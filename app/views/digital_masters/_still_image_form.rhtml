@@ -1,0 +1,25 @@
+<%= javascript_include_tag "prototype" %>
+<%= error_messages_for 'content' %>
+<%= render :partial => 'edit_div' %>
+
+<%= start_form_tag :action => 'update', :id => @content %>
+
+<%= render :partial => 'collaspe_section_js' %>
+
+<div id="content_data_control" style="float:left"><%= link_to_function '- Collapse ', "collaspe('content_data', 'content_data_control');" %></div>&nbsp;Content Details 
+<div id="content_data"><%= render :partial => 'content_form', :locals => {:content => @content} %></div>
+<p>
+<div id="names_control" style="float:left"><%= link_to_function '- Collapse ', "collaspe('names', 'names_control');" %></div>&nbsp;Names 
+<div id="names"><%= render :partial => 'content_names', :locals => {:content => @content} %></div>
+<p>
+<div id="subjects_control" style="float:left"><%= link_to_function '- Collapse ', "collaspe('subjects', 'subjects_control');" %></div>&nbsp;Subjects 
+<div id="subjects"><%= render :partial => 'content_subjects', :locals => {:content => @content} %></div>
+<p>
+
+<div id="still_img_subform">
+	<%= render :partial => 'src_still_image_show' %>
+</div>
+
+<%= submit_tag 'Edit' %>
+<%= end_form_tag %>
+

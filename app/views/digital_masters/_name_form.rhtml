@@ -1,0 +1,4 @@
+<%= hidden_field 'nc', 'content_id', :value => @nc.content_id %>
+<%=	select ('nc', 'name_id', Name::getNames()) %>
+<%=	select ('nc', 'role_id', Role::getRoles()) %>
+<%= text_field 'nc', 'role_term', 'size' => 50, :value => @nc.role_term %>

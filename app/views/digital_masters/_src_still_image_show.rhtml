@@ -1,0 +1,4 @@
+<%= link_to_remote 'Add Image', :complete => 'eval(request.responseText)', :url => {:action => 'addSrcStillImage', :content_id => @content.id} %><br />
+<% for image in @content.src_still_images %>
+	<%= link_to_remote 'Edit Image', :complete => 'eval(request.responseText)', :url => {:action => 'editSrcStillImage', :id => image.id} %><br />
+<% end %>	

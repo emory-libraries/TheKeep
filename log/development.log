@@ -1,0 +1,2040 @@
+
+
+Processing DigitalMastersController#editContentName (for 170.140.209.182 at 2006-10-09 11:58:09) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentName", "id"=>"30", "controller"=>"digital_masters"}
+  [4;36;1mContentsNames Load (0.075035)[0m   [0;1mSELECT * FROM contents_names WHERE (contents_names.id = '30') LIMIT 1[0m
+  [4;35;1mSQL (0.025219)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.002019)[0m   [0;1mSELECT * FROM names WHERE (names.id = 115) LIMIT 1[0m
+  [4;35;1mRole Load (0.001514)[0m   [0mSELECT * FROM roles WHERE (roles.id = 1) LIMIT 1[0m
+  [4;36;1mName Load (0.013898)[0m   [0;1mSELECT name, id FROM names ORDER BY name [0m
+  [4;35;1mSQL (0.001839)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.014956)[0m   [0;1mSELECT title, id FROM roles [0m
+  [4;35;1mSQL (0.001755)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_name_form (0.04532)
+Rendered digital_masters/_popup_edit (0.05813)
+Completed in 0.26633 (3 reqs/sec) | Rendering: 0.02614 (9%) | DB: 0.13623 (51%) | 200 OK [http://wilson/digital_masters/editContentName/30]
+
+
+Processing DigitalMastersController#index (for 170.140.209.182 at 2006-10-09 12:05:36) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"index", "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.016841)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSQL (0.052875)[0m   [0mSELECT count(*) AS count_all FROM contents [0m
+  [4;36;1mContent Load (0.079145)[0m   [0;1mSELECT c.id, c.record_id_type, c.other_id, c.date_created, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date, c.complete FROM contents AS c LEFT JOIN tech_images AS ti ON c.id = ti.content_id WHERE ("ti"."image_note" = 'Dawson Grant') [0m
+Rendering actionlistlayoutfalse within layouts/digital_masters
+Rendering digital_masters/list
+Completed in 0.31232 (3 reqs/sec) | Rendering: 0.14366 (45%) | DB: 0.14886 (47%) | 200 OK [http://wilson/digital_masters]
+
+
+Processing DigitalMastersController#show (for 170.140.209.182 at 2006-10-09 12:05:50) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"show", "id"=>"1034", "controller"=>"digital_masters"}
+  [4;35;1mContent Load (0.002205)[0m   [0mSELECT * FROM contents WHERE (contents.id = '1034') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/show
+  [4;36;1mSQL (0.003091)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Completed in 0.02592 (38 reqs/sec) | Rendering: 0.01514 (58%) | DB: 0.00530 (20%) | 200 OK [http://wilson/digital_masters/show/1034]
+
+
+Processing DigitalMastersController#edit (for 170.140.209.182 at 2006-10-09 12:06:18) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"edit", "id"=>"1034", "controller"=>"digital_masters"}
+  [4;35;1mContent Load (0.050700)[0m   [0mSELECT * FROM contents WHERE (contents.id = '1034') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/edit
+Rendered digital_masters/_edit_div (0.00679)
+  [4;36;1mSQL (0.003331)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_collaspe_section_js (0.00775)
+  [4;35;1mStaffName Load (0.001779)[0m   [0mSELECT name, id FROM staff_names [0m
+  [4;36;1mSQL (0.001565)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'staff_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mDescriptionData Load (0.232943)[0m   [0mSELECT id FROM description_datas [0m
+  [4;36;1mSQL (0.002577)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'description_datas'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mDescriptionData Load (0.012622)[0m   [0mSELECT * FROM description_datas WHERE (description_datas.id = 826) LIMIT 1[0m
+  [4;36;1mResourceType Load (0.001887)[0m   [0;1mSELECT resource_type, id FROM resource_types [0m
+  [4;35;1mSQL (0.052955)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'resource_types'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mLanguage Load (0.039303)[0m   [0;1mSELECT * FROM languages [0m
+  [4;35;1mSQL (0.001816)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSQL (0.001677)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mLanguage Load (0.002633)[0m   [0mSELECT * FROM languages INNER JOIN contents_languages ON languages.id = contents_languages.language_id WHERE (contents_languages.content_id = 1034 ) [0m
+  [4;36;1mLocation Load (0.001899)[0m   [0;1mSELECT name, id FROM locations [0m
+  [4;35;1mSQL (0.002361)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'locations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_form (0.45116)
+  [4;36;1mSQL (0.002091)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mName Load (0.001349)[0m   [0mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 1034 ) [0m
+Rendered digital_masters/_content_names (0.00861)
+  [4;36;1mSQL (0.001975)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSubject Load (0.011971)[0m   [0mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 1034 ) [0m
+Rendered digital_masters/_content_subjects (0.01884)
+  [4;36;1mSrcStillImage Load (0.003176)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 1034) [0m
+  [4;35;1mSQL (0.003246)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_src_still_image_show (0.01533)
+Rendered digital_masters/_still_image_form (0.51713)
+Completed in 0.58570 (1 reqs/sec) | Rendering: 0.14626 (24%) | DB: 0.43386 (74%) | 200 OK [http://wilson/digital_masters/edit/1034]
+
+
+Processing DigitalMastersController#edit (for 170.140.209.182 at 2006-10-09 12:06:28) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"edit", "id"=>"9", "controller"=>"digital_masters"}
+  [4;36;1mContent Load (0.002435)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/edit
+Rendered digital_masters/_edit_div (0.00013)
+  [4;35;1mSQL (0.003773)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_collaspe_section_js (0.00029)
+  [4;36;1mStaffName Load (0.001319)[0m   [0;1mSELECT name, id FROM staff_names [0m
+  [4;35;1mSQL (0.001390)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'staff_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.077545)[0m   [0;1mSELECT id FROM description_datas [0m
+  [4;35;1mSQL (0.002569)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'description_datas'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.012444)[0m   [0;1mSELECT * FROM description_datas WHERE (description_datas.id = 826) LIMIT 1[0m
+  [4;35;1mResourceType Load (0.001677)[0m   [0mSELECT resource_type, id FROM resource_types [0m
+  [4;36;1mSQL (0.001418)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'resource_types'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mLanguage Load (0.091656)[0m   [0mSELECT * FROM languages [0m
+  [4;36;1mSQL (0.001643)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSQL (0.001429)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mLanguage Load (0.002147)[0m   [0;1mSELECT * FROM languages INNER JOIN contents_languages ON languages.id = contents_languages.language_id WHERE (contents_languages.content_id = 9 ) [0m
+  [4;35;1mLocation Load (0.001506)[0m   [0mSELECT name, id FROM locations [0m
+  [4;36;1mSQL (0.002199)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'locations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_form (0.33634)
+  [4;35;1mSQL (0.001800)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.001461)[0m   [0;1mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001473)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000865)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+  [4;35;1mSQL (0.001403)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_names (0.01435)
+  [4;36;1mSQL (0.001685)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSubject Load (0.001717)[0m   [0mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 9 ) [0m
+  [4;36;1mSQL (0.001447)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_subjects (0.00991)
+  [4;35;1mSrcStillImage Load (0.003558)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+  [4;36;1mSQL (0.004377)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_src_still_image_show (0.01285)
+Rendered digital_masters/_still_image_form (0.38156)
+Completed in 0.39172 (2 reqs/sec) | Rendering: 0.16085 (41%) | DB: 0.22494 (57%) | 200 OK [http://wilson/digital_masters/edit/9]
+
+
+Processing DigitalMastersController#editContentName (for 170.140.209.182 at 2006-10-09 13:32:47) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentName", "id"=>"30", "controller"=>"digital_masters"}
+  [4;35;1mContentsNames Load (0.001242)[0m   [0mSELECT * FROM contents_names WHERE (contents_names.id = '30') LIMIT 1[0m
+  [4;36;1mSQL (0.001969)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mName Load (0.000947)[0m   [0mSELECT * FROM names WHERE (names.id = 115) LIMIT 1[0m
+  [4;36;1mRole Load (0.000905)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = 1) LIMIT 1[0m
+  [4;35;1mName Load (0.012865)[0m   [0mSELECT name, id FROM names ORDER BY name [0m
+  [4;36;1mSQL (0.001814)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mRole Load (0.015606)[0m   [0mSELECT title, id FROM roles [0m
+  [4;36;1mSQL (0.001826)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_name_form (0.10364)
+Rendered digital_masters/_popup_edit (0.10604)
+Completed in 0.11888 (8 reqs/sec) | Rendering: 0.07436 (62%) | DB: 0.03717 (31%) | 200 OK [http://wilson/digital_masters/editContentName/30]
+
+
+Processing DigitalMastersController#edit (for 170.140.209.182 at 2006-10-09 13:32:49) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"edit", "id"=>"9", "controller"=>"digital_masters"}
+  [4;35;1mContent Load (0.002251)[0m   [0mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/edit
+Rendered digital_masters/_edit_div (0.00008)
+  [4;36;1mSQL (0.003228)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_collaspe_section_js (0.00027)
+  [4;35;1mStaffName Load (0.001328)[0m   [0mSELECT name, id FROM staff_names [0m
+  [4;36;1mSQL (0.001725)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'staff_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mDescriptionData Load (0.076206)[0m   [0mSELECT id FROM description_datas [0m
+  [4;36;1mSQL (0.002809)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'description_datas'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mDescriptionData Load (0.012434)[0m   [0mSELECT * FROM description_datas WHERE (description_datas.id = 826) LIMIT 1[0m
+  [4;36;1mResourceType Load (0.001787)[0m   [0;1mSELECT resource_type, id FROM resource_types [0m
+  [4;35;1mSQL (0.001614)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'resource_types'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mLanguage Load (0.038690)[0m   [0;1mSELECT * FROM languages [0m
+  [4;35;1mSQL (0.001835)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSQL (0.001640)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mLanguage Load (0.002267)[0m   [0mSELECT * FROM languages INNER JOIN contents_languages ON languages.id = contents_languages.language_id WHERE (contents_languages.content_id = 9 ) [0m
+  [4;36;1mLocation Load (0.001623)[0m   [0;1mSELECT name, id FROM locations [0m
+  [4;35;1mSQL (0.002398)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'locations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_form (0.28110)
+  [4;36;1mSQL (0.002110)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mName Load (0.001587)[0m   [0mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 9 ) [0m
+  [4;36;1mSQL (0.049051)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mRole Load (0.001092)[0m   [0mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+  [4;36;1mSQL (0.001681)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_names (0.07107)
+  [4;35;1mSQL (0.002009)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.002001)[0m   [0;1mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001750)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_subjects (0.01194)
+  [4;36;1mSrcStillImage Load (0.003059)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+  [4;35;1mSQL (0.003299)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_src_still_image_show (0.01134)
+Rendered digital_masters/_still_image_form (0.38245)
+Completed in 0.39186 (2 reqs/sec) | Rendering: 0.16669 (42%) | DB: 0.21947 (56%) | 200 OK [http://wilson/digital_masters/edit/9]
+
+
+Processing DigitalMastersController#addContentName (for 170.140.209.182 at 2006-10-09 13:32:54) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"content_id"=>"9", "action"=>"addContentName", "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.002135)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mName Load (0.012986)[0m   [0mSELECT name, id FROM names ORDER BY name [0m
+  [4;36;1mSQL (0.001742)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mRole Load (0.014550)[0m   [0mSELECT title, id FROM roles [0m
+  [4;36;1mSQL (0.001754)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_name_form (0.05078)
+Rendered digital_masters/_popup_edit (0.05297)
+Completed in 0.05852 (17 reqs/sec) | Rendering: 0.02235 (38%) | DB: 0.03317 (56%) | 200 OK [http://wilson/digital_masters/addContentName?content_id=9]
+
+
+Processing DigitalMastersController#saveContentName (for 170.140.209.182 at 2006-10-09 13:32:59) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveContentName", "controller"=>"digital_masters", "nc"=>{"content_id"=>"9", "role_id"=>"1", "name_id"=>"117", "role_term"=>""}}
+  [4;35;1mSQL (0.002134)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSQL (0.000314)[0m   [0;1mBEGIN[0m
+  [4;35;1mPK and serial sequence (0.082040)[0m   [0m SELECT attr.attname, name.nspname, seq.relname
+ FROM pg_class seq,
+ pg_attribute attr,
+ pg_depend dep,
+ pg_namespace name,
+ pg_constraint cons
+ WHERE seq.oid = dep.objid
+ AND seq.relnamespace = name.oid
+ AND seq.relkind = 'S'
+ AND attr.attrelid = dep.refobjid
+ AND attr.attnum = dep.refobjsubid
+ AND attr.attrelid = cons.conrelid
+ AND attr.attnum = cons.conkey[1]
+ AND cons.contype = 'p'
+ AND dep.refobjid = 'contents_names'::regclass
+[0m
+  [4;36;1mPK and custom sequence (0.002385)[0m   [0;1m SELECT attr.attname, name.nspname, split_part(def.adsrc, '\'', 2)
+ FROM pg_class t
+ JOIN pg_namespace name ON (t.relnamespace = name.oid)
+ JOIN pg_attribute attr ON (t.oid = attrelid)
+ JOIN pg_attrdef def ON (adrelid = attrelid AND adnum = attnum)
+ JOIN pg_constraint cons ON (conrelid = adrelid AND adnum = conkey[1])
+ WHERE t.oid = 'contents_names'::regclass
+ AND cons.contype = 'p'
+ AND def.adsrc ~* 'nextval'
+[0m
+  [4;35;1mContentsNames Create (0.016857)[0m   [0mINSERT INTO contents_names ("content_id", "role_id", "name_id", "role_term") VALUES(9, 1, 117, '')[0m
+  [4;36;1mSQL (0.007688)[0m   [0;1mSELECT currval('contents_names_id_seq')[0m
+  [4;35;1mSQL (0.079299)[0m   [0mCOMMIT[0m
+  [4;36;1mContent Load (0.061536)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;35;1mSQL (0.003332)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSQL (0.002091)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mName Load (0.001796)[0m   [0mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 9 ) [0m
+  [4;36;1mSQL (0.001607)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mRole Load (0.001006)[0m   [0mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+  [4;36;1mSQL (0.001587)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mRole Load (0.000990)[0m   [0mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+Rendered digital_masters/_content_names (0.02261)
+Rendered digital_masters/_content_name_table (0.03237)
+Completed in 0.29781 (3 reqs/sec) | Rendering: 0.02074 (6%) | DB: 0.26466 (88%) | 200 OK [http://wilson/digital_masters/saveContentName/]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 13:35:24) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"51", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002372)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '51') LIMIT 1[0m
+  [4;35;1mSQL (0.003252)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mForm Load (0.004934)[0m   [0;1mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;35;1mSQL (0.001822)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mHousing Load (0.003642)[0m   [0;1mSELECT description, id FROM housings ORDER BY description [0m
+  [4;35;1mSQL (0.001330)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.04978)
+Rendered digital_masters/_popup_edit (0.05582)
+Completed in 0.06156 (16 reqs/sec) | Rendering: 0.04125 (67%) | DB: 0.01735 (28%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/51]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 13:35:28) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"6", "dimension_width_unit"=>"inches", "related_item"=>"There is a similar photograph of Plath in the same folder.", "item_location"=>"Series 7 (Photographs), Box 177, Folder 56", "generation"=>"", "dimension_height"=>"0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0", "dimension_height_unit"=>"inches", "source_date"=>"1959-08-00", "housing_id"=>"13"}, "id"=>"51", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002274)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '51') LIMIT 1[0m
+  [4;35;1mSQL (0.003327)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mContent Load (0.002040)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;35;1mSQL (0.000270)[0m   [0mBEGIN[0m
+  [4;36;1mSrcStillImage Update (0.000930)[0m   [0;1mUPDATE src_still_images SET "source_date" = '1959-08-00', "dimension_height" = 0.0, "generation" = NULL, "disposition" = 'retained', "housing_id" = 0, "item_location" = 'Series 7 (Photographs), Box 177, Folder 56', "form_id" = 6, "dimension_width_unit" = 'inches', "dimension_height_unit" = 'inches', "dimension_width" = 0.0, "source_note" = NULL, "related_item" = 'There is a similar photograph of Plath in the same folder.', "conservation_history" = NULL, "publication_date" = NULL, "content_id" = 9, "dimension_note" = NULL WHERE id = 51[0m
+  [4;35;1mSQL (0.050235)[0m   [0mCOMMIT[0m
+  [4;36;1mSQL (0.003141)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSrcStillImage Load (0.002745)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00888)
+Rendered digital_masters/_src_still_image_reload (0.02283)
+Completed in 0.09424 (10 reqs/sec) | Rendering: 0.01737 (18%) | DB: 0.06496 (68%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/51]
+
+
+Processing DigitalMastersController#editContentSubject (for 170.140.209.182 at 2006-10-09 13:36:20) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentSubject", "id"=>"2006", "controller"=>"digital_masters"}
+  [4;36;1mContentsSubjects Load (0.001293)[0m   [0;1mSELECT * FROM contents_subjects WHERE (contents_subjects.id = '2006') LIMIT 1[0m
+  [4;35;1mSQL (0.001857)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001764)[0m   [0;1mSELECT subject, id FROM subjects ORDER BY subject [0m
+  [4;35;1mSQL (0.001658)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_subject_form (0.01589)
+Rendered digital_masters/_popup_edit (0.01982)
+Completed in 0.10011 (9 reqs/sec) | Rendering: 0.01497 (14%) | DB: 0.00657 (6%) | 200 OK [http://wilson/digital_masters/editContentSubject/2006]
+
+
+Processing DigitalMastersController#edit (for 170.140.209.182 at 2006-10-09 13:36:22) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"edit", "id"=>"9", "controller"=>"digital_masters"}
+  [4;36;1mContent Load (0.002242)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/edit
+Rendered digital_masters/_edit_div (0.00008)
+  [4;35;1mSQL (0.003174)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_collaspe_section_js (0.00028)
+  [4;36;1mStaffName Load (0.001333)[0m   [0;1mSELECT name, id FROM staff_names [0m
+  [4;35;1mSQL (0.001494)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'staff_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.076608)[0m   [0;1mSELECT id FROM description_datas [0m
+  [4;35;1mSQL (0.002557)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'description_datas'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.012527)[0m   [0;1mSELECT * FROM description_datas WHERE (description_datas.id = 826) LIMIT 1[0m
+  [4;35;1mResourceType Load (0.001595)[0m   [0mSELECT resource_type, id FROM resource_types [0m
+  [4;36;1mSQL (0.001549)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'resource_types'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mLanguage Load (0.039021)[0m   [0mSELECT * FROM languages [0m
+  [4;36;1mSQL (0.001808)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSQL (0.001636)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mLanguage Load (0.002226)[0m   [0;1mSELECT * FROM languages INNER JOIN contents_languages ON languages.id = contents_languages.language_id WHERE (contents_languages.content_id = 9 ) [0m
+  [4;35;1mLocation Load (0.001608)[0m   [0mSELECT name, id FROM locations [0m
+  [4;36;1mSQL (0.002391)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'locations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_form (0.27833)
+  [4;35;1mSQL (0.002044)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.001706)[0m   [0;1mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001539)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000978)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+  [4;35;1mSQL (0.001545)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000942)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+Rendered digital_masters/_content_names (0.01722)
+  [4;35;1mSQL (0.001884)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001808)[0m   [0;1mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001560)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_subjects (0.01066)
+  [4;36;1mSrcStillImage Load (0.003003)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+  [4;35;1mSQL (0.051765)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_src_still_image_show (0.06706)
+Rendered digital_masters/_still_image_form (0.38019)
+Completed in 0.38980 (2 reqs/sec) | Rendering: 0.16361 (41%) | DB: 0.22054 (56%) | 200 OK [http://wilson/digital_masters/edit/9]
+
+
+Processing DigitalMastersController#editContentSubject (for 170.140.209.182 at 2006-10-09 13:36:36) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentSubject", "id"=>"2008", "controller"=>"digital_masters"}
+  [4;36;1mContentsSubjects Load (0.001224)[0m   [0;1mSELECT * FROM contents_subjects WHERE (contents_subjects.id = '2008') LIMIT 1[0m
+  [4;35;1mSQL (0.001821)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001659)[0m   [0;1mSELECT subject, id FROM subjects ORDER BY subject [0m
+  [4;35;1mSQL (0.001616)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_subject_form (0.00973)
+Rendered digital_masters/_popup_edit (0.01340)
+Completed in 0.01772 (56 reqs/sec) | Rendering: 0.00872 (49%) | DB: 0.00632 (35%) | 200 OK [http://wilson/digital_masters/editContentSubject/2008]
+
+
+Processing DigitalMastersController#saveContentSubject (for 170.140.209.182 at 2006-10-09 13:36:37) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveContentSubject", "cs"=>{"content_id"=>"9", "fieldnames"=>"565", "subject_id"=>"22"}, "id"=>"2008", "controller"=>"digital_masters"}
+  [4;36;1mContentsSubjects Load (0.001172)[0m   [0;1mSELECT * FROM contents_subjects WHERE (contents_subjects.id = '2008') LIMIT 1[0m
+  [4;35;1mSQL (0.001717)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSQL (0.000283)[0m   [0;1mBEGIN[0m
+  [4;35;1mContentsSubjects Update (0.027831)[0m   [0mUPDATE contents_subjects SET "subject_id" = 22, "fieldnames" = 565, "content_id" = 9 WHERE id = 2008[0m
+  [4;36;1mSQL (0.040110)[0m   [0;1mCOMMIT[0m
+  [4;35;1mContent Load (0.002090)[0m   [0mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;36;1mSQL (0.003097)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSQL (0.001880)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001700)[0m   [0;1mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001525)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_subjects (0.01480)
+Rendered digital_masters/_content_subjects_table (0.02452)
+Completed in 0.10750 (9 reqs/sec) | Rendering: 0.01671 (15%) | DB: 0.08141 (75%) | 200 OK [http://wilson/digital_masters/saveContentSubject/2008]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 13:36:41) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"50", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002306)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;35;1mSQL (0.003405)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mForm Load (0.004569)[0m   [0;1mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;35;1mSQL (0.002022)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mHousing Load (0.003946)[0m   [0;1mSELECT description, id FROM housings ORDER BY description [0m
+  [4;35;1mSQL (0.001591)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.09075)
+Rendered digital_masters/_popup_edit (0.09703)
+Completed in 0.10248 (9 reqs/sec) | Rendering: 0.08193 (79%) | DB: 0.01784 (17%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/50]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 13:36:44) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"6", "dimension_width_unit"=>"inches", "related_item"=>"see box 177 folders 1-47 for other portraits of Hughes.", "item_location"=>"Series 7 (Photographs), Box 177, Folder 16?", "generation"=>"", "dimension_height"=>"0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0", "dimension_height_unit"=>"inches", "source_date"=>"1970-00-00", "housing_id"=>"13"}, "id"=>"50", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002290)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;35;1mSQL (0.003402)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mContent Load (0.002063)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;35;1mSQL (0.000273)[0m   [0mBEGIN[0m
+  [4;36;1mSrcStillImage Update (0.000702)[0m   [0;1mUPDATE src_still_images SET "source_date" = '1970-00-00', "dimension_height" = 0.0, "generation" = NULL, "disposition" = 'retained', "housing_id" = 0, "item_location" = 'Series 7 (Photographs), Box 177, Folder 16?', "form_id" = 6, "dimension_width_unit" = 'inches', "dimension_height_unit" = 'inches', "dimension_width" = 0.0, "source_note" = NULL, "related_item" = 'see box 177 folders 1-47 for other portraits of Hughes.', "conservation_history" = NULL, "publication_date" = NULL, "content_id" = 9, "dimension_note" = NULL WHERE id = 50[0m
+  [4;35;1mSQL (0.055413)[0m   [0mCOMMIT[0m
+  [4;36;1mSQL (0.003146)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSrcStillImage Load (0.002894)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00875)
+Rendered digital_masters/_src_still_image_reload (0.00918)
+Completed in 0.08626 (11 reqs/sec) | Rendering: 0.00355 (4%) | DB: 0.07018 (81%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/50]
+
+
+Processing DigitalMastersController#editContentName (for 170.140.209.182 at 2006-10-09 13:38:11) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentName", "id"=>"30", "controller"=>"digital_masters"}
+  [4;36;1mContentsNames Load (0.001251)[0m   [0;1mSELECT * FROM contents_names WHERE (contents_names.id = '30') LIMIT 1[0m
+  [4;35;1mSQL (0.001952)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.000927)[0m   [0;1mSELECT * FROM names WHERE (names.id = 115) LIMIT 1[0m
+  [4;35;1mRole Load (0.000893)[0m   [0mSELECT * FROM roles WHERE (roles.id = 1) LIMIT 1[0m
+  [4;36;1mName Load (0.012936)[0m   [0;1mSELECT name, id FROM names ORDER BY name [0m
+  [4;35;1mSQL (0.001720)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.014358)[0m   [0;1mSELECT title, id FROM roles [0m
+  [4;35;1mSQL (0.001699)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_name_form (0.04223)
+Rendered digital_masters/_popup_edit (0.04445)
+Completed in 0.05737 (17 reqs/sec) | Rendering: 0.01416 (24%) | DB: 0.03574 (62%) | 200 OK [http://wilson/digital_masters/editContentName/30]
+
+
+Processing DigitalMastersController#edit (for 170.140.209.182 at 2006-10-09 13:56:28) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"edit", "id"=>"9", "controller"=>"digital_masters"}
+  [4;36;1mContent Load (0.002301)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/edit
+Rendered digital_masters/_edit_div (0.00009)
+  [4;35;1mSQL (0.003270)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_collaspe_section_js (0.00029)
+  [4;36;1mStaffName Load (0.001361)[0m   [0;1mSELECT name, id FROM staff_names [0m
+  [4;35;1mSQL (0.001519)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'staff_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.077501)[0m   [0;1mSELECT id FROM description_datas [0m
+  [4;35;1mSQL (0.002547)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'description_datas'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.012454)[0m   [0;1mSELECT * FROM description_datas WHERE (description_datas.id = 826) LIMIT 1[0m
+  [4;35;1mResourceType Load (0.001933)[0m   [0mSELECT resource_type, id FROM resource_types [0m
+  [4;36;1mSQL (0.001770)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'resource_types'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mLanguage Load (0.039047)[0m   [0mSELECT * FROM languages [0m
+  [4;36;1mSQL (0.001819)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSQL (0.001619)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mLanguage Load (0.002236)[0m   [0;1mSELECT * FROM languages INNER JOIN contents_languages ON languages.id = contents_languages.language_id WHERE (contents_languages.content_id = 9 ) [0m
+  [4;35;1mLocation Load (0.001648)[0m   [0mSELECT name, id FROM locations [0m
+  [4;36;1mSQL (0.002407)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'locations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_form (0.27814)
+  [4;35;1mSQL (0.002032)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.001683)[0m   [0;1mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001548)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000974)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+  [4;35;1mSQL (0.001558)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000937)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+Rendered digital_masters/_content_names (0.01708)
+  [4;35;1mSQL (0.001878)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001764)[0m   [0;1mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001529)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_subjects (0.01036)
+  [4;36;1mSrcStillImage Load (0.002910)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+  [4;35;1mSQL (0.003143)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_src_still_image_show (0.01035)
+Rendered digital_masters/_still_image_form (0.32299)
+Completed in 0.33317 (3 reqs/sec) | Rendering: 0.15336 (46%) | DB: 0.17339 (52%) | 200 OK [http://wilson/digital_masters/edit/9]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 13:57:06) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"49", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.059633)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '49') LIMIT 1[0m
+  [4;35;1mSQL (0.003509)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mForm Load (0.004546)[0m   [0;1mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;35;1mSQL (0.002063)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mHousing Load (0.003681)[0m   [0;1mSELECT description, id FROM housings ORDER BY description [0m
+  [4;35;1mSQL (0.001591)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02813)
+Rendered digital_masters/_popup_edit (0.03464)
+Completed in 0.09859 (10 reqs/sec) | Rendering: 0.02052 (20%) | DB: 0.07502 (76%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/49]
+
+
+Processing Base#index (for 170.140.209.182 at 2006-10-09 13:57:12) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"\\\"srcStillImage[conservation_history]\\\""=>nil, "\\\"srcStillImage[dimension_width]\\\""=>"\\\"0\\\"", "\\\"srcStillImage[related_item]\\\""=>"see box 179 4-21 for other family pictures from this time period; 1383", "commit"=>"Save", "\\\"srcStillImage[generation]\\\""=>"\\\"\\\"", "\\\"srcStillImage[source_note]\\\""=>nil, "\\\"srcStillImage[publication_date]\\\""=>"\\\"\\\"", "\\\"srcStillImage[dimension_note]\\\""=>nil, "\\\"srcStillImage[dimension_height_unit]\\\""=>"\\\"inches\\\"", "\\\"srcStillImage[disposition]\\\""=>"\\\"retained\\\"", "\\\"srcStillImage[item_location]\\\""=>"\\\"Series", "\\\"srcStillImage[form_id]\\\""=>"\\\"5\\\"", "\\\"srcStillImage[source_date]\\\""=>"\\\"1962-04-00\\\"", "\\\"srcStillImage[dimension_width_unit]\\\""=>"\\\"inches\\\"", "\\\"srcStillImage[dimension_height]\\\""=>"\\\"0\\\"", "\\\"srcStillImage[housing_id]\\\""=>"\\\"13\\\""}
+
+
+ActionController::RoutingError (Recognition failed for "/digital_masters/editSrcStillImage/%5C%22/digital_masters/saveSrcStillImage/49%5C%22"):
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/routing.rb:522:in `recognition_failed'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/routing.rb:512:in `recognize!'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/dispatcher.rb:38:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:115:in `handle_dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:81:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:104:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:65:in `run'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:173:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:162:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:95:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:92:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:23:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:82:in `start'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:67:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/servers/webrick.rb:59
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/server.rb:30
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    ./script/server:3
+
+
+Rendering /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/templates/rescues/layout.rhtml (404 Page Not Found)
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 13:57:38) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"saveSrcStillImage", "id"=>"49", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002274)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '49') LIMIT 1[0m
+  [4;35;1mSQL (0.003340)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+
+
+ActiveRecord::RecordNotFound (Couldn't find Content without an ID):
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:939:in `find_from_ids'
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:382:in `find'
+    .//app/controllers/digital_masters_controller.rb:177:in `saveSrcStillImage'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:941:in `perform_action_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:368:in `perform_action_without_benchmark'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/1.8/benchmark.rb:293:in `measure'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/rescue.rb:82:in `perform_action'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:408:in `process_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:377:in `process_without_session_management_support'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/session_management.rb:117:in `process'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/dispatcher.rb:38:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:115:in `handle_dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:81:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:104:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:65:in `run'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:173:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:162:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:95:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:92:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:23:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:82:in `start'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:67:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/servers/webrick.rb:59
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/server.rb:30
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    ./script/server:3
+
+
+Rendering /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/templates/rescues/layout.rhtml (500 Internal Error)
+
+
+Processing DigitalMastersController#edit (for 170.140.209.182 at 2006-10-09 14:01:30) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"edit", "id"=>"9", "controller"=>"digital_masters"}
+  [4;36;1mContent Load (0.002247)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+Rendering  within layouts/digital_masters
+Rendering digital_masters/edit
+Rendered digital_masters/_edit_div (0.00008)
+  [4;35;1mSQL (0.003155)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_collaspe_section_js (0.00028)
+  [4;36;1mStaffName Load (0.001355)[0m   [0;1mSELECT name, id FROM staff_names [0m
+  [4;35;1mSQL (0.001502)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'staff_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.080165)[0m   [0;1mSELECT id FROM description_datas [0m
+  [4;35;1mSQL (0.002516)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'description_datas'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mDescriptionData Load (0.012509)[0m   [0;1mSELECT * FROM description_datas WHERE (description_datas.id = 826) LIMIT 1[0m
+  [4;35;1mResourceType Load (0.001747)[0m   [0mSELECT resource_type, id FROM resource_types [0m
+  [4;36;1mSQL (0.001446)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'resource_types'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mLanguage Load (0.038530)[0m   [0mSELECT * FROM languages [0m
+  [4;36;1mSQL (0.001520)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSQL (0.001361)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_languages'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mLanguage Load (0.002129)[0m   [0;1mSELECT * FROM languages INNER JOIN contents_languages ON languages.id = contents_languages.language_id WHERE (contents_languages.content_id = 9 ) [0m
+  [4;35;1mLocation Load (0.001553)[0m   [0mSELECT name, id FROM locations [0m
+  [4;36;1mSQL (0.002175)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'locations'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_form (0.28021)
+  [4;35;1mSQL (0.001753)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.001606)[0m   [0;1mSELECT * FROM names INNER JOIN contents_names ON names.id = contents_names.name_id WHERE (contents_names.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001407)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000875)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+  [4;35;1mSQL (0.001412)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.000823)[0m   [0;1mSELECT * FROM roles WHERE (roles.id = '1') LIMIT 1[0m
+Rendered digital_masters/_content_names (0.01584)
+  [4;35;1mSQL (0.050596)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001882)[0m   [0;1mSELECT * FROM subjects INNER JOIN contents_subjects ON subjects.id = contents_subjects.subject_id WHERE (contents_subjects.content_id = 9 ) [0m
+  [4;35;1mSQL (0.001451)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_content_subjects (0.06471)
+  [4;36;1mSrcStillImage Load (0.002920)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+  [4;35;1mSQL (0.003095)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_src_still_image_show (0.01114)
+Rendered digital_masters/_still_image_form (0.37882)
+Completed in 0.38833 (2 reqs/sec) | Rendering: 0.16083 (41%) | DB: 0.22734 (58%) | 200 OK [http://wilson/digital_masters/edit/9]
+
+
+Processing DigitalMastersController#editContentName (for 170.140.209.182 at 2006-10-09 14:01:37) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentName", "id"=>"30", "controller"=>"digital_masters"}
+  [4;36;1mContentsNames Load (0.001262)[0m   [0;1mSELECT * FROM contents_names WHERE (contents_names.id = '30') LIMIT 1[0m
+  [4;35;1mSQL (0.002020)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mName Load (0.000942)[0m   [0;1mSELECT * FROM names WHERE (names.id = 115) LIMIT 1[0m
+  [4;35;1mRole Load (0.000895)[0m   [0mSELECT * FROM roles WHERE (roles.id = 1) LIMIT 1[0m
+  [4;36;1mName Load (0.013003)[0m   [0;1mSELECT name, id FROM names ORDER BY name [0m
+  [4;35;1mSQL (0.001737)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'names'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mRole Load (0.014565)[0m   [0;1mSELECT title, id FROM roles [0m
+  [4;35;1mSQL (0.001719)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'roles'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_name_form (0.04260)
+Rendered digital_masters/_popup_edit (0.04483)
+Completed in 0.05800 (17 reqs/sec) | Rendering: 0.01423 (24%) | DB: 0.03614 (62%) | 200 OK [http://wilson/digital_masters/editContentName/30]
+
+
+Processing DigitalMastersController#editContentSubject (for 170.140.209.182 at 2006-10-09 14:01:42) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentSubject", "id"=>"2009", "controller"=>"digital_masters"}
+  [4;36;1mContentsSubjects Load (0.001177)[0m   [0;1mSELECT * FROM contents_subjects WHERE (contents_subjects.id = '2009') LIMIT 1[0m
+  [4;35;1mSQL (0.001810)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSubject Load (0.001666)[0m   [0;1mSELECT subject, id FROM subjects ORDER BY subject [0m
+  [4;35;1mSQL (0.001630)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_subject_form (0.00968)
+Rendered digital_masters/_popup_edit (0.01335)
+Completed in 0.01733 (57 reqs/sec) | Rendering: 0.00864 (49%) | DB: 0.00628 (36%) | 200 OK [http://wilson/digital_masters/editContentSubject/2009]
+  [4;36;1mSrcStillImage Load (0.003699)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = 49) LIMIT 1[0m
+  [4;35;1mSrcStillImage Load (0.002230)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = 50) LIMIT 1[0m
+  [4;36;1mSrcStillImage Load (0.002234)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = 51) LIMIT 1[0m
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:04:20) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"saveSrcStillImage", "id"=>"50", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002303)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;35;1mSQL (0.003357)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mContent Load (0.002092)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;35;1mSQL (0.000282)[0m   [0mBEGIN[0m
+  [4;36;1mSrcStillImage Update (0.000817)[0m   [0;1mUPDATE src_still_images SET "source_date" = '1970-00-00', "dimension_height" = 0.0, "generation" = NULL, "disposition" = 'retained', "housing_id" = 0, "item_location" = 'Series 7 (Photographs), Box 177, Folder 16?', "form_id" = 6, "dimension_width_unit" = 'inches', "dimension_height_unit" = 'inches', "dimension_width" = 0.0, "source_note" = NULL, "related_item" = 'see box 177 folders 1-47 for other portraits of Hughes.', "conservation_history" = NULL, "publication_date" = NULL, "content_id" = 9, "dimension_note" = NULL WHERE id = 50[0m
+  [4;35;1mSQL (0.055156)[0m   [0mCOMMIT[0m
+  [4;36;1mSQL (0.003143)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSrcStillImage Load (0.002911)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00880)
+Rendered digital_masters/_src_still_image_reload (0.00923)
+Completed in 0.08632 (11 reqs/sec) | Rendering: 0.00359 (4%) | DB: 0.07006 (81%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/50]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:06:01) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"51", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002251)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '51') LIMIT 1[0m
+  [4;35;1mSQL (0.003265)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mForm Load (0.004340)[0m   [0;1mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;35;1mSQL (0.001931)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mHousing Load (0.003570)[0m   [0;1mSELECT description, id FROM housings ORDER BY description [0m
+  [4;35;1mSQL (0.001498)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02638)
+Rendered digital_masters/_popup_edit (0.03232)
+Completed in 0.03783 (26 reqs/sec) | Rendering: 0.01813 (47%) | DB: 0.01685 (44%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/51]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:06:19) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"6", "dimension_width_unit"=>"inches", "related_item"=>"There is a similar photograph of Plath in the same folder.", "item_location"=>"Series 7 (Photographs), Box 177, Folder 56", "generation"=>"", "dimension_height"=>"0", "disposition"=>"retained", "publication_date"=>"10-06-", "dimension_width"=>"0", "dimension_height_unit"=>"inches", "source_date"=>"1959-08-00", "housing_id"=>"13"}, "id"=>"51", "controller"=>"digital_masters"}
+  [4;36;1mSrcStillImage Load (0.002261)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.id = '51') LIMIT 1[0m
+  [4;35;1mSQL (0.003352)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mContent Load (0.002072)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;35;1mSQL (0.000269)[0m   [0mBEGIN[0m
+  [4;36;1mSrcStillImage Update (0.000788)[0m   [0;1mUPDATE src_still_images SET "source_date" = '1959-08-00', "dimension_height" = 0.0, "generation" = NULL, "disposition" = 'retained', "housing_id" = 0, "item_location" = 'Series 7 (Photographs), Box 177, Folder 56', "form_id" = 6, "dimension_width_unit" = 'inches', "dimension_height_unit" = 'inches', "dimension_width" = 0.0, "source_note" = NULL, "related_item" = 'There is a similar photograph of Plath in the same folder.', "conservation_history" = NULL, "publication_date" = NULL, "content_id" = 9, "dimension_note" = NULL WHERE id = 51[0m
+  [4;35;1mSQL (0.052266)[0m   [0mCOMMIT[0m
+  [4;36;1mSQL (0.003082)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSrcStillImage Load (0.060569)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.06682)
+Rendered digital_masters/_src_still_image_reload (0.06726)
+Completed in 0.14041 (7 reqs/sec) | Rendering: 0.00403 (2%) | DB: 0.12466 (88%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/51]
+
+
+Processing DigitalMastersController#addSrcStillImage (for 170.140.209.182 at 2006-10-09 14:07:09) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"content_id"=>"9", "action"=>"addSrcStillImage", "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.003560)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mContent Load (0.002288)[0m   [0mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+  [4;36;1mForm Load (0.004401)[0m   [0;1mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;35;1mSQL (0.001974)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mHousing Load (0.003679)[0m   [0;1mSELECT description, id FROM housings ORDER BY description [0m
+  [4;35;1mSQL (0.001579)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02721)
+Rendered digital_masters/_popup_edit (0.02907)
+Completed in 0.04375 (22 reqs/sec) | Rendering: 0.01785 (40%) | DB: 0.01748 (39%) | 200 OK [http://wilson/digital_masters/addSrcStillImage?content_id=9]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:07:20) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"78", "dimension_width_unit"=>"inches", "related_item"=>"This is a test", "item_location"=>"", "generation"=>"", "dimension_height"=>"0.0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0.0", "dimension_height_unit"=>"inches", "source_date"=>"", "housing_id"=>"13"}, "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.003374)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+
+
+ActiveRecord::RecordNotFound (Couldn't find Content without an ID):
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:939:in `find_from_ids'
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:382:in `find'
+    .//app/controllers/digital_masters_controller.rb:174:in `saveSrcStillImage'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:941:in `perform_action_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:368:in `perform_action_without_benchmark'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/1.8/benchmark.rb:293:in `measure'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/rescue.rb:82:in `perform_action'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:408:in `process_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:377:in `process_without_session_management_support'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/session_management.rb:117:in `process'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/dispatcher.rb:38:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:115:in `handle_dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:81:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:104:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:65:in `run'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:173:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:162:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:95:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:92:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:23:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:82:in `start'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:67:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/servers/webrick.rb:59
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/server.rb:30
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    ./script/server:3
+
+
+Rendering /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/templates/rescues/layout.rhtml (500 Internal Error)
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:08:16) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"50", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002263)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;36;1mSQL (0.003214)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.004160)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.001958)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003789)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001607)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.09016)
+Rendered digital_masters/_popup_edit (0.09624)
+Completed in 0.10172 (9 reqs/sec) | Rendering: 0.08194 (80%) | DB: 0.02036 (20%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/50]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:11:34) [GET]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"50", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002677)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;36;1mSQL (0.003685)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.004817)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.002261)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003892)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001755)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.03398)
+Rendered digital_masters/_popup_edit (0.04117)
+Completed in 0.04821 (20 reqs/sec) | Rendering: 0.02531 (52%) | DB: 0.01909 (39%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/50]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:12:51) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"50", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002282)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;36;1mSQL (0.003262)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.004310)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.001975)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003563)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001536)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02646)
+Rendered digital_masters/_popup_edit (0.03240)
+Completed in 0.03792 (26 reqs/sec) | Rendering: 0.01816 (47%) | DB: 0.01693 (44%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/50]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:13:02) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"This is a ates", "form_id"=>"6", "dimension_width_unit"=>"inches", "related_item"=>"see box 177 folders 1-47 for other portraits of Hughes.", "content_id"=>"9", "item_location"=>"Series 7 (Photographs), Box 177, Folder 16?", "generation"=>"", "dimension_height"=>"0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0", "dimension_height_unit"=>"inches", "source_date"=>"1970-00-00", "housing_id"=>"13"}, "id"=>"50", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002370)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;36;1mSQL (0.003462)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mContent Load (0.002113)[0m   [0mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;36;1mSQL (0.000289)[0m   [0;1mBEGIN[0m
+  [4;35;1mSrcStillImage Update (0.004604)[0m   [0mUPDATE src_still_images SET "source_date" = '1970-00-00', "dimension_height" = 0.0, "generation" = NULL, "disposition" = 'retained', "housing_id" = 0, "item_location" = 'Series 7 (Photographs), Box 177, Folder 16?', "form_id" = 6, "dimension_width_unit" = 'inches', "dimension_height_unit" = 'inches', "dimension_width" = 0.0, "source_note" = NULL, "related_item" = 'see box 177 folders 1-47 for other portraits of Hughes.', "conservation_history" = NULL, "publication_date" = NULL, "content_id" = 9, "dimension_note" = NULL WHERE id = 50[0m
+  [4;36;1mSQL (0.043813)[0m   [0;1mCOMMIT[0m
+  [4;35;1mSQL (0.003141)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSrcStillImage Load (0.002797)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00864)
+Rendered digital_masters/_src_still_image_reload (0.00907)
+Completed in 0.07996 (12 reqs/sec) | Rendering: 0.00355 (4%) | DB: 0.06259 (78%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/50]
+
+
+Processing DigitalMastersController#editContentSubject (for 170.140.209.182 at 2006-10-09 14:13:07) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editContentSubject", "id"=>"2007", "controller"=>"digital_masters"}
+  [4;35;1mContentsSubjects Load (0.001100)[0m   [0mSELECT * FROM contents_subjects WHERE (contents_subjects.id = '2007') LIMIT 1[0m
+  [4;36;1mSQL (0.001688)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents_subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSubject Load (0.001527)[0m   [0mSELECT subject, id FROM subjects ORDER BY subject [0m
+  [4;36;1mSQL (0.001394)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'subjects'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_subject_form (0.00919)
+Rendered digital_masters/_popup_edit (0.01262)
+Completed in 0.01667 (60 reqs/sec) | Rendering: 0.00840 (50%) | DB: 0.00571 (34%) | 200 OK [http://wilson/digital_masters/editContentSubject/2007]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:13:10) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"50", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002175)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '50') LIMIT 1[0m
+  [4;36;1mSQL (0.003103)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.004188)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.001718)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003440)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001279)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02534)
+Rendered digital_masters/_popup_edit (0.03094)
+Completed in 0.03625 (27 reqs/sec) | Rendering: 0.01759 (48%) | DB: 0.01590 (43%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/50]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:13:14) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"51", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002274)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '51') LIMIT 1[0m
+  [4;36;1mSQL (0.003285)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.005455)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.002629)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003751)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001578)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.08622)
+Rendered digital_masters/_popup_edit (0.09227)
+Completed in 0.09824 (10 reqs/sec) | Rendering: 0.07598 (77%) | DB: 0.01897 (19%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/51]
+
+
+Processing DigitalMastersController#addSrcStillImage (for 170.140.209.182 at 2006-10-09 14:13:19) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"content_id"=>"9", "action"=>"addSrcStillImage", "controller"=>"digital_masters"}
+  [4;35;1mSQL (0.003287)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mContent Load (0.002046)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+  [4;35;1mForm Load (0.004292)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.001749)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003449)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001264)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02574)
+Rendered digital_masters/_popup_edit (0.02759)
+Completed in 0.04140 (24 reqs/sec) | Rendering: 0.01724 (41%) | DB: 0.01609 (38%) | 200 OK [http://wilson/digital_masters/addSrcStillImage?content_id=9]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:13:27) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"78", "dimension_width_unit"=>"inches", "related_item"=>"this is a test", "content_id"=>"9", "item_location"=>"", "generation"=>"", "dimension_height"=>"0.0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0.0", "dimension_height_unit"=>"inches", "source_date"=>"", "housing_id"=>"13"}, "controller"=>"digital_masters"}
+  [4;35;1mSQL (0.003257)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+
+
+ActiveRecord::RecordNotFound (Couldn't find Content without an ID):
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:939:in `find_from_ids'
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:382:in `find'
+    .//app/controllers/digital_masters_controller.rb:174:in `saveSrcStillImage'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:941:in `perform_action_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:368:in `perform_action_without_benchmark'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/1.8/benchmark.rb:293:in `measure'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/rescue.rb:82:in `perform_action'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:408:in `process_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:377:in `process_without_session_management_support'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/session_management.rb:117:in `process'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/dispatcher.rb:38:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:115:in `handle_dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:81:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:104:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:65:in `run'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:173:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:162:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:95:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:92:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:23:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:82:in `start'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:67:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/servers/webrick.rb:59
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/server.rb:30
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    ./script/server:3
+
+
+Rendering /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/templates/rescues/layout.rhtml (500 Internal Error)
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:13:49) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"78", "dimension_width_unit"=>"inches", "related_item"=>"this is a test", "content_id"=>"9", "item_location"=>"", "generation"=>"", "dimension_height"=>"0.0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0.0", "dimension_height_unit"=>"inches", "source_date"=>"", "housing_id"=>"13"}, "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.003423)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+
+
+ActiveRecord::RecordNotFound (Couldn't find Content without an ID):
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:939:in `find_from_ids'
+    /usr/local/lib/ruby/gems/1.8/gems/activerecord-1.14.4/lib/active_record/base.rb:382:in `find'
+    .//app/controllers/digital_masters_controller.rb:174:in `saveSrcStillImage'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:941:in `perform_action_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:368:in `perform_action_without_benchmark'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/1.8/benchmark.rb:293:in `measure'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/benchmarking.rb:69:in `perform_action_without_rescue'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/rescue.rb:82:in `perform_action'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/base.rb:408:in `process_without_filters'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/filters.rb:377:in `process_without_session_management_support'
+    /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/session_management.rb:117:in `process'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/dispatcher.rb:38:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:115:in `handle_dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:81:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:104:in `service'
+    /usr/local/lib/ruby/1.8/webrick/httpserver.rb:65:in `run'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:173:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:162:in `start_thread'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:95:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:92:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:23:in `start'
+    /usr/local/lib/ruby/1.8/webrick/server.rb:82:in `start'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/webrick_server.rb:67:in `dispatch'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/servers/webrick.rb:59
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/rails-1.1.6/lib/commands/server.rb:30
+    /usr/local/lib/ruby/site_ruby/1.8/rubygems/custom_require.rb:27:in `require'
+    /usr/local/lib/ruby/gems/1.8/gems/activesupport-1.3.1/lib/active_support/dependencies.rb:147:in `require'
+    ./script/server:3
+
+
+Rendering /usr/local/lib/ruby/gems/1.8/gems/actionpack-1.12.5/lib/action_controller/templates/rescues/layout.rhtml (500 Internal Error)
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:14:32) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"78", "dimension_width_unit"=>"inches", "related_item"=>"this is a test", "content_id"=>"9", "item_location"=>"", "generation"=>"", "dimension_height"=>"0.0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0.0", "dimension_height_unit"=>"inches", "source_date"=>"", "housing_id"=>"13"}, "controller"=>"digital_masters"}
+  [4;35;1mSQL (0.003271)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mContent Load (0.002020)[0m   [0;1mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+  [4;35;1mSQL (0.000283)[0m   [0mBEGIN[0m
+  [4;36;1mPK and serial sequence (0.002118)[0m   [0;1m SELECT attr.attname, name.nspname, seq.relname
+ FROM pg_class seq,
+ pg_attribute attr,
+ pg_depend dep,
+ pg_namespace name,
+ pg_constraint cons
+ WHERE seq.oid = dep.objid
+ AND seq.relnamespace = name.oid
+ AND seq.relkind = 'S'
+ AND attr.attrelid = dep.refobjid
+ AND attr.attnum = dep.refobjsubid
+ AND attr.attrelid = cons.conrelid
+ AND attr.attnum = cons.conkey[1]
+ AND cons.contype = 'p'
+ AND dep.refobjid = 'src_still_images'::regclass
+[0m
+  [4;35;1mSrcStillImage Create (0.012326)[0m   [0mINSERT INTO src_still_images ("conservation_history", "dimension_note", "dimension_width_unit", "form_id", "related_item", "source_note", "content_id", "item_location", "generation", "dimension_height", "disposition", "publication_date", "dimension_width", "dimension_height_unit", "housing_id", "source_date") VALUES(NULL, NULL, 'inches', 0, NULL, NULL, 0, NULL, NULL, 0.0, 'retained', NULL, 0.0, 'inches', 0, NULL)[0m
+  [4;36;1mSQL (0.000606)[0m   [0;1mSELECT currval('public.src_still_images_id_seq')[0m
+  [4;35;1mSQL (0.041248)[0m   [0mCOMMIT[0m
+  [4;36;1mSQL (0.003162)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mSrcStillImage Load (0.002901)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00879)
+Rendered digital_masters/_src_still_image_reload (0.00920)
+Completed in 0.08340 (11 reqs/sec) | Rendering: 0.00356 (4%) | DB: 0.07462 (89%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/]
+
+
+Processing DigitalMastersController#addSrcStillImage (for 170.140.209.182 at 2006-10-09 14:15:53) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"content_id"=>"9", "action"=>"addSrcStillImage", "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.003333)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mContent Load (0.002182)[0m   [0mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+  [4;36;1mForm Load (0.004341)[0m   [0;1mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;35;1mSQL (0.001905)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mHousing Load (0.003561)[0m   [0;1mSELECT description, id FROM housings ORDER BY description [0m
+  [4;35;1mSQL (0.001493)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02615)
+Rendered digital_masters/_popup_edit (0.02793)
+Completed in 0.04146 (24 reqs/sec) | Rendering: 0.01707 (41%) | DB: 0.01681 (40%) | 200 OK [http://wilson/digital_masters/addSrcStillImage?content_id=9]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:16:02) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"78", "dimension_width_unit"=>"inches", "related_item"=>"This is a test", "content_id"=>"9", "item_location"=>"", "generation"=>"", "dimension_height"=>"0.0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0.0", "dimension_height_unit"=>"inches", "source_date"=>"", "housing_id"=>"13"}, "controller"=>"digital_masters"}
+  [4;36;1mSQL (0.003500)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mContent Load (0.002210)[0m   [0mSELECT * FROM contents WHERE (contents.id = '9') LIMIT 1[0m
+  [4;36;1mSQL (0.000313)[0m   [0;1mBEGIN[0m
+  [4;35;1mPK and serial sequence (0.002355)[0m   [0m SELECT attr.attname, name.nspname, seq.relname
+ FROM pg_class seq,
+ pg_attribute attr,
+ pg_depend dep,
+ pg_namespace name,
+ pg_constraint cons
+ WHERE seq.oid = dep.objid
+ AND seq.relnamespace = name.oid
+ AND seq.relkind = 'S'
+ AND attr.attrelid = dep.refobjid
+ AND attr.attnum = dep.refobjsubid
+ AND attr.attrelid = cons.conrelid
+ AND attr.attnum = cons.conkey[1]
+ AND cons.contype = 'p'
+ AND dep.refobjid = 'src_still_images'::regclass
+[0m
+  [4;36;1mSrcStillImage Create (0.000566)[0m   [0;1mINSERT INTO src_still_images ("conservation_history", "dimension_note", "dimension_width_unit", "form_id", "related_item", "source_note", "content_id", "item_location", "generation", "dimension_height", "disposition", "publication_date", "dimension_width", "dimension_height_unit", "housing_id", "source_date") VALUES('', '', 'inches', 78, 'This is a test', '', 9, '', '', 0.0, 'retained', '', 0.0, 'inches', 13, '')[0m
+  [4;35;1mSQL (0.000516)[0m   [0mSELECT currval('public.src_still_images_id_seq')[0m
+  [4;36;1mSQL (0.043473)[0m   [0;1mCOMMIT[0m
+  [4;35;1mSQL (0.003176)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSrcStillImage Load (0.003250)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00951)
+Rendered digital_masters/_src_still_image_reload (0.00997)
+Completed in 0.07634 (13 reqs/sec) | Rendering: 0.00399 (5%) | DB: 0.05936 (77%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:16:15) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"2035", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002268)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '2035') LIMIT 1[0m
+  [4;36;1mSQL (0.003269)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.004400)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.001954)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003597)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001526)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02675)
+Rendered digital_masters/_popup_edit (0.03270)
+Completed in 0.03825 (26 reqs/sec) | Rendering: 0.01837 (48%) | DB: 0.01701 (44%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/2035]
+
+
+Processing DigitalMastersController#saveSrcStillImage (for 170.140.209.182 at 2006-10-09 14:16:23) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"commit"=>"Save", "action"=>"saveSrcStillImage", "srcStillImage"=>{"conservation_history"=>"", "source_note"=>"", "dimension_note"=>"", "form_id"=>"78", "dimension_width_unit"=>"inches", "related_item"=>"This is a test", "content_id"=>"9", "item_location"=>"", "generation"=>"", "dimension_height"=>"12.0", "disposition"=>"retained", "publication_date"=>"", "dimension_width"=>"0", "dimension_height_unit"=>"inches", "source_date"=>"", "housing_id"=>"13"}, "id"=>"2035", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002265)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '2035') LIMIT 1[0m
+  [4;36;1mSQL (0.003290)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mContent Load (0.002023)[0m   [0mSELECT * FROM contents WHERE (contents.id = 9) LIMIT 1[0m
+  [4;36;1mSQL (0.000288)[0m   [0;1mBEGIN[0m
+  [4;35;1mSrcStillImage Update (0.000681)[0m   [0mUPDATE src_still_images SET "source_date" = '', "dimension_height" = 12.0, "generation" = '', "disposition" = 'retained', "housing_id" = 13, "item_location" = '', "form_id" = 78, "dimension_width_unit" = 'inches', "dimension_height_unit" = 'inches', "dimension_width" = 0.0, "source_note" = '', "related_item" = 'This is a test', "conservation_history" = '', "publication_date" = '', "content_id" = 9, "dimension_note" = '' WHERE id = 2035[0m
+  [4;36;1mSQL (0.040691)[0m   [0;1mCOMMIT[0m
+  [4;35;1mSQL (0.003109)[0m   [0m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'contents'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;36;1mSrcStillImage Load (0.003145)[0m   [0;1mSELECT * FROM src_still_images WHERE (src_still_images.content_id = 9) [0m
+Rendered digital_masters/_src_still_image_show (0.00910)
+Rendered digital_masters/_src_still_image_reload (0.00953)
+Completed in 0.07098 (14 reqs/sec) | Rendering: 0.00368 (5%) | DB: 0.05549 (78%) | 200 OK [http://wilson/digital_masters/saveSrcStillImage/2035]
+
+
+Processing DigitalMastersController#editSrcStillImage (for 170.140.209.182 at 2006-10-09 14:16:24) [POST]
+  Session ID: 8a964398750cc844ae2e67cb93438ac3
+  Parameters: {"action"=>"editSrcStillImage", "id"=>"2035", "controller"=>"digital_masters"}
+  [4;35;1mSrcStillImage Load (0.002413)[0m   [0mSELECT * FROM src_still_images WHERE (src_still_images.id = '2035') LIMIT 1[0m
+  [4;36;1mSQL (0.003422)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'src_still_images'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mForm Load (0.004489)[0m   [0mSELECT form, id FROM forms WHERE (forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%') ORDER BY form [0m
+  [4;36;1mSQL (0.002011)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'forms'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+  [4;35;1mHousing Load (0.003677)[0m   [0mSELECT description, id FROM housings ORDER BY description [0m
+  [4;36;1mSQL (0.001553)[0m   [0;1m SELECT a.attname, format_type(a.atttypid, a.atttypmod), d.adsrc, a.attnotnull
+ FROM pg_attribute a LEFT JOIN pg_attrdef d
+ ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+ WHERE a.attrelid = 'housings'::regclass
+ AND a.attnum > 0 AND NOT a.attisdropped
+ ORDER BY a.attnum
+[0m
+Rendered digital_masters/_still_img_subform (0.02764)
+Rendered digital_masters/_popup_edit (0.03400)
+Completed in 0.04029 (24 reqs/sec) | Rendering: 0.01930 (47%) | DB: 0.01757 (43%) | 200 OK [http://wilson/digital_masters/editSrcStillImage/2035]
