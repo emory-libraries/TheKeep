@@ -1,8 +1,27 @@
-<H1>Search Screen</H1>
+<H1>Search</H1>
 
-<%= start_form_tag :action => 'searchAction', :method => 'get' %>
+<%= start_form_tag :action => 'searchAction' %>
+<table>
+<tr>
+ <td>Title:</td>
+ <td> <%= text_field_tag("title") %> </td>
+</tr>
+<tr>
+ <td>Name:</td>
+ <td> <%=	select ('name', 'id', [["Anyone", nil]] + Name::getNames()) %> </td>
+ <td> Role: </td> 
+ <td> <%=	select ('role', 'id', [["Any Role", nil]] + Role::getRoles()) %></td>
+</tr>
+<tr>
+ <td>Image note:</td>
+ <td> <%= text_field_tag("image_note") %> </td>
+</tr>
+<tr>
+ <td>Source Image Format:</td>
+ <td> <%=   select ('image', "format", [["Any Format", nil]] + Form::getForms("src_still_img")) %> </td> 
+</tr>
 
-Title: <%= text_field_tag("title") %>
-
+</table>
 <%= submit_tag 'Search' %>
+<input type="reset" value="Reset">
 <%= end_form_tag %>
