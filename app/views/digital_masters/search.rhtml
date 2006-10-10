@@ -1,0 +1,8 @@
+<H1>Search Screen</H1>
+
+<%= start_form_tag :action => 'searchAction', :method => 'get' %>
+
+Title: <%= text_field_tag("title") %>
+
+<%= submit_tag 'Search' %>
+<%= end_form_tag %>

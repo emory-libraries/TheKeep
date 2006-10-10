@@ -1,8 +1,14 @@
 class DigitalMastersController < ApplicationController
   def index
+
+    render :action => 'search'
+  end 
+  
+  def searchAction
     @content_pages = Paginator.new self, Content.count, 25, @params['page']
-    @contents = Content.find_by_image_note('Dawson Grant')
+    #@contents = Content.find_by_image_note('Dawson Grant')
     
+    @contents = Content.find_by_image_note(params[:title])
     render :action => 'list'
   end
 
