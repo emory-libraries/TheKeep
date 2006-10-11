@@ -53,7 +53,13 @@ class DigitalMastersController < ApplicationController
     @content.resource_type_id = params[:content][:resource_type_id]
     @content.other_id = params[:content][:other_id]
     @content.date_modified = Time::now
-    @content.collection_number = params[:content][:collection_number]
+    
+    unless (params[:content][:collection_number] == "No Collection")
+      @content.collection_number = params[:content][:collection_number]
+    else
+      @content.collection_number = nil
+    end
+    
     @content.title = params[:content][:title]
     @content.subtitle = params[:content][:subtitle]
     @content.resource_type_id = params[:content][:resource_type_id]
@@ -249,14 +255,20 @@ class DigitalMastersController < ApplicationController
 
   def updateMainEntry
     #return main_entry when Collection Number is changed
-    
-    dd = DescriptionData.find(params[:collection_number])    
-    render_text(dd.main_entry)
+    unless (params[:collection_number] == "No Collection")
+      dd = DescriptionData.find(params[:collection_number])    
+      render_text(dd.main_entry)
+    else
+      render_text("")
+    end
   end
   def updateTitleStatement
     #return TitleStatement when Collection Number is changed
-    
-    dd = DescriptionData.find(params[:collection_number])    
-    render_text(dd.title_statement)
+    unless (params[:collection_number] == "No Collection")    
+      dd = DescriptionData.find(params[:collection_number])    
+      render_text(dd.title_statement)
+    else
+      render_text("")
+    end      
   end    
 end
