@@ -35,7 +35,7 @@ class Content < ActiveRecord::Base
         conditions += "and cn.role_id = #{options[:role][:id]}"  
       end 
    end
-   if (options[:resource] != nil and options[:resource][:type])
+   if (options[:resource] != nil and options[:resource][:type] != '')
      conditions += "and c.resource_type_id = #{options[:resource][:type]}"
    end  
    if (options[:image_note] != '')
