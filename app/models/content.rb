@@ -35,6 +35,9 @@ class Content < ActiveRecord::Base
         conditions += "and cn.role_id = #{options[:role][:id]}"  
       end 
    end
+   if (options[:resource] != nil and options[:resource][:type])
+     conditions += "and c.resource_type_id = #{options[:resource][:type]}"
+   end  
    if (options[:image_note] != '')
      joins += " LEFT JOIN tech_images AS ti ON c.id = ti.content_id "
      conditions += "and ti.image_note LIKE '%#{options[:image_note]}%'"

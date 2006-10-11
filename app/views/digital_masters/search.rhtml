@@ -13,6 +13,10 @@
  <td> <%=	select ('role', 'id', [["Any Role", nil]] + Role::getRoles()) %></td>
 </tr>
 <tr>
+ <td>Resource Type:</td>
+ <td> <%=   select ('resource', "type", [["Any Type", nil]] + ResourceType::getResourceTypes()) %> </td> 
+</tr>
+<tr>
  <td>Image note:</td>
  <td> <%= text_field_tag("image_note") %> </td>
 </tr>
