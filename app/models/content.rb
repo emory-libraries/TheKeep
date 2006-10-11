@@ -27,7 +27,7 @@ class Content < ActiveRecord::Base
    if (options[:title] != '')
      conditions += "and c.title LIKE '%#{options[:title]}%'"
    end  
-   unless (options[:name][:id] == '')
+   if (options[:name] != nil and options[:name][:id] != '')
       joins += " LEFT JOIN contents_names as cn ON c.id = cn.content_id"
       conditions += "and cn.name_id = #{options[:name][:id]}"
       # role is only used in tandem with a name
@@ -39,7 +39,7 @@ class Content < ActiveRecord::Base
      joins += " LEFT JOIN tech_images AS ti ON c.id = ti.content_id "
      conditions += "and ti.image_note LIKE '%#{options[:image_note]}%'"
    end  
-   unless (options[:image][:format] == '')
+   if ( options[:image] != nil and options[:image][:format] != '')
      joins += " LEFT JOIN src_still_images AS ssi ON c.id = ssi.content_id "
      conditions += " and ssi.form_id = #{options[:image][:format]}"
    end
