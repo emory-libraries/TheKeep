@@ -2,7 +2,7 @@
 
 <tr>
 	<td><label for="content_completed_by">Completed by</label></td>
-	<td><%= select ('content', 'completed_by', [[ "Not Complete", "0"]] + StaffName::getStaff ) %></td>
+	<td><%= select ('content', 'completed_by', [[ "Not Complete", nil]] + StaffName::getStaff ) %></td>
 	<td><label for="content_completed_date">Completed Date</label></td>
 	<td colspan="3">
 		<div id='completed_date'>&nbsp;</div>
@@ -12,7 +12,7 @@
 	</td>
 </tr>
 <tr>
-	<td>Record ID/ File Name</td><td><%= @content.id %></td>
+	<td>Record ID/ File Name</td><td><%= @content.id %>&nbsp;</td>
 	
 	<td><label for="content_record_id_type">Type</label></td>
 	<td>
@@ -52,17 +52,17 @@
 
 <tr>
 	<td>Main Entry</td>
-	<td colspan="3"><div id="main_entry"><%=	@content.DescriptionData.main_entry %></div></td>
+	<td colspan="3"><div id="main_entry"><%= @content.DescriptionData.main_entry %></div></td>
 </tr>
 
 <tr>
 	<td>Title Statement</td>
-	<td colspan="3"><div id="title_statement"><%=	@content.DescriptionData.title_statement %></div></td>
+	<td colspan="3"><div id="title_statement"><%= @content.DescriptionData.title_statement %></div></td>
 </tr>
 
 <tr>
 	<td>Record Creation Date</td>
-	<td colspan="3"><div id="date_created"><%= @content.date_created %></div></td>
+	<td colspan="3"><div id="date_created"><%= @content.date_created %>&nbsp;</div></td>
 	
 	<td rowspan="3"><label for="content_toc">Table of Contents</label></td>
 	<td rowspan="3"><%= text_area 'content', 'toc', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>
@@ -70,7 +70,7 @@
 
 <tr>
 	<td>Date Last Modified</td>
-	<td colspan="3"><div id="date_modified"><%= @content.date_modified %></div></td>
+	<td colspan="3"><div id="date_modified"><%= @content.date_modified %>&nbsp;</div></td>
 </tr>
 
 <tr>
@@ -79,8 +79,22 @@
 </tr>
 
 <tr>
-	<td>Language</td>
-	<td colspan="3"><%= select('content', 'languages',  Language::getLanguages) %></td>
+	<td>Languages</td>
+	<td colspan="3">
+		<%= select('language', 'languages0', Language::getLanguages) %> <i>primary</i><br />
+		<%= select('language', 'languages1', [["None", nil]] + Language::getLanguages) %> <i>secondary</i>		
+		<script language="JavaScript">
+			function setSelected(s, v)
+			{
+				for (var i = 0; i < s.options.length; i++)
+				{
+					if (s.options[i].value == v) {	s.selectedIndex = i; }
+				}
+			}
+			setSelected(document.getElementById("language_languages0"), '<%= @content.languages[0].language_id %>');
+			setSelected(document.getElementById("language_languages1"), '<%= @content.languages[1].language_id %>');
+		</script>
+	</td>
 	<td rowspan="3">Content Notes</td>
 	<td rowspan="3"><%= text_area 'content', 'content_notes', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>	
 </tr>

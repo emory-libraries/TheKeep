@@ -36,6 +36,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_conditions" TO digmast_user;
 CREATE TABLE "contents_languages" (content_id integer, language_id integer);
 INSERT INTO contents_languages (SELECT "ID", "Language1" FROM "Content" WHERE "Language1" IS NOT NULL);
 INSERT INTO contents_languages (SELECT "ID", "Language2" FROM "Content" WHERE "Language2" IS NOT NULL);
+
+ALTER TABLE "contents_languages" ADD COLUMN "id" serial;
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_languages" TO digmast_user;
 
 ALTER TABLE "Content" RENAME COLUMN "ID" TO "id";
@@ -53,7 +55,7 @@ ALTER TABLE "Content" RENAME COLUMN "TOC" TO "toc";
 ALTER TABLE "Content" RENAME COLUMN "ContentNotes" TO "content_notes";
 ALTER TABLE "Content" RENAME COLUMN "CompletedBy" TO "completed_by";
 ALTER TABLE "Content" RENAME COLUMN "CompletedDate" TO "completed_date";
-ALTER TABLE "Content" RENAME COLUMN "Complete" TO "complete";
+ALTER TABLE "Content" DROP COLUMN "Complete";
 ALTER TABLE "Content" RENAME TO "contents";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents" TO digmast_user;
 
@@ -371,6 +373,14 @@ UPDATE pg_class SET relname = 'src_still_images_pkey' WHERE relname = 'SourceSti
 
 ALTER TABLE src_still_images ALTER COLUMN id SET DEFAULT nextval('"src_still_images_id_seq"'::regclass);
 
+CREATE SEQUENCE 'content_id_seq';
+ALTER TABLE contents ALTER COLUMN id SET DEFAULT nextval('"content_id_seq"'::regclass);
+GRANT SELECT, INSERT, UPDATE, DELETE ON "content_id_seq" TO digmast_user;
+
+CREATE SEQUENCE 'language_id_seq';
+UPDATE pg_class SET relname = 'language_id_seq' WHERE relname = 'Language_ID_seq';
+ALTER TABLE languages ALTER COLUMN id SET DEFAULT nextval('"language_id_seq"'::regclass);
+GRANT SELECT, INSERT, UPDATE, DELETE ON "language_id_seq" TO digmast_user;
 
 CREATE VIEW description_datas AS
  	SELECT t1.main_entry, t1.title_statement, t1.mss_number, t1.description_y_n, t1.record_type, t1.msword_filename, t1.rlin_id_number, t1.xml, t1.notes, t1.id

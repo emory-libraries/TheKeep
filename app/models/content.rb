@@ -1,6 +1,7 @@
 class Content < ActiveRecord::Base
   belongs_to :DescriptionData, :foreign_key => "collection_number"
-  has_and_belongs_to_many :languages
+  #has_and_belongs_to_many :languages
+  has_many :languages, :class_name => 'ContentsLanguages'
   belongs_to :Location
   has_and_belongs_to_many :names
   belongs_to :ResourceType
@@ -51,5 +52,4 @@ class Content < ActiveRecord::Base
       :conditions => conditions)
   end
 
-  
 end

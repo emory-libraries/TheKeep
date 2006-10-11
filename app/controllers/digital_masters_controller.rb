@@ -23,29 +23,62 @@ class DigitalMastersController < ApplicationController
   end
 
   def new
-    @content = Content.new
-  end
-
-  def create
-    @content = Content.new(params[:content])
-    if @content.save
-      flash[:notice] = 'Content was successfully created.'
-      redirect_to :action => 'list'
-    else
-      render :action => 'new'
-    end
+    redirect_to :action => 'edit'
   end
  
   def edit
-    @content = Content.find(params[:id])
-    #@src_still_image = @content.src_still_image
+    unless params[:id]
+      @content = Content.new
+      @content.DescriptionData = DescriptionData.find(1)
+    else
+      @content = Content.find(params[:id])
+    end
+    
+    if @content.languages[0].nil?
+      @content.languages << ContentsLanguages.new
+    end
+    if @content.languages[1].nil?
+      @content.languages << ContentsLanguages.new
+    end    
   end
 
   def update
-    @content = Content.find(params[:id])
-    if @content.update_attributes(params[:content])
-      flash[:notice] = 'Content was successfully updated.'
-      redirect_to :action => 'show', :id => @content
+    unless params[:id]
+      @content = Content.new(params[:content])
+      @content.date_created = Time::now
+    else 
+      @content = Content.find(params[:id])
+    end
+      
+    @content.resource_type_id = params[:content][:resource_type_id]
+    @content.other_id = params[:content][:other_id]
+    @content.date_modified = Time::now
+    @content.collection_number = params[:content][:collection_number]
+    @content.title = params[:content][:title]
+    @content.subtitle = params[:content][:subtitle]
+    @content.resource_type_id = params[:content][:resource_type_id]
+    @content.location_id = params[:content][:location_id]
+    @content.abstract = params[:content][:abstract]
+    @content.toc = params[:content][:toc]
+    @content.content_notes = params[:content][:content_notes]
+
+    unless (!params[:content][:completed_by])
+      @content.completed_by = params[:content][:completed_by]
+      @content.completed_date = Time::now
+    else
+      @content.completed_by = nil
+      @content.completed_date = nil
+    end
+    
+    @content.languages[0] = Language.find(params[:language][:languages0])
+    if (params[:language][:languages1] != "")
+      @content.languages[1] = Language.find(params[:language][:languages1])
+    end
+    
+
+    if @content.save
+      flash[:notice] = 'Record saved successfully. <a href="/digital_masters/edit/' + @content.id.to_s + '">Return to record.</a>'
+      redirect_to :action => 'list'
     else
       render :action => 'edit'
     end
