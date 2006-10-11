@@ -3,11 +3,11 @@ class DescriptionData < ActiveRecord::Base
 
 
   def self.getMSSNumbers
-    @dd = find(:all, :select => 'id')
+    @dd = find(:all, :select => 'id, mss_number')
     
     mss = []    
     for d in @dd
-      mss << [d.id, d.id]
+      mss << [d.mss_number, d.id]
     end  
     
     return mss
