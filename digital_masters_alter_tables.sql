@@ -1,11 +1,9 @@
 BEGIN;
 
-/* Copy data from DigitalProvence into TechImages */
-/*
-SELECT "TechImages"."*", "DigitalProvence"."ID" as "digital_provence_id" INTO "TechImagesTmp"
+/* Copy data from DigitalProvenance into TechImages */
+SELECT "TechImages"."*", "DigitalProvence"."ID" as "digital_provenance_id" INTO "TechImagesTmp"
 FROM "TechImages" 
 LEFT JOIN "DigitalProvence" ON "DigitalProvence"."TechImageID" = "TechImages"."ID";
-*/
 
 /* Change column and tables names to work with Rails */
 ALTER TABLE "Authority" RENAME TO "authorities";
@@ -57,7 +55,7 @@ ALTER TABLE "Content" RENAME COLUMN "TOC" TO "toc";
 ALTER TABLE "Content" RENAME COLUMN "ContentNotes" TO "content_notes";
 ALTER TABLE "Content" RENAME COLUMN "CompletedBy" TO "completed_by";
 ALTER TABLE "Content" RENAME COLUMN "CompletedDate" TO "completed_date";
-ALTER TABLE "Content" DROP COLUMN "Complete";
+ALTER TABLE "Content" DROP COLUMN "Complete" CASCADE;
 ALTER TABLE "Content" RENAME TO "contents";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents" TO digmast_user;
 
@@ -125,6 +123,9 @@ ALTER TABLE "NameDetail" RENAME COLUMN "RoleTerm" TO "role_term";
 ALTER TABLE "NameDetail" ADD COLUMN "id" serial;
 ALTER TABLE "NameDetail" RENAME TO "contents_names";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_names" TO digmast_user;
+
+CREATE SEQUENCE "contents_names_id_seq";
+ALTER TABLE contents_names ALTER COLUMN id SET DEFAULT nextval('"contents_names_id_seq"'::regclass);
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_names_id_seq" TO digmast_user;
 
 ALTER TABLE "ResourceType" RENAME COLUMN "ID" TO "id";
@@ -349,7 +350,7 @@ ALTER TABLE "TechSound" RENAME COLUMN "Duration" TO "duration";
 ALTER TABLE "TechSound" RENAME COLUMN "DateCaptured" TO "date_captured";
 ALTER TABLE "TechSound" RENAME COLUMN "FileLoc" TO "file_location";
 ALTER TABLE "TechSound" RENAME COLUMN "SoundClip" TO "sound_clip";
-ALTER TABLE "TechSound" ADD COLUMN "digital_provence_id" integer;
+ALTER TABLE "TechSound" ADD COLUMN "digital_provenance_id" integer;
 ALTER TABLE "TechSound" RENAME TO "tech_sounds";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "tech_sounds" TO digmast_user;
 
@@ -360,7 +361,7 @@ DROP TABLE "TechImages" CASCADE;
 ALTER TABLE "contents" DROP COLUMN "Language1" CASCADE;
 ALTER TABLE "contents" DROP COLUMN "Language2" CASCADE;
 
-ALTER TABLE "digital_provences" DROP COLUMN "TechImageID" CASCADE;
+ALTER TABLE "digital_provenances" DROP COLUMN "TechImageID" CASCADE;
 
 UPDATE pg_class SET relname = 'contents_subjects_id' WHERE relname = 'Subjects Detail_ID';
 UPDATE pg_class SET relname = 'contents_subjects_id_seq' WHERE relname = 'Subjects Detail_ID_seq';
@@ -375,11 +376,10 @@ UPDATE pg_class SET relname = 'src_still_images_pkey' WHERE relname = 'SourceSti
 
 ALTER TABLE src_still_images ALTER COLUMN id SET DEFAULT nextval('"src_still_images_id_seq"'::regclass);
 
-CREATE SEQUENCE 'content_id_seq';
+CREATE SEQUENCE "content_id_seq";
 ALTER TABLE contents ALTER COLUMN id SET DEFAULT nextval('"content_id_seq"'::regclass);
 GRANT SELECT, INSERT, UPDATE, DELETE ON "content_id_seq" TO digmast_user;
 
-CREATE SEQUENCE 'language_id_seq';
 UPDATE pg_class SET relname = 'language_id_seq' WHERE relname = 'Language_ID_seq';
 ALTER TABLE languages ALTER COLUMN id SET DEFAULT nextval('"language_id_seq"'::regclass);
 GRANT SELECT, INSERT, UPDATE, DELETE ON "language_id_seq" TO digmast_user;
