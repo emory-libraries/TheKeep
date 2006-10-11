@@ -5,8 +5,9 @@ class DigitalMastersController < ApplicationController
   end 
   
   def searchAction
-    @content_pages = Paginator.new self, Content.count, 25, @params['page']
     @contents = Content.search(@params)
+    #@content_pages = Paginator.new self, @contents.nitems, 25, @params['page'] 
+          
     render :action => 'list'
   end
 
@@ -32,14 +33,7 @@ class DigitalMastersController < ApplicationController
       @content.DescriptionData = DescriptionData.find(1)
     else
       @content = Content.find(params[:id])
-    end
-    
-    if @content.languages[0].nil?
-      @content.languages << ContentsLanguages.new
-    end
-    if @content.languages[1].nil?
-      @content.languages << ContentsLanguages.new
-    end    
+    end  
   end
 
   def update
@@ -75,13 +69,15 @@ class DigitalMastersController < ApplicationController
       @content.completed_by = nil
       @content.completed_date = nil
     end
-    
-    @content.languages[0] = Language.find(params[:language][:languages0])
-    if (params[:language][:languages1] != "")
-      @content.languages[1] = Language.find(params[:language][:languages1])
+
+    @content.languages.clear
+    unless (params[:language][:languages0] == "")
+      @content.languages << Language.find(params[:language][:languages0])    
+    end
+    unless (params[:language][:languages1] == "")
+      @content.languages << Language.find(params[:language][:languages1])    
     end
     
-
     if @content.save
       flash[:notice] = 'Record saved successfully. <a href="/digital_masters/edit/' + @content.id.to_s + '">Return to record.</a>'
       redirect_to :action => 'list'
@@ -94,6 +90,8 @@ class DigitalMastersController < ApplicationController
     Content.find(params[:id]).destroy
     redirect_to :action => 'list'
   end
+  
+  
   
   
 #############################################################################

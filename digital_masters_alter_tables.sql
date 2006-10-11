@@ -38,6 +38,8 @@ INSERT INTO contents_languages (SELECT "ID", "Language1" FROM "Content" WHERE "L
 INSERT INTO contents_languages (SELECT "ID", "Language2" FROM "Content" WHERE "Language2" IS NOT NULL);
 
 ALTER TABLE "contents_languages" ADD COLUMN "id" serial;
+ALTER TABLE "contents_languages" ALTER COLUMN content_id SET NOT NULL;
+ALTER TABLE "contents_languages" ALTER COLUMN language_id SET NOT NULL;
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_languages" TO digmast_user;
 
 ALTER TABLE "Content" RENAME COLUMN "ID" TO "id";
@@ -388,4 +390,5 @@ CREATE VIEW description_datas AS
 
 GRANT SELECT ON "description_datas" TO digmast_user;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_languages_id_seq" TO digmast_user;
 COMMIT;

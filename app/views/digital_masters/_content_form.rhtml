@@ -91,8 +91,8 @@
 					if (s.options[i].value == v) {	s.selectedIndex = i; }
 				}
 			}
-			setSelected(document.getElementById("language_languages0"), '<%= @content.languages[0].language_id %>');
-			setSelected(document.getElementById("language_languages1"), '<%= @content.languages[1].language_id %>');
+			setSelected(document.getElementById("language_languages0"), '<% unless (@content.languages[0].nil?) %><%= @content.languages[0].language_id %><% end %>');
+			setSelected(document.getElementById("language_languages1"), '<% unless (@content.languages[1].nil?) %><%= @content.languages[1].language_id %><% end %>');
 		</script>
 	</td>
 	<td rowspan="3">Content Notes</td>
