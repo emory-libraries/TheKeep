@@ -23,21 +23,21 @@
 	</td>
 	
 	<td><label for="content_title">Title</label></td>
-	<td><%= text_field 'content', 'title', 'size' => 75 %></td>
+	<td><%= text_field 'content', 'title', 'size' => 75, 'MAXLENGTH' => 255 %></td>
 <tr>
 
 <tr>
 	<td><label for="other_id">Other ID</label></td>
-	<td colspan="3"><%= text_field 'content', 'other_id', 'size' => 75 %></td>
+	<td colspan="3"><%= text_field 'content', 'other_id', 'size' => 75, 'MAXLENGTH' => 255 %></td>
 	
 	<td><label for="content_subtitle">Subtitle</label></td>
-	<td><%= text_field 'content', 'subtitle', 'size' => 75 %></td>		
+	<td><%= text_field 'content', 'subtitle', 'size' => 75, 'MAXLENGTH' => 255 %></td>		
 </tr>
 
 <tr>
 	<td><label for="content_collection_number">Collection Number</label></td>
 	<td colspan="3">
-		<%= select ('content', 'collection_number', DescriptionData::getMSSNumbers) %>
+		<%= select ('content', 'collection_number', [["No Collection", nil]] + DescriptionData::getMSSNumbers) %>
 		<%= observe_field(:content_collection_number, :on => 'changed', :with => "collection_number",
 			:update => :main_entry, :url => { :action => :updateMainEntry} ) 
 		%>
@@ -52,12 +52,12 @@
 
 <tr>
 	<td>Main Entry</td>
-	<td colspan="3"><div id="main_entry"><%= @content.DescriptionData.main_entry %></div></td>
+	<td colspan="3"><div id="main_entry"><% unless (@content.DescriptionData.nil?) %><%= @content.DescriptionData.main_entry %><% end %></div></td>
 </tr>
 
 <tr>
 	<td>Title Statement</td>
-	<td colspan="3"><div id="title_statement"><%= @content.DescriptionData.title_statement %></div></td>
+	<td colspan="3"><div id="title_statement"><% unless (@content.DescriptionData.nil?) %><%= @content.DescriptionData.title_statement %><% end %></div></td>
 </tr>
 
 <tr>
