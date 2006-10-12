@@ -1,20 +1,32 @@
 <H1>Search</H1>
 
+<p>Note: Search is case-sensitive.</br></p>
+
 <%= start_form_tag :action => 'searchAction' %>
 <table>
+<tr>
+	<td><label for="content_collection_number">Collection Number</label></td>
+	<td>
+	 <%= text_field_tag("mss_number") %>
+<!--		<%= select ('content', 'collection_number', [["Any Collection", nil]] + DescriptionData::getMSSNumbers) %> -->
+	</td>
+<tr>
+ <td>Record ID/Filename:</td>
+ <td> <%= text_field_tag("id") %> </td>
+</tr>
 <tr>
  <td>Title:</td>
  <td> <%= text_field_tag("title") %> </td>
 </tr>
 <tr>
  <td>Name:</td>
- <td> <%=	select ('name', 'id', [["Anyone", nil]] + Name::getNames()) %> </td>
+ <td> <%=	select('name', 'id', [["Anyone", nil]] + Name::getNames()) %> </td>
  <td> Role: </td> 
- <td> <%=	select ('role', 'id', [["Any Role", nil]] + Role::getRoles()) %></td>
+ <td> <%=	select('role', 'id', [["Any Role", nil]] + Role::getRoles()) %></td>
 </tr>
 <tr>
  <td>Resource Type:</td>
- <td> <%=   select ('resource', "type", [["Any Type", nil]] + ResourceType::getResourceTypes()) %> </td> 
+ <td> <%=   select('resource', "type", [["Any Type", nil]] + ResourceType::getResourceTypes()) %> </td> 
 </tr>
 <tr>
  <td>Image note:</td>
@@ -22,7 +34,7 @@
 </tr>
 <tr>
  <td>Source Image Format:</td>
- <td> <%=   select ('image', "format", [["Any Format", nil]] + Form::getForms("src_still_img")) %> </td> 
+ <td> <%=   select('image', "format", [["Any Format", nil]] + Form::getForms("src_still_img")) %> </td> 
 </tr>
 
 </table>
@@ -32,5 +44,12 @@
 
 <p> <%= link_to 'Create new record', :action => 'new' %> </p>
 
+<p> <%= link_to 'List all records', :action => 'list' %> </p>
+
+<hr/>
+
 <p> <%= link_to 'Dawson Grant records', {:action => 'searchAction', :image_note => 'Dawson Grant'} %> </p>
 
+<!-- 
+<p> <%= link_to 'Dawson Grant records with no subject', {:action => 'searchAction', :image_note => 'Dawson Grant', :filter => "no_subject"} %> </p>
+-->

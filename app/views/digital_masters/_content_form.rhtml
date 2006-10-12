@@ -81,7 +81,7 @@
 <tr>
 	<td>Languages</td>
 	<td colspan="3">
-		<%= select('language', 'languages0', Language::getLanguages) %> <i>primary</i><br />
+		<%= select('language', 'languages0', [["None", nil]] + Language::getLanguages) %> <i>primary</i><br />
 		<%= select('language', 'languages1', [["None", nil]] + Language::getLanguages) %> <i>secondary</i>		
 		<script language="JavaScript">
 			function setSelected(s, v)

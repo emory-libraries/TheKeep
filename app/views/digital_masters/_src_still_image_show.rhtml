@@ -1,4 +1,11 @@
 <%= link_to_remote 'Add Image', :complete => 'eval(request.responseText)', :url => {:action => 'addSrcStillImage', :content_id => @content.id} %><br />
 <% for image in @content.src_still_images %>
-	<%= link_to_remote 'Edit Image', :complete => 'eval(request.responseText)', :url => {:action => 'editSrcStillImage', :id => image.id} %><br />
+	<%= link_to_remote 'Edit Image', :complete => 'eval(request.responseText)', :url => {:action => 'editSrcStillImage', :id => image.id} %>
+	<%= image.dimension_height %>x<%= image.dimension_width %>
+	<%= image.item_location %> 
+	<% if image.source_note 
+	   (image.source_note)
+	   end	%>
+	
+	<br />
 <% end %>	

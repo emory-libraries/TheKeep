@@ -17,7 +17,10 @@ class Content < ActiveRecord::Base
   def self.search(options)  
     conditions = "1=1 "
     joins = "AS c "
-   if (options[:title] != '')
+   if (not(options[:id].nil?) and options[:id] != '')
+     conditions += "and c.id = #{options[:id]}"
+   end  
+   if (not(options[:title].nil?) and options[:title] != '')
      conditions += "and c.title LIKE '%#{options[:title]}%'"
    end  
    if (options[:name] != nil and options[:name][:id] != '')
@@ -40,6 +43,10 @@ class Content < ActiveRecord::Base
      conditions += " and ssi.form_id = #{options[:image][:format]}"
    end
  
+ # fixme - query is not working correctly
+#   if (options[:filter] == "no_subject")
+#     conditions += " and c.id not in (select distinct content_id from contents_subjects)";
+#   end
       
     find(:all,
 #      :select     => 'c.id, c.record_id_type, c.other_id, c.date_created, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date',

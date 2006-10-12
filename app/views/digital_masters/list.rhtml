@@ -16,7 +16,7 @@
   
 <% for content in @contents %>
   <tr>
-  	<td align="center"><%= content.collection_number %></td>
+  	<td align="center"><%= content.DescriptionData.mss_number if (content.DescriptionData)  %></td>
   	<td align="center"><%= content.title %></td>
   	<td align="center"><%= content.content_notes %></td>
   
@@ -28,8 +28,8 @@
 </table>
 
 
-<%#= link_to 'Previous page', { :page => @content_pages.current.previous } if @content_pages.current.previous %>
-<%#= link_to 'Next page', { :page => @content_pages.current.next } if @content_pages.current.next %> 
+<%= link_to 'Previous page', { :page => @content_pages.current.previous } if @content_pages and @content_pages.current.previous %>
+<%= link_to 'Next page', { :page => @content_pages.current.next } if @content_pages and @content_pages.current.next %> 
 <br />
 
 <%= link_to 'New content', :action => 'new' %><br/>

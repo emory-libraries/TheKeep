@@ -6,8 +6,7 @@ class DigitalMastersController < ApplicationController
   
   def searchAction
     @contents = Content.search(@params)
-    #@content_pages = Paginator.new self, @contents.nitems, 25, @params['page'] 
-          
+#    @content_pages = Paginator.new self, @contents.nitems, 25, @params['page']          
     render :action => 'list'
   end
 
@@ -16,7 +15,7 @@ class DigitalMastersController < ApplicationController
          :redirect_to => { :action => :list }
 
   def list
-    @content_pages, @contents = paginate :contents, :per_page => 10
+    @content_pages, @contents = paginate :contents, :per_page => 25
   end
 
   def show
