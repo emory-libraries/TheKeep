@@ -8,7 +8,7 @@
 	<td><label for="content_collection_number">Collection Number</label></td>
 	<td>
 	 <%= text_field_tag("mss_number") %>
-<!--		<%= select ('content', 'collection_number', [["Any Collection", nil]] + DescriptionData::getMSSNumbers) %> -->
+		<%= select ('content', 'collection_number', [["Any Collection", nil]] + DescriptionData::getMSSNumbers) %> 
 	</td>
 <tr>
  <td>Record ID/Filename:</td>
@@ -50,6 +50,6 @@
 
 <p> <%= link_to 'Dawson Grant records', {:action => 'searchAction', :image_note => 'Dawson Grant'} %> </p>
 
-<!-- 
+
 <p> <%= link_to 'Dawson Grant records with no subject', {:action => 'searchAction', :image_note => 'Dawson Grant', :filter => "no_subject"} %> </p>
--->
+

@@ -43,14 +43,16 @@ class Content < ActiveRecord::Base
      conditions += " and ssi.form_id = #{options[:image][:format]}"
    end
  
- # fixme - query is not working correctly
-#   if (options[:filter] == "no_subject")
-#     conditions += " and c.id not in (select distinct content_id from contents_subjects)";
-#   end
+ # filter - records with no subjects (for canned searches)
+   if (options[:filter] == "no_subject")
+     joins += " LEFT JOIN contents_subjects as cs ON c.id = cs.content_id"
+     conditions += " and cs.id is null";
+   end
+   
       
     find(:all,
 #      :select     => 'c.id, c.record_id_type, c.other_id, c.date_created, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date',
-      :select     => '*',
+      :select     => 'c.*',
       :joins      => joins,
       :conditions => conditions)
   end
