@@ -15,14 +15,34 @@ class Content < ActiveRecord::Base
     ["Other - Record in Content Notes"]
   ].freeze  
 
+  def self.findNext(id)  
+    c = find(:all,
+      :conditions => "id > #{id}",
+      :order => 'id',
+      :limit => '1')     
+      return c[0]
+  end
+
+  def self.findPrevious(id)  
+    c = find(:all,
+      :conditions => "id < #{id}",
+      :order => 'id DESC',
+      :limit => '1')     
+      return c[0]
+  end
+
   def self.search(options)  
     conditions = "1=1 "
     joins = "AS c "
+   if (not(options[:mss_number].nil?) and options[:mss_number] != '')
+     joins += "LEFT JOIN description_datas as dd on c.collection_number = dd.id "
+     conditions += "and dd.mss_number = #{options[:mss_number]} "
+   end  
    if (not(options[:id].nil?) and options[:id] != '')
      conditions += "and c.id = #{options[:id]}"
    end  
    if (not(options[:title].nil?) and options[:title] != '')
-     conditions += "and c.title LIKE '%#{options[:title]}%'"
+     conditions += "and c.title ILIKE '%#{options[:title]}%'"
    end  
    if (options[:name] != nil and options[:name][:id] != '')
       joins += " LEFT JOIN contents_names as cn ON c.id = cn.content_id"
@@ -37,12 +57,24 @@ class Content < ActiveRecord::Base
    end  
    if (options[:image_note] != '')
      joins += " LEFT JOIN tech_images AS ti ON c.id = ti.content_id "
-     conditions += "and ti.image_note LIKE '%#{options[:image_note]}%'"
+     conditions += "and ti.image_note ILIKE '%#{options[:image_note]}%'"
    end  
    if ( options[:image] != nil and options[:image][:format] != '')
      joins += " LEFT JOIN src_still_images AS ssi ON c.id = ssi.content_id "
      conditions += " and ssi.form_id = #{options[:image][:format]}"
    end
+ # filter by date: before, after, or both (between)
+  if (options[:date_mode] != nil and options[:date_mode] != 'none')
+    case options[:date_mode]
+      when "Before"
+       conditions += "and c.date_created < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "
+      when "After"
+        conditions += "and c.date_created > '#{options[:after][:year]}-#{options[:after][:month]}-#{options[:after][:day]}' "
+      when "Between"
+        conditions += "and c.date_created < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "
+        conditions += "and c.date_created > '#{options[:after][:year]}-#{options[:after][:month]}-#{options[:after][:day]}' "
+    end
+  end
  
  # filter - records with no subjects (for canned searches)
    if (options[:filter] == "no_subject")

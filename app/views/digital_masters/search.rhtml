@@ -1,14 +1,14 @@
 <H1>Search</H1>
 
-<p>Note: Search is case-sensitive.</br></p>
 
+<p>Note: Search is case-sensitive.</br></p>
+<%= javascript_include_tag :defaults %>
 <%= start_form_tag :action => 'searchAction' %>
 <table>
 <tr>
 	<td><label for="content_collection_number">Collection Number</label></td>
 	<td>
 	 <%= text_field_tag("mss_number") %>
-		<%= select ('content', 'collection_number', [["Any Collection", nil]] + DescriptionData::getMSSNumbers) %> 
 	</td>
 <tr>
  <td>Record ID/Filename:</td>
@@ -23,6 +23,48 @@
  <td> <%=	select('name', 'id', [["Anyone", nil]] + Name::getNames()) %> </td>
  <td> Role: </td> 
  <td> <%=	select('role', 'id', [["Any Role", nil]] + Role::getRoles()) %></td>
+</tr>
+<script language="Javascript" type="text/javascript">
+function showdate () {
+var select = document.getElementById("date_mode");
+var mode = select.options[select.selectedIndex].value;
+ switch (mode) {
+  case "none":
+     Element.hide("after");
+     Element.hide("and");
+     Element.hide("before");
+      break;
+  case "Before":
+     Element.hide("after");
+     Element.hide("and");
+     Element.show("before");
+      break;
+  case "After":
+    Element.show("after");
+    Element.hide("and");
+    Element.hide("before");
+    break;
+  case "Between":
+    Element.show("after");
+    Element.show("and");
+    Element.show("before");
+   }
+}
+</script>
+<tr>
+ <td>Date Created:</td>
+  <td colspan="2">
+  <select id="date_mode" name="date_mode" onchange="showdate()">
+    <option value="none"></option>
+    <option value="Before">Before</option>
+    <option value="After">After</option>  
+    <option value="Between">Between</option>
+  </select>
+  <!-- note: hiding by default; no date search unless a date mode is selected -->
+  <span  style="display:none" id="after"> <%= select_date(Date.today, {:prefix => "after"}) %> </span>
+ <span style="display:none" id="and"> and </span>
+ <span style="display:none" id="before"> <%= select_date(Date.today, {:prefix => "before"}) %> </span>
+  </td>
 </tr>
 <tr>
  <td>Resource Type:</td>

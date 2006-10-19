@@ -5,8 +5,9 @@ class DigitalMastersController < ApplicationController
   end 
   
   def searchAction
-    @contents = Content.search(@params)
+   @contents = Content.search(@params)
 #    @content_pages = Paginator.new self, @contents.nitems, 25, @params['page']          
+ #  render_text @params.inspect
     render :action => 'list'
   end
 
@@ -33,6 +34,16 @@ class DigitalMastersController < ApplicationController
     else
       @content = Content.find(params[:id])
     end  
+  end
+
+  def next 
+    @content = Content.findNext(params[:id])
+    render :action => 'edit' 
+  end
+
+  def previous 
+    @content = Content.findPrevious(params[:id])
+    render :action => 'edit' 
   end
 
   def update
