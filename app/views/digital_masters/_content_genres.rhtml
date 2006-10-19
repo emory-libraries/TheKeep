@@ -1,0 +1,21 @@
+<table border="1" width="100%">
+	<tr>
+		<td>
+			<%= link_to 'Add New Genre to List', {:controller => 'digital_masters_admin', :action => 'genre_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
+			<br/>
+			<%= link_to_remote 'Add Genre', :complete => 'eval(request.responseText)', :url => { :action => 'addContentGenre', :content_id => content.id } %> 
+		</td>
+		<th>FieldNames</th>
+		<th>Subject Headings</th>
+	</tr>
+	
+	<% for genre in content.genres %>
+
+	<tr id="genre_row_<%= genre.id %>">
+		<td><%= link_to_remote 'Edit Genre', :complete => 'eval(request.responseText)', :url => {:action => 'editContentGenre', :id => genre.id,} %></td>
+		<td><%= genre.fieldnames %></td>
+		<td><%= genre.genre %></td>
+	</tr>
+
+	<% end %>
+</table>

@@ -21,14 +21,15 @@
 			select ('content', 'record_id_type', options)
 		%>
 	</td>
-	
+</tr>
+<tr>	
 	<td><label for="content_title">Title</label></td>
-	<td><%= text_field 'content', 'title', 'size' => 75, 'MAXLENGTH' => 255 %></td>
+	<td colspan="5"><%= text_field 'content', 'title', 'size' => 225, 'MAXLENGTH' => 255 %></td>
 <tr>
 
 <tr>
 	<td><label for="other_id">Other ID</label></td>
-	<td colspan="3"><%= text_field 'content', 'other_id', 'size' => 75, 'MAXLENGTH' => 255 %></td>
+	<td colspan="3"><%= text_field 'content', 'other_id', 'size' => 25, 'MAXLENGTH' => 255 %></td>
 	
 	<td><label for="content_subtitle">Subtitle</label></td>
 	<td><%= text_field 'content', 'subtitle', 'size' => 75, 'MAXLENGTH' => 255 %></td>		

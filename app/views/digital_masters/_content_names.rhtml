@@ -1,6 +1,10 @@
 <table border="1" width="100%">
 	<tr>
-		<td><%= link_to_remote 'Add New Name', :complete => 'eval(request.responseText)', :url => { :action => 'addContentName', :content_id => content.id } %> </td>
+		<td>
+			<%= link_to 'Add New Name to List', {:controller => 'digital_masters_admin', :action => 'name_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
+			<br/>
+			<%= link_to_remote 'Add Name', :complete => 'eval(request.responseText)', :url => { :action => 'addContentName', :content_id => content.id } %> 			
+		</td>
 		<th>Name</th>
 		<th>Role</th>
 		<th>Name Part</th>

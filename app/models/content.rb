@@ -1,6 +1,7 @@
 class Content < ActiveRecord::Base
+  has_many :AccessRights
   belongs_to :DescriptionData, :foreign_key => "collection_number"
-  #has_many :languages, :class_name => 'ContentsLanguages'
+  has_and_belongs_to_many :genres
   has_and_belongs_to_many :languages
   belongs_to :Location
   has_and_belongs_to_many :names

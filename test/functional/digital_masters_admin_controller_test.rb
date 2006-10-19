@@ -1,14 +1,14 @@
 require File.dirname(__FILE__) + '/../test_helper'
-require 'jason_controller'
+require 'digital_masters_admin_controller'
 
 # Re-raise errors caught by the controller.
-class JasonController; def rescue_action(e) raise e end; end
+class DigitalMastersAdminController; def rescue_action(e) raise e end; end
 
-class JasonControllerTest < Test::Unit::TestCase
-  fixtures :src_still_images
+class DigitalMastersAdminControllerTest < Test::Unit::TestCase
+  fixtures :names
 
   def setup
-    @controller = JasonController.new
+    @controller = DigitalMastersAdminController.new
     @request    = ActionController::TestRequest.new
     @response   = ActionController::TestResponse.new
   end
@@ -25,7 +25,7 @@ class JasonControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'list'
 
-    assert_not_nil assigns(:src_still_images)
+    assert_not_nil assigns(:names)
   end
 
   def test_show
@@ -34,8 +34,8 @@ class JasonControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'show'
 
-    assert_not_nil assigns(:src_still_image)
-    assert assigns(:src_still_image).valid?
+    assert_not_nil assigns(:name)
+    assert assigns(:name).valid?
   end
 
   def test_new
@@ -44,18 +44,18 @@ class JasonControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'new'
 
-    assert_not_nil assigns(:src_still_image)
+    assert_not_nil assigns(:name)
   end
 
   def test_create
-    num_src_still_images = SrcStillImage.count
+    num_names = Name.count
 
-    post :create, :src_still_image => {}
+    post :create, :name => {}
 
     assert_response :redirect
     assert_redirected_to :action => 'list'
 
-    assert_equal num_src_still_images + 1, SrcStillImage.count
+    assert_equal num_names + 1, Name.count
   end
 
   def test_edit
@@ -64,8 +64,8 @@ class JasonControllerTest < Test::Unit::TestCase
     assert_response :success
     assert_template 'edit'
 
-    assert_not_nil assigns(:src_still_image)
-    assert assigns(:src_still_image).valid?
+    assert_not_nil assigns(:name)
+    assert assigns(:name).valid?
   end
 
   def test_update
@@ -75,14 +75,14 @@ class JasonControllerTest < Test::Unit::TestCase
   end
 
   def test_destroy
-    assert_not_nil SrcStillImage.find(1)
+    assert_not_nil Name.find(1)
 
     post :destroy, :id => 1
     assert_response :redirect
     assert_redirected_to :action => 'list'
 
     assert_raise(ActiveRecord::RecordNotFound) {
-      SrcStillImage.find(1)
+      Name.find(1)
     }
   end
 end

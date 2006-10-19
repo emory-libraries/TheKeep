@@ -22,6 +22,9 @@
 	<!--<div id="subjects_control" style="float:left"><%= link_to_function '- Collapse ', "collaspe('subjects', 'subjects_control');" %></div>&nbsp;Subjects -->
 	<div id="subjects"><%= render :partial => 'content_subjects', :locals => {:content => @content} %></div>
 	<p>
+
+	<div id="genres"><%= render :partial => 'content_genres', :locals => {:content => @content} %></div>
+	<p>
 	
 	<div id="still_img_subform">
 		<%#= render :partial => 'src_still_image_show' %>

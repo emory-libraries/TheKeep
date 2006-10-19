@@ -2,6 +2,7 @@ class Name < ActiveRecord::Base
   belongs_to :Authority
   has_and_belongs_to_many :contents 
   has_many :ContentsNames 
+  has_many :Restrictions
 
   def getRoleTitle(role_id)
     r = Role.find(role_id)

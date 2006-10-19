@@ -62,7 +62,7 @@ ALTER TABLE "Content" RENAME TO "contents";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents" TO digmast_user;
 
 ALTER TABLE "ContentGenre" RENAME COLUMN "Content_id" TO "content_id";
-ALTER TABLE "ContentGenre" RENAME COLUMN "FieldNames" TO "field_names";
+ALTER TABLE "ContentGenre" RENAME COLUMN "FieldNames" TO "fieldnames";
 ALTER TABLE "ContentGenre" RENAME COLUMN "Genre_id" TO "genre_id";
 ALTER TABLE "ContentGenre" RENAME TO "contents_genres";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_genres" TO digmast_user;
@@ -368,6 +368,12 @@ UPDATE pg_class SET relname = 'contents_subjects_content_id' WHERE relname = 'Su
 UPDATE pg_class SET relname = 'contents_subjects_fieldnames' WHERE relname = 'Subjects Detail_FieldNamesID';
 
 ALTER TABLE contents_subjects ALTER COLUMN id SET DEFAULT nextval('"contents_subjects_id_seq"'::regclass);;
+
+UPDATE pg_class SET relname = 'subjects_id_seq' WHERE relname = 'Subjects_ID_seq';
+
+UPDATE pg_class SET relname = 'names_id_seq' WHERE relname = 'Name_ID_seq';
+ALTER TABLE contents_subjects ALTER COLUMN id SET DEFAULT nextval('"names_id_seq"'::regclass);;
+
 
 UPDATE pg_class SET relname = 'src_still_images_id_seq' WHERE relname = 'SourceStillImage_ID_seq';
 UPDATE pg_class SET relname = 'src_still_images_id' WHERE relname = 'SourceStillImage_ID';

@@ -1,0 +1,8 @@
+<% for column in Genre.content_columns %>
+<p>
+  <b><%= column.human_name %>:</b> <%=h @genre.send(column.name) %>
+</p>
+<% end %>
+
+<%= link_to 'Edit', :action => 'genre_edit', :id => @genre %> |
+<%= link_to 'Back', :action => 'genre_list' %>

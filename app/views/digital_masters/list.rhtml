@@ -1,6 +1,6 @@
 <h1>Digital Masters</h1>
 
-<p />
+<p/>
 <%= link_to 'New content', :action => 'new' %><br/>
 <%= link_to 'New search', :action => 'index' %>
 <p/>
@@ -16,9 +16,9 @@
   
 <% for content in @contents %>
   <tr>
-  	<td align="center"><%= content.DescriptionData.mss_number if (content.DescriptionData)  %></td>
-  	<td align="center"><%= content.title %></td>
-  	<td align="center"><%= content.content_notes %></td>
+  	<td align="left"><%= content.DescriptionData.mss_number if (content.DescriptionData)  %></td>
+  	<td align="left"><%= content.title %></td>
+  	<td align="left"><%= content.content_notes %></td>
   
  <!--   <td><%= link_to 'Show', :action => 'show', :id => content %></td> -->
     <td><%= link_to 'Edit', :action => 'edit', :id => content %></td>

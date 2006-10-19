@@ -190,6 +190,101 @@ class DigitalMastersController < ApplicationController
     @content = Content.find(cs.content_id)    
     render :partial => 'content_subjects_table'
   end  
+
+#############################################################################
+# Contents Genres
+#############################################################################
+  def showContentGenres
+    @content = Content.find(params[:id])
+    
+    render :partial => 'content_genres_table'
+  end  
+  
+  def addContentGenre
+  
+    @cg = ContentsGenres.new
+    @cg.content_id = params[:content_id]
+    
+    #display pop_up edit window loaded with partial genres_form next action saveContentGenres
+    render :partial => "popup_edit", :locals => {:partial_name => "genre_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentGenre', :id => @cg}}}    
+    
+  end 
+  
+  def editContentGenre
+  
+    @cg = ContentsGenres.find(params[:id])
+    
+    #display pop_up edit window loaded with partial genres_form next action saveContentGenre
+    render :partial => "popup_edit", :locals => {:partial_name => "genre_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentGenre', :id => @cg}}}    
+    
+  end 
+ 
+  def saveContentGenre
+    
+    unless params[:id]
+      cg = ContentsGenres.new
+    else
+      cg = ContentsGenres.find(params[:id])
+    end
+      
+    #update with new values  
+    cg.content_id = params[:cg][:content_id]
+    cg.genre_id = params[:cg][:genre_id]
+    cg.fieldnames = params[:cg][:fieldnames]
+
+      
+    cg.save
+    
+    @content = Content.find(cg.content_id)    
+    render :partial => 'content_genres_table'
+  end
+
+#############################################################################
+# Contents AccessRights
+#############################################################################
+  def showContentAccessRights
+    @content = Content.find(params[:id])
+    
+    render :partial => 'content_accessrights_table'
+  end  
+  
+  def addContentAccessRights
+  
+    @ar = AccessRight.new
+    @ar.content_id = params[:content_id]
+    
+    #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights
+    render :partial => "popup_edit", :locals => {:partial_name => "accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
+    
+  end 
+  
+  def editContentAccessRights
+  
+    @ar = AccessRight.find(params[:id])
+    
+    #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights
+    render :partial => "popup_edit", :locals => {:partial_name => "accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
+    
+  end 
+ 
+  def saveContentAccessRights
+    
+    unless params[:id]
+      ar = AccessRight.new
+    else
+      ar = AccessRight.find(params[:id])
+    end
+      
+    #update with new values  
+    ar.content_id = params[:ar][:content_id]
+    ar.restriction_id = params[:ar][:genre_id]
+    ar.restriction_other = params[:ar][:restriction_other]
+      
+    ar.save
+    
+    @content = Content.find(cg.content_id)    
+    render :partial => 'content_genres_table'
+  end
   
 #############################################################################
 # Still Images
