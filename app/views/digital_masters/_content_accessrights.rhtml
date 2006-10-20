@@ -1,20 +1,24 @@
 <table border="1" width="100%">
 	<tr>
 		<td>
-			<%= link_to 'Add New Genre to List', {:controller => 'digital_masters_admin', :action => 'genre_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
+			<%#= link_to 'Add New Genre to List', {:controller => 'digital_masters_admin', :action => 'genre_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
 			<br/>
-			<%= link_to_remote 'Add Genre', :complete => 'eval(request.responseText)', :url => { :action => 'addContentGenre', :content_id => content.id } %> 
+			<%#= link_to_remote 'Add Access Right', :complete => 'eval(request.responseText)', :url => { :action => 'addContentAccessRight', :content_id => content.id } %> 
 		</td>
-		<th>FieldNames</th>
-		<th>Subject Headings</th>
+		<th>Restriction</th>
+		<th>Restriction Other</th>
+		<th>Name</th>
+		<th>Copyright Date</th>	
 	</tr>
-	
-	<% for genre in content.genres %>
+		
+	<% for r in rights %>
 
-	<tr id="genre_row_<%= genre.id %>">
-		<td><%= link_to_remote 'Edit Genre', :complete => 'eval(request.responseText)', :url => {:action => 'editContentGenre', :id => genre.id,} %></td>
-		<td><%= genre.fieldnames %></td>
-		<td><%= genre.genre %></td>
+	<tr id="accessright_row_<%= r.id %>">
+		<td><%#= link_to_remote 'Edit Access Rights', :complete => 'eval(request.responseText)', :url => {:action => 'editContentAccessRight', :id => r.id} %>&nbsp;</td>
+		<td><%= r.restriction.description %>&nbsp;</td>
+		<td><%= r.restriction_other %>&nbsp;</td>
+		<td><%= r.name.name %>&nbsp;</td>
+		<td><%= r.copyright_date %>&nbsp;</td>
 	</tr>
 
 	<% end %>

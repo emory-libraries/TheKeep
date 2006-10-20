@@ -34,6 +34,12 @@ class DigitalMastersController < ApplicationController
     else
       @content = Content.find(params[:id])
     end  
+    
+    @ar = Array.new
+    for access in @content.AccessRights
+      @ar << AccessRight.find(access.id)
+    end
+    
   end
 
   def next 
@@ -253,13 +259,13 @@ class DigitalMastersController < ApplicationController
 #############################################################################
 # Contents AccessRights
 #############################################################################
-  def showContentAccessRights
+  def showContentAccessRight
     @content = Content.find(params[:id])
     
     render :partial => 'content_accessrights_table'
   end  
   
-  def addContentAccessRights
+  def addContentAccessRight
   
     @ar = AccessRight.new
     @ar.content_id = params[:content_id]
@@ -269,16 +275,18 @@ class DigitalMastersController < ApplicationController
     
   end 
   
-  def editContentAccessRights
-  
-    @ar = AccessRight.find(params[:id])
+  def editContentAccessRight
+    @ar = Array.new
+    @ar << AccessRight.find(params[:id])
+    
+    render_text @ar.inspect
     
     #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights
-    render :partial => "popup_edit", :locals => {:partial_name => "accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
+    #render :partial => "popup_edit", :locals => {:partial_name => "accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
     
   end 
  
-  def saveContentAccessRights
+  def saveContentAccessRight
     
     unless params[:id]
       ar = AccessRight.new

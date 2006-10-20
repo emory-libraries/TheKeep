@@ -10,7 +10,10 @@
 
 <!--<div id="content_data_control" style="float:left"><%= link_to_function '- Collapse ', "collaspe('content_data', 'content_data_control');" %></div>&nbsp;Content Details -->
 <div id="content_data"><%= render :partial => 'content_form', :locals => {:content => @content} %></div>
-
+<p/>
+<div id="access_rights">
+	<%= render :partial => 'content_accessrights', :locals => {:content => @content, :rights => @ar} %>
+</div>
 
 <% unless @content.id %>
 	You must save this record before adding names or subjects. <p /> 
