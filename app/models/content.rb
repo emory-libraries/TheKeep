@@ -31,21 +31,28 @@ class Content < ActiveRecord::Base
       return c[0]
   end
 
+
+
   def self.search(options)  
     conditions = "1=1 "
     joins = "AS c "
+    vals = Array.new
    if (not(options[:mss_number].nil?) and options[:mss_number] != '')
      joins += "LEFT JOIN description_datas as dd on c.collection_number = dd.id "
-     conditions += "and dd.mss_number = #{options[:mss_number]} "
+     conditions += "and dd.mss_number = ? "
+     vals.push(options[:mss_number])
    end  
    if (not(options[:id].nil?) and options[:id] != '')
-     conditions += "and c.id = #{options[:id]}"
+     conditions += "and c.id = ?"
+     vals.push(options[:id])
    end  
    if (not(options[:title].nil?) and options[:title] != '')
    ## keyword search instead of phrase
      words = options[:title].split
      for w in words
-        conditions += "and c.title ILIKE '%#{w}%'"     
+     # note : allow ruby/rails to do search term escaping (for characters like ')
+        conditions += "and c.title ILIKE ? "     
+        vals.push("%#{w}%")
      end
    end  
    if (options[:name] != nil and options[:name][:id] != '')
@@ -63,7 +70,8 @@ class Content < ActiveRecord::Base
      joins += " LEFT JOIN tech_images AS ti ON c.id = ti.content_id "
      words = options[:image_note].split
      for w in words
-          conditions += "and ti.image_note ILIKE '%#{w}%'"
+        conditions += "and ti.image_note ILIKE ? "
+        vals.push("%#{w}%") 
      end
    end  
    if ( options[:image] != nil and options[:image][:format] != '')
@@ -88,13 +96,15 @@ class Content < ActiveRecord::Base
      joins += " LEFT JOIN contents_subjects as cs ON c.id = cs.content_id"
      conditions += " and cs.id is null";
    end
-   
-      
+
+  # make conditions text first member of vals array   
+   vals.unshift(conditions)
+    
     find(:all,
 #      :select     => 'c.id, c.record_id_type, c.other_id, c.date_created, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date',
       :select     => 'c.*',
       :joins      => joins,
-      :conditions => conditions)
+      :conditions => vals)
   end
 
 end
