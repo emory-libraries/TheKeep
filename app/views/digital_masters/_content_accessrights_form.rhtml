@@ -1,10 +1,25 @@
 <%= error_messages_for 'access_rights' %>
 
 <!--[form:access_rights]-->
-<p><label for="access_rights_restriction_other">Restriction other</label><br/>
-<%= text_field 'access_rights', 'restriction_other'  %></p>
+<%= hidden_field 'ar', 'content_id', :value => @ar.content_id %>
+<p>
+	<label for="access_rights_restriction_id">Name</label><br/>
+	<%=	select ('ar', 'restriction_id', Restriction::getRestrictions()) %>
+</p>
 
-<p><label for="access_rights_copyright_date">Copyright date</label><br/>
-<%= text_field 'access_rights', 'copyright_date'  %></p>
-<!--[eoform:access_rights]-->
+<p>
+	<label for="ar_restriction_other">Restriction Other</label><br/>
+	<%= text_field 'ar', 'restriction_other'  %>
+</p>
+
+<p>
+	<label for="ar_name_id">Name</label><br/>
+	<%=	select ('ar', 'name_id', Name::getNames()) %>
+</p>
+
+<p>
+	<label for="ar_copyright_date">Copyright date</label><br/>
+	<%= text_field 'ar', 'copyright_date'  %>
+</p>
+<!--[eoform:ar]-->
 

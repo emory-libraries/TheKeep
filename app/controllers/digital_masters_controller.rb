@@ -269,24 +269,19 @@ class DigitalMastersController < ApplicationController
   
     @ar = AccessRight.new
     @ar.content_id = params[:content_id]
-    
-    #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights
-    render :partial => "popup_edit", :locals => {:partial_name => "accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
-    
+        
+    #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights    
+    render :partial => "popup_edit", :locals => {:partial_name => "content_accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
   end 
   
   def editContentAccessRight
-    @ar = Array.new
-    @ar << AccessRight.find(params[:id])
-    
-    render_text @ar.inspect
-    
+    @ar = AccessRight.find(params[:id])
+     
     #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights
-    #render :partial => "popup_edit", :locals => {:partial_name => "accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
-    
+    render :partial => "popup_edit", :locals => {:partial_name => "content_accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}       
   end 
  
-  def saveContentAccessRight
+  def saveContentAccessRights
     
     unless params[:id]
       ar = AccessRight.new
@@ -296,13 +291,21 @@ class DigitalMastersController < ApplicationController
       
     #update with new values  
     ar.content_id = params[:ar][:content_id]
-    ar.restriction_id = params[:ar][:genre_id]
+    ar.restriction_id = params[:ar][:restriction_id]
     ar.restriction_other = params[:ar][:restriction_other]
+    ar.name_id = params[:ar][:name_id]
+    ar.copyright_date = params[:ar][:copyright_date]
       
     ar.save
     
-    @content = Content.find(cg.content_id)    
-    render :partial => 'content_genres_table'
+    @content = Content.find(params[:ar][:content_id])  
+    
+    @ar = Array.new
+    for access in @content.AccessRights
+      @ar << AccessRight.find(access.id)
+    end
+      
+    render :partial => 'content_accessrights_table'
   end
   
 #############################################################################

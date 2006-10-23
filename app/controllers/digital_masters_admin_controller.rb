@@ -163,6 +163,49 @@ class DigitalMastersAdminController < ApplicationController
     Genre.find(params[:id]).destroy
     redirect_to :action => 'genre_list'
   end  
-  
+
+  #####################################################################################################
+  #Restriction controls
+  #####################################################################################################    
+  def restriction_list
+    @restriction_pages, @restrictions = paginate :restrictions, :per_page => 100
+  end
+
+  def restriction_show
+    @restriction = Restriction.find(params[:id])
+  end
+
+  def restriction_new
+    @restriction = Restriction.new
+  end
+
+  def restriction_create
+    @restriction = Restriction.new(params[:restriction])
+    if @restriction.save
+      flash[:notice] = 'Restriction was successfully created.'
+      redirect_to :action => 'restriction_list'
+    else
+      render :action => 'restriction_new'
+    end
+  end
+
+  def restriction_edit
+    @restriction = Restriction.find(params[:id])
+  end
+
+  def restriction_update
+    @restriction = Restriction.find(params[:id])
+    if @restriction.update_attributes(params[:restriction])
+      flash[:notice] = 'Restriction was successfully updated.'
+      redirect_to :action => 'restriction_show', :id => @restriction
+    else
+      render :action => 'restriction_edit'
+    end
+  end
+
+  def restriction_destroy
+    Restriction.find(params[:id]).destroy
+    redirect_to :action => 'restriction_list'
+  end  
   
 end

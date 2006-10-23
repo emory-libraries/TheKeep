@@ -1,6 +1,6 @@
 function load_accessrights_table()
 {
 	document.getElementById('edit_div').style.display = 'none';	
-	document.getElementById('accessrights').innerHTML = "<%= escape_javascript(render :partial => 'content_accessrights', :locals => {:content => @content}) %>";
+	document.getElementById('access_rights').innerHTML = "<%= escape_javascript(render :partial => 'content_accessrights', :locals => {:content => @content, :rights => @ar }) %>";
 }
 load_accessrights_table();

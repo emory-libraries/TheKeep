@@ -372,8 +372,15 @@ ALTER TABLE contents_subjects ALTER COLUMN id SET DEFAULT nextval('"contents_sub
 UPDATE pg_class SET relname = 'subjects_id_seq' WHERE relname = 'Subjects_ID_seq';
 
 UPDATE pg_class SET relname = 'names_id_seq' WHERE relname = 'Name_ID_seq';
-ALTER TABLE contents_subjects ALTER COLUMN id SET DEFAULT nextval('"names_id_seq"'::regclass);;
+ALTER TABLE contents_subjects ALTER COLUMN id SET DEFAULT nextval('"names_id_seq"'::regclass);
 
+UPDATE pg_class SET relname = 'access_rights_id_seq' WHERE relname = 'RightsAccess_ID_seq';
+ALTER TABLE access_rights ALTER COLUMN id SET DEFAULT nextval('"access_rights_id_seq"'::regclass);
+GRANT SELECT, INSERT, UPDATE, DELETE ON "access_rights_id_seq" TO digmast_user;
+
+UPDATE pg_class SET relname = 'restrictions_id_seq' WHERE relname = 'Restrictions_ID_seq';
+ALTER TABLE restrictions ALTER COLUMN id SET DEFAULT nextval('"restrictions_id_seq"'::regclass);
+GRANT SELECT, INSERT, UPDATE, DELETE ON "restrictions_id_seq" TO digmast_user;
 
 UPDATE pg_class SET relname = 'src_still_images_id_seq' WHERE relname = 'SourceStillImage_ID_seq';
 UPDATE pg_class SET relname = 'src_still_images_id' WHERE relname = 'SourceStillImage_ID';
