@@ -2,12 +2,6 @@ function popup_row()
 {
 	d = document.getElementById('edit_div');
 
-	d.style.background = "#66cc66";
-	d.style.padding = "5px";
-	d.style.border = "1px";
-	d.style.position = "fixed";
-	d.style.top = "150px";
-	d.style.left = "20px";
 	d.style.display = "block";
 		
 	start_form = '<%= escape_javascript(form_remote_tag (action)) %>';

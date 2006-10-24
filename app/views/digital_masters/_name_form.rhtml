@@ -1,4 +1,8 @@
+<div id="label">Add/Edit Name
+<span id="close"><%= link_to_function "X", "Element.hide('edit_div')"%></span>
+</div>
 <%= hidden_field 'nc', 'content_id', :value => @nc.content_id %>
 <%=	select ('nc', 'name_id', Name::getNames()) %>
 <%=	select ('nc', 'role_id', Role::getRoles()) %>
 <%= text_field 'nc', 'role_term', 'size' => 50, :value => @nc.role_term %>
+
