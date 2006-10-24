@@ -43,13 +43,11 @@ class DigitalMastersController < ApplicationController
   end
 
   def next 
-    @content = Content.findNext(params[:id])
-    render :action => 'edit' 
+    redirect_to :action => 'edit', :id => Content.findNext(params[:id])
   end
 
   def previous 
-    @content = Content.findPrevious(params[:id])
-    render :action => 'edit' 
+    redirect_to :action => 'edit', :id => Content.findPrevious(params[:id])
   end
 
   def update

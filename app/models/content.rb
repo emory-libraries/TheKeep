@@ -20,7 +20,7 @@ class Content < ActiveRecord::Base
       :conditions => "id > #{id}",
       :order => 'id',
       :limit => '1')     
-      return c[0]
+      return c[0].id
   end
 
   def self.findPrevious(id)  
@@ -28,7 +28,7 @@ class Content < ActiveRecord::Base
       :conditions => "id < #{id}",
       :order => 'id DESC',
       :limit => '1')     
-      return c[0]
+      return c[0].id
   end
 
 
