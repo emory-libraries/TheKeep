@@ -1,7 +1,7 @@
 div#edit_div {
-  background-color:#66cc66;
+  background-color:#ffffff;
   padding:0px;
-  border:1px solid #555555;
+  border:2px solid #555555;
   position:fixed;
   top:150px;
   left:20px;
@@ -34,6 +34,10 @@ span#close a:hover {
  text-decoration:none;
  background:none;
 }
+
+/*div#edit_div div#content {
+  padding:5px;
+}*/
 
 div#edit_div input, div#edit_div select,  div#edit_div p {
   margin:5px;
