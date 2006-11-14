@@ -1,3 +1,7 @@
+<div id="label">Add/Edit Source Still Image
+<span id="close"><%= link_to_function "X", "Element.hide('edit_div')"%></span>
+</div>
+
 <%= hidden_field ('srcStillImage', 'content_id') %>
 <table> 
 	<tr>
@@ -7,19 +11,7 @@
 		<td><label for="srcStillImage_publication_date">Publication date</label></td>
 		<td><%= text_field 'srcStillImage', 'publication_date'  %></td>
 	</tr>
-	<tr>
-		<td><label for="srcStillImage_form_id">Form</label></td>
-		<td><%=	select ('srcStillImage', 'form_id', Form.getForms(subform = 'src_still_img')) %></td>
-		
-		<td rowspan="2"><label for="srcStillImage_related_item">Related item</label></td>
-		<td rowspan="2">
-			<%= text_area 'srcStillImage', 'related_item', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %>
-		</td>
-	</tr>
-	<tr>
-		<td>&nbsp;</td> 
-		<td>Need help identifying the form type?</td>
-	</tr>
+	
 	<tr>
 		<td><label for="srcStillImage_dimension_height">Dimension height</label></td>
 		<td>
@@ -59,11 +51,16 @@
 		<td><label for="srcStillImage_disposition">Disposition</label></td>
 		<td><%= text_field 'srcStillImage', 'disposition'  %></td>
 		
-		<td rowspan="2"><label for="srcStillImage_conservation_history">Conservation history</label></td>
-		<td rowspan="2"><%= text_area 'srcStillImage', 'conservation_history', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>		
+		<td><label for="srcStillImage_conservation_history">Conservation history</label></td>
+		<td><%= text_area 'srcStillImage', 'conservation_history', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>		
 	</tr>
 	<tr>	
 		<td><label for="srcStillImage_generation">Generation</label></td>
 		<td><%= text_field 'srcStillImage', 'generation'  %></td>
-	</tr>			
+
+		<td><label for="srcStillImage_related_item">Related item</label></td>
+		<td>
+			<%= text_area 'srcStillImage', 'related_item', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %>
+		</td>
+	</tr>				
 </table>		

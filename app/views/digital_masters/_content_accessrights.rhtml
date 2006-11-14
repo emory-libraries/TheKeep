@@ -1,24 +1,27 @@
-<table border="1" width="100%">
+<table border="0" width="100%">
 	<tr>
-		<td>
+		<td class="row_label">
 			<%= link_to 'Add New Restriction', {:controller => 'digital_masters_admin', :action => 'restriction_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
-			<br/>
+			<br/><br/>
 			<%= link_to_remote 'Add Access Right', :complete => 'eval(request.responseText)', :url => { :action => 'addContentAccessRight', :content_id => content.id } %> 
 		</td>
 		<th>Restriction</th>
-		<th>Restriction Other</th>
 		<th>Name</th>
 		<th>Copyright Date</th>	
 	</tr>
 		
 	<% for r in rights %>
 
-	<tr id="accessright_row_<%= r.id %>">
-		<td><%= link_to_remote 'Edit Access Rights', :complete => 'eval(request.responseText)', :url => {:action => 'editContentAccessRight', :id => r.id} %>&nbsp;</td>
-		<td><%= r.restriction.description %>&nbsp;</td>
-		<td><%= r.restriction_other %>&nbsp;</td>
+	<tr class="border_top">
+		<td class="row_label"><%= link_to_remote 'Edit Access Rights', :complete => 'eval(request.responseText)', :url => {:action => 'editContentAccessRight', :id => r.id} %>&nbsp;</td>
+		<td><%= r.restriction.description %>&nbsp;</td>		
 		<td><%= r.name.name %>&nbsp;</td>
 		<td><%= r.copyright_date %>&nbsp;</td>
+	</tr>
+	
+	<tr>
+		<td>&nbsp;</td>
+		<td colspan="3"><%= r.restriction_other %>&nbsp;</td>
 	</tr>
 
 	<% end %>

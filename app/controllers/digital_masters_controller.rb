@@ -1,6 +1,12 @@
 class DigitalMastersController < ApplicationController
-  def index
 
+  #verify :method => :post, :only => [ :destroy, :create, :update ],
+  #       :redirect_to => { :action => :list }
+  verify :method => :post, :only => [ :saveContentGenre ],
+         :redirect_to => { :action => :showContentGenres }  
+  
+
+  def index
     render :action => 'search'
   end 
   
@@ -28,9 +34,12 @@ class DigitalMastersController < ApplicationController
   end
  
   def edit
+    if params[:view]
+      session[:view] = params[:view]
+    end
+  
     unless params[:id]
       @content = Content.new
-      @content.DescriptionData = DescriptionData.find(1)
     else
       @content = Content.find(params[:id])
     end  
@@ -53,14 +62,14 @@ class DigitalMastersController < ApplicationController
   def update
     unless params[:id]
       @content = Content.new(params[:content])
-      @content.date_created = Time::now
+      @content.created_at = Time::now
     else 
       @content = Content.find(params[:id])
     end
       
     @content.resource_type_id = params[:content][:resource_type_id]
     @content.other_id = params[:content][:other_id]
-    @content.date_modified = Time::now
+    @content.modified_at = Time::now
     
     unless (params[:content][:collection_number] == "No Collection")
       @content.collection_number = params[:content][:collection_number]
@@ -76,12 +85,19 @@ class DigitalMastersController < ApplicationController
     @content.toc = params[:content][:toc]
     @content.content_notes = params[:content][:content_notes]
 
+    unless (!params[:content][:data_entered_by])
+      @content.data_entered_by = params[:content][:data_entered_by]
+      @content.data_entered_date = Time::now
+    end
+
+    unless (!params[:content][:authority_work_by])
+      @content.authority_work_by = params[:content][:authority_work_by]
+      @content.authority_work_date = Time::now
+    end
+
     unless (!params[:content][:completed_by])
       @content.completed_by = params[:content][:completed_by]
       @content.completed_date = Time::now
-    else
-      @content.completed_by = nil
-      @content.completed_date = nil
     end
 
     @content.languages.clear
@@ -355,6 +371,48 @@ class DigitalMastersController < ApplicationController
   end
   
 #############################################################################
+# Tech Images
+#############################################################################  
+  def addTechImage
+
+      @techImage = TechImage.new
+      @techImage.src_still_image_id = params[:src_still_image_id]
+      
+      render :partial => "popup_edit", :locals => {:partial_name => "tech_image_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveTechImage', :id => @TechImage, :src_still_image_id => @techImage.src_still_image_id}}}    
+  end
+  
+  def editTechImage
+    @tech_image = TechImage.find(params[:id])
+    render :partial => "popup_edit", :locals => {:partial_name => "tech_image_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveTechImage', :id => @tech_image, :src_still_image_id => @tech_image.src_still_image_id}}}    
+  end
+  
+  def saveTechImage
+    unless params[:id]
+      tech_image = TechImage.new
+    else
+      tech_image = TechImage.find(params[:id])
+    end    
+    
+    tech_image.src_still_image_id = params[:tech_image][:src_still_image_id]
+    tech_image.deriv_filename     = params[:tech_image][:deriv_filename]    
+    tech_image.date_captured      = params[:tech_image][:date_captured]    
+    tech_image.methodology        = params[:tech_image][:methodology]    
+    tech_image.scale              = params[:tech_image][:scale]    
+    tech_image.scanner_camera_id  = params[:tech_image][:scanner_camera_id]    
+    tech_image.target_id          = params[:tech_image][:target_id]    
+    tech_image.file_location      = params[:tech_image][:file_location]    
+    tech_image.image_processing   = params[:tech_image][:image_processing]    
+    tech_image.image_note         = params[:tech_image][:image_note]    
+    
+    tech_image.save
+    
+    @content = Content.find(SrcStillImage.find(tech_image.src_still_image_id).content_id)    
+    
+    render :partial => 'src_still_image_reload'
+  end  
+  
+  
+#############################################################################
 #AJAX Responders
 #############################################################################
   def getNow
@@ -367,7 +425,7 @@ class DigitalMastersController < ApplicationController
 
   def updateMainEntry
     #return main_entry when Collection Number is changed
-    unless (params[:collection_number] == "No Collection")
+    unless (params[:collection_number] == "")
       dd = DescriptionData.find(params[:collection_number])    
       render_text(dd.main_entry)
     else
@@ -376,7 +434,7 @@ class DigitalMastersController < ApplicationController
   end
   def updateTitleStatement
     #return TitleStatement when Collection Number is changed
-    unless (params[:collection_number] == "No Collection")    
+    unless (params[:collection_number] == "")    
       dd = DescriptionData.find(params[:collection_number])    
       render_text(dd.title_statement)
     else

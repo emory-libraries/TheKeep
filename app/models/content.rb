@@ -67,7 +67,8 @@ class Content < ActiveRecord::Base
      conditions += "and c.resource_type_id = #{options[:resource][:type]}"
    end  
    if (options[:image_note] != '')
-     joins += " LEFT JOIN tech_images AS ti ON c.id = ti.content_id "
+     joins += " LEFT JOIN src_still_images AS si ON c.id = si.content_id"
+     joins += " LEFT JOIN tech_images AS ti ON si.id = ti.src_still_image_id "
      words = options[:image_note].split
      for w in words
         conditions += "and ti.image_note ILIKE ? "

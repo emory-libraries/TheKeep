@@ -5,7 +5,7 @@
 <%= link_to 'New search', :action => 'index' %>
 <p/>
 
-<table>
+<table class="list">
   <tr>
   <th>MSS Number</th>
   <th>Title</th>
@@ -21,7 +21,10 @@
   	<td align="left"><%= content.content_notes %></td>
   
  <!--   <td><%= link_to 'Show', :action => 'show', :id => content %></td> -->
-    <td><%= link_to 'Edit', :action => 'edit', :id => content %></td>
+    <td><%= link_to 'DE', {:action => 'edit', :view => 'data_entry', :id => content} %></td>
+    <td><%= link_to 'AW', {:action => 'edit', :view => 'authority', :id => content} %></td>
+    <td><%= link_to 'QC', {:action => 'edit', :view => 'quality_control', :id => content} %></td>
+    
     <td><%= link_to 'Destroy', { :action => 'destroy', :id => content }, :confirm => 'Are you sure?', :post => true %></td>
   </tr>
 <% end %>

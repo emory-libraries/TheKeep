@@ -45,12 +45,15 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_languages" TO digmast_user;
 ALTER TABLE "Content" RENAME COLUMN "ID" TO "id";
 ALTER TABLE "Content" RENAME COLUMN "RecordIDType" TO "record_id_type";
 ALTER TABLE "Content" RENAME COLUMN "OtherID" TO "other_id";
-ALTER TABLE "Content" RENAME COLUMN "DateCreated" TO "date_created";
-ALTER TABLE "Content" RENAME COLUMN "DateModified" TO "date_modified";
+ALTER TABLE "Content" RENAME COLUMN "DateCreated" TO "created_on";
+ALTER TABLE "Content" ALTER  COLUMN "created_at" SET DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "Content" RENAME COLUMN "DateModified" TO "modified_at";
 ALTER TABLE "Content" RENAME COLUMN "Collection Number" TO "collection_number";
+ALTER TABLE "Content" ALTER  COLUMN "collection_number" SET NULL;
 ALTER TABLE "Content" RENAME COLUMN "Title" TO "title";
 ALTER TABLE "Content" RENAME COLUMN "Subtitle" TO "subtitle";
 ALTER TABLE "Content" RENAME COLUMN "ResourceType" TO "resource_type_id";
+ALTER TABLE "Content" ALTER  COLUMN "resource_type_id" SET DEFAULT NULL;
 ALTER TABLE "Content" RENAME COLUMN "Location" TO "location_id";
 ALTER TABLE "Content" RENAME COLUMN "Abstract" TO "abstract";
 ALTER TABLE "Content" RENAME COLUMN "TOC" TO "toc";
@@ -59,6 +62,13 @@ ALTER TABLE "Content" RENAME COLUMN "CompletedBy" TO "completed_by";
 ALTER TABLE "Content" RENAME COLUMN "CompletedDate" TO "completed_date";
 ALTER TABLE "Content" DROP COLUMN "Complete" CASCADE; 
 ALTER TABLE "Content" RENAME TO "contents";
+
+ALTER TABLE "Content" ADD COLUMN "data_entered_by" integer;
+ALTER TABLE "Content" ADD COLUMN "data_entered_date" timestamp without time zone;
+
+ALTER TABLE "Content" ADD COLUMN "authority_work_by" integer;
+ALTER TABLE "Content" ADD COLUMN "authority_work_date" timestamp without time zone;
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents" TO digmast_user;
 
 ALTER TABLE "ContentGenre" RENAME COLUMN "Content_id" TO "content_id";
@@ -277,6 +287,7 @@ SELECT setval('contents_subjects_id_seq', (SELECT max(id) FROM "contents_subject
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_subjects_id_seq" TO digmast_user;
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents_subjects" TO digmast_user;
 
+DROP TABLE "Subjects Detail" CASCADE;
 
 ALTER TABLE "Target" RENAME COLUMN "ID" TO "id";
 ALTER TABLE "Target" RENAME COLUMN "TargetName" TO "name";
@@ -326,7 +337,7 @@ ALTER TABLE "TechImagesTmp" RENAME COLUMN "JPEG2000Level" TO "jpeg2000_level";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "MrSid" TO "mr_sid";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "MrSidZoomLevels" TO "mr_sid_zoom_levels";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "FileSize" TO "file_size";
-ALTER TABLE "TechImagesTmp" RENAME COLUMN "ScannerCameraModelName" TO "scanner_camera_model_name";
+ALTER TABLE "TechImagesTmp" RENAME COLUMN "ScannerCameraModelName" TO "scanner_camera_id";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "Methodology" TO "methodology";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "ImageWidth" TO "image_width";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "ImageLength" TO "image_length";
@@ -335,7 +346,7 @@ ALTER TABLE "TechImagesTmp" RENAME COLUMN "BitsPerSample" TO "bits_per_sample";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "BitsPerSampleUnit" TO "bits_per_sample_unit";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "SamplesPerPixel" TO "samples_per_pixel";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "ExtraSamples" TO "extra_samples";
-ALTER TABLE "TechImagesTmp" RENAME COLUMN "TargetLookup" TO "target_lookup";
+ALTER TABLE "TechImagesTmp" RENAME COLUMN "TargetLookup" TO "target_id";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "ImageProcessing" TO "image_processing";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "Gamma" TO "gamma";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "Scale" TO "scale";
@@ -348,6 +359,11 @@ ALTER TABLE "TechImagesTmp" RENAME COLUMN "FileLoc" TO "file_location";
 ALTER TABLE "TechImagesTmp" RENAME COLUMN "Thumbnail" TO "thumbnail";
 ALTER TABLE "TechImagesTmp" RENAME TO "tech_images";
 GRANT SELECT, INSERT, UPDATE, DELETE ON "tech_images" TO digmast_user;
+
+CREATE SEQUENCE "tech_images_id_seq";
+ALTER TABLE tech_images ALTER COLUMN id SET DEFAULT nextval('"tech_images_id_seq"'::regclass);
+GRANT SELECT, INSERT, UPDATE, DELETE ON "tech_images_id_seq" TO digmast_user;
+SELECT setval('tech_images_id_seq', (SELECT max(id) FROM "tech_images"));
 
 ALTER TABLE "TechSound" RENAME COLUMN "ID" TO "id";
 ALTER TABLE "TechSound" RENAME COLUMN "Content#" TO "content_id";
@@ -397,6 +413,7 @@ ALTER TABLE src_still_images ALTER COLUMN id SET DEFAULT nextval('"src_still_ima
 CREATE SEQUENCE "content_id_seq";
 ALTER TABLE contents ALTER COLUMN id SET DEFAULT nextval('"content_id_seq"'::regclass);
 GRANT SELECT, INSERT, UPDATE, DELETE ON "content_id_seq" TO digmast_user;
+SELECT setval('content_id_seq', (SELECT max(id) FROM "contents"));
 
 
 CREATE SEQUENCE "language_id_seq";

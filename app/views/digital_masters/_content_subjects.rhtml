@@ -1,8 +1,8 @@
-<table border="1" width="100%">
+<table border="0" width="100%">
 	<tr>
-		<td>
+		<td class="row_label">
 			<%= link_to 'Add New Subject to List', {:controller => 'digital_masters_admin', :action => 'subject_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
-			<br/>
+			<br/><br/>
 			<%= link_to_remote 'Add Subject', :complete => 'eval(request.responseText)', :url => { :action => 'addContentSubject', :content_id => content.id } %> 
 		</td>
 		<th>FieldNames</th>
@@ -12,8 +12,8 @@
 	
 	<% for subject in content.subjects %>
 
-	<tr id="subject_row_<%= subject.id %>">
-		<td><%= link_to_remote 'Edit Subject', :complete => 'eval(request.responseText)', :url => {:action => 'editContentSubject', :id => subject.id,} %></td>
+	<tr class="border_top" id="subject_row_<%= subject.id %>">
+		<td class="row_label"><%= link_to_remote 'Edit Subject', :complete => 'eval(request.responseText)', :url => {:action => 'editContentSubject', :id => subject.id,} %></td>
 		<td><%= subject.fieldnames %></td>
 		<td>&nbsp;<%#= subject.indicator %></td>
 		<td><%= subject.subject %></td>

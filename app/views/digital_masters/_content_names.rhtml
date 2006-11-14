@@ -1,8 +1,8 @@
-<table border="1" width="100%">
+<table border="0" width="100%">
 	<tr>
-		<td>
+		<td class="row_label">
 			<%= link_to 'Add New Name to List', {:controller => 'digital_masters_admin', :action => 'name_new'}, :popup=>['new_window', 'height=300,width=600,scrollbars=yes'] %>
-			<br/>
+			<br/><br/>
 			<%= link_to_remote 'Add Name', :complete => 'eval(request.responseText)', :url => { :action => 'addContentName', :content_id => content.id } %> 			
 		</td>
 		<th>Name</th>
@@ -12,8 +12,8 @@
 	
 	<% for name in content.names %>
 
-	<tr id="name_row_<%= name.id %>">
-		<td><%= link_to_remote 'Edit Name', :complete => 'eval(request.responseText)', :url => {:action => 'editContentName', :id => name.id,} %></td>
+	<tr class="border_top" id="name_row_<%= name.id %>">
+		<td class="row_label"><%= link_to_remote 'Edit Name', :complete => 'eval(request.responseText)', :url => {:action => 'editContentName', :id => name.id,} %></td>
 		<td><%= name.name %></td>
 		<td><%= name.getRoleTitle(name.role_id) %></td>
 		<td><%= name.role_term %></td>

@@ -2,10 +2,6 @@
 <%= error_messages_for 'content' %>
 <%= render :partial => 'edit_div' %>
 
-<%= start_form_tag :action => 'update', :id => @content %>
-
-<%= render :partial => 'collaspe_section_js' %>
-
 <h1><font color="red">This is a demo. Data entered at this time will not be saved permanently.</font></H1><p>
 
 <!--<div id="content_data_control" style="float:left"><%= link_to_function '- Collapse ', "collaspe('content_data', 'content_data_control');" %></div>&nbsp;Content Details -->
@@ -31,10 +27,7 @@
 	<p/>
 	
 	<div id="still_img_subform">
-		<%#= render :partial => 'src_still_image_show' %>
+		<%= render :partial => 'src_still_image_show' %>
 	</div>
+	<p/>
 <% end %>
-
-<%= submit_tag 'Save' %>
-<%= end_form_tag %>
-
