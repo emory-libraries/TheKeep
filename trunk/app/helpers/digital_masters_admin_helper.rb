@@ -1,0 +1,2 @@
+module DigitalMastersAdminHelper
+end

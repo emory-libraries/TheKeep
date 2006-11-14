@@ -1,0 +1,6 @@
+<%= link_to_remote 'Add Tech Image', :complete => 'eval(request.responseText)', :url => {:action => 'addTechImage', :src_still_image_id => image.id} %><br />
+<% for tech_image in image.TechImages %>
+	<%= link_to_remote 'Edit Tech Image', :complete => 'eval(request.responseText)', :url => {:action => 'editTechImage', :id => tech_image.id} %>
+	<%= tech_image.icc_profile %>  <%= tech_image.image_note %>	
+	<br />
+<% end %>	

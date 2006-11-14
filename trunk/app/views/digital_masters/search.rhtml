@@ -1,0 +1,102 @@
+<H1>Search</H1>
+
+
+
+<%= javascript_include_tag :defaults %>
+<%= start_form_tag :action => 'searchAction' %>
+<table>
+<tr>
+	<td><label for="content_collection_number">Collection Number</label></td>
+	<td>
+	 <%= text_field_tag("mss_number") %>
+	</td>
+<tr>
+ <td>Record ID/Filename:</td>
+ <td> <%= text_field_tag("id") %> </td>
+</tr>
+<tr>
+ <td>Title:</td>
+ <td> <%= text_field_tag("title") %> <i>(keyword search)</i></td>
+</tr>
+<tr>
+ <td>Name:</td>
+ <td> <%=	select('name', 'id', [["Anyone", nil]] + Name::getNames()) %> </td>
+ <td> Role: </td> 
+ <td> <%=	select('role', 'id', [["Any Role", nil]] + Role::getRoles()) %></td>
+</tr>
+<script language="Javascript" type="text/javascript">
+function showdate (reset) {
+var mode;
+if (reset == 'reset') {
+  mode = "none";
+} else {
+  var select = document.getElementById("date_mode");
+  mode = select.options[select.selectedIndex].value;
+ }
+ switch (mode) {
+  case "none":
+     Element.hide("after");
+     Element.hide("and");
+     Element.hide("before");
+      break;
+  case "Before":
+     Element.hide("after");
+     Element.hide("and");
+     Element.show("before");
+      break;
+  case "After":
+    Element.show("after");
+    Element.hide("and");
+    Element.hide("before");
+    break;
+  case "Between":
+    Element.show("after");
+    Element.show("and");
+    Element.show("before");
+   }
+}
+</script>
+<tr>
+ <td>Date Created:</td>
+  <td colspan="2">
+  <select id="date_mode" name="date_mode" onchange="showdate()">
+    <option value="none"></option>
+    <option value="Before">Before</option>
+    <option value="After">After</option>  
+    <option value="Between">Between</option>
+  </select>
+  <!-- note: hiding by default; no date search unless a date mode is selected -->
+  <span  style="display:none" id="after"> <%= select_date(Date.today, {:prefix => "after"}) %> </span>
+ <span style="display:none" id="and"> and </span>
+ <span style="display:none" id="before"> <%= select_date(Date.today, {:prefix => "before"}) %> </span>
+  </td>
+</tr>
+<tr>
+ <td>Resource Type:</td>
+ <td> <%=   select('resource', "type", [["Any Type", nil]] + ResourceType::getResourceTypes()) %> </td> 
+</tr>
+<tr>
+ <td>Image note:</td>
+ <td> <%= text_field_tag("image_note") %> <i>(keyword search)</i></td>
+</tr>
+<tr>
+ <td>Source Image Format:</td>
+ <td> <%=   select('image', "format", [["Any Format", nil]] + Form::getForms("src_still_img")) %> </td> 
+</tr>
+
+</table>
+<%= submit_tag 'Search' %>
+<input type="reset" value="Reset" onClick="showdate('reset')">
+<%= end_form_tag %>
+
+<p> <%= link_to 'Create new record', :action => 'new' %> </p>
+
+<p> <%= link_to 'List all records', :action => 'list' %> </p>
+
+<hr/>
+
+<p> <%= link_to 'Dawson Grant records', {:action => 'searchAction', :image_note => 'Dawson Grant'} %> </p>
+
+
+<p> <%= link_to 'Dawson Grant records with no subject', {:action => 'searchAction', :image_note => 'Dawson Grant', :filter => "no_subject"} %> </p>
+
