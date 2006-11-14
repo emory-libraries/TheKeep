@@ -7,7 +7,7 @@
 
 <%= start_form_tag :action => 'update', :id => @content %>
 <div class="inline">
-	<%= submit_tag 'Save' %> <%= button_to 'Return to Browse', :action => 'list' %>
+	<%= submit_tag 'Save' %> <%= link_to 'Return to Browse', :action => 'list' %>
 </div>
 
 <% unless session[:view] %>
@@ -17,7 +17,7 @@
 <% end %>
 
 <div class="inline">
-	<%= submit_tag 'Save' %> <%= button_to 'Return to Browse', :action => 'list' %>
+	<%= submit_tag 'Save' %> <%= link_to 'Return to Browse', :action => 'list' %>
 </div>
 
 <%= end_form_tag %>
