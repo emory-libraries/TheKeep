@@ -3,5 +3,9 @@
 <!--[form:subject]-->
 <p><label for="subject_subject">Subject</label><br/>
 <%= text_field 'subject', 'subject'  %></p>
+
+<p><label for="subject_authority">Authority</label><br/>
+<%= select ('subject', 'authority_id', Authority::getAuthorities) %></p>
+
 <!--[eoform:subject]-->
 

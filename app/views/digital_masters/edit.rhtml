@@ -1,9 +1,18 @@
-<h1>Still Image :: Edit Full Record</h1>
-
 <%= javascript_include_tag :defaults %>
 <%= javascript_include_tag 'prototype' %>
 
 <%= render :partial => 'collaspe_section_js' %>
+
+<%= render :partial => 'edit_div' %>
+
+<h2><font color="red">This is a demo. Data entered at this time will not be saved permanently.</font></h2><p>
+
+<div align="center">
+	<!-- NOTE: need to add bounds checking for 1 / last id -->
+	&lt;&lt; <%= link_to 'Previous', {:action => 'previous', :id => @content.id} %>
+
+	<%= link_to 'Next', {:action => 'next', :id => @content.id} %> &gt;&gt;
+</div>
 
 <%= start_form_tag :action => 'update', :id => @content %>
 <div class="inline">
@@ -23,8 +32,8 @@
 <%= end_form_tag %>
 
 <div align="center">
-<!-- NOTE: need to add bounds checking for 1 / last id -->
-&lt;&lt; <%= link_to 'Previous', {:action => 'previous', :id => @content.id} %>
+	<!-- NOTE: need to add bounds checking for 1 / last id -->
+	&lt;&lt; <%= link_to 'Previous', {:action => 'previous', :id => @content.id} %>
 
-<%= link_to 'Next', {:action => 'next', :id => @content.id} %> &gt;&gt;
+	<%= link_to 'Next', {:action => 'next', :id => @content.id} %> &gt;&gt;
 </div>

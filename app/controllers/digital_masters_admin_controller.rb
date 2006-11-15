@@ -84,7 +84,8 @@ class DigitalMastersAdminController < ApplicationController
   end
 
   def subject_new
-    @subject = Subject.new
+    #@subject = Subject.new
+    @subject = Subject.create
   end
 
   def subject_create
@@ -208,4 +209,47 @@ class DigitalMastersAdminController < ApplicationController
     redirect_to :action => 'restriction_list'
   end  
   
+  #####################################################################################################
+  #Staff controls
+  #####################################################################################################      
+  def staff_list
+    @staff_name_pages, @staff_names = paginate :staff_names, :per_page => 10
+  end
+
+  def staff_show
+    @staff_name = StaffName.find(params[:id])
+  end
+
+  def staff_new
+    @staff_name = StaffName.new
+  end
+
+  def staff_create
+    @staff_name = StaffName.new(params[:staff_name])
+    if @staff_name.save
+      flash[:notice] = 'StaffName was successfully created.'
+      redirect_to :action => 'staff_list'
+    else
+      render :action => 'staff_new'
+    end
+  end
+
+  def staff_edit
+    @staff_name = StaffName.find(params[:id])
+  end
+
+  def staff_update
+    @staff_name = StaffName.find(params[:id])
+    if @staff_name.update_attributes(params[:staff_name])
+      flash[:notice] = 'Staff was successfully updated.'
+      redirect_to :action => 'staff_show', :id => @staff_name
+    else
+      render :action => 'staff_edit'
+    end
+  end
+
+  def staff_destroy
+    StaffName.find(params[:id]).destroy
+    redirect_to :action => 'staff_list'
+  end  
 end

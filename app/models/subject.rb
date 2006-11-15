@@ -4,11 +4,12 @@ class Subject < ActiveRecord::Base
   
   
   def self.getSubjects
-    @subjects = find(:all, :select => 'subject, id', :order => 'subject')
+    @subjects = find(:all, :select => 'subject, id, authority_id', :order => 'subject')    
     
     sub = []    
     for subject in @subjects
-      sub << [subject.subject, subject.id]
+      a = Authority.find(subject.authority_id)
+      sub << [subject.subject + " [" + a.authority + "]", subject.id]
     end  
     
     return sub

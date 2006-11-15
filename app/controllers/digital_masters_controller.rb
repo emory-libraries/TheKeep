@@ -2,8 +2,8 @@ class DigitalMastersController < ApplicationController
 
   #verify :method => :post, :only => [ :destroy, :create, :update ],
   #       :redirect_to => { :action => :list }
-  verify :method => :post, :only => [ :saveContentGenre ],
-         :redirect_to => { :action => :showContentGenres }  
+  #verify :method => :post, :only => [ :saveContentGenre ],
+  #       :redirect_to => { :action => :showContentGenres }  
   
 
   def index
@@ -85,17 +85,22 @@ class DigitalMastersController < ApplicationController
     @content.toc = params[:content][:toc]
     @content.content_notes = params[:content][:content_notes]
 
-    unless (!params[:content][:data_entered_by])
+    if (!params[:content][:data_entered_by].nil?)
       @content.data_entered_by = params[:content][:data_entered_by]
       @content.data_entered_date = Time::now
     end
 
-    unless (!params[:content][:authority_work_by])
+    if (!params[:content][:authority_work_by].nil?)
       @content.authority_work_by = params[:content][:authority_work_by]
       @content.authority_work_date = Time::now
     end
 
-    unless (!params[:content][:completed_by])
+    if (!params[:content][:initial_qc_by].nil?)
+      @content.initial_qc_by = params[:content][:initial_qc_by]
+      @content.initial_qc_date = Time::now
+    end
+
+    if (!params[:content][:completed_by].nil?)
       @content.completed_by = params[:content][:completed_by]
       @content.completed_date = Time::now
     end
@@ -296,7 +301,7 @@ class DigitalMastersController < ApplicationController
   end 
  
   def saveContentAccessRights
-    
+
     unless params[:id]
       ar = AccessRight.new
     else
@@ -440,5 +445,10 @@ class DigitalMastersController < ApplicationController
     else
       render_text("")
     end      
-  end    
+  end   
+  
+  def getSubjectAuthority
+    #render_text (Subject.find(params[:subject_id]).Authority.authority)
+    render_text (Subject.find(22).Authority.authority)
+  end 
 end

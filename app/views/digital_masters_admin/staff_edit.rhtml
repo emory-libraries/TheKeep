@@ -1,0 +1,9 @@
+<h1>Editing staff_name</h1>
+
+<%= start_form_tag :action => 'update', :id => @staff_name %>
+  <%= render :partial => 'form' %>
+  <%= submit_tag 'Edit' %>
+<%= end_form_tag %>
+
+<%= link_to 'Show', :action => 'staff_show', :id => @staff_name %> |
+<%= link_to 'Back', :action => 'staff_list' %>

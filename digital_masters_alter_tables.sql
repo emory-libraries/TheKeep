@@ -69,6 +69,9 @@ ALTER TABLE "Content" ADD COLUMN "data_entered_date" timestamp without time zone
 ALTER TABLE "Content" ADD COLUMN "authority_work_by" integer;
 ALTER TABLE "Content" ADD COLUMN "authority_work_date" timestamp without time zone;
 
+ALTER TABLE "Content" ADD COLUMN "initial_qc_by" integer;
+ALTER TABLE "Content" ADD COLUMN "initial_qc_date" timestamp without time zone;
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON "contents" TO digmast_user;
 
 ALTER TABLE "ContentGenre" RENAME COLUMN "Content_id" TO "content_id";

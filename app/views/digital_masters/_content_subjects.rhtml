@@ -8,6 +8,7 @@
 		<th>FieldNames</th>
 		<th>Indicators</th>
 		<th>Subject Headings</th>
+		<th>Authority</th>
 	</tr>
 	
 	<% for subject in content.subjects %>
@@ -17,6 +18,7 @@
 		<td><%= subject.fieldnames %></td>
 		<td>&nbsp;<%#= subject.indicator %></td>
 		<td><%= subject.subject %></td>
+		<td><%= subject.Authority.authority %></td>
 	</tr>
 
 	<% end %>

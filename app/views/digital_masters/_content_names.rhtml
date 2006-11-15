@@ -8,6 +8,7 @@
 		<th>Name</th>
 		<th>Role</th>
 		<th>Name Part</th>
+		<th>Authority</th>
 	</tr>
 	
 	<% for name in content.names %>
@@ -17,6 +18,7 @@
 		<td><%= name.name %></td>
 		<td><%= name.getRoleTitle(name.role_id) %></td>
 		<td><%= name.role_term %></td>
+		<td><%= name.Authority.authority %></td>		
 	</tr>
 
 	<% end %>

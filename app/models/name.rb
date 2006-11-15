@@ -11,11 +11,12 @@ class Name < ActiveRecord::Base
   end
   
   def self.getNames
-    @names = find(:all, :select => 'name, id', :order => 'name')
+    @names = find(:all, :select => 'name, id, authority_id', :order => 'name')
     
     n = []    
     for name in @names
-      n << [name.name, name.id]
+      a = Authority.find(name.authority_id)
+      n << [name.name + " [" + a.authority + "]", name.id]
     end  
     
     return n

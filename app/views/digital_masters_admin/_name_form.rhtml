@@ -3,5 +3,8 @@
 <!--[form:name]-->
 <p><label for="name_name">Name</label><br/>
 <%= text_field 'name', 'name'  %></p>
+
+<p><label for="name_authority">Authority</label><br/>
+<%= select ('name', 'authority_id', Authority::getAuthorities) %></p>
 <!--[eoform:name]-->
 

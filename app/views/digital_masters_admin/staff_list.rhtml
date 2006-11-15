@@ -1,0 +1,26 @@
+<h1>Listing staff_names</h1>
+
+<table>
+  <tr>
+  <% for column in StaffName.content_columns %>
+    <th><%= column.human_name %></th>
+  <% end %>
+  </tr>
+  
+<% for staff_name in @staff_names %>
+  <tr>
+  <% for column in StaffName.content_columns %>
+    <td><%=h staff_name.send(column.name) %></td>
+  <% end %>
+    <td><%= link_to 'Show', :action => 'staff_show', :id => staff_name %></td>
+    <td><%= link_to 'Edit', :action => 'staff_edit', :id => staff_name %></td>
+  </tr>
+<% end %>
+</table>
+
+<%= link_to 'Previous page', { :page => @staff_name_pages.current.previous } if @staff_name_pages.current.previous %>
+<%= link_to 'Next page', { :page => @staff_name_pages.current.next } if @staff_name_pages.current.next %> 
+
+<br />
+
+<%= link_to 'New staff_name', :action => 'staff_new' %>

@@ -3,7 +3,7 @@ class Location < ActiveRecord::Base
   
   
   def self.getLocations
-    @locations = find(:all, :select => 'name, id')
+    @locations = find(:all, :select => 'name, id', :order => 'name')
     
     locs = []    
     for l in @locations

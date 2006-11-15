@@ -3,7 +3,7 @@ class StaffName < ActiveRecord::Base
   
   
   def self.getStaff
-    @staff = find(:all, :select => 'name, id')
+    @staff = find(:all, :select => 'name, id', :order => 'name')
     
     names = []    
     for s in @staff
