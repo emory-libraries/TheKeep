@@ -105,7 +105,8 @@ class Content < ActiveRecord::Base
 #      :select     => 'c.id, c.record_id_type, c.other_id, c.date_created, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date',
       :select     => 'c.*',
       :joins      => joins,
-      :conditions => vals)
+      :conditions => vals,
+      :order => 'id')
   end
 
 end

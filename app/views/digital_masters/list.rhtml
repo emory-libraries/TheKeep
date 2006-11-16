@@ -21,9 +21,15 @@
   	<td align="left"><%= content.content_notes %></td>
   
  <!--   <td><%= link_to 'Show', :action => 'show', :id => content %></td> -->
-    <td><%= link_to 'DE', {:action => 'edit', :view => 'data_entry', :id => content} %></td>
-    <td><%= link_to 'AW', {:action => 'edit', :view => 'authority', :id => content} %></td>
-    <td><%= link_to 'QC', {:action => 'edit', :view => 'quality_control', :id => content} %></td>
+    <td <% unless (content.data_entered_date.nil?) %> class="completed" <% end %> >
+    	<%= link_to 'DE', {:action => 'edit', :view => 'data_entry', :id => content} %>
+    </td>
+    <td <% unless (content.authority_work_date.nil?) %> class="completed" <% end %> >
+    	<%= link_to 'AW', {:action => 'edit', :view => 'authority', :id => content} %>
+    </td>
+    <td <% unless (content.completed_date.nil?) %> class="completed" <% end %> >
+    	<%= link_to 'QC', {:action => 'edit', :view => 'quality_control', :id => content} %>
+    </td>
     
     <td><%= link_to 'Destroy', { :action => 'destroy', :id => content }, :confirm => 'Are you sure?', :post => true %></td>
   </tr>

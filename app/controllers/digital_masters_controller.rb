@@ -22,7 +22,7 @@ class DigitalMastersController < ApplicationController
          :redirect_to => { :action => :list }
 
   def list
-    @content_pages, @contents = paginate :contents, :per_page => 25
+    @content_pages, @contents = paginate :contents, :per_page => 25, :order => 'id'
   end
 
   def show
@@ -30,7 +30,7 @@ class DigitalMastersController < ApplicationController
   end
 
   def new
-    redirect_to :action => 'edit'
+    redirect_to :action => 'edit', :view => 'data_entry'
   end
  
   def edit

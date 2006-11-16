@@ -16,6 +16,7 @@ class Name < ActiveRecord::Base
     n = []    
     for name in @names
       a = Authority.find(name.authority_id)
+     
       n << [name.name + " [" + a.authority + "]", name.id]
     end  
     
