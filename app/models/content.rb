@@ -6,6 +6,7 @@ class Content < ActiveRecord::Base
   belongs_to :Location
   has_and_belongs_to_many :names
   belongs_to :ResourceType
+  has_many :src_sounds
   has_many :src_still_images
   belongs_to :StaffName, :foreign_key => "completed_by"
   has_and_belongs_to_many :subjects

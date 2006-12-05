@@ -415,6 +415,106 @@ class DigitalMastersController < ApplicationController
     
     render :partial => 'src_still_image_reload'
   end  
+
+#############################################################################
+# Sounds
+#############################################################################  
+  def addSrcSound
+
+      @src_sound = SrcSound.new
+      @src_sound.content_id = params[:content_id]
+      @content = Content.find(params[:content_id])
+      
+      render :partial => "popup_edit", :locals => {:partial_name => "src_sound_subform", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveSrcSound', :id => @src_sound}}}    
+  end
+  
+  def editSrcSound
+    @src_sound = SrcSound.find(params[:id])
+    render :partial => "popup_edit", :locals => {:partial_name => "src_sound_subform", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveSrcSound', :id => @src_sound}}}    
+  end
+  
+  def saveSrcSound
+    unless params[:id]
+      srcSound = SrcSound.new
+      @content = Content.find(params[:src_sound][:content_id])
+    else
+      srcSound = SrcSound.find(params[:id])
+      @content = Content.find(src_sound.content_id)
+    end    
+    
+    srcSound.form_id = params[:src_sound][:form_id]
+    srcSound.reel_size = params[:src_sound][:reel_size]
+    srcSound.dimension_note = params[:src_sound][:dimension_note]
+    srcSound.disposition = params[:src_sound][:disposition]
+    srcSound.gauge = params[:src_sound][:gauge]
+    srcSound.generation = params[:src_sound][:generation]
+    srcSound.length = params[:src_sound][:length]
+    srcSound.source_note = params[:src_sound][:source_note]
+    srcSound.sound_field = params[:src_sound][:sound_field]
+    srcSound.speed_id = params[:src_sound][:speed_id]
+    srcSound.stock = params[:src_sound][:stock]
+    srcSound.tape_thick = params[:src_sound][:tape_thick]
+    srcSound.track_format = params[:src_sound][:track_format]
+    srcSound.related_item = params[:src_sound][:related_item]
+    srcSound.item_location = params[:src_sound][:item_location]
+    srcSound.content_id = params[:src_sound][:content_id]
+    srcSound.housing_id = params[:src_sound][:housing_id]
+    srcSound.conservation_history = params[:src_sound][:conservation_history]
+    srcSound.source_date = params[:src_sound][:source_date]
+    srcSound.publication_date = params[:src_sound][:publication_date]
+    srcSound.transfer_engineer_staff_id = params[:src_sound][:transfer_engineer_staff_id]
+    
+    srcSound.save
+    
+    render :partial => 'src_sound_reload'
+  end
+  
+#############################################################################
+# Tech Sounds
+#############################################################################  
+  def addTechSound
+
+      @tech_sound = TechSound.new
+      @tech_sound.src_sound_id = params[:src_sound_id]
+      
+      render :partial => "popup_edit", :locals => {:partial_name => "tech_sound_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveTechSound', :id => @TechImage, :src_sound_id => @tech_sound.src_sound_id}}}    
+  end
+  
+  def editTechSound
+    @tech_sound = TechSound.find(params[:id])
+    render :partial => "popup_edit", :locals => {:partial_name => "tech_sound_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveTechSound', :id => @tech_sound, :src_sound_id => @tech_sound.src_sound_id}}}    
+  end
+  
+  def saveTechSound
+    unless params[:id]
+      tech_sound = TechSound.new
+    else
+      tech_sound = TechSound.find(params[:id])
+    end    
+    
+    tech_sound.src_sound_id       = params[:tech_sound][:src_sound_id]
+    tech_sound.format_name        = params[:tech_sound][:format_name]    
+    tech_sound.byte_order         = params[:tech_sound][:byte_order]    
+    tech_sound.compression_scheme = params[:tech_sound][:compression_scheme]    
+    tech_sound.file_size          = params[:tech_sound][:file_size]    
+    tech_sound.codec_creator      = params[:tech_sound][:codec_creatoe]    
+    tech_sound.codec_quality      = params[:tech_sound][:codec_quality]    
+    tech_sound.methodology        = params[:tech_sound][:methodology]    
+    tech_sound.bits_per_sample    = params[:tech_sound][:bits_per_sample]    
+    tech_sound.sampling_frequency = params[:tech_sound][:sampling_frequency]    
+    tech_sound.sound_note         = params[:tech_sound][:sound_note]
+    tech_sound.duration           = params[:tech_sound][:duration]
+    tech_sound.file_location      = params[:tech_sound][:file_location]
+    tech_sound.sound_clip         = params[:tech_sound][:sound_clip]                
+    tech_sound.digital_provenance_id = params[:tech_sound][:digital_provenance_id] 
+    tech_sound.src_sound_id       = params[:tech_sound][:src_sound_id] 
+    
+    tech_sound.save
+    
+    @content = Content.find(SrcSound.find(tech_sound.src_sound_id).content_id)    
+    
+    render :partial => 'src_sound_reload'
+  end  
   
   
 #############################################################################

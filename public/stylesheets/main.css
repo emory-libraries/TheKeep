@@ -41,7 +41,8 @@ div#access_rights,
 div#names,
 div#subjects,
 div#genres,
-div#still_img_subform
+div#still_img_subform,
+div#src_sound_subform
 {
 	background: white;
 	padding: 5px;
@@ -78,3 +79,22 @@ div.inline div
 	display: inline;
 	align: center;
 }
+
+/*
+td.completed a
+{
+	font-weight: 30%;
+	color: green;
+}
+*/
+
+
+a,
+a:link,
+a:visited,
+a:active
+{
+	color: black;
+}
+
+a:hover { color: white; }

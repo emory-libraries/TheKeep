@@ -6,8 +6,6 @@ class Form < ActiveRecord::Base
     case subform
       when "src_still_img"
         condition = "forms.form LIKE 'Still%' OR forms.form LIKE '%Arch%'"
-      else
-        condition = ""
     end
     
     @forms = find(:all, :select => 'form, id', :order => 'form', :conditions => condition)

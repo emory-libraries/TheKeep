@@ -1,0 +1,67 @@
+<div id="label">Add/Edit Source Sound
+<span id="close"><%= link_to_function "X", "Element.hide('edit_div')"%></span>
+</div>
+
+<%= error_messages_for 'tech_sound' %>
+
+<%= hidden_field ('tech_sound', 'src_sound_id') %>
+
+<!--[form:tech_sound]-->
+<table>
+	<tr>
+		<td><label for="tech_sound_format_name">Format name</label></td>
+		<td><%= text_field 'tech_sound', 'format_name'  %></td>
+	
+		<td><label for="tech_sound_byte_order">Byte order</label></td>
+		<td><%= text_field 'tech_sound', 'byte_order'  %></td>
+	</tr>
+
+	<tr>
+		<td><label for="tech_sound_compression_scheme">Compression scheme</label></td>
+		<td><%= text_field 'tech_sound', 'compression_scheme'  %></td>
+
+		<td><label for="tech_sound_file_size">File size</label></td>
+		<td><%= text_field 'tech_sound', 'file_size'  %></td>
+	</tr>
+
+	<tr>
+		<td><label for="tech_sound_codec_creator">Codec creator</label></td>
+		<td><%= text_field 'tech_sound', 'codec_creator'  %></td>
+
+		<td><label for="tech_sound_codec_quality">Codec quality</label></td>
+		<td><%= text_field 'tech_sound', 'codec_quality'  %></td>
+	</tr>
+
+	<tr>
+		<td><label for="tech_sound_methodology">Methodology</label></td>
+		<td><%= text_field 'tech_sound', 'methodology'  %></td>
+
+		<td><label for="tech_sound_bits_per_sample">Bits per sample</label></td>
+		<td><%= text_field 'tech_sound', 'bits_per_sample'  %></td>
+	</tr>
+
+	<tr>
+		<td><label for="tech_sound_duration">Duration</label></td>
+		<td><%= text_field 'tech_sound', 'duration'  %></td>	
+		
+		<td><label for="tech_sound_sound_clip">Sound clip</label></td>
+		<td><%= text_area 'tech_sound', 'sound_clip', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual'  %></td>		
+	</tr>
+
+	<tr>
+		<td><label for="tech_sound_sampling_frequency">Sampling frequency</label></td>
+		<td><%= text_field 'tech_sound', 'sampling_frequency'  %></td>
+		
+		<td><label for="tech_sound_sound_note">Sound note</label></td>
+		<td><%= text_area 'tech_sound', 'sound_note', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual'  %></td>		
+	</tr>
+
+	<tr>
+		<td><label for="tech_sound_file_location">File location</label></td>
+		<td><%= text_field 'tech_sound', 'file_location'  %></td>
+
+		<td><label for="tech_sound_date_captured">Date captured</label></td>
+		<td><%= datetime_select 'tech_sound', 'date_captured'  %></td>
+	</tr>
+<!--[eoform:tech_sound]-->
+</table>
