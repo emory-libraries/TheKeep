@@ -1,0 +1,8 @@
+<% for column in Authority.content_columns %>
+<p>
+  <b><%= column.human_name %>:</b> <%=h @authority.send(column.name) %>
+</p>
+<% end %>
+
+<%= link_to 'Edit', :action => 'authority_edit', :id => @authority %> |
+<%= link_to 'Back', :action => 'authority_list' %>

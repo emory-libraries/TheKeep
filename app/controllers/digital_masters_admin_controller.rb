@@ -3,6 +3,51 @@ class DigitalMastersAdminController < ApplicationController
   end
   
   #####################################################################################################
+  #authority controls
+  #####################################################################################################    
+  def authority_list
+    @authority_pages, @authorities = paginate :authorities, :per_page => 10
+  end
+
+  def authority_show
+    @authority = Authority.find(params[:id])
+  end
+
+  def authority_new
+    @authority = Authority.new
+  end
+
+  def authority_create
+    @authority = Authority.new(params[:authority])
+    if @authority.save
+      flash[:notice] = 'Authority was successfully created.'
+      redirect_to :action => 'authority_list'
+    else
+      render :action => 'authority_new'
+    end
+  end
+
+  def authority_edit
+    @authority = Authority.find(params[:id])
+  end
+
+  def authority_update
+    @authority = Authority.find(params[:id])
+    if @authority.update_attributes(params[:authority])
+      flash[:notice] = 'Authority was successfully updated.'
+      redirect_to :action => 'authority_show', :id => @authority
+    else
+      render :action => 'authority_edit'
+    end
+  end
+
+  def authority_destroy
+    Authority.find(params[:id]).destroy
+    redirect_to :action => 'authority_list'
+  end
+  
+  
+  #####################################################################################################
   #Name controls
   #####################################################################################################  
   # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
@@ -19,7 +64,7 @@ class DigitalMastersAdminController < ApplicationController
          :redirect_to => { :action => :list }
 
   def name_list
-    @name_pages, @names = paginate :names, :per_page => 100
+    @name_pages, @names = paginate :names, :per_page => 100, :order => 'name'
   end
 
   def name_show
