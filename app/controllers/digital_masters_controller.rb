@@ -5,7 +5,12 @@ class DigitalMastersController < ApplicationController
   #verify :method => :post, :only => [ :saveContentGenre ],
   #       :redirect_to => { :action => :showContentGenres }  
   
-
+  auto_complete_for :content, :collection_number
+  
+ # def auto_complete_for_content_collection_number
+ #   auto_complete_responder_for_content_collection_number params[:content][:collection_number]
+ # end
+       
   def index
     render :action => 'search'
   end 
@@ -551,4 +556,17 @@ class DigitalMastersController < ApplicationController
     #render_text (Subject.find(params[:subject_id]).Authority.authority)
     render_text (Subject.find(22).Authority.authority)
   end 
+
+  private
+  def auto_complete_responder_for_content_collection_number(value)
+    @mss = DescriptionData.find(:all, :conditions => ['mss_number LIKE ?', '%' + value + '%'], 
+       :order => 'mss_number DESC',
+       :limit => 10)
+       
+    render :partial => 'collection_number_autocomplete'
+  end
+
+  
 end
+
+
