@@ -5,12 +5,8 @@ class DigitalMastersController < ApplicationController
   #verify :method => :post, :only => [ :saveContentGenre ],
   #       :redirect_to => { :action => :showContentGenres }  
   
-  auto_complete_for :content, :collection_number
+  auto_complete_for :description_data, :mss_number, :limit => 20
   
- # def auto_complete_for_content_collection_number
- #   auto_complete_responder_for_content_collection_number params[:content][:collection_number]
- # end
-       
   def index
     render :action => 'search'
   end 
@@ -535,8 +531,8 @@ class DigitalMastersController < ApplicationController
 
   def updateMainEntry
     #return main_entry when Collection Number is changed
-    unless (params[:collection_number] == "")
-      dd = DescriptionData.find(params[:collection_number])    
+    unless (params[:mss_number] == "")
+      dd = DescriptionData.find_by_mss_number(params[:mss_number])    
       render_text(dd.main_entry)
     else
       render_text("")
@@ -544,29 +540,23 @@ class DigitalMastersController < ApplicationController
   end
   def updateTitleStatement
     #return TitleStatement when Collection Number is changed
-    unless (params[:collection_number] == "")    
-      dd = DescriptionData.find(params[:collection_number])    
+    unless (params[:mss_number] == "")    
+      dd = DescriptionData.find_by_mss_number(params[:mss_number])    
       render_text(dd.title_statement)
     else
       render_text("")
     end      
   end   
-  
-  def getSubjectAuthority
-    #render_text (Subject.find(params[:subject_id]).Authority.authority)
-    render_text (Subject.find(22).Authority.authority)
-  end 
-
-  private
-  def auto_complete_responder_for_content_collection_number(value)
-    @mss = DescriptionData.find(:all, :conditions => ['mss_number LIKE ?', '%' + value + '%'], 
-       :order => 'mss_number DESC',
-       :limit => 10)
-       
-    render :partial => 'collection_number_autocomplete'
+  def updateCollectionNumberID
+    #return id field in a hidden field
+    unless (params[:mss_number] == "")    
+      dd = DescriptionData.find_by_mss_number(params[:mss_number])    
+      id = dd.id.to_s
+    else
+      id = ""
+    end      
+    render_text('<input id="content_collection_number" maxlength="3" name="content[collection_number]" type="hidden" value="' + id + "'>'")  
   end
-
-  
 end
 
 

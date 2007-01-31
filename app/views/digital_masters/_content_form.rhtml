@@ -9,7 +9,7 @@
 	<td>
 		<%= 
 			options = Content::RECORD_ID_TYPES; 
-			select ('content', 'record_id_type', options)
+			select('content', 'record_id_type', options)
 		%>
 	</td>
 	<td><label for="content_title">Title</label></td>
@@ -23,13 +23,23 @@
 <tr>
 	<td class="collection"><label for="content_collection_number">Collection Number</label></td>
 	<td class="collection">
-		<%#= select ('content', 'collection_number', DescriptionData::getMSSNumbers, { :include_blank => true }) %>
-		<%= text_field_with_auto_complete :content, :collection_number, :size => 5, :maxlength => 3 %>
+	    <% @description_data = DescriptionData.find(@content.collection_number) %>
+		<%= text_field_with_auto_complete :description_data, :mss_number, :size => 5, :maxlength => 3 %>	
+			
+		<div id="content_collection_number_div">
+		  <%= hidden_field :content, :collection_number, :size => 5, :maxlength => 3 %>
+		</div>
 		
-		<%= observe_field(:content_collection_number, :on => 'changed', :with => "collection_number",
+
+		<%= observe_field(:description_data_mss_number, :on => 'changed', :with => "mss_number",
+			:update => :content_collection_number_div, :url => { :action => :updateCollectionNumberID} ) 
+		%>	
+
+		
+		<%= observe_field(:description_data_mss_number, :on => 'changed', :with => "mss_number",
 			:update => :main_entry, :url => { :action => :updateMainEntry} ) 
 		%>
-		<%= observe_field(:content_collection_number, :on => 'changed', :with => "collection_number",
+		<%= observe_field(:description_data_mss_number, :on => 'changed', :with => "mss_number",
 			:update => :title_statement, :url => { :action => :updateTitleStatement} ) 
 		%>		
 	</td>
@@ -80,7 +90,7 @@
 
 <tr>
 	<td><label>Resource Type</label></td>
-	<td colspan="3"><%=	select ('content', 'resource_type_id', ResourceType::getResourceTypes, { :include_blank => true }) %></td>
+	<td colspan="3"><%=	select('content', 'resource_type_id', ResourceType::getResourceTypes, { :include_blank => true }) %></td>
 </tr>
 
 <tr>
@@ -106,7 +116,7 @@
 
 <tr>
 	<td><label>Location</label></td>
-	<td colspan="3"><%=	select ('content', 'location_id', Location::getLocations) %></td>
+	<td colspan="3"><%=	select('content', 'location_id', Location::getLocations) %></td>
 </tr>
 
 </table>
