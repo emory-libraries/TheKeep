@@ -555,7 +555,7 @@ class DigitalMastersController < ApplicationController
     else
       id = ""
     end      
-    render_text('<input id="content_collection_number" maxlength="3" name="content[collection_number]" type="hidden" value="' + id + "'>'")  
+    render_text('<input id="content_collection_number" maxlength="3" name="content[collection_number]" type="hidden" value="' + id + "'>")  
   end
 end
 
