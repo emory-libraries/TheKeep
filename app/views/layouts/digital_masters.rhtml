@@ -8,9 +8,9 @@
   <%#= javascript_include_tag :defaults %>
   <%#= javascript_include_tag 'prototype' %>
   <%= define_javascript_functions %> <!-- not recommended but autocomplete doesnt work without this -->
+  
 </head>
 <body>
-
 <p style="color: green"><%= flash[:notice] %></p>
 
 <%= yield  %>
