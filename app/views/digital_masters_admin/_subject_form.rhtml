@@ -7,5 +7,8 @@
 <p><label for="subject_authority">Authority</label><br/>
 <%= select ('subject', 'authority_id', Authority::getAuthorities) %></p>
 
+<p><label for="subject_fieldnames">Fieldname</label><br/>
+<%= select ('subject', 'fieldnames', ['600', '610', '611', '648', '650', '651', '656']) %></p>
+
 <!--[eoform:subject]-->
 

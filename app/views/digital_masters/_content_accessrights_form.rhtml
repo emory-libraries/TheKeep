@@ -6,7 +6,7 @@
 <!--[form:access_rights]-->
 <%= hidden_field 'ar', 'content_id', :value => @ar.content_id %>
 <p>
-	<label for="access_rights_restriction_id">Name</label><br/>
+	<label for="access_rights_restriction_id">Restriction</label><br/>
 	<%=	select ('ar', 'restriction_id', Restriction::getRestrictions()) %>
 </p>
 

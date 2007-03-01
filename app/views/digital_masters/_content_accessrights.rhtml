@@ -13,7 +13,11 @@
 	<% for r in rights %>
 
 	<tr class="border_top">
-		<td class="row_label"><%= link_to_remote 'Edit Access Rights', :complete => 'eval(request.responseText)', :url => {:action => 'editContentAccessRight', :id => r.id} %>&nbsp;</td>
+		<td class="row_label">
+		  <%= link_to_remote 'Edit Access Rights', :complete => 'eval(request.responseText)', :url => {:action => 'editContentAccessRight', :id => r.id} %>&nbsp;
+		  <br />
+  		  <%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyContentAccessRight', :id => r.id, :content_id => @content.id} %>&nbsp;
+		</td>
 		<td><%= r.restriction.description %>&nbsp;</td>		
 		<td><%= r.name.name %>&nbsp;</td>
 		<td><%= r.copyright_date %>&nbsp;</td>

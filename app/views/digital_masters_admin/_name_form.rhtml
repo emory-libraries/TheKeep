@@ -6,5 +6,9 @@
 
 <p><label for="name_authority">Authority</label><br/>
 <%= select ('name', 'authority_id', Authority::getAuthorities) %></p>
+
+<p><label for="name_part">Name Part</label><br/>
+<%= select ('name', 'name_type', ['conference', 'corporate', 'personal']) %></p>
+
 <!--[eoform:name]-->
 

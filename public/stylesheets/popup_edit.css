@@ -9,6 +9,8 @@ div#edit_div {
   display:none;
 }
 
+div#scroll_div {overflow: scroll;}
+
 div#edit_div div#label {
   background-color:#555555;
   color:white;
@@ -24,6 +26,7 @@ div#edit_div div#label span#close {
   right:2px; 
   top:0px; 
   font-weight:bold;
+
 }
 
 span#close a {

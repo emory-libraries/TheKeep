@@ -13,7 +13,7 @@ function popup_row()
 	
 	end_form = '<%= end_form_tag %>';
 	
-	d.innerHTML = start_form + row + controls + end_form;
+	d.innerHTML = "<div id='scroll_div'>" + start_form + row + controls + end_form + "</div>";
 }
 
 function popup_close()

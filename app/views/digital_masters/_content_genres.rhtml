@@ -13,7 +13,11 @@
 	<% for genre in content.genres %>
 
 	<tr  class="border_top" id="genre_row_<%= genre.id %>">
-		<td class="row_label"><%= link_to_remote 'Edit Genre', :complete => 'eval(request.responseText)', :url => {:action => 'editContentGenre', :id => genre.id,} %></td>
+		<td class="row_label">
+		  <%= link_to_remote 'Edit Genre', :complete => 'eval(request.responseText)', :url => {:action => 'editContentGenre', :id => genre.id,} %>
+		  <br />
+		  <%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyContentGenre', :id => genre.id, :content_id => @content.id} %>&nbsp;		  
+		 </td>
 		<td><%= genre.fieldnames %></td>
 		<td><%= genre.genre %></td>
 		<td><%= genre.Authority.authority %></td>

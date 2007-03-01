@@ -3,6 +3,7 @@
 <br />
 <% for sound in @content.src_sounds %>
 	<%= link_to_remote 'Edit Original Source Sound', :complete => 'eval(request.responseText)', :url => {:action => 'editSrcSound', :id => sound.id} %>
+	<%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroySrcSound', :id => sound.id, :content_id => @content.id} %>&nbsp;		  
 	<%= sound.stock %> 
 	<%= sound.sound_field %> 
 	<%= sound.length %>

@@ -49,7 +49,7 @@
 		
 	<tr>
 		<td><label for="srcStillImage_disposition">Disposition</label></td>
-		<td><%= text_field 'srcStillImage', 'disposition'  %></td>
+		<td><%= select ('srcStillImage', 'disposition', ['retained', 'on deposit', 'deaccessioned']) %></td>
 		
 		<td><label for="srcStillImage_conservation_history">Conservation history</label></td>
 		<td><%= text_area 'srcStillImage', 'conservation_history', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>		

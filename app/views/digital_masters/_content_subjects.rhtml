@@ -6,7 +6,6 @@
 			<%= link_to_remote 'Add Subject', :complete => 'eval(request.responseText)', :url => { :action => 'addContentSubject', :content_id => content.id } %> 
 		</td>
 		<th>FieldNames</th>
-		<th>Indicators</th>
 		<th>Subject Headings</th>
 		<th>Authority</th>
 	</tr>
@@ -14,9 +13,12 @@
 	<% for subject in content.subjects %>
 
 	<tr class="border_top" id="subject_row_<%= subject.id %>">
-		<td class="row_label"><%= link_to_remote 'Edit Subject', :complete => 'eval(request.responseText)', :url => {:action => 'editContentSubject', :id => subject.id,} %></td>
+		<td class="row_label">
+		  <%= link_to_remote 'Edit Subject', :complete => 'eval(request.responseText)', :url => {:action => 'editContentSubject', :id => subject.id,} %>
+    	  <br/>
+		  <%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyContentSubject', :id => subject.id, :content_id => @content.id} %>&nbsp;		  		  
+		 </td>
 		<td><%= subject.fieldnames %></td>
-		<td>&nbsp;<%#= subject.indicator %></td>
 		<td><%= subject.subject %></td>
 		<td><%= subject.Authority.authority %></td>
 	</tr>

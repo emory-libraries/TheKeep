@@ -1,4 +1,4 @@
-<div id="label">Add/Edit Tech Image
+<div id="label">Add/Edit Digital Copy
 <span id="close"><%= link_to_function "X", "Element.hide('edit_div')"%></span>
 </div>
 
@@ -17,7 +17,7 @@
 	<td><%= datetime_select 'tech_image', 'date_captured'  %></td>
 	
 	<td><label for="tech_image_methodology">Methodology</label></td>
-	<td><%= text_field 'tech_image', 'methodology'  %></td>	
+	<td><%= select ('tech_image', 'methodology', ['library internal use', 'university use', 'outside researcher use'])  %></td>	
 </tr>
 
 <tr>

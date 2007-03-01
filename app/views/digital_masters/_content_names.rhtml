@@ -7,17 +7,21 @@
 		</td>
 		<th>Name</th>
 		<th>Role</th>
-		<th>Name Part</th>
+		<th>Name Type</th>
 		<th>Authority</th>
 	</tr>
 	
 	<% for name in content.names %>
 
 	<tr class="border_top" id="name_row_<%= name.id %>">
-		<td class="row_label"><%= link_to_remote 'Edit Name', :complete => 'eval(request.responseText)', :url => {:action => 'editContentName', :id => name.id,} %></td>
+		<td class="row_label">
+		  <%= link_to_remote 'Edit Name', :complete => 'eval(request.responseText)', :url => {:action => 'editContentName', :id => name.id,} %>
+		  <br />
+  		  <%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyContentName', :id => name.id, :content_id => @content.id} %>&nbsp;		  
+    	</td>
 		<td><%= name.name %></td>
 		<td><%= name.getRoleTitle(name.role_id) %></td>
-		<td><%= name.role_term %></td>
+		<td><%= name.name_type %></td>
 		<td><%= name.Authority.authority %></td>		
 	</tr>
 

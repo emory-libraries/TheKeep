@@ -10,6 +10,11 @@
 	   end	%>
 	
 	<br />
+	
+	<%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroySrcStillImage', :id => image.id, :content_id => @content.id} %>&nbsp;		  
+	
+	<br />
+	
 	<%= render :partial => 'tech_image_show', :locals => {'image' => image} %>
 	<hr />
 <% end %>	

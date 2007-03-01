@@ -4,11 +4,9 @@
 <%= hidden_field 'cs', 'content_id', :value => @cs.content_id %>
 <table>
 	<tr>
-		<th>Field Name</th>
 		<th>Subject</th>
 	</tr>
 	<tr>
-		<td><%= text_field ('cs', 'fieldnames') %></td>
 		<td><%=	select ('cs', 'subject_id', Subject::getSubjects()) %></td>
 	</tr>
 </table>

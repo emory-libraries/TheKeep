@@ -1,9 +1,4 @@
-class DigitalMastersController < ApplicationController
-
-  #verify :method => :post, :only => [ :destroy, :create, :update ],
-  #       :redirect_to => { :action => :list }
-  #verify :method => :post, :only => [ :saveContentGenre ],
-  #       :redirect_to => { :action => :showContentGenres }  
+class DigitalMastersController < ApplicationController 
   
   auto_complete_for :description_data, :mss_number, :limit => 20
   
@@ -172,11 +167,17 @@ class DigitalMastersController < ApplicationController
     nc.content_id = params[:nc][:content_id]
     nc.name_id = params[:nc][:name_id]
     nc.role_id = params[:nc][:role_id]
-    nc.role_term = params[:nc][:role_term]
       
     nc.save
     
     @content = Content.find(nc.content_id)    
+    render :partial => 'content_name_table'
+  end  
+  
+  def destroyContentName
+    ContentsNames.find(params[:id]).destroy   
+    
+    @content = Content.find(params[:content_id])          
     render :partial => 'content_name_table'
   end  
   
@@ -219,8 +220,6 @@ class DigitalMastersController < ApplicationController
     #update with new values  
     cs.content_id = params[:cs][:content_id]
     cs.subject_id = params[:cs][:subject_id]
-    cs.fieldnames = params[:cs][:fieldnames]
-
       
     cs.save
     
@@ -228,6 +227,12 @@ class DigitalMastersController < ApplicationController
     render :partial => 'content_subjects_table'
   end  
 
+  def destroyContentSubject
+    ContentsSubjects.find(params[:id]).destroy   
+    
+    @content = Content.find(params[:content_id])          
+    render :partial => 'content_subjects_table'
+  end 
 #############################################################################
 # Contents Genres
 #############################################################################
@@ -267,8 +272,6 @@ class DigitalMastersController < ApplicationController
     #update with new values  
     cg.content_id = params[:cg][:content_id]
     cg.genre_id = params[:cg][:genre_id]
-    cg.fieldnames = params[:cg][:fieldnames]
-
       
     cg.save
     
@@ -276,6 +279,12 @@ class DigitalMastersController < ApplicationController
     render :partial => 'content_genres_table'
   end
 
+  def destroyContentGenre
+    ContentsGenres.find(params[:id]).destroy   
+    
+    @content = Content.find(params[:content_id])          
+    render :partial => 'content_genres_table'
+  end
 #############################################################################
 # Contents AccessRights
 #############################################################################
@@ -293,6 +302,19 @@ class DigitalMastersController < ApplicationController
     #display pop_up edit window loaded with partial accessrights_form next action saveContentAccessRights    
     render :partial => "popup_edit", :locals => {:partial_name => "content_accessrights_form", :action => {:complete => 'eval(request.responseText)', :url => { :action => 'saveContentAccessRights', :id => @ar}}}    
   end 
+  
+  def destroyContentAccessRight    
+    AccessRight.find(params[:id]).destroy   
+    
+    @content = Content.find(params[:content_id])  
+    
+    @ar = Array.new
+    for access in @content.AccessRights
+      @ar << AccessRight.find(access.id)
+    end
+     
+    render :partial => 'content_accessrights_table'
+  end
   
   def editContentAccessRight
     @ar = AccessRight.find(params[:id])
@@ -376,6 +398,11 @@ class DigitalMastersController < ApplicationController
     render :partial => 'src_still_image_reload'
   end
   
+  def destroySrcStillImage
+    SrcStillImage.find(params[:id]).destroy
+    @content = Content.find(params[:content_id])
+    render :partial => 'src_still_image_reload'
+  end
 #############################################################################
 # Tech Images
 #############################################################################  
@@ -417,6 +444,12 @@ class DigitalMastersController < ApplicationController
     render :partial => 'src_still_image_reload'
   end  
 
+  def destroyTechImage
+    TechImage.find(params[:id]).destroy
+    @content = Content.find(params[:content_id])    
+    
+    render :partial => 'src_still_image_reload'
+  end
 #############################################################################
 # Sounds
 #############################################################################  
@@ -470,6 +503,12 @@ class DigitalMastersController < ApplicationController
     render :partial => 'src_sound_reload'
   end
   
+  def destroySrcSound
+    SrcSound.find(params[:id]).destroy
+    @content = Content.find(params[:content_id])
+    
+    render :partial => 'src_sound_reload'
+  end
 #############################################################################
 # Tech Sounds
 #############################################################################  
@@ -517,7 +556,11 @@ class DigitalMastersController < ApplicationController
     render :partial => 'src_sound_reload'
   end  
   
-  
+  def destroyTechSound
+    TechSound.find(params[:id]).destroy
+    @content = Content.find(params[:content_id])    
+    render :partial => 'src_sound_reload'    
+  end
 #############################################################################
 #AJAX Responders
 #############################################################################

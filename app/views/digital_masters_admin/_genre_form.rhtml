@@ -6,5 +6,8 @@
 
 <p><label for="genre_authority">Authority</label><br/>
 <%= select ('genre', 'authority_id', Authority::getAuthorities) %></p>
+
+<p><label for="genre_fieldnames">Fieldname</label><br/>
+<%= select ('genre', 'fieldnames', ['655']) %></p>
 <!--[eoform:genre]-->
 

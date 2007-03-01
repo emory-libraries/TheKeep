@@ -6,7 +6,7 @@ class DigitalMastersAdminController < ApplicationController
   #authority controls
   #####################################################################################################    
   def authority_list
-    @authority_pages, @authorities = paginate :authorities, :per_page => 10
+    @authority_pages, @authorities = paginate :authorities, :per_page => 10, :order => 'authority'
   end
 
   def authority_show
@@ -121,7 +121,7 @@ class DigitalMastersAdminController < ApplicationController
          :redirect_to => { :action => :subject_list }
 
   def subject_list
-    @subject_pages, @subjects = paginate :subjects, :per_page => 100
+    @subject_pages, @subjects = paginate :subjects, :per_page => 100, :order => 'subject'
   end
 
   def subject_show
@@ -170,7 +170,7 @@ class DigitalMastersAdminController < ApplicationController
          :redirect_to => { :action => :genre_list }
 
   def genre_list
-    @genre_pages, @genres = paginate :genres, :per_page => 100
+    @genre_pages, @genres = paginate :genres, :per_page => 100, :order => 'genre'
   end
 
   def genre_show
@@ -214,7 +214,7 @@ class DigitalMastersAdminController < ApplicationController
   #Restriction controls
   #####################################################################################################    
   def restriction_list
-    @restriction_pages, @restrictions = paginate :restrictions, :per_page => 100
+    @restriction_pages, @restrictions = paginate :restrictions, :per_page => 100, :order => 'description'
   end
 
   def restriction_show
@@ -258,7 +258,7 @@ class DigitalMastersAdminController < ApplicationController
   #Staff controls
   #####################################################################################################      
   def staff_list
-    @staff_name_pages, @staff_names = paginate :staff_names, :per_page => 10
+    @staff_name_pages, @staff_names = paginate :staff_names, :per_page => 10, :order => 'name'
   end
 
   def staff_show
