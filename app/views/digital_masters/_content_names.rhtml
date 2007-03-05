@@ -17,7 +17,7 @@
 		<td class="row_label">
 		  <%= link_to_remote 'Edit Name', :complete => 'eval(request.responseText)', :url => {:action => 'editContentName', :id => name.id,} %>
 		  <br />
-  		  <%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyContentName', :id => name.id, :content_id => @content.id} %>&nbsp;		  
+  		  <%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyContentName', :id => name.id, :content_id => @content.id}, :confirm => 'Are you sure?' %>&nbsp;		  
     	</td>
 		<td><%= name.name %></td>
 		<td><%= name.getRoleTitle(name.role_id) %></td>

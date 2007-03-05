@@ -108,17 +108,13 @@ class DigitalMastersAdminController < ApplicationController
   #Subject Controls
   #####################################################################################################
   # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
-  verify :method => :post, :only => [ :subject_destroy, :subject_create, :subjec_update ],
+  verify :method => :post, :only => [ :subject_destroy, :subject_create, :subject_update ],
          :redirect_to => { :action => :subject_list }
            
   def subject
     subject_list
     render :action => 'subject_list'
   end
-
-  # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
-  verify :method => :post, :only => [ :subject_destroy, :subject_create, :subject_update ],
-         :redirect_to => { :action => :subject_list }
 
   def subject_list
     @subject_pages, @subjects = paginate :subjects, :per_page => 100, :order => 'subject'
@@ -129,8 +125,7 @@ class DigitalMastersAdminController < ApplicationController
   end
 
   def subject_new
-    #@subject = Subject.new
-    @subject = Subject.create
+    @subject = Subject.new
   end
 
   def subject_create
