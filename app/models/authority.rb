@@ -3,6 +3,8 @@ class Authority < ActiveRecord::Base
   has_one :subjects
   has_one :genres
   
+  validates_presence_of :authority
+  
   def self.getAuthorities
     @authorities = find(:all, :select => 'authority, id', :order => 'authority')
     

@@ -4,6 +4,8 @@ class Name < ActiveRecord::Base
   has_many :ContentsNames 
   has_many :Restrictions
 
+  validates_presence_of :name
+
   def getRoleTitle(role_id)
     r = Role.find(role_id)
   
