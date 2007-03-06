@@ -9,6 +9,14 @@
 
 <p><label for="subject_fieldnames">Fieldname</label><br/>
 <%= select ('subject', 'fieldnames', ['600', '610', '611', '648', '650', '651', '656']) %></p>
+<script language="javascript">
+    var s = document.getElementById("subject_fieldnames");
+    for (var i=0;i<s.options.length;i++)
+    {
+        if (s.options[i].value == <%= @subject.fieldnames%>)
+            s.selectedIndex = i;            
+    }
+</script>
 
 <!--[eoform:subject]-->
 

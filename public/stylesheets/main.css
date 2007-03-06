@@ -80,13 +80,18 @@ div.inline div
 	align: center;
 }
 
-/*
+
 td.completed a
 {
 	font-weight: 30%;
 	color: green;
 }
-*/
+
+tr.border td
+{
+    border-style: groove;
+    border-width: 1px;
+}
 
 
 a,

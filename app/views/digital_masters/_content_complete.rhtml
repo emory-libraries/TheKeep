@@ -12,6 +12,21 @@
 	</tr>
 <% end %>
 
+<% if (view == 'quality_control') %> 
+	<tr>
+		<td><label for='content_initial_qc_by'>Initial Quality Check By</label></td>
+		<td><%= select ('content', 'initial_qc_by', [[ "Not Complete", nil]] + StaffName::getStaff ) %></td>
+		<td><label for="content_initial_qc_date">Completed Date</label></td>
+		<td>
+			<div id='initial_qc_date'><%= @content.initial_qc_date %>&nbsp;</div>
+			  <%= observe_field(:content_initial_qc_by, :on => 'changed', :with => 'initial_qc_by',
+				:update => :initial_qc_date, :url => { :action => :getNow} ) 
+			  %>
+		</td>
+	</tr>
+<% end %>
+
+
 <% if (view == 'authority' || view == 'quality_control') %> 
 	<tr>
 		<td><label for='content_authority_work_by'>Authority Work By</label></td>
@@ -27,17 +42,6 @@
 <% end %>
 
 <% if (view == 'quality_control') %> 
-	<tr>
-		<td><label for='content_initial_qc_by'>Initial Quality Check By</label></td>
-		<td><%= select ('content', 'initial_qc_by', [[ "Not Complete", nil]] + StaffName::getStaff ) %></td>
-		<td><label for="content_initial_qc_date">Completed Date</label></td>
-		<td>
-			<div id='initial_qc_date'><%= @content.initial_qc_date %>&nbsp;</div>
-			  <%= observe_field(:content_initial_qc_by, :on => 'changed', :with => 'initial_qc_by',
-				:update => :initial_qc_date, :url => { :action => :getNow} ) 
-			  %>
-		</td>
-	</tr>
 	<tr>
 		<td><label for='content_completed_by'>Completed By</label></td>
 		<td><%= select ('content', 'completed_by', [[ "Not Complete", nil]] + StaffName::getStaff ) %></td>

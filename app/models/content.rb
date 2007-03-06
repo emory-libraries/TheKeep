@@ -39,7 +39,7 @@ class Content < ActiveRecord::Base
     joins = "AS c "
     vals = Array.new
    if (not(options[:mss_number].nil?) and options[:mss_number] != '')
-     joins += "LEFT JOIN description_datas as dd on c.collection_number = dd.id "
+     joins += "JOIN description_datas as dd on c.collection_number = dd.id "
      conditions += "and dd.mss_number = ? "
      vals.push(options[:mss_number])
    end  
@@ -58,12 +58,24 @@ class Content < ActiveRecord::Base
    end  
    if (options[:name] != nil and options[:name][:id] != '')
       joins += " LEFT JOIN contents_names as cn ON c.id = cn.content_id"
-      conditions += "and cn.name_id = #{options[:name][:id]}"
+      joins += " LEFT JOIN access_rights as ar ON c.id = ar.content_id"
+      conditions += "and (cn.name_id = #{options[:name][:id]} OR ar.name_id = #{options[:name][:id]})"
       # role is only used in tandem with a name
       unless (options[:role][:id] == '')
         conditions += "and cn.role_id = #{options[:role][:id]}"  
       end 
    end
+   
+   if (options[:subject] != nil and options[:subject][:subject_id] != '')
+      joins += " LEFT JOIN contents_subjects as cs1 ON c.id = cs1.content_id"
+      conditions += "and cs1.subject_id = #{options[:subject][:subject_id]}"
+   end
+
+   if (options[:genre] != nil and options[:genre][:genre_id] != '')
+      joins += " LEFT JOIN contents_genres as cg ON c.id = cg.content_id"
+      conditions += "and cg.genre_id = #{options[:genre][:genre_id]}"
+   end
+   
    if (options[:resource] != nil and options[:resource][:type] != '')
      conditions += "and c.resource_type_id = #{options[:resource][:type]}"
    end  

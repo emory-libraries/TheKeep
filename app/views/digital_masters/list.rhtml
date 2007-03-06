@@ -10,28 +10,29 @@
   <th>MSS Number</th>
   <th>Title</th>
   <th>Content Notes</th>
+  <td colspan="4"><font size="-2"><i>green indicates completion</i></font></td>
   </tr>
   
 <p> Displaying <%= @contents.nitems %> Record(s)</p>
   
 <% for content in @contents %>
-  <tr>
+  <tr class="border">
   	<td align="left"><%= content.DescriptionData.mss_number if (content.DescriptionData)  %></td>
   	<td align="left"><%= content.title %></td>
   	<td align="left"><%= content.content_notes %></td>
   
- <!--   <td><%= link_to 'Show', :action => 'show', :id => content %></td> -->
-    <td <% unless (content.data_entered_date.nil?) %> class="completed" <% end %> >
+    <td <% unless (content.data_entered_by.nil?) %> class="completed" <% end %> >
     	<%= link_to 'DE', {:action => 'edit', :view => 'data_entry', :id => content} %>
     </td>
-    <td <% unless (content.authority_work_date.nil?) %> class="completed" <% end %> >
+    <td <% unless (content.initial_qc_by.nil?) %> class="completed" <% end %> >
+    	<%= link_to 'I.QC', {:action => 'edit', :view => 'quality_control', :id => content} %>
+    </td>    
+    <td <% unless (content.authority_work_by.nil?) %> class="completed" <% end %> >
     	<%= link_to 'AW', {:action => 'edit', :view => 'authority', :id => content} %>
     </td>
-    <td <% unless (content.completed_date.nil?) %> class="completed" <% end %> >
-    	<%= link_to 'QC', {:action => 'edit', :view => 'quality_control', :id => content} %>
+    <td <% unless (content.completed_by.nil?) %> class="completed" <% end %> >
+    	<%= link_to 'F.QC', {:action => 'edit', :view => 'quality_control', :id => content} %>
     </td>
-    
-    <td><%= link_to 'Destroy', { :action => 'destroy', :id => content }, :confirm => 'Are you sure?', :post => true %></td>
   </tr>
 <% end %>
 </table>
