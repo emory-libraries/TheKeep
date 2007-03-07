@@ -96,12 +96,12 @@ class Content < ActiveRecord::Base
   if (options[:date_mode] != nil and options[:date_mode] != 'none')
     case options[:date_mode]
       when "Before"
-       conditions += "and c.date_created < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "
+       conditions += "and c.created_at < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "
       when "After"
-        conditions += "and c.date_created > '#{options[:after][:year]}-#{options[:after][:month]}-#{options[:after][:day]}' "
+        conditions += "and c.created_at > '#{options[:after][:year]}-#{options[:after][:month]}-#{options[:after][:day]}' "
       when "Between"
-        conditions += "and c.date_created < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "
-        conditions += "and c.date_created > '#{options[:after][:year]}-#{options[:after][:month]}-#{options[:after][:day]}' "
+        conditions += "and c.created_at < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "
+        conditions += "and c.created_at > '#{options[:after][:year]}-#{options[:after][:month]}-#{options[:after][:day]}' "
     end
   end
  
@@ -115,7 +115,7 @@ class Content < ActiveRecord::Base
    vals.unshift(conditions)
     
     find(:all,
-#      :select     => 'c.id, c.record_id_type, c.other_id, c.date_created, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date',
+#      :select     => 'c.id, c.record_id_type, c.other_id, c.created_at, c.date_modified, c.collection_number, c.title, c.subtitle, c.resource_type_id, c.location_id, c.abstract, c.toc, c.content_notes, c.completed_by, c.completed_date',
       :select     => 'c.*',
       :joins      => joins,
       :conditions => vals,
