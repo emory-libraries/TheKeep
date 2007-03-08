@@ -292,4 +292,50 @@ class DigitalMastersAdminController < ApplicationController
     StaffName.find(params[:id]).destroy
     redirect_to :action => 'staff_list'
   end  
+
+
+  #####################################################################################################
+  #Role controls
+  #####################################################################################################     
+  def role_list
+    @role_pages, @roles = paginate :roles, :per_page => 100
+  end
+
+  def role_show
+    @role = Role.find(params[:id])
+  end
+
+  def role_new
+    @role = Role.new
+  end
+
+  def role_create
+    @role = Role.new(params[:role])
+    if @role.save
+      flash[:notice] = 'Role was successfully created.'
+      redirect_to :action => 'role_list'
+    else
+      render :action => 'role_new'
+    end
+  end
+
+  def role_edit
+    @role = Role.find(params[:id])
+  end
+
+  def role_update
+    @role = Role.find(params[:id])
+    if @role.update_attributes(params[:role])
+      flash[:notice] = 'Role was successfully updated.'
+      redirect_to :action => 'role_show', :id => @role
+    else
+      render :action => 'role_edit'
+    end
+  end
+
+  def role_destroy
+    Role.find(params[:id]).destroy
+    redirect_to :action => 'role_list'
+  end
+  
 end
