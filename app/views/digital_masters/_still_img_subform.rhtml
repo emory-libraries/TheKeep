@@ -41,7 +41,7 @@
 	</tr>
 	<tr>
 		<td><label for="srcStillImage_housing_id">Housing Description</label></td>
-		<td><%= select('srcStillImage', 'housing_id', Housing::getHousings) %></td>
+		<td><%= select('srcStillImage', 'housing_id', Housing::getHousings, { :include_blank => true }) %></td>
 		
 		<td></td>
 		<td></td>
