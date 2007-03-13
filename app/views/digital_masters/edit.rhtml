@@ -11,7 +11,10 @@
 
 <%= start_form_tag :action => 'update', :id => @content %>
 <div class="inline">
-	<%= submit_tag 'Save' %> <%= link_to 'Return to Browse', :action => 'list' %>
+	<%= submit_tag 'Save' %> 
+	<%= link_to 'Return to Browse', :action => 'list' %>
+	<%= link_to 'New Search', :action => 'search'%>
+	<%= link_to 'New Record', :action => 'new' %>
 </div>
 
 <% unless session[:view] %>
@@ -21,7 +24,10 @@
 <% end %>
 
 <div class="inline">
-	<%= submit_tag 'Save' %> <%= link_to 'Return to Browse', :action => 'list' %>
+	<%= submit_tag 'Save' %> 
+	<%= link_to 'Return to Browse', :action => 'list' %>
+	<%= link_to 'New Search', :action => 'search'%>
+	<%= link_to 'New Record', :action => 'new' %>
 </div>
 
 <%= end_form_tag %>
