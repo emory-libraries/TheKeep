@@ -7,9 +7,9 @@ class DigitalMastersController < ApplicationController
   end 
   
   def searchAction
-   @contents = Content.search(@params)
-#    @content_pages = Paginator.new self, @contents.nitems, 25, @params['page']          
- #  render_text @params.inspect
+    #render_text @params.inspect
+     
+    @contents = Content.search(@params)
     render :action => 'list'
   end
 
@@ -18,7 +18,7 @@ class DigitalMastersController < ApplicationController
          :redirect_to => { :action => :list }
 
   def list
-    @content_pages, @contents = paginate :contents, :per_page => 25, :order => 'id'
+    @content_pages, @contents = paginate :contents, :per_page => 50, :order => 'id'
   end
 
   def show
@@ -110,8 +110,8 @@ class DigitalMastersController < ApplicationController
     end
     
     if @content.save
-      flash[:notice] = 'Record saved successfully. <a href="/digital_masters/edit/' + @content.id.to_s + '">Return to record.</a>'
-      redirect_to :action => 'list'
+      flash[:notice] = 'Record saved successfully. ' #<a href="/digital_masters/edit/' + @content.id.to_s + '">Return to record.</a>'
+      redirect_to :action => 'edit', :id => @content.id
     else
       render :action => 'edit'
     end
