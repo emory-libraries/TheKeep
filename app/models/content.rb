@@ -43,10 +43,22 @@ class Content < ActiveRecord::Base
      conditions += "and dd.mss_number = ? "
      vals.push(options[:mss_number])
    end  
+   
+   if (not(options[:other_id].nil?) and options[:other_id] != '')
+    conditions += "and c.other_id ILIKE  ? "
+    vals.push("%" + options[:other_id] + "%")
+   end
+   
    if (not(options[:id].nil?) and options[:id] != '')
      conditions += "and c.id = ?"
      vals.push(options[:id])
    end  
+   
+   if (options[:content][:location_id] != '')
+      conditions += "and c.location_id = ?"
+      vals.push(options[:content][:location_id])
+    end
+   
    if (not(options[:title].nil?) and options[:title] != '')
    ## keyword search instead of phrase
      words = options[:title].split
@@ -93,7 +105,7 @@ class Content < ActiveRecord::Base
      conditions += " and ssi.form_id = #{options[:image][:format]}"
    end
  # filter by date: before, after, or both (between)
-  if (options[:date_mode] != nil and options[:date_mode] != 'none')
+   if (options[:date_mode] != nil and options[:date_mode] != 'none')
     case options[:date_mode]
       when "Before"
        conditions += "and c.created_at < '#{options[:before][:year]}-#{options[:before][:month]}-#{options[:before][:day]}' "

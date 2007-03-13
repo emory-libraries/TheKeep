@@ -11,6 +11,9 @@
  <td>Record ID/Filename:</td>
  <td> <%= text_field_tag("id") %> </td>
 </tr>
+
+<tr><td>Other ID</td><td><%= text_field_tag("other_id") %></td></tr>
+
 <tr>
  <td>Title:</td>
  <td> <%= text_field_tag("title") %> <i>(keyword search)</i></td>
@@ -93,6 +96,8 @@ if (reset == 'reset') {
  <td>Source Image Format:</td>
  <td> <%=   select('image', "format", [["Any Format", nil]] + Form::getForms("src_still_img")) %> </td> 
 </tr>
+
+<tr><td>Location:</td><td><%= select('content', 'location_id', [["Any Location", nil]] + Location.find(:all).collect {|p| [ p.name, p.id ] }, { :include_blank => false })%>
 
 </table>
 <%= submit_tag 'Search' %>
