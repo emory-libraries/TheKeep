@@ -54,7 +54,7 @@ class Content < ActiveRecord::Base
      vals.push(options[:id])
    end  
    
-   if (options[:content][:location_id] != '')
+   if (!options[:content].nil? && options[:content][:location_id] != '')
       conditions += "and c.location_id = ?"
       vals.push(options[:content][:location_id])
     end
