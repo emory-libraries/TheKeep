@@ -8,7 +8,7 @@ class DigitalMastersController < ApplicationController
   
   def searchAction
     #render_text @params.inspect
-     
+  
     @contents = Content.search(@params)
     render :action => 'list'
   end
