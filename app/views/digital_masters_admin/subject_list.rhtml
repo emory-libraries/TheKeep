@@ -5,6 +5,7 @@
   <% for column in Subject.content_columns %>
     <th><%= column.human_name %></th>
   <% end %>
+    <th>Authority</th>
   </tr>
   
 <% for subject in @subjects %>
@@ -12,6 +13,7 @@
   <% for column in Subject.content_columns %>
     <td><%=h subject.send(column.name) %></td>
   <% end %>
+    <td><%= subject.Authority.authority %>
     <td><%= link_to 'Show', :action => 'subject_show', :id => subject %></td>
     <td><%= link_to 'Edit', :action => 'subject_edit', :id => subject %></td>
     <td><%= link_to 'Destroy', { :action => 'subject_destroy', :id => subject }, :confirm => 'Are you sure?', :post => true %></td>
