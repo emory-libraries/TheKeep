@@ -11,7 +11,7 @@
 	
 	<br />
 	
-	<%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroySrcStillImage', :id => image.id, :content_id => @content.id} %>&nbsp;		  
+	<%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroySrcStillImage', :id => image.id, :content_id => @content.id}, :confirm => 'Are you sure?' %>&nbsp;		  
 	
 	<br />
 	
