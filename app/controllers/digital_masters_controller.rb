@@ -473,7 +473,7 @@ class DigitalMastersController < ApplicationController
       @content = Content.find(params[:src_sound][:content_id])
     else
       srcSound = SrcSound.find(params[:id])
-      @content = Content.find(src_sound.content_id)
+      @content = Content.find(srcSound.content_id)
     end    
     
     srcSound.form_id = params[:src_sound][:form_id]
