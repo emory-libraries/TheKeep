@@ -9,6 +9,9 @@ class Content < ActiveRecord::Base
   has_many :src_sounds
   has_many :src_still_images
   belongs_to :StaffName, :foreign_key => "completed_by"
+  belongs_to :DataEntryStaff, :class_name => "StaffName", :foreign_key => "data_entered_by"  
+  belongs_to :InitialQCStaff, :class_name => "StaffName", :foreign_key => "initial_qc_by"  
+  belongs_to :AuthorityStaff, :class_name => "StaffName", :foreign_key => "authority_work_by"
   has_and_belongs_to_many :subjects
   
   RECORD_ID_TYPES = [

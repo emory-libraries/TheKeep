@@ -1,4 +1,7 @@
 class DigitalMastersController < ApplicationController 
+  # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
+  verify :method => :post, :only => [ :destroy, :create, :update ],
+         :redirect_to => { :action => :list }
   
   auto_complete_for :description_data, :mss_number, :limit => 20
   
@@ -13,9 +16,10 @@ class DigitalMastersController < ApplicationController
     render :action => 'list'
   end
 
-  # GETs should be safe (see http://www.w3.org/2001/tag/doc/whenToUseGet.html)
-  verify :method => :post, :only => [ :destroy, :create, :update ],
-         :redirect_to => { :action => :list }
+  def dump
+    @contents = Content.find(:all, :limit => 10, :conditions => 'id = 4')
+    render :action => 'dump', :layout => false
+  end
 
   def list
     @content_pages, @contents = paginate :contents, :per_page => 50, :order => 'id'

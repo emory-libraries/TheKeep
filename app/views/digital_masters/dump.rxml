@@ -1,0 +1,141 @@
+xml.instruct! :xml, :version=>"1.0",
+:encoding=>"UTF-8"
+
+xml.contents() do
+  for c in @contents
+    xml.content(:id => c.id) do
+      xml.record_id_type(c.record_id_type)
+      xml.other_id(c.other_id)
+      xml.created_at(c.created_at)
+      xml.modified_at(c.modified_at)
+      xml.collection_number(c.collection_number)
+      xml.title(c.title)
+      xml.subtitle(c.subtitle)
+      xml.resource_type_id(c.resource_type_id)
+      
+      xml.location(:id => c.location_id) do
+        xml.name(c.Location.name)
+        xml.address(c.Location.address)
+        xml.phone(c.Location.phone)
+        xml.fax(c.Location.fax)
+        xml.email(c.Location.email)
+        xml.url(c.Location.url)
+        xml.city(c.Location.city)
+        xml.state(c.Location.state)
+        xml.zip(c.Location.zip)
+      end
+      
+      xml.abstract(c.abstract)
+      xml.toc(c.toc)
+      xml.content_notes(c.content_notes)
+      
+      xml.completed_by(c.StaffName.name, :id => c.StaffName.id) unless (c.StaffName.nil?)
+      
+      xml.completed_date(c.completed_date)
+      unless (c.data_entered_by.nil?)
+        xml.data_entered_by(c.DataEntryStaff.name)
+        xml.data_entered_date(c.data_entered_date)
+      end
+      unless (c.authority_work_by.nil?)
+        xml.authority_work_by(c.AuthorityStaff.name)
+        xml.authority_work_date(c.authority_work_date)
+      end
+      unless (c.initial_qc_by.nil?)
+        xml.initial_qc_by(c.InitialQCStaff.name)
+        xml.initial_qc_date(c.initial_qc_date)
+      end
+      
+      for rights in c.AccessRights
+        xml.access_rights do 
+          xml.name(rights.name.name)
+          xml.name_type(rights.name.name_type)
+          xml.authority(rights.name.Authority.authority)
+          xml.copyright_date(rights.copyright_date)
+          xml.restriction(rights.restriction.description)
+          xml.restriction_other(rights.restriction_other)
+        end
+      end
+      
+      xml.collection do
+        xml.main_entry(c.DescriptionData.main_entry)
+        xml.title_statement(c.DescriptionData.title_statement)
+        xml.mss_number(c.DescriptionData.mss_number)
+      end
+      
+      for genre in c.genres
+        xml.genre(:id => genre.id) do
+          xml.genre(genre.genre)
+          xml.authority(genre.Authority.authority)
+          xml.fieldname(genre.fieldnames)
+        end
+      end
+      
+      for lang in c.languages
+        xml.language(lang.language, :code => lang.code)
+      end
+      
+      xml.names do
+        for name in c.names
+          xml.name(:id => name.id) do
+            xml.name(name.name)
+            xml.authority(name.Authority.authority)
+            xml.name_type(name.name_type)
+          end
+        end
+      end
+      
+      xml.resource_type(c.ResourceType.resource_type)
+      
+      xml.sounds do
+        for sound in c.src_sounds
+          xml.source_sound(:id => sound.id) do
+            xml.form(sound.form.form, :support_material => sound.form.support_material, :dates => sound.form.dates, :identifying_features => sound.form.identifying_features, :source => sound.form.source) 
+          end
+          xml.reel_size(sound.reel_size)
+          xml.dimension_note(sound.dimension_note)
+          xml.disposition(sound.disposition)
+          xml.gauge(sound.gauge)
+          xml.generation(sound.generation)
+          xml.length(sound.length)
+          xml.source_note(sound.source_note)
+          xml.sound_field(sound.sound_field)
+          xml.speed(sound.speed.speed, :speed_alt => sound.speed.speed_alt, :format_type => sound.speed.format_type) unless sound.speed.nil?
+          xml.stock(sound.stock)
+          xml.tape_thick(sound.tape_thick)
+          xml.related_item(sound.related_item)
+          xml.item_location(sound.item_location)
+          xml.source_date(sound.source_date)
+          xml.conservation_history(sound.conservation_history)
+          xml.publication_date(sound.publication_date)
+          xml.housing(sound.housing.description) unless sound.housing.nil?
+          xml.transfer_engineer(sound.TransferEngineer.name) unless sound.TransferEngineer.nil?
+        end
+      end
+      
+      xml.still_images do
+        for img in c.src_still_images
+          xml.image(:id => img.id) do
+            xml.form(img.form.form, :support_material => img.form.support_material, :dates => img.form.dates, :identifying_features => img.form.identifying_features, :source => img.form.source) 
+          end
+          xml.height(img.dimension_height)
+          xml.height_unit(img.dimension_height_unit)
+          xml.width(img.dimension_width)
+          xml.width_unit(img.dimension_width_unit)
+          xml.dimension_note(img.dimension_note)
+          xml.disposition(img.disposition)
+          xml.generation(img.generation)
+          xml.source_note(img.source_note)
+          xml.related_item(img.related_item)
+          xml.housing(img.housing.description) unless img.housing.nil?
+          xml.conservation_history(img.conservation_history)
+          xml.source_date(img.source_date)
+          xml.publication_date(img.publication_date)
+        end
+      end
+      
+      for subject in c.subjects
+         xml.subject(subject.subject, :id => subject.id, :authority => subject.Authority.authority, :fieldnames => subject.fieldnames)
+      end
+    end  #end content tag
+  end    #end contents tag
+end
