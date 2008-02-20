@@ -17,7 +17,7 @@ class DigitalMastersController < ApplicationController
   end
 
   def dump
-    @contents = Content.find(:all, :limit => 10, :conditions => 'id = 4')
+    @contents = Content.find(:all)
     render :action => 'dump', :layout => false
   end
 
