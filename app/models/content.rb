@@ -13,6 +13,7 @@ class Content < ActiveRecord::Base
   belongs_to :InitialQCStaff, :class_name => "StaffName", :foreign_key => "initial_qc_by"  
   belongs_to :AuthorityStaff, :class_name => "StaffName", :foreign_key => "authority_work_by"
   has_and_belongs_to_many :subjects
+  has_many :TargetUrls
   
   RECORD_ID_TYPES = [
     ["local", "local"], 

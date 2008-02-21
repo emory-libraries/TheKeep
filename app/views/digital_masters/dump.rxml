@@ -152,6 +152,11 @@ xml.contents() do
       for subject in c.subjects
          xml.subject(subject.subject, :id => subject.id, :authority => subject.Authority.authority, :fieldnames => subject.fieldnames)
       end
+      
+      for target in c.TargetUrls
+        xml.target_url(target.url)
+      end
+      
     end  #end content tag
   end    #end contents tag
 end
