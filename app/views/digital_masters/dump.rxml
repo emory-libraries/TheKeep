@@ -52,7 +52,7 @@ xml.contents() do
           unless (rights.name.nil?)
             xml.name(rights.name.name)
             xml.name_type(rights.name.name_type)
-            xml.authority(rights.name.Authority.authority) unless (rights.name.authority.nil?)
+            xml.authority(rights.name.Authority.authority) unless (rights.name.Authority.nil?)
           end
           xml.copyright_date(rights.copyright_date)
           xml.restriction(rights.restriction.description)

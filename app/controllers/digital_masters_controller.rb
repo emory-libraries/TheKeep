@@ -17,7 +17,12 @@ class DigitalMastersController < ApplicationController
   end
 
   def dump
-    @contents = Content.find(:all)
+    unless (params[:id].nil?)
+      conditions = ["id = ?", params[:id]]
+    else
+      conditions = ["1=1"]
+    end
+    @contents = Content.find(:all, :conditions => conditions)
     render :action => 'dump', :layout => false
   end
 
