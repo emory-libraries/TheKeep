@@ -338,4 +338,11 @@ class DigitalMastersAdminController < ApplicationController
     redirect_to :action => 'role_list'
   end
   
+  def fixDatabase()
+    ManuscriptAccession::fixDatabase
+    flash[:notice] = 'Database has been repaired'
+    
+    redirect_to :action => 'index'
+  end
+  
 end

@@ -51,3 +51,4 @@ end
 # end
 
 # Include your application configuration below
+ManuscriptAccession.establish_connection "mss_#{RAILS_ENV}"
