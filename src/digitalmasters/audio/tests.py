@@ -1,6 +1,8 @@
 from django.test import Client, TestCase
 from django.core.urlresolvers import reverse
 
+from digitalmasters.audio.forms import UploadForm
+
 class AudioTest(TestCase):
     fixtures =  ['users']
     admin_credentials = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -27,4 +29,19 @@ class AudioTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, audio_index))
 
-        
+
+    def test_upload(self):
+        # test upload form
+        upload_url = reverse('audio:upload')
+
+        # logged in as staff
+        self.client.login(**self.admin_credentials)
+        response = self.client.get(upload_url)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, upload_url))
+
+        self.assert_(isinstance(response.context['form'], UploadForm))
+        self.assertContains(response, 'Audio file')
+        self.assertContains(response, '<input')

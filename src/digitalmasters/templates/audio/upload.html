@@ -1,0 +1,6 @@
+<h1>Upload an audio file.</h1>
+
+<form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Upload" />
+</form>
