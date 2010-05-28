@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.admin',
     'eulcore.django.ldap.emory',
+    'digitalmasters.audio',
 )
 
 
@@ -63,6 +64,9 @@ AUTHENTICATION_BACKENDS = (
 EXTENSION_DIRS = (
     path.join(BASE_DIR, '../externals/django-modules'),
 )
+
+# NOTE: for now, just using admin site for login/logout
+LOGIN_URL = '/admin/'
 
 import sys
 try:

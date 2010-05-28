@@ -6,8 +6,7 @@ urlpatterns = patterns('',
     (r'^$', 'django.views.generic.simple.redirect_to',  {'url': 'admin/', 'permanent' : False}),
     (r'^admin/',  include(admin.site.urls)),
     
-    # Example:
-    # (r'^digitalmasters/', include('digitalmasters.foo.urls')),
+    url(r'^audio/', include('digitalmasters.audio.urls', namespace='audio')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
