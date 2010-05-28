@@ -5,6 +5,7 @@ from django.conf.urls.defaults import *
 # admin.autodiscover()
 
 urlpatterns = patterns('',
+    (r'^$', 'django.views.generic.simple.redirect_to',  {'url': 'admin/', 'permanent' : False}),
     # Example:
     # (r'^digitalmasters/', include('digitalmasters.foo.urls')),
 
