@@ -1,7 +1,0 @@
-<%= link_to_remote 'Add Digital Copy', :complete => 'eval(request.responseText)', :url => {:action => 'addTechSound', :src_sound_id => sound.id} %><br />
-<% for tech_sound in sound.TechSounds %>
-	<%= link_to_remote 'Edit Digital Copy', :complete => 'eval(request.responseText)', :url => {:action => 'editTechSound', :id => tech_sound.id} %>
-	<%= link_to_remote 'Remove', :complete => 'eval(request.responseText)', :url => {:action => 'destroyTechSound', :id => tech_sound.id, :content_id => @content.id}, :confirm => 'Are you sure?' %>&nbsp;		  
-	<%= tech_sound.format_name %> <%= tech_sound.byte_order %> <%= tech_sound.sound_note %>	
-	<br />
-<% end %>	

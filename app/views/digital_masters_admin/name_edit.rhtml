@@ -1,9 +1,0 @@
-<h1>Editing name</h1>
-
-<%= start_form_tag :action => 'name_update', :id => @name %>
-  <%= render :partial => 'name_form' %>
-  <%= submit_tag 'Save' %>
-<%= end_form_tag %>
-
-<%= link_to 'Show', :action => 'name_show', :id => @name %> |
-<%= link_to 'Back', :action => 'name_list' %>

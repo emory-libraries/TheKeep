@@ -1,9 +1,0 @@
-<h1>Editing genre</h1>
-
-<%= start_form_tag :action => 'genre_update', :id => @genre %>
-  <%= render :partial => 'genre_form' %>
-  <%= submit_tag 'Edit' %>
-<%= end_form_tag %>
-
-<%= link_to 'Show', :action => 'genre_show', :id => @genre %> |
-<%= link_to 'Back', :action => 'genre_list' %>

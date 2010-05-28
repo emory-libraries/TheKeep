@@ -1,9 +1,0 @@
-<h1>Editing restriction</h1>
-
-<%= start_form_tag :action => 'restriction_update', :id => @restriction %>
-  <%= render :partial => 'restriction_form' %>
-  <%= submit_tag 'Save' %>
-<%= end_form_tag %>
-
-<%= link_to 'Show', :action => 'restriction_show', :id => @restriction %> |
-<%= link_to 'Back', :action => 'restriction_list' %>
