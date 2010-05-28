@@ -51,6 +51,13 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.admin',
+    'eulcore.django.ldap.emory',
+)
+
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'eulcore.django.ldap.emory.EmoryLDAPBackend',
 )
 
 EXTENSION_DIRS = (
