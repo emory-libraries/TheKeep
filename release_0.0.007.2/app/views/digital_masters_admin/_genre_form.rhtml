@@ -1,0 +1,10 @@
+<%= error_messages_for 'genre' %>
+
+<!--[form:genre]-->
+<p><label for="genre_genre">Genre</label><br/>
+<%= text_field 'genre', 'genre'  %></p>
+
+<p><label for="genre_authority">Authority</label><br/>
+<%= select ('genre', 'authority_id', Authority::getAuthorities) %></p>
+<!--[eoform:genre]-->
+

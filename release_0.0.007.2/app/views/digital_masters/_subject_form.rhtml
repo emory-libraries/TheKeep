@@ -1,0 +1,17 @@
+<%= javascript_include_tag :defaults %>
+<%= javascript_include_tag 'prototype' %>
+
+<div id="label">Add/Edit Subject
+<span id="close"><%= link_to_function "X", "Element.hide('edit_div')"%></span>
+</div>
+<%= hidden_field 'cs', 'content_id', :value => @cs.content_id %>
+<table>
+	<tr>
+		<th>Field Name</th>
+		<th>Subject</th>
+	</tr>
+	<tr>
+		<td><%= text_field ('cs', 'fieldnames') %></td>
+		<td><%=	select ('cs', 'subject_id', Subject::getSubjects()) %></td>
+	</tr>
+</table>

@@ -1,0 +1,66 @@
+<div id="label">Add/Edit Source Still Image
+<span id="close"><%= link_to_function "X", "Element.hide('edit_div')"%></span>
+</div>
+
+<%= hidden_field ('srcStillImage', 'content_id') %>
+<table> 
+	<tr>
+		<td><label for="srcStillImage_source_date">Date of Source Item</label></td>
+		<td><%= text_field 'srcStillImage', 'source_date'  %></td>
+
+		<td><label for="srcStillImage_publication_date">Publication date</label></td>
+		<td><%= text_field 'srcStillImage', 'publication_date'  %></td>
+	</tr>
+	
+	<tr>
+		<td><label for="srcStillImage_dimension_height">Dimension height</label></td>
+		<td>
+			<%= text_field 'srcStillImage', 'dimension_height', :size => 4%> 
+			<%= select ('srcStillImage', 'dimension_height_unit', getLinearUnits) %>
+		</td>
+				
+		<td rowspan="2"><label for="srcStillImage_dimension_note">Dimension note</label></td>
+		<td rowspan="2"><%= text_area 'srcStillImage', 'dimension_note', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>
+	</tr>
+	<tr>
+		<td><label for="srcStillImage_dimension_width">Dimension width</label></td>
+		<td>
+			<%= text_field 'srcStillImage', 'dimension_width', :size => 4 %>
+			<%= select ('srcStillImage', 'dimension_width_unit', getLinearUnits) %>
+		</td>
+		
+		<td></td>
+		<td></td>
+	</tr>	 
+	<tr>
+		<td><label for="srcStillImage_item_location">Item location</label></td>
+		<td><%= text_field 'srcStillImage', 'item_location'  %></td>
+		
+		<td rowspan="2"><label for="srcStillImage_source_note">Source Notes</label></td>
+		<td rowspan="2"><%= text_area 'srcStillImage', 'source_note', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>
+	</tr>
+	<tr>
+		<td><label for="srcStillImage_housing_id">Housing Description</label></td>
+		<td><%= select('srcStillImage', 'housing_id', Housing::getHousings) %></td>
+		
+		<td></td>
+		<td></td>
+	</tr>
+		
+	<tr>
+		<td><label for="srcStillImage_disposition">Disposition</label></td>
+		<td><%= text_field 'srcStillImage', 'disposition'  %></td>
+		
+		<td><label for="srcStillImage_conservation_history">Conservation history</label></td>
+		<td><%= text_area 'srcStillImage', 'conservation_history', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>		
+	</tr>
+	<tr>	
+		<td><label for="srcStillImage_generation">Generation</label></td>
+		<td><%= text_field 'srcStillImage', 'generation'  %></td>
+
+		<td><label for="srcStillImage_related_item">Related item</label></td>
+		<td>
+			<%= text_area 'srcStillImage', 'related_item', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %>
+		</td>
+	</tr>				
+</table>		

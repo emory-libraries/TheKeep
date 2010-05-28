@@ -1,0 +1,8 @@
+<% for column in Restriction.content_columns %>
+<p>
+  <b><%= column.human_name %>:</b> <%=h @restriction.send(column.name) %>
+</p>
+<% end %>
+
+<%= link_to 'Edit', :action => 'restriction_edit', :id => @restriction %> |
+<%= link_to 'Back', :action => 'restriction_list' %>

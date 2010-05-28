@@ -1,0 +1,15 @@
+<html>
+<head>
+  <title>DigitalMasters: <%= controller.action_name %></title>
+  <%= stylesheet_link_tag 'scaffold' %>
+  <%= stylesheet_link_tag 'popup_edit' %>
+  <%= stylesheet_link_tag 'main' %>
+</head>
+<body>
+
+<p style="color: green"><%= flash[:notice] %></p>
+
+<%= yield  %>
+
+</body>
+</html>

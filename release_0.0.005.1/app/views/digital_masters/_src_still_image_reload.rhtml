@@ -1,0 +1,6 @@
+function load_still_images()
+{
+	document.getElementById('edit_div').style.display = 'none';	
+	document.getElementById('still_img_subform').innerHTML = "<%= escape_javascript(render :partial => 'src_still_image_show', :locals => {:content => @content}) %>";
+}
+load_still_images();

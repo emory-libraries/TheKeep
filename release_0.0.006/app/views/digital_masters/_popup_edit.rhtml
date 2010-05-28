@@ -1,0 +1,30 @@
+function popup_row()
+{
+	d = document.getElementById('edit_div');
+
+	d.style.background = "#66cc66";
+	d.style.padding = "5px";
+	d.style.border = "1px";
+	d.style.position = "fixed";
+	d.style.top = "150px";
+	d.style.left = "20px";
+	d.style.display = "block";
+		
+	start_form = '<%= escape_javascript(form_remote_tag (action)) %>';
+	
+	row = "<%= escape_javascript(render :partial => partial_name) %>";
+	
+	
+	controls = ' <%= submit_tag "Save" %> <input value="Cancel" type="button" onClick="document.getElementById(\'edit_div\').style.display = \'none\'"/>'; 
+	
+	end_form = '<%= end_form_tag %>';
+	
+	d.innerHTML = start_form + row + controls + end_form;
+}
+
+function popup_close()
+{
+	document.getElementById('edit_div').display = "none";
+}
+
+popup_row();

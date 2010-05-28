@@ -1,0 +1,5 @@
+<p><b><%= Subject %>:</b> <%= @subject.subject %></p>
+<p><b><%= Authority %>:</b> <%= @subject.Authority.authority %></p>
+
+<%= link_to 'Edit', :action => 'subject_edit', :id => @subject %> |
+<%= link_to 'Back', :action => 'subject_list' %>

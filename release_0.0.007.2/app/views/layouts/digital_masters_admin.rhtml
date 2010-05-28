@@ -1,0 +1,17 @@
+<html>
+<head>
+  <title>DigitalMastersAdmin: <%= controller.action_name %></title>
+  <%= stylesheet_link_tag 'scaffold' %>
+</head>
+<body>
+
+<p style="color: green"><%= flash[:notice] %></p>
+
+<%= link_to_function "Close Window", "self.close();" %>
+<br />
+<%= link_to "Admin Menu", :action => "index" %>
+
+<%= yield  %>
+
+</body>
+</html>

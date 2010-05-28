@@ -1,0 +1,4 @@
+<%= hidden_field 'cg', 'content_id', :value => @cg.content_id %>
+<%= text_field ('cg', 'fieldnames') %>
+<%=	select ('cg', 'genre_id', Genre::getGenres()) %>
+

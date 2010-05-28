@@ -1,0 +1,6 @@
+function load_name_table()
+{
+	document.getElementById('edit_div').style.display = 'none';	
+	document.getElementById('subjects').innerHTML = "<%= escape_javascript(render :partial => 'content_subjects', :locals => {:content => @content}) %>";
+}
+load_name_table();

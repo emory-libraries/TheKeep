@@ -1,0 +1,6 @@
+<%= link_to_remote 'Add Digital Copy', :complete => 'eval(request.responseText)', :url => {:action => 'addTechImage', :src_still_image_id => image.id} %><br />
+<% for tech_image in image.TechImages %>
+	<%= link_to_remote 'Edit Digital Copy', :complete => 'eval(request.responseText)', :url => {:action => 'editTechImage', :id => tech_image.id} %>
+	<%= tech_image.format_name_version %> <%= tech_image.pPixel_res %> <%= tech_image.image_note %>	
+	<br />
+<% end %>	

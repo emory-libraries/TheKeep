@@ -1,0 +1,108 @@
+<table border="1">
+
+<tr>
+	<td><label for="content_completed_by">Completed by</label></td>
+	<td><%= select ('content', 'completed_by', [[ "Not Complete", nil]] + StaffName::getStaff ) %></td>
+	<td><label for="content_completed_date">Completed Date</label></td>
+	<td colspan="3">
+		<div id='completed_date'>&nbsp;</div>
+		  <%= observe_field(:content_completed_by, :on => 'changed', :with => 'completed_by',
+			:update => :completed_date, :url => { :action => :getNow} ) 
+		  %>
+	</td>
+</tr>
+<tr>
+	<td>Record ID/ File Name</td><td><%= @content.id %>&nbsp;</td>
+	
+	<td><label for="content_record_id_type">Type</label></td>
+	<td>
+		<%= 
+			options = Content::RECORD_ID_TYPES; 
+			select ('content', 'record_id_type', options)
+		%>
+	</td>
+</tr>
+<tr>	
+	<td><label for="content_title">Title</label></td>
+	<td colspan="5"><%= text_field 'content', 'title', 'size' => 170, 'MAXLENGTH' => 255 %></td>
+<tr>
+
+<tr>
+	<td><label for="other_id">Other ID</label></td>
+	<td colspan="3"><%= text_field 'content', 'other_id', 'size' => 25, 'MAXLENGTH' => 255 %></td>
+	
+	<td><label for="content_subtitle">Subtitle</label></td>
+	<td><%= text_field 'content', 'subtitle', 'size' => 75, 'MAXLENGTH' => 255 %></td>		
+</tr>
+
+<tr>
+	<td><label for="content_collection_number">Collection Number</label></td>
+	<td colspan="3">
+		<%= select ('content', 'collection_number', [["No Collection", nil]] + DescriptionData::getMSSNumbers) %>
+		<%= observe_field(:content_collection_number, :on => 'changed', :with => "collection_number",
+			:update => :main_entry, :url => { :action => :updateMainEntry} ) 
+		%>
+		<%= observe_field(:content_collection_number, :on => 'changed', :with => "collection_number",
+			:update => :title_statement, :url => { :action => :updateTitleStatement} ) 
+		%>		
+	</td>
+	
+	<td rowspan="3"><label for="content_abstract">Abstract</label></td>
+	<td rowspan="3"><%= text_area 'content', 'abstract', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>
+</tr>
+
+<tr>
+	<td>Main Entry</td>
+	<td colspan="3"><div id="main_entry"><% unless (@content.DescriptionData.nil?) %><%= @content.DescriptionData.main_entry %><% end %></div></td>
+</tr>
+
+<tr>
+	<td>Title Statement</td>
+	<td colspan="3"><div id="title_statement"><% unless (@content.DescriptionData.nil?) %><%= @content.DescriptionData.title_statement %><% end %></div></td>
+</tr>
+
+<tr>
+	<td>Record Creation Date</td>
+	<td colspan="3"><div id="date_created"><%= @content.date_created %>&nbsp;</div></td>
+	
+	<td rowspan="3"><label for="content_toc">Table of Contents</label></td>
+	<td rowspan="3"><%= text_area 'content', 'toc', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>
+</tr>
+
+<tr>
+	<td>Date Last Modified</td>
+	<td colspan="3"><div id="date_modified"><%= @content.date_modified %>&nbsp;</div></td>
+</tr>
+
+<tr>
+	<td>Resource Type</td>
+	<td colspan="3"><%=	select ('content', 'resource_type_id', ResourceType::getResourceTypes) %></td>
+</tr>
+
+<tr>
+	<td>Languages</td>
+	<td colspan="3">
+		<%= select('language', 'languages0', [["None", nil]] + Language::getLanguages) %> <i>primary</i><br />
+		<%= select('language', 'languages1', [["None", nil]] + Language::getLanguages) %> <i>secondary</i>		
+		<script language="JavaScript">
+			function setSelected(s, v)
+			{
+				for (var i = 0; i < s.options.length; i++)
+				{
+					if (s.options[i].value == v) {	s.selectedIndex = i; }
+				}
+			}
+			setSelected(document.getElementById("language_languages0"), '<% unless (@content.languages[0].nil?) %><%= @content.languages[0].language_id %><% end %>');
+			setSelected(document.getElementById("language_languages1"), '<% unless (@content.languages[1].nil?) %><%= @content.languages[1].language_id %><% end %>');
+		</script>
+	</td>
+	<td rowspan="3">Content Notes</td>
+	<td rowspan="3"><%= text_area 'content', 'content_notes', 'rows' => 6, 'cols' => '60', 'wrap' => 'virtual' %></td>	
+</tr>
+
+<tr>
+	<td>Location</td>
+	<td colspan="3"><%=	select ('content', 'location_id', Location::getLocations) %></td>
+</tr>
+
+</table>

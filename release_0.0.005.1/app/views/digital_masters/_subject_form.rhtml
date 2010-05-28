@@ -1,0 +1,4 @@
+<%= hidden_field 'cs', 'content_id', :value => @cs.content_id %>
+<%= text_field ('cs', 'fieldnames') %>
+<%=	select ('cs', 'subject_id', Subject::getSubjects()) %>
+
