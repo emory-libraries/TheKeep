@@ -1,5 +1,8 @@
-from django.test import Client, TestCase
+import os
+
+from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.test import Client, TestCase
 
 from digitalmasters.audio.forms import UploadForm
 
@@ -45,3 +48,21 @@ class AudioTest(TestCase):
         self.assert_(isinstance(response.context['form'], UploadForm))
         self.assertContains(response, 'Audio file')
         self.assertContains(response, '<input')
+
+        # POST non-wav file results in an error
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'))
+        response = self.client.post(upload_url, {'label': 'sample non-WAV', 'audio': f})
+        self.assertEqual('Upload file must be a WAV file (got audio/mpeg)', response.context['error'])
+        f.close()
+
+        # POST actual wav file - no error
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        response = self.client.post(upload_url, {'label': 'sample WAV', 'audio': f})
+        self.assert_('error' not in response.context)
+        f.close()
+
+        
+        
+
+        
+        

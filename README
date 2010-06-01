@@ -1,0 +1,19 @@
+README
+======
+
+Dependencies
+------------
+ * eulcore (currently included as a subversion external)
+  * see eulcore documentation for dependencies
+ * python-magic (for file mimetype detection)
+
+
+Installation
+------------
+Install and configure like other django applications.
+
+Copy ``localsettings-sample.py`` to ``localsettings.py`` and configure. 
+
+Install ``python-magic`` and its dependencies. On Ubuntu, install
+the ``python-magic`` package.
+

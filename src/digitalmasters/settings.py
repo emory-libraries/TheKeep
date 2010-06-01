@@ -61,6 +61,11 @@ AUTHENTICATION_BACKENDS = (
     'eulcore.django.ldap.emory.EmoryLDAPBackend',
 )
 
+FILE_UPLOAD_HANDLERS = (
+    # removing defualg MemoryFileUploadHandler so all uploaded files can be treated the same
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+)
+
 EXTENSION_DIRS = (
     path.join(BASE_DIR, '../externals/django-modules'),
 )
