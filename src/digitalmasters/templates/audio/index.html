@@ -1,3 +1,7 @@
-<p>Hello, Euterpe!</p>
+{% extends "site_base.html" %}
 
-<a href="{% url audio:upload %}">upload an audio file</a>
+{% block content-title %}Hello, Euterpe!{% endblock %}
+
+{% block content-body %}
+  <a href="{% url audio:upload %}">upload an audio file</a>
+{% endblock %}

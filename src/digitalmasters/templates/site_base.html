@@ -1,0 +1,30 @@
+{% extends "genlib_templates/site_base.xhtml" %}
+
+{% block page-title %}Euterpe Prototype {% block page-subtitle %}: Home{% endblock %}{% endblock %}
+
+{% block style %}
+    {{ block.super }}
+    {% comment %}Place Local changes, modifications and overrisdes in your local.css file.{% endcomment %}
+   {# <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/local.css" /> #}
+{% endblock %}
+
+{% block site-name %}Euterpe Prototype{% endblock %}
+{% block site-slogan %}digital masters audio{% endblock %}
+
+{% load eulcore_tags %}
+
+{% block message %}
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|safe }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+{% endblock %}
+
+{% block content-outer-bottom %}
+  {% if SW_VERSION %}
+    <div class="sw-version dev-note">v{{ SW_VERSION }}</div>
+  {% endif %}
+{% endblock %}
