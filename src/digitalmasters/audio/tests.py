@@ -52,13 +52,19 @@ class AudioTest(TestCase):
         # POST non-wav file results in an error
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'))
         response = self.client.post(upload_url, {'label': 'sample non-WAV', 'audio': f})
-        self.assertEqual('Upload file must be a WAV file (got audio/mpeg)', response.context['error'])
+        # should only be one message
+        for msg in response.context['messages']:
+            self.assertEqual('Upload file must be a WAV file (got audio/mpeg)', str(msg))
+            self.assertEqual('error', msg.tags)
         f.close()
 
         # POST actual wav file - no error
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
         response = self.client.post(upload_url, {'label': 'sample WAV', 'audio': f})
         self.assert_('error' not in response.context)
+        for msg in response.context['messages']:
+            self.assert_('Successfully ingested WAV file' in str(msg))
+            self.assertEqual('success', msg.tags)        
         f.close()
 
         
