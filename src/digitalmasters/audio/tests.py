@@ -7,6 +7,7 @@ from django.test import Client, TestCase
 from eulcore.django.fedora.server import Repository
 
 from digitalmasters.audio.forms import UploadForm, SearchForm
+from digitalmasters.audio.models import AudioObject
 
 class AudioTest(TestCase):
     fixtures =  ['users']
@@ -110,9 +111,38 @@ class AudioTest(TestCase):
         self.assertContains(response, obj2.pid,
                 msg_prefix="test object 2 listed in results when searching by title")
 
+        download_url = reverse('audio:download-audio', args=[obj.pid])
+        self.assertContains(response, download_url,
+                msg_prefix="search results link to audio download")
+
+    def test_download_audio(self):
+        # create a test audio object
+        repo = Repository()
+        obj = repo.get_object(type=AudioObject)
+        obj.label = "my audio test object"
+        obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        obj.save()
+        # log in as staff
+        self.client.login(**self.admin_credentials)
+
+        download_url = reverse('audio:download-audio', args=[obj.pid])
         
-        
-        
+        response = self.client.get(download_url)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, download_url))
+                             
+        expected = 'audio/x-wav'
+        self.assertEqual(response['Content-Type'], expected,
+                        "Expected '%s' but returned '%s' for %s mimetype" % \
+                        (expected, response['Content-Type'], download_url))
+                        
+        expected = 'attachment; filename=my-audio-test-object.wav'
+        self.assertEqual(response['Content-Disposition'], expected,
+                        "Expected '%s' but returned '%s' for %s content disposition" % \
+                        (expected, response['Content-Type'], download_url))
+                             
 
         
         

@@ -9,7 +9,7 @@
 {% for obj in results %}
     <tr>
         <td><a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a></td>
-        <td>{{ obj.label }}</td>
+        <td>{{ obj.label }} <br/> <a href="{% url audio:download-audio obj.pid %}">download audio</a></td>
         <td>{{ obj.created }}</td>
         <td>{{ obj.modified }}</td>
     </tr>

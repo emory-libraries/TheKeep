@@ -6,6 +6,7 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.template.defaultfilters import slugify
 
 from eulcore.django.fedora.server import Repository
 
@@ -22,6 +23,7 @@ def index(request):
 
 @permission_required('is_staff')
 def upload(request):
+    "Upload a WAV file and create a new fedora object.  Only accepts audio/x-wav."
     if request.method == 'POST':
         form = UploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -54,6 +56,7 @@ def upload(request):
                               context_instance=RequestContext(request))
 @permission_required('is_staff')
 def search(request):
+    "Search for fedora objects by pid or title."
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
@@ -77,5 +80,19 @@ def search(request):
 @permission_required('is_staff')
 def edit(request, pid):
     # place-holder so search results have somewhere to link to
-    return HttpResponse("edit page placeholder")
-    
+    repo = Repository()
+    obj = repo.get_object(pid, type=AudioObject)
+    return render_to_response('audio/edit.html', {'obj' : obj },
+            context_instance=RequestContext(request))
+
+
+@permission_required('is_staff')
+def download_audio(request, pid):
+    "Serve out the audio datastream for the fedora object specified by pid."
+    repo = Repository()
+    obj = repo.get_object(pid, type=AudioObject)
+    # NOTE: this will probably need some work to be able to handle large datastreams
+    response = HttpResponse(obj.audio.content, mimetype=obj.audio.mimetype)
+    response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
+    return response
+

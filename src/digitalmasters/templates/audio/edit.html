@@ -1,0 +1,9 @@
+{% extends "site_base.html" %}
+
+{% block content-title %}Edit Record{% endblock %}
+
+{% block content-body %}
+<h2>{{ obj.label }}</h2>
+<p>{{ obj.pid }} - <a href="{% url audio:download-audio obj.pid %}">download audio</a></p>
+
+{% endblock %}
