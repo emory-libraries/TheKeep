@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
-from digitalmasters.audio.forms import UploadForm
+from digitalmasters.audio.forms import UploadForm, SearchForm
 
 class AudioTest(TestCase):
     fixtures =  ['users']
@@ -32,6 +32,10 @@ class AudioTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, audio_index))
 
+        self.assert_(isinstance(response.context['search'], SearchForm))
+        self.assertContains(response, '<input')
+        self.assertContains(response, 'Pid:')
+        self.assertContains(response, 'Title:')
 
     def test_upload(self):
         # test upload form
