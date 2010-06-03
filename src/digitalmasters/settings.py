@@ -53,6 +53,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'eulcore.django.ldap.emory',
     'eulcore.django.util',
+    'eulcore.django.testsetup',
+    'eulcore.django.fedora',
     'digitalmasters.audio',
 )
 
