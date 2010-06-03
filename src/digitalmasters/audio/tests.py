@@ -4,6 +4,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
+from eulcore.django.fedora.server import Repository
+
 from digitalmasters.audio.forms import UploadForm, SearchForm
 
 class AudioTest(TestCase):
@@ -64,13 +66,51 @@ class AudioTest(TestCase):
 
         # POST actual wav file - no error
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
-        response = self.client.post(upload_url, {'label': 'sample WAV', 'audio': f})
-        self.assert_('error' not in response.context)
+        response = self.client.post(upload_url, {'label': 'sample WAV', 'audio': f}, follow=True)
         for msg in response.context['messages']:
             self.assert_('Successfully ingested WAV file' in str(msg))
             self.assertEqual('success', msg.tags)        
         f.close()
 
+    def test_search(self):
+        search_url = reverse('audio:search')
+
+        # create some test objects to search for
+        repo = Repository()
+        obj = repo.get_object()
+        obj.label = "test search object 1"
+        obj.save()
+        obj2 = repo.get_object()
+        obj2.label = "test search object 2"
+        obj2.save()
+
+        # log in as staff
+        self.client.login(**self.admin_credentials)
+
+        # search by exact pid
+        response = self.client.post(search_url, {'pid': obj.pid})
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertContains(response, obj.pid,
+                msg_prefix="test object 1 listed in results when searching by pid")
+        self.assertNotContains(response, obj2.pid,
+                msg_prefix="test object 2 not listed in results when searching by pid for test object 1")
+
+        # search by title phrase
+        response = self.client.post(search_url,
+            {'title': 'test search', 'pid': '%s:' % settings.FEDORA_PIDSPACE })
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertContains(response, obj.pid,
+                msg_prefix="test object 1 listed in results when searching by title")
+        self.assertContains(response, obj2.pid,
+                msg_prefix="test object 2 listed in results when searching by title")
+
+        
         
         
 

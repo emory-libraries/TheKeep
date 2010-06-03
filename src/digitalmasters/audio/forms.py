@@ -9,5 +9,6 @@ class UploadForm(forms.Form):
 class SearchForm(forms.Form):
     pid = forms.CharField(required=False, help_text='Search by fedora pid.',
             initial='%s:' % settings.FEDORA_PIDSPACE)
-    title = forms.CharField(required=False, help_text='Search for title word or phrase.')
+    title = forms.CharField(required=False,
+            help_text='Search for title word or phrase.  May contain wildcards * or ?.')
     

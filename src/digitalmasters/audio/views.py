@@ -1,8 +1,9 @@
 import magic
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
@@ -43,7 +44,7 @@ def upload(request):
                 obj.save()
                 messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
                                 % (uploaded_file.name, obj.pid))
-                return render_to_response('audio/index.html', context_instance=RequestContext(request))
+                return HttpResponseRedirect(reverse('audio:index'))
 
             # NOTE: uploaded file does not need to be removed because django
             # cleans it up automatically
@@ -51,3 +52,30 @@ def upload(request):
         form = UploadForm()
     return render_to_response('audio/upload.html', {'form': form },
                               context_instance=RequestContext(request))
+@permission_required('is_staff')
+def search(request):
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            search_opts = {}
+            if form.cleaned_data['pid']:
+                # NOTE: adding wildcard to match all records in an instance
+                search_opts['pid__contains'] = "%s*" % form.cleaned_data['pid']
+            if form.cleaned_data['title']:
+                search_opts['title__contains'] = form.cleaned_data['title']
+                
+            repo = Repository()
+            found = repo.find_objects(**search_opts)
+            return render_to_response('audio/search.html', {'results': found, 'search': form},
+                    context_instance=RequestContext(request))
+    else:
+        form = SearchForm()
+
+    return render_to_response('audio/search.html', {'results': found, 'search': form},
+                    context_instance=RequestContext(request))
+    
+@permission_required('is_staff')
+def edit(request, pid):
+    # place-holder so search results have somewhere to link to
+    return HttpResponse("edit page placeholder")
+    

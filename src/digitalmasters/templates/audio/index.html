@@ -6,11 +6,6 @@
 <p><a href="{% url audio:upload %}">upload an audio file</a></p>
 
 <hr/>
-
-<h2>Search for content already ingested in Fedora.</h2>
-<form method="post" action="">
-    {{ search.as_p }}
-    <input type="submit" value="Search" />
-</form>
+{% include 'audio/_search_form.html' %}
 
 {% endblock %}
