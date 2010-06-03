@@ -33,6 +33,14 @@ AUTH_LDAP_SEARCH_FILTER = '' # e.g. '(uid=%s)'
 AUTH_LDAP_CHECK_SERVER_CERT = False # ALWAYS SET True in production.
 AUTH_LDAP_CA_CERT_PATH = '' # absolute path of cert
 
+# Fedora Repository settings
+FEDORA_ROOT = 'http://localhost:8080/fedora/'
+FEDORA_USER = 'fedoraAdmin'
+FEDORA_PASS = 'fedoraAdmin'
+FEDORA_PIDSPACE = 'changeme'
+FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
+# use this to explicitly configure a test pidspace; by default, uses pidspace-test
+#FEDORA_TEST_PIDSPACE = 'testme'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
