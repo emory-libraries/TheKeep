@@ -1,11 +1,15 @@
 import magic
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
+from eulcore.django.fedora.server import Repository
+
 from digitalmasters.audio.forms import UploadForm
+from digitalmasters.audio.models import AudioObject
 
 allowed_audio_types = ['audio/x-wav']
 
@@ -29,7 +33,14 @@ def upload(request):
             if type not in allowed_audio_types:
                 messages.error(request, 'Upload file must be a WAV file (got %s)' % type)
             else:
-                messages.success(request, 'Successfully uploaded WAV file %s.' % uploaded_file.name)
+                repo = Repository()
+                obj = repo.get_object(type=AudioObject)
+                obj.label = form.cleaned_data['label']
+                obj.dc.content.title = obj.label
+                obj.audio.content = uploaded_file  
+                obj.save()
+                messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
+                                % (uploaded_file.name, obj.pid))
                 return render_to_response('audio/index.html', context_instance=RequestContext(request))
 
             # NOTE: uploaded file does not need to be removed because django
