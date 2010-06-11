@@ -1,5 +1,5 @@
 <h2>Search for records in Fedora.</h2>
-<form method="get" action="{% url audio:search %}">{% csrf_token %}
+<form method="get" action="{% url audio:search %}">
     {{ search.as_p }}
     <input type="submit" value="Search" />
 </form>
