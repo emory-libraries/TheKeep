@@ -89,7 +89,7 @@ class AudioTest(TestCase):
         self.client.login(**self.admin_credentials)
 
         # search by exact pid
-        response = self.client.post(search_url, {'pid': obj.pid})
+        response = self.client.get(search_url, {'pid': obj.pid})
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
@@ -100,7 +100,7 @@ class AudioTest(TestCase):
                 msg_prefix="test object 2 not listed in results when searching by pid for test object 1")
 
         # search by title phrase
-        response = self.client.post(search_url,
+        response = self.client.get(search_url,
             {'title': 'test search', 'pid': '%s:' % settings.FEDORA_PIDSPACE })
         code = response.status_code
         expected = 200

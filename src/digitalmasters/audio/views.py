@@ -54,27 +54,28 @@ def upload(request):
         form = UploadForm()
     return render_to_response('audio/upload.html', {'form': form },
                               context_instance=RequestContext(request))
+
 @permission_required('is_staff')
 def search(request):
     "Search for fedora objects by pid or title."
-    if request.method == 'POST':
-        form = SearchForm(request.POST)
-        if form.is_valid():
-            search_opts = {}
-            if form.cleaned_data['pid']:
-                # NOTE: adding wildcard to match all records in an instance
-                search_opts['pid__contains'] = "%s*" % form.cleaned_data['pid']
-            if form.cleaned_data['title']:
-                search_opts['title__contains'] = form.cleaned_data['title']
-                
+    form = SearchForm(request.GET)
+    ctx_dict = {'search': form}
+    if form.is_valid():
+        search_opts = {}
+        if form.cleaned_data['pid']:
+            # NOTE: adding wildcard to match all records in an instance
+            search_opts['pid__contains'] = "%s*" % form.cleaned_data['pid']
+        if form.cleaned_data['title']:
+            search_opts['title__contains'] = form.cleaned_data['title']
+            
+        if search_opts:
+            # If they didn't specify any search options, don't bother
+            # searching.
             repo = Repository()
             found = repo.find_objects(**search_opts)
-            return render_to_response('audio/search.html', {'results': found, 'search': form},
-                    context_instance=RequestContext(request))
-    else:
-        form = SearchForm()
+            ctx_dict['results'] = found
 
-    return render_to_response('audio/search.html', {'results': found, 'search': form},
+    return render_to_response('audio/search.html', ctx_dict,
                     context_instance=RequestContext(request))
     
 @permission_required('is_staff')
