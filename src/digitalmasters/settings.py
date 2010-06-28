@@ -51,7 +51,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.admin',
-    'eulcore.django.ldap.emory',
+    'eulcore.django.emory_ldap',
     'eulcore.django.util',
     'eulcore.django.testsetup',
     'eulcore.django.fedora',
@@ -61,11 +61,11 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'eulcore.django.ldap.emory.EmoryLDAPBackend',
+    'eulcore.django.emory_ldap.backends.EmoryLDAPBackend',
 )
 
 FILE_UPLOAD_HANDLERS = (
-    # removing defualg MemoryFileUploadHandler so all uploaded files can be treated the same
+    # removing default MemoryFileUploadHandler so all uploaded files can be treated the same
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 )
 
