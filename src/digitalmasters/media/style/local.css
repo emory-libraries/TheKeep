@@ -1,0 +1,7 @@
+table#mods_edit table.subform {
+  margin-left: 10px;  
+ /* border-left: 1px solid #cccccc;*/
+}
+table#mods_edit table.subform th {
+    padding-left: 5px;
+}

@@ -8,10 +8,11 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
+from eulcore import xmlmap
 from eulcore.django.fedora.server import Repository
 
-from digitalmasters.audio.forms import UploadForm, SearchForm
-from digitalmasters.audio.models import AudioObject
+from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
+from digitalmasters.audio.models import AudioObject, Mods
 
 allowed_audio_types = ['audio/x-wav']
 
@@ -77,13 +78,39 @@ def search(request):
 
     return render_to_response('audio/search.html', ctx_dict,
                     context_instance=RequestContext(request))
-    
+
 @permission_required('is_staff')
 def edit(request, pid):
     # place-holder so search results have somewhere to link to
     repo = Repository()
     obj = repo.get_object(pid, type=AudioObject)
-    return render_to_response('audio/edit.html', {'obj' : obj },
+
+    # NOTE: fixture text is just a place-holder until edit form gets glued into
+    # the repo object
+    
+    MODS_TEXT = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+  <mods:titleInfo>
+    <mods:title>A simple record</mods:title>
+  </mods:titleInfo>
+  <mods:typeOfResource>text</mods:typeOfResource>
+  <mods:note displayLabel="a general note" type="general">remember to...</mods:note>
+  <mods:originInfo>
+    <mods:dateCreated keyDate='yes'>2010-06-17T00:00:00.00Z</mods:dateCreated>
+  </mods:originInfo>
+</mods:mods>
+"""
+    testobj = xmlmap.load_xmlobject_from_string(MODS_TEXT, Mods)
+    print testobj.serialize()
+    if request.method == 'POST': # If the form has been submitted...
+        form = EditForm(request.POST, instance=testobj) # form bound to the POST data
+        if form.is_valid():
+            instance = form.update_instance()
+            # print instance.serialize()
+    else:
+        form = EditForm(instance=testobj)
+        #form = EditForm()
+    
+    return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 
 
