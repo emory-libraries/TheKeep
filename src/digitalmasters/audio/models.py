@@ -17,8 +17,8 @@ class AudioObject(DigitalObject):
 
 class ModsDate(xmlmap.XmlObject):
     ROOT_NAME = 'dateCreated'       # ?? could vary
-    key = xmlmap.SimpleBooleanField('@keyDate', 'yes', 'no')    # FIXME: not really a simple boolean...
-    value = xmlmap.StringField('.')     # date field?
+    key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', '')    # FIXME: not really a simple boolean...
+    date = xmlmap.StringField('.')     # date field?
 
 class ModsOriginInfo(xmlmap.XmlObject):
     ROOT_NAME = 'originInfo'
@@ -27,9 +27,9 @@ class ModsOriginInfo(xmlmap.XmlObject):
 class ModsNote(xmlmap.XmlObject):
     ROOT_NAME = 'note'
     label = xmlmap.StringField('@displayLabel')
-    type = xmlmap.StringField('@type')
-        # list of options:
-        # general, inscription, source of information, reference, hidden
+    type = xmlmap.StringField('@type',
+                choices=['general', 'inscription', 'source of information', 
+                        'reference', 'hidden'])
         # with capacity to add to the list ?
     text = xmlmap.StringField('.')      # actual text value of the note
 
@@ -48,7 +48,7 @@ class Mods(xmlmap.XmlObject):
     xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
     
     title = xmlmap.StringField("mods:titleInfo/mods:title")
-    resource_type  = xmlmap.StringField("mods:typeOfResource")  # controlled list?
+    resource_type  = xmlmap.SchemaField("mods:typeOfResource", "resourceTypeDefinition")
     note = xmlmap.NodeField('mods:note', ModsNote)
     origin_info = xmlmap.NodeField('mods:originInfo', ModsOriginInfo)
 
