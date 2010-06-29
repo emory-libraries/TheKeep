@@ -76,6 +76,8 @@ EXTENSION_DIRS = (
 # NOTE: for now, just using admin site for login/logout
 LOGIN_URL = '/admin/'
 
+AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
+
 import sys
 try:
     sys.path.extend(EXTENSION_DIRS)
