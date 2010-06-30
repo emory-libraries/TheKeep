@@ -175,8 +175,8 @@ class TestMods(TestCase):
         self.assertEqual('general', self.mods.note.type)
         self.assertEqual(u'remember to...', unicode(self.mods.note))
         self.assertEqual(u'2010-06-17', unicode(self.mods.origin_info.created))
-        self.assertEqual('2010-06-17', self.mods.origin_info.created.value)
-        self.assertEqual(True, self.mods.origin_info.created.key)   # oversimplifying boolean here
+        self.assertEqual('2010-06-17', self.mods.origin_info.created.date)
+        self.assertEqual(True, self.mods.origin_info.created.key_date)   # oversimplifying boolean here
 
     def test_template_init(self):
         mods = Mods()
