@@ -90,7 +90,7 @@ def edit(request, pid):
             if form.is_valid():
                 # FIXME: should probably check schema-valid here also
                 # update foxml object with MODS from the form
-                obj.mods = form.update_instance()
+                form.update_instance()      # instance is reference to mods object
                 obj.save()
                 messages.success(request, 'Updated MODS for %s' % pid)
                 return HttpResponseRedirect(reverse('audio:index'))

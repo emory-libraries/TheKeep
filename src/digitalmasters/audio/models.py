@@ -64,3 +64,18 @@ class AudioObject(DigitalObject):
             'mimetype': 'audio/x-wav',
         })
 
+    def save(self, logMessage=None):
+        if self.mods.isModified():
+            # MODS is master metadata
+            # if it has changed, update DC and object label to keep them in sync
+            if self.mods.content.title:
+                self.label = self.mods.content.title
+                self.dc.content.title = self.mods.content.title
+            if self.mods.content.resource_type:
+                self.dc.content.type = self.mods.content.resource_type
+            if self.mods.content.origin_info.created.date:
+                # UGH: this will add originInfo and dateCreated if they aren't already in the xml
+                # because of our instantiate-on-get hack
+                self.dc.content.date = self.mods.content.origin_info.created.date
+                
+        return super(AudioObject, self).save(logMessage)

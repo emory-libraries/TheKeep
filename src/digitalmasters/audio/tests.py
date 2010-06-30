@@ -272,3 +272,38 @@ class TestMods(TestCase):
         invalid_mods = load_xmlobject_from_string(invalid, Mods)
         self.assertFalse(invalid_mods.is_valid())
         
+
+# tests for (prototype) Audio DigitalObject
+class TestAudioObject(TestCase):
+    repo = Repository()
+
+    def setUp(self):
+        # create a test audio object to edit    
+        self.obj = self.repo.get_object(type=AudioObject)
+        self.obj.label = "Testing, one, two"
+        self.obj.dc.content.title = self.obj.label
+        self.obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        self.obj.save()
+
+    def tearDown(self):
+        self.repo.purge_object(self.obj.pid, "removing unit test fixture")
+
+    def test_save(self):
+        # save without changing the MODS - shouldn't mess anything up
+        self.obj.save()
+        self.assertEqual("Testing, one, two", self.obj.label)
+        self.assertEqual("Testing, one, two", self.obj.dc.content.title)
+
+        # set values in mods and save - should cascade to label, DC
+        title, type, date = 'new title in mods', 'text', '2010-01-03'
+        self.obj.mods.content.title = title
+        self.obj.mods.content.resource_type = type
+        self.obj.mods.content.origin_info.created.date = date
+        self.obj.save('testing custom save logic')
+
+        # get updated copy from repo to check
+        obj = self.repo.get_object(self.obj.pid, type=AudioObject)
+        self.assertEqual(title, obj.label)
+        self.assertEqual(title, obj.dc.content.title)
+        self.assertEqual(type, obj.dc.content.type)
+        self.assertEqual(date, obj.dc.content.date)
