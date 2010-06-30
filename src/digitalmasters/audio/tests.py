@@ -7,7 +7,7 @@ from django.test import Client, TestCase
 from eulcore.django.fedora.server import Repository
 from eulcore.xmlmap  import load_xmlobject_from_string
 
-from digitalmasters.audio.forms import UploadForm, SearchForm
+from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, ModsDate
 
 class AudioTest(TestCase):
@@ -144,6 +144,83 @@ class AudioTest(TestCase):
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
                              
+    def test_edit(self):
+        # create a test audio object to edit
+        repo = Repository()
+        obj = repo.get_object(type=AudioObject)
+        obj.label = "my audio test object"
+        obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        obj.save()
+        # log in as staff
+        self.client.login(**self.admin_credentials)
+
+        edit_url = reverse('audio:edit', args=[obj.pid])
+
+        response = self.client.get(edit_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, edit_url))
+        self.assert_(isinstance(response.context['form'], EditForm),
+                "MODS EditForm is set in response context")
+        self.assert_(isinstance(response.context['form'].instance, Mods),
+                "form instance is a MODS xmlobject")
+
+        # POST data to update MODS in fedora
+        mods_data = {'title': 'new title',
+                    'resource_type': 'text',
+                    'note-label' : 'a general note',
+                    'note-type': 'general',
+                    'note-text': 'remember to ...',
+                    'created-key_date': True,
+                    'created-date': '2010-01-02',
+                    }
+        response = self.client.post(edit_url, mods_data, follow=True)
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assertEqual("Updated MODS for %s" % obj.pid, messages[0],
+            "successful save message set in response context")
+        # currently redirects to audio index
+        (redirect_url, code) = response.redirect_chain[0]
+        self.assert_(reverse('audio:index') in redirect_url,
+            "attempting to edit non-existent pid redirects to audio index page")
+        expected = 302      # redirect  -- maybe this should be a 303?
+        self.assertEqual(code, expected,
+            'Expected %s but returned %s for %s (edit non-existent record)'  % \
+            (expected, code, edit_url))
+
+        # retrieve the modified object from Fedora to check for updates
+        updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
+        self.assertEqual(mods_data['title'], updated_obj.mods.content.title,
+            'mods title in fedora matches posted title')
+        self.assertEqual(mods_data['resource_type'], updated_obj.mods.content.resource_type,
+            'mods resource type in fedora matches posted resource type')
+        self.assertEqual(mods_data['note-label'], updated_obj.mods.content.note.label,
+            'mods note label in fedora matches posted note label')
+        self.assertEqual(mods_data['note-type'], updated_obj.mods.content.note.type,
+            'mods note type in fedora matches posted note type')
+        self.assertEqual(mods_data['note-text'], updated_obj.mods.content.note.text,
+            'mods note text in fedora matches posted note text')
+        self.assertEqual(mods_data['created-key_date'],
+            updated_obj.mods.content.origin_info.created.key_date,
+            'mods created key date in fedora matches posted created key date')
+        self.assertEqual(mods_data['created-date'],
+            updated_obj.mods.content.origin_info.created.date,
+            'mods created date in fedora matches posted created date')
+        
+        # edit non-existent record - exception
+        fakepid = 'bogus-pid:1'
+        edit_url = reverse('audio:edit', args=[fakepid])
+        response = self.client.get(edit_url, follow=True)  # follow redirect to check error message
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assertEqual("Error: failed to load %s MODS for editing" % fakepid, messages[0],
+            "load error message set in context when attempting to edit a non-existent pid")
+        # currently redirects to audio index 
+        (redirect_url, code) = response.redirect_chain[0]
+        self.assert_(reverse('audio:index') in redirect_url,
+            "attempting to edit non-existent pid redirects to audio index page")
+        expected = 302      # redirect  -- maybe this should be a 303?
+        self.assertEqual(code, expected,
+            'Expected %s but returned %s for %s (edit non-existent record)'  % (expected, code, edit_url))
+
 
 # tests for (prototype) MODS XmlObject
 class TestMods(TestCase):

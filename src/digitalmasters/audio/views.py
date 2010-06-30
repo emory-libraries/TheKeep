@@ -8,11 +8,10 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
-from eulcore import xmlmap
 from eulcore.django.fedora.server import Repository
 
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
-from digitalmasters.audio.models import AudioObject, Mods
+from digitalmasters.audio.models import AudioObject
 
 allowed_audio_types = ['audio/x-wav']
 
@@ -42,7 +41,7 @@ def upload(request):
                 repo = Repository()
                 obj = repo.get_object(type=AudioObject)
                 obj.label = form.cleaned_data['label']
-                obj.dc.content.title = obj.label
+                obj.dc.content.title = obj.mods.content.title = obj.label
                 obj.audio.content = uploaded_file  
                 obj.save()
                 messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
@@ -81,39 +80,33 @@ def search(request):
 
 @permission_required('is_staff')
 def edit(request, pid):
-    # place-holder so search results have somewhere to link to
     repo = Repository()
-    obj = repo.get_object(pid, type=AudioObject)
 
-    # NOTE: fixture text is just a place-holder until edit form gets glued into
-    # the repo object
-    
-    MODS_TEXT = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
-  <mods:titleInfo>
-    <mods:title>A simple record</mods:title>
-  </mods:titleInfo>
-  <mods:typeOfResource>text</mods:typeOfResource>
-  <mods:note displayLabel="a general note" type="general">remember to...</mods:note>
-  <mods:originInfo>
-    <mods:dateCreated keyDate='yes'>2010-06-17T00:00:00.00Z</mods:dateCreated>
-  </mods:originInfo>
-</mods:mods>
-"""
-    testobj = xmlmap.load_xmlobject_from_string(MODS_TEXT, Mods)
-    print testobj.serialize()
-    if request.method == 'POST': # If the form has been submitted...
-        form = EditForm(request.POST, instance=testobj) # form bound to the POST data
-        if form.is_valid():
-            instance = form.update_instance()
-            # print instance.serialize()
-    else:
-        form = EditForm(instance=testobj)
-        #form = EditForm()
-    
-    return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
+    try:
+        obj = repo.get_object(pid, type=AudioObject)
+        if request.method == 'POST':
+            # if data has been submitted, initialize form with request data and object mods
+            form = EditForm(request.POST, instance=obj.mods.content)
+            if form.is_valid():
+                # FIXME: should probably check schema-valid here also
+                # update foxml object with MODS from the form
+                obj.mods = form.update_instance()
+                obj.save()
+                messages.success(request, 'Updated MODS for %s' % pid)
+                return HttpResponseRedirect(reverse('audio:index'))
+        else:
+            # GET - display the form for editing, pre-populated with MODS content from the object
+            form = EditForm(instance=obj.mods.content)
+
+        return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 
-
+    except Exception:
+        # eventually we will need better error handling... 
+        # this could mean the object doesn't exist OR it exists but has no MODS
+        messages.error(request, "Error: failed to load %s MODS for editing" % pid)
+        return HttpResponseRedirect(reverse('audio:index'))
+         
 @permission_required('is_staff')
 def download_audio(request, pid):
     "Serve out the audio datastream for the fedora object specified by pid."
