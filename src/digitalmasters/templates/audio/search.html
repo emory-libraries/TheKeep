@@ -4,6 +4,12 @@
 
 {% block content-body %}
 
+{% if server_error %}
+  <ul class='errorlist'>
+    <li class='error'>{{ server_error }}</li>
+  </ul>
+{% endif %}
+
 <table>
     <tr><th>pid</th><th>label</th><th>created</th><th>last modified</th></tr>
 {% for obj in results %}

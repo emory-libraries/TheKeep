@@ -60,6 +60,7 @@ def upload(request):
 @permission_required('is_staff')
 def search(request):
     "Search for fedora objects by pid or title."
+    response_code = None
     form = SearchForm(request.GET)
     ctx_dict = {'search': form}
     if form.is_valid():
@@ -73,12 +74,23 @@ def search(request):
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.
-            repo = Repository()
-            found = repo.find_objects(**search_opts)
-            ctx_dict['results'] = found
+            try:
+                repo = Repository()
+                found = repo.find_objects(**search_opts)
+                ctx_dict['results'] = list(found)
+            except:
+                response_code = 500
+                ctx_dict['server_error'] = 'There was an error ' + \
+                    'contacting the digital repository. This ' + \
+                    'prevented us from completing your search. If ' + \
+                    'this problem persists, please alert the ' + \
+                    'repository administrator. repo=' + repo.fedora_root
 
-    return render_to_response('audio/search.html', ctx_dict,
+    response = render_to_response('audio/search.html', ctx_dict,
                     context_instance=RequestContext(request))
+    if response_code is not None:
+        response.status_code = response_code
+    return response
 
 @permission_required('is_staff')
 def edit(request, pid):

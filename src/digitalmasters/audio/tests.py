@@ -1,4 +1,5 @@
 import os
+import urlparse
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -10,9 +11,10 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, ModsDate
 
+ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
+
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
-    admin_credentials = {'username': 'euterpe', 'password': 'digitaldelight'}
 
     def setUp(self):
         self.client = Client()
@@ -29,7 +31,7 @@ class AudioViewsTest(TestCase):
                              % (expected, code, audio_index))
 
         # logged in as staff
-        self.client.login(**self.admin_credentials)
+        self.client.login(**ADMIN_CREDENTIALS)
         response = self.client.get(audio_index)
         code = response.status_code
         expected = 200
@@ -46,7 +48,7 @@ class AudioViewsTest(TestCase):
         upload_url = reverse('audio:upload')
 
         # logged in as staff
-        self.client.login(**self.admin_credentials)
+        self.client.login(**ADMIN_CREDENTIALS)
         response = self.client.get(upload_url)
         code = response.status_code
         expected = 200
@@ -87,7 +89,7 @@ class AudioViewsTest(TestCase):
         obj2.save()
 
         # log in as staff
-        self.client.login(**self.admin_credentials)
+        self.client.login(**ADMIN_CREDENTIALS)
 
         # search by exact pid
         response = self.client.get(search_url, {'pid': obj.pid})
@@ -124,7 +126,7 @@ class AudioViewsTest(TestCase):
         obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
         obj.save()
         # log in as staff
-        self.client.login(**self.admin_credentials)
+        self.client.login(**ADMIN_CREDENTIALS)
 
         download_url = reverse('audio:download-audio', args=[obj.pid])
         
@@ -152,7 +154,7 @@ class AudioViewsTest(TestCase):
         obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
         obj.save()
         # log in as staff
-        self.client.login(**self.admin_credentials)
+        self.client.login(**ADMIN_CREDENTIALS)
 
         edit_url = reverse('audio:edit', args=[obj.pid])
 
@@ -229,6 +231,79 @@ class AudioViewsTest(TestCase):
             'Expected %s but returned %s for %s (edit non-existent record)'  % (expected, code, edit_url))
 
 
+RealRepository = Repository
+class FedoraCommsTest(TestCase):
+    '''Test the app's response to fedora inaccessibility and unexpected
+    fedora errors.'''
+
+    fixtures =  ['users']
+
+    def setUp(self):
+        self.client = Client()
+        self.client.login(**ADMIN_CREDENTIALS)
+
+    def tearDown(self):
+        self.restoreRepository()
+
+    def useRepositoryRoot(self, root=None, host=None, port=None, path=None):
+        if root is None:
+            root = settings.FEDORA_ROOT
+        root = self._update_root(root, host, port, path)
+
+        # lots of Repository objects floating around here. let's do our
+        # modules and namespacing very explicitly
+        import eulcore.fedora.server
+        import eulcore.django.fedora
+        import eulcore.django.fedora.server
+        import digitalmasters.audio.views
+
+        username = getattr(settings, 'FEDORA_USER', None)
+        password = getattr(settings, 'FEDORA_PASS', None)
+
+        class RedirectedRepository(eulcore.fedora.server.Repository):
+            def __init__(self):
+                eulcore.fedora.server.Repository.__init__(self, root, username, password)
+        if hasattr(settings, 'FEDORA_PIDSPACE'):
+            RedirectedRepository.default_pidspace = settings.FEDORA_PIDSPACE
+
+        eulcore.django.fedora.Repository = RedirectedRepository
+        eulcore.django.fedora.server.Repository = RedirectedRepository
+        digitalmasters.audio.views.Repository = RedirectedRepository
+
+    def restoreRepository(self):
+        import eulcore.django.fedora
+        import eulcore.django.fedora.server
+        import digitalmasters.audio.views
+        eulcore.django.fedora.Repository = RealRepository
+        eulcore.django.fedora.server.Repository = RealRepository
+        digitalmasters.audio.views.Repository = RealRepository
+
+    def _update_root(self, root, host, port, path):
+        root_parts = urlparse.urlsplit(root)
+        use_auth, at, hostport = root_parts.netloc.rpartition('@')
+        use_host, colon, use_port = hostport.partition(':')
+        use_parts = list(root_parts)
+
+        if host is not None:
+            use_host = host
+        if port is not None:
+            use_port = str(port)
+            colon = ':' # just in case it wasn't already
+        use_parts[1] = ''.join((use_auth, at, use_host, colon, use_port))
+
+        if path is not None:
+            use_parts[2] = path
+
+        return urlparse.urlunsplit(use_parts)
+
+    def testRepositoryDown(self):
+        '''Verify we respond correctly when we can't connect to the repo.'''
+        self.useRepositoryRoot(port=1)
+
+        search_url = reverse('audio:search')
+        response = self.client.get(search_url, {'pid': 'fakepid:42'})
+        self.assertContains(response, 'error contacting the digital repository',
+                status_code=500)
 
 
 # tests for (prototype) MODS XmlObject
