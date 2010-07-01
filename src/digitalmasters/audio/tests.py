@@ -10,7 +10,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, ModsDate
 
-class AudioTest(TestCase):
+class AudioViewsTest(TestCase):
     fixtures =  ['users']
     admin_credentials = {'username': 'euterpe', 'password': 'digitaldelight'}
 
@@ -205,7 +205,14 @@ class AudioTest(TestCase):
         self.assertEqual(mods_data['created-date'],
             updated_obj.mods.content.origin_info.created.date,
             'mods created date in fedora matches posted created date')
-        
+
+        # force a schema-validation error (shouldn't happen normally)
+        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, Mods)
+        obj.save("schema-invalid MODS")
+        response = self.client.post(edit_url, mods_data)
+
+        self.assertContains(response, '<ul class="errorlist">')
+
         # edit non-existent record - exception
         fakepid = 'bogus-pid:1'
         edit_url = reverse('audio:edit', args=[fakepid])
@@ -222,6 +229,8 @@ class AudioTest(TestCase):
             'Expected %s but returned %s for %s (edit non-existent record)'  % (expected, code, edit_url))
 
 
+
+
 # tests for (prototype) MODS XmlObject
 class TestMods(TestCase):
     FIXTURE = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
@@ -235,6 +244,10 @@ class TestMods(TestCase):
   </mods:originInfo>
 </mods:mods>
 """
+    invalid_xml = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+    <mods:titleInfo><mods:title invalid_attribute='oops'>An invalid record</mods:title></mods:titleInfo>
+</mods:mods>
+        """
 
     def setUp(self):
         self.mods = load_xmlobject_from_string(self.FIXTURE, Mods)
@@ -264,12 +277,7 @@ class TestMods(TestCase):
 
     def test_isvalid(self):
         self.assertTrue(self.mods.is_valid())
-
-        invalid = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
-    <mods:titleInfo><mods:title invalid_attribute='oops'>An invalid record</mods:title></mods:titleInfo>
-</mods:mods>
-        """
-        invalid_mods = load_xmlobject_from_string(invalid, Mods)
+        invalid_mods = load_xmlobject_from_string(self.invalid_xml, Mods)
         self.assertFalse(invalid_mods.is_valid())
         
 

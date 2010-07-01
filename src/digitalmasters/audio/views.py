@@ -1,5 +1,6 @@
 import magic
 
+
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
@@ -9,6 +10,7 @@ from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
 from eulcore.django.fedora.server import Repository
+from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
 from digitalmasters.audio.models import AudioObject
@@ -87,13 +89,14 @@ def edit(request, pid):
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = EditForm(request.POST, instance=obj.mods.content)
-            if form.is_valid():
-                # FIXME: should probably check schema-valid here also
+            if form.is_valid():     # includes schema validation
                 # update foxml object with MODS from the form
                 form.update_instance()      # instance is reference to mods object
-                obj.save()
-                messages.success(request, 'Updated MODS for %s' % pid)
-                return HttpResponseRedirect(reverse('audio:index'))
+                if obj.mods.content.is_valid():
+                    obj.save()
+                    messages.success(request, 'Updated MODS for %s' % pid)
+                    return HttpResponseRedirect(reverse('audio:index'))
+                # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with MODS content from the object
             form = EditForm(instance=obj.mods.content)
@@ -101,7 +104,7 @@ def edit(request, pid):
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 
-    except Exception:
+    except RequestFailed:
         # eventually we will need better error handling... 
         # this could mean the object doesn't exist OR it exists but has no MODS
         messages.error(request, "Error: failed to load %s MODS for editing" % pid)
