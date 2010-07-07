@@ -134,9 +134,10 @@ def edit(request, pid):
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 
-    except RequestFailed:
+    except:
         # eventually we will need better error handling... 
-        # this could mean the object doesn't exist OR it exists but has no MODS
+        # this could mean the object doesn't exist OR it exists but has no
+        # MODS or even that we couldn't contact the server
         messages.error(request, "Error: failed to load %s MODS for editing" % pid)
         return HttpResponseRedirect(reverse('audio:index'))
          
