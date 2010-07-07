@@ -296,10 +296,10 @@ class FedoraCommsTest(TestCase):
 
         return urlparse.urlunsplit(use_parts)
 
-    def testRepositoryDown(self):
-        '''Verify we respond correctly when we can't connect to the repo.'''
-        self.useRepositoryRoot(port=1)
-
+    # _test not test so that this isn't picked up as a test case. this
+    # method should be called from other test methods after changing the
+    # repo root.
+    def _testRepoErrors(self):
         # search
         url = reverse('audio:search')
         response = self.client.get(url, {'pid': 'fakepid:42'})
@@ -342,6 +342,16 @@ class FedoraCommsTest(TestCase):
         response = self.client.get(url)
         self.assertContains(response, 'error contacting the digital repository',
                 status_code=500)
+
+    def testRepositoryDown(self):
+        '''Verify we respond correctly when we can't connect to the repo.'''
+        self.useRepositoryRoot(port=1)
+        self._testRepoErrors()
+
+    def testBadRepoUrl(self):
+        '''Verify we respond correctly when the repo path is inaccessible.'''
+        self.useRepositoryRoot(path='/')
+        self._testRepoErrors()
 
 
 # tests for (prototype) MODS XmlObject
