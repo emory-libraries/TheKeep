@@ -319,7 +319,7 @@ class FedoraCommsTest(TestCase):
         # other tests in this block. we should unify them. at the very
         # least, these errors should return 500, not 302.
         url = reverse('audio:edit', kwargs={'pid': 'fakepid:42'})
-        response = self.client.get(url, {'pid': 'fakepid:42'}, follow=True)
+        response = self.client.get(url, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assertEqual("Error: failed to load fakepid:42 MODS for editing", messages[0],
             "load error message set in context when attempting to access bad fedora port")
@@ -336,6 +336,12 @@ class FedoraCommsTest(TestCase):
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assertEqual("Error: failed to load fakepid:42 MODS for editing", messages[0],
             "load error message set in context when attempting to access bad fedora port")
+
+        # download
+        url = reverse('audio:download-audio', kwargs={'pid': 'fakepid:42'})
+        response = self.client.get(url)
+        self.assertContains(response, 'error contacting the digital repository',
+                status_code=500)
 
 
 # tests for (prototype) MODS XmlObject

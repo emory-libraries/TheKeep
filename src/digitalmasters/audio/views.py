@@ -147,7 +147,13 @@ def download_audio(request, pid):
     repo = Repository()
     obj = repo.get_object(pid, type=AudioObject)
     # NOTE: this will probably need some work to be able to handle large datastreams
-    response = HttpResponse(obj.audio.content, mimetype=obj.audio.mimetype)
-    response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
-    return response
-
+    try:
+        response = HttpResponse(obj.audio.content, mimetype=obj.audio.mimetype)
+        response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
+        return response
+    except:
+        msg = 'There was an error contacting the digital repository. ' + \
+              'This prevented us from accessing audio data. If this ' + \
+              'problem persists, please alert the repository ' + \
+              'administrator.'
+        return HttpResponse(msg, mimetype='text/plain', status=500)
