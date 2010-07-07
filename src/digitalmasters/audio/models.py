@@ -10,7 +10,7 @@ class ModsBase(xmlmap.XmlObject):
 class ModsDate(ModsBase):
     "MODS date element (common fields for the dates under mods:originInfo)"
     ROOT_NAME = 'dateCreated'       # ?? could vary
-    key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', '')    # FIXME: not really a simple boolean...
+    key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', false=None)
     date = xmlmap.StringField('.')     # date field?
 
 class ModsOriginInfo(ModsBase):
