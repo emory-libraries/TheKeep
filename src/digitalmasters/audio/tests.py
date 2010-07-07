@@ -300,10 +300,19 @@ class FedoraCommsTest(TestCase):
         '''Verify we respond correctly when we can't connect to the repo.'''
         self.useRepositoryRoot(port=1)
 
-        search_url = reverse('audio:search')
-        response = self.client.get(search_url, {'pid': 'fakepid:42'})
+        # search
+        url = reverse('audio:search')
+        response = self.client.get(url, {'pid': 'fakepid:42'})
         self.assertContains(response, 'error contacting the digital repository',
                 status_code=500)
+
+        # upload
+        url = reverse('audio:upload')
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        response = self.client.post(url, {'label': 'sample WAV', 'audio': f}) 
+        self.assertContains(response, 'error contacting the digital repository',
+                status_code=500)
+
 
 
 # tests for (prototype) MODS XmlObject

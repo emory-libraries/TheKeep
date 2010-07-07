@@ -23,6 +23,16 @@
     {% endif %}
 {% endblock %}
 
+{% block content-body %}
+  {# individual pages will want to extend this with {{ block.super }} #}
+  {% if server_error %}
+    <ul class='errorlist'>
+      <li class='error'>{{ server_error }}</li>
+    </ul>
+  {% endif %}
+
+{% endblock %}
+
 {% block content-outer-bottom %}
   {% if SW_VERSION %}
     <div class="sw-version dev-note">v{{ SW_VERSION }}</div>

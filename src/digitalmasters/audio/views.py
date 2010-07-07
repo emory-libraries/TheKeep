@@ -26,8 +26,13 @@ def index(request):
 @permission_required('is_staff')
 def upload(request):
     "Upload a WAV file and create a new fedora object.  Only accepts audio/x-wav."
+
+    ctx_dict = {}
+    response_code = None
+
     if request.method == 'POST':
         form = UploadForm(request.POST, request.FILES)
+        ctx_dict['form'] = form
         if form.is_valid():
             uploaded_file = request.FILES['audio']
 
@@ -40,22 +45,35 @@ def upload(request):
             if type not in allowed_audio_types:
                 messages.error(request, 'Upload file must be a WAV file (got %s)' % type)
             else:
-                repo = Repository()
-                obj = repo.get_object(type=AudioObject)
-                obj.label = form.cleaned_data['label']
-                obj.dc.content.title = obj.mods.content.title = obj.label
-                obj.audio.content = uploaded_file  
-                obj.save()
-                messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
-                                % (uploaded_file.name, obj.pid))
-                return HttpResponseRedirect(reverse('audio:index'))
+                try:
+                    repo = Repository()
+                    obj = repo.get_object(type=AudioObject)
+                    obj.label = form.cleaned_data['label']
+                    obj.dc.content.title = obj.mods.content.title = obj.label
+                    obj.audio.content = uploaded_file  
+                    obj.save()
+                    messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
+                                    % (uploaded_file.name, obj.pid))
+                    return HttpResponseRedirect(reverse('audio:index'))
+                except:
+                    response_code = 500
+                    ctx_dict['server_error'] = 'There was an error ' + \
+                        'contacting the digital repository. This ' + \
+                        'prevented us from ingesting your file. If ' + \
+                        'this problem persists, please alert the ' + \
+                        'repository administrator.'
 
             # NOTE: uploaded file does not need to be removed because django
             # cleans it up automatically
     else:
-        form = UploadForm()
-    return render_to_response('audio/upload.html', {'form': form },
-                              context_instance=RequestContext(request))
+        ctx_dict['form'] = UploadForm()
+
+    response = render_to_response('audio/upload.html', ctx_dict,
+                                  context_instance=RequestContext(request))
+    if response_code is not None:
+        response.status_code = response_code
+    return response
+
 
 @permission_required('is_staff')
 def search(request):
@@ -84,7 +102,7 @@ def search(request):
                     'contacting the digital repository. This ' + \
                     'prevented us from completing your search. If ' + \
                     'this problem persists, please alert the ' + \
-                    'repository administrator. repo=' + repo.fedora_root
+                    'repository administrator.'
 
     response = render_to_response('audio/search.html', ctx_dict,
                     context_instance=RequestContext(request))

@@ -3,6 +3,7 @@
 {% block content-title %}Upload an audio file.{% endblock %}
 
 {% block content-body %}
+  {{ block.super }}
 
 <form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
     {{ form.as_p }}

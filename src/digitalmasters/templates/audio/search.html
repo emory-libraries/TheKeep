@@ -3,12 +3,7 @@
 {% block content-title %}Search results{% endblock %}
 
 {% block content-body %}
-
-{% if server_error %}
-  <ul class='errorlist'>
-    <li class='error'>{{ server_error }}</li>
-  </ul>
-{% endif %}
+  {{ block.super }}
 
 <table>
     <tr><th>pid</th><th>label</th><th>created</th><th>last modified</th></tr>
