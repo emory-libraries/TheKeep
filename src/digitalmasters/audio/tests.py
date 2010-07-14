@@ -82,10 +82,10 @@ class AudioViewsTest(TestCase):
         # create some test objects to search for
         repo = Repository()
         obj = repo.get_object()
-        obj.label = "test search object 1"
+        obj.dc.content.title = "test search object 1"
         obj.save()
         obj2 = repo.get_object()
-        obj2.label = "test search object 2"
+        obj2.dc.content.title = "test search object 2"
         obj2.save()
 
         # log in as staff
