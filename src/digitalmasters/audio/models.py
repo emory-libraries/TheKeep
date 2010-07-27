@@ -12,9 +12,12 @@ class ModsDate(ModsBase):
     ROOT_NAME = 'dateCreated'       # ?? could vary
     date = xmlmap.StringField('.')     # date field?
     key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', false=None)
-    encoding = xmlmap.StringField('@encoding')
-    point = xmlmap.StringField('@point')
-    qualifier = xmlmap.StringField('@qualifier')
+    encoding = xmlmap.StringField('@encoding',
+        choices=['w3cdtf', 'iso8601', 'marc'])
+    point = xmlmap.StringField('@point',
+        choices=['start', 'end'])
+    qualifier = xmlmap.StringField('@qualifier',
+        choices=['approximate', 'inferred', 'questionable'])
 
 class ModsOriginInfo(ModsBase):
     "MODS originInfo element (incomplete)"
