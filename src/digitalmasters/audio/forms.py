@@ -19,7 +19,12 @@ class SearchForm(forms.Form):
 class EditForm(XmlObjectForm):
     class Meta:
         model = Mods
+        fields = [
+            'title', 'resource_type', 'note',
+            'origin_info.created.date', 'origin_info.created.key_date',
+            ]
+
         widgets = {
             'note' : {'text': forms.Textarea },
-            'origin_info' : { 'created': {'value': forms.DateInput }}
+            'origin_info' : { 'created' : { 'date': forms.DateInput }}
             }

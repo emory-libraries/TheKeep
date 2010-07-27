@@ -10,8 +10,11 @@ class ModsBase(xmlmap.XmlObject):
 class ModsDate(ModsBase):
     "MODS date element (common fields for the dates under mods:originInfo)"
     ROOT_NAME = 'dateCreated'       # ?? could vary
-    key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', false=None)
     date = xmlmap.StringField('.')     # date field?
+    key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', false=None)
+    encoding = xmlmap.StringField('@encoding')
+    point = xmlmap.StringField('@point')
+    qualifier = xmlmap.StringField('@qualifier')
 
 class ModsOriginInfo(ModsBase):
     "MODS originInfo element (incomplete)"
@@ -35,9 +38,7 @@ class Mods(ModsBase):
     Only a limited field set for now.
     """
 
-    ROOT_NS = 'http://www.loc.gov/mods/v3'
     ROOT_NAME = 'mods'
-    ROOT_NAMESPACES = {'mods': ROOT_NS }
 
     XSD_SCHEMA = "http://www.loc.gov/standards/mods/mods.xsd"
     xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
@@ -46,19 +47,25 @@ class Mods(ModsBase):
     resource_type  = xmlmap.SchemaField("mods:typeOfResource", "resourceTypeDefinition")
     note = xmlmap.NodeField('mods:note', ModsNote, instantiate_on_get=True)
     origin_info = xmlmap.NodeField('mods:originInfo', ModsOriginInfo, instantiate_on_get=True)
+    record_id = xmlmap.StringField('mods:recordInfo/mods:recordIdentifier')
+
+
+class CollectionObject(DigitalObject):
+    CONTENT_MODELS = [ 'emory-control:Collection-1.0' ]
+
+    mods = XmlDatastream('MODS', 'MODS Metadata', Mods, defaults={
+            'control_group': 'M',
+            'format': Mods.ROOT_NS,
+            'versionable': True,
+        })
 
 class AudioObject(DigitalObject):
+    CONTENT_MODELS = [ 'emory-control:EuterpeAudio-1.0' ]
+
     mods = XmlDatastream("MODS", "MODS Metadata", Mods, defaults={
             'control_group': 'M',
             'format': Mods.ROOT_NS,
-        })
-    dc = XmlDatastream("DC", "Dublin Core", DublinCore, defaults={
-            'control_group': 'X',
-            'format': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
-        })
-    rels_ext = RdfDatastream("RELS-EXT", "External Relations", defaults={
-            'control_group': 'X',
-            'format': 'info:fedora/fedora-system:FedoraRELSExt-1.0',
+            'versionable': True,
         })
     audio = FileDatastream("AUDIO", "Audio datastream", defaults={
             'mimetype': 'audio/x-wav',
