@@ -51,7 +51,7 @@ class Mods(ModsBase):
 
 
 class CollectionObject(DigitalObject):
-    CONTENT_MODELS = [ 'emory-control:Collection-1.0' ]
+    CONTENT_MODELS = [ 'emory-control:Collection-1.1' ]
 
     mods = XmlDatastream('MODS', 'MODS Metadata', Mods, defaults={
             'control_group': 'M',
