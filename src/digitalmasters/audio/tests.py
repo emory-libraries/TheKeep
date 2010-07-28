@@ -9,7 +9,9 @@ from eulcore.django.fedora.server import Repository
 from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
-from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, ModsDate
+from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
+        ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
+        ModsRelatedItem
 
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
@@ -365,6 +367,23 @@ class TestMods(TestCase):
   <mods:originInfo>
     <mods:dateCreated keyDate='yes'>2010-06-17</mods:dateCreated>
   </mods:originInfo>
+  <mods:identifier type='uri'>http://so.me/uri</mods:identifier>
+  <mods:name type="personal" authority="naf" ID="n82032703">
+    <mods:namePart>Dawson, William Levi</mods:namePart>
+    <mods:namePart type="date">1899-1990</mods:namePart>
+    <mods:displayForm>William Levi Dawson (1899-1990)</mods:displayForm>
+    <mods:affiliation>Tuskegee</mods:affiliation>
+    <mods:role>
+      <mods:roleTerm type="text" authority="marcrelator">Composer</mods:roleTerm>
+    </mods:role>
+  </mods:name>
+  <mods:accessCondition type="restrictions on access">Restricted</mods:accessCondition>
+  <mods:relatedItem type="host">
+    <mods:titleInfo>
+      <mods:title>Emory University Archives</mods:title>
+    </mods:titleInfo>
+  <mods:identifier type="local_sourcecoll_id">eua</mods:identifier>
+  </mods:relatedItem>
 </mods:mods>
 """
     invalid_xml = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
@@ -380,6 +399,12 @@ class TestMods(TestCase):
         self.assert_(isinstance(self.mods.note, ModsNote))
         self.assert_(isinstance(self.mods.origin_info, ModsOriginInfo))
         self.assert_(isinstance(self.mods.origin_info.created, ModsDate))
+        self.assert_(isinstance(self.mods.identifiers[0], ModsIdentifier))
+        self.assert_(isinstance(self.mods.name, ModsName))
+        self.assert_(isinstance(self.mods.name.name_parts[0], ModsNamePart))
+        self.assert_(isinstance(self.mods.name.roles[0], ModsRole))
+        self.assert_(isinstance(self.mods.access_conditions[0], ModsAccessCondition))
+        self.assert_(isinstance(self.mods.related_items[0], ModsRelatedItem))
 
     def test_fields(self):
         self.assertEqual('A simple record', self.mods.title)
@@ -389,20 +414,66 @@ class TestMods(TestCase):
         self.assertEqual(u'remember to...', unicode(self.mods.note))
         self.assertEqual(u'2010-06-17', unicode(self.mods.origin_info.created))
         self.assertEqual('2010-06-17', self.mods.origin_info.created.date)
-        self.assertEqual(True, self.mods.origin_info.created.key_date)   # oversimplifying boolean here
+        self.assertEqual(True, self.mods.origin_info.created.key_date)  
+        self.assertEqual(u'http://so.me/uri', self.mods.identifiers[0].text)
+        self.assertEqual(u'uri', self.mods.identifiers[0].type)
+        # name fields
+        self.assertEqual(u'personal', self.mods.name.type)
+        self.assertEqual(u'naf', self.mods.name.authority)
+        self.assertEqual(u'n82032703', self.mods.name.id)
+        self.assertEqual(u'Dawson, William Levi', self.mods.name.name_parts[0].text)
+        self.assertEqual(u'1899-1990', self.mods.name.name_parts[1].text)
+        self.assertEqual(u'date', self.mods.name.name_parts[1].type)
+        self.assertEqual(u'William Levi Dawson (1899-1990)', self.mods.name.display_form)
+        self.assertEqual(u'Tuskegee', self.mods.name.affiliation)
+        self.assertEqual(u'text', self.mods.name.roles[0].type)
+        self.assertEqual(u'marcrelator', self.mods.name.roles[0].authority)
+        self.assertEqual(u'Composer', self.mods.name.roles[0].text)
+        # access condition
+        self.assertEqual(u'restrictions on access', self.mods.access_conditions[0].type)
+        self.assertEqual(u'Restricted', self.mods.access_conditions[0].text)
+        # related item
+        self.assertEqual(u'host', self.mods.related_items[0].type)
+        self.assertEqual(u'Emory University Archives', self.mods.related_items[0].title)
+        self.assertEqual(u'local_sourcecoll_id', self.mods.related_items[0].identifiers[0].type)
+        self.assertEqual(u'eua', self.mods.related_items[0].identifiers[0].text)
 
-    def test_template_init(self):
+    def test_create_mods(self):
+        # test creating MODS from scratch - ensure sub-xmlobject definitions are correct
+        # and produce schema-valid MODS
         mods = Mods()
+        mods.title = 'A Record'
+        mods.resource_type = 'text'
+        mods.name.type = 'personal'
+        mods.name.authority = 'local'
+        mods.name.name_parts.extend([ModsNamePart(type='family', text='Schmoe'),
+                                    ModsNamePart(type='given', text='Joe')])
+        mods.name.roles.append(ModsRole(type='text', authority='local',
+                                        text='Test Subject'))
+        mods.note.type = 'general'
+        mods.note.text = 'general note'
+        mods.origin_info.created.date = '2001-10-02'
+        mods.record_id = 'id:1'
+        mods.identifiers.extend([ModsIdentifier(type='uri', text='http://ur.l'),
+                                 ModsIdentifier(type='local', text='332')])
+        mods.access_conditions.extend([ModsAccessCondition(type='restriction', text='unavailable'),
+                                       ModsAccessCondition(type='use', text='Tuesdays only')])
+        mods.related_items.extend([ModsRelatedItem(type='host', title='EU Archives'),
+                                   ModsRelatedItem(type='isReferencedBy', title='Finding Aid'),])
         xml = mods.serialize()
         self.assert_('<mods:mods ' in xml)
         self.assert_('xmlns:mods="http://www.loc.gov/mods/v3"' in xml)
-        # TODO: can't yet create from scratch because fields are nested...
+
+        self.assertTrue(mods.is_valid(), "MODS created from scratch should be schema-valid")
 
     def test_isvalid(self):
-        self.assertTrue(self.mods.is_valid())
+        # if additions to MODS test fixture cause validation errors, uncomment the next 2 lines to debug
+        #self.mods.is_valid()
+        #print self.mods.validation_errors()
+        self.assertTrue(self.mods.is_valid())        
         invalid_mods = load_xmlobject_from_string(self.invalid_xml, Mods)
         self.assertFalse(invalid_mods.is_valid())
-        
+
 
 # tests for (prototype) Audio DigitalObject
 class TestAudioObject(TestCase):
