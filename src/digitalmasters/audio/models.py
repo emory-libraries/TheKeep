@@ -9,14 +9,14 @@ class ModsCommon(xmlmap.XmlObject):
 class ModsDate(ModsCommon):
     "MODS date element (common fields for the dates under mods:originInfo)"
     ROOT_NAME = 'dateCreated'       # ?? could vary
+    # FIXME: schema required here for schemafields; this should be refactored
+    XSD_SCHEMA = "http://www.loc.gov/standards/mods/mods.xsd"
+    xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
     date = xmlmap.StringField('.')     # date field?
     key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', false=None)
-    encoding = xmlmap.StringField('@encoding',
-        choices=['w3cdtf', 'iso8601', 'marc'])
-    point = xmlmap.StringField('@point',
-        choices=['start', 'end'])
-    qualifier = xmlmap.StringField('@qualifier',
-        choices=['approximate', 'inferred', 'questionable'])
+    encoding = xmlmap.SchemaField('@encoding', 'dateEncodingAttributeDefinition')
+    point = xmlmap.SchemaField('@point', 'datePointAttributeDefinition')
+    qualifier = xmlmap.SchemaField('@qualifier', 'dateQualifierAttributeDefinition')
 
 class ModsOriginInfo(ModsCommon):
     "MODS originInfo element (incomplete)"
