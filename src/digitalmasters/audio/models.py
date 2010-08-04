@@ -1,5 +1,6 @@
 from eulcore import xmlmap
 from eulcore.fedora.models import DigitalObject, FileDatastream, XmlDatastream
+from eulcore.django.fedora.server import Repository
 
 class ModsCommon(xmlmap.XmlObject):
     "MODS class with namespace declaration common to all MODS XmlObjects."
@@ -21,7 +22,7 @@ class ModsDate(ModsCommon):
 class ModsOriginInfo(ModsCommon):
     "MODS originInfo element (incomplete)"
     ROOT_NAME = 'originInfo'
-    created = xmlmap.NodeField('mods:dateCreated', ModsDate, instantiate_on_get=True)
+    created = xmlmap.NodeListField('mods:dateCreated', ModsDate)
 
 class ModsNote(ModsCommon):
     "MODS note element"
@@ -111,15 +112,72 @@ class Mods(ModsBase):
     XSD_SCHEMA = "http://www.loc.gov/standards/mods/mods.xsd"
     xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
     related_items = xmlmap.NodeListField('mods:relatedItem', ModsRelatedItem)
-    
-class CollectionObject(DigitalObject):
-    CONTENT_MODELS = [ 'emory-control:Collection-1.1' ]
 
-    mods = XmlDatastream('MODS', 'MODS Metadata', Mods, defaults={
+
+class Modsv34(Mods):
+    XSD_SCHEMA = "http://www.loc.gov/standards/mods/v3/mods-3-4.xsd" 
+    xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
+    # FIXME: how to set version attribute when creating from scratch?
+
+class CollectionMods(Mods):
+    """Collection-specific MODS."""
+    source_id = xmlmap.StringField("mods:identifier[@type='local_source_id']")
+    # possibly map identifier type uri as well ?
+    # TODO: (maybe) - single name here, multiple names on standard Mods
+    # relatedItem type host - not editable on form, but may want mapping for easy access
+    # - same for relatedItem type isReferencedyBy
+    restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
+                                              ModsAccessCondition, instantiate_on_get=True)
+    use_and_reproduction = xmlmap.NodeField('mods:accessCondition[@type="use and reproduction"]',
+                                              ModsAccessCondition, instantiate_on_get=True)
+    
+
+class CollectionObject(DigitalObject):
+    CONTENT_MODELS = [ 'info:fedora/emory-control:Collection-1.1' ]
+
+    mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
             'control_group': 'M',
             'format': Mods.ROOT_NS,
             'versionable': True,
         })
+        
+    def save(self, logMessage=None):
+        # FIXME: largely duplicated logic from AudioObject save
+        if self.mods.isModified():
+            # MODS is master metadata
+            # if it has changed, update DC and object label to keep them in sync
+            if self.mods.content.title:
+                self.label = self.mods.content.title
+                self.dc.content.title = self.mods.content.title
+            if self.mods.content.resource_type:
+                self.dc.content.type = self.mods.content.resource_type
+            if len(self.mods.content.origin_info.created):                
+                self.dc.content.date = self.mods.content.origin_info.created[0].date
+                # if a date range in MODS, add both dates
+                if len(self.mods.content.origin_info.created) > 1:
+                    self.dc.content.date = "%s-%s" % (self.dc.content.date,
+                                self.mods.content.origin_info.created[1].date)
+
+        return super(CollectionObject, self).save(logMessage)
+
+    @staticmethod
+    def top_level():
+        "Find top-level collection objects"
+        repo = Repository()
+        # find all objects with cmodel collection-1.1 and no parents
+        query = '''SELECT ?coll
+        WHERE {
+            ?coll <info:fedora/fedora-system:def/model#hasModel> <%s>
+            OPTIONAL { ?coll <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> ?parent }
+            FILTER ( ! bound(?parent) )
+        }
+        ''' % CollectionObject.CONTENT_MODELS[0]
+        collections = repo.risearch.find_statements(query, language='sparql',
+                                                         type='tuples', flush=True)
+        return [repo.get_object(result['coll'], type=CollectionObject) for result in collections]
+
+
+
 
 class AudioObject(DigitalObject):
     CONTENT_MODELS = [ 'emory-control:EuterpeAudio-1.0' ]
@@ -142,9 +200,11 @@ class AudioObject(DigitalObject):
                 self.dc.content.title = self.mods.content.title
             if self.mods.content.resource_type:
                 self.dc.content.type = self.mods.content.resource_type
-            if self.mods.content.origin_info.created.date:
+            if len(self.mods.content.origin_info.created) and \
+                  self.mods.content.origin_info.created[0].date:
                 # UGH: this will add originInfo and dateCreated if they aren't already in the xml
                 # because of our instantiate-on-get hack
-                self.dc.content.date = self.mods.content.origin_info.created.date
+                # FIXME: creating origin_info without at least one field may result in invalid MODS
+                self.dc.content.date = self.mods.content.origin_info.created[0].date
                 
         return super(AudioObject, self).save(logMessage)
