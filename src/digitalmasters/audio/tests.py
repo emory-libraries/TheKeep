@@ -248,7 +248,7 @@ class AudioViewsTest(TestCase):
         self.assert_(isinstance(response.context['form'], CollectionForm),
                 "MODS CollectionForm is set in response context")
 
-        # test POSTing incomplete data, POST and create new object, verify in fedora
+        # TODO: test POSTing incomplete data, POST and create new object, verify in fedora
         
 
 RealRepository = Repository

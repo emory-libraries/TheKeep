@@ -1,5 +1,5 @@
 from eulcore import xmlmap
-from eulcore.fedora.models import DigitalObject, FileDatastream, XmlDatastream
+from eulcore.fedora.models import DigitalObject, FileDatastream, XmlDatastream, URI_HAS_MODEL
 from eulcore.django.fedora.server import Repository
 
 class ModsCommon(xmlmap.XmlObject):
@@ -135,6 +135,9 @@ class CollectionMods(Mods):
 class CollectionObject(DigitalObject):
     CONTENT_MODELS = [ 'info:fedora/emory-control:Collection-1.1' ]
 
+    # FIXME: there should be a better place to put this... (eulcore.fedora somewhere?)
+    MEMBER_OF_COLLECTION = 'info:fedora/fedora-system:def/relations-external#isMemberOfCollection'
+
     mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
             'control_group': 'M',
             'format': Mods.ROOT_NS,
@@ -167,11 +170,15 @@ class CollectionObject(DigitalObject):
         # find all objects with cmodel collection-1.1 and no parents
         query = '''SELECT ?coll
         WHERE {
-            ?coll <info:fedora/fedora-system:def/model#hasModel> <%s>
-            OPTIONAL { ?coll <info:fedora/fedora-system:def/relations-external#isMemberOfCollection> ?parent }
+            ?coll <%(has_model)s> <%(cmodel)s>
+            OPTIONAL { ?coll <%(member_of)s> ?parent }
             FILTER ( ! bound(?parent) )
         }
-        ''' % CollectionObject.CONTENT_MODELS[0]
+        ''' % {
+            'has_model': URI_HAS_MODEL,
+            'cmodel': CollectionObject.CONTENT_MODELS[0],
+            'member_of': CollectionObject.MEMBER_OF_COLLECTION
+        }
         collections = repo.risearch.find_statements(query, language='sparql',
                                                          type='tuples', flush=True)
         return [repo.get_object(result['coll'], type=CollectionObject) for result in collections]

@@ -6,4 +6,5 @@ urlpatterns = patterns('digitalmasters.audio.views',
     url(r'^search$', 'search', name='search'),
     url(r'^(?P<pid>[^/]+)/edit$', 'edit', name='edit'),
     url(r'^(?P<pid>[^/]+)/audio$', 'download_audio', name='download-audio'),
+    url(r'^collections/new$', 'create_collection', name='new-collection'),
 )

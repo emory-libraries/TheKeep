@@ -34,7 +34,8 @@ class CollectionForm(XmlObjectForm):
     # NOTE: this only sets choices on load time
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
     collection = forms.ChoiceField(label="Collection",
-                    choices=[(o.pid, o.label) for o in CollectionObject.top_level()] )
+                    choices=[(o.uri, o.label) for o in CollectionObject.top_level()] )
+                    # using URI because it will be used to set a relation in RELS-EXT
     date_created = forms.CharField(help_text="Date created, or start date for a date range.")
     date_end = forms.CharField(help_text="End date for a date range. Leave blank if not a range.",
                                 required=False)

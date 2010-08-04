@@ -1,5 +1,5 @@
 import magic
-
+from rdflib import URIRef
 
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -12,8 +12,8 @@ from django.template.defaultfilters import slugify
 from eulcore.django.fedora.server import Repository
 from eulcore.fedora.util import RequestFailed
 
-from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm
-from digitalmasters.audio.models import AudioObject
+from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm
+from digitalmasters.audio.models import AudioObject, CollectionObject
 
 allowed_audio_types = ['audio/x-wav']
 
@@ -115,7 +115,7 @@ def edit(request, pid):
     repo = Repository()
 
     try:
-        obj = repo.get_object(pid, type=AudioObject)
+        obj = repo.get_object(pid, type=AudioObject)        
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = EditForm(request.POST, instance=obj.mods.content)
@@ -157,3 +157,32 @@ def download_audio(request, pid):
               'problem persists, please alert the repository ' + \
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
+
+def create_collection(request):
+    if request.method == 'POST':
+        repo = Repository()
+        obj = repo.get_object(type=CollectionObject)
+        # if data has been submitted, initialize form with request data and object mods
+        form = CollectionForm(request.POST, instance=obj.mods.content)        
+        if form.is_valid():     # includes schema validation
+            form.update_instance()      # instance is reference to mods object
+            if obj.mods.content.is_valid():
+                # update foxml object with MODS from the form
+                form.update_instance()      # instance is reference to mods object
+                if obj.mods.content.is_valid():
+                    # add relation to top-level collection
+                    obj.rels_ext.content.add((
+                            URIRef(obj.uri),
+                            URIRef(CollectionObject.MEMBER_OF_COLLECTION),
+                            URIRef(form.cleaned_data['collection'])
+                    ))
+                    obj.save()
+                    messages.success(request, 'Created new collection %s' % obj.pid)
+                    return HttpResponseRedirect(reverse('audio:index'))
+                # otherwise - fall through to display edit form again
+    else:
+        # GET - display the form for editing
+        form = CollectionForm()
+
+    return render_to_response('audio/edit_collection.html', {'form': form },
+        context_instance=RequestContext(request))

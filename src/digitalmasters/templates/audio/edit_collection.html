@@ -1,0 +1,12 @@
+{% extends "site_base.html" %}
+
+{% block content-title %}Create a new collection{% endblock %}
+
+{% block content-body %}
+<form method="post">{% csrf_token %}
+<table id="mods_edit">
+{{ form.as_table }}
+</table>
+<input type="submit" value="save"/>
+</form>
+{% endblock %}
