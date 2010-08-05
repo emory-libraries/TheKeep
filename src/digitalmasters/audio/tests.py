@@ -1,5 +1,6 @@
 import os
 import urlparse
+from rdflib import URIRef
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -248,8 +249,51 @@ class AudioViewsTest(TestCase):
         self.assert_(isinstance(response.context['form'], CollectionForm),
                 "MODS CollectionForm is set in response context")
 
-        # TODO: test POSTing incomplete data, POST and create new object, verify in fedora
-        
+        # POST data
+        collection_data = {
+            'title': 'Rushdie papers',
+            'source_id': 'MSS1000',
+            'date_created': '1947',
+            'date_end': '2008',
+            'collection': 'info:fedora/euterpe:marbl-archives',
+            'resource_type': 'mixed material',
+            'use_and_reproduction-text': 'no photos',
+            'restrictions_on_access-text': 'tuesdays only'
+        }
+        # test submitting incomplete/invalid data - should redisplay form with errors
+        bad_data = collection_data.copy()
+        del(bad_data['source_id'])
+        del(bad_data['use_and_reproduction-text'])
+        bad_data['collection'] = 'bogus-pid:123'
+        response = self.client.post(new_coll_url, bad_data)
+        self.assert_(isinstance(response.context['form'], CollectionForm),
+                "MODS CollectionForm is set in response context after invalid submission")
+        self.assertContains(response, 'This field is required', 2,
+            msg_prefix='error message for 2 missing required fields')
+        self.assertContains(response, 'Select a valid choice',
+            msg_prefix='error message for collection pid not in list')
+
+        # POST and create new object, verify in fedora
+        response = self.client.post(new_coll_url, collection_data, follow=True)
+        # do we need to test actual response, redirect ?
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assert_('Created new collection' in messages[0],
+            'successful collection creation message displayed to user')
+        # get pid of created object and inspect in fedora
+        pid = messages[0].replace('Created new collection ', '')
+        repo = Repository()
+        new_coll = repo.get_object(pid, type=CollectionObject)
+        # check object creation and init-specific logic handled by view (isMemberOf)
+        self.assertTrue(new_coll.has_model(CollectionObject.CONTENT_MODELS[0]),
+            "collection object was created with the correct content model")
+        self.assertEqual(collection_data['title'], new_coll.mods.content.title,
+            "MODS content created on new object from form data")
+        # collection membership
+        self.assert_((URIRef(new_coll.uri),
+                      URIRef(CollectionObject.MEMBER_OF_COLLECTION),
+                      URIRef(collection_data['collection'])) in
+                      new_coll.rels_ext.content,
+                      "collection object is member of requested top-level collection")
 
 RealRepository = Repository
 class FedoraCommsTest(TestCase):

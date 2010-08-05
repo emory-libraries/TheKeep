@@ -163,12 +163,12 @@ def create_collection(request):
         repo = Repository()
         obj = repo.get_object(type=CollectionObject)
         # if data has been submitted, initialize form with request data and object mods
-        form = CollectionForm(request.POST, instance=obj.mods.content)        
+        form = CollectionForm(request.POST, instance=obj.mods.content)
         if form.is_valid():     # includes schema validation
             form.update_instance()      # instance is reference to mods object
             if obj.mods.content.is_valid():
                 # update foxml object with MODS from the form
-                form.update_instance()      # instance is reference to mods object
+                form.update_instance()      # instance is reference to mods datastream object
                 if obj.mods.content.is_valid():
                     # add relation to top-level collection
                     obj.rels_ext.content.add((
