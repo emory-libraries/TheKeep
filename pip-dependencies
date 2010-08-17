@@ -1,0 +1,19 @@
+# inherited from eulcore
+ply
+lxml
+django
+mimeparse
+rdflib>=3.0
+python-dateutil
+soaplib==0.8.1
+python-ldap
+
+# local dependencies
+# FIXME: requires ubuntu's python-magic package. it's based on
+# http://www.darwinsys.com/file/ but # I haven't found a way to install it
+# via pip yet.
+
+# dev dependencies
+unittest-xml-reporting
+sphinx
+coverage
