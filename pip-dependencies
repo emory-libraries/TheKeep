@@ -17,3 +17,4 @@ python-ldap
 unittest-xml-reporting
 sphinx
 coverage
+MySQL-python
