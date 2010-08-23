@@ -6,7 +6,7 @@ Dependencies
  * eulcore (currently included as a subversion external)
   * see eulcore documentation for dependencies
  * python-magic (for file mimetype detection)
-
+ * PyCrypto
 
 Installation
 ------------
@@ -17,3 +17,5 @@ Copy ``localsettings-sample.py`` to ``localsettings.py`` and configure.
 Install ``python-magic`` and its dependencies. On Ubuntu, install
 the ``python-magic`` package.
 
+Install ``PyCrypto`` and its dependencies. On Ubuntu, install
+the ``python-crypto`` package.  Other users can ``easy_install pycrypto``.

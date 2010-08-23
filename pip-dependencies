@@ -12,6 +12,7 @@ python-ldap
 # FIXME: requires ubuntu's python-magic package. it's based on
 # http://www.darwinsys.com/file/ but # I haven't found a way to install it
 # via pip yet.
+pycrypto
 
 # dev dependencies
 unittest-xml-reporting

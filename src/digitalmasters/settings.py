@@ -48,7 +48,6 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.admin',
     'eulcore.django.emory_ldap',
@@ -56,6 +55,7 @@ INSTALLED_APPS = (
     'eulcore.django.testsetup',
     'eulcore.django.fedora',
     'digitalmasters.audio',
+    'digitalmasters.accounts',
 )
 
 
@@ -73,8 +73,8 @@ EXTENSION_DIRS = (
     path.join(BASE_DIR, '../externals/django-modules'),
 )
 
-# NOTE: for now, just using admin site for login/logout
-LOGIN_URL = '/admin/'
+# using default django login url
+LOGIN_URL = '/accounts/login/'
 
 AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
 
