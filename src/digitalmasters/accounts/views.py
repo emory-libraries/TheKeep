@@ -1,7 +1,11 @@
 from Crypto.Cipher import Blowfish as EncryptionAlgorithm
+import hashlib
+import logging
 
 from django.conf import settings
 from django.contrib.auth import views as authviews
+
+logger = logging.getLogger(__name__)
 
 def login(request):
     response = authviews.login(request, 'accounts/login.html')
@@ -10,17 +14,29 @@ def login(request):
         request.session['fedora_password'] = encrypt(request.POST.get('password'))
     return response
 
-# NOTE: current encryption logic should work with most of the encryption algorithms
-# supported by Crypto that allow for variable key length
+# NOTE: current encryption logic should be easily adapted to most of the
+# encryption algorithms supported by Crypto that allow for variable key length
 
 ENCRYPT_PAD_CHARACTER = '\0'
+# NOTE: Blowfish key length is variable but must be 32-448 bits
+# (but PyCrypto does not actually make this information accessible)
+KEY_MIN_CHARS = 32/8
+KEY_MAX_CHARS = 448/8
+if KEY_MIN_CHARS <= len(settings.SECRET_KEY) <= KEY_MAX_CHARS:
+    ENCRYPTION_KEY = settings.SECRET_KEY
+else:
+    ENCRYPTION_KEY = hashlib.sha224(settings.SECRET_KEY).hexdigest()
+    message = '''Django secret key length (%d) requires hashing for use as encryption key
+    (to avoid hashing, should be %d-%d characters)''' % \
+        (len(settings.SECRET_KEY), KEY_MIN_CHARS, KEY_MAX_CHARS)
+    logger.warn(message)
 
 def encrypt(text):
-    crypt = EncryptionAlgorithm.new(settings.SECRET_KEY)
+    crypt = EncryptionAlgorithm.new(ENCRYPTION_KEY)
     return crypt.encrypt(to_blocksize(text))
 
 def decrypt(text):
-    crypt = EncryptionAlgorithm.new(settings.SECRET_KEY)
+    crypt = EncryptionAlgorithm.new(ENCRYPTION_KEY)
     return crypt.decrypt(text).rstrip(ENCRYPT_PAD_CHARACTER)
 
 def to_blocksize(password):
