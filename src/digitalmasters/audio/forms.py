@@ -21,13 +21,12 @@ class EditForm(XmlObjectForm):
         model = Mods
         fields = [
             'title', 'resource_type', 'note',
-            # NOTE: disabled because created is now a list field - not yet supported
-            #'origin_info.created.date', 'origin_info.created.key_date',
+            'origin_info.created.date', 'origin_info.created.key_date',
             ]
 
         widgets = {
             'note' : {'text': forms.Textarea },
-            #'origin_info' : { 'created' : { 'date': forms.DateInput }}
+            'origin_info' : { 'created' : { 'date': forms.DateInput }}
             }
 
 class CollectionForm(XmlObjectForm):
