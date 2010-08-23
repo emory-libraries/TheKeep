@@ -21,16 +21,11 @@
         {% endfor %}
     </ul>
     {% endif %}
-{% endblock %}
-
-{% block content-body %}
-  {# individual pages will want to extend this with {{ block.super }} #}
-  {% if server_error %}
-    <ul class='errorlist'>
-      <li class='error'>{{ server_error }}</li>
-    </ul>
-  {% endif %}
-
+    {% if server_error %}
+        <ul class='errorlist'>
+          <li class='error'>{{ server_error }}</li>
+        </ul>
+    {% endif %}
 {% endblock %}
 
 {% block content-outer-bottom %}
