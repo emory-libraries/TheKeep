@@ -9,11 +9,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
-from eulcore.django.fedora.server import Repository
-from eulcore.fedora.util import RequestFailed
-
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm
 from digitalmasters.audio.models import AudioObject, CollectionObject
+from digitalmasters.fedora import Repository
 
 allowed_audio_types = ['audio/x-wav']
 
