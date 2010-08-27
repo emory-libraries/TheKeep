@@ -13,8 +13,35 @@ from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, Collect
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
         ModsRelatedItem, CollectionObject
+from digitalmasters.audio.forms import CollectionForm, AccessConditionForm, NamePartForm, \
+        NameForm
 
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
+
+# sample POST data for creating a collection
+COLLECTION_DATA = {
+    'title': 'Rushdie papers',
+    'source_id': 'MSS1000',
+    'date_created': '1947',
+    'date_end': '2008',
+    'collection': 'info:fedora/euterpe:marbl-archives',
+    'resource_type': 'mixed material',
+    'use_and_reproduction-text': 'no photos',
+    'restrictions_on_access-text': 'tuesdays only',
+    'name-type': 'personal',
+    'name-authority': 'local',
+    # 'management' form data is required for django to process formsets
+    'name_parts-INITIAL_FORMS': '0',
+    'name_parts-TOTAL_FORMS': '1',
+    'name_parts-MAX_NUM_FORMS': '',
+    'name_parts-0-text':'Mr. So and So',
+    'roles-TOTAL_FORMS': '1',
+    'roles-INITIAL_FORMS': '0',
+    'roles-MAX_NUM_FORMS': '',
+    'roles-0-authority': 'local',
+    'roles-0-type': 'text',
+    'roles-0-text': 'curator',
+}
 
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
@@ -249,21 +276,11 @@ class AudioViewsTest(TestCase):
         self.assert_(isinstance(response.context['form'], CollectionForm),
                 "MODS CollectionForm is set in response context")
 
-        # POST data
-        collection_data = {
-            'title': 'Rushdie papers',
-            'source_id': 'MSS1000',
-            'date_created': '1947',
-            'date_end': '2008',
-            'collection': 'info:fedora/euterpe:marbl-archives',
-            'resource_type': 'mixed material',
-            'use_and_reproduction-text': 'no photos',
-            'restrictions_on_access-text': 'tuesdays only'
-        }
+        
         # test submitting incomplete/invalid data - should redisplay form with errors
-        bad_data = collection_data.copy()
+        bad_data = COLLECTION_DATA.copy()
         del(bad_data['source_id'])
-        del(bad_data['use_and_reproduction-text'])
+        del(bad_data['resource_type'])
         bad_data['collection'] = 'bogus-pid:123'
         response = self.client.post(new_coll_url, bad_data)
         self.assert_(isinstance(response.context['form'], CollectionForm),
@@ -274,7 +291,7 @@ class AudioViewsTest(TestCase):
             msg_prefix='error message for collection pid not in list')
 
         # POST and create new object, verify in fedora
-        response = self.client.post(new_coll_url, collection_data, follow=True)
+        response = self.client.post(new_coll_url, COLLECTION_DATA, follow=True)
         # do we need to test actual response, redirect ?
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assert_('Created new collection' in messages[0],
@@ -286,12 +303,12 @@ class AudioViewsTest(TestCase):
         # check object creation and init-specific logic handled by view (isMemberOf)
         self.assertTrue(new_coll.has_model(CollectionObject.CONTENT_MODELS[0]),
             "collection object was created with the correct content model")
-        self.assertEqual(collection_data['title'], new_coll.mods.content.title,
+        self.assertEqual(COLLECTION_DATA['title'], new_coll.mods.content.title,
             "MODS content created on new object from form data")
         # collection membership
         self.assert_((URIRef(new_coll.uri),
                       URIRef(CollectionObject.MEMBER_OF_COLLECTION),
-                      URIRef(collection_data['collection'])) in
+                      URIRef(COLLECTION_DATA['collection'])) in
                       new_coll.rels_ext.content,
                       "collection object is member of requested top-level collection")
 
@@ -585,3 +602,59 @@ class TestCollectionObject(TestCase):
                 "top-level collection is instance of CollectionObject")
         # should this test pids from fixture?
 
+class TestCollectionForm(TestCase):
+    # test form data with all required fields
+    data = COLLECTION_DATA
+    form = CollectionForm(data)
+
+    def test_subform_classes(self):
+        # test that subforms are initialized with the correct classes
+        sub = self.form.subforms['restrictions_on_access']
+        self.assert_(isinstance(sub, AccessConditionForm),
+                    "restrictions on access subform should be instance of AccessConditionForm, got %s" \
+                    % sub.__class__)
+        sub = self.form.subforms['use_and_reproduction']
+        self.assert_(isinstance(sub, AccessConditionForm),
+                    "use & reproduction subform should be instance of AccessConditionForm, got %s" \
+                    % sub.__class__)
+        sub = self.form.subforms['name']
+        self.assert_(isinstance(sub, NameForm),
+                    "name subform should be instance of NameForm, got %s" % sub.__class__)
+        fs = self.form.subforms['name'].formsets['name_parts'].forms[0]
+        self.assert_(isinstance(fs, NamePartForm),
+                    "name_parts form should be instance of NamePartForm, got %s" % \
+                    fs.__class__)
+
+    def test_update_instance(self):
+        # test custom save logic for date created
+        # - must be valid to update instance
+        self.assertTrue(self.form.is_valid(), "test form object with test data is valid")
+        # initial data has start and end date
+        mods = self.form.update_instance()
+        expected, got = 2, len(mods.origin_info.created)
+        self.assertEqual(expected, got,
+            "expected %d created dates when date range is submitted, got %d" % \
+            (expected, got))
+        self.assertEqual(self.data['date_created'], mods.origin_info.created[0].date)
+        self.assertEqual('start', mods.origin_info.created[0].point,
+            'first date should have point=start when date range is submitted')
+        self.assertTrue(mods.origin_info.created[0].key_date,
+            'first created date should have key_date = True')
+        self.assertEqual(self.data['date_end'], mods.origin_info.created[1].date)
+        self.assertEqual('end', mods.origin_info.created[1].point,
+            'second date should have point=end when date range is submitted')
+
+        # start date only (not a date range)
+        data = self.data.copy()
+        del(data['date_end'])
+        form = CollectionForm(data)
+        self.assertTrue(form.is_valid(), "test form object with test data is valid")
+        mods = form.update_instance()
+        expected, got = 1, len(mods.origin_info.created)
+        self.assertEqual(expected, got,
+            "expected %d created dates when single created date is submitted, got %d" % \
+            (expected, got))
+        self.assertEqual(self.data['date_created'], mods.origin_info.created[0].date)
+        self.assertEqual(None, mods.origin_info.created[0].point,
+            "created date should have no point attribute when single date is submitted")
+        self.assertTrue(mods.origin_info.created[0].key_date)

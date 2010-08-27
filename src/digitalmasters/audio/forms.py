@@ -1,9 +1,10 @@
 from django import forms
 from django.conf import settings
 
-from eulcore.django.forms import XmlObjectForm
+from eulcore.django.forms import XmlObjectForm, SubformField
 
-from digitalmasters.audio.models import Mods, CollectionMods, ModsDate, CollectionObject
+from digitalmasters.audio.models import Mods, CollectionMods, ModsDate, CollectionObject, \
+    ModsAccessCondition, ModsName, ModsNamePart, ModsRole, ModsOriginInfo
 
 class UploadForm(forms.Form):
     label = forms.CharField(max_length=255, # fedora label maxes out at 255 characters
@@ -29,45 +30,102 @@ class EditForm(XmlObjectForm):
             'origin_info' : { 'created' : { 'date': forms.DateInput }}
             }
 
+class AccessConditionForm(XmlObjectForm):
+    """Custom XmlObjectForm to edit MODS accessCondition fields:
+     * suppress default label 'text'
+     * use Textarea
+     * make not required
+    """
+    text = forms.CharField(label='', widget=forms.Textarea, required=False)
+    class Meta:
+        model = ModsAccessCondition
+        exclude = ['type']
+
+class NamePartForm(XmlObjectForm):
+    """Custom XmlObjectForm to edit MODS name namePart
+     * suppress default label 'text'
+    """
+    text = forms.CharField(label='Name Part', 
+                            widget=forms.TextInput(attrs={'class': 'long'}))
+    class Meta:
+        model = ModsNamePart
+
+class RoleForm(XmlObjectForm):
+    """Custom XmlObjectForm to edit MODS name role information
+     * suppress default label 'text'
+     * configure type with initial value 'text' and make read-only
+    """
+    text = forms.CharField(label='Role',
+                            widget=forms.TextInput(attrs={'class': 'long'}))
+    # for our purposes, all roles will be type='text': set as initial value & make read only
+    type = forms.CharField(label='Type', initial='text',
+                    widget=forms.TextInput(attrs={'readonly':'readonly'}))
+    class Meta:
+        model = ModsRole
+
+class NameForm(XmlObjectForm):    
+    """Custom XmlObjectForm to edit MODS name information
+     * use custom namePart and role forms
+     * customize id field label & help text
+     * suppress displayForm and affiliation
+    """
+    id = forms.CharField(required=False, label='Identifier',
+                        help_text="Optional; supply for NAF names.")
+    name_parts = SubformField(formclass=NamePartForm)
+    roles = SubformField(formclass=RoleForm)
+    class Meta:
+        model = ModsName
+        exclude = ['display_form', 'affiliation']
+
 class CollectionForm(XmlObjectForm):
+    "Custom XmlObjectForm to edit MODS+ for collection objects."
+    
     # NOTE: this only sets choices on load time
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
     collection = forms.ChoiceField(label="Collection",
-                    choices=[(o.uri, o.label) for o in CollectionObject.top_level()] )
+                    choices=[(o.uri, o.label) for o in CollectionObject.top_level()],
+                    help_text="Top-level collection this collection falls under.")
                     # using URI because it will be used to set a relation in RELS-EXT
+    source_id = forms.CharField(label="Source Identifier",
+                    help_text="Source archival collection number, e.g. MSS123")
+    title = forms.CharField(help_text="Title of the archival collection",
+                    widget=forms.TextInput(attrs={'class': 'long'}))
+    # NOTE: handling date range with custom input forms and logic on update_instance
+    # this could possibly be handled by a custom XmlObjectForm for originInfo
     date_created = forms.CharField(help_text="Date created, or start date for a date range.")
     date_end = forms.CharField(help_text="End date for a date range. Leave blank if not a range.",
                                 required=False)
+    name = SubformField(formclass=NameForm)
+    restrictions_on_access = SubformField(formclass=AccessConditionForm)
+    use_and_reproduction = SubformField(formclass=AccessConditionForm)
     class Meta:
         model = CollectionMods
-        fields = [
-            'source_id', 'title', 'resource_type',
-            # TODO: name
-            'restrictions_on_access.text', 'use_and_reproduction.text',
-            ]
-        widgets = {
-            'restrictions_on_access' : {'text': forms.Textarea },
-            'use_and_reproduction' : {'text': forms.Textarea }
-            }
-
-
+        fields = (
+            'collection', 'source_id', 'title', 'resource_type', 'name',
+            'restrictions_on_access', 'use_and_reproduction',
+            )
+        
     def update_instance(self):
         # override default update for additional logic
         super(CollectionForm, self).update_instance()
 
-        # set date created - could be a single date or a date range
-        if len(self.instance.origin_info.created) == 0:
-            self.instance.origin_info.created.insert(0, ModsDate())
-        self.instance.origin_info.created[0].date = self.cleaned_data['date_created']
-        self.instance.origin_info.created[0].key_date = True
-        if 'date_end' in self.cleaned_data and self.cleaned_data['date_end']:
-            if len(self.instance.origin_info.created) == 1:
-                self.instance.origin_info.created.insert(1, ModsDate())            
-            self.instance.origin_info.created[1].date = self.cleaned_data['date_end']
-            self.instance.origin_info.created[1].point = 'end'
-            self.instance.origin_info.created[0].point = 'start'
+        # cleaned data only available when the form is valid,
+        # but xmlobjectform is_valid calls update_instance
+        if hasattr(self, 'cleaned_data'):
+            # set date created - could be a single date or a date range
+            if len(self.instance.origin_info.created) == 0:
+                self.instance.origin_info.created.insert(0, ModsDate())
+            self.instance.origin_info.created[0].date = self.cleaned_data['date_created']
+            self.instance.origin_info.created[0].key_date = True
+            # if there is a date end, store it and set end & start attributes
+            if 'date_end' in self.cleaned_data and self.cleaned_data['date_end']:
+                if len(self.instance.origin_info.created) == 1:
+                    self.instance.origin_info.created.insert(1, ModsDate())
+                self.instance.origin_info.created[1].date = self.cleaned_data['date_end']
+                self.instance.origin_info.created[1].point = 'end'
+                self.instance.origin_info.created[0].point = 'start'
 
-        # NOTE: parent collection - not part of the MODS
-        # will have to be set in the view?
+            # NOTE: parent collection is not part of the MODS; for now,
+            # this will have to be set in the view
 
         return self.instance

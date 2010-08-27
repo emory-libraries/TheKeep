@@ -5,3 +5,7 @@ table#mods_edit table.subform {
 table#mods_edit table.subform th {
     padding-left: 5px;
 }
+
+textarea, input.long {
+    width:85%;
+}

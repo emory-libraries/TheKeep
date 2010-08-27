@@ -54,14 +54,15 @@ class ModsNamePart(ModsCommon):
     XSD_SCHEMA = "http://www.loc.gov/standards/mods/mods.xsd"
     xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
 
-    type = xmlmap.SchemaField('@type', 'namePartTypeAttributeDefinition') # optional 
+    type = xmlmap.SchemaField('@type', 'namePartTypeAttributeDefinition',
+                              required=False) # type is optional
     text = xmlmap.StringField('.')
 
 class ModsRole(ModsCommon):
     "MODS role"
     ROOT_NAME = 'role'
     type = xmlmap.StringField('mods:roleTerm/@type')
-    authority = xmlmap.StringField('mods:roleTerm/@authority')
+    authority = xmlmap.StringField('mods:roleTerm/@authority', choices=['marcrelator', 'local'])
     text = xmlmap.StringField('mods:roleTerm')
 
 class ModsName(ModsCommon):
@@ -72,7 +73,7 @@ class ModsName(ModsCommon):
     xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
 
     type = xmlmap.SchemaField('@type', 'nameTypeAttributeDefinition')
-    authority = xmlmap.StringField('@authority')    # choices local/naf - form detail?
+    authority = xmlmap.StringField('@authority', choices=['local', 'naf']) # naf = NACO authority file
     id = xmlmap.StringField('@ID')  # optional
     name_parts = xmlmap.NodeListField('mods:namePart', ModsNamePart)
     display_form = xmlmap.StringField('mods:displayForm')
