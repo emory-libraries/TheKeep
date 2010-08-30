@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: Create Collection{% endblock %}
-{% block content-title %}Create a new collection{% endblock %}
+{% block page-subtitle %}: {% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
+{% block content-title %}{% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
 
 {% block content-body %}
 <form method="post">{% csrf_token %}
