@@ -354,6 +354,9 @@ class AudioViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (non-existing pid)'
                              % (expected, code, edit_url))
 
+        # clean up - remove test object
+        repo.purge_object(obj.pid, "removing unit test object")
+
 
 RealRepository = Repository
 class FedoraCommsTest(TestCase):
