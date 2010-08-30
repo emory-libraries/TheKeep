@@ -4,10 +4,12 @@ from rdflib import URIRef
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
+
+from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm
 from digitalmasters.audio.models import AudioObject, CollectionObject
@@ -159,34 +161,44 @@ def download_audio(request, pid):
 def edit_collection(request, pid=None):
     "Create a new or edit an existing Fedora Collection object with MODS metadata."
     repo = Repository()
-    # get collection object - existing if pid specified, or new if not
-    obj = repo.get_object(type=CollectionObject, pid=pid)
-    # NOTE: on new objects, for now, this will generate and throw away pids
-    # TODO: solve this in eulcore.fedora before we start using ARKs for pids
+    try:
+        # get collection object - existing if pid specified, or new if not
+        obj = repo.get_object(type=CollectionObject, pid=pid)
+        # NOTE: on new objects, for now, this will generate and throw away pids
+        # TODO: solve this in eulcore.fedora before we start using ARKs for pids
 
-    if request.method == 'POST':        
-        # if data has been submitted, initialize form with request data and object mods
-        form = CollectionForm(request.POST, instance=obj.mods.content)
-        if form.is_valid():     # includes schema validation
-            form.update_instance()      # instance is reference to mods object
-            if obj.mods.content.is_valid():
-                # update foxml object with MODS from the form
-                form.update_instance()      # instance is reference to mods datastream object
+        if request.method == 'POST':
+            # if data has been submitted, initialize form with request data and object mods
+            form = CollectionForm(request.POST, instance=obj.mods.content)
+            if form.is_valid():     # includes schema validation
+                form.update_instance()      # instance is reference to mods object
                 if obj.mods.content.is_valid():
-                    # add relation to top-level collection
-                    obj.rels_ext.content.add((
-                            URIRef(obj.uri),
-                            URIRef(CollectionObject.MEMBER_OF_COLLECTION),
-                            URIRef(form.cleaned_data['collection'])
-                    ))
-                    obj.save()
-                    action = 'Created new' if pid is None else 'Updated'
-                    messages.success(request, '%s collection %s' % (action, obj.pid))
-                    return HttpResponseRedirect(reverse('audio:index'))
-                # otherwise - fall through to display edit form again
-    else:
-        # GET - display the form for editing
-        form = CollectionForm(instance=obj.mods.content)
+                    # update foxml object with MODS from the form
+                    form.update_instance()      # instance is reference to mods datastream object
+                    if obj.mods.content.is_valid():
+                        # add relation to top-level collection
+                        obj.rels_ext.content.add((
+                                URIRef(obj.uri),
+                                URIRef(CollectionObject.MEMBER_OF_COLLECTION),
+                                URIRef(form.cleaned_data['collection'])
+                        ))
+                        obj.save()
+                        action = 'Created new' if pid is None else 'Updated'
+                        messages.success(request, '%s collection %s' % (action, obj.pid))
+                        return HttpResponseRedirect(reverse('audio:index'))
+                    # otherwise - fall through to display edit form again
+        else:
+            # GET - display the form for editing
+            form = CollectionForm(instance=obj.mods.content)
+    except RequestFailed, e:
+        # if there was a 404 accessing object MODS, raise http404
+        # NOTE: this probably doesn't distinguish between object exists with
+        # no MODS and object does not exist at all
+        if e.code == 404:
+            raise Http404
+        # otherwise, re-raise and handle as a common fedora connection error
+        else:
+            raise e
 
     context = {'form': form}
     if pid is not None:

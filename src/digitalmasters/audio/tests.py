@@ -347,6 +347,13 @@ class AudioViewsTest(TestCase):
         self.assertEqual(COLLECTION_DATA['title'], obj.mods.content.title,
             "MODS content updated in existing object from form data")
 
+        # attempt to edit non-existent record
+        edit_url = reverse('audio:edit-collection', args=['my-bogus-pid:123'])
+        response = self.client.get(edit_url)
+        expected, code = 404, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s (non-existing pid)'
+                             % (expected, code, edit_url))
+
 
 RealRepository = Repository
 class FedoraCommsTest(TestCase):

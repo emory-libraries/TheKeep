@@ -1,0 +1,9 @@
+{% extends "site_base.html" %}
+{# place-holder 404 page #}
+
+{% block page-subtitle %}: Document Not Found{% endblock %}
+{% block content-title %}Document not Found{% endblock %}
+
+{% block content-body %}
+The requested document at {{ request_path }} was not found.
+{% endblock %}
