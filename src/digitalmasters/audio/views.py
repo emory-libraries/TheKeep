@@ -156,7 +156,7 @@ def download_audio(request, pid):
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
-def create_collection(request):
+def edit_collection(request, pid=None):
     if request.method == 'POST':
         repo = Repository()
         obj = repo.get_object(type=CollectionObject)
