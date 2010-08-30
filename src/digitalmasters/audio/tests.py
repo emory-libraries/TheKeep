@@ -12,7 +12,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
-        ModsRelatedItem, CollectionObject
+        ModsRelatedItem, CollectionObject, CollectionMods
 from digitalmasters.audio.forms import CollectionForm, AccessConditionForm, NamePartForm, \
         NameForm
 
@@ -311,6 +311,42 @@ class AudioViewsTest(TestCase):
                       URIRef(COLLECTION_DATA['collection'])) in
                       new_coll.rels_ext.content,
                       "collection object is member of requested top-level collection")
+
+    def test_edit_collection(self):
+        repo = Repository()
+        obj = repo.get_object(type=CollectionObject)
+        obj.label = 'Salman Rushdie Collection'
+        obj.mods.content.title = 'Salman Rushdie Collection'
+        obj.mods.content.source_id = 'MSS1000'
+        obj.save()
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        edit_url = reverse('audio:edit-collection', args=[obj.pid])
+
+        response = self.client.get(edit_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, edit_url))
+        self.assert_(isinstance(response.context['form'], CollectionForm),
+                "MODS CollectionForm is set in response context")
+        self.assert_(isinstance(response.context['form'].instance, CollectionMods),
+                "form instance is a collection MODS XmlObject")
+        self.assertContains(response, 'value="MSS1000"',
+                msg_prefix='MSS # from existing object set as input value')
+        self.assertContains(response, 'value="Salman Rushdie Collection"',
+                msg_prefix='Title from existing object set as input value')
+        self.assertContains(response, 'Edit Collection',
+                msg_prefix='page title indicates user is editing an existing collection')
+
+        # POST and update existing object, verify in fedora
+        response = self.client.post(edit_url, COLLECTION_DATA, follow=True)
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assertEqual('Updated collection %s' % obj.pid, messages[0],
+            'successful collection update message displayed to user')
+        obj = repo.get_object(type=CollectionObject, pid=obj.pid)
+        self.assertEqual(COLLECTION_DATA['title'], obj.mods.content.title,
+            "MODS content updated in existing object from form data")
+
 
 RealRepository = Repository
 class FedoraCommsTest(TestCase):

@@ -157,9 +157,14 @@ def download_audio(request, pid):
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
 def edit_collection(request, pid=None):
-    if request.method == 'POST':
-        repo = Repository()
-        obj = repo.get_object(type=CollectionObject)
+    "Create a new or edit an existing Fedora Collection object with MODS metadata."
+    repo = Repository()
+    # get collection object - existing if pid specified, or new if not
+    obj = repo.get_object(type=CollectionObject, pid=pid)
+    # NOTE: on new objects, for now, this will generate and throw away pids
+    # TODO: solve this in eulcore.fedora before we start using ARKs for pids
+
+    if request.method == 'POST':        
         # if data has been submitted, initialize form with request data and object mods
         form = CollectionForm(request.POST, instance=obj.mods.content)
         if form.is_valid():     # includes schema validation
@@ -175,12 +180,17 @@ def edit_collection(request, pid=None):
                             URIRef(form.cleaned_data['collection'])
                     ))
                     obj.save()
-                    messages.success(request, 'Created new collection %s' % obj.pid)
+                    action = 'Created new' if pid is None else 'Updated'
+                    messages.success(request, '%s collection %s' % (action, obj.pid))
                     return HttpResponseRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
     else:
         # GET - display the form for editing
-        form = CollectionForm()
+        form = CollectionForm(instance=obj.mods.content)
 
-    return render_to_response('audio/edit_collection.html', {'form': form },
+    context = {'form': form}
+    if pid is not None:
+        context['collection'] = obj
+
+    return render_to_response('audio/edit_collection.html', context,
         context_instance=RequestContext(request))
