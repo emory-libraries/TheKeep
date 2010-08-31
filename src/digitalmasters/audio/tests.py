@@ -318,6 +318,11 @@ class AudioViewsTest(TestCase):
         obj.label = 'Salman Rushdie Collection'
         obj.mods.content.title = 'Salman Rushdie Collection'
         obj.mods.content.source_id = 'MSS1000'
+        collection_uri = CollectionObject.top_level()[1].uri
+        obj.set_collection(collection_uri)
+        # date range
+        obj.mods.content.origin_info.created.append(ModsDate(date=1947, point='start'))
+        obj.mods.content.origin_info.created.append(ModsDate(date=2008, point='end'))
         obj.save()
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -327,7 +332,8 @@ class AudioViewsTest(TestCase):
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, edit_url))
-        self.assert_(isinstance(response.context['form'], CollectionForm),
+        form = response.context['form']
+        self.assert_(isinstance(form, CollectionForm),
                 "MODS CollectionForm is set in response context")
         self.assert_(isinstance(response.context['form'].instance, CollectionMods),
                 "form instance is a collection MODS XmlObject")
@@ -335,6 +341,12 @@ class AudioViewsTest(TestCase):
                 msg_prefix='MSS # from existing object set as input value')
         self.assertContains(response, 'value="Salman Rushdie Collection"',
                 msg_prefix='Title from existing object set as input value')
+        self.assertContains(response, 'value="1947"',
+                msg_prefix='Start date from existing object set as input value')
+        self.assertContains(response, 'value="2008"',
+                msg_prefix='End date from existing object set as input value')
+        self.assertContains(response, 'value="%s" selected="selected"' % collection_uri,
+                msg_prefix='Parent collection from existing object pre-selected')
         self.assertContains(response, 'Edit Collection',
                 msg_prefix='page title indicates user is editing an existing collection')
 
@@ -733,6 +745,24 @@ class TestCollectionForm(TestCase):
     # test form data with all required fields
     data = COLLECTION_DATA
     form = CollectionForm(data)
+    repo = Repository()
+
+    def setUp(self):
+        self.obj = self.repo.get_object(type=CollectionObject)
+        self.obj.label = 'Salman Rushdie Collection'
+        self.obj.mods.content.title = 'Salman Rushdie Collection'
+        self.obj.mods.content.source_id = 'MSS1000'
+        self.top_level_collections = CollectionObject.top_level()
+        self.collection_uri = self.top_level_collections[1].uri
+        self.obj.set_collection(self.collection_uri)
+        # date range
+        self.obj.mods.content.origin_info.created.append(ModsDate(date=1947, point='start'))
+        self.obj.mods.content.origin_info.created.append(ModsDate(date=2008, point='end'))
+        #self.obj.save()
+
+    def tearDown(self):
+        pass
+        #self.repo.purge_object(self.obj.pid, "removing test object")
 
     def test_subform_classes(self):
         # test that subforms are initialized with the correct classes
@@ -785,3 +815,28 @@ class TestCollectionForm(TestCase):
         self.assertEqual(None, mods.origin_info.created[0].point,
             "created date should have no point attribute when single date is submitted")
         self.assertTrue(mods.origin_info.created[0].key_date)
+
+        # change collection and confirm set in RELS-EXT
+        data = self.data.copy()
+        data['collection'] = self.top_level_collections[2].uri
+        form = CollectionForm(data, instance=self.obj)
+        self.assertTrue(form.is_valid(), "test form object with test data is valid")
+        form.update_instance()
+        self.assertEqual(self.top_level_collections[2].uri, self.obj.collection_id)        
+
+    def test_initial_data(self):
+        form = CollectionForm(instance=self.obj)
+        # custom fields that are not handled by XmlObjectForm have special logic
+        # to ensure they get set when an instance is passed in
+        expected, got = self.collection_uri, form.initial['collection']
+        self.assertEqual(expected, got,
+            'collection uri is set correctly in form initial data from instance; expected %s, got %s' \
+            % (expected, got))
+        expected, got = '1947', form.initial['date_created']
+        self.assertEqual(expected, got,
+            'date created is set correctly in form initial data from instance; expected %s, got %s' \
+            % (expected, got))
+        expected, got = '2008', form.initial['date_end']
+        self.assertEqual(expected, got,
+            'date end is set correctly in form initial data from instance; expected %s, got %s' \
+            % (expected, got))

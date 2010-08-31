@@ -172,23 +172,18 @@ def edit_collection(request, pid=None):
 
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = CollectionForm(request.POST, instance=obj.mods.content)
+            form = CollectionForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
-                form.update_instance()      # instance is reference to mods object
-                if obj.mods.content.is_valid():
-                    # update foxml object with MODS from the form
-                    form.update_instance()      # instance is reference to mods datastream object
-                    if obj.mods.content.is_valid():
-                        # add relation to top-level collection
-                        obj.set_collection(form.cleaned_data['collection'])
-                        obj.save()
-                        action = 'Created new' if pid is None else 'Updated'
-                        messages.success(request, '%s collection %s' % (action, obj.pid))
-                        return HttpResponseRedirect(reverse('audio:index'))
-                    # otherwise - fall through to display edit form again
+                form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
+                obj.save()      
+                action = 'Created new' if pid is None else 'Updated'
+                messages.success(request, '%s collection %s' % (action, obj.pid))
+                return HttpResponseRedirect(reverse('audio:index'))
+                # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing
-            form = CollectionForm(instance=obj.mods.content)
+            # FIXME: special fields not getting set!
+            form = CollectionForm(instance=obj)
     except RequestFailed, e:
         # if there was a 404 accessing object MODS, raise http404
         # NOTE: this probably doesn't distinguish between object exists with
@@ -218,7 +213,9 @@ def collection_search(request):
         search_opts = {
             'type': CollectionObject,
             # for now, restrict to objects in configured pidspace
-            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE
+            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
+            # for now, restrict by cmodel in dc:format
+            'format': CollectionObject.CONTENT_MODELS[0],
         }
 
         if form.cleaned_data['mss']:
@@ -231,8 +228,7 @@ def collection_search(request):
         if form.cleaned_data['collection']:
             search_opts['relation'] = form.cleaned_data['collection']
         if search_opts:
-            # If they didn't specify any search options, don't bother
-            # searching.
+            # If no user-specified search terms are entered, find all collections
             try:
                 repo = Repository()
                 found = repo.find_objects(**search_opts)

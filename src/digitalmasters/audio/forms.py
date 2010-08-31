@@ -91,7 +91,9 @@ class NameForm(XmlObjectForm):
         exclude = ['display_form', 'affiliation']
 
 class CollectionForm(XmlObjectForm):
-    "Custom XmlObjectForm to edit MODS+ for collection objects."
+    """Custom XmlObjectForm to edit descriptive metadata on a :class:`CollectionObject`.
+    Takes a :class:`CollectionObject` as form instance.
+    """
     
     # NOTE: this only sets choices on load time
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
@@ -117,9 +119,39 @@ class CollectionForm(XmlObjectForm):
             'collection', 'source_id', 'title', 'resource_type', 'name',
             'restrictions_on_access', 'use_and_reproduction',
             )
+
+    def __init__(self, data=None, instance=None, prefix=None, **kwargs):
+        # overriding init to accept a CollectionObject instead of CollectionMods
+        # - set initial data for extra fields (collection & dates) from instance
+        # - pass mods xmlobject to parent XmlObjectForm
+        if instance is not None:
+            # store the digital object, store mods to pass on to parent init
+            self.object_instance = instance
+            mods_instance = instance.mods.content
+            
+            # populate fields not auto-generated & handled by XmlObjectForm
+            initial = {}
+            if mods_instance.origin_info.created:
+                initial['date_created'] = mods_instance.origin_info.created[0].date
+                if len(mods_instance.origin_info.created) > 1:
+                    initial['date_end'] = mods_instance.origin_info.created[1].date
+
+            if self.object_instance.collection_id is not None:
+                initial['collection'] = self.object_instance.collection_id
+
+            if 'initial' not in kwargs:
+                kwargs['initial'] = {}
+            kwargs['initial'].update(initial)
+        else:
+            mods_instance = None
+            
+        super(CollectionForm, self).__init__(data=data, instance=mods_instance,
+                                             prefix=prefix, **kwargs)
         
     def update_instance(self):
-        # override default update for additional logic
+        # override default update to handle extra fields (collection & dates)
+        # NOTE: collection membership can only be set when a CollectionObject
+        #       was passed in as form instance
         super(CollectionForm, self).update_instance()
 
         # cleaned data only available when the form is valid,
@@ -141,7 +173,9 @@ class CollectionForm(XmlObjectForm):
                     ))
                 self.instance.origin_info.created[0].point = 'start'
 
-            # NOTE: parent collection is not part of the MODS; for now,
-            # this will have to be set in the view
+            # set relation to top-level collection when an instance was passed in
+            if hasattr(self, 'object_instance'):
+                self.object_instance.set_collection(self.cleaned_data['collection'])
 
+        # must return mods portion because XmlObjectForm depends on it for validation
         return self.instance
