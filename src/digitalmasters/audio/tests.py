@@ -9,12 +9,12 @@ from django.test import Client, TestCase
 from eulcore.django.fedora.server import Repository
 from eulcore.xmlmap  import load_xmlobject_from_string
 
-from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm
+from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm, \
+    AccessConditionForm, NamePartForm, NameForm
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
         ModsRelatedItem, CollectionObject, CollectionMods
-from digitalmasters.audio.forms import CollectionForm, AccessConditionForm, NamePartForm, \
-        NameForm
+from digitalmasters.audio.fixtures import FedoraFixtures
 
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
@@ -314,16 +314,11 @@ class AudioViewsTest(TestCase):
 
     def test_edit_collection(self):
         repo = Repository()
-        obj = repo.get_object(type=CollectionObject)
-        obj.label = 'Salman Rushdie Collection'
-        obj.mods.content.title = 'Salman Rushdie Collection'
-        obj.mods.content.source_id = 'MSS1000'
-        collection_uri = CollectionObject.top_level()[1].uri
-        obj.set_collection(collection_uri)
-        # date range
-        obj.mods.content.origin_info.created.append(ModsDate(date=1947, point='start'))
-        obj.mods.content.origin_info.created.append(ModsDate(date=2008, point='end'))
-        obj.save()
+        obj = FedoraFixtures.rushdie_collection()
+        # store initial collection id from fixture
+        collection_uri = obj.collection_id
+        obj.save()  # save to fedora for editing
+        
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
         edit_url = reverse('audio:edit-collection', args=[obj.pid])
@@ -377,6 +372,60 @@ class AudioViewsTest(TestCase):
 
         # clean up - remove test object
         repo.purge_object(obj.pid, "removing unit test object")
+
+    def test_collection_search(self):
+        search_url = reverse('audio:search-collections')
+
+        # ingest some test objects to search for
+        repo = Repository()
+        rushdie = FedoraFixtures.rushdie_collection()
+        rushdie.save()  # save to fedora for searching
+        esterbrook = FedoraFixtures.esterbrook_collection()
+        esterbrook.save()
+        engdocs = FedoraFixtures.englishdocs_collection()
+        engdocs.save()
+        pids = [rushdie.pid, esterbrook.pid, engdocs.pid]
+        
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # search by MSS #
+        response = self.client.get(search_url, {'mss': 'MSS1000'})
+        self.assertContains(response, rushdie.pid,
+                msg_prefix="Rushdie test collection object found when searching by Rushdie MSS #")
+        self.assertNotContains(response, esterbrook.pid,
+                msg_prefix="Esterbrook collection object not found when searching by Rushdie MSS #")
+
+        # search by title phrase
+        response = self.client.get(search_url, {'title': 'collection'})
+        self.assertContains(response, rushdie.pid,
+                msg_prefix="Rushdie collection found for title contains 'collection'")
+        self.assertContains(response, engdocs.pid,
+                msg_prefix="English Documents collection found for title contains 'collection'")
+        self.assertNotContains(response, esterbrook.pid,
+                msg_prefix="Esterbrook not found when searching for title contains 'collection'")
+                
+        # search by creator
+        response = self.client.get(search_url, {'creator': 'esterbrook'})
+        self.assertNotContains(response, rushdie.pid,
+                msg_prefix="Rushdie collection not found for creator 'esterbrook'")
+        self.assertContains(response, esterbrook.pid,
+                msg_prefix="Esterbrook found when searching for creator 'esterbrook'")
+
+        # search by collection
+        collection = FedoraFixtures.top_level_collections[1].uri
+        response = self.client.get(search_url, {'collection': collection })
+        self.assertContains(response, rushdie.pid,
+                msg_prefix="Rushdie collection found for collection %s" % collection)
+        self.assertNotContains(response, esterbrook.pid,
+                msg_prefix="Esterbrook not found when searching for collection %s" % collection)
+        self.assertContains(response, engdocs.pid,
+                msg_prefix="English Documents collection found for collection %s" % collection)
+
+
+        # clean up
+        for p in pids:
+            repo.purge_object(p)
 
 
 RealRepository = Repository
@@ -753,25 +802,14 @@ class TestCollectionObject(TestCase):
 class TestCollectionForm(TestCase):
     # test form data with all required fields
     data = COLLECTION_DATA
-    form = CollectionForm(data)
-    repo = Repository()
 
     def setUp(self):
-        self.obj = self.repo.get_object(type=CollectionObject)
-        self.obj.label = 'Salman Rushdie Collection'
-        self.obj.mods.content.title = 'Salman Rushdie Collection'
-        self.obj.mods.content.source_id = 'MSS1000'
-        self.top_level_collections = CollectionObject.top_level()
-        self.collection_uri = self.top_level_collections[1].uri
-        self.obj.set_collection(self.collection_uri)
-        # date range
-        self.obj.mods.content.origin_info.created.append(ModsDate(date=1947, point='start'))
-        self.obj.mods.content.origin_info.created.append(ModsDate(date=2008, point='end'))
-        #self.obj.save()
+        self.form = CollectionForm(self.data)
+        self.obj = FedoraFixtures.rushdie_collection()
+        self.top_level_collections = FedoraFixtures.top_level_collections
+        # store initial collection id from fixture
+        self.collection_uri = self.obj.collection_id
 
-    def tearDown(self):
-        pass
-        #self.repo.purge_object(self.obj.pid, "removing test object")
 
     def test_subform_classes(self):
         # test that subforms are initialized with the correct classes

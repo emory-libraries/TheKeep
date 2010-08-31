@@ -11,9 +11,8 @@
     <tr>
         <td>{{ obj.mods.content.source_id|default:'' }}</td>
         <td><a href="{% url audio:edit-collection obj.pid %}">{{ obj.mods.content.title }}</a></td>
-        <td>{{ obj.mods.content.name }}</td>
-        <td>{# FIXME: how to get collection name? #}  {{ obj.collection_label }}
-        </td>
+        <td>{{ obj.mods.content.name.name_parts|join:' ' }}</td> {# FIXME: handle multipart better! #}
+        <td>{{ obj.collection_label }}</td>
     </tr>
 {% empty %}
     <tr><td colspan="4">no results</td></tr>
