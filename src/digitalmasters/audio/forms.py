@@ -17,6 +17,19 @@ class SearchForm(forms.Form):
     title = forms.CharField(required=False,
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
 
+class CollectionSearch(forms.Form):
+    mss = forms.CharField(required=False, label='Manuscript Number', initial='MSS',
+            help_text='Search by collection manuscript number (e.g, MSS123)')
+    title = forms.CharField(required=False,
+            help_text='Search by collection title word or phrase.  May contain wildcards * or ?.')
+    creator = forms.CharField(required=False,
+            help_text='Search by collection creator')
+    # NOTE: this only sets choices on load time (should be OK for search)
+    collection_list = [(o.uri, o.label) for o in CollectionObject.top_level()]
+    collection_list.insert(0, ('', '--'))   # add a blank option first
+    collection = forms.ChoiceField(label="Collection", required=False,
+                    choices=collection_list, initial='')
+
 class EditForm(XmlObjectForm):
     class Meta:
         model = Mods
