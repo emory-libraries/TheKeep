@@ -149,23 +149,46 @@ class CollectionObject(DigitalObject):
 
     _collection_id = None
     _collection_label = None
-        
-    def save(self, logMessage=None):
-        # FIXME: largely duplicated logic from AudioObject save
-        if self.mods.isModified():
-            # MODS is master metadata
-            # if it has changed, update DC and object label to keep them in sync
-            if self.mods.content.title:
-                self.label = self.mods.content.title
-                self.dc.content.title = self.mods.content.title
-            if self.mods.content.resource_type:
-                self.dc.content.type = self.mods.content.resource_type
-            if len(self.mods.content.origin_info.created):                
-                self.dc.content.date = self.mods.content.origin_info.created[0].date
+
+    def _update_dc(self):
+        # FIXME: some duplicated logic from AudioObject save
+        if self.mods.content.title:
+            self.label = self.mods.content.title
+            self.dc.content.title = self.mods.content.title
+        if self.mods.content.resource_type:
+            self.dc.content.type = self.mods.content.resource_type
+        if self.mods.content.source_id or len(self.mods.content.identifiers):
+            # remove all current dc identifiers and replace
+            for i in range(len(self.dc.content.identifier_list)):
+                self.dc.content.identifier_list.pop()
+            self.dc.content.identifier_list.extend([id.text for id
+                                            in self.mods.content.identifiers])
+        if unicode(self.mods.content.name) != '':
+            # TODO: format multi-part name fields intelligently for dc:creator
+            self.dc.content.creator_list[0] = unicode(self.mods.content.name.name_parts[0])
+        if len(self.mods.content.origin_info.created):                        
+            self.dc.content.date = self.mods.content.origin_info.created[0].date
+            # if a date range in MODS, add both dates
+            if len(self.mods.content.origin_info.created) > 1:
                 # if a date range in MODS, add both dates
-                if len(self.mods.content.origin_info.created) > 1:
-                    self.dc.content.date = "%s-%s" % (self.dc.content.date,
-                                self.mods.content.origin_info.created[1].date)
+                self.dc.content.date = "%s-%s" % (self.dc.content.date,
+                            self.mods.content.origin_info.created[1].date)
+            # FIXME: should this be dc:coverage ?
+
+        # TEMPORARY: collection relation and cmodel must be in DC for find_objects
+        # - these two can be removed once we implement gsearch
+        if self.collection_id is not None:
+            # store collection membership as dc:relation            
+            self.dc.content.relation = self.collection_id
+        # set content model URI as dc:format
+        self.dc.content.format = self.CONTENT_MODELS[0]
+
+
+    def save(self, logMessage=None):
+        if self.mods.isModified() or self.rels_ext.isModified:
+            # DC is derivative metadata based on MODS/RELS-EXT
+            # if either has changed, update DC and object label to keep them in sync
+            self._update_dc()
 
         return super(CollectionObject, self).save(logMessage)
 

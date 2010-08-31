@@ -668,7 +668,66 @@ class TestCollectionObject(TestCase):
         self.assertEqual(collections[1].uri, obj.collection_id)
         self.assertEqual(collections[1].label, obj.collection_label)
 
+    def test_update_dc(self):
+        # DC should get updated from MODS & RELS-EXT on save
 
+        # create test object and populate with data
+        repo = Repository()
+        obj = repo.get_object(type=CollectionObject)
+        # collection membership in RELS-EXT
+        collections = CollectionObject.top_level()
+        obj.set_collection(collections[0].uri)        
+        obj.mods.content.source_id = 'MSS1000'
+        obj.mods.content.title = 'Salman Rushdie Papers'
+        obj.mods.content.resource_type = 'mixed material'
+        # name
+        obj.mods.content.name.name_parts.append(ModsNamePart(text='Salman Rushdie'))
+        obj.mods.content.name.roles.append(ModsRole(text='author', authority='local'))
+        # date range
+        obj.mods.content.origin_info.created.append(ModsDate(date=1947, point='start'))
+        obj.mods.content.origin_info.created.append(ModsDate(date=2008, point='end'))
+
+        # update DC and check values
+        obj._update_dc()
+        self.assert_('MSS1000' in obj.dc.content.identifier_list,
+            'source identifier should be present in a dc:identifier')
+        self.assertEqual(obj.mods.content.title, obj.dc.content.title,
+            'dc:title should match title from MODS')
+        self.assertEqual(obj.mods.content.resource_type, obj.dc.content.type,
+            'dc:type should match resource type from MODS')
+        self.assertEqual('Salman Rushdie', obj.dc.content.creator,
+            'dc:creator set from MODS name')
+        self.assertEqual('1947-2008', obj.dc.content.date,
+            'dc:date has text version of date range from MODS')
+        self.assertEqual(collections[0].uri, obj.dc.content.relation,
+            'top-level collection URI set as dc:relation')
+        # cmodel set as format (TEMPORARY)
+        self.assertEqual(obj.CONTENT_MODELS[0], obj.dc.content.format)
+            
+        # change values - test updated in DC correctly
+        obj.mods.content.source_id = 'MSS123'
+        obj.mods.content.title = 'Thomas Esterbrook letter books'
+        obj.mods.content.resource_type = 'text'
+        # name
+        obj.mods.content.name.name_parts[0].text = 'Thomas Esterbrook'
+        # single date
+        obj.mods.content.origin_info.created.pop()  # remove second date
+        obj.mods.content.origin_info.created[0].date = 1950
+        obj.mods.content.origin_info.created[0].point = None
+
+        obj._update_dc()
+        self.assert_('MSS123' in obj.dc.content.identifier_list,
+            'updated source identifier should be present in a dc:identifier')
+        self.assert_('MSS1000' not in obj.dc.content.identifier_list,
+            'previous source identifier should not be present in a dc:identifier')
+        self.assertEqual(obj.mods.content.title, obj.dc.content.title,
+            'dc:title should match updated title from MODS')
+        self.assertEqual(obj.mods.content.resource_type, obj.dc.content.type,
+            'dc:type should match updated resource type from MODS')
+        self.assertEqual('Thomas Esterbrook', obj.dc.content.creator,
+            'dc:creator set from updated MODS name')
+        self.assertEqual('1950', obj.dc.content.date,
+            'dc:date has single date from MODS')
 
 class TestCollectionForm(TestCase):
     # test form data with all required fields
