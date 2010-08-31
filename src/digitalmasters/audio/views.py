@@ -175,11 +175,15 @@ def edit_collection(request, pid=None):
             form = CollectionForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
                 form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
-                obj.save()      
+                obj.save()
                 action = 'Created new' if pid is None else 'Updated'
                 messages.success(request, '%s collection %s' % (action, obj.pid))
-                return HttpResponseRedirect(reverse('audio:index'))
-                # otherwise - fall through to display edit form again
+                # submit via normal save
+                if '_save_continue' not in request.POST:
+                    return HttpResponseRedirect(reverse('audio:index'))
+                # could also be _save_continue
+                # -- fall through and display form; will display save message
+            # in any other case - fall through to display edit form again
         else:
             # GET - display the form for editing
             # FIXME: special fields not getting set!

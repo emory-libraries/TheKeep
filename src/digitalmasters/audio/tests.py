@@ -332,8 +332,7 @@ class AudioViewsTest(TestCase):
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, edit_url))
-        form = response.context['form']
-        self.assert_(isinstance(form, CollectionForm),
+        self.assert_(isinstance(response.context['form'], CollectionForm),
                 "MODS CollectionForm is set in response context")
         self.assert_(isinstance(response.context['form'].instance, CollectionMods),
                 "form instance is a collection MODS XmlObject")
@@ -358,6 +357,16 @@ class AudioViewsTest(TestCase):
         obj = repo.get_object(type=CollectionObject, pid=obj.pid)
         self.assertEqual(COLLECTION_DATA['title'], obj.mods.content.title,
             "MODS content updated in existing object from form data")
+
+        # test logic for save and continue editing
+        data = COLLECTION_DATA.copy()
+        data['_save_continue'] = True   # simulate submit via 'save and continue' button
+        response = self.client.post(edit_url, data)
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assertEqual('Updated collection %s' % obj.pid, messages[0],
+            'successful collection update message displayed to user on save and continue editing')
+        self.assert_(isinstance(response.context['form'], CollectionForm),
+                "MODS CollectionForm is set in response context after save and continue editing")
 
         # attempt to edit non-existent record
         edit_url = reverse('audio:edit-collection', args=['my-bogus-pid:123'])
