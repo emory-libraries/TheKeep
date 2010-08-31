@@ -1,6 +1,7 @@
 import magic
 from rdflib import URIRef
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
@@ -11,7 +12,8 @@ from django.template.defaultfilters import slugify
 
 from eulcore.fedora.util import RequestFailed
 
-from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm
+from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, \
+    CollectionForm, CollectionSearch
 from digitalmasters.audio.models import AudioObject, CollectionObject
 from digitalmasters.fedora import Repository
 
@@ -158,6 +160,7 @@ def download_audio(request, pid):
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
+@permission_required('is_staff')
 def edit_collection(request, pid=None):
     "Create a new or edit an existing Fedora Collection object with MODS metadata."
     repo = Repository()
@@ -177,11 +180,7 @@ def edit_collection(request, pid=None):
                     form.update_instance()      # instance is reference to mods datastream object
                     if obj.mods.content.is_valid():
                         # add relation to top-level collection
-                        obj.rels_ext.content.add((
-                                URIRef(obj.uri),
-                                URIRef(CollectionObject.MEMBER_OF_COLLECTION),
-                                URIRef(form.cleaned_data['collection'])
-                        ))
+                        obj.set_collection(form.cleaned_data['collection'])
                         obj.save()
                         action = 'Created new' if pid is None else 'Updated'
                         messages.success(request, '%s collection %s' % (action, obj.pid))
@@ -206,3 +205,49 @@ def edit_collection(request, pid=None):
 
     return render_to_response('audio/edit_collection.html', context,
         context_instance=RequestContext(request))
+
+
+
+@permission_required('is_staff')
+def collection_search(request):
+    "Search for collection objects."
+    response_code = None
+    form = CollectionSearch(request.GET)
+    context = {'search': form}
+    if form.is_valid():
+        search_opts = {
+            'type': CollectionObject,
+            # for now, restrict to objects in configured pidspace
+            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE
+        }
+
+        if form.cleaned_data['mss']:
+            # NOTE: adding wildcard to match all records in an instance
+            search_opts['identifier__contains'] = "%s*" % form.cleaned_data['mss']
+        if form.cleaned_data['title']:
+            search_opts['title__contains'] = form.cleaned_data['title']
+        if form.cleaned_data['creator']:
+            search_opts['creator__contains'] = form.cleaned_data['creator']
+        if form.cleaned_data['collection']:
+            search_opts['relation'] = form.cleaned_data['collection']
+        if search_opts:
+            # If they didn't specify any search options, don't bother
+            # searching.
+            try:
+                repo = Repository()
+                found = repo.find_objects(**search_opts)
+                context['results'] = list(found)
+            except:
+                response_code = 500
+                # FIXME: this is duplicate logic from generic search view
+                context['server_error'] = 'There was an error ' + \
+                    'contacting the digital repository. This ' + \
+                    'prevented us from completing your search. If ' + \
+                    'this problem persists, please alert the ' + \
+                    'repository administrator.'
+
+    response = render_to_response('audio/collection_search.html', context,
+                    context_instance=RequestContext(request))
+    if response_code is not None:
+        response.status_code = response_code
+    return response
