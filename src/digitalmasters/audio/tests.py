@@ -648,6 +648,28 @@ class TestCollectionObject(TestCase):
                 "top-level collection is instance of CollectionObject")
         # should this test pids from fixture?
 
+    def test_collection_info(self):
+        # test setting & getting collection membership
+        repo = Repository()
+        obj = repo.get_object(type=CollectionObject)
+        self.assertEqual(None, obj.collection_id,
+            "CollectionObject with no collection membership returns None for collection id")
+        self.assertEqual(None, obj.collection_label,
+            "CollectionObject with no collection membership returns None for collection label")
+
+        # set collection membership
+        collections = CollectionObject.top_level()
+        obj.set_collection(collections[0].uri)
+        self.assertEqual(collections[0].uri, obj.collection_id)
+        self.assertEqual(collections[0].label, obj.collection_label)
+
+        # update collection membership
+        obj.set_collection(collections[1].uri)
+        self.assertEqual(collections[1].uri, obj.collection_id)
+        self.assertEqual(collections[1].label, obj.collection_label)
+
+
+
 class TestCollectionForm(TestCase):
     # test form data with all required fields
     data = COLLECTION_DATA

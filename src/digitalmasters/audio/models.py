@@ -1,3 +1,5 @@
+from rdflib import URIRef
+
 from eulcore import xmlmap
 from eulcore.fedora.models import DigitalObject, FileDatastream, XmlDatastream, URI_HAS_MODEL
 from eulcore.django.fedora.server import Repository
@@ -144,6 +146,9 @@ class CollectionObject(DigitalObject):
             'format': Mods.ROOT_NS,
             'versionable': True,
         })
+
+    _collection_id = None
+    _collection_label = None
         
     def save(self, logMessage=None):
         # FIXME: largely duplicated logic from AudioObject save
@@ -164,9 +169,52 @@ class CollectionObject(DigitalObject):
 
         return super(CollectionObject, self).save(logMessage)
 
+    @property
+    def collection_id(self):
+        """Fedora URI for the top-level collection this object is a member of.
+        :rtype: string
+        """
+        # for now, a collection should only have one isMemberOfCollection relation
+        if self._collection_id is None:
+            uri = self.rels_ext.content.value(subject=URIRef(self.uri),
+                        predicate=URIRef(CollectionObject.MEMBER_OF_COLLECTION))
+            if uri is not None:
+                self._collection_id = str(uri)  # convert from URIRef to string
+        return self._collection_id
+
+    @property
+    def collection_label(self):
+        """Label of the top-level collection this object is a member of.
+        :rtype: string
+        """
+        if self._collection_label is None:
+            for coll in CollectionObject.top_level():
+                if coll.uri == self.collection_id:
+                    self._collection_label = coll.label
+                    break
+        return self._collection_label
+
+    def set_collection(self, collection_uri):
+        """Add or update the isMemberOfcollection relation in object RELS-EXT.
+        
+        :param collection_uri: string containing collection URI
+        """
+        # update/replace any existing collection membership (only one allowed, for now)
+        self.rels_ext.content.set((
+            URIRef(self.uri),
+            URIRef(CollectionObject.MEMBER_OF_COLLECTION),
+            URIRef(collection_uri)
+        ))
+        # clear out any cached collection id/label
+        self._collection_id = None
+        self._collection_label = None
+
     @staticmethod
     def top_level():
-        "Find top-level collection objects"
+        """Find top-level collection objects.
+        :returns: list of :class:`CollectionObject`
+        :rtype: list
+        """
         repo = Repository()
         # find all objects with cmodel collection-1.1 and no parents
         query = '''SELECT ?coll
