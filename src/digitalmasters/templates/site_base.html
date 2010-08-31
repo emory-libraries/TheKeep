@@ -13,6 +13,12 @@
 
 {% load eulcore_tags %}
 
+{% block sidebar-left %}
+  {% if collection_search %}
+    {% include 'audio/_collection_search_form.html' %}
+  {% endif %}
+{% endblock %}
+
 {% block message %}
     {% if messages %}
     <ul class="messages">
@@ -33,3 +39,6 @@
     <div class="sw-version dev-note">v{{ SW_VERSION }}</div>
   {% endif %}
 {% endblock %}
+
+{% block share-bar %}{# suppress share-bar #}{% endblock %}
+{% block headerblocks %}{# suppress search boxes in header #}{% endblock %}

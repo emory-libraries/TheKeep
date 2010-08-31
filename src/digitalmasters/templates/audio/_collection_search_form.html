@@ -1,0 +1,14 @@
+<div id="collection-search">
+  <h2>Search Collections</h2>
+  <form action="{% url audio:search-collections %}" method="get">
+      {% for field in collection_search %}
+      <p class="fieldWrapper">
+          {{ field.errors }}
+          {{ field.label_tag }}: {{ field }}
+          {# suppressing help text for space reasons; might be nice to have pop-up help #}
+      </p>
+      {% endfor %}
+    {# might be nice to have a clear (not reset) button #}
+    <input class="form-submit" type="submit" value="Search" />
+  </form>
+</div>

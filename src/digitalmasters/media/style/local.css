@@ -9,3 +9,34 @@ table#mods_edit table.subform th {
 textarea, input.long {
     width:85%;
 }
+
+div#sidebar-left-inner div {
+    border: 1px solid #D9D9D9;
+    background-color: #f2f3f5;
+    padding: 5px;
+    margin-bottom: 10px;
+    font-size: 90%;
+}
+div#collection-search input {
+    margin: 0px;
+}
+div#collection-search p {
+    margin: 0px;
+}
+
+/* form buttons styled to look sort of like form-submit */
+input.form-button {
+    background-color:#02266D;
+    border:1px solid #002878;
+    color:#E6EDF2;
+    cursor:pointer;
+    font:0.833333em/1em "Trebuchet MS",Arial,Helvetica,sans-serif;
+    height:20px;
+    padding:3px 10px;
+    text-transform:uppercase;
+}
+input.form-button:hover {
+    background-color:#B98B02;
+    border-color:#997300;
+    color:#FFFFFF
+}
