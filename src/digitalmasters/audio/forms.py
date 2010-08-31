@@ -126,16 +126,19 @@ class CollectionForm(XmlObjectForm):
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
             # set date created - could be a single date or a date range
-            if len(self.instance.origin_info.created) == 0:
-                self.instance.origin_info.created.insert(0, ModsDate())
-            self.instance.origin_info.created[0].date = self.cleaned_data['date_created']
-            self.instance.origin_info.created[0].key_date = True
+            # remove existing dates and re-add
+            for i in range(len(self.instance.origin_info.created)):
+                self.instance.origin_info.created.pop()
+            self.instance.origin_info.created.append(ModsDate(
+                    date=self.cleaned_data['date_created'],
+                    key_date=True,
+                    ))
             # if there is a date end, store it and set end & start attributes
             if 'date_end' in self.cleaned_data and self.cleaned_data['date_end']:
-                if len(self.instance.origin_info.created) == 1:
-                    self.instance.origin_info.created.insert(1, ModsDate())
-                self.instance.origin_info.created[1].date = self.cleaned_data['date_end']
-                self.instance.origin_info.created[1].point = 'end'
+                self.instance.origin_info.created.append(ModsDate(
+                    date=self.cleaned_data['date_end'],
+                    point='end',
+                    ))
                 self.instance.origin_info.created[0].point = 'start'
 
             # NOTE: parent collection is not part of the MODS; for now,
