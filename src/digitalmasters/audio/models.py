@@ -82,6 +82,9 @@ class ModsName(ModsCommon):
     affiliation = xmlmap.StringField('mods:affiliation')
     roles = xmlmap.NodeListField('mods:role', ModsRole)
 
+    # TODO: logic for converting to plain-text name (e.g., for template display,
+    # setting as dc:creator, etc) should probably be implemented here
+
 class ModsBase(ModsCommon):
     """Common field declarations for all top-level MODS elements; base class for
     :class:`Mods` and :class:`ModsRelatedItem`."""
