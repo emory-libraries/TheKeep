@@ -422,6 +422,10 @@ class AudioViewsTest(TestCase):
         self.assertContains(response, engdocs.pid,
                 msg_prefix="English Documents collection found for collection %s" % collection)
 
+        # no match
+        response = self.client.get(search_url, {'title': 'not-a-collection' })
+        self.assertContains(response, 'no results',
+                msg_prefix='Message should be displayed to user when search finds no matches')
 
         # clean up
         for p in pids:
