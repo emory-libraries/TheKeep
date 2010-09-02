@@ -82,8 +82,11 @@ class ModsName(ModsCommon):
     affiliation = xmlmap.StringField('mods:affiliation')
     roles = xmlmap.NodeListField('mods:role', ModsRole)
 
-    # TODO: logic for converting to plain-text name (e.g., for template display,
-    # setting as dc:creator, etc) should probably be implemented here
+    def __unicode__(self):
+        # default text display of a name (excluding roles for now)
+        # TODO: improve logic for converting to plain-text name
+        # (e.g., for template display, setting as dc:creator, etc)
+        return ' '.join([unicode(part) for part in self.name_parts])
 
 class ModsBase(ModsCommon):
     """Common field declarations for all top-level MODS elements; base class for
@@ -167,8 +170,8 @@ class CollectionObject(DigitalObject):
             self.dc.content.identifier_list.extend([id.text for id
                                             in self.mods.content.identifiers])
         if unicode(self.mods.content.name) != '':
-            # TODO: format multi-part name fields intelligently for dc:creator
-            self.dc.content.creator_list[0] = unicode(self.mods.content.name.name_parts[0])
+            # for now, use unicode conversion as defined in ModsName
+            self.dc.content.creator_list[0] = unicode(self.mods.content.name)
         if len(self.mods.content.origin_info.created):                        
             self.dc.content.date = self.mods.content.origin_info.created[0].date
             # if a date range in MODS, add both dates

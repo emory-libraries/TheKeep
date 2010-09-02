@@ -1,0 +1,42 @@
+{% extends "site_base.html" %}
+
+{% block content-title %}Browse Collections{% endblock %}
+
+{% block content-body %}
+<ul>
+    {% for coll in collections %}
+        <li>{{ coll.label }}
+            <ul>
+            {% for subcoll in coll.subcollections %}
+            <li>{{ subcoll.mods.content.source_id }}
+                <a href="{% url audio:edit-collection subcoll.pid %}">                   
+                    {{ subcoll.mods.content.title }}</a>
+                    {{ subcoll.mods.content.name }}
+                </li>
+            {% empty %}
+                <li>No subcollections</li>
+            {% endfor %}
+            </ul>
+        </li>
+    {% empty %}
+    <li>No top-level collections found.</li>
+    {% endfor %}
+</ul>
+{% comment %}
+
+<table>
+    <tr><th>MSS #</th><th>Title</th><th>Creator</th><th>Collection</th></tr>
+{% for obj in results %}
+    <tr>
+        <td>{{ obj.mods.content.source_id|default:'' }}</td>
+        <td><a href="{% url audio:edit-collection obj.pid %}">{{ obj.mods.content.title }}</a></td>
+        <td>{{ obj.mods.content.name.name_parts|join:' ' }}</td> {# FIXME: handle multipart better! #}
+        <td>{{ obj.collection_label }}</td>
+    </tr>
+{% empty %}
+    <tr><td colspan="4">no results</td></tr>
+{% endfor %}
+</table>
+{% endcomment %}
+
+{% endblock %}

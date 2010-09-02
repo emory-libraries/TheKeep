@@ -431,6 +431,43 @@ class AudioViewsTest(TestCase):
         for p in pids:
             repo.purge_object(p)
 
+    def test_collection_browse(self):
+        browse_url = reverse('audio:browse-collections')
+
+        # ingest test objects to browse
+        repo = Repository()
+        rushdie = FedoraFixtures.rushdie_collection()
+        rushdie.save()  # save to fedora for searching
+        esterbrook = FedoraFixtures.esterbrook_collection()
+        esterbrook.save()
+        engdocs = FedoraFixtures.englishdocs_collection()
+        engdocs.save()
+        pids = [rushdie.pid, esterbrook.pid, engdocs.pid]
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        response = self.client.get(browse_url)
+        self.assert_(response.context['collections'],
+            'top-level collection object list is set in response context')
+        for obj in FedoraFixtures.top_level_collections:
+            self.assertContains(response, obj.label,
+                msg_prefix="top-level collection %s is listed on collection browse page" % obj.label)
+
+        for obj in rushdie, esterbrook, engdocs:
+            self.assertContains(response, obj.mods.content.title,
+                msg_prefix="subcollection title for %s is listed on collection browse page" % obj.pid)
+            self.assertContains(response, obj.mods.content.source_id,
+                msg_prefix="subcollection MSS # for %s is listed on collection browse page" % obj.pid)
+            self.assertContains(response, unicode(obj.mods.content.name),
+                msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
+
+        # test errors?
+
+        # clean up
+        for p in pids:
+            repo.purge_object(p)
+
 
 RealRepository = Repository
 class FedoraCommsTest(TestCase):

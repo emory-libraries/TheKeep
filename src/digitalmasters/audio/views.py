@@ -251,3 +251,25 @@ def collection_search(request):
     if response_code is not None:
         response.status_code = response_code
     return response
+
+@permission_required('is_staff')
+def collection_browse(request):
+    "Browse collections by hierarchy."  
+    response_code = None
+    context = {}
+    try:
+        context['collections'] = CollectionObject.top_level()
+    except:
+        response_code = 500
+        # FIXME: this is duplicate logic from generic search view
+        context['server_error'] = 'There was an error ' + \
+            'contacting the digital repository. This ' + \
+            'prevented us from completing your search. If ' + \
+            'this problem persists, please alert the ' + \
+            'repository administrator.'
+
+    response = render_to_response('audio/collection_browse.html', context,
+                    context_instance=RequestContext(request))
+    if response_code is not None:
+        response.status_code = response_code
+    return response
