@@ -803,6 +803,48 @@ class TestCollectionObject(TestCase):
         self.assertEqual('1950', obj.dc.content.date,
             'dc:date has single date from MODS')
 
+    def test_subcollections(self):
+         # ingest test collection objects
+        repo = Repository()
+        rushdie = FedoraFixtures.rushdie_collection()
+        rushdie.save()
+        esterbrook = FedoraFixtures.esterbrook_collection()
+        esterbrook.save()
+        engdocs = FedoraFixtures.englishdocs_collection()
+        engdocs.save()
+        pids = [rushdie.pid, esterbrook.pid, engdocs.pid]
+
+        # rushdie & engdocs are in the same collection
+        collection = repo.get_object(type=CollectionObject, pid=rushdie.collection_id)
+        subcolls = collection.subcollections()
+        self.assert_(isinstance(subcolls[0], CollectionObject),
+            "subcollections methods returns instances of CollectionObject")
+        subcoll_pids = [coll.pid for coll in subcolls]
+        self.assert_(rushdie.pid in subcoll_pids,
+            "rushdie should be included in subcollection for %s" % collection.pid)
+        self.assert_(engdocs.pid in subcoll_pids,
+            "engdocs should be included in subcollection for %s" % collection.pid)
+        self.assert_(esterbrook.pid not in subcoll_pids,
+            "esterbrook should be excluded from subcollections for %s" % collection.pid)
+
+        # esterbrook is in a different collection
+        collection = repo.get_object(type=CollectionObject, pid=esterbrook.collection_id)
+        subcolls = collection.subcollections()
+        subcoll_pids = [coll.pid for coll in subcolls]
+        self.assert_(rushdie.pid not in subcoll_pids,
+            "rushdie should be excluded from subcollections for %s" % collection.pid)
+        self.assert_(engdocs.pid not in subcoll_pids,
+            "engdocs should be excluded from subcollections for %s" % collection.pid)
+        self.assert_(esterbrook.pid in subcoll_pids,
+            "esterbrook should be included in subcollections for %s" % collection.pid)
+
+
+        
+
+        # clean up
+        for p in pids:
+            repo.purge_object(p)
+
 class TestCollectionForm(TestCase):
     # test form data with all required fields
     data = COLLECTION_DATA
