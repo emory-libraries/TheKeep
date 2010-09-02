@@ -48,7 +48,7 @@ def upload(request):
                 messages.error(request, 'Upload file must be a WAV file (got %s)' % type)
             else:
                 try:
-                    repo = Repository()
+                    repo = Repository(request=request)
                     obj = repo.get_object(type=AudioObject)
                     obj.label = form.cleaned_data['label']
                     obj.dc.content.title = obj.mods.content.title = obj.label
@@ -95,7 +95,7 @@ def search(request):
             # If they didn't specify any search options, don't bother
             # searching.
             try:
-                repo = Repository()
+                repo = Repository(request=request)
                 found = repo.find_objects(**search_opts)
                 ctx_dict['results'] = list(found)
             except:
@@ -114,7 +114,7 @@ def search(request):
 
 @permission_required('is_staff')
 def edit(request, pid):
-    repo = Repository()
+    repo = Repository(request=request)
 
     try:
         obj = repo.get_object(pid, type=AudioObject)        
@@ -146,7 +146,7 @@ def edit(request, pid):
 @permission_required('is_staff')
 def download_audio(request, pid):
     "Serve out the audio datastream for the fedora object specified by pid."
-    repo = Repository()
+    repo = Repository(request=request)
     obj = repo.get_object(pid, type=AudioObject)
     # NOTE: this will probably need some work to be able to handle large datastreams
     try:
@@ -163,7 +163,7 @@ def download_audio(request, pid):
 @permission_required('is_staff')
 def edit_collection(request, pid=None):
     "Create a new or edit an existing Fedora Collection object with MODS metadata."
-    repo = Repository()
+    repo = Repository(request=request)
     try:
         # get collection object - existing if pid specified, or new if not
         obj = repo.get_object(type=CollectionObject, pid=pid)
@@ -234,7 +234,7 @@ def collection_search(request):
         if search_opts:
             # If no user-specified search terms are entered, find all collections
             try:
-                repo = Repository()
+                repo = Repository(request=request)
                 found = repo.find_objects(**search_opts)
                 context['results'] = list(found)
             except:
