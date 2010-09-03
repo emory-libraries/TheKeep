@@ -120,7 +120,7 @@ class CollectionForm(XmlObjectForm):
             'restrictions_on_access', 'use_and_reproduction',
             )
 
-    def __init__(self, data=None, instance=None, prefix=None, **kwargs):
+    def __init__(self, data=None, instance=None, **kwargs):
         # overriding init to accept a CollectionObject instead of CollectionMods
         # - set initial data for extra fields (collection & dates) from instance
         # - pass mods xmlobject to parent XmlObjectForm
@@ -146,7 +146,7 @@ class CollectionForm(XmlObjectForm):
             mods_instance = None
             
         super(CollectionForm, self).__init__(data=data, instance=mods_instance,
-                                             prefix=prefix, **kwargs)
+                                             **kwargs)
         
     def update_instance(self):
         # override default update to handle extra fields (collection & dates)
