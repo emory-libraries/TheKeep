@@ -511,7 +511,8 @@ class FedoraCommsTest(TestCase):
         password = getattr(settings, 'FEDORA_PASS', None)
 
         class RedirectedRepository(eulcore.fedora.server.Repository):
-            def __init__(self):
+            def __init__(self, request=None):
+                # take (and ignore) a request option to match local Repository class
                 eulcore.fedora.server.Repository.__init__(self, root, username, password)
         if hasattr(settings, 'FEDORA_PIDSPACE'):
             RedirectedRepository.default_pidspace = settings.FEDORA_PIDSPACE
