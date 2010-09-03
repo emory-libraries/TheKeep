@@ -15,8 +15,8 @@ from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginI
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
         ModsRelatedItem, CollectionObject, CollectionMods
 from digitalmasters.audio.fixtures import FedoraFixtures
-#from digitalmasters.fedora import Repository
 
+# NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
 # sample POST data for creating a collection
