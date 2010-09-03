@@ -175,8 +175,18 @@ def edit_collection(request, pid=None):
             form = CollectionForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
                 form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
-                obj.save()
-                action = 'Created new' if pid is None else 'Updated'
+                if pid is None:
+                    # new object
+                    log_message = 'Creating new collection'
+                    action = 'Created new'
+                else:
+                    # existing object
+                    log_message = 'Updating collection'
+                    action = 'Updated'
+
+                # NOTE: by sending a log message, we force Fedora to store an
+                # audit trail entry for object creation, which doesn't happen otherwise
+                obj.save(log_message)
                 messages.success(request, '%s collection %s' % (action, obj.pid))
                 # submit via normal save
                 if '_save_continue' not in request.POST:

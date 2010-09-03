@@ -315,10 +315,8 @@ class AudioViewsTest(TestCase):
                       "collection object is member of requested top-level collection")
 
         # confirm that current site user appears in fedora audit trail
-        #xml, uri = new_coll.api.getObjectXML(new_coll.pid)
-        #print xml
-        # TODO: ingest not logged by fedora...
-        #self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
+        xml, uri = new_coll.api.getObjectXML(new_coll.pid)
+        self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
 
 
     def test_edit_collection(self):
@@ -364,7 +362,6 @@ class AudioViewsTest(TestCase):
             "MODS content updated in existing object from form data")
         # confirm that current site user appears in fedora audit trail
         xml, uri = obj.api.getObjectXML(obj.pid)
-        print xml
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml,
             'user logged into site is also username in fedora audit:trail')
 
