@@ -169,7 +169,7 @@ class CollectionObject(DigitalObject):
                 self.dc.content.identifier_list.pop()
             self.dc.content.identifier_list.extend([id.text for id
                                             in self.mods.content.identifiers])
-        if unicode(self.mods.content.name) != '':
+        if unicode(self.mods.content.name):
             # for now, use unicode conversion as defined in ModsName
             self.dc.content.creator_list[0] = unicode(self.mods.content.name)
         if len(self.mods.content.origin_info.created):                        
