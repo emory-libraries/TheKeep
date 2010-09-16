@@ -19,3 +19,12 @@ the ``python-magic`` package.
 
 Install ``PyCrypto`` and its dependencies. On Ubuntu, install
 the ``python-crypto`` package.  Other users can ``easy_install pycrypto``.
+
+
+Test Setup
+----------
+
+Certain unit tests pass test user credentials to Fedora, in order to test and 
+simulate accessing Fedora as the logged in user.  For tests to work properly,
+the unit test user should be defined (with appropriate permissions)
+as a fedora account.  See digitalmasters.audio.tests for account details.

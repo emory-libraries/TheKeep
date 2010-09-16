@@ -16,6 +16,7 @@ from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginI
         ModsRelatedItem, CollectionObject, CollectionMods
 from digitalmasters.audio.fixtures import FedoraFixtures
 
+# NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
 # sample POST data for creating a collection
@@ -265,7 +266,8 @@ class AudioViewsTest(TestCase):
     def test_create_collection(self):
         # test creating a collection object
         # log in as staff
-        self.client.login(**ADMIN_CREDENTIALS)
+        # NOTE: using admin view so user credentials will be used to access fedora
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
 
         new_coll_url = reverse('audio:new-collection')
 
@@ -312,6 +314,11 @@ class AudioViewsTest(TestCase):
                       new_coll.rels_ext.content,
                       "collection object is member of requested top-level collection")
 
+        # confirm that current site user appears in fedora audit trail
+        xml, uri = new_coll.api.getObjectXML(new_coll.pid)
+        self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
+
+
     def test_edit_collection(self):
         repo = Repository()
         obj = FedoraFixtures.rushdie_collection()
@@ -320,7 +327,8 @@ class AudioViewsTest(TestCase):
         obj.save()  # save to fedora for editing
         
         # log in as staff
-        self.client.login(**ADMIN_CREDENTIALS)
+        # NOTE: using admin view so user credentials will be used to access fedora
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         edit_url = reverse('audio:edit-collection', args=[obj.pid])
 
         response = self.client.get(edit_url)
@@ -352,6 +360,10 @@ class AudioViewsTest(TestCase):
         obj = repo.get_object(type=CollectionObject, pid=obj.pid)
         self.assertEqual(COLLECTION_DATA['title'], obj.mods.content.title,
             "MODS content updated in existing object from form data")
+        # confirm that current site user appears in fedora audit trail
+        xml, uri = obj.api.getObjectXML(obj.pid)
+        self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml,
+            'user logged into site is also username in fedora audit:trail')
 
         # test logic for save and continue editing
         data = COLLECTION_DATA.copy()
@@ -499,7 +511,8 @@ class FedoraCommsTest(TestCase):
         password = getattr(settings, 'FEDORA_PASS', None)
 
         class RedirectedRepository(eulcore.fedora.server.Repository):
-            def __init__(self):
+            def __init__(self, request=None):
+                # take (and ignore) a request option to match local Repository class
                 eulcore.fedora.server.Repository.__init__(self, root, username, password)
         if hasattr(settings, 'FEDORA_PIDSPACE'):
             RedirectedRepository.default_pidspace = settings.FEDORA_PIDSPACE
