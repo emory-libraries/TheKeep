@@ -4,7 +4,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'admin/', 'permanent' : False}),
+    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
     (r'^admin/',  include(admin.site.urls)),
     # NOTE: temporary - added because theme requires it
     url(r'^index$', 'digitalmasters.audio.views.index', name="site-index"),
