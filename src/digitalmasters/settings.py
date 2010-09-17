@@ -37,6 +37,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     # additional context processors
     "django.core.context_processors.request", # always include request in render context
     "digitalmasters.audio.context_processors.collection_search",  # collection search form on every page
+    "digitalmasters.version_context", # include app version
 )
 
 MIDDLEWARE_CLASSES = (

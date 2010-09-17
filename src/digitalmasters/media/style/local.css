@@ -40,3 +40,10 @@ input.form-button:hover {
     border-color:#997300;
     color:#FFFFFF
 }
+
+.sw-version {
+    text-align: right
+}
+.dev-note {
+    color: #999
+}
