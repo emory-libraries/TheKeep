@@ -64,7 +64,7 @@ class ModsRole(ModsCommon):
     "MODS role"
     ROOT_NAME = 'role'
     type = xmlmap.StringField('mods:roleTerm/@type')
-    authority = xmlmap.StringField('mods:roleTerm/@authority', choices=['marcrelator', 'local'])
+    authority = xmlmap.StringField('mods:roleTerm/@authority', choices=['', 'marcrelator', 'local'])
     text = xmlmap.StringField('mods:roleTerm')
 
 class ModsName(ModsCommon):
