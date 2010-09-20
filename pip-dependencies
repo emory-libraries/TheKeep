@@ -1,5 +1,4 @@
 # inherited from eulcore
-ply
 lxml
 django
 mimeparse
@@ -9,6 +8,7 @@ soaplib==0.8.1
 python-ldap
 
 # local dependencies
+http://waterhouse.library.emory.edu:8080/hudson/job/python-eulcore-release-0.6/14/artifact/python-eulcore/dist/eulcore-0.6.0.tar.gz
 # FIXME: requires ubuntu's python-magic package. it's based on
 # http://www.darwinsys.com/file/ but # I haven't found a way to install it
 # via pip yet.

@@ -50,12 +50,15 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'digitalmasters.urls'
 
-TEMPLATE_DIRS = (
+TEMPLATE_DIRS = [
     path.join(BASE_DIR, 'templates'),
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
-)
+]
+
+# also look for templates in virtualenv
+import os
+if 'VIRTUAL_ENV' in os.environ:
+    genlib_path = os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib')
+    TEMPLATE_DIRS.append(genlib_path)
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -82,21 +85,10 @@ FILE_UPLOAD_HANDLERS = (
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 )
 
-EXTENSION_DIRS = (
-    path.join(BASE_DIR, '../externals/django-modules'),
-)
-
 # using default django login url
 LOGIN_URL = '/accounts/login/'
 
 AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
-
-import sys
-try:
-    sys.path.extend(EXTENSION_DIRS)
-except NameError:
-    pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
-del sys
 
 try:
     from localsettings import *
@@ -106,6 +98,13 @@ except ImportError:
         'stuff blows up, try copying localsettings.py.sample to ' + \
         'localsettings.py and setting appropriately for your environment.'
     pass
+
+import sys
+try:
+    sys.path.extend(EXTENSION_DIRS)
+except NameError:
+    pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
+del sys
 
 try:
     # use xmlrunner if it's installed; default runner otherwise. download
