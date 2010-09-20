@@ -1,24 +1,98 @@
 README
 ======
 
-Dependencies
-------------
- * eulcore (currently included as a subversion external)
-  * see eulcore documentation for dependencies
- * python-magic (for file mimetype detection)
- * PyCrypto
+System Dependencies
+-------------------
+
+Digital Masters (a.k.a. Euterpe) requires the following network resources::
+
+  * LDAP for user authentication
+  * Fedora 3.4 with risearch enabled. It should be configured for FeSL LDAP
+    authentication. Note that the localsettings.py requests user
+    credentials. These are used by command line applciations: Users logged
+    into the web application use their own LDAP credentials when accessing
+    fedora.
+  * A relational database for user and session information
+
+Software Dependencies
+---------------------
+
+We recommend the use of `pip <http://pip.openplans.org/>`_ and `virtualenv
+<http://virtualenv.openplans.org/>`_ for environment and dependency
+management in this and other Python projects. If you don't have them
+installed we recommend `sudo easy_install pip` and then `sudo pip install
+virtualenv`.
+
+Configure the environment
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you've never used virtualenv to set up a virtual environment for this
+project, you'll need to create a virtual environment for it. The environment
+is just a directory. You can store it anywhere you like; in this
+documentation it’ll live right next to the source. For instance, if the
+source is in /home/euterpe/src, consider creating an environment in
+/home/euterpe/env. To create such an environment, su into apache's user
+and::
+
+  $ virtualenv --no-site-packages /home/euterpe/env
+
+This creates a new virtual environment in that directory. Use pip to
+activate it::
+
+  $ . /home/euterpe/env/bin/activate
+
+Once the environment has been activated inside a shell, Python programs
+spawned from that shell will read their environment only from this
+directory, not from the system-wide site packages. Installations will
+correspondingly be installed into this environment.
+
+Installation instructions below assume all installations are invoked from an
+activated shell.
+
+Install dependencies
+~~~~~~~~~~~~~~~~~~~~
+
+Digital Masters (a.k.a. Euterpe) has several dependencies. The installation
+is mostly automated, but it had to be broken into three stages. Each stage
+will print status messages as it installs. If there are any errors, pip
+should announce them very loudly.
+
+To install the first stage of dependencies, cd into the repository checkout
+and::
+
+  $ pip install -r pip-predepends
+
+For the second stage, the software unfortunately depends on a package that
+cannot be installed directly from pip. It needs to be installed manually.
+From /home/euterpe in our example configuration above::
+
+  $ mkdir deps
+  $ cd deps
+  $ curl -O ftp://ftp.astron.com/pub/file/file-5.03.tar.gz
+  $ tar xzf file-5.03.tar.gz
+  $ cd file-5.03/python
+  $ python setup.py install
+
+The third stage looks like the first. It will produce much more output,
+though, as it installs most of the dependencies. From the checkout
+directory::
+
+  $ pip install -r pip-dependencies
+
+After this step, your virtual environment should contain all of the
+dependencies for Digital Masters (Euterpe).
+
 
 Installation
 ------------
-Install and configure like other django applications.
 
-Copy ``localsettings-sample.py`` to ``localsettings.py`` and configure. 
+After installing dependencies, copy and edit the wsgi and apache
+configuration files in src/apache inside the source code checkout. Both will
+probably require some tweaking for paths and such. 
 
-Install ``python-magic`` and its dependencies. On Ubuntu, install
-the ``python-magic`` package.
-
-Install ``PyCrypto`` and its dependencies. On Ubuntu, install
-the ``python-crypto`` package.  Other users can ``easy_install pycrypto``.
+Configure application settings by copying localsettings.py.sample to
+localsettings.py and editing for local database, LDAP, fedora, and key
+configuration.
 
 
 Test Setup
