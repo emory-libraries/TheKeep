@@ -12,8 +12,7 @@ from django.template.defaultfilters import slugify
 
 from eulcore.fedora.util import RequestFailed
 
-from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, \
-    CollectionForm, CollectionSearch
+from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject, CollectionObject
 from digitalmasters.fedora import Repository
 
@@ -21,7 +20,7 @@ allowed_audio_types = ['audio/x-wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
 def index(request):
-    search = SearchForm()
+    search = audioforms.SearchForm()
     return render_to_response('audio/index.html', {'search' : search},
             context_instance=RequestContext(request))
 
@@ -33,7 +32,7 @@ def upload(request):
     response_code = None
 
     if request.method == 'POST':
-        form = UploadForm(request.POST, request.FILES)
+        form = audioforms.UploadForm(request.POST, request.FILES)
         ctx_dict['form'] = form
         if form.is_valid():
             uploaded_file = request.FILES['audio']
@@ -68,7 +67,7 @@ def upload(request):
             # NOTE: uploaded file does not need to be removed because django
             # cleans it up automatically
     else:
-        ctx_dict['form'] = UploadForm()
+        ctx_dict['form'] = audioforms.UploadForm()
 
     response = render_to_response('audio/upload.html', ctx_dict,
                                   context_instance=RequestContext(request))
@@ -81,7 +80,7 @@ def upload(request):
 def search(request):
     "Search for fedora objects by pid or title."
     response_code = None
-    form = SearchForm(request.GET)
+    form = audioforms.SearchForm(request.GET)
     ctx_dict = {'search': form}
     if form.is_valid():
         search_opts = {}
@@ -120,7 +119,7 @@ def edit(request, pid):
         obj = repo.get_object(pid, type=AudioObject)        
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = EditForm(request.POST, instance=obj.mods.content)
+            form = audioforms.EditForm(request.POST, instance=obj.mods.content)
             if form.is_valid():     # includes schema validation
                 # update foxml object with MODS from the form
                 form.update_instance()      # instance is reference to mods object
@@ -131,7 +130,7 @@ def edit(request, pid):
                 # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with MODS content from the object
-            form = EditForm(instance=obj.mods.content)
+            form = audioforms.EditForm(instance=obj.mods.content)
 
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
@@ -172,7 +171,7 @@ def edit_collection(request, pid=None):
 
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = CollectionForm(request.POST, instance=obj)
+            form = audioforms.CollectionForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
                 form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
                 if pid is None:
@@ -197,7 +196,7 @@ def edit_collection(request, pid=None):
         else:
             # GET - display the form for editing
             # FIXME: special fields not getting set!
-            form = CollectionForm(instance=obj)
+            form = audioforms.CollectionForm(instance=obj)
     except RequestFailed, e:
         # if there was a 404 accessing object MODS, raise http404
         # NOTE: this probably doesn't distinguish between object exists with
@@ -221,7 +220,7 @@ def edit_collection(request, pid=None):
 def collection_search(request):
     "Search for collection objects."
     response_code = None
-    form = CollectionSearch(request.GET)
+    form = audioforms.CollectionSearch(request.GET)
     context = {'search': form}
     if form.is_valid():
         search_opts = {
