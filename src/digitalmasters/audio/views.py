@@ -1,15 +1,15 @@
 import magic
-from rdflib import URIRef
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
+from eulcore.django.http import HttpResponseSeeOtherRedirect
 from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.audio import forms as audioforms
@@ -55,7 +55,7 @@ def upload(request):
                     obj.save()
                     messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
                                     % (uploaded_file.name, obj.pid))
-                    return HttpResponseRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 except:
                     response_code = 500
                     ctx_dict['server_error'] = 'There was an error ' + \
@@ -126,7 +126,7 @@ def edit(request, pid):
                 if obj.mods.content.is_valid():
                     obj.save()
                     messages.success(request, 'Updated MODS for %s' % pid)
-                    return HttpResponseRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with MODS content from the object
@@ -140,7 +140,7 @@ def edit(request, pid):
         # this could mean the object doesn't exist OR it exists but has no
         # MODS or even that we couldn't contact the server
         messages.error(request, "Error: failed to load %s MODS for editing" % pid)
-        return HttpResponseRedirect(reverse('audio:index'))
+        return HttpResponseSeeOtherRedirect(reverse('audio:index'))
          
 @permission_required('is_staff')
 def download_audio(request, pid):
@@ -189,7 +189,7 @@ def edit_collection(request, pid=None):
                 messages.success(request, '%s collection %s' % (action, obj.pid))
                 # submit via normal save
                 if '_save_continue' not in request.POST:
-                    return HttpResponseRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # could also be _save_continue
                 # -- fall through and display form; will display save message
             # in any other case - fall through to display edit form again
