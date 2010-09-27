@@ -92,7 +92,15 @@ class NameForm(XmlObjectForm):
 
 class CollectionForm(XmlObjectForm):
     """Custom XmlObjectForm to edit descriptive metadata on a :class:`CollectionObject`.
-    Takes a :class:`CollectionObject` as form instance.
+
+    Takes a :class:`CollectionObject` as form instance.  This stands in contrast
+    to a regular :class:`eulcore.django.forms.XmlObjectForm`, which would take
+    an :class:`eulcore.xmlmap.XmlObject`. This form edits a whole
+    :class:`CollectionObject`, although most of the editing is on the MODS
+    datastream (which is an :class:`eulcore.xmlmap.XmlObject`). The most expedient
+    way to make a :class:`CollectionObject` editable was to make a customized
+    :class:`eulcore.django.forms.XmlObjectForm` that mostly deals with the
+    MODS datastream.
     """
     
     # NOTE: this only sets choices on load time
