@@ -229,7 +229,7 @@ def collection_search(request):
             # for now, restrict to objects in configured pidspace
             'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
             # for now, restrict by cmodel in dc:format
-            'format': CollectionObject.CONTENT_MODELS[0],
+            'format': CollectionObject.COLLECTION_CONTENT_MODEL,
         }
 
         if form.cleaned_data['mss']:

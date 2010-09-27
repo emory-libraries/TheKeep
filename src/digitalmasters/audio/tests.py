@@ -303,7 +303,7 @@ class AudioViewsTest(TestCase):
         repo = Repository()
         new_coll = repo.get_object(pid, type=CollectionObject)
         # check object creation and init-specific logic handled by view (isMemberOf)
-        self.assertTrue(new_coll.has_model(CollectionObject.CONTENT_MODELS[0]),
+        self.assertTrue(new_coll.has_model(CollectionObject.COLLECTION_CONTENT_MODEL),
             "collection object was created with the correct content model")
         self.assertEqual(COLLECTION_DATA['title'], new_coll.mods.content.title,
             "MODS content created on new object from form data")
@@ -825,8 +825,8 @@ class TestCollectionObject(TestCase):
             'dc:date has text version of date range from MODS')
         self.assertEqual(collections[0].uri, obj.dc.content.relation,
             'top-level collection URI set as dc:relation')
-        # cmodel set as format (TEMPORARY)
-        self.assertEqual(obj.CONTENT_MODELS[0], obj.dc.content.format)
+        # collection cmodel set as format (TEMPORARY)
+        self.assertEqual(obj.COLLECTION_CONTENT_MODEL, obj.dc.content.format)
             
         # change values - test updated in DC correctly
         obj.mods.content.source_id = 'MSS123'

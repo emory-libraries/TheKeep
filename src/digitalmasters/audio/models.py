@@ -142,7 +142,8 @@ class CollectionMods(Mods):
     
 
 class CollectionObject(DigitalObject):
-    CONTENT_MODELS = [ 'info:fedora/emory-control:Collection-1.1' ]
+    COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
+    CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
 
     # FIXME: there should be a better place to put this... (eulcore.fedora somewhere?)
     MEMBER_OF_COLLECTION = 'info:fedora/fedora-system:def/relations-external#isMemberOfCollection'
@@ -186,8 +187,8 @@ class CollectionObject(DigitalObject):
         if self.collection_id is not None:
             # store collection membership as dc:relation            
             self.dc.content.relation = self.collection_id
-        # set content model URI as dc:format
-        self.dc.content.format = self.CONTENT_MODELS[0]
+        # set collection content model URI as dc:format
+        self.dc.content.format = self.COLLECTION_CONTENT_MODEL
 
 
     def save(self, logMessage=None):
@@ -254,7 +255,7 @@ class CollectionObject(DigitalObject):
         }
         ''' % {
             'has_model': URI_HAS_MODEL,
-            'cmodel': CollectionObject.CONTENT_MODELS[0],
+            'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
             'member_of': CollectionObject.MEMBER_OF_COLLECTION
         }
         collections = repo.risearch.find_statements(query, language='sparql',
