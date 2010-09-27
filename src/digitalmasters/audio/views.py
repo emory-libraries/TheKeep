@@ -89,7 +89,7 @@ def search(request):
             search_opts['pid__contains'] = "%s*" % form.cleaned_data['pid']
         if form.cleaned_data['title']:
             search_opts['title__contains'] = form.cleaned_data['title']
-            
+
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.
@@ -240,20 +240,20 @@ def collection_search(request):
             search_opts['creator__contains'] = form.cleaned_data['creator']
         if form.cleaned_data['collection']:
             search_opts['relation'] = form.cleaned_data['collection']
-        if search_opts:
-            # If no user-specified search terms are entered, find all collections
-            try:
-                repo = Repository(request=request)
-                found = repo.find_objects(**search_opts)
-                context['results'] = list(found)
-            except:
-                response_code = 500
-                # FIXME: this is duplicate logic from generic search view
-                context['server_error'] = 'There was an error ' + \
-                    'contacting the digital repository. This ' + \
-                    'prevented us from completing your search. If ' + \
-                    'this problem persists, please alert the ' + \
-                    'repository administrator.'
+
+        # If no user-specified search terms are entered, find all collections
+        try:
+            repo = Repository(request=request)
+            found = repo.find_objects(**search_opts)
+            context['results'] = list(found)
+        except:
+            response_code = 500
+            # FIXME: this is duplicate logic from generic search view
+            context['server_error'] = 'There was an error ' + \
+                'contacting the digital repository. This ' + \
+                'prevented us from completing your search. If ' + \
+                'this problem persists, please alert the ' + \
+                'repository administrator.'
 
     response = render_to_response('audio/collection_search.html', context,
                     context_instance=RequestContext(request))
