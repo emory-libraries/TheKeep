@@ -1,19 +1,18 @@
 import magic
-from rdflib import URIRef
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
+from eulcore.django.http import HttpResponseSeeOtherRedirect
 from eulcore.fedora.util import RequestFailed
 
-from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, \
-    CollectionForm, CollectionSearch
+from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject, CollectionObject
 from digitalmasters.fedora import Repository
 
@@ -21,7 +20,7 @@ allowed_audio_types = ['audio/x-wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
 def index(request):
-    search = SearchForm()
+    search = audioforms.SearchForm()
     return render_to_response('audio/index.html', {'search' : search},
             context_instance=RequestContext(request))
 
@@ -33,7 +32,7 @@ def upload(request):
     response_code = None
 
     if request.method == 'POST':
-        form = UploadForm(request.POST, request.FILES)
+        form = audioforms.UploadForm(request.POST, request.FILES)
         ctx_dict['form'] = form
         if form.is_valid():
             uploaded_file = request.FILES['audio']
@@ -56,7 +55,7 @@ def upload(request):
                     obj.save()
                     messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
                                     % (uploaded_file.name, obj.pid))
-                    return HttpResponseRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 except:
                     response_code = 500
                     ctx_dict['server_error'] = 'There was an error ' + \
@@ -68,7 +67,7 @@ def upload(request):
             # NOTE: uploaded file does not need to be removed because django
             # cleans it up automatically
     else:
-        ctx_dict['form'] = UploadForm()
+        ctx_dict['form'] = audioforms.UploadForm()
 
     response = render_to_response('audio/upload.html', ctx_dict,
                                   context_instance=RequestContext(request))
@@ -81,7 +80,7 @@ def upload(request):
 def search(request):
     "Search for fedora objects by pid or title."
     response_code = None
-    form = SearchForm(request.GET)
+    form = audioforms.SearchForm(request.GET)
     ctx_dict = {'search': form}
     if form.is_valid():
         search_opts = {}
@@ -90,7 +89,7 @@ def search(request):
             search_opts['pid__contains'] = "%s*" % form.cleaned_data['pid']
         if form.cleaned_data['title']:
             search_opts['title__contains'] = form.cleaned_data['title']
-            
+
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.
@@ -120,18 +119,18 @@ def edit(request, pid):
         obj = repo.get_object(pid, type=AudioObject)        
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = EditForm(request.POST, instance=obj.mods.content)
+            form = audioforms.EditForm(request.POST, instance=obj.mods.content)
             if form.is_valid():     # includes schema validation
                 # update foxml object with MODS from the form
                 form.update_instance()      # instance is reference to mods object
                 if obj.mods.content.is_valid():
                     obj.save()
                     messages.success(request, 'Updated MODS for %s' % pid)
-                    return HttpResponseRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with MODS content from the object
-            form = EditForm(instance=obj.mods.content)
+            form = audioforms.EditForm(instance=obj.mods.content)
 
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
@@ -141,7 +140,7 @@ def edit(request, pid):
         # this could mean the object doesn't exist OR it exists but has no
         # MODS or even that we couldn't contact the server
         messages.error(request, "Error: failed to load %s MODS for editing" % pid)
-        return HttpResponseRedirect(reverse('audio:index'))
+        return HttpResponseSeeOtherRedirect(reverse('audio:index'))
          
 @permission_required('is_staff')
 def download_audio(request, pid):
@@ -172,7 +171,7 @@ def edit_collection(request, pid=None):
 
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = CollectionForm(request.POST, instance=obj)
+            form = audioforms.CollectionForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
                 form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
                 if pid is None:
@@ -190,14 +189,14 @@ def edit_collection(request, pid=None):
                 messages.success(request, '%s collection %s' % (action, obj.pid))
                 # submit via normal save
                 if '_save_continue' not in request.POST:
-                    return HttpResponseRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # could also be _save_continue
                 # -- fall through and display form; will display save message
             # in any other case - fall through to display edit form again
         else:
             # GET - display the form for editing
             # FIXME: special fields not getting set!
-            form = CollectionForm(instance=obj)
+            form = audioforms.CollectionForm(instance=obj)
     except RequestFailed, e:
         # if there was a 404 accessing object MODS, raise http404
         # NOTE: this probably doesn't distinguish between object exists with
@@ -221,7 +220,7 @@ def edit_collection(request, pid=None):
 def collection_search(request):
     "Search for collection objects."
     response_code = None
-    form = CollectionSearch(request.GET)
+    form = audioforms.CollectionSearch(request.GET)
     context = {'search': form}
     if form.is_valid():
         search_opts = {
@@ -229,7 +228,7 @@ def collection_search(request):
             # for now, restrict to objects in configured pidspace
             'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
             # for now, restrict by cmodel in dc:format
-            'format': CollectionObject.CONTENT_MODELS[0],
+            'format': CollectionObject.COLLECTION_CONTENT_MODEL,
         }
 
         if form.cleaned_data['mss']:
@@ -241,20 +240,20 @@ def collection_search(request):
             search_opts['creator__contains'] = form.cleaned_data['creator']
         if form.cleaned_data['collection']:
             search_opts['relation'] = form.cleaned_data['collection']
-        if search_opts:
-            # If no user-specified search terms are entered, find all collections
-            try:
-                repo = Repository(request=request)
-                found = repo.find_objects(**search_opts)
-                context['results'] = list(found)
-            except:
-                response_code = 500
-                # FIXME: this is duplicate logic from generic search view
-                context['server_error'] = 'There was an error ' + \
-                    'contacting the digital repository. This ' + \
-                    'prevented us from completing your search. If ' + \
-                    'this problem persists, please alert the ' + \
-                    'repository administrator.'
+
+        # If no user-specified search terms are entered, find all collections
+        try:
+            repo = Repository(request=request)
+            found = repo.find_objects(**search_opts)
+            context['results'] = list(found)
+        except:
+            response_code = 500
+            # FIXME: this is duplicate logic from generic search view
+            context['server_error'] = 'There was an error ' + \
+                'contacting the digital repository. This ' + \
+                'prevented us from completing your search. If ' + \
+                'this problem persists, please alert the ' + \
+                'repository administrator.'
 
     response = render_to_response('audio/collection_search.html', context,
                     context_instance=RequestContext(request))

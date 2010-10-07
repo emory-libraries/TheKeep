@@ -9,8 +9,7 @@ from django.test import Client, TestCase
 from eulcore.django.fedora.server import Repository
 from eulcore.xmlmap  import load_xmlobject_from_string
 
-from digitalmasters.audio.forms import UploadForm, SearchForm, EditForm, CollectionForm, \
-    AccessConditionForm, NamePartForm, NameForm
+from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
         ModsRelatedItem, CollectionObject, CollectionMods
@@ -69,7 +68,7 @@ class AudioViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, audio_index))
 
-        self.assert_(isinstance(response.context['search'], SearchForm))
+        self.assert_(isinstance(response.context['search'], audioforms.SearchForm))
         self.assertContains(response, '<input')
         self.assertContains(response, 'Pid:')
         self.assertContains(response, 'Title:')
@@ -86,7 +85,7 @@ class AudioViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, upload_url))
 
-        self.assert_(isinstance(response.context['form'], UploadForm))
+        self.assert_(isinstance(response.context['form'], audioforms.UploadForm))
         self.assertContains(response, 'Audio file')
         self.assertContains(response, '<input')
 
@@ -194,7 +193,7 @@ class AudioViewsTest(TestCase):
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, edit_url))
-        self.assert_(isinstance(response.context['form'], EditForm),
+        self.assert_(isinstance(response.context['form'], audioforms.EditForm),
                 "MODS EditForm is set in response context")
         self.assert_(isinstance(response.context['form'].instance, Mods),
                 "form instance is a MODS xmlobject")
@@ -275,7 +274,7 @@ class AudioViewsTest(TestCase):
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, new_coll_url))
-        self.assert_(isinstance(response.context['form'], CollectionForm),
+        self.assert_(isinstance(response.context['form'], audioforms.CollectionForm),
                 "MODS CollectionForm is set in response context")
 
         
@@ -285,7 +284,7 @@ class AudioViewsTest(TestCase):
         del(bad_data['resource_type'])
         bad_data['collection'] = 'bogus-pid:123'
         response = self.client.post(new_coll_url, bad_data)
-        self.assert_(isinstance(response.context['form'], CollectionForm),
+        self.assert_(isinstance(response.context['form'], audioforms.CollectionForm),
                 "MODS CollectionForm is set in response context after invalid submission")
         self.assertContains(response, 'This field is required', 2,
             msg_prefix='error message for 2 missing required fields')
@@ -303,7 +302,7 @@ class AudioViewsTest(TestCase):
         repo = Repository()
         new_coll = repo.get_object(pid, type=CollectionObject)
         # check object creation and init-specific logic handled by view (isMemberOf)
-        self.assertTrue(new_coll.has_model(CollectionObject.CONTENT_MODELS[0]),
+        self.assertTrue(new_coll.has_model(CollectionObject.COLLECTION_CONTENT_MODEL),
             "collection object was created with the correct content model")
         self.assertEqual(COLLECTION_DATA['title'], new_coll.mods.content.title,
             "MODS content created on new object from form data")
@@ -335,7 +334,7 @@ class AudioViewsTest(TestCase):
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, edit_url))
-        self.assert_(isinstance(response.context['form'], CollectionForm),
+        self.assert_(isinstance(response.context['form'], audioforms.CollectionForm),
                 "MODS CollectionForm is set in response context")
         self.assert_(isinstance(response.context['form'].instance, CollectionMods),
                 "form instance is a collection MODS XmlObject")
@@ -372,7 +371,7 @@ class AudioViewsTest(TestCase):
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assertEqual('Updated collection %s' % obj.pid, messages[0],
             'successful collection update message displayed to user on save and continue editing')
-        self.assert_(isinstance(response.context['form'], CollectionForm),
+        self.assert_(isinstance(response.context['form'], audioforms.CollectionForm),
                 "MODS CollectionForm is set in response context after save and continue editing")
 
         # attempt to edit non-existent record
@@ -825,8 +824,8 @@ class TestCollectionObject(TestCase):
             'dc:date has text version of date range from MODS')
         self.assertEqual(collections[0].uri, obj.dc.content.relation,
             'top-level collection URI set as dc:relation')
-        # cmodel set as format (TEMPORARY)
-        self.assertEqual(obj.CONTENT_MODELS[0], obj.dc.content.format)
+        # collection cmodel set as format (TEMPORARY)
+        self.assertEqual(obj.COLLECTION_CONTENT_MODEL, obj.dc.content.format)
             
         # change values - test updated in DC correctly
         obj.mods.content.source_id = 'MSS123'
@@ -900,7 +899,7 @@ class TestCollectionForm(TestCase):
     data = COLLECTION_DATA
 
     def setUp(self):
-        self.form = CollectionForm(self.data)
+        self.form = audioforms.CollectionForm(self.data)
         self.obj = FedoraFixtures.rushdie_collection()
         self.top_level_collections = FedoraFixtures.top_level_collections
         # store initial collection id from fixture
@@ -910,18 +909,18 @@ class TestCollectionForm(TestCase):
     def test_subform_classes(self):
         # test that subforms are initialized with the correct classes
         sub = self.form.subforms['restrictions_on_access']
-        self.assert_(isinstance(sub, AccessConditionForm),
+        self.assert_(isinstance(sub, audioforms.AccessConditionForm),
                     "restrictions on access subform should be instance of AccessConditionForm, got %s" \
                     % sub.__class__)
         sub = self.form.subforms['use_and_reproduction']
-        self.assert_(isinstance(sub, AccessConditionForm),
+        self.assert_(isinstance(sub, audioforms.AccessConditionForm),
                     "use & reproduction subform should be instance of AccessConditionForm, got %s" \
                     % sub.__class__)
         sub = self.form.subforms['name']
-        self.assert_(isinstance(sub, NameForm),
+        self.assert_(isinstance(sub, audioforms.NameForm),
                     "name subform should be instance of NameForm, got %s" % sub.__class__)
         fs = self.form.subforms['name'].formsets['name_parts'].forms[0]
-        self.assert_(isinstance(fs, NamePartForm),
+        self.assert_(isinstance(fs, audioforms.NamePartForm),
                     "name_parts form should be instance of NamePartForm, got %s" % \
                     fs.__class__)
 
@@ -947,7 +946,7 @@ class TestCollectionForm(TestCase):
         # start date only (not a date range)
         data = self.data.copy()
         del(data['date_end'])
-        form = CollectionForm(data)
+        form = audioforms.CollectionForm(data)
         self.assertTrue(form.is_valid(), "test form object with test data is valid")
         mods = form.update_instance()
         expected, got = 1, len(mods.origin_info.created)
@@ -962,13 +961,13 @@ class TestCollectionForm(TestCase):
         # change collection and confirm set in RELS-EXT
         data = self.data.copy()
         data['collection'] = self.top_level_collections[2].uri
-        form = CollectionForm(data, instance=self.obj)
+        form = audioforms.CollectionForm(data, instance=self.obj)
         self.assertTrue(form.is_valid(), "test form object with test data is valid")
         form.update_instance()
         self.assertEqual(self.top_level_collections[2].uri, self.obj.collection_id)        
 
     def test_initial_data(self):
-        form = CollectionForm(instance=self.obj)
+        form = audioforms.CollectionForm(instance=self.obj)
         # custom fields that are not handled by XmlObjectForm have special logic
         # to ensure they get set when an instance is passed in
         expected, got = self.collection_uri, form.initial['collection']
