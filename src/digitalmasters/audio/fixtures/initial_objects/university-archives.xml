@@ -3,6 +3,7 @@
   <foxml:objectProperties>
     <foxml:property NAME="info:fedora/fedora-system:def/model#state" VALUE="A"/>
     <foxml:property NAME="info:fedora/fedora-system:def/model#label" VALUE="Emory University Archives"/>
+    <foxml:property NAME="info:fedora/fedora-system:def/model#ownerId" VALUE="euterpe-project"/>
   </foxml:objectProperties>
   <foxml:datastream ID="RELS-EXT" CONTROL_GROUP="X" STATE="A" VERSIONABLE="false">
     <foxml:datastreamVersion ID="RELS-EXT.0" MIMETYPE="application/rdf+xml" FORMAT_URI="info:fedora/fedora-system:FedoraRELSExt-1.0" LABEL="External Relations">
