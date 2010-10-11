@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Policy xmlns="urn:oasis:names:tc:xacml:1.0:policy"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        PolicyId="permit-euterpe-if-euadmin-or-euserver"
+        RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable">
+  <Description>Allow objects that are part of the Euterpe Project
+(identified by a project owner id) to be accessed and modified by
+specific Euterpe admin users and from a Euterpe application server.</Description>
+  <Target>
+    <Subjects>
+      <AnySubject/>
+    </Subjects>
+    <Resources>
+
+<!-- restrict to euterpe objects -->
+
+      <Resource>
+        <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+            <AttributeValue
+		DataType="http://www.w3.org/2001/XMLSchema#string">euterpe-project</AttributeValue>
+            <ResourceAttributeDesignator
+		AttributeId="urn:fedora:names:fedora:2.1:resource:object:owner"
+                DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+        </ResourceMatch>
+      </Resource>
+
+    </Resources>    
+    <Actions>
+      <AnyAction/>
+    </Actions>    
+  </Target>
+
+  <Rule RuleId="euterpe-admin" Effect="Permit">
+    <Target>
+      <Subjects>
+        <AnySubject/>
+      </Subjects>
+      <Resources>
+        <AnyResource/>
+      </Resources>
+      <Actions>
+	<AnyAction/>
+      </Actions>
+    </Target>
+
+      <!-- usernames for euterpe admins -->
+      <Condition FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
+        <SubjectAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:subject:loginId" DataType="http://www.w3.org/2001/XMLSchema#string"/>
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">branker</AttributeValue> <!-- Ben -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">rsutton</AttributeValue> <!-- Rebecca -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">liblna</AttributeValue> <!-- Laura Akerman -->
+        </Apply>
+      </Condition>
+
+  </Rule>
+
+  <Rule RuleId="permit-euservers" Effect="Permit">
+  <!-- permit access to euterpe objects from configured servers by IP address -->
+    <Target>
+      <Subjects>
+        <AnySubject/>
+      </Subjects>
+      <Resources>
+        <AnyResource/>
+      </Resources>
+      <Actions>
+        <AnyAction/>
+      </Actions>
+    </Target>
+
+    <Condition FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
+          <EnvironmentAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:environment:httpRequest:clientIpAddress" DataType="http://www.w3.org/2001/XMLSchema#string"/>
+          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.41</AttributeValue> <!-- rebecca -->
+            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.75</AttributeValue> <!-- waterhouse -->
+            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.210.175</AttributeValue> <!-- ben -->
+            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.38</AttributeValue> <!-- brutus -->
+      </Apply>
+    </Condition>
+
+  </Rule>
+
+  <Rule RuleId="deny-the-rest" Effect="Deny"/> 
+
+</Policy>
