@@ -738,6 +738,14 @@ class TestAudioObject(TestCase):
     def tearDown(self):
         self.repo.purge_object(self.obj.pid, "removing unit test fixture")
 
+    def test_creation(self):
+        # verify that the owner id is set.
+        self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
+
+        self.obj.save()
+        obj = self.repo.get_object(self.obj.pid, type=AudioObject)
+        self.assertEqual(settings.FEDORA_OBJECT_OWNERID, obj.info.owner)
+
     def test_save(self):
         # save without changing the MODS - shouldn't mess anything up
         self.obj.save()
@@ -758,6 +766,9 @@ class TestAudioObject(TestCase):
         self.assertEqual(type, obj.dc.content.type)
         self.assertEqual(date, obj.dc.content.date)
 
+        # verify that the owner id is set in repo copy.
+        self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
+
 
 # tests for Collection DigitalObject
 class TestCollectionObject(TestCase):
@@ -770,6 +781,11 @@ class TestCollectionObject(TestCase):
         self.assert_(isinstance(collections[0], CollectionObject),
                 "top-level collection is instance of CollectionObject")
         # should this test pids from fixture?
+
+    def test_creation(self):
+        repo = Repository()
+        obj = repo.get_object(type=CollectionObject)
+        self.assertEqual(settings.FEDORA_OBJECT_OWNERID, obj.info.owner)
 
     def test_collection_info(self):
         # test setting & getting collection membership
