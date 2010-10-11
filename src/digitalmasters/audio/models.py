@@ -1,8 +1,10 @@
 from rdflib import URIRef
 
 from eulcore import xmlmap
-from eulcore.fedora.models import DigitalObject, FileDatastream, XmlDatastream, URI_HAS_MODEL
+from eulcore.fedora.models import FileDatastream, XmlDatastream, URI_HAS_MODEL
 from eulcore.django.fedora.server import Repository
+
+from digitalmasters.fedora import DigitalObject
 
 class ModsCommon(xmlmap.XmlObject):
     "MODS class with namespace declaration common to all MODS XmlObjects."
