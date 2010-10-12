@@ -41,7 +41,6 @@ FEDORA_PIDSPACE = 'changeme'
 FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 # use this to explicitly configure a test pidspace; by default, uses pidspace-test
 #FEDORA_TEST_PIDSPACE = 'testme'
-FEDORA_OBJECT_OWNERID = 'euterpe-project' # the default owner of all fedora objects created by this app
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

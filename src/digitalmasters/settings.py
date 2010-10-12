@@ -90,6 +90,9 @@ LOGIN_URL = '/accounts/login/'
 
 AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
 
+# the default owner of all fedora objects created by this app
+FEDORA_OBJECT_OWNERID = 'euterpe-project'
+
 try:
     from localsettings import *
 except ImportError:
