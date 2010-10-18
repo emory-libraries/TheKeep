@@ -297,6 +297,7 @@ class AudioObject(DigitalObject):
         })
     audio = FileDatastream("AUDIO", "Audio datastream", defaults={
             'mimetype': 'audio/x-wav',
+            'versionable': True,
         })
 
     def save(self, logMessage=None):
