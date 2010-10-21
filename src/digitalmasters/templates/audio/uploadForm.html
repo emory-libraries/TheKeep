@@ -1,0 +1,13 @@
+{% extends "site_base.html" %}
+
+{% block content-title %}Upload audio files.{% endblock %}
+
+{% block content-body %}
+  {{ block.super }}
+
+<form enctype="multipart/form-data" method="post" name="uploadForm" action="{% url audio:upload %}">{% csrf_token %}
+    {{ HTML5Upload|safe }}
+
+</form>
+
+{% endblock %}

@@ -1,4 +1,6 @@
 import magic
+import logging
+import os
 
 from django.conf import settings
 from django.contrib import messages
@@ -67,15 +69,38 @@ def upload(request):
             # NOTE: uploaded file does not need to be removed because django
             # cleans it up automatically
     else:
-        ctx_dict['form'] = audioforms.UploadForm()
 
-    response = render_to_response('audio/upload.html', ctx_dict,
+        ctx_dict['form'] = audioforms.UploadForm()
+        ctx_dict['HTML5Upload'] = audioforms.HTML5Upload()
+    response = render_to_response('audio/uploadForm.html', ctx_dict,
                                   context_instance=RequestContext(request))
     if response_code is not None:
         response.status_code = response_code
     return response
 
 
+def HTML5FileUpload(request):
+    #logging.debug(request.META['HTTP_UPLOADEDFILETYPE'])
+    #logging.debug('Work please.')
+    #logging.debug(request.POST.get('testing'))
+    
+    dir = settings.INGEST_STAGING_TEMP_DIR
+    fileName = request.META['HTTP_X_FILE_NAME']
+    
+    #Need to see if exists to prevent over-writes.... currently prepends a number.
+    counter = 0
+    while (os.path.exists(os.path.join(dir, fileName))):
+        logging.debug("Counter is being tried")
+        counter = counter + 1
+        fileName = str(counter) + request.META['HTTP_X_FILE_NAME']
+        
+    filepath = os.path.join(dir, fileName)
+    destination = open(filepath, 'wb+')
+    destination.write(request.raw_post_data);
+    destination.close()
+    
+    return HttpResponse(fileName)
+    
 @permission_required('is_staff')
 def search(request):
     "Search for fedora objects by pid or title."
@@ -97,6 +122,7 @@ def search(request):
                 repo = Repository(request=request)
                 found = repo.find_objects(**search_opts)
                 ctx_dict['results'] = list(found)
+        
             except:
                 response_code = 500
                 ctx_dict['server_error'] = 'There was an error ' + \
