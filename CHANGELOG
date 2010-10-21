@@ -1,0 +1,99 @@
+Release 0.7 - Min Items
+-----------------------
+Date: TBD
+
+Minimal functionality necessary to support storage, metadata creation,
+search and kiosk RSS feed for newly digitized sound recordings.
+
+[TODO: add user stories here as/when they are completed]
+
+Deployment Notes
+^^^^^^^^^^^^^^^^
+* The new batch-upload/ingest process may result in uploaded files
+  that will need to be cleaned up.  There is a custom manage.py script
+  to handle this which should be configured to run as a cron job.
+  This script relies on the following django settings:
+  INGEST_STAGING_TEMP_DIR and INGEST_STAGING_KEEP_AGE.  If run with
+  verbosity 0, only errors will be reported, i.e.::
+     ``python manage.py  ingest_cleanup -v 0``
+  NOTE: this script will delete all files older than a specified age
+  in the configured directory, so it should **not** be run as a
+  privileged user.
+
+
+Release 0.6
+-------------
+Date: October 2010
+
+**NOT FOR RELEASE TO PRODUCTION**
+
+Support for basic, production-ready user interface for adding and
+managing the Fedora digital collection objects that will ultimately
+contain digital master items.
+
+* An editor can create a collection object, associate it with a
+  top-level collection, and enter basic initial metadata, so that the
+  collection can be described and assigned objects.
+* An editor can edit complete initial metadata so that the collection
+  MODS can describe the full range of available metadata.
+* An editor can update descriptive metadata for a collection to keep
+  collection metadata up-to-date.
+* An editor can search for a collection by title, manuscript number,
+  creator, and top-level collection to locate one for editing or to
+  check if a particular collection exists before creating it.
+* An editor can view a hierarchical list of collections to locate one
+  for editing or to understand the organization of collections. 
+* When any user creates or modifies a collection, the repository
+  permanently associates that action with the user for preservation
+  and auditing.
+* When an editor saves changes on a collection, they can choose to
+  continue editing or return to the default view.
+
+
+Deployment Notes
+^^^^^^^^^^^^^^^^
+* Requires Fedora 3.4 or greater with LDAP login configured.
+* Requires Fedora XACML policies (bundled with other local policies in
+  https://svn.library.emory.edu/svn/fedora/repository-policies/
+  (TODO: reference tag/revision when release is finalized)
+* After django application and Fedora are both configured, run
+  syncrepo to load Fedora fixtures and control objects::
+  ``python manage.py syncrepo``
+
+
+Prototype ingest/editing
+------------------------
+Date: September 2010
+
+**NOT FOR RELEASE TO PRODUCTION**
+
+Prototype system that includes the simplest implementation of a
+metadata editor interface and content ingest. This includes a simple
+content model, ingest of a single sound file, and simple indexing, and
+uses LDAP authentication for library staff.
+
+* Users can log into the application with their Emory User ID so they
+  can be authorized if appropriate.
+* Admins can assign roles and permissions to users to maintain
+  security and workflow in the application. (built-in Django
+  functionality)
+* Editors can upload and ingest a sound file in wave format so
+  metadata can be created for the ingest item.
+* Editors can add or edit metadata to an ingested sound file from a
+  selected mods subset to describe the sound file. 
+* Editors can search ingested content by PID or Title so they can find
+  an item to modify or create metadata. 
+* Editors can download ingested audio files for review to assist them
+  in creating metadata.  
+* Editors receive error messages pertaining to metadata validation
+  when editing records to ensure data quality and consistency. 
+* The application logs and displays error messages related to
+  interaction with Fedora for troubleshooting and communication. 
+* Developers can create django forms related to XML objects to ease
+  the development of editing interfaces.
+* Developers can link an XML Object with an XML schema so objects can
+  be validated.
+
+
+ 
+
