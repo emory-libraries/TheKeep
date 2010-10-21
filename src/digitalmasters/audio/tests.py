@@ -1,9 +1,15 @@
+import cStringIO
 import os
 import urlparse
 from rdflib import URIRef
+import stat
+import sys
+import tempfile
+from time import sleep
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.core.management.base import CommandError
 from django.test import Client, TestCase
 
 from eulcore.django.fedora.server import Repository
@@ -14,6 +20,7 @@ from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginI
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
         ModsRelatedItem, CollectionObject, CollectionMods
 from digitalmasters.audio.fixtures import FedoraFixtures
+from digitalmasters.audio.management.commands import ingest_cleanup
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -998,3 +1005,99 @@ class TestCollectionForm(TestCase):
         self.assertEqual(expected, got,
             'date end is set correctly in form initial data from instance; expected %s, got %s' \
             % (expected, got))
+
+
+class TestIngestCleanupCommand(ingest_cleanup.Command):
+    # extend command class to simplify calling as if running from the commandline
+    # base command will set up default args before calling handle method
+    def run_command(self, *args):
+        '''Run the command as if calling from command line by giving a list
+        of command-line arguments, e.g.::
+
+            command.run_command('-n', '-v', '2')
+
+        :param args: list of command-line arguments
+        '''
+        # run from argv expects command, subcommand, then any arguments
+        run_args = ['manage.py', 'ingest_cleanup']
+        run_args.extend(args)
+        return self.run_from_argv(run_args)
+
+class IngestCleanupTest(TestCase):
+    def setUp(self):
+        self.command = TestIngestCleanupCommand()
+        self._real_temp_dir = settings.INGEST_STAGING_TEMP_DIR
+        self._real_keep_age = settings.INGEST_STAGING_KEEP_AGE
+        self.tmpdir = tempfile.mkdtemp(prefix='digmast-ingest-cleanup-test')
+        settings.INGEST_STAGING_TEMP_DIR = self.tmpdir
+
+    def tearDown(self):
+        # remove any files created in temporary test staging dir
+        for file in os.listdir(self.tmpdir):
+            os.unlink(os.path.join(self.tmpdir, file))
+        # remove temporary test staging dir
+        os.rmdir(self.tmpdir)
+        settings.INGEST_STAGING_TEMP_DIR = self._real_temp_dir
+        settings.INGEST_STAGING_KEEP_AGE = self._real_keep_age
+
+    def test_missing_age_setting(self):
+        del(settings.INGEST_STAGING_KEEP_AGE)
+        self.assertRaises(CommandError, self.command.handle, verbosity=0)
+        
+    def test_missing_dir_setting(self):
+        del(settings.INGEST_STAGING_TEMP_DIR)
+        self.assertRaises(CommandError, self.command.handle, verbosity=0)
+
+    def test_nonexistent_directory(self):
+        # temporarily override tmp dir with a non-existent one
+        settings.INGEST_STAGING_TEMP_DIR = os.path.join('this', 'dir', 'should', 'not', 'exist')
+        # should get a command error when directory does not exist or is not readable
+        # - calling handle directly because base command run_from_argv handles/presents the command error
+        self.assertRaises(CommandError, self.command.handle, verbosity=0)
+        
+        # restore existing test tmp dir
+        settings.INGEST_STAGING_TEMP_DIR = self.tmpdir
+
+    def test_cleanup(self):
+        settings.INGEST_STAGING_KEEP_AGE = 10
+        # create temp files in temp dir, one older than the keep age and one newer
+        # - using delete=False so tempfile doesn't complain when the object is deleted
+        #   and the file is not present to be removed
+        older = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='older-', delete=False)
+        sleep(10)
+        newer = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='newer-', delete=False)
+        self.command.run_command('-v', '0')
+        self.assertFalse(os.access(older.name, os.F_OK),
+            'older file should NOT exist - should have been removed by cleanup script')
+        self.assertTrue(os.access(newer.name, os.F_OK),
+            'newer file should exist - should NOT have been removed by cleanup script')
+
+    def test_read_error(self):
+        settings.INGEST_STAGING_KEEP_AGE = 1
+        file = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='file-')
+        sleep(1)
+        # temporarily make directory read-only
+        dir_stats = os.stat(self.tmpdir)
+        os.chmod(self.tmpdir, stat.S_IREAD)
+
+        # capture command output in a stream
+        buffer = cStringIO.StringIO()
+        sys.stdout = buffer
+        self.command.run_command('-v', '0')
+        sys.stdout = sys.__stdout__         # restore real stdout
+        output = buffer.getvalue()
+        self.assert_('Error reading file' in output,
+            'error reading file is printed even in minimal-output mode')
+        buffer.close()
+
+        # restore previous tmp dir permissions
+        os.chmod(self.tmpdir, dir_stats.st_mode)
+
+    def test_dry_run(self):
+        settings.INGEST_STAGING_KEEP_AGE = 1
+        file = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='dryrun-')
+        sleep(1)
+        self.command.run_command('-n', '-v', '0')
+        self.assertTrue(os.access(file.name, os.F_OK),
+            'file past keep age is not deleted in dry-run mode')
+

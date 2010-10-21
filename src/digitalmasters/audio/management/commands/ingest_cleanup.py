@@ -8,8 +8,8 @@ from django.conf import settings
 
 class Command(BaseCommand):
     '''Clean up any files uploaded for ingest older than a specified duration.
-
-    Uses directory and file age configurations from django settings.
+Uses directory and file age configurations from django settings.  If minimal
+output is requested, only errors will be reported.
     '''
     help = __doc__
 
@@ -17,10 +17,11 @@ class Command(BaseCommand):
         make_option('--dry-run', '-n',
             dest='dryrun',
             action='store_true',
-            help='''Report on what would be done, but don't actually delete any files'''),
+            help='''Report on what would be done, but don't delete any files'''),
         )
 
     def handle(self, *args, **options):
+        # verbosity should be set by django BaseCommand standard options
         verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
         v_normal = 1
 
@@ -48,7 +49,14 @@ class Command(BaseCommand):
         removed = 0
         for file in files:
             filepath = os.path.join(dir, file)
-            stat = os.stat(filepath)
+            try:
+                stat = os.stat(filepath)
+            except OSError as e:
+                errored += 1
+                # display error message in any output verbosity level
+                print "Error reading file '%s' modification time: %s" % (file, e)
+                continue
+
             # description for output messages
             file_lastmodified = "'%s' last modified %s" % (file,
                                         datetime.utcfromtimestamp(stat.st_mtime))
@@ -61,9 +69,8 @@ class Command(BaseCommand):
                         os.unlink(filepath)
                         removed += 1
                     except OSError as e:
-                        # if there is a problem deleting a file, report but keep going
-                        if verbosity >= v_normal:
-                            print "Error removing file '%s': %s" % (file, e)
+                        # if there is a problem deleting a file, report but keep going                
+                        print "Error removing file '%s': %s" % (file, e)
                         errored += 1
             else:
                 if verbosity > v_normal:
