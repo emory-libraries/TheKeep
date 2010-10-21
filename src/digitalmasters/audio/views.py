@@ -1,5 +1,6 @@
 import magic
 import os
+import tempfile
 
 from django.conf import settings
 from django.contrib import messages
@@ -79,25 +80,17 @@ def upload(request):
 
 
 def HTML5FileUpload(request):
-    #logging.debug(request.META['HTTP_UPLOADEDFILETYPE'])
-    #logging.debug('Work please.')
-    #logging.debug(request.POST.get('testing'))
-    
     dir = settings.INGEST_STAGING_TEMP_DIR
     fileName = request.META['HTTP_X_FILE_NAME']
+    fileDetailsTuple = fileName.rpartition('.')
     
     #Need to see if exists to prevent over-writes.... currently prepends a number.
-    counter = 0
-    while (os.path.exists(os.path.join(dir, fileName))):
-        counter = counter + 1
-        fileName = str(counter) + request.META['HTTP_X_FILE_NAME']
-        
-    filepath = os.path.join(dir, fileName)
-    destination = open(filepath, 'wb+')
+    #returnedMkStemp is a tuple with the name in the 2nd position.
+    returnedMkStemp = tempfile.mkstemp(fileDetailsTuple[1]+fileDetailsTuple[2]+"_",fileDetailsTuple[0],dir)
+    destination = open(returnedMkStemp[1], 'wb+')
     destination.write(request.raw_post_data);
     destination.close()
-    
-    return HttpResponse(fileName)
+    return HttpResponse(returnedMkStemp[1])
     
 @permission_required('is_staff')
 def search(request):
