@@ -66,5 +66,6 @@ SECRET_KEY = ''
 
 # settings for ingest staging directory
 INGEST_STAGING_TEMP_DIR = '/tmp/digitalmasters-ingest-staging'
-INGEST_STAGING_KEEP_AGE = 60*60*12*3 # time in seconds that un-ingested files should be kept
+# time in seconds that files in the ingest staging directory should be kept
+INGEST_STAGING_KEEP_AGE = 60*60*24*3
 
