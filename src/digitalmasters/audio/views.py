@@ -1,5 +1,4 @@
 import magic
-import logging
 import os
 
 from django.conf import settings
@@ -90,7 +89,6 @@ def HTML5FileUpload(request):
     #Need to see if exists to prevent over-writes.... currently prepends a number.
     counter = 0
     while (os.path.exists(os.path.join(dir, fileName))):
-        logging.debug("Counter is being tried")
         counter = counter + 1
         fileName = str(counter) + request.META['HTTP_X_FILE_NAME']
         
