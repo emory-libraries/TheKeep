@@ -1035,6 +1035,11 @@ class IngestCleanupTest(TestCase):
         # remove any files created in temporary test staging dir
         for file in os.listdir(self.tmpdir):
             os.unlink(os.path.join(self.tmpdir, file))
+        
+        #Possible timing conflict.... can still occur if an anti-virus is running or something else accesses the file: http://bugs.python.org/issue1425127
+        sleep(1)
+        #See: http://stackoverflow.com/questions/1213706/what-user-do-python-scripts-run-as-in-windows
+        os.chmod(self.tmpdir,stat.S_IWUSR)
         # remove temporary test staging dir
         os.rmdir(self.tmpdir)
         settings.INGEST_STAGING_TEMP_DIR = self._real_temp_dir
@@ -1064,8 +1069,10 @@ class IngestCleanupTest(TestCase):
         # - using delete=False so tempfile doesn't complain when the object is deleted
         #   and the file is not present to be removed
         older = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='older-', delete=False)
+        older.close()
         sleep(10)
         newer = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='newer-', delete=False)
+        newer.close()
         self.command.run_command('-v', '0')
         self.assertFalse(os.access(older.name, os.F_OK),
             'older file should NOT exist - should have been removed by cleanup script')
@@ -1075,6 +1082,7 @@ class IngestCleanupTest(TestCase):
     def test_read_error(self):
         settings.INGEST_STAGING_KEEP_AGE = 1
         file = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='file-')
+        file.close()
         sleep(1)
         # temporarily make directory read-only
         dir_stats = os.stat(self.tmpdir)

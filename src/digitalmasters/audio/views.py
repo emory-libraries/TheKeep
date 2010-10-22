@@ -1,5 +1,5 @@
 import magic
-
+import logging
 import os
 import tempfile
 
@@ -41,9 +41,14 @@ def upload(request):
             uploaded_file = request.FILES['audio']
 
             # check mimetype of uploaded file (uploaded_file.content_type is unreliable)
-            m = magic.open(magic.MAGIC_MIME)
-            m.load()
-            type = m.file(uploaded_file.temporary_file_path())
+            #Old magic way - remove once servers are updated
+            #m = magic.open(magic.MAGIC_MIME)
+            #m.load()
+            #type = m.file(uploaded_file.temporary_file_path())
+            
+            m = magic.Magic(mime=True)
+            type = m.from_file(uploaded_file.temporary_file_path())
+            
             if ';' in type:
                 type, charset = type.split(';')
             if type not in allowed_audio_types:
@@ -87,16 +92,14 @@ def HTML5FileUpload(request):
     
     #Need to see if exists to prevent over-writes.... currently prepends a number.
     #returnedMkStemp is a tuple with the name in the 2nd position.
-    returnedMkStemp = tempfile.mkstemp(fileDetailsTuple[1]+fileDetailsTuple[2]+"_",fileDetailsTuple[0],dir)
+    returnedMkStemp = tempfile.mkstemp(fileDetailsTuple[1]+fileDetailsTuple[2],fileDetailsTuple[0]+"_",dir)
     destination = open(returnedMkStemp[1], 'wb+')
     destination.write(request.raw_post_data);
     destination.close()
     
-    # check mimetype of uploaded file (uploaded_file.content_type is unreliable)
     try:
-        m = magic.open(magic.MAGIC_MIME)
-        m.load()
-        type = m.file(returnedMkStemp[1])
+        m = magic.Magic(mime=True)
+        type = m.from_file(returnedMkStemp[1])
         if ';' in type:
             type, charset = type.split(';')
         if type not in allowed_audio_types:
@@ -104,10 +107,8 @@ def HTML5FileUpload(request):
             #return HttpResonse('alert(The type ' + type + ' of file ' + fileName + ' is not allowed. That file was rejected.); $("item' + request.META['HTTP_X_FILE_INDEX'] + '").remove();')
             return HttpResponse('Incorrect File Type')
     except Exception as e:
-        #logging.debug(e)
-        #Throws exception of: 'module' object has no attribute 'open' - my magic may be broken on Windows?
-        
-        
+        logging.debug(e)
+
     return HttpResponse(returnedMkStemp[1])
     
 @permission_required('is_staff')
