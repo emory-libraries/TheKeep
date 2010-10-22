@@ -102,3 +102,64 @@ Certain unit tests pass test user credentials to Fedora, in order to test and
 simulate accessing Fedora as the logged in user.  For tests to work properly,
 the unit test user should be defined (with appropriate permissions)
 as a fedora account.  See digitalmasters.audio.tests for account details.
+
+
+Windows Installation Help
+-------------------------
+
+Installation for Python 2.7 under 32-bit Windows:
+  1. Contact Steven Anderson at Steven.Anderson@emory.edu for the files if any of the below
+  links no longer function.
+
+Setup Tools (Pip?):
+  1. Install from Windows installer at: http://pypi.python.org/pypi/setuptools#downloads
+  
+PyCrypto:
+  1. Install located at: http://www.voidspace.org.uk/python/modules.shtml#pycrypto
+  
+MySQL-python:
+  1. Install located at: http://www.codegood.com/downloads?dl_cat=2
+  
+Python-ldap:
+  1. Install located at: http://pypi.python.org/pypi/python-ldap/
+
+Magic: 
+  1. Download "File" from the following site: http://gnuwin32.sourceforge.net/packages.html
+  2. Install the above program.
+  3. In <installaion directory>\GnuWin32\bin, make a copy of magic1.dll to magic.dll.
+  4. Add <installaion directory>\GnuWin32\bin to your system PATH value.
+  5. Copy the contents of <installaion directory>\GnuWin32\share\file\ into C:\Program Files\File\share\file
+    a. Alternatively, you could possibly configure this directory. See thread: http://www.mail-archive.com/python-list@python.org/msg195285.html
+    b. Alternate thread locations: http://mail.python.org/pipermail/python-list/2008-May/1145223.html or copied in install files.
+  6. In the command prompt, do pip install python-magic.
+  7. Test the install by running the following in Python, if no errors, it is installed right:
+    a. >>> import magic
+    b. >>> test = magic.Magic()
+  8. Shouldn't be needed for any of the above, but I also installed Microsoft Visual C++ 2008 Express Edition and MinGW when attempted to compile Magic that failed.
+  
+Config of base urls.py for Windows:
+  Due to differences in directory structure, have hard-coded paths at the end of this file. 
+  For me, the changes looked like:
+  
+  
+      # if there's not a genlib_media dir/link in the media directory, then
+    # look for it in the virtualenv themes.
+#    if not os.path.exists(os.path.join(settings.MEDIA_ROOT, 'genlib_media')) and \
+#            'VIRTUAL_ENV' in os.environ:
+#        genlib_media_root = os.path.join(os.environ['VIRTUAL_ENV'],
+#                                         'themes', 'genlib', 'genlib_media')
+#        urlpatterns += patterns('',
+#            (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
+#                'document_root': genlib_media_root,
+#                }),
+#        )
+
+    genlib_media_root = 'C:/Users/Bluewolf/root/EUL_CORE/themes/genlib/genlib_media/'
+    urlpatterns += patterns('',
+        (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
+            'document_root': genlib_media_root,
+            }),
+        (r'^static/(?P<path>.*)$', 'django.views.static.serve', {
+            'document_root': settings.MEDIA_ROOT,
+            }),
+    )
