@@ -25,7 +25,7 @@ html[xmlns] .clearfix { display: block;
 #output
 {
 	min-width: 690px;
-	min-height: 280px;
+	min-height: 330px;
 	padding: 10px;
 	border: 2px dotted #000;
 	-moz-border-radius: 15px;
@@ -35,7 +35,7 @@ html[xmlns] .clearfix { display: block;
 }
 #output:before
 {
-	content: "Drag and Drop to upload!";
+  /*content: "Drag and Drop to upload!";*/
 	color: #fff;
 	font-size: 50px;
 	font-weight: bold;

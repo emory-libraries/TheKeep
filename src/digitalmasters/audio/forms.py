@@ -16,7 +16,7 @@ def HTML5Upload():
     output += '<div id="output" class="clearfix">'
     output += '<ul id="output-listing01"></ul>'
     output += '</div>'
-    output += '<script type="text/javascript" src="/static/HTML5//prototype.js"></script>'
+    output += '<script type="text/javascript" src="/static/HTML5/prototype.js"></script>'
     output += '<script type="text/javascript" src="/static/HTML5/HTML5Upload.js"></script>'
     #Need to fix the hardcoding of "html5dropbox".
     output += '<br /><br /><input type="submit" value="Ingest the above files" id="btn_ingest" name="btn_ingest" /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Clear the above files" id="btn_clear" name="btn_clear" onClick="html5dropbox.clearAllDisplayed(); return false;" />'

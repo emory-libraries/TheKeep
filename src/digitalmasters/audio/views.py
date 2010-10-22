@@ -1,4 +1,5 @@
 import magic
+
 import os
 import tempfile
 
@@ -90,6 +91,23 @@ def HTML5FileUpload(request):
     destination = open(returnedMkStemp[1], 'wb+')
     destination.write(request.raw_post_data);
     destination.close()
+    
+    # check mimetype of uploaded file (uploaded_file.content_type is unreliable)
+    try:
+        m = magic.open(magic.MAGIC_MIME)
+        m.load()
+        type = m.file(returnedMkStemp[1])
+        if ';' in type:
+            type, charset = type.split(';')
+        if type not in allowed_audio_types:
+            os.remove(returnedMkStemp[1])
+            #return HttpResonse('alert(The type ' + type + ' of file ' + fileName + ' is not allowed. That file was rejected.); $("item' + request.META['HTTP_X_FILE_INDEX'] + '").remove();')
+            return HttpResponse('Incorrect File Type')
+    except Exception as e:
+        #logging.debug(e)
+        #Throws exception of: 'module' object has no attribute 'open' - my magic may be broken on Windows?
+        
+        
     return HttpResponse(returnedMkStemp[1])
     
 @permission_required('is_staff')

@@ -20,6 +20,7 @@ var HTML5DropBox = Class.create({
         this.formName = formName;
         this.imageWidth = 185;
         this.imageHeight = 100;
+        this.itemIndex = 0;
         //Below is counter to tell when all files are uploaded. Not used effectively yet....
         this.uploadFileCount = 0;
         
@@ -135,26 +136,34 @@ var HTML5DropBox = Class.create({
         event.preventDefault();
 
         for (var i = 0; i < count; i++) {
-          if(files[i].size < this.maxAllowedByteSize || this.maxAllowedByteSize == -1) {
-            var file = files[i],
-              droppedFileName = file.name,
-              reader = new FileReader();
-              reader.index = i;
-              reader.file = file;
-              
-              if(this.checkFileType(file.type))
-              {
-                this.uploadFileCount = this.uploadFileCount + 1;
-                reader.onloadend = function (event){ self.buildImageListItem(event); };
-                reader.readAsDataURL(file);
-              }
-              else {
-                //handle non correct file here. Better implementation needed than just alert.
-                alert('The type "' + file.type + '" is not supported for the file "' + file.name + '"');
-              }
+          if(files[i].size != 0) {
+            if(files[i].size < this.maxAllowedByteSize || this.maxAllowedByteSize == -1) {
+             
+              var file = files[i],
+                droppedFileName = file.name,
+                reader = new FileReader();
+                reader.index = this.itemIndex;
+                reader.file = file;
+                
+                this.itemIndex = this.itemIndex + 1;
+                
+                if(this.checkFileType(file.type))
+                {
+                  this.uploadFileCount = this.uploadFileCount + 1;
+                  reader.onloadend = function (event){ self.buildImageListItem(event); };
+                  reader.readAsDataURL(file);
+                }
+                else {
+                  //handle non correct file here. Better implementation needed than just alert.
+                  alert('The type "' + file.type + '" is not supported for the file "' + file.name + '"');
+                }
+            } else {
+              //handle max file size here. Better implementation needed than just alert.
+              alert('File "' + files[i].name + '" is too big, needs to be below ' + this.maxAllowedByteSize + ' bytes.');
+            }
           } else {
-            //handle max file size here. Better implementation needed than just alert.
-            alert('File "' + file.name + '" is too big, needs to be below ' + this.maxAllowedByteSize + ' bytes.');
+            //handle zero file size here. Better implementation needed than just alert.
+            alert('File "' + files[i].name + '" cannot be 0 bytes in length (ie. must be non-empy file).');
           }
         }
       },
@@ -241,18 +250,28 @@ var HTML5DropBox = Class.create({
         xhr.setRequestHeader('X-FILE-NAME', file.name);
         xhr.setRequestHeader('X-FILE-SIZE', file.size);
         xhr.setRequestHeader('X-FILE-TYPE', file.type);
+        xhr.setRequestHeader('X-FILE-INDEX', index);
         
         xhr.onreadystatechange = function() {  
           if (xhr.readyState == 4 && xhr.status == 200) {  
              //alert(xhr.responseText.strip()); 
-             var hiddenFormString = '<input type="hidden" value="' + xhr.responseText.strip() + '" name="fileUploads" />';
-             hiddenFormString = '<input type="hidden" value="' + file.name + '" name="originalFileNames" />';
-             container.insert({bottom:hiddenFormString});
+             if(xhr.responseText.string() == 'Incorrect File Type')
+             {
+               alert('Incorrect type from server side check.')
+             }
+             else {
+               var hiddenFormString = '<input type="hidden" value="' + xhr.responseText.strip() + '" name="fileUploads" />';
+               hiddenFormString = '<input type="hidden" value="' + file.name + '" name="originalFileNames" />';
+               container.insert({bottom:hiddenFormString});
+             }
+                  
+             //eval(xhr.responseText.strip());
+             
              //Below is a temporary way to make sure all files are uploaded before submitting.
              this.uploadFileCount = this.uploadFileCount - 1;
              if(this.uploadFileCount == 0)
              {
-              $$('btn_ingest').disabled = false;
+              $('btn_ingest').disabled = false;
              }
           }  
         }
