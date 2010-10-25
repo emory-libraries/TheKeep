@@ -4,6 +4,18 @@ from eulcore.django.fedora import server
 from digitalmasters.accounts.views import decrypt
 
 class DigitalObject(models.DigitalObject):
+    """Extend the default fedora DigitalObject class. Objects derived from
+    this one will automatically have their owner set to
+    ``settings.FEDORA_OBJECT_OWNERID``. This happens only when the fedora
+    object is ingested, so it won't happen to objects already in the
+    repository.
+
+    As an implementation detail, we need this right now for security: Some
+    of our security policies use the owner to identify objects associated
+    with this project. We hope FeSL will enable us to get away from this
+    practice, at which point this class will probably no longer be
+    necessary."""
+
     default_owner = getattr(settings, 'FEDORA_OBJECT_OWNERID', None)
 
     def _init_as_new_object(self):
