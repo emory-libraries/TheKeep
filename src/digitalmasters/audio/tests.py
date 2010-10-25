@@ -1081,7 +1081,7 @@ class IngestCleanupTest(TestCase):
 
     def test_read_error(self):
         settings.INGEST_STAGING_KEEP_AGE = 1
-        file = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='file-')
+        file = tempfile.NamedTemporaryFile(dir=self.tmpdir, prefix='file-', delete=False)
         file.close()
         sleep(1)
         # temporarily make directory read-only
