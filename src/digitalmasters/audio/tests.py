@@ -93,7 +93,7 @@ class AudioViewsTest(TestCase):
                              % (expected, code, upload_url))
 
         self.assert_(isinstance(response.context['form'], audioforms.UploadForm))
-        self.assertContains(response, 'Audio file')
+        self.assertContains(response, 'audio file')
         self.assertContains(response, '<input')
 
         # POST non-wav file results in an error
