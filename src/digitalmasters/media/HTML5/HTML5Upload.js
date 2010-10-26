@@ -21,11 +21,12 @@ var HTML5DropBox = Class.create({
         this.imageWidth = 185;
         this.imageHeight = 100;
         this.itemIndex = 0;
+        this.ingestReady = false;
         //Below is counter to tell when all files are uploaded. Not used effectively yet....
         this.uploadFileCount = 0;
         
         var self = this;
-        
+  
         //HTML5 File API supported?
         if(typeof window["FileReader"] === "function") {
           this.dropContainer.addEventListener("dragenter", function (event){ self.dragenter(event); }, false);
@@ -34,7 +35,7 @@ var HTML5DropBox = Class.create({
   
         } else {
           // No File API support fallback to file input. Currently half-baked and only just displays the upload box in IE.
-          var fileUploadString = '<input type="file" name="fileManualUpload" id="fileManualUpload" multiple="true" />'
+          var fileUploadString = '<input type="file" name="fileManualUpload" id="fileManualUpload" />'
           this.dropListing.remove();
           this.dropContainer.insert({before:fileUploadString});
           this.dropContainer.remove();
@@ -87,7 +88,6 @@ var HTML5DropBox = Class.create({
       this.dropListing.innerHTML = '';
     }
     
-    $('btn_ingest').disabled = true;
     event.stopPropagation();
     event.preventDefault();
   },
@@ -251,27 +251,32 @@ var HTML5DropBox = Class.create({
         xhr.setRequestHeader('X-FILE-SIZE', file.size);
         xhr.setRequestHeader('X-FILE-TYPE', file.type);
         xhr.setRequestHeader('X-FILE-INDEX', index);
-        
+ 
         xhr.onreadystatechange = function() {  
           if (xhr.readyState == 4 && xhr.status == 200) {  
-             //alert(xhr.responseText.strip()); 
-             if(xhr.responseText.string() == 'Incorrect File Type')
+   
+             if(xhr.responseText.strip().include("Error - Incorrect File Type"))
              {
-               alert('Incorrect type from server side check.')
+               alert('Incorrect type for the file "' + file.name + '" from the server side check. If you has selected to ingest, you will need to click the button again.');
+               
+               //This stops the form from processing.... don't want it to auto-ingest after a bad file, so hold it up until re-confirmed.
+               self.ingestReady = false;
+               $('btn_ingest').disabled = false;
+               container.remove();
              }
              else {
                var hiddenFormString = '<input type="hidden" value="' + xhr.responseText.strip() + '" name="fileUploads" />';
-               hiddenFormString = '<input type="hidden" value="' + file.name + '" name="originalFileNames" />';
+               hiddenFormString = hiddenFormString + '<input type="hidden" value="' + file.name + '" name="originalFileNames" />';
                container.insert({bottom:hiddenFormString});
              }
                   
              //eval(xhr.responseText.strip());
              
              //Below is a temporary way to make sure all files are uploaded before submitting.
-             this.uploadFileCount = this.uploadFileCount - 1;
-             if(this.uploadFileCount == 0)
+             self.uploadFileCount = self.uploadFileCount - 1;
+             if(self.uploadFileCount == 0 && self.ingestReady)
              {
-              $('btn_ingest').disabled = false;
+                document.uploadForm.submit();
              }
           }  
         }
@@ -290,5 +295,14 @@ var HTML5DropBox = Class.create({
       deleteFileUpload: function (object, index) {
         var container = $("item"+index);
         container.remove();
+      },
+      
+      ingestWhenReady: function() {
+        $('btn_ingest').disabled = true;
+        this.ingestReady = true;
+ 
+        if(this.uploadFileCount == 0) {
+          document.uploadForm.submit();
+        }
       }
 });

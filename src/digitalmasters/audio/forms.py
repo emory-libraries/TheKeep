@@ -11,6 +11,9 @@ class UploadForm(forms.Form):
                 help_text='Preliminary title for the object in Fedora. 255 characters max.')
     audio = forms.FileField(label="Audio file")
     
+class UploadFormSingle(forms.Form):
+    fileManualUpload = forms.FileField(label="Audio file")
+    
 def HTML5Upload():
     output = '<link rel="stylesheet" type="text/css" href="/static/HTML5/_styles.css" media="screen" />'
     output += '<div id="output" class="clearfix">'
@@ -19,7 +22,7 @@ def HTML5Upload():
     output += '<script type="text/javascript" src="/static/HTML5/prototype.js"></script>'
     output += '<script type="text/javascript" src="/static/HTML5/HTML5Upload.js"></script>'
     #Need to fix the hardcoding of "html5dropbox".
-    output += '<br /><br /><input type="submit" value="Ingest the above files" id="btn_ingest" name="btn_ingest" /> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Clear the above files" id="btn_clear" name="btn_clear" onClick="html5dropbox.clearAllDisplayed(); return false;" />'
+    output += '<br /><br /><input type="button" value="Ingest the above file(s)" id="btn_ingest" name="btn_ingest" onClick="html5dropbox.ingestWhenReady();"/> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="button" value="Clear the above files" id="btn_clear" name="btn_clear" onClick="html5dropbox.clearAllDisplayed(); return false;" />'
     output += "<script>var html5dropbox = new HTML5DropBox('uploadForm','/audio/HTML5FileUpload','output');</script>"
     output += "<script>html5dropbox.setActionPage('/audio/HTML5FileUpload');</script>"
     output += '<script>html5dropbox.setAcceptedFileType("audio/*");</script>'

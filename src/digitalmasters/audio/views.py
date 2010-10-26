@@ -33,19 +33,12 @@ def upload(request):
 
     ctx_dict = {}
     response_code = None
-
+    
     if request.method == 'POST':
-        form = audioforms.UploadForm(request.POST, request.FILES)
-        ctx_dict['form'] = form
-        if form.is_valid():
-            uploaded_file = request.FILES['audio']
+        #See if it is manual upload due to non-HTML5 browser.
+        if request.FILES.has_key('fileManualUpload'):
+            uploaded_file = request.FILES['fileManualUpload']
 
-            # check mimetype of uploaded file (uploaded_file.content_type is unreliable)
-            #Old magic way - remove once servers are updated
-            #m = magic.open(magic.MAGIC_MIME)
-            #m.load()
-            #type = m.file(uploaded_file.temporary_file_path())
-            
             m = magic.Magic(mime=True)
             type = m.from_file(uploaded_file.temporary_file_path())
             
@@ -57,25 +50,56 @@ def upload(request):
                 try:
                     repo = Repository(request=request)
                     obj = repo.get_object(type=AudioObject)
-                    obj.label = form.cleaned_data['label']
+                    obj.label = uploaded_file.name
                     obj.dc.content.title = obj.mods.content.title = obj.label
                     obj.audio.content = uploaded_file  
                     obj.save()
                     messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
-                                    % (uploaded_file.name, obj.pid))
-                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
-                except:
-                    response_code = 500
-                    ctx_dict['server_error'] = 'There was an error ' + \
-                        'contacting the digital repository. This ' + \
-                        'prevented us from ingesting your file. If ' + \
-                        'this problem persists, please alert the ' + \
-                        'repository administrator.'
+                            % (uploaded_file.name, obj.pid))
+                except Exception as e:
+                    messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
+                            % (uploaded_file.name))
+        #Process the list of files.
+        else:
+            file_list = request.POST.getlist('fileUploads')
+            file_original_name_list = request.POST.getlist('originalFileNames')
+            if len(file_list) != len(file_original_name_list):
+                messages.error(request, 'The hidden input file lists length did not match... some type of form error')
+            else:
+                for index in range(len(file_list)):
+                    #Add the full path qualifier of the temp directory from settings.
+                    fullFilePath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,file_list[index])
+                    
+                    # check mimetype of uploaded file (uploaded_file.content_type is unreliable)
+                    m = magic.Magic(mime=True)
+                    type = m.from_file(fullFilePath)
+                    del m
+                    if ';' in type:
+                        type, charset = type.split(';')
+                    if type not in allowed_audio_types:
+                        messages.error(request, 'Upload file must be a WAV file (got %s)' % type)
+                    #type is allowed
+                    else:
+                        #inject code to go here....
+                        try:
+                            repo = Repository(request=request)
+                            obj = repo.get_object(type=AudioObject)
+                            obj.label = file_original_name_list[index]
+                            obj.dc.content.title = obj.mods.content.title = obj.label
+                            obj.audio.content = fullFilePath  
+                            obj.save()
+                            messages.success(request, 'Successfully ingested file %s in fedora as %s.'
+                                    % (file_original_name_list[index], obj.pid))
+                            os.remove(fullFilePath)
+                        except Exception as e:
+                            messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
+                                    % (file_original_name_list[index]))
+                        
+        #Return the response with the messages for both cases above.
+        return HttpResponseSeeOtherRedirect(reverse('audio:index'))
 
-            # NOTE: uploaded file does not need to be removed because django
-            # cleans it up automatically
+    #non-posted form
     else:
-
         ctx_dict['form'] = audioforms.UploadForm()
         ctx_dict['HTML5Upload'] = audioforms.HTML5Upload()
     response = render_to_response('audio/uploadForm.html', ctx_dict,
@@ -84,7 +108,7 @@ def upload(request):
         response.status_code = response_code
     return response
 
-
+@permission_required('is_staff')
 def HTML5FileUpload(request):
     dir = settings.INGEST_STAGING_TEMP_DIR
     fileName = request.META['HTTP_X_FILE_NAME']
@@ -93,23 +117,28 @@ def HTML5FileUpload(request):
     #Need to see if exists to prevent over-writes.... currently prepends a number.
     #returnedMkStemp is a tuple with the name in the 2nd position.
     returnedMkStemp = tempfile.mkstemp(fileDetailsTuple[1]+fileDetailsTuple[2],fileDetailsTuple[0]+"_",dir)
+    
     destination = open(returnedMkStemp[1], 'wb+')
     destination.write(request.raw_post_data);
     destination.close()
     
+    newFileName = os.path.basename(returnedMkStemp[1])
+    
     try:
+        os.close(returnedMkStemp[0])
         m = magic.Magic(mime=True)
         type = m.from_file(returnedMkStemp[1])
+        del m
         if ';' in type:
             type, charset = type.split(';')
         if type not in allowed_audio_types:
             os.remove(returnedMkStemp[1])
             #return HttpResonse('alert(The type ' + type + ' of file ' + fileName + ' is not allowed. That file was rejected.); $("item' + request.META['HTTP_X_FILE_INDEX'] + '").remove();')
-            return HttpResponse('Incorrect File Type')
+            return HttpResponse('Error - Incorrect File Type')
     except Exception as e:
         logging.debug(e)
 
-    return HttpResponse(returnedMkStemp[1])
+    return HttpResponse(newFileName)
     
 @permission_required('is_staff')
 def search(request):
