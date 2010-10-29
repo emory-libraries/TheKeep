@@ -132,11 +132,15 @@ def HTML5FileUpload(request):
         os.makedirs(dir)
     
     fileName = request.META['HTTP_X_FILE_NAME']
-    fileDetailsTuple = fileName.rpartition('.')
     
-    #Need to see if exists to prevent over-writes.... currently prepends a number.
+    #Returns a Tuple with: "<file_base>", ".", and "<file_extension>"
+    fileDetailsTuple = fileName.rpartition('.')
+    fileBase = fileDetailsTuple[0]
+    fileDot = fileDetailsTuple[1]
+    fileExtension = fileDetailsTuple[2]
+    
     #returnedMkStemp is a tuple with the name in the 2nd position.
-    returnedMkStemp = tempfile.mkstemp(fileDetailsTuple[1]+fileDetailsTuple[2],fileDetailsTuple[0]+"_",dir)
+    returnedMkStemp = tempfile.mkstemp(fileDot+fileExtension,fileBase+"_",dir)
     
     destination = open(returnedMkStemp[1], 'wb+')
     destination.write(request.raw_post_data);
@@ -180,7 +184,7 @@ def md5sum(fname):
     #Calculate the md5
     m = hashlib.md5()
     while True:
-        d = fobj.read(8096)
+        d = f.read(8096)
         if not d:
             break
         m.update(d)
