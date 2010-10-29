@@ -321,7 +321,10 @@ class AudioObject(DigitalObject):
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None):
         '''Static method to create a new :class:`AudioObject` instance from
-        a file.
+        a file.  Sets the object label and metadata title based on the initial
+        label specified, or file basename.  Also sets the following default
+        metadata values:
+            * mods:typeOfResource = "sound recording"
 
         :param filename: full path to the file, as string
         :param initial_label: optional initial label to use; if not specified,
@@ -339,4 +342,7 @@ class AudioObject(DigitalObject):
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
         obj.audio.content = filename
+        # set initial mods:typeOfResource - all AudioObjects default to sound recording
+        obj.mods.content.resource_type = 'sound recording'
+
         return obj

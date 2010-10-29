@@ -854,6 +854,9 @@ class TestAudioObject(TestCase):
         self.assertEqual(filename, new_obj.label)
         self.assertEqual(filename, new_obj.mods.content.title)
         self.assertEqual(filename, new_obj.dc.content.title)
+        # typeOfResource
+        self.assertEqual('sound recording', new_obj.mods.content.resource_type,
+            'mods:typeOfResource initializeg to "sound recording"')
 
         # specify an initial label
         label = 'this is a test WAV file'
