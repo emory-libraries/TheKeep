@@ -2,7 +2,7 @@ import magic
 import logging
 import os
 import tempfile
-import md5
+import hashlib
 import sys
 
 from django.conf import settings
@@ -169,29 +169,24 @@ def HTML5FileUpload(request):
 
     return HttpResponse(newFileName)
 
-def sumfile(fobj):
-    '''Returns an md5 hash for an object with read() method.'''
-    m = md5.new()
+def md5sum(fname):
+    '''Returns an md5 hash for file fname, or stdin if fname is "-".'''
+    #Try to open the file.
+    try:
+        f = file(fname, 'rb')
+    except:
+        return 'Failed to open file'
+    
+    #Calculate the md5
+    m = hashlib.md5()
     while True:
         d = fobj.read(8096)
         if not d:
             break
         m.update(d)
+        
+    f.close()
     return m.hexdigest()
-
-
-def md5sum(fname):
-    '''Returns an md5 hash for file fname, or stdin if fname is "-".'''
-    if fname == '-':
-        ret = sumfile(sys.stdin)
-    else:
-        try:
-            f = file(fname, 'rb')
-        except:
-            return 'Failed to open file'
-        ret = sumfile(f)
-        f.close()
-    return ret
     
 @permission_required('is_staff')
 def search(request):
