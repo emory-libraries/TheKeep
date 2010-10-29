@@ -128,6 +128,9 @@ def upload(request):
 @permission_required('is_staff')
 def HTML5FileUpload(request):
     dir = settings.INGEST_STAGING_TEMP_DIR
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    
     fileName = request.META['HTTP_X_FILE_NAME']
     fileDetailsTuple = fileName.rpartition('.')
     
