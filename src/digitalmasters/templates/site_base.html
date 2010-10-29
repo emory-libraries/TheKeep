@@ -13,6 +13,10 @@
 
 {% load eulcore_tags %}
 
+{% block navbar-items %}
+    <li><a href="{% url audio:browse-collections %}">Collections</a></li>          
+{% endblock %}
+
 {% block sidebar-left %}
   {% if collection_search %}
     {% include 'audio/_collection_search_form.html' %}
