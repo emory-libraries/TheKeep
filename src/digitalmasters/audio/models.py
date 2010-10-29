@@ -1,10 +1,10 @@
+import os
 from rdflib import URIRef
 
 from eulcore import xmlmap
 from eulcore.fedora.models import FileDatastream, XmlDatastream, URI_HAS_MODEL
-from eulcore.django.fedora.server import Repository
 
-from digitalmasters.fedora import DigitalObject
+from digitalmasters.fedora import DigitalObject, Repository
 
 class ModsCommon(xmlmap.XmlObject):
     "MODS class with namespace declaration common to all MODS XmlObjects."
@@ -317,3 +317,26 @@ class AudioObject(DigitalObject):
                 self.dc.content.date = self.mods.content.origin_info.created[0].date
                 
         return super(AudioObject, self).save(logMessage)
+
+    @staticmethod
+    def init_from_file(filename, initial_label=None, request=None):
+        '''Static method to create a new :class:`AudioObject` instance from
+        a file.
+
+        :param filename: full path to the file, as string
+        :param initial_label: optional initial label to use; if not specified,
+            the base name of the specified file will be used
+        :param request: :class:`django.http.HttpRequest` passed into a view method;
+            must be passed in order to connect to Fedora as the currently-logged
+            in user
+        :returns: :class:`AudioObject` initialized from thef ile
+        '''
+        if initial_label is None:
+            initial_label = os.path.basename(filename)
+        repo = Repository(request=request)
+        obj = repo.get_object(type=AudioObject)
+        # set initial object label from the base filename
+        obj.label = initial_label
+        obj.dc.content.title = obj.mods.content.title = obj.label
+        obj.audio.content = filename
+        return obj

@@ -7,7 +7,9 @@ import sys
 import tempfile
 from time import sleep
 
+from django.http import HttpRequest
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse, resolve
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
@@ -800,6 +802,7 @@ class TestMods(TestCase):
 
 # tests for (prototype) Audio DigitalObject
 class TestAudioObject(TestCase):
+    fixtures =  ['users']
     repo = Repository()
 
     def setUp(self):
@@ -807,7 +810,8 @@ class TestAudioObject(TestCase):
         self.obj = self.repo.get_object(type=AudioObject)
         self.obj.label = "Testing, one, two"
         self.obj.dc.content.title = self.obj.label
-        self.obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        self.wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
+        self.obj.audio.content = open(self.wav_filename)
         self.obj.save()
 
     def tearDown(self):
@@ -844,6 +848,31 @@ class TestAudioObject(TestCase):
         # verify that the owner id is set in repo copy.
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
+    def test_init_from_file(self):
+        new_obj = AudioObject.init_from_file(self.wav_filename)
+        filename = 'example.wav'
+        self.assertEqual(filename, new_obj.label)
+        self.assertEqual(filename, new_obj.mods.content.title)
+        self.assertEqual(filename, new_obj.dc.content.title)
+
+        # specify an initial label
+        label = 'this is a test WAV file'
+        new_obj = AudioObject.init_from_file(self.wav_filename, label)
+        self.assertEqual(label, new_obj.label)
+        self.assertEqual(label, new_obj.mods.content.title)
+        self.assertEqual(label, new_obj.dc.content.title)
+
+        # use request to pass logged-in user credentials for fedora access
+        rqst = HttpRequest()
+        user = ADMIN_CREDENTIALS['username']
+        rqst.user = User.objects.get(username=user)
+        # use custom login so user credentials will be stored properly
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
+        rqst.session = self.client.session
+        new_obj = AudioObject.init_from_file(self.wav_filename, request=rqst)
+        self.assertEqual(new_obj.api.opener.username, user,
+            'object initialized with request has user credentials configured for fedora access')
+        
 
 # tests for Collection DigitalObject
 class TestCollectionObject(TestCase):
