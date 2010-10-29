@@ -2,6 +2,8 @@ import magic
 import logging
 import os
 import tempfile
+import md5
+import sys
 
 from django.conf import settings
 from django.contrib import messages
@@ -33,19 +35,18 @@ def upload(request):
 
     ctx_dict = {}
     response_code = None
-    
+
     if request.method == 'POST':
         #See if it is manual upload due to non-HTML5 browser.
         if request.FILES.has_key('fileManualUpload'):
             uploaded_file = request.FILES['fileManualUpload']
-
             m = magic.Magic(mime=True)
             type = m.from_file(uploaded_file.temporary_file_path())
             
             if ';' in type:
                 type, charset = type.split(';')
             if type not in allowed_audio_types:
-                messages.error(request, 'Upload file must be a WAV file (got %s)' % type)
+                messages.error(request, 'The file uploaded is not of an accepted type (got %s)' % type)
             else:
                 try:
                     repo = Repository(request=request)
@@ -54,16 +55,28 @@ def upload(request):
                     obj.dc.content.title = obj.mods.content.title = obj.label
                     obj.audio.content = uploaded_file  
                     obj.save()
-                    messages.success(request, 'Successfully ingested WAV file %s in fedora as %s.'
+                    messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                             % (uploaded_file.name, obj.pid))
                 except Exception as e:
-                    messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
-                            % (uploaded_file.name))
+                    response_code = 500
+                    ctx_dict['server_error'] = 'There was an error ' + \
+                            'contacting the digital repository. This ' + \
+                            'prevented us from ingesting your file. If ' + \
+                            'this problem persists, please alert the ' + \
+                            'repository administrator.'
+                    response = render_to_response('audio/uploadForm.html', ctx_dict,context_instance=RequestContext(request))
+                    if response_code is not None:
+                        response.status_code = response_code
+                    return response
+                    
         #Process the list of files.
-        else:
+        elif request.POST.has_key('fileUploads'):
+
             file_list = request.POST.getlist('fileUploads')
             file_original_name_list = request.POST.getlist('originalFileNames')
-            if len(file_list) != len(file_original_name_list):
+            file_md5sum_list = request.POST.getlist('fileMD5sum')
+
+            if len(file_list) != len(file_original_name_list) != len(file_md5sum_list):
                 messages.error(request, 'The hidden input file lists length did not match... some type of form error')
             else:
                 for index in range(len(file_list)):
@@ -77,23 +90,27 @@ def upload(request):
                     if ';' in type:
                         type, charset = type.split(';')
                     if type not in allowed_audio_types:
-                        messages.error(request, 'Upload file must be a WAV file (got %s)' % type)
+                        messages.error(request, 'The file %s is not of an accepted type (got %s)' % (file_original_name_list[index], type))
                     #type is allowed
                     else:
-                        #inject code to go here....
-                        try:
-                            repo = Repository(request=request)
-                            obj = repo.get_object(type=AudioObject)
-                            obj.label = file_original_name_list[index]
-                            obj.dc.content.title = obj.mods.content.title = obj.label
-                            obj.audio.content = fullFilePath  
-                            obj.save()
-                            messages.success(request, 'Successfully ingested file %s in fedora as %s.'
-                                    % (file_original_name_list[index], obj.pid))
-                            os.remove(fullFilePath)
-                        except Exception as e:
-                            messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
-                                    % (file_original_name_list[index]))
+                        #recheck md5sum once more before ingesting....
+                        if file_md5sum_list[index] != md5sum(fullFilePath):
+                            messages.error(request, 'The file %s has a corrupted MD5 sum on the server.' % file_original_name_list[index])
+                        else:
+                            #fedora inject code to go here....
+                            try:
+                                repo = Repository(request=request)
+                                obj = repo.get_object(type=AudioObject)
+                                obj.label = file_original_name_list[index]
+                                obj.dc.content.title = obj.mods.content.title = obj.label
+                                obj.audio.content = fullFilePath
+                                obj.save()
+                                messages.success(request, 'Successfully ingested file %s in fedora as %s.'
+                                                % (file_original_name_list[index], obj.pid))
+                                os.remove(fullFilePath)
+                            except Exception as e:
+                                messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
+                                               % (file_original_name_list[index]))
                         
         #Return the response with the messages for both cases above.
         return HttpResponseSeeOtherRedirect(reverse('audio:index'))
@@ -128,6 +145,7 @@ def HTML5FileUpload(request):
         os.close(returnedMkStemp[0])
         m = magic.Magic(mime=True)
         type = m.from_file(returnedMkStemp[1])
+
         del m
         if ';' in type:
             type, charset = type.split(';')
@@ -137,8 +155,40 @@ def HTML5FileUpload(request):
             return HttpResponse('Error - Incorrect File Type')
     except Exception as e:
         logging.debug(e)
+        
+    #Check the MD5 sum.
+    try:
+        fileMD5 = request.META['HTTP_X_FILE_MD5']
+        if md5sum(returnedMkStemp[1]) != fileMD5:
+            return HttpResponse('Error - MD5 Did Not Match')
+    except Exception as e:
+        logging.debug(e)
 
     return HttpResponse(newFileName)
+
+def sumfile(fobj):
+    '''Returns an md5 hash for an object with read() method.'''
+    m = md5.new()
+    while True:
+        d = fobj.read(8096)
+        if not d:
+            break
+        m.update(d)
+    return m.hexdigest()
+
+
+def md5sum(fname):
+    '''Returns an md5 hash for file fname, or stdin if fname is "-".'''
+    if fname == '-':
+        ret = sumfile(sys.stdin)
+    else:
+        try:
+            f = file(fname, 'rb')
+        except:
+            return 'Failed to open file'
+        ret = sumfile(f)
+        f.close()
+    return ret
     
 @permission_required('is_staff')
 def search(request):

@@ -80,7 +80,7 @@ class AudioViewsTest(TestCase):
         self.assertContains(response, 'Pid:')
         self.assertContains(response, 'Title:')
 
-    def test_upload(self):
+    def test_upload_html5(self):
         # test upload form
         upload_url = reverse('audio:upload')
 
@@ -92,26 +92,71 @@ class AudioViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, upload_url))
 
-        self.assert_(isinstance(response.context['form'], audioforms.UploadForm))
-        self.assertContains(response, 'audio file')
         self.assertContains(response, '<input')
 
-        # POST non-wav file results in an error
-        #f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'))
-        #response = self.client.post(upload_url, {'label': 'sample non-WAV', 'audio': f})
-        # should only be one message
-        #for msg in response.context['messages']:
-            #self.assertEqual('Upload file must be a WAV file (got audio/mpeg)', str(msg))
-            #self.assertEqual('error', msg.tags)
-        #f.close()
+        # POST non-wav file to AJAX Upload view results in an error
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'), 'rb')
+        fileContents = f.read()
+        response = self.client.post(path='/audio/HTML5FileUpload',data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.mp3',HTTP_X_FILE_MD5='b56b59c5004212b7be53fb5742823bd2', content_type='multipart/form-data')
+        self.assertEqual('Error - Incorrect File Type',response.content)
+        f.close()
+        
+        #POST wav file to AJAX Upload view with incorrect checksum should fail
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'), 'rb')
+        fileContents = f.read()
+        response = self.client.post(path='/audio/HTML5FileUpload',data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c2', content_type='text/plain')
+        self.assertEqual('Error - MD5 Did Not Match',response.content)
+        f.close()
+        
+        #POST wav file to AJAX Upload view should work
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'), 'rb')
+        fileContents = f.read()
+        response = self.client.post(path='/audio/HTML5FileUpload',data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c3', content_type='application/x-www-form-urlencoded')
+        self.assert_('example' in str(response.content))
+        f.close()
+        
+        correct_wav_response = response.content
+        
+        #POST wav file with incorrect checksum should fail
+        response = self.client.post(upload_url, {'originalFileNames': 'example.wav', 'fileUploads': correct_wav_response, 'fileMD5sum': 'a725ce7eda38088ede8409254d6fe8c3'}, follow=True)
+        for msg in response.context['messages']:
+            self.assert_('has a corrupted MD5 sum on the server.' in str(msg))
+            self.assertEqual('error', msg.tags)
+        
+        #POST wav file should succeed
+        response = self.client.post(upload_url, {'originalFileNames': 'example.wav', 'fileUploads': correct_wav_response, 'fileMD5sum': 'f725ce7eda38088ede8409254d6fe8c3'}, follow=True)
+        for msg in response.context['messages']:
+            self.assert_('Successfully ingested file' in str(msg))
+            self.assertEqual('success', msg.tags)    
+            
+    def test_upload_fallback(self):
+        # test upload form
+        upload_url = reverse('audio:upload')
 
-        # POST actual wav file - no error
-        #f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
-        #response = self.client.post(upload_url, {'label': 'sample WAV', 'audio': f}, follow=True)
-        #for msg in response.context['messages']:
-            #self.assert_('Successfully ingested WAV file' in str(msg))
-            #self.assertEqual('success', msg.tags)        
-        #f.close()
+        # logged in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(upload_url)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, upload_url))
+
+        self.assertContains(response, '<input')
+
+        # POST non-wav file from non-HTML browser should fail
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'))
+        response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)
+        for msg in response.context['messages']:
+            self.assertEqual('The file uploaded is not of an accepted type (got audio/mpeg)', str(msg))
+            self.assertEqual('error', msg.tags)
+        f.close()
+        
+        #POST wav file should work
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)
+        for msg in response.context['messages']:
+            self.assertEqual('success', msg.tags)
+        f.close()
 
     def test_search(self):
         search_url = reverse('audio:search')
@@ -566,9 +611,9 @@ class FedoraCommsTest(TestCase):
         # upload
         url = reverse('audio:upload')
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
-        response = self.client.post(url, {'label': 'sample WAV', 'audio': f}) 
+        response = self.client.post(url, {'fileManualUpload': f}, follow=True) 
         self.assertContains(response, 'error contacting the digital repository',
-                status_code=500)
+                status_code=500) 
 
         # edit
 

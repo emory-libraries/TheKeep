@@ -240,6 +240,7 @@ var HTML5DropBox = Class.create({
           alert("An error occured uploading a file");
         }, false);
           
+        md5hash = rstr2hex(rstr_md5(bin));
 
         //Here is where we post the file to save file.
         xhr.open("POST", this.actionPage);
@@ -251,7 +252,8 @@ var HTML5DropBox = Class.create({
         xhr.setRequestHeader('X-FILE-SIZE', file.size);
         xhr.setRequestHeader('X-FILE-TYPE', file.type);
         xhr.setRequestHeader('X-FILE-INDEX', index);
- 
+        xhr.setRequestHeader('X-FILE-MD5', md5hash);
+        
         xhr.onreadystatechange = function() {  
           if (xhr.readyState == 4 && xhr.status == 200) {  
    
@@ -264,9 +266,19 @@ var HTML5DropBox = Class.create({
                $('btn_ingest').disabled = false;
                container.remove();
              }
+             else if(xhr.responseText.strip().include("Error - MD5 Did Not Match"))
+             {
+               alert('The MD5 checksum for the file "' + file.name + '" did not match what the server generated (likely a corrupted upload). If you has selected to ingest, you will need to click the button again.');
+               
+               //This stops the form from processing.... don't want it to auto-ingest after a bad file, so hold it up until re-confirmed.
+               self.ingestReady = false;
+               $('btn_ingest').disabled = false;
+               container.remove();
+             }
              else {
                var hiddenFormString = '<input type="hidden" value="' + xhr.responseText.strip() + '" name="fileUploads" />';
                hiddenFormString = hiddenFormString + '<input type="hidden" value="' + file.name + '" name="originalFileNames" />';
+               hiddenFormString = hiddenFormString + '<input type="hidden" value="' + md5hash + '" name="fileMD5sum" />';
                container.insert({bottom:hiddenFormString});
              }
                   
