@@ -3,13 +3,14 @@ import urlparse
 from rdflib import URIRef
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from django.test import Client, TestCase
 
 from eulcore.django.fedora.server import Repository
 from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters.audio import forms as audioforms
+from digitalmasters.audio import views
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
         ModsRelatedItem, CollectionObject, CollectionMods
@@ -373,6 +374,28 @@ class AudioViewsTest(TestCase):
             'successful collection update message displayed to user on save and continue editing')
         self.assert_(isinstance(response.context['form'], audioforms.CollectionForm),
                 "MODS CollectionForm is set in response context after save and continue editing")
+
+        # save & continue when creating a new record
+        new_collection_url = reverse('audio:new-collection')
+        data = COLLECTION_DATA.copy()
+        data['_save_continue'] = True   # simulate submit via 'save and continue' button
+        # for a new collection, should redirect to edit collection url (with pid)
+        response = self.client.post(new_collection_url, data, follow=True)
+        redirect_url, redirect_code = response.redirect_chain[0]
+        self.assertEqual(303, redirect_code,
+            'save and continue editing on new collection should redirect with 303, got %s' \
+            % redirect_code)
+        # resolve the redirect url and confirm it redirected to edit-collection
+        # - redirect url is absolute, strip off django testserver hostname for resolvable path
+        redirect_url = redirect_url[len('http://testserver'):]
+        view_func, args, kwargs = resolve(redirect_url)
+        self.assertEqual(views.edit_collection, view_func,
+            'redirect url %s should resolve to edit_collection view' % redirect_url)
+        self.assert_('pid' in kwargs, 'object pid is set in resolved url keyword args')
+
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assert_('Created new collection' in messages[0],
+            'successful collection creation message displayed to user on save and continue editing')
 
         # attempt to edit non-existent record
         edit_url = reverse('audio:edit-collection', args=['my-bogus-pid:123'])

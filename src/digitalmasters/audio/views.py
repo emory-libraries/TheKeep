@@ -187,11 +187,18 @@ def edit_collection(request, pid=None):
                 # audit trail entry for object creation, which doesn't happen otherwise
                 obj.save(log_message)
                 messages.success(request, '%s collection %s' % (action, obj.pid))
-                # submit via normal save
+
+                # form submitted via normal save button - redirect to main audio page
                 if '_save_continue' not in request.POST:
                     return HttpResponseSeeOtherRedirect(reverse('audio:index'))
-                # could also be _save_continue
-                # -- fall through and display form; will display save message
+                
+                # otherwise, form was submitted via "save and continue editing"
+                else:
+                    # creating a new object- redirect to the edit-collection url for the new pid
+                    if pid is None:
+                        return HttpResponseSeeOtherRedirect(reverse('audio:edit-collection',
+                                                            args=[obj.pid]))
+                
             # in any other case - fall through to display edit form again
         else:
             # GET - display the form for editing
