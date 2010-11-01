@@ -326,7 +326,7 @@ class AudioObject(DigitalObject):
         metadata values:
             * mods:typeOfResource = "sound recording"
 
-        :param filename: full path to the file, as string
+        :param filename: full path to the audio file, as a string
         :param initial_label: optional initial label to use; if not specified,
             the base name of the specified file will be used
         :param request: :class:`django.http.HttpRequest` passed into a view method;
@@ -341,7 +341,7 @@ class AudioObject(DigitalObject):
         # set initial object label from the base filename
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
-        obj.audio.content = filename
+        obj.audio.content = open(filename)
         # set initial mods:typeOfResource - all AudioObjects default to sound recording
         obj.mods.content.resource_type = 'sound recording'
 
