@@ -143,6 +143,19 @@ class CollectionMods(Mods):
                                               ModsAccessCondition, instantiate_on_get=True)
     
 
+class DigitalTech(xmlmap.XmlObject):
+    # ROUGH version of xmlmap for digital technical metadata - incomplete
+    # TODO: needs correct root element (currently unknown) and namespace
+    ROOT_NAME = 'dt'
+    date_captured = xmlmap.StringField('dateCaptured[@encoding="w3cdft"]')
+    codec_quality = xmlmap.StringField('codecQuality')
+    duration = xmlmap.StringField('duration/measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]')
+    note = xmlmap.StringListField('note[@type="general"]')
+    digitization_purpose = xmlmap.StringListField('note[@type="purpose of digitization"]')
+    transfer_engineer = xmlmap.StringField('transferEngineerID')
+    # TODO: codec creator
+    
+
 class CollectionObject(DigitalObject):
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
@@ -299,6 +312,11 @@ class AudioObject(DigitalObject):
             'mimetype': 'audio/x-wav',
             'versionable': True,
         })
+    digtech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
+        defaults={
+            'control_group': 'M',
+            'versionable': True,
+        })
 
     def save(self, logMessage=None):
         if self.mods.isModified():
@@ -344,5 +362,8 @@ class AudioObject(DigitalObject):
         obj.audio.content = open(filename)
         # set initial mods:typeOfResource - all AudioObjects default to sound recording
         obj.mods.content.resource_type = 'sound recording'
+        # set codec quality to lossless in digital tech metadata 
+        # - default for AudioObjects, should only accept lossless audio for master file
+        obj.digtech.content.codec_quality = 'lossless'
 
         return obj

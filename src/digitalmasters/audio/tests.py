@@ -883,6 +883,8 @@ class TestAudioObject(TestCase):
         # typeOfResource
         self.assertEqual('sound recording', new_obj.mods.content.resource_type,
             'mods:typeOfResource initializeg to "sound recording"')
+        # codec quality
+        self.assertEqual('lossless', new_obj.digtech.content.codec_quality)
 
         # specify an initial label
         label = 'this is a test WAV file'
