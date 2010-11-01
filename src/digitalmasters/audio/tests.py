@@ -85,6 +85,7 @@ class AudioViewsTest(TestCase):
 
     def test_upload_html5(self):
         # test upload form
+        HTML5_upload_url = reverse('audio:HTML5FileUpload')
         upload_url = reverse('audio:upload')
 
         # logged in as staff
@@ -97,24 +98,47 @@ class AudioViewsTest(TestCase):
 
         self.assertContains(response, '<input')
 
+        #NOTE: For some of the below, I pass in different Content Types. That header 
+        #shouldn't matter, so I switch it around in case one of them eventually throws 
+        #an error.  
+        
         # POST non-wav file to AJAX Upload view results in an error
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'), 'rb')
         fileContents = f.read()
-        response = self.client.post(path='/audio/HTML5FileUpload',data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.mp3',HTTP_X_FILE_MD5='b56b59c5004212b7be53fb5742823bd2', content_type='multipart/form-data')
+        response = self.client.post(path=HTML5_upload_url,data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.mp3',HTTP_X_FILE_MD5='b56b59c5004212b7be53fb5742823bd2', content_type='multipart/form-data')
         self.assertEqual('Error - Incorrect File Type',response.content)
+        code = response.status_code
+        expected = 400
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
+                             % (expected, code, HTML5_upload_url))
         f.close()
         
         #POST wav file to AJAX Upload view with incorrect checksum should fail
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'), 'rb')
         fileContents = f.read()
-        response = self.client.post(path='/audio/HTML5FileUpload',data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c2', content_type='text/plain')
+        response = self.client.post(path=HTML5_upload_url,data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c2', content_type='text/plain')
         self.assertEqual('Error - MD5 Did Not Match',response.content)
+        code = response.status_code
+        expected = 400
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
+                             % (expected, code, HTML5_upload_url))
+        f.close()
+        
+        #POST wav file to AJAX Upload view with incorrect header argument should fail
+        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'), 'rb')
+        fileContents = f.read()
+        response = self.client.post(path=HTML5_upload_url,data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav', content_type='text/plain')
+        self.assertEqual('Error - missing needed headers (either HTTP-X-FILE-NAME or HTTP-X-FILE-MD5).',response.content)
+        code = response.status_code
+        expected = 400
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
+                             % (expected, code, HTML5_upload_url))
         f.close()
         
         #POST wav file to AJAX Upload view should work
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'), 'rb')
         fileContents = f.read()
-        response = self.client.post(path='/audio/HTML5FileUpload',data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c3', content_type='application/x-www-form-urlencoded')
+        response = self.client.post(path=HTML5_upload_url,data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c3', content_type='application/x-www-form-urlencoded')
         self.assert_('example' in str(response.content))
         f.close()
         

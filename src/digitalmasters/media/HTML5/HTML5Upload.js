@@ -255,34 +255,36 @@ var HTML5DropBox = Class.create({
         xhr.setRequestHeader('X-FILE-MD5', md5hash);
         
         xhr.onreadystatechange = function() {  
-          if (xhr.readyState == 4 && xhr.status == 200) {  
-   
-             if(xhr.responseText.strip().include("Error - Incorrect File Type"))
-             {
-               alert('Incorrect type for the file "' + file.name + '" from the server side check. If you has selected to ingest, you will need to click the button again.');
-               
-               //This stops the form from processing.... don't want it to auto-ingest after a bad file, so hold it up until re-confirmed.
-               self.ingestReady = false;
-               $('btn_ingest').disabled = false;
-               container.remove();
-             }
-             else if(xhr.responseText.strip().include("Error - MD5 Did Not Match"))
-             {
-               alert('The MD5 checksum for the file "' + file.name + '" did not match what the server generated (likely a corrupted upload). If you has selected to ingest, you will need to click the button again.');
-               
-               //This stops the form from processing.... don't want it to auto-ingest after a bad file, so hold it up until re-confirmed.
-               self.ingestReady = false;
-               $('btn_ingest').disabled = false;
-               container.remove();
-             }
-             else {
+          if (xhr.readyState == 4) {
+            if(xhr.status == 200)
+            {
                var hiddenFormString = '<input type="hidden" value="' + xhr.responseText.strip() + '" name="fileUploads" />';
                hiddenFormString = hiddenFormString + '<input type="hidden" value="' + file.name + '" name="originalFileNames" />';
                hiddenFormString = hiddenFormString + '<input type="hidden" value="' + md5hash + '" name="fileMD5sum" />';
                container.insert({bottom:hiddenFormString});
-             }
-                  
-             //eval(xhr.responseText.strip());
+            }
+            else if(xhr.status == 400) {
+                if(xhr.responseText.strip().include("Error - missing needed headers (either HTTP-X-FILE-NAME or HTTP-X-FILE-MD5)"))
+                {
+                  alert('Error - missing needed headers (either HTTP-X-FILE-NAME or HTTP-X-FILE-MD5)')
+                }
+                else if(xhr.responseText.strip().include("Error - Incorrect File Type"))
+                {
+                  alert('Incorrect type for the file "' + file.name + '" from the server side check. If you has selected to ingest, you will need to click the button again.');
+                }
+                else if(xhr.responseText.strip().include("Error - MD5 Did Not Match"))
+                {
+                  alert('The MD5 checksum for the file "' + file.name + '" did not match what the server generated (likely a corrupted upload). If you has selected to ingest, you will need to click the button again.');
+                }
+                else {
+                  alert('HTTP 400 response - unspecified.')
+                }
+                
+                //This stops the form from processing.... don't want it to auto-ingest after a bad file, so hold it up until re-confirmed.
+                self.ingestReady = false;
+                $('btn_ingest').disabled = false;
+                container.remove();    
+            }
              
              //Below is a temporary way to make sure all files are uploaded before submitting.
              self.uploadFileCount = self.uploadFileCount - 1;

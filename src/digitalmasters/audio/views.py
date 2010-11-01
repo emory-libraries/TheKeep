@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
@@ -31,7 +31,7 @@ def index(request):
 
 @permission_required('is_staff')
 def upload(request):
-    "Upload a WAV file and create a new fedora object.  Only accepts audio/x-wav."
+    "Upload file(s) and create new fedora object(s).  Only accepts audio/x-wav currently."
 
     ctx_dict = {}
     response_code = None
@@ -127,11 +127,19 @@ def upload(request):
 
 @permission_required('is_staff')
 def HTML5FileUpload(request):
+    "Used for the AJAX HTML5 upload only. Accepts the AJAX request, checks the request, uploads the file, returns its end name."
+    
+    #Setup the directory for the file upload.
     dir = settings.INGEST_STAGING_TEMP_DIR
     if not os.path.exists(dir):
         os.makedirs(dir)
     
-    fileName = request.META['HTTP_X_FILE_NAME']
+    #Get the header values.
+    try:
+        fileName = request.META['HTTP_X_FILE_NAME']
+        fileMD5 = request.META['HTTP_X_FILE_MD5']
+    except Exception as e:
+        return HttpResponseBadRequest('Error - missing needed headers (either HTTP-X-FILE-NAME or HTTP-X-FILE-MD5).')
     
     #Returns a Tuple with: "<file_base>", ".", and "<file_extension>"
     fileDetailsTuple = fileName.rpartition('.')
@@ -159,22 +167,21 @@ def HTML5FileUpload(request):
         if type not in allowed_audio_types:
             os.remove(returnedMkStemp[1])
             #return HttpResonse('alert(The type ' + type + ' of file ' + fileName + ' is not allowed. That file was rejected.); $("item' + request.META['HTTP_X_FILE_INDEX'] + '").remove();')
-            return HttpResponse('Error - Incorrect File Type')
+            return HttpResponseBadRequest('Error - Incorrect File Type')
     except Exception as e:
         logging.debug(e)
         
     #Check the MD5 sum.
     try:
-        fileMD5 = request.META['HTTP_X_FILE_MD5']
         if md5sum(returnedMkStemp[1]) != fileMD5:
-            return HttpResponse('Error - MD5 Did Not Match')
+            return HttpResponseBadRequest('Error - MD5 Did Not Match')
     except Exception as e:
         logging.debug(e)
 
     return HttpResponse(newFileName)
 
 def md5sum(fname):
-    '''Returns an md5 hash for file fname, or stdin if fname is "-".'''
+    '''Returns an md5 hash for file fname.'''
     #Try to open the file.
     try:
         f = file(fname, 'rb')
