@@ -28,6 +28,10 @@ from digitalmasters.audio.management.commands import ingest_cleanup
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
+# fixture filenames used in multiple tests
+mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
+wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
+
 # sample POST data for creating a collection
 COLLECTION_DATA = {
     'title': 'Rushdie papers',
@@ -103,7 +107,7 @@ class AudioViewsTest(TestCase):
         #an error.  
         
         # POST non-wav file to AJAX Upload view results in an error
-        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'), 'rb')
+        f = open(mp3_filename, 'rb')
         fileContents = f.read()
         response = self.client.post(path=HTML5_upload_url,data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.mp3',HTTP_X_FILE_MD5='b56b59c5004212b7be53fb5742823bd2', content_type='multipart/form-data')
         self.assertEqual('Error - Incorrect File Type',response.content)
@@ -114,7 +118,7 @@ class AudioViewsTest(TestCase):
         f.close()
         
         #POST wav file to AJAX Upload view with incorrect checksum should fail
-        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'), 'rb')
+        f = open(wav_filename, 'rb')
         fileContents = f.read()
         response = self.client.post(path=HTML5_upload_url,data=fileContents,HTTP_X_REQUESTED_WITH='XMLHttpRequest',HTTP_X_FILE_NAME='example.wav',HTTP_X_FILE_MD5='f725ce7eda38088ede8409254d6fe8c2', content_type='text/plain')
         self.assertEqual('Error - MD5 Did Not Match',response.content)
@@ -171,38 +175,40 @@ class AudioViewsTest(TestCase):
         self.assertContains(response, '<input')
 
         # POST non-wav file - should fail
-        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'))
-        response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)
-        # convert messages to a list for easier inspection
-        messages = [ msg for msg in response.context['messages'] ]
-        self.assertEqual('The file uploaded is not of an accepted type (got audio/mpeg)',
-                         str(messages[0]))
-        self.assertEqual('error', messages[0].tags,
-            'message on invalid file type should have tag "error", got "%s"' % messages[0].tags)
-        f.close()
+        with open(mp3_filename) as mp3:
+            response = self.client.post(upload_url, {'fileManualUpload': mp3},
+                                        follow=True)
+            # convert messages to a list for easier inspection
+            messages = [ msg for msg in response.context['messages'] ]
+            self.assertEqual('The file uploaded is not of an accepted type (got audio/mpeg)',
+                 str(messages[0]))
+            self.assertEqual('error', messages[0].tags,
+                'message on invalid file type should have tag "error", got "%s"' \
+                % messages[0].tags)
         
         # POST a wav file - should result in a new object
-        example_wav = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
-        f = open(example_wav)
-        response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)        
-        messages = [ msg for msg in response.context['messages'] ]
-        self.assert_('Successfully ingested file example.wav' in str(messages[0]),
-            'successful file ingest message displayed to user')
-        self.assertEqual('success', messages[0].tags,
-            'message on successful ingest should have tag "success", got "%s"' % messages[0].tags)
-        # pull the pid of the newly created object from the message and inspect in fedora
-        pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
-                                  '').rstrip('.')
-        repo = Repository()
-        new_obj = repo.get_object(pid, type=AudioObject)
-        # check object was created with audio cmodel
-        self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
-            "audio object was created with the correct content model")
-        self.assertEqual(open(example_wav).read(), new_obj.audio.content.read(),
-            "audio file content on new object corresponds to uploaded file data")
+        with open(wav_filename) as wav:
+            response = self.client.post(upload_url, {'fileManualUpload': wav},
+                                        follow=True)
+            messages = [ msg for msg in response.context['messages'] ]
+            self.assert_('Successfully ingested file example.wav' in str(messages[0]),
+                'successful file ingest message displayed to user')
+            self.assertEqual('success', messages[0].tags,
+                'message on successful ingest should have tag "success", got "%s"' % messages[0].tags)
+            # pull the pid of the newly created object from the message and inspect in fedora
+            pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
+                                      '').rstrip('.')
+            repo = Repository()
+            new_obj = repo.get_object(pid, type=AudioObject)
+            # check object was created with audio cmodel
+            self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
+                "audio object was created with the correct content model")
+            # seek to 0 so we can re-read file data
+            wav.seek(0)
+            self.assertEqual(wav.read(), new_obj.audio.content.read(),
+                "audio file content on new object corresponds to uploaded file data")
 
-        f.close()
-
+                    
     def test_search(self):
         search_url = reverse('audio:search')
 
@@ -848,13 +854,13 @@ class TestAudioObject(TestCase):
     repo = Repository()
 
     def setUp(self):
-        # create a test audio object to edit    
-        self.obj = self.repo.get_object(type=AudioObject)
-        self.obj.label = "Testing, one, two"
-        self.obj.dc.content.title = self.obj.label
-        self.wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
-        self.obj.audio.content = open(self.wav_filename)
-        self.obj.save()
+        # create a test audio object to edit
+        with open(wav_filename) as wav:
+            self.obj = self.repo.get_object(type=AudioObject)
+            self.obj.label = "Testing, one, two"
+            self.obj.dc.content.title = self.obj.label
+            self.obj.audio.content = wav
+            self.obj.save()
 
     def tearDown(self):
         self.repo.purge_object(self.obj.pid, "removing unit test fixture")
@@ -891,7 +897,7 @@ class TestAudioObject(TestCase):
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
     def test_init_from_file(self):
-        new_obj = AudioObject.init_from_file(self.wav_filename)
+        new_obj = AudioObject.init_from_file(wav_filename)
         filename = 'example.wav'
         self.assertEqual(filename, new_obj.label)
         self.assertEqual(filename, new_obj.mods.content.title)
@@ -910,7 +916,7 @@ class TestAudioObject(TestCase):
 
         # specify an initial label
         label = 'this is a test WAV file'
-        new_obj = AudioObject.init_from_file(self.wav_filename, label)
+        new_obj = AudioObject.init_from_file(wav_filename, label)
         self.assertEqual(label, new_obj.label)
         self.assertEqual(label, new_obj.mods.content.title)
         self.assertEqual(label, new_obj.dc.content.title)
@@ -922,7 +928,7 @@ class TestAudioObject(TestCase):
         # use custom login so user credentials will be stored properly
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         rqst.session = self.client.session
-        new_obj = AudioObject.init_from_file(self.wav_filename, request=rqst)
+        new_obj = AudioObject.init_from_file(wav_filename, request=rqst)
         self.assertEqual(new_obj.api.opener.username, user,
             'object initialized with request has user credentials configured for fedora access')
         
@@ -930,17 +936,13 @@ class TestAudioObject(TestCase):
 
 class TestWavDuration(TestCase):
 
-    def setUp(self):
-        self.wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
-        self.mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
-
     def test_success(self):
-        duration = wav_duration(self.wav_filename)
-        # ffmpeg reports the duration of this WAV file as 00:00:03.30
+        duration = wav_duration(wav_filename)
+        # ffmpeg reports the duration of fixture WAV file as 00:00:03.30
         self.assertAlmostEqual(3.3, duration, 3)
 
     def test_non_wav(self):
-        self.assertRaises(StandardError, wav_duration, self.mp3_filename)
+        self.assertRaises(StandardError, wav_duration, mp3_filename)
 
     def test_nonexistent(self):
         self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
