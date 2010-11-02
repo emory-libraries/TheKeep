@@ -1,5 +1,6 @@
 import os
 from rdflib import URIRef
+import wave
 
 from eulcore import xmlmap
 from eulcore.fedora.models import FileDatastream, XmlDatastream, URI_HAS_MODEL
@@ -145,14 +146,17 @@ class CollectionMods(Mods):
 
 class DigitalTech(xmlmap.XmlObject):
     # ROUGH version of xmlmap for digital technical metadata - incomplete
-    # TODO: needs correct root element (currently unknown) and namespace
-    ROOT_NAME = 'dt'
-    date_captured = xmlmap.StringField('dateCaptured[@encoding="w3cdft"]')
-    codec_quality = xmlmap.StringField('codecQuality')
-    duration = xmlmap.StringField('duration/measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]')
-    note = xmlmap.StringListField('note[@type="general"]')
-    digitization_purpose = xmlmap.StringListField('note[@type="purpose of digitization"]')
+    "Digital Technical Metadata."
+    ROOT_NS = 'http://pid.emory.edu/ns/2010/digital-tech-metadata' 
+    ROOT_NAMESPACES = {'dt': ROOT_NS }
+    ROOT_NAME = 'dt'    # tentative/temporary
+    date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdft"]')
+    codec_quality = xmlmap.StringField('dt:codecQuality')
+    duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]')
+    note = xmlmap.StringListField('dt:note[@type="general"]')
+    digitization_purpose = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
     transfer_engineer = xmlmap.StringField('transferEngineerID')
+    # TODO: split out transfer engineer into sub object with attributes
     # TODO: codec creator
     
 
@@ -365,5 +369,26 @@ class AudioObject(DigitalObject):
         # set codec quality to lossless in digital tech metadata 
         # - default for AudioObjects, should only accept lossless audio for master file
         obj.digtech.content.codec_quality = 'lossless'
+        # get wav duration and store in digital tech metadata
+        obj.digtech.content.duration = '%d' % round(wav_duration(filename))
 
         return obj
+
+
+def wav_duration(filename):
+    '''Calculate the duration of a WAV file using Python's built in :mod:`wave`
+    library.  Raises a StandardError if file cannot be read as a WAV.
+
+    :param filename: full path to the WAV file
+    :returns: duration in seconds as a float
+    '''
+    try:
+        wav_file = wave.open(filename, 'rb')
+    except wave.Error as werr:
+        # FIXME: is there a better/more specific exception that can be used here?
+        raise StandardError('Failed to open file %s as a WAV due to: %s' % (filename, werr))
+    # any other file errors will be propagated as IOError
+    
+    # duration in secdons = number of samples / sampling frequency
+    duration = float(wav_file.getnframes())/float(wav_file.getframerate())
+    return duration

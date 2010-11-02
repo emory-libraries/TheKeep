@@ -21,7 +21,7 @@ from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio import views
 from digitalmasters.audio.models import AudioObject, Mods, ModsNote, ModsOriginInfo, \
         ModsDate, ModsIdentifier, ModsName, ModsNamePart, ModsRole, ModsAccessCondition, \
-        ModsRelatedItem, CollectionObject, CollectionMods
+        ModsRelatedItem, CollectionObject, CollectionMods, wav_duration
 from digitalmasters.audio.fixtures import FedoraFixtures
 from digitalmasters.audio.management.commands import ingest_cleanup
 
@@ -882,9 +882,13 @@ class TestAudioObject(TestCase):
             'audio datastreamc ontent should be a file object')
         # typeOfResource
         self.assertEqual('sound recording', new_obj.mods.content.resource_type,
-            'mods:typeOfResource initializeg to "sound recording"')
+            'mods:typeOfResource initialized to "sound recording"')
         # codec quality
-        self.assertEqual('lossless', new_obj.digtech.content.codec_quality)
+        self.assertEqual('lossless', new_obj.digtech.content.codec_quality,
+            'codec quality should be initialized to "lossless"')
+        # duration
+        self.assertEqual(3, new_obj.digtech.content.duration,
+            'duration should be calculated and stored in duration, rounded to the nearest second')
 
         # specify an initial label
         label = 'this is a test WAV file'
@@ -904,6 +908,25 @@ class TestAudioObject(TestCase):
         self.assertEqual(new_obj.api.opener.username, user,
             'object initialized with request has user credentials configured for fedora access')
         
+
+
+class TestWavDuration(TestCase):
+
+    def setUp(self):
+        self.wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
+        self.mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
+
+    def test_success(self):
+        duration = wav_duration(self.wav_filename)
+        # ffmpeg reports the duration of this WAV file as 00:00:03.30
+        self.assertAlmostEqual(3.3, duration, 3)
+
+    def test_non_wav(self):
+        self.assertRaises(StandardError, wav_duration, self.mp3_filename)
+
+    def test_nonexistent(self):
+        self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
+
 
 # tests for Collection DigitalObject
 class TestCollectionObject(TestCase):
