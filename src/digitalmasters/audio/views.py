@@ -49,11 +49,9 @@ def upload(request):
                 messages.error(request, 'The file uploaded is not of an accepted type (got %s)' % type)
             else:
                 try:
-                    repo = Repository(request=request)
-                    obj = repo.get_object(type=AudioObject)
-                    obj.label = uploaded_file.name
-                    obj.dc.content.title = obj.mods.content.title = obj.label
-                    obj.audio.content = uploaded_file  
+                    # initialize from the file itself; use original name as initial object label
+                    obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
+                                                     uploaded_file.name, request)
                     obj.save()
                     messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                             % (uploaded_file.name, obj.pid))
@@ -99,14 +97,13 @@ def upload(request):
                         else:
                             #fedora inject code to go here....
                             try:
-                                repo = Repository(request=request)
-                                obj = repo.get_object(type=AudioObject)
-                                obj.label = file_original_name_list[index]
-                                obj.dc.content.title = obj.mods.content.title = obj.label
-                                obj.audio.content = fullFilePath
+                                 # initialize from the file itself; use original name as initial object label
+                                obj = AudioObject.init_from_file(fullFilePath,
+                                                     file_original_name_list[index], request)
                                 obj.save()
                                 messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                                                 % (file_original_name_list[index], obj.pid))
+                                # clean up temporary upload file after successful ingest
                                 os.remove(fullFilePath)
                             except Exception as e:
                                 messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
@@ -127,7 +124,8 @@ def upload(request):
 
 @permission_required('is_staff')
 def HTML5FileUpload(request):
-    "Used for the AJAX HTML5 upload only. Accepts the AJAX request, checks the request, uploads the file, returns its end name."
+    """Used for the AJAX HTML5 upload only. Accepts the AJAX request, checks the
+    request, uploads the file, returns its end name."""
     
     #Setup the directory for the file upload.
     dir = settings.INGEST_STAGING_TEMP_DIR
@@ -151,7 +149,7 @@ def HTML5FileUpload(request):
     returnedMkStemp = tempfile.mkstemp(fileDot+fileExtension,fileBase+"_",dir)
     
     destination = open(returnedMkStemp[1], 'wb+')
-    destination.write(request.raw_post_data);
+    destination.write(request.raw_post_data)
     destination.close()
     
     newFileName = os.path.basename(returnedMkStemp[1])

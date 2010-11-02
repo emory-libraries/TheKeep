@@ -364,7 +364,7 @@ class AudioObject(DigitalObject):
         # set initial object label from the base filename
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
-        obj.audio.content = open(filename)
+        obj.audio.content = open(filename)  # FIXME: at what point does/should this get closed?
         # set initial mods:typeOfResource - all AudioObjects default to sound recording
         obj.mods.content.resource_type = 'sound recording'
         # set codec quality to lossless in digital tech metadata 

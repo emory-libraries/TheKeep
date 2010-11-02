@@ -198,6 +198,9 @@ class AudioViewsTest(TestCase):
             "audio object was created with the correct content model")
         self.assertEqual('example.wav', new_obj.label,
             'initial object label set from original file name (not temporary upload filename)')
+        # check that init from file worked correctly
+        self.assertEqual(3, new_obj.digtech.content.duration,
+                'duration is set on new object created via upload (init from file worked correctly)')
             
     def test_upload_fallback(self):
         # test upload form
@@ -246,6 +249,9 @@ class AudioViewsTest(TestCase):
             wav.seek(0)
             self.assertEqual(wav.read(), new_obj.audio.content.read(),
                 "audio file content on new object corresponds to uploaded file data")
+            # check that init from file worked correctly
+            self.assertEqual(3, new_obj.digtech.content.duration,
+                'duration is set on new object created via upload (init from file worked correctly)')
 
                     
     def test_search(self):
