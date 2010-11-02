@@ -162,27 +162,45 @@ class AudioViewsTest(TestCase):
 
         # logged in as staff
         self.client.login(**ADMIN_CREDENTIALS)
+        # view the form
         response = self.client.get(upload_url)
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, upload_url))
-
         self.assertContains(response, '<input')
 
-        # POST non-wav file from non-HTML browser should fail
+        # POST non-wav file - should fail
         f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3'))
         response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)
-        for msg in response.context['messages']:
-            self.assertEqual('The file uploaded is not of an accepted type (got audio/mpeg)', str(msg))
-            self.assertEqual('error', msg.tags)
+        # convert messages to a list for easier inspection
+        messages = [ msg for msg in response.context['messages'] ]
+        self.assertEqual('The file uploaded is not of an accepted type (got audio/mpeg)',
+                         str(messages[0]))
+        self.assertEqual('error', messages[0].tags,
+            'message on invalid file type should have tag "error", got "%s"' % messages[0].tags)
         f.close()
         
-        #POST wav file should work
-        f = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
-        response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)
-        for msg in response.context['messages']:
-            self.assertEqual('success', msg.tags)
+        # POST a wav file - should result in a new object
+        example_wav = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
+        f = open(example_wav)
+        response = self.client.post(upload_url, {'fileManualUpload': f}, follow=True)        
+        messages = [ msg for msg in response.context['messages'] ]
+        self.assert_('Successfully ingested file example.wav' in str(messages[0]),
+            'successful file ingest message displayed to user')
+        self.assertEqual('success', messages[0].tags,
+            'message on successful ingest should have tag "success", got "%s"' % messages[0].tags)
+        # pull the pid of the newly created object from the message and inspect in fedora
+        pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
+                                  '').rstrip('.')
+        repo = Repository()
+        new_obj = repo.get_object(pid, type=AudioObject)
+        # check object was created with audio cmodel
+        self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
+            "audio object was created with the correct content model")
+        self.assertEqual(open(example_wav).read(), new_obj.audio.content.read(),
+            "audio file content on new object corresponds to uploaded file data")
+
         f.close()
 
     def test_search(self):
@@ -879,7 +897,7 @@ class TestAudioObject(TestCase):
         self.assertEqual(filename, new_obj.mods.content.title)
         self.assertEqual(filename, new_obj.dc.content.title)
         self.assert_(isinstance(new_obj.audio.content, file),
-            'audio datastreamc ontent should be a file object')
+            'audio datastream content should be a file object')
         # typeOfResource
         self.assertEqual('sound recording', new_obj.mods.content.resource_type,
             'mods:typeOfResource initialized to "sound recording"')
