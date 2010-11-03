@@ -36,7 +36,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",
     # additional context processors
     "django.core.context_processors.request", # always include request in render context
-    "digitalmasters.audio.context_processors.collection_search",  # collection search form on every page
+    "digitalmasters.collection.context_processors.collection_search",  # collection search form on every page
     "digitalmasters.version_context", # include app version
 )
 

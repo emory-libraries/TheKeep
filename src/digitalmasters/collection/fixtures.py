@@ -2,8 +2,6 @@ from digitalmasters.collection.models import CollectionObject
 from digitalmasters.fedora import Repository
 from digitalmasters import mods
 
-# TODO: move to collection
-
 # fixture objects for use with unit tests
 # objects are generated each time, so content is reliable
 # if a test requires the object be ingested into fedora, the test should ingest and purge

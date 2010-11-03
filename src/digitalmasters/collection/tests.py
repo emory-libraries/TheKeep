@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client, TestCase
 
-from digitalmasters.audio.fixtures import FedoraFixtures    # TODO: move to collections
+from digitalmasters.collection.fixtures import FedoraFixtures 
 from digitalmasters.collection import forms as cforms
 from digitalmasters.collection import views
 from digitalmasters.collection.models import CollectionObject, CollectionMods
