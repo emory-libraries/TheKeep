@@ -4,7 +4,7 @@
 
 {% block content-body %}
 <p><a href="{% url audio:upload %}">upload an audio file</a></p>
-<p><a href="{% url audio:new-collection %}">create a new collection</a></p>
+<p><a href="{% url collection:new %}">create a new collection</a></p>
 
 <hr/>
 {% include 'audio/_search_form.html' %}

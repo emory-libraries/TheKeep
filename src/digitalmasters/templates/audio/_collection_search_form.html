@@ -1,6 +1,6 @@
 <div id="collection-search">
   <h2>Search Collections</h2>
-  <form action="{% url audio:search-collections %}" method="get">
+  <form action="{% url collection:search %}" method="get">
       {% for field in collection_search %}
       <p class="fieldWrapper">
           {{ field.errors }}

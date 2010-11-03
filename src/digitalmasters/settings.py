@@ -72,6 +72,7 @@ INSTALLED_APPS = (
     'eulcore.django.fedora',
     'digitalmasters.audio',
     'digitalmasters.accounts',
+    'digitalmasters.collection',
 )
 
 
