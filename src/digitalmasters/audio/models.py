@@ -28,7 +28,7 @@ class AudioObject(DigitalObject):
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'
     CONTENT_MODELS = [ AUDIO_CONTENT_MODEL ]
 
-    mods = XmlDatastream("MODS", "MODS Metadata", mods.Mods, defaults={
+    mods = XmlDatastream("MODS", "MODS Metadata", mods.MODS, defaults={
             'control_group': 'M',
             'format': mods.MODS_NAMESPACE,
             'versionable': True,

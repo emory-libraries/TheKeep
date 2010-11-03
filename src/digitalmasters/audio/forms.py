@@ -40,7 +40,7 @@ class SearchForm(forms.Form):
 
 class EditForm(XmlObjectForm):
     class Meta:
-        model = mods.Mods
+        model = mods.MODS
         fields = [
             'title', 'resource_type', 'note',
             'origin_info.created.date', 'origin_info.created.key_date',

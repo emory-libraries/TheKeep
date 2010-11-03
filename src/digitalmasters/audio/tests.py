@@ -315,7 +315,7 @@ class AudioViewsTest(TestCase):
                              % (expected, code, edit_url))
         self.assert_(isinstance(response.context['form'], audioforms.EditForm),
                 "MODS EditForm is set in response context")
-        self.assert_(isinstance(response.context['form'].instance, mods.Mods),
+        self.assert_(isinstance(response.context['form'].instance, mods.MODS),
                 "form instance is a MODS xmlobject")
 
         # POST data to update MODS in fedora
@@ -360,7 +360,7 @@ class AudioViewsTest(TestCase):
             'mods created date in fedora matches posted created date')
 
         # force a schema-validation error (shouldn't happen normally)
-        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.Mods)
+        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.MODS)
         obj.save("schema-invalid MODS")
         response = self.client.post(edit_url, mods_data)
 
@@ -544,19 +544,19 @@ class TestMods(TestCase):
         """
 
     def setUp(self):
-        self.mods = load_xmlobject_from_string(self.FIXTURE, mods.Mods)
+        self.mods = load_xmlobject_from_string(self.FIXTURE, mods.MODS)
 
     def test_init_types(self):
-        self.assert_(isinstance(self.mods, mods.Mods))
-        self.assert_(isinstance(self.mods.note, mods.ModsNote))
-        self.assert_(isinstance(self.mods.origin_info, mods.ModsOriginInfo))
-        self.assert_(isinstance(self.mods.origin_info.created[0], mods.ModsDate))
-        self.assert_(isinstance(self.mods.identifiers[0], mods.ModsIdentifier))
-        self.assert_(isinstance(self.mods.name, mods.ModsName))
-        self.assert_(isinstance(self.mods.name.name_parts[0], mods.ModsNamePart))
-        self.assert_(isinstance(self.mods.name.roles[0], mods.ModsRole))
-        self.assert_(isinstance(self.mods.access_conditions[0], mods.ModsAccessCondition))
-        self.assert_(isinstance(self.mods.related_items[0], mods.ModsRelatedItem))
+        self.assert_(isinstance(self.mods, mods.MODS))
+        self.assert_(isinstance(self.mods.note, mods.Note))
+        self.assert_(isinstance(self.mods.origin_info, mods.OriginInfo))
+        self.assert_(isinstance(self.mods.origin_info.created[0], mods.Date))
+        self.assert_(isinstance(self.mods.identifiers[0], mods.Identifier))
+        self.assert_(isinstance(self.mods.name, mods.Name))
+        self.assert_(isinstance(self.mods.name.name_parts[0], mods.NamePart))
+        self.assert_(isinstance(self.mods.name.roles[0], mods.Role))
+        self.assert_(isinstance(self.mods.access_conditions[0], mods.AccessCondition))
+        self.assert_(isinstance(self.mods.related_items[0], mods.RelatedItem))
 
     def test_fields(self):
         self.assertEqual('A simple record', self.mods.title)
@@ -593,25 +593,25 @@ class TestMods(TestCase):
     def test_create_mods(self):
         # test creating MODS from scratch - ensure sub-xmlobject definitions are correct
         # and produce schema-valid MODS
-        mymods = mods.Mods()
+        mymods = mods.MODS()
         mymods.title = 'A Record'
         mymods.resource_type = 'text'
         mymods.name.type = 'personal'
         mymods.name.authority = 'local'
-        mymods.name.name_parts.extend([mods.ModsNamePart(type='family', text='Schmoe'),
-                                    mods.ModsNamePart(type='given', text='Joe')])
-        mymods.name.roles.append(mods.ModsRole(type='text', authority='local',
+        mymods.name.name_parts.extend([mods.NamePart(type='family', text='Schmoe'),
+                                    mods.NamePart(type='given', text='Joe')])
+        mymods.name.roles.append(mods.Role(type='text', authority='local',
                                         text='Test Subject'))
         mymods.note.type = 'general'
         mymods.note.text = 'general note'
-        mymods.origin_info.created.append(mods.ModsDate(date='2001-10-02'))
+        mymods.origin_info.created.append(mods.Date(date='2001-10-02'))
         mymods.record_id = 'id:1'
-        mymods.identifiers.extend([mods.ModsIdentifier(type='uri', text='http://ur.l'),
-                                 mods.ModsIdentifier(type='local', text='332')])
-        mymods.access_conditions.extend([mods.ModsAccessCondition(type='restriction', text='unavailable'),
-                                       mods.ModsAccessCondition(type='use', text='Tuesdays only')])
-        mymods.related_items.extend([mods.ModsRelatedItem(type='host', title='EU Archives'),
-                                   mods.ModsRelatedItem(type='isReferencedBy', title='Finding Aid'),])
+        mymods.identifiers.extend([mods.Identifier(type='uri', text='http://ur.l'),
+                                 mods.Identifier(type='local', text='332')])
+        mymods.access_conditions.extend([mods.AccessCondition(type='restriction', text='unavailable'),
+                                       mods.AccessCondition(type='use', text='Tuesdays only')])
+        mymods.related_items.extend([mods.RelatedItem(type='host', title='EU Archives'),
+                                   mods.RelatedItem(type='isReferencedBy', title='Finding Aid'),])
         xml = mymods.serialize()
         self.assert_('<mods:mods ' in xml)
         self.assert_('xmlns:mods="http://www.loc.gov/mods/v3"' in xml)
@@ -623,7 +623,7 @@ class TestMods(TestCase):
         #self.mods.is_valid()
         #print self.mods.validation_errors()
         self.assertTrue(self.mods.is_valid())        
-        invalid_mods = load_xmlobject_from_string(self.invalid_xml, mods.Mods)
+        invalid_mods = load_xmlobject_from_string(self.invalid_xml, mods.MODS)
         self.assertFalse(invalid_mods.is_valid())
 
 
@@ -662,7 +662,7 @@ class TestAudioObject(TestCase):
         title, type, date = 'new title in mods', 'text', '2010-01-03'
         self.obj.mods.content.title = title
         self.obj.mods.content.resource_type = type
-        self.obj.mods.content.origin_info.created.append(mods.ModsDate(date=date))
+        self.obj.mods.content.origin_info.created.append(mods.Date(date=date))
         self.obj.save('testing custom save logic')
 
         # get updated copy from repo to check

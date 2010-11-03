@@ -7,17 +7,17 @@ from digitalmasters import mods
 from digitalmasters.fedora import DigitalObject, Repository
 
 
-class CollectionMods(mods.Mods):
-    """Collection-specific MODS."""
+class CollectionMods(mods.MODS):
+    """Collection-specific MODS, based on :class:`mods.MODS`."""
     source_id = xmlmap.StringField("mods:identifier[@type='local_source_id']")
     # possibly map identifier type uri as well ?
-    # TODO: (maybe) - single name here, multiple names on standard Mods
+    # TODO: (maybe) - single name here, multiple names on standard MODS
     # relatedItem type host - not editable on form, but may want mapping for easy access
     # - same for relatedItem type isReferencedyBy
     restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
-                                              mods.ModsAccessCondition, instantiate_on_get=True)
+                                              mods.AccessCondition, instantiate_on_get=True)
     use_and_reproduction = xmlmap.NodeField('mods:accessCondition[@type="use and reproduction"]',
-                                              mods.ModsAccessCondition, instantiate_on_get=True)
+                                              mods.AccessCondition, instantiate_on_get=True)
 
 
 
@@ -51,7 +51,7 @@ class CollectionObject(DigitalObject):
             self.dc.content.identifier_list.extend([id.text for id
                                             in self.mods.content.identifiers])
         if unicode(self.mods.content.name):
-            # for now, use unicode conversion as defined in ModsName
+            # for now, use unicode conversion as defined in mods.Name
             self.dc.content.creator_list[0] = unicode(self.mods.content.name)
         if len(self.mods.content.origin_info.created):
             self.dc.content.date = self.mods.content.origin_info.created[0].date

@@ -28,7 +28,7 @@ class AccessConditionForm(XmlObjectForm):
     """
     text = forms.CharField(label='', widget=forms.Textarea, required=False)
     class Meta:
-        model = mods.ModsAccessCondition
+        model = mods.AccessCondition
         exclude = ['type']
 
 class NamePartForm(XmlObjectForm):
@@ -38,7 +38,7 @@ class NamePartForm(XmlObjectForm):
     text = forms.CharField(label='Name Part',
                             widget=forms.TextInput(attrs={'class': 'long'}))
     class Meta:
-        model = mods.ModsNamePart
+        model = mods.NamePart
 
 class RoleForm(XmlObjectForm):
     """Custom XmlObjectForm to edit MODS name role information
@@ -51,7 +51,7 @@ class RoleForm(XmlObjectForm):
     type = forms.CharField(label='Type', initial='text',
                     widget=forms.TextInput(attrs={'readonly':'readonly'}))
     class Meta:
-        model = mods.ModsRole
+        model = mods.Role
 
 class NameForm(XmlObjectForm):
     """Custom XmlObjectForm to edit MODS name information
@@ -64,7 +64,7 @@ class NameForm(XmlObjectForm):
     name_parts = SubformField(formclass=NamePartForm)
     roles = SubformField(formclass=RoleForm)
     class Meta:
-        model = mods.ModsName
+        model = mods.Name
         exclude = ['display_form', 'affiliation']
 
 
@@ -148,13 +148,13 @@ class CollectionForm(XmlObjectForm):
             # remove existing dates and re-add
             for i in range(len(self.instance.origin_info.created)):
                 self.instance.origin_info.created.pop()
-            self.instance.origin_info.created.append(mods.ModsDate(
+            self.instance.origin_info.created.append(mods.Date(
                     date=self.cleaned_data['date_created'],
                     key_date=True,
                     ))
             # if there is a date end, store it and set end & start attributes
             if 'date_end' in self.cleaned_data and self.cleaned_data['date_end']:
-                self.instance.origin_info.created.append(mods.ModsDate(
+                self.instance.origin_info.created.append(mods.Date(
                     date=self.cleaned_data['date_end'],
                     point='end',
                     ))

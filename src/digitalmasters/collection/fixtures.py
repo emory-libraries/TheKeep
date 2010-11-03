@@ -17,9 +17,9 @@ class FedoraFixtures:
         obj.mods.content.title = 'Salman Rushdie Collection'
         obj.mods.content.source_id = 'MSS1000'
         obj.set_collection(FedoraFixtures.top_level_collections[1].uri)
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=1947, point='start'))
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=2008, point='end'))
-        obj.mods.content.name.name_parts.append(mods.ModsNamePart(text='Salman Rushdie'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=1947, point='start'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=2008, point='end'))
+        obj.mods.content.name.name_parts.append(mods.NamePart(text='Salman Rushdie'))
         return obj
 
     @staticmethod
@@ -29,9 +29,9 @@ class FedoraFixtures:
         obj.mods.content.title = 'Thomas Esterbrook letter books'
         obj.mods.content.source_id = 'MSS123'
         obj.set_collection(FedoraFixtures.top_level_collections[2].uri)
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=1855, point='start'))
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=1861, point='end'))
-        obj.mods.content.name.name_parts.append(mods.ModsNamePart(text='Thomas Esterbrook'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=1855, point='start'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=1861, point='end'))
+        obj.mods.content.name.name_parts.append(mods.NamePart(text='Thomas Esterbrook'))
         return obj
 
     @staticmethod
@@ -41,8 +41,8 @@ class FedoraFixtures:
         obj.mods.content.title = 'English documents collection'
         obj.mods.content.source_id = 'MSS309'
         obj.set_collection(FedoraFixtures.top_level_collections[1].uri)
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=1509, point='start'))
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=1805, point='end'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=1509, point='start'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=1805, point='end'))
         return obj
 
     

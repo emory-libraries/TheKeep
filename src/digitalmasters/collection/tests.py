@@ -64,11 +64,11 @@ class CollectionObjectTest(TestCase):
         obj.mods.content.title = 'Salman Rushdie Papers'
         obj.mods.content.resource_type = 'mixed material'
         # name
-        obj.mods.content.name.name_parts.append(mods.ModsNamePart(text='Salman Rushdie'))
-        obj.mods.content.name.roles.append(mods.ModsRole(text='author', authority='local'))
+        obj.mods.content.name.name_parts.append(mods.NamePart(text='Salman Rushdie'))
+        obj.mods.content.name.roles.append(mods.Role(text='author', authority='local'))
         # date range
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=1947, point='start'))
-        obj.mods.content.origin_info.created.append(mods.ModsDate(date=2008, point='end'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=1947, point='start'))
+        obj.mods.content.origin_info.created.append(mods.Date(date=2008, point='end'))
 
         # update DC and check values
         obj._update_dc()
