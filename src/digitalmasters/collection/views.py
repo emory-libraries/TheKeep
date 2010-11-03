@@ -81,7 +81,7 @@ def edit(request, pid=None):
     if pid is not None:
         context['collection'] = obj
 
-    return render_to_response('audio/edit_collection.html', context,
+    return render_to_response('collection/edit.html', context,
         context_instance=RequestContext(request))
 
 @permission_required('is_staff')
@@ -125,7 +125,7 @@ def search(request):
                 'this problem persists, please alert the ' + \
                 'repository administrator.'
 
-    response = render_to_response('audio/collection_search.html', context,
+    response = render_to_response('collection/search.html', context,
                     context_instance=RequestContext(request))
     if response_code is not None:
         response.status_code = response_code
@@ -149,7 +149,7 @@ def browse(request):
             'this problem persists, please alert the ' + \
             'repository administrator.'
 
-    response = render_to_response('audio/collection_browse.html', context,
+    response = render_to_response('collection/browse.html', context,
                     context_instance=RequestContext(request))
     if response_code is not None:
         response.status_code = response_code
