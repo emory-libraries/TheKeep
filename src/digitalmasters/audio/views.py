@@ -21,6 +21,8 @@ from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.fedora import Repository
 
+from eulcore.fedora.models import DigitalObjectSaveFailure
+
 allowed_audio_types = ['audio/x-wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
@@ -51,7 +53,7 @@ def upload(request):
                 try:
                     # initialize from the file itself; use original name as initial object label
                     obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
-                                                     uploaded_file.name, request)
+                                                     uploaded_file.name, request, md5sum(uploaded_file.temporary_file_path()))
                     obj.save()
                     messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                             % (uploaded_file.name, obj.pid))
@@ -99,14 +101,17 @@ def upload(request):
                             try:
                                  # initialize from the file itself; use original name as initial object label
                                 obj = AudioObject.init_from_file(fullFilePath,
-                                                     file_original_name_list[index], request)
+                                                     file_original_name_list[index], 
+                                                     request,
+                                                     file_md5sum_list[index])
                                 obj.save()
                                 messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                                                 % (file_original_name_list[index], obj.pid))
                                 # clean up temporary upload file after successful ingest
                                 os.remove(fullFilePath)
                             except Exception as e:
-                                messages.error(request, 'Failed to ingest file %s in fedora (fedora is likely down).'
+                                logging.debug(e)
+                                messages.error(request, 'Failed to ingest file %s in fedora (fedora is either down or the checksum is incorrect).'
                                                % (file_original_name_list[index]))
                         
         #Return the response with the messages for both cases above.

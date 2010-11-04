@@ -53,7 +53,7 @@ class AudioObject(DigitalObject):
             if self.mods.content.resource_type:
                 self.dc.content.type = self.mods.content.resource_type
             if len(self.mods.content.origin_info.created) and \
-                  self.mods.content.origin_info.created[0].date:
+                self.mods.content.origin_info.created[0].date:
                 # UGH: this will add originInfo and dateCreated if they aren't already in the xml
                 # because of our instantiate-on-get hack
                 # FIXME: creating origin_info without at least one field may result in invalid MODS
@@ -62,7 +62,7 @@ class AudioObject(DigitalObject):
         return super(AudioObject, self).save(logMessage)
 
     @staticmethod
-    def init_from_file(filename, initial_label=None, request=None):
+    def init_from_file(filename, initial_label=None, request=None, checksum=None):
         '''Static method to create a new :class:`AudioObject` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Also sets the following default
@@ -75,7 +75,8 @@ class AudioObject(DigitalObject):
         :param request: :class:`django.http.HttpRequest` passed into a view method;
             must be passed in order to connect to Fedora as the currently-logged
             in user
-        :returns: :class:`AudioObject` initialized from thef ile
+        :param checksum: the checksum of the file being sent to fedora.
+        :returns: :class:`AudioObject` initialized from the file
         '''
         if initial_label is None:
             initial_label = os.path.basename(filename)
@@ -85,6 +86,8 @@ class AudioObject(DigitalObject):
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
         obj.audio.content = open(filename)  # FIXME: at what point does/should this get closed?
+        #Set the file checksum, if set.
+        obj.audio.checksum=checksum
         # set initial mods:typeOfResource - all AudioObjects default to sound recording
         obj.mods.content.resource_type = 'sound recording'
         # set codec quality to lossless in digital tech metadata 
