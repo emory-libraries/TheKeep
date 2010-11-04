@@ -8,6 +8,15 @@ from eulcore.fedora.models import FileDatastream, XmlDatastream, URI_HAS_MODEL
 from digitalmasters.fedora import DigitalObject, Repository
 from digitalmasters import mods
 
+
+class AudioMods(mods.MODS):
+    """AudioObject-specific MODS, based on :class:`mods.MODS`."""
+    # possibly map identifier type uri as well ?
+    general_note = xmlmap.NodeField('mods:note[@type="general"]',
+                                          mods.Note, instantiate_on_get=True)
+    part_note = xmlmap.NodeField('mods:note[@type="part number"]',
+                                          mods.Note, instantiate_on_get=True)
+    
 class DigitalTech(xmlmap.XmlObject):
     # ROUGH version of xmlmap for digital technical metadata - incomplete
     "Digital Technical Metadata."
@@ -28,7 +37,7 @@ class AudioObject(DigitalObject):
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'
     CONTENT_MODELS = [ AUDIO_CONTENT_MODEL ]
 
-    mods = XmlDatastream("MODS", "MODS Metadata", mods.MODS, defaults={
+    mods = XmlDatastream("MODS", "MODS Metadata", AudioMods, defaults={
             'control_group': 'M',
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
