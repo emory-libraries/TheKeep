@@ -224,7 +224,6 @@ class AudioViewsTest(TestCase):
             # check that init from file worked correctly
             self.assertEqual(3, new_obj.digtech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
-
                     
     def test_search(self):
         search_url = reverse('audio:search')
@@ -676,6 +675,27 @@ class TestAudioObject(TestCase):
 
         # verify that the owner id is set in repo copy.
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
+        
+    def test_file_checksum(self):
+        #This is just a sanity check that eulcore is working as expected with checksums.
+        filename = 'example.wav'
+        label = 'this is a test WAV file'
+        #specify an incorrect checksum
+        wav_md5 = 'aaa'
+        obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
+        expected_error=None
+        try:
+            obj.save()
+        except Exception as e:
+            expected_error = e
+            
+        self.assert_(str(expected_error).endswith('500 Internal Server Error'), 'Incorrect checksum should not be ingested.') 
+        
+        # specify a correct checksum
+        wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
+        obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
+        return_result = obj.save()
+        self.assertEqual(True, return_result)
 
     def test_init_from_file(self):
         new_obj = AudioObject.init_from_file(wav_filename)
@@ -702,23 +722,6 @@ class TestAudioObject(TestCase):
         self.assertEqual(label, new_obj.mods.content.title)
         self.assertEqual(label, new_obj.dc.content.title)
         
-        # specify an incorrect checksum
-        wav_md5 = 'aaa'
-        checksum_obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
-        expected_error=None
-        try:
-            checksum_obj.save()
-        except Exception as e:
-            expected_error = e
-            
-        self.assert_(str(expected_error).endswith('500 Internal Server Error'), 'Incorrect checksum should not be ingested.') 
-        
-        # specify a correct checksum
-        wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
-        checksum_obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
-        return_result = checksum_obj.save()
-        self.assertEqual(True, return_result)
-
         # use request to pass logged-in user credentials for fedora access
         rqst = HttpRequest()
         user = ADMIN_CREDENTIALS['username']
@@ -729,7 +732,6 @@ class TestAudioObject(TestCase):
         new_obj = AudioObject.init_from_file(wav_filename, request=rqst)
         self.assertEqual(new_obj.api.opener.username, user,
             'object initialized with request has user credentials configured for fedora access')
-        
 
 
 class TestWavDuration(TestCase):

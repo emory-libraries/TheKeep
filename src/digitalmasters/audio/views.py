@@ -119,8 +119,9 @@ def upload(request):
 
     #non-posted form
     else:
-        ctx_dict['form'] = audioforms.UploadForm()
-        ctx_dict['HTML5Upload'] = audioforms.HTML5Upload()
+        ctx_dict['allowed_audio_types'] = allowed_audio_types
+        ctx_dict['action_page'] = reverse('audio:HTML5FileUpload')
+
     response = render_to_response('audio/uploadForm.html', ctx_dict,
                                   context_instance=RequestContext(request))
     if response_code is not None:
