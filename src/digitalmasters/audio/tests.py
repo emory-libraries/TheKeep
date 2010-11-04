@@ -604,7 +604,8 @@ class TestMods(TestCase):
                                         text='Test Subject'))
         mymods.note.type = 'general'
         mymods.note.text = 'general note'
-        mymods.origin_info.created.append(mods.Date(date='2001-10-02'))
+        mymods.origin_info.created.append(mods.DateCreated(date='2001-10-02'))
+        mymods.origin_info.issued.append(mods.DateIssued(date='2001-12-01'))
         mymods.record_id = 'id:1'
         mymods.identifiers.extend([mods.Identifier(type='uri', text='http://ur.l'),
                                  mods.Identifier(type='local', text='332')])
@@ -612,7 +613,7 @@ class TestMods(TestCase):
                                        mods.AccessCondition(type='use', text='Tuesdays only')])
         mymods.related_items.extend([mods.RelatedItem(type='host', title='EU Archives'),
                                    mods.RelatedItem(type='isReferencedBy', title='Finding Aid'),])
-        xml = mymods.serialize()
+        xml = mymods.serialize(pretty=True)
         self.assert_('<mods:mods ' in xml)
         self.assert_('xmlns:mods="http://www.loc.gov/mods/v3"' in xml)
 

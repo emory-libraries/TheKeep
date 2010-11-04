@@ -19,21 +19,28 @@ class Common(xmlmap.XmlObject):
     ROOT_NAMESPACES = {'mods': MODS_NAMESPACE }
 
 class Date(Common):
-    "MODS date element (common fields for the dates under mods:originInfo)"
-    ROOT_NAME = 'dateCreated'       # ?? could vary
+    '''MODS date element (common fields for the dates under mods:originInfo).'''
+    # this class not meant for direct use; should be extended for specific dates.
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
     xmlschema = _mods_xmlschema
-    date = xmlmap.StringField('.')     # date field?
+    date = xmlmap.StringField('.') 
     key_date = xmlmap.SimpleBooleanField('@keyDate', 'yes', false=None)
     encoding = xmlmap.SchemaField('@encoding', 'dateEncodingAttributeDefinition')
     point = xmlmap.SchemaField('@point', 'datePointAttributeDefinition')
     qualifier = xmlmap.SchemaField('@qualifier', 'dateQualifierAttributeDefinition')
 
+class DateCreated(Date):
+    ROOT_NAME = 'dateCreated'
+
+class DateIssued(Date):
+    ROOT_NAME = 'dateIssued'
+
 class OriginInfo(Common):
     "MODS originInfo element (incomplete)"
     ROOT_NAME = 'originInfo'
-    created = xmlmap.NodeListField('mods:dateCreated', Date)
+    created = xmlmap.NodeListField('mods:dateCreated', DateCreated)
+    issued = xmlmap.NodeListField('mods:dateIssued', DateIssued)
 
 class Note(Common):
     "MODS note element"
