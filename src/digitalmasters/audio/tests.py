@@ -333,13 +333,8 @@ class AudioViewsTest(TestCase):
             initial_data['origin_info-issued-0-date'],
             'object MODS date issued is pre-populated in form initial data')
 
-
-    # prototype edit tests - still needs to be updated for latest code
-    def prototype_test_edit(self):
-
         # POST data to update MODS in fedora
         mods_data = {'title': 'new title',
-                    'collection': 'foo',
                     'note-label' : 'a general note',
                     'general_note-text': 'remember to ...',
                     'part_note-text': 'side A',
@@ -363,30 +358,29 @@ class AudioViewsTest(TestCase):
         # currently redirects to audio index
         (redirect_url, code) = response.redirect_chain[0]
         self.assert_(reverse('audio:index') in redirect_url,
-            "attempting to edit non-existent pid redirects to audio index page")
-        expected = 302      # redirect  -- maybe this should be a 303?
+            "successful save redirects to audio index page")
+        expected = 303      # redirect  -- maybe this should be a 303?
         self.assertEqual(code, expected,
-            'Expected %s but returned %s for %s (edit non-existent record)'  % \
+            'Expected %s but returned %s for %s (successfully saved)'  % \
             (expected, code, edit_url))
 
         # retrieve the modified object from Fedora to check for updates
+        repo = Repository()
         updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
         self.assertEqual(mods_data['title'], updated_obj.mods.content.title,
-            'mods title in fedora matches posted title')
-        self.assertEqual(mods_data['resource_type'], updated_obj.mods.content.resource_type,
-            'mods resource type in fedora matches posted resource type')
-        self.assertEqual(mods_data['note-label'], updated_obj.mods.content.note.label,
-            'mods note label in fedora matches posted note label')
-        self.assertEqual(mods_data['note-type'], updated_obj.mods.content.note.type,
-            'mods note type in fedora matches posted note type')
-        self.assertEqual(mods_data['note-text'], updated_obj.mods.content.note.text,
-            'mods note text in fedora matches posted note text')
-        self.assertEqual(mods_data['created-key_date'],
-            updated_obj.mods.content.origin_info.created.key_date,
-            'mods created key date in fedora matches posted created key date')
-        self.assertEqual(mods_data['created-date'],
-            updated_obj.mods.content.origin_info.created.date,
-            'mods created date in fedora matches posted created date')
+            'mods title in fedora matches posted title')        
+        self.assertEqual(mods_data['general_note-text'], updated_obj.mods.content.general_note.text,
+            'mods general note text in fedora matches posted note text')
+        self.assertEqual(mods_data['part_note-text'], updated_obj.mods.content.part_note.text,
+            'mods part note text in fedora matches posted note text')
+        # date issued and created are multi-part fields
+        issued = '-'.join([mods_data['issued-0-date_year'], mods_data['issued-0-date_month'],
+            mods_data['issued-0-date_day']])
+        self.assertEqual(issued, updated_obj.mods.content.origin_info.issued[0].date,
+            'mods issued date in fedora matches posted issued date')
+        created = '-'.join([mods_data['created-0-date_year'], mods_data['created-0-date_month']])
+        self.assertEqual(created, updated_obj.mods.content.origin_info.created[0].date,
+            'mods date created in fedora matches posted date created')
 
         # force a schema-validation error (shouldn't happen normally)
         obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.MODS)
@@ -395,7 +389,7 @@ class AudioViewsTest(TestCase):
 
         self.assertContains(response, '<ul class="errorlist">')
 
-        # edit non-existent record - exception
+        # edit non-existent record - exception  -- TODO: should actually be a 404
         fakepid = 'bogus-pid:1'
         edit_url = reverse('audio:edit', args=[fakepid])
         response = self.client.get(edit_url, follow=True)  # follow redirect to check error message
@@ -406,7 +400,7 @@ class AudioViewsTest(TestCase):
         (redirect_url, code) = response.redirect_chain[0]
         self.assert_(reverse('audio:index') in redirect_url,
             "attempting to edit non-existent pid redirects to audio index page")
-        expected = 302      # redirect  -- maybe this should be a 303?
+        expected = 303      # redirect
         self.assertEqual(code, expected,
             'Expected %s but returned %s for %s (edit non-existent record)'  % (expected, code, edit_url))
 

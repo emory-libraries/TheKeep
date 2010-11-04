@@ -241,6 +241,7 @@ def search(request):
 
 @permission_required('is_staff')
 def edit(request, pid):
+    '''Edit the metadata for a single :class:`~digitalmasters.audio.models.AudioObject`.'''
     repo = Repository(request=request)
 
     try:
@@ -264,6 +265,7 @@ def edit(request, pid):
             context_instance=RequestContext(request))
 
     except:
+        # FIXME: should 404 when object is not found
         # eventually we will need better error handling... 
         # this could mean the object doesn't exist OR it exists but has no
         # MODS or even that we couldn't contact the server

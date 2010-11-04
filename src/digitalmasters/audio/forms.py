@@ -57,7 +57,7 @@ class EditForm(XmlObjectForm):
     # PLACEHOLDER: needs non-top-level collections here
     collection = forms.ChoiceField(label="Collection",
                     choices=[(o.uri, o.label) for o in CollectionObject.top_level()],
-                    help_text="Collection this item belongs to.")
+                    help_text="Collection this item belongs to.", required=False)
                     # using URI because it will be used to set a relation in RELS-EXT
                     
     # TODO: ARK will need to be set on form init from instance
