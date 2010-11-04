@@ -18,7 +18,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters import mods
 from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.models import AudioObject, wav_duration
+from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration
 from digitalmasters.audio.management.commands import ingest_cleanup
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
@@ -550,7 +550,7 @@ class TestMods(TestCase):
         self.assert_(isinstance(self.mods, mods.MODS))
         self.assert_(isinstance(self.mods.note, mods.Note))
         self.assert_(isinstance(self.mods.origin_info, mods.OriginInfo))
-        self.assert_(isinstance(self.mods.origin_info.created[0], mods.Date))
+        self.assert_(isinstance(self.mods.origin_info.created[0], mods.DateCreated))
         self.assert_(isinstance(self.mods.identifiers[0], mods.Identifier))
         self.assert_(isinstance(self.mods.name, mods.Name))
         self.assert_(isinstance(self.mods.name.name_parts[0], mods.NamePart))
@@ -652,6 +652,7 @@ class TestAudioObject(TestCase):
         self.obj.save()
         obj = self.repo.get_object(self.obj.pid, type=AudioObject)
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, obj.info.owner)
+        self.assert_(isinstance(obj.mods.content, AudioMods))
 
     def test_save(self):
         # save without changing the MODS - shouldn't mess anything up
@@ -663,7 +664,7 @@ class TestAudioObject(TestCase):
         title, type, date = 'new title in mods', 'text', '2010-01-03'
         self.obj.mods.content.title = title
         self.obj.mods.content.resource_type = type
-        self.obj.mods.content.origin_info.created.append(mods.Date(date=date))
+        self.obj.mods.content.origin_info.created.append(mods.DateCreated(date=date))
         self.obj.save('testing custom save logic')
 
         # get updated copy from repo to check

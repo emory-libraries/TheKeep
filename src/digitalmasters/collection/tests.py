@@ -67,8 +67,8 @@ class CollectionObjectTest(TestCase):
         obj.mods.content.name.name_parts.append(mods.NamePart(text='Salman Rushdie'))
         obj.mods.content.name.roles.append(mods.Role(text='author', authority='local'))
         # date range
-        obj.mods.content.origin_info.created.append(mods.Date(date=1947, point='start'))
-        obj.mods.content.origin_info.created.append(mods.Date(date=2008, point='end'))
+        obj.mods.content.origin_info.created.append(mods.DateCreated(date=1947, point='start'))
+        obj.mods.content.origin_info.created.append(mods.DateCreated(date=2008, point='end'))
 
         # update DC and check values
         obj._update_dc()
