@@ -686,6 +686,8 @@ class TestAudioObject(TestCase):
         expected_error=None
         try:
             obj.save()
+            #Purge if it somehow did not error on the save.
+            self.repo.purge_object(obj.pid, "removing unit test fixture")
         except Exception as e:
             expected_error = e
             
@@ -696,6 +698,7 @@ class TestAudioObject(TestCase):
         obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
         return_result = obj.save()
         self.assertEqual(True, return_result)
+        self.repo.purge_object(obj.pid, "removing unit test fixture")
 
     def test_init_from_file(self):
         new_obj = AudioObject.init_from_file(wav_filename)
