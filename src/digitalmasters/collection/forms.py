@@ -148,13 +148,13 @@ class CollectionForm(XmlObjectForm):
             # remove existing dates and re-add
             for i in range(len(self.instance.origin_info.created)):
                 self.instance.origin_info.created.pop()
-            self.instance.origin_info.created.append(mods.Date(
+            self.instance.origin_info.created.append(mods.DateCreated(
                     date=self.cleaned_data['date_created'],
                     key_date=True,
                     ))
             # if there is a date end, store it and set end & start attributes
             if 'date_end' in self.cleaned_data and self.cleaned_data['date_end']:
-                self.instance.origin_info.created.append(mods.Date(
+                self.instance.origin_info.created.append(mods.DateCreated(
                     date=self.cleaned_data['date_end'],
                     point='end',
                     ))
