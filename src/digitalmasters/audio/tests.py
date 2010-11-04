@@ -295,13 +295,14 @@ class AudioViewsTest(TestCase):
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
 
-    # NOTE: prototype edit form tests are failing; disabling because it's a *prototype*
-    def disabled_test_edit(self):
+    def test_edit(self):
         # create a test audio object to edit
-        repo = Repository()
-        obj = repo.get_object(type=AudioObject)
-        obj.label = "my audio test object"
-        obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        obj = AudioObject.init_from_file(wav_filename, "my audio test object")
+        # pre-populate some data to check it is set in form instance
+        obj.mods.content.general_note.text = 'Here is some general info about this item.'
+        obj.mods.content.part_note.text = 'Side 1'
+        obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
+        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         obj.save()
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -314,17 +315,46 @@ class AudioViewsTest(TestCase):
                              % (expected, code, edit_url))
         self.assert_(isinstance(response.context['form'], audioforms.EditForm),
                 "MODS EditForm is set in response context")
-        self.assert_(isinstance(response.context['form'].instance, mods.MODS),
-                "form instance is a MODS xmlobject")
+        self.assert_(isinstance(response.context['form'].instance, AudioMods),
+                "form instance is an AudioMods xmlobject")
+
+        initial_data = response.context['form'].initial
+        item_mods = obj.mods.content
+        self.assertEqual(item_mods.title, initial_data['title'],
+            'object MODS title is pre-populated in form initial data')
+        self.assertEqual(item_mods.general_note.text, initial_data['general_note-text'],
+            'object MODS general note is pre-populated in form initial data')
+        self.assertEqual(item_mods.part_note.text, initial_data['part_note-text'],
+            'object MODS part note is pre-populated in form initial data')
+        self.assertEqual(item_mods.origin_info.created[0].date, 
+            initial_data['origin_info-created-0-date'],
+            'object MODS date created is pre-populated in form initial data')
+        self.assertEqual(item_mods.origin_info.issued[0].date,
+            initial_data['origin_info-issued-0-date'],
+            'object MODS date issued is pre-populated in form initial data')
+
+
+    # prototype edit tests - still needs to be updated for latest code
+    def prototype_test_edit(self):
 
         # POST data to update MODS in fedora
         mods_data = {'title': 'new title',
-                    'resource_type': 'text',
+                    'collection': 'foo',
                     'note-label' : 'a general note',
-                    'note-type': 'general',
-                    'note-text': 'remember to ...',
-                    'created-key_date': True,
-                    'created-date': '2010-01-02',
+                    'general_note-text': 'remember to ...',
+                    'part_note-text': 'side A',
+                    # 'management' form data is required for django to process formsets/subforms
+                    'issued-INITIAL_FORMS': '0',
+                    'issued-TOTAL_FORMS': '1',
+                    'issued-MAX_NUM_FORMS': '',
+                    'issued-0-date_year': '2010',
+                    'issued-0-date_month': '01',
+                    'issued-0-date_day': '11',
+                    'created-INITIAL_FORMS': '0',
+                    'created-TOTAL_FORMS': '1',
+                    'created-MAX_NUM_FORMS': '',
+                    'created-0-date_year': '1980',
+                    'created-0-date_month': '03',
                     }
         response = self.client.post(edit_url, mods_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]

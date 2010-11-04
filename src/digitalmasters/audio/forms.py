@@ -66,6 +66,7 @@ class EditForm(XmlObjectForm):
         widget=forms.TextInput(attrs={'readonly':'readonly', 'class': 'long'}))
     origin_info = SubformField(formclass=OriginInfoForm)
     general_note = SubformField(formclass=SimpleNoteForm)
+    # FIXME: label as part number note? add directions/examples?
     part_note = SubformField(formclass=SimpleNoteForm)
     
     class Meta:
