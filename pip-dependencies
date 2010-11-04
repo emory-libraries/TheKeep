@@ -8,7 +8,7 @@ soaplib==0.8.1
 python-ldap
 
 # local dependencies
-http://waterhouse.library.emory.edu:8080/hudson/job/python-eulcore_0.7.x/6/artifact/python-eulcore/dist/eulcore-0.7.1-pre.tar.gz
+http://waterhouse.library.emory.edu:8080/hudson/job/python-eulcore/lastSuccessfulBuild/artifact/trunk/dist/eulcore-0.10-pre.tar.gz
 python-magic
 pycrypto
 
