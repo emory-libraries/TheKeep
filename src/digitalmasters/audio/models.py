@@ -1,3 +1,4 @@
+from operator import attrgetter
 from rdflib import URIRef
 
 from eulcore import xmlmap
@@ -282,9 +283,13 @@ class CollectionObject(DigitalObject):
             'member_of': CollectionObject.MEMBER_OF_COLLECTION,
             'parent': self.uri,
         }
-        collections = repo.risearch.find_statements(query, language='sparql',
+        collection_pids = repo.risearch.find_statements(query, language='sparql',
                                                          type='tuples', flush=True)
-        return [repo.get_object(result['coll'], type=CollectionObject) for result in collections]
+        collections = [repo.get_object(result['coll'], type=CollectionObject)
+                                            for result in collection_pids]
+        # for now, very simple sort on source identifier (MSS###)
+        collections = sorted(collections, key=attrgetter('mods.content.source_id'))
+        return collections
 
 
 class AudioObject(DigitalObject):
