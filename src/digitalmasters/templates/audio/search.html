@@ -1,4 +1,5 @@
 {% extends "site_base.html" %}
+{% load fedora %}
 
 {% block content-title %}Search results{% endblock %}
 
@@ -6,17 +7,25 @@
   {{ block.super }}
 
 <table>
-    <tr><th>pid</th><th>label</th><th>created</th><th>last modified</th></tr>
-{% for obj in results %}
+  <tr><th>pid</th><th>label</th><th>created</th><th>last modified</th></tr>
+  {% for obj in results %}
     <tr>
+      {% fedora_access %}
         <td><a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a></td>
         <td>{{ obj.label }} <br/> <a href="{% url audio:download-audio obj.pid %}">download audio</a></td>
         <td>{{ obj.created }}</td>
         <td>{{ obj.modified }}</td>
+      {% permission_denied %}
+        <td>{{ obj.pid }}</td>
+        <td colspan="3">You don't have permission to view this object.</td>
+      {% fedora_failed %}
+        <td>{{ obj.pid }}</td>
+        <td colspan="3">There was an error accessing fedora.</td>
+      {% end_fedora_access %}
     </tr>
-{% empty %}
+  {% empty %}
     <tr><td colspan="4">no results</td></tr>
-{% endfor %}
+  {% endfor %}
 </table>
 
 <hr/>
