@@ -143,6 +143,31 @@ class CollectionObject(DigitalObject):
                                                          type='tuples', flush=True)
         return [repo.get_object(result['coll'], type=CollectionObject) for result in collections]
 
+    @staticmethod
+    def item_collections():
+        """Find all collection objects that can contain items. Today this
+        includes all those collections that are not top-level.
+        :returns: list of :class:`CollectionObject`
+        :rtype: list
+        """
+        repo = Repository()
+        # find all objects with cmodel collection-1.1 and any parent
+        query = '''SELECT DISTINCT ?coll
+        WHERE {
+            ?coll <%(has_model)s> <%(cmodel)s> .
+            ?coll <%(member_of)s> ?parent
+        }
+        ''' % {
+            'has_model': URI_HAS_MODEL,
+            'cmodel': CollectionObject.CONTENT_MODELS[0],
+            'member_of': CollectionObject.MEMBER_OF_COLLECTION,
+        }
+        collection_pids = repo.risearch.find_statements(query, language='sparql',
+                                                        type='tuples', flush=True)
+        collections = [ repo.get_object(result['coll'], type=CollectionObject)
+                        for result in collection_pids ]
+        return collections
+
     def subcollections(self):
         """Find all sub-collections that are members of the current collection.
 

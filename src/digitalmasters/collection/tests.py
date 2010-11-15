@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from rdflib import URIRef
 
 from django.conf import settings
@@ -27,14 +29,12 @@ class CollectionObjectTest(TestCase):
         # should this test pids from fixture?
 
     def test_creation(self):
-        repo = Repository()
-        obj = repo.get_object(type=CollectionObject)
+        obj = self.repo.get_object(type=CollectionObject)
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, obj.info.owner)
 
     def test_collection_info(self):
         # test setting & getting collection membership
-        repo = Repository()
-        obj = repo.get_object(type=CollectionObject)
+        obj = self.repo.get_object(type=CollectionObject)
         self.assertEqual(None, obj.collection_id,
             "CollectionObject with no collection membership returns None for collection id")
         self.assertEqual(None, obj.collection_label,
@@ -55,8 +55,7 @@ class CollectionObjectTest(TestCase):
         # DC should get updated from MODS & RELS-EXT on save
 
         # create test object and populate with data
-        repo = Repository()
-        obj = repo.get_object(type=CollectionObject)
+        obj = self.repo.get_object(type=CollectionObject)
         # collection membership in RELS-EXT
         collections = CollectionObject.top_level()
         obj.set_collection(collections[0].uri)
@@ -112,44 +111,71 @@ class CollectionObjectTest(TestCase):
         self.assertEqual('1950', obj.dc.content.date,
             'dc:date has single date from MODS')
 
-    def test_subcollections(self):
-         # ingest test collection objects
-        repo = Repository()
-        rushdie = FedoraFixtures.rushdie_collection()
-        rushdie.save()
-        esterbrook = FedoraFixtures.esterbrook_collection()
-        esterbrook.save()
-        engdocs = FedoraFixtures.englishdocs_collection()
-        engdocs.save()
-        pids = [rushdie.pid, esterbrook.pid, engdocs.pid]
+    @contextmanager
+    def ingest_test_collections(self):
+        self.rushdie = FedoraFixtures.rushdie_collection()
+        self.rushdie.save()
+        self.esterbrook = FedoraFixtures.esterbrook_collection()
+        self.esterbrook.save()
+        self.engdocs = FedoraFixtures.englishdocs_collection()
+        self.engdocs.save()
 
-        # rushdie & engdocs are in the same collection
-        collection = repo.get_object(type=CollectionObject, pid=rushdie.collection_id)
-        subcolls = collection.subcollections()
-        self.assert_(isinstance(subcolls[0], CollectionObject),
-            "subcollections methods returns instances of CollectionObject")
-        subcoll_pids = [coll.pid for coll in subcolls]
-        self.assert_(rushdie.pid in subcoll_pids,
-            "rushdie should be included in subcollection for %s" % collection.pid)
-        self.assert_(engdocs.pid in subcoll_pids,
-            "engdocs should be included in subcollection for %s" % collection.pid)
-        self.assert_(esterbrook.pid not in subcoll_pids,
-            "esterbrook should be excluded from subcollections for %s" % collection.pid)
+        pids = [ self.rushdie.pid, self.esterbrook.pid, self.engdocs.pid ]
+        yield pids
 
-        # esterbrook is in a different collection
-        collection = repo.get_object(type=CollectionObject, pid=esterbrook.collection_id)
-        subcolls = collection.subcollections()
-        subcoll_pids = [coll.pid for coll in subcolls]
-        self.assert_(rushdie.pid not in subcoll_pids,
-            "rushdie should be excluded from subcollections for %s" % collection.pid)
-        self.assert_(engdocs.pid not in subcoll_pids,
-            "engdocs should be excluded from subcollections for %s" % collection.pid)
-        self.assert_(esterbrook.pid in subcoll_pids,
-            "esterbrook should be included in subcollections for %s" % collection.pid)
-
-        # clean up
         for p in pids:
-            repo.purge_object(p)
+            self.repo.purge_object(p)
+        self.rushdie = None
+        self.esterbrook = None
+        self.engdocs = None
+
+    def test_item_collections(self):
+        pids = self.ingest_test_collections()
+
+        with self.ingest_test_collections():
+            collections = CollectionObject.item_collections()
+            self.assert_(isinstance(collections[0], CollectionObject),
+                    "item collection is instance of CollectionObject")
+
+            source_ids = [ coll.mods.content.source_id
+                           for coll in collections ]
+            self.assert_("MSS1000" in source_ids,
+                    "MSS1000 included in item collections")
+            self.assert_("MSS123" in source_ids,
+                    "MSS123 included in item collections")
+            self.assert_("MSS309" in source_ids,
+                    "MSS309 included in item collections")
+
+            pids = [ coll.pid for coll in collections ]
+            top_levels = CollectionObject.top_level()
+            self.assert_(top_levels[0].pid not in pids,
+                    "top level collection %s should not be in item collections." % (top_levels[0].pid,))
+
+    def test_subcollections(self):
+        with self.ingest_test_collections():
+            # rushdie & engdocs are in the same collection
+            collection = self.repo.get_object(type=CollectionObject, pid=self.rushdie.collection_id)
+            subcolls = collection.subcollections()
+            self.assert_(isinstance(subcolls[0], CollectionObject),
+                "subcollections methods returns instances of CollectionObject")
+            subcoll_pids = [coll.pid for coll in subcolls]
+            self.assert_(self.rushdie.pid in subcoll_pids,
+                "rushdie should be included in subcollection for %s" % collection.pid)
+            self.assert_(self.engdocs.pid in subcoll_pids,
+                "engdocs should be included in subcollection for %s" % collection.pid)
+            self.assert_(self.esterbrook.pid not in subcoll_pids,
+                "esterbrook should be excluded from subcollections for %s" % collection.pid)
+
+            # esterbrook is in a different collection
+            collection = self.repo.get_object(type=CollectionObject, pid=self.esterbrook.collection_id)
+            subcolls = collection.subcollections()
+            subcoll_pids = [coll.pid for coll in subcolls]
+            self.assert_(self.rushdie.pid not in subcoll_pids,
+                "rushdie should be excluded from subcollections for %s" % collection.pid)
+            self.assert_(self.engdocs.pid not in subcoll_pids,
+                "engdocs should be excluded from subcollections for %s" % collection.pid)
+            self.assert_(self.esterbrook.pid in subcoll_pids,
+                "esterbrook should be included in subcollections for %s" % collection.pid)
 
 
 # sample POST data for creating a collection
