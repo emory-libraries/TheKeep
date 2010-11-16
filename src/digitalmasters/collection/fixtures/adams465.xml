@@ -14,7 +14,8 @@
   <archdesc level="collection" relatedencoding="MARC21">
     <did>
       <origination>
-        <persname encodinganalog="100" source="lcnaf">Adams, W. H.</persname>
+        <persname encodinganalog="100" source="lcnaf">Adams, W.
+			 H.</persname>
       </origination>
       <unittitle encodinganalog="245$a">W.H. Adams reminiscences,
 		  <unitdate encodinganalog="245$f" normal="1861/1865" type="inclusive">1861-1865</unitdate></unittitle>
