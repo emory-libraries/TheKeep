@@ -42,6 +42,13 @@ FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 # use this to explicitly configure a test pidspace; by default, uses pidspace-test
 #FEDORA_TEST_PIDSPACE = 'testme'
 
+# Exist DB Settings
+EXISTDB_SERVER_URL      = 'http://user:password@existdb.example.com/exist/xmlrpc'
+# collection should begin with / -  e.g., /edc
+EXISTDB_ROOT_COLLECTION = ''
+# use this to explicitly set test collection; by default, uses collection_test
+# EXISTDB_TEST_COLLECTION = ''
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

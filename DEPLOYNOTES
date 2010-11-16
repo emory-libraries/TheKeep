@@ -1,0 +1,31 @@
+Installation & Upgrade instructions
+===================================
+
+Release 0.7 - Min Items
+-----------------------
+* The new batch-upload/ingest process may result in uploaded files
+  that will need to be cleaned up.  There is a custom manage.py script
+  to handle this which should be configured to run as a cron job.
+  This script relies on the following django settings:
+  INGEST_STAGING_TEMP_DIR and INGEST_STAGING_KEEP_AGE.  If run with
+  verbosity 0, only errors will be reported, i.e.::
+     ``python manage.py  ingest_cleanup -v 0``
+  NOTE: this script will delete all files older than a specified age
+  in the configured directory, so it should **not** be run as a
+  privileged user.
+* Now requires access to eXist Database for the purpose of generating
+  Fedora collection objects based on EAD Finding Aid documents.  All EXISTDB
+  settings in the localsettings example file should be configured for access
+  to an eXist 1.4.x instance with Finding Aids content.  It is recommended to
+  configure eXist access using guest access or a non-privileged account.
+
+
+Release 0.6
+-------------
+* Requires Fedora 3.4 or greater with LDAP login configured.
+* Requires Fedora XACML policies (bundled with other local policies in
+  https://svn.library.emory.edu/svn/fedora/repository-policies/
+* After django application and Fedora are both configured, run
+  syncrepo to load Fedora fixtures and control objects::
+  ``python manage.py syncrepo``
+

@@ -7,19 +7,6 @@ search and kiosk RSS feed for newly digitized sound recordings.
 
 [TODO: add user stories here as/when they are completed]
 
-Deployment Notes
-^^^^^^^^^^^^^^^^
-* The new batch-upload/ingest process may result in uploaded files
-  that will need to be cleaned up.  There is a custom manage.py script
-  to handle this which should be configured to run as a cron job.
-  This script relies on the following django settings:
-  INGEST_STAGING_TEMP_DIR and INGEST_STAGING_KEEP_AGE.  If run with
-  verbosity 0, only errors will be reported, i.e.::
-     ``python manage.py  ingest_cleanup -v 0``
-  NOTE: this script will delete all files older than a specified age
-  in the configured directory, so it should **not** be run as a
-  privileged user.
-
 
 Release 0.6
 -------------
@@ -48,17 +35,6 @@ contain digital master items.
   and auditing.
 * When an editor saves changes on a collection, they can choose to
   continue editing or return to the default view.
-
-
-Deployment Notes
-^^^^^^^^^^^^^^^^
-* Requires Fedora 3.4 or greater with LDAP login configured.
-* Requires Fedora XACML policies (bundled with other local policies in
-  https://svn.library.emory.edu/svn/fedora/repository-policies/
-  (TODO: reference tag/revision when release is finalized)
-* After django application and Fedora are both configured, run
-  syncrepo to load Fedora fixtures and control objects::
-  ``python manage.py syncrepo``
 
 
 Prototype ingest/editing
