@@ -1,5 +1,6 @@
 from operator import attrgetter
 from rdflib import URIRef
+import re
 
 from eulcore import xmlmap
 from eulcore.django.existdb.manager import Manager
@@ -209,6 +210,8 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         'e': EAD_NAMESPACE,
     }
     # redeclaring namespace from eulcore to ensure prefix is correct for xpaths
+    
+    coverage = xmlmap.StringField('e:archdesc/e:did/e:unittitle/e:unitdate[@type="inclusive"]/@normal')
 
     objects = Manager('/e:ead')
     """:class:`eulcore.django.existdb.manager.Manager` - similar to an object manager
@@ -217,6 +220,80 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
     Configured to use */e:ead* as base search path.
     """
+
+    def generate_collection(self):
+        '''Generate a :class:`CollectionObject` with fields pre-populated
+        based on the contents of the current Finding Aid object.
+        '''
+        repo = Repository()
+        coll = repo.get_object(type=CollectionObject)
+        # TODO: top-level collection membership?
+
+        # title
+        # remove trailing dates in these formats: , NNNN-NNN. , NNNN. , NNNN-
+        title = re.sub(r',\s*\d{4}-?(\d{4})?.?$', '', unicode(self.unittitle))        
+        coll.mods.content.title = title  
+        # main entry/name - origination, if any
+        if self.archdesc.did.origination:
+            name_text = unicode(self.archdesc.did.origination)
+            # determine type of name
+            type = self.archdesc.did.node.xpath('''local-name(e:origination/e:persname |
+                e:origination/e:corpname  | e:origination/e:famname)''',
+                namespaces=self.ROOT_NAMESPACES)
+            if type == 'persname':
+                name_type = 'personal'
+            elif type == 'famname':
+                name_type = 'family'
+                # family names consistently end with a period, which can be removed
+                name_text = name_text.rstrip('.')
+            elif type == 'corpname':
+                name_type = 'corporate'
+
+            if name_type is not None:
+                coll.mods.content.name.type = name_type
+                
+            authority = self.archdesc.did.node.xpath('string(e:origination/*/@source)',
+                namespaces=self.ROOT_NAMESPACES)
+            # lcnaf in the EAD is equivalent to naf in MODS
+            if authority == 'lcnaf':
+                coll.mods.content.name.authority = 'naf'
+
+            coll.mods.content.name.name_parts.append(mods.NamePart(text=name_text))
+
+        # date coverage
+        if self.coverage:
+            date_encoding = {'encoding': 'w3cdtf'}
+            # date range
+            if '/' in self.coverage:
+                start, end = self.coverage.split('/')
+                coll.mods.content.origin_info.created.append(mods.DateCreated(date=start,
+                    point='start', key_date=True, **date_encoding))
+                coll.mods.content.origin_info.created.append(mods.DateCreated(date=end,
+                    point='end', **date_encoding))
+            # single date
+            else:
+                coll.mods.content.origin_info.created.append(mods.DateCreated(date=self.coverage,
+                    key_date=True, **date_encoding))
+
+        # source id
+        # FIXME: either sanitize or (better) populate and use identifier attribute
+        coll.mods.content.source_id = self.archdesc.did.unitid
+
+        # access restriction
+        if self.archdesc.access_restriction:
+            coll.mods.content.restrictions_on_access.text =  "\n".join([
+                    unicode(c) for c in self.archdesc.access_restriction.content])
+
+        # use & reproduction
+        if self.archdesc.use_restriction:
+            coll.mods.content.use_and_reproduction.text =  "\n".join([
+                    unicode(c) for c in self.archdesc.use_restriction.content])
+
+        # EAD url - where does this go?
+        # accessible at self.eadid.url
+
+        return coll
+
 
     @staticmethod
     def find_by_unitid(id):
