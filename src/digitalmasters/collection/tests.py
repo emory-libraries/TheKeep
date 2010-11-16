@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from os import path
 
 from rdflib import URIRef
 
@@ -6,10 +7,12 @@ from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client, TestCase
 
+from eulcore.django.test import TestCase as EulcoreTestCase
+
 from digitalmasters.collection.fixtures import FedoraFixtures 
 from digitalmasters.collection import forms as cforms
 from digitalmasters.collection import views
-from digitalmasters.collection.models import CollectionObject, CollectionMods
+from digitalmasters.collection.models import CollectionObject, CollectionMods, FindingAid
 from digitalmasters.fedora import Repository
 from digitalmasters import mods
 
@@ -537,3 +540,22 @@ class CollectionViewsTest(TestCase):
         # clean up
         for p in pids:
             repo.purge_object(p)
+
+
+
+class FindingAidTest(EulcoreTestCase):
+    exist_fixtures = {'directory':  path.join(path.dirname(path.abspath(__file__)), 'fixtures')}
+
+    def test_find_by_unitid(self):
+        found = FindingAid.find_by_unitid('244')
+        self.assert_(isinstance(found, FindingAid),
+            'find_by_unitid("244") found and returned a single FindingAid object')
+        # should be the document we expect
+        self.assert_('Abbey Theatre' in unicode(found.title),
+            'find_by_unitid("244") should find Abbey Theater EAD document')
+
+        # missing/no match
+        self.assertRaises(Exception, FindingAid.find_by_unitid, '301023')
+
+        # ambiguous/too many matches
+        self.assertRaises(Exception, FindingAid.find_by_unitid, '4')

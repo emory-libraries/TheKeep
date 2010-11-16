@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ead xmlns="urn:isbn:1-931666-22-9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd" relatedencoding="MARC21">
+  <eadheader countryencoding="iso3166-1" dateencoding="iso8601" langencoding="iso639-2b" relatedencoding="Dublin Core" repositoryencoding="iso15511" scriptencoding="iso15924">
+    <eadid countrycode="US" identifier="adams465.xml" mainagencycode="geu-s">adams465</eadid>
+    <filedesc>
+      <titlestmt>
+        <titleproper encodinganalog="Title">W.H. Adams reminiscences,
+			 1861-1865</titleproper>
+        <author encodinganalog="Creator">Manuscript, Archives, and Rare Book
+			 Library, Emory University</author>
+      </titlestmt>
+    </filedesc>
+  </eadheader>
+  <archdesc level="collection" relatedencoding="MARC21">
+    <did>
+      <origination>
+        <persname encodinganalog="100" source="lcnaf">Adams, W.
+			 H.</persname>
+      </origination>
+      <unittitle encodinganalog="245$a">W.H. Adams reminiscences,
+		  <unitdate encodinganalog="245$f" normal="1861/1865" type="inclusive">1861-1865</unitdate></unittitle>
+      <unitid countrycode="US" repositorycode="geu-s">Manuscript Collection No. 465</unitid>
+    </did>
+  </archdesc>
+</ead>

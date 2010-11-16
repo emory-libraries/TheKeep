@@ -70,6 +70,7 @@ INSTALLED_APPS = (
     'eulcore.django.util',
     'eulcore.django.testsetup',
     'eulcore.django.fedora',
+    'eulcore.django.existdb',
     'digitalmasters.audio',
     'digitalmasters.accounts',
     'digitalmasters.collection',

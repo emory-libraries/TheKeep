@@ -2,7 +2,10 @@ from operator import attrgetter
 from rdflib import URIRef
 
 from eulcore import xmlmap
+from eulcore.django.existdb.manager import Manager
+from eulcore.django.existdb.models import XmlModel
 from eulcore.fedora.models import XmlDatastream, URI_HAS_MODEL
+from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from digitalmasters import mods
 from digitalmasters.fedora import DigitalObject, Repository
@@ -193,3 +196,43 @@ class CollectionObject(DigitalObject):
         # for now, very simple sort on source identifier (MSS###)
         collections = sorted(collections, key=attrgetter('mods.content.source_id'))
         return collections
+
+
+
+class FindingAid(XmlModel, EncodedArchivalDescription):
+    """
+    :class:`~eulcore.django.existdb.models.XmlModel` version of
+    :class:`eulcore.xmlmap.eadmap.EncodedArchivalDescription`EAD object, for
+    querying EAD content in an eXist DB.
+    """
+    ROOT_NAMESPACES = {
+        'e': EAD_NAMESPACE,
+    }
+    # redeclaring namespace from eulcore to ensure prefix is correct for xpaths
+
+    objects = Manager('/e:ead')
+    """:class:`eulcore.django.existdb.manager.Manager` - similar to an object manager
+    for django db objects, used for finding and retrieving
+    :class:`~digitalmasters.collection.models.FindingAid` objects from eXist.
+
+    Configured to use */e:ead* as base search path.
+    """
+
+    @staticmethod
+    def find_by_unitid(id):
+        '''Retrieve a single Finding Aid by top-level unitid.  This method assumes
+        a single Finding Aid should be found, so uses the 
+        :meth:`eulcore.existdb.query.QuerySet.get` method, which raises the following
+        exceptions if anything other than a single match is found:
+          * :class:`eulcore.existdb.exceptions.DoesNotExist` when no matches
+             are found
+          * :class:`eulcore.existdb.exceptions.ReturnedMultiple` if more than
+             one match is found
+
+        :param id: unitid to search on
+        :returns: :class:`~digitalmasters.collection.models.FindingAid` instance
+        '''
+        # FIXME: hopefully
+        return FindingAid.objects.filter(archdesc__did__unitid__contains=id).get()
+
+    
