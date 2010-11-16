@@ -23,5 +23,15 @@
       <repository encodinganalog="852">Emory University<subarea>Manuscript,
 		  Archives, and Rare Book Library</subarea></repository>
     </did>
+    <accessrestrict encodinganalog="506">
+      <head>Restrictions on access</head>
+      <p>Unrestricted access. </p>
+    </accessrestrict>
+    <userestrict encodinganalog="540">
+      <head>Terms Governing Use and Reproduction</head>
+      <p>Information on copyright (literary rights) available from repository.
+		  All requests subject to limitations noted in departmental policies on
+		  reproduction.</p>
+    </userestrict>
   </archdesc>
 </ead>

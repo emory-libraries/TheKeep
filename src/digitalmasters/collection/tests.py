@@ -559,3 +559,35 @@ class FindingAidTest(EulcoreTestCase):
 
         # ambiguous/too many matches
         self.assertRaises(Exception, FindingAid.find_by_unitid, '4')
+
+    def test_generate_collection(self):
+        abbey = FindingAid.find_by_unitid('244')
+        coll = abbey.generate_collection()
+        self.assert_(isinstance(coll, CollectionObject))
+        # title
+        self.assertEqual('Abbey Theatre collection', coll.mods.content.title)
+        # name / main entry
+        self.assertEqual('Abbey Theatre.', coll.mods.content.name.name_parts[0].text)
+        self.assertEqual('corporate', coll.mods.content.name.type)
+        self.assertEqual('naf', coll.mods.content.name.authority)
+        # TODO: test corpname and famname
+
+        # coverage / dates - abbey244 fixture has 1921/1995
+        self.assertEqual('1921', coll.mods.content.origin_info.created[0].date)
+        self.assertEqual('start', coll.mods.content.origin_info.created[0].point)
+        self.assertEqual('w3cdtf', coll.mods.content.origin_info.created[0].encoding)
+        self.assertEqual(True, coll.mods.content.origin_info.created[0].key_date)
+        self.assertEqual('1995', coll.mods.content.origin_info.created[1].date)
+        self.assertEqual('end', coll.mods.content.origin_info.created[1].point)
+        self.assertEqual('w3cdtf', coll.mods.content.origin_info.created[1].encoding)
+        # TODO: test single date
+
+        # source id - TODO
+        #  self.assertEqual('MSS244', coll.mods.content.source_id)
+        self.assert_('244' in coll.mods.content.source_id)
+
+        self.assertEqual('Unrestricted access.', coll.mods.content.restrictions_on_access.text)
+        
+        # generated MODS should be schema-valid
+        self.assert_(coll.mods.content.is_valid())
+
