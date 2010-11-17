@@ -72,6 +72,17 @@ def _collection_options():
         return [(c.uri, c.label) for c in collections]
 
 class EditForm(XmlObjectForm):
+    """XmlObjectForm for metadata on a :class:`AudioObject`.
+
+    Takes an :class:`AudioObject` as form instance. This stands in contrast
+    to a regular :class:`eulcore.django.forms.XmlObjectForm`, which would
+    take an :class:`eulcore.xmlmap.XmlObject`. This form edits a whole
+    :class:`AudioObject`, although currently most of the editing is on the
+    MODS datastream (which is an :class:`eulcore.xmlmap.XmlObject`). The
+    most expedient way to make an :class:`AudioObject` editable was to make
+    a customized :class:`eulcore.django.forms.XmlObjectForm` that mostly
+    deals with the MODS datastream.
+    """
     # FIXME: this needs to save to RELS-EXT
     collection = DynamicChoiceField(label="Collection",
                     choices=_collection_options,
@@ -97,3 +108,37 @@ class EditForm(XmlObjectForm):
         widgets = {
             'title': forms.TextInput(attrs={'class': 'long'}),
             }
+
+    def __init__(self, data=None, instance=None, initial={}, **kwargs):
+        # overriding to accept an AudioObject instead of AudioMods
+        if instance is None:
+            mods_instance = None
+        else:
+            mods_instance = instance.mods.content
+            self.object_instance = instance
+            orig_initial = initial
+            initial = {}
+
+            # populate fields not auto-generated & handled by XmlObjectForm
+            if self.object_instance.collection_uri:
+                initial['collection'] = str(self.object_instance.collection_uri)
+
+            # passed-in initial values override ones calculated here
+            initial.update(orig_initial)
+
+        super_init = super(EditForm, self).__init__
+        super_init(data=data, instance=mods_instance, initial=initial, **kwargs)
+
+    def update_instance(self):
+        # override default update to handle extra fields
+        super(EditForm, self).update_instance()
+
+        # cleaned data only available when the form is valid,
+        # but xmlobjectform is_valid calls update_instance
+        if hasattr(self, 'cleaned_data'):
+            # set collection if we have all the attributes we need
+            if hasattr(self, 'object_instance'):
+                self.object_instance.collection_uri = self.cleaned_data['collection']
+
+        # must return mods because XmlObjectForm depends on it for # validation
+        return self.instance

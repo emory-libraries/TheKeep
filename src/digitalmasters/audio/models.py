@@ -4,6 +4,7 @@ import wave
 
 from eulcore import xmlmap
 from eulcore.fedora.models import FileDatastream, XmlDatastream, URI_HAS_MODEL
+from eulcore.fedora.rdfns import relsext
 
 from digitalmasters.fedora import DigitalObject, Repository
 from digitalmasters import mods
@@ -51,6 +52,8 @@ class AudioObject(DigitalObject):
             'control_group': 'M',
             'versionable': True,
         })
+
+    _collection_uri = None
 
     def save(self, logMessage=None):
         if self.mods.isModified():
@@ -106,6 +109,28 @@ class AudioObject(DigitalObject):
         obj.digtech.content.duration = '%d' % round(wav_duration(filename))
 
         return obj
+
+    def _get_collection_uri(self):
+        # for now, an audio object should only have one isMemberOfCollection relation
+        if self._collection_uri is None:
+            self._collection_uri = self.rels_ext.content.value(
+                        subject=self.uriref,
+                        predicate=relsext.isMemberOfCollection)
+        return self._collection_uri
+
+    def _set_collection_uri(self, collection_uri):
+        if not isinstance(collection_uri, URIRef):
+            collection_uri = URIRef(collection_uri)
+
+        # update/replace any existing collection membership (only one allowed, for now)
+        self.rels_ext.content.set((
+            self.uriref,
+            relsext.isMemberOfCollection,
+            collection_uri))
+        # clear out any cached collection id
+        self._collection_uri = None
+
+    collection_uri = property(_get_collection_uri, _set_collection_uri)
 
 
 def wav_duration(filename):

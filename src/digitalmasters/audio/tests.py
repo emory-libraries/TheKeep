@@ -351,6 +351,7 @@ class AudioViewsTest(TestCase):
 
         # POST data to update MODS in fedora
         mods_data = {'title': 'new title',
+                    'collection': self.rushdie.uri,
                     'note-label' : 'a general note',
                     'general_note-text': 'remember to ...',
                     'part_note-text': 'side A',
@@ -397,6 +398,8 @@ class AudioViewsTest(TestCase):
         created = '-'.join([mods_data['created-0-date_year'], mods_data['created-0-date_month']])
         self.assertEqual(created, updated_obj.mods.content.origin_info.created[0].date,
             'mods date created in fedora matches posted date created')
+        self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
+            'collection id in fedora matches posted collection')
 
         # force a schema-validation error (shouldn't happen normally)
         obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.MODS)
@@ -775,6 +778,15 @@ class TestAudioObject(TestCase):
         new_obj = AudioObject.init_from_file(wav_filename, request=rqst)
         self.assertEqual(new_obj.api.opener.username, user,
             'object initialized with request has user credentials configured for fedora access')
+
+    def test_collection(self):
+        FAKE_COLLECTION = 'info:fedora/test:FakeCollection'
+
+        self.obj.collection_uri = FAKE_COLLECTION
+        self.obj.save()
+
+        obj = self.repo.get_object(self.obj.pid, type=AudioObject)
+        self.assertEqual(FAKE_COLLECTION, str(obj.collection_uri))
 
 
 class TestWavDuration(TestCase):

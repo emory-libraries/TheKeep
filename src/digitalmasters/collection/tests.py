@@ -8,6 +8,7 @@ from django.core.urlresolvers import reverse, resolve
 from django.test import Client, TestCase
 
 from eulcore.django.test import TestCase as EulcoreTestCase
+from eulcore.fedora.rdfns import relsext
 
 from digitalmasters.collection.fixtures import FedoraFixtures 
 from digitalmasters.collection import forms as cforms
@@ -348,7 +349,7 @@ class CollectionViewsTest(TestCase):
             "MODS content created on new object from form data")
         # collection membership
         self.assert_((URIRef(new_coll.uri),
-                      URIRef(CollectionObject.MEMBER_OF_COLLECTION),
+                      relsext.isMemberOfCollection,
                       URIRef(COLLECTION_DATA['collection'])) in
                       new_coll.rels_ext.content,
                       "collection object is member of requested top-level collection")
