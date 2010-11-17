@@ -1,11 +1,13 @@
 from operator import attrgetter
-from rdflib import URIRef
 import re
+
+from rdflib import URIRef
 
 from eulcore import xmlmap
 from eulcore.django.existdb.manager import Manager
 from eulcore.django.existdb.models import XmlModel
 from eulcore.fedora.models import XmlDatastream, URI_HAS_MODEL
+from eulcore.fedora.rdfns import relsext
 from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from digitalmasters import mods
@@ -29,9 +31,6 @@ class CollectionMods(mods.MODS):
 class CollectionObject(DigitalObject):
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
-
-    # FIXME: there should be a better place to put this... (eulcore.fedora somewhere?)
-    MEMBER_OF_COLLECTION = 'info:fedora/fedora-system:def/relations-external#isMemberOfCollection'
 
     mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
             'control_group': 'M',
@@ -91,8 +90,8 @@ class CollectionObject(DigitalObject):
         """
         # for now, a collection should only have one isMemberOfCollection relation
         if self._collection_id is None:
-            uri = self.rels_ext.content.value(subject=URIRef(self.uri),
-                        predicate=URIRef(CollectionObject.MEMBER_OF_COLLECTION))
+            uri = self.rels_ext.content.value(subject=self.uriref,
+                        predicate=relsext.isMemberOfCollection)
             if uri is not None:
                 self._collection_id = str(uri)  # convert from URIRef to string
         return self._collection_id
@@ -114,11 +113,15 @@ class CollectionObject(DigitalObject):
 
         :param collection_uri: string containing collection URI
         """
+
+        if not isinstance(collection_uri, URIRef):
+            collection_uri = URIRef(collection_uri)
+
         # update/replace any existing collection membership (only one allowed, for now)
         self.rels_ext.content.set((
-            URIRef(self.uri),
-            URIRef(CollectionObject.MEMBER_OF_COLLECTION),
-            URIRef(collection_uri)
+            self.uriref,
+            relsext.isMemberOfCollection,
+            collection_uri
         ))
         # clear out any cached collection id/label
         self._collection_id = None
@@ -141,7 +144,7 @@ class CollectionObject(DigitalObject):
         ''' % {
             'has_model': URI_HAS_MODEL,
             'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
-            'member_of': CollectionObject.MEMBER_OF_COLLECTION
+            'member_of': relsext.isMemberOfCollection,
         }
         collections = repo.risearch.find_statements(query, language='sparql',
                                                          type='tuples', flush=True)
@@ -164,7 +167,7 @@ class CollectionObject(DigitalObject):
         ''' % {
             'has_model': URI_HAS_MODEL,
             'cmodel': CollectionObject.CONTENT_MODELS[0],
-            'member_of': CollectionObject.MEMBER_OF_COLLECTION,
+            'member_of': relsext.isMemberOfCollection,
         }
         collection_pids = repo.risearch.find_statements(query, language='sparql',
                                                         type='tuples', flush=True)
@@ -187,7 +190,7 @@ class CollectionObject(DigitalObject):
         ''' % {
             'has_model': URI_HAS_MODEL,
             'cmodel': CollectionObject.CONTENT_MODELS[0],
-            'member_of': CollectionObject.MEMBER_OF_COLLECTION,
+            'member_of': relsext.isMemberOfCollection,
             'parent': self.uri,
         }
         collection_pids = repo.risearch.find_statements(query, language='sparql',
