@@ -1,13 +1,17 @@
+import logging
+
 import mods
 from django import forms
 from django.conf import settings
 
 from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_factory
-from eulcore.django.forms.fields import W3CDateField
+from eulcore.django.forms.fields import W3CDateField, DynamicChoiceField
 
 from digitalmasters import mods
 from digitalmasters.audio.models import AudioMods
 from digitalmasters.collection.models import CollectionObject
+
+logger = logging.getLogger(__name__)
 
 class UploadForm(forms.Form):
     label = forms.CharField(max_length=255, # fedora label maxes out at 255 characters
@@ -53,10 +57,24 @@ class OriginInfoForm(XmlObjectForm):
         model = mods.OriginInfo
 
 
+def _cmp_collections(a, b):
+    # compare pidspaces alphabetically, then compare pid length numerically
+    # (so that short pids sort before long ones), then compare pids
+    # alphabetically)
+    return cmp((a.pidspace, len(a.pid), a.pid),
+               (b.pidspace, len(b.pid), b.pid))
+
+def _collection_options():
+        collections = [ c for c in CollectionObject.item_collections()
+                        if c.pidspace == settings.FEDORA_PIDSPACE ]
+        collections.sort(cmp=_cmp_collections)
+        logging.debug('Calculated collections: ' + repr(collections))
+        return [(c.uri, c.label) for c in collections]
+
 class EditForm(XmlObjectForm):
-    # PLACEHOLDER: needs non-top-level collections here
-    collection = forms.ChoiceField(label="Collection",
-                    choices=[(o.uri, o.label) for o in CollectionObject.top_level()],
+    # FIXME: this needs to save to RELS-EXT
+    collection = DynamicChoiceField(label="Collection",
+                    choices=_collection_options,
                     help_text="Collection this item belongs to.", required=False)
                     # using URI because it will be used to set a relation in RELS-EXT
                     

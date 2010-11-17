@@ -20,6 +20,7 @@ from digitalmasters import mods
 from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration
 from digitalmasters.audio.management.commands import ingest_cleanup
+from digitalmasters.collection.fixtures import FedoraFixtures
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -34,6 +35,18 @@ class AudioViewsTest(TestCase):
 
     def setUp(self):
         self.client = Client()
+
+        self.rushdie = FedoraFixtures.rushdie_collection()
+        self.rushdie.save()
+        self.esterbrook = FedoraFixtures.esterbrook_collection()
+        self.esterbrook.save()
+        self.englishdocs = FedoraFixtures.englishdocs_collection()
+        self.englishdocs.save()
+
+    def tearDown(self):
+        FedoraFixtures.repo.purge_object(self.rushdie.pid)
+        FedoraFixtures.repo.purge_object(self.esterbrook.pid)
+        FedoraFixtures.repo.purge_object(self.englishdocs.pid)
 
     def test_index(self):
         # test audio app index page permissions
@@ -317,6 +330,9 @@ class AudioViewsTest(TestCase):
                 "MODS EditForm is set in response context")
         self.assert_(isinstance(response.context['form'].instance, AudioMods),
                 "form instance is an AudioMods xmlobject")
+        self.assertContains(response, self.rushdie.pid)
+        self.assertContains(response, self.esterbrook.pid)
+        self.assertContains(response, self.englishdocs.pid)
 
         initial_data = response.context['form'].initial
         item_mods = obj.mods.content
