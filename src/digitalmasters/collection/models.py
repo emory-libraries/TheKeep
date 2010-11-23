@@ -280,9 +280,8 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
                 coll.mods.content.origin_info.created.append(mods.DateCreated(date=self.coverage,
                     key_date=True, **date_encoding))
 
-        # source id
-        # FIXME: either sanitize or (better) populate and use identifier attribute
-        coll.mods.content.source_id = self.archdesc.did.unitid
+        # source id - numeric form of the manuscript/archive collection number
+        coll.mods.content.source_id = self.archdesc.did.unitid.identifier
 
         # access restriction
         if self.archdesc.access_restriction:

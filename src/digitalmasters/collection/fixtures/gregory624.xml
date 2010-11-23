@@ -1,11 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ead xmlns="urn:isbn:1-931666-22-9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd" relatedencoding="MARC21">
   <eadheader countryencoding="iso3166-1" dateencoding="iso8601" langencoding="iso639-2b" relatedencoding="Dublin Core" repositoryencoding="iso15511" scriptencoding="iso15924">
-    <eadid countrycode="US" identifier="adams465.xml" mainagencycode="geu-s">adams465</eadid>
+    <eadid countrycode="US" identifier="ark:/25593/8057r" mainagencycode="geu-s">gregory624</eadid>
     <filedesc>
       <titlestmt>
-        <titleproper encodinganalog="Title">W.H. Adams reminiscences,
-			 1861-1865</titleproper>
+        <titleproper encodinganalog="Title">Gregory family papers, 1770-1956</titleproper>
         <author encodinganalog="Creator">Manuscript, Archives, and Rare Book
 			 Library, Emory University</author>
       </titlestmt>
@@ -14,11 +13,11 @@
   <archdesc level="collection" relatedencoding="MARC21">
     <did>
       <origination>
-        <persname encodinganalog="100" source="lcnaf">Adams, W. H.</persname>
+        <famname encodinganalog="100" source="lcnaf">Gregory family.</famname>
       </origination>
-      <unittitle encodinganalog="245$a">W.H. Adams reminiscences,
-		  <unitdate encodinganalog="245$f" normal="1861/1865" type="inclusive">1861-1865</unitdate></unittitle>
-      <unitid countrycode="US" repositorycode="geu-s" identifier="465">Manuscript Collection No. 465</unitid>
+      <unittitle encodinganalog="245$a">Gregory family papers,
+		  <unitdate encodinganalog="245$f" normal="1770/1956" type="inclusive">1770-1956</unitdate></unittitle>
+      <unitid countrycode="US" repositorycode="geu-s" identifier="624">Manuscript Collection No. 624</unitid>
       <repository encodinganalog="852">Emory University<subarea>Manuscript,
 		  Archives, and Rare Book Library</subarea></repository>
     </did>

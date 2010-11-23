@@ -559,8 +559,8 @@ class FindingAidTest(EulcoreTestCase):
         # missing/no match
         self.assertRaises(Exception, FindingAid.find_by_unitid, '301023', self.marbl)
 
-        # ambiguous/too many matches
-        self.assertRaises(Exception, FindingAid.find_by_unitid, '4', self.marbl)
+        # partial/non-exact match
+        self.assertRaises(Exception, FindingAid.find_by_unitid, '24', self.marbl)
 
     def test_generate_collection(self):
         abbey = FindingAid.find_by_unitid('244', self.marbl)
@@ -572,8 +572,7 @@ class FindingAidTest(EulcoreTestCase):
         self.assertEqual('Abbey Theatre.', coll.mods.content.name.name_parts[0].text)
         self.assertEqual('corporate', coll.mods.content.name.type)
         self.assertEqual('naf', coll.mods.content.name.authority)
-        # TODO: test corpname and famname
-
+        
         # coverage / dates - abbey244 fixture has 1921/1995
         self.assertEqual('1921', coll.mods.content.origin_info.created[0].date)
         self.assertEqual('start', coll.mods.content.origin_info.created[0].point)
@@ -585,9 +584,7 @@ class FindingAidTest(EulcoreTestCase):
         # TODO: test single date
 
         # source id
-        # TODO - not yet sanitized/final format
-        #  self.assertEqual('MSS244', coll.mods.content.source_id)
-        self.assert_('244' in coll.mods.content.source_id)
+        self.assertEqual('244', coll.mods.content.source_id)
 
         # access restrictions
         self.assertEqual('Unrestricted access.', coll.mods.content.restrictions_on_access.text)
@@ -602,9 +599,40 @@ class FindingAidTest(EulcoreTestCase):
         # generated MODS should be schema-valid
         self.assert_(coll.mods.content.is_valid())
 
-        # adams465 - personal name for main entry/origination
-        adams = FindingAid.find_by_unitid('465', self.marbl)
-        coll = adams.generate_collection()
+        # gregory624 - family name for main entry/origination
+        gregory = FindingAid.find_by_unitid('624', self.marbl)
+        coll = gregory.generate_collection()
         # name / main entry type
+        self.assertEqual('family', coll.mods.content.name.type)
+        self.assertEqual('Gregory family', coll.mods.content.name.name_parts[0].text)
+
+        # rushdie1000
+        # - personal name, single coverage date (for test), multi-paragraph restrictions
+        rushdie = FindingAid.find_by_unitid('1000', self.marbl)
+        coll = rushdie.generate_collection()
         self.assertEqual('personal', coll.mods.content.name.type)
+        # coverage / dates - fixture has 1947
+        self.assertEqual('1947', coll.mods.content.origin_info.created[0].date)
+        self.assertEqual(None, coll.mods.content.origin_info.created[0].point)
+        self.assertEqual('w3cdtf', coll.mods.content.origin_info.created[0].encoding)
+        self.assertEqual(True, coll.mods.content.origin_info.created[0].key_date)
+        # only one date added
+        self.assertEqual(1, len(coll.mods.content.origin_info.created))
+        # multi-paragraph restrictions on access
+        # - first paragraph
+        self.assert_('The following series are completely closed'
+            in coll.mods.content.restrictions_on_access.text)
+        # - middle somewhere
+        self.assert_('Subseries 7.4: Family photographs'
+            in coll.mods.content.restrictions_on_access.text)
+        # - last paragraph
+        self.assert_('7.3: Slides and negatives'
+            in coll.mods.content.restrictions_on_access.text)
+        # multi-paragraph use restrictions
+        # - first paragraph
+        self.assert_('The use of personal cameras is not allowed'
+            in coll.mods.content.use_and_reproduction.text)
+        # - second/last paragraph
+        self.assert_('not permitted to copy or download any digital files'
+            in coll.mods.content.use_and_reproduction.text)
 
