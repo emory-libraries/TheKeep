@@ -188,7 +188,7 @@ COLLECTION_DATA = {
     'source_id': 'MSS1000',
     'date_created': '1947',
     'date_end': '2008',
-    'collection': 'info:fedora/euterpe:marbl-archives',
+    'collection': 'info:fedora/euterpe:marbl',
     'resource_type': 'mixed material',
     'use_and_reproduction-text': 'no photos',
     'restrictions_on_access-text': 'tuesdays only',
