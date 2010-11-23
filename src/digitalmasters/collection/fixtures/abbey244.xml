@@ -18,7 +18,7 @@
         <corpname encodinganalog="110" source="lcnaf">Abbey Theatre.</corpname>
       </origination>
       <unittitle encodinganalog="245$a">Abbey Theatre collection,<unitdate calendar="gregorian" encodinganalog="245$f" era="ce" normal="1921/1995" type="inclusive">1921-1995</unitdate></unittitle>
-      <unitid countrycode="US" repositorycode="geu-s">Manuscript Collection No.
+      <unitid countrycode="US" repositorycode="geu-s" identifier="244">Manuscript Collection No.
 		  244</unitid>
       <repository encodinganalog="852">Emory University<subarea>Manuscript,
 		  Archives, and Rare Book Library</subarea></repository>

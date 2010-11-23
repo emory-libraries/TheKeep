@@ -18,7 +18,9 @@
       </origination>
       <unittitle encodinganalog="245$a">W.H. Adams reminiscences,
 		  <unitdate encodinganalog="245$f" normal="1861/1865" type="inclusive">1861-1865</unitdate></unittitle>
-      <unitid countrycode="US" repositorycode="geu-s">Manuscript Collection No. 465</unitid>
+      <unitid countrycode="US" repositorycode="geu-s" identifier="465">Manuscript Collection No. 465</unitid>
+      <repository encodinganalog="852">Emory University<subarea>Manuscript,
+		  Archives, and Rare Book Library</subarea></repository>
     </did>
   </archdesc>
 </ead>

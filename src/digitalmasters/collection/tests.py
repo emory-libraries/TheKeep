@@ -546,23 +546,24 @@ class CollectionViewsTest(TestCase):
 
 class FindingAidTest(EulcoreTestCase):
     exist_fixtures = {'directory':  path.join(path.dirname(path.abspath(__file__)), 'fixtures')}
+    marbl = 'Manuscript, Archives, and Rare Book Library'
 
     def test_find_by_unitid(self):
-        found = FindingAid.find_by_unitid('244')
+        found = FindingAid.find_by_unitid('244', self.marbl)
         self.assert_(isinstance(found, FindingAid),
-            'find_by_unitid("244") found and returned a single FindingAid object')
+            'find_by_unitid [244, MARBL] found and returned a single FindingAid object')
         # should be the document we expect
         self.assert_('Abbey Theatre' in unicode(found.title),
             'find_by_unitid("244") should find Abbey Theater EAD document')
 
         # missing/no match
-        self.assertRaises(Exception, FindingAid.find_by_unitid, '301023')
+        self.assertRaises(Exception, FindingAid.find_by_unitid, '301023', self.marbl)
 
         # ambiguous/too many matches
-        self.assertRaises(Exception, FindingAid.find_by_unitid, '4')
+        self.assertRaises(Exception, FindingAid.find_by_unitid, '4', self.marbl)
 
     def test_generate_collection(self):
-        abbey = FindingAid.find_by_unitid('244')
+        abbey = FindingAid.find_by_unitid('244', self.marbl)
         coll = abbey.generate_collection()
         self.assert_(isinstance(coll, CollectionObject))
         # title
@@ -602,7 +603,7 @@ class FindingAidTest(EulcoreTestCase):
         self.assert_(coll.mods.content.is_valid())
 
         # adams465 - personal name for main entry/origination
-        adams = FindingAid.find_by_unitid('465')
+        adams = FindingAid.find_by_unitid('465', self.marbl)
         coll = adams.generate_collection()
         # name / main entry type
         self.assertEqual('personal', coll.mods.content.name.type)

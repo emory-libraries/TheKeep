@@ -215,6 +215,8 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
     # redeclaring namespace from eulcore to ensure prefix is correct for xpaths
     
     coverage = xmlmap.StringField('e:archdesc/e:did/e:unittitle/e:unitdate[@type="inclusive"]/@normal')
+    # local repository *subarea* - e.g., MARBL, University Archives, Pitts
+    repository = xmlmap.StringField('normalize-space(.//e:subarea)')
 
     objects = Manager('/e:ead')
     """:class:`eulcore.django.existdb.manager.Manager` - similar to an object manager
@@ -299,9 +301,9 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
 
     @staticmethod
-    def find_by_unitid(id):
-        '''Retrieve a single Finding Aid by top-level unitid.  This method assumes
-        a single Finding Aid should be found, so uses the 
+    def find_by_unitid(id, archive_name):
+        '''Retrieve a single Finding Aid by top-level unitid and repository name.
+        This method assumes a single Finding Aid should be found, so uses the
         :meth:`eulcore.existdb.query.QuerySet.get` method, which raises the following
         exceptions if anything other than a single match is found:
           * :class:`eulcore.existdb.exceptions.DoesNotExist` when no matches
@@ -309,10 +311,11 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
           * :class:`eulcore.existdb.exceptions.ReturnedMultiple` if more than
              one match is found
 
-        :param id: unitid to search on
+        :param id: integer unitid to search on
+        :param archive_name: name of the repository/subarea (numbering scheme)
         :returns: :class:`~digitalmasters.collection.models.FindingAid` instance
         '''
-        # FIXME: hopefully
-        return FindingAid.objects.filter(archdesc__did__unitid__contains=id).get()
+        return FindingAid.objects.filter(archdesc__did__unitid__identifier=id,
+                repository=archive_name).get()
 
     
