@@ -50,9 +50,9 @@ class OriginInfoForm(XmlObjectForm):
     """Custom XmlObjectForm to edit MODS originInfo.  Currently only consists
     of bare-minimum date entry for date created and issued.
     """
-    # FIXME: need a way to limit these to one each! subformfield seems to want to repeat them!
-    created = SubformField(formclass=xmlobjectform_factory(mods.DateCreated, form=SimpleDateForm))
-    issued = SubformField(formclass=xmlobjectform_factory(mods.DateIssued, form=SimpleDateForm))
+    #Create the subform fields from fields (xmlmap) in eulcore.
+    created = SubformField(formclass=xmlobjectform_factory(mods.DateCreated, form=SimpleDateForm, maxNum=1))
+    issued = SubformField(formclass=xmlobjectform_factory(mods.DateIssued, form=SimpleDateForm, maxNum=1))
     class Meta:
         model = mods.OriginInfo
 
