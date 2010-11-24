@@ -63,7 +63,7 @@ class CollectionObjectTest(TestCase):
         # collection membership in RELS-EXT
         collections = CollectionObject.top_level()
         obj.set_collection(collections[0].uri)
-        obj.mods.content.source_id = 'MSS1000'
+        obj.mods.content.source_id = '1000'
         obj.mods.content.title = 'Salman Rushdie Papers'
         obj.mods.content.resource_type = 'mixed material'
         # name
@@ -75,7 +75,7 @@ class CollectionObjectTest(TestCase):
 
         # update DC and check values
         obj._update_dc()
-        self.assert_('MSS1000' in obj.dc.content.identifier_list,
+        self.assert_('1000' in obj.dc.content.identifier_list,
             'source identifier should be present in a dc:identifier')
         self.assertEqual(obj.mods.content.title, obj.dc.content.title,
             'dc:title should match title from MODS')
@@ -91,7 +91,7 @@ class CollectionObjectTest(TestCase):
         self.assertEqual(obj.COLLECTION_CONTENT_MODEL, obj.dc.content.format)
 
         # change values - test updated in DC correctly
-        obj.mods.content.source_id = 'MSS123'
+        obj.mods.content.source_id = '123'
         obj.mods.content.title = 'Thomas Esterbrook letter books'
         obj.mods.content.resource_type = 'text'
         # name
@@ -102,9 +102,9 @@ class CollectionObjectTest(TestCase):
         obj.mods.content.origin_info.created[0].point = None
 
         obj._update_dc()
-        self.assert_('MSS123' in obj.dc.content.identifier_list,
+        self.assert_('123' in obj.dc.content.identifier_list,
             'updated source identifier should be present in a dc:identifier')
-        self.assert_('MSS1000' not in obj.dc.content.identifier_list,
+        self.assert_('1000' not in obj.dc.content.identifier_list,
             'previous source identifier should not be present in a dc:identifier')
         self.assertEqual(obj.mods.content.title, obj.dc.content.title,
             'dc:title should match updated title from MODS')
@@ -143,12 +143,12 @@ class CollectionObjectTest(TestCase):
 
             source_ids = [ coll.mods.content.source_id
                            for coll in collections ]
-            self.assert_("MSS1000" in source_ids,
-                    "MSS1000 included in item collections")
-            self.assert_("MSS123" in source_ids,
-                    "MSS123 included in item collections")
-            self.assert_("MSS309" in source_ids,
-                    "MSS309 included in item collections")
+            self.assert_("1000" in source_ids,
+                    "MSS# 1000 included in item collections")
+            self.assert_("123" in source_ids,
+                    "MSS# 123 included in item collections")
+            self.assert_("309" in source_ids,
+                    "MSS# 309 included in item collections")
 
             pids = [ coll.pid for coll in collections ]
             top_levels = CollectionObject.top_level()
@@ -185,7 +185,7 @@ class CollectionObjectTest(TestCase):
 # sample POST data for creating a collection
 COLLECTION_DATA = {
     'title': 'Rushdie papers',
-    'source_id': 'MSS1000',
+    'source_id': '1000',
     'date_created': '1947',
     'date_end': '2008',
     'collection': 'info:fedora/euterpe:marbl',
@@ -379,7 +379,7 @@ class CollectionViewsTest(TestCase):
                 "MODS CollectionForm is set in response context")
         self.assert_(isinstance(response.context['form'].instance, CollectionMods),
                 "form instance is a collection MODS XmlObject")
-        self.assertContains(response, 'value="MSS1000"',
+        self.assertContains(response, 'value="1000"',
                 msg_prefix='MSS # from existing object set as input value')
         self.assertContains(response, 'value="Salman Rushdie Collection"',
                 msg_prefix='Title from existing object set as input value')
@@ -464,7 +464,7 @@ class CollectionViewsTest(TestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # search by MSS #
-        response = self.client.get(search_url, {'mss': 'MSS1000'})
+        response = self.client.get(search_url, {'mss': '1000'})
         self.assertContains(response, rushdie.pid,
                 msg_prefix="Rushdie test collection object found when searching by Rushdie MSS #")
         self.assertNotContains(response, esterbrook.pid,

@@ -16,7 +16,7 @@ from digitalmasters.fedora import DigitalObject, Repository
 
 class CollectionMods(mods.MODS):
     """Collection-specific MODS, based on :class:`mods.MODS`."""
-    source_id = xmlmap.StringField("mods:identifier[@type='local_source_id']")
+    source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
     # possibly map identifier type uri as well ?
     # TODO: (maybe) - single name here, multiple names on standard MODS
     # relatedItem type host - not editable on form, but may want mapping for easy access

@@ -7,8 +7,8 @@ from digitalmasters.collection.models import CollectionMods, CollectionObject
 
 
 class CollectionSearch(forms.Form):
-    mss = forms.CharField(required=False, label='Manuscript Number', initial='MSS',
-            help_text='Search by collection manuscript number (e.g, MSS123)')
+    mss = forms.IntegerField(required=False, label='Manuscript Number',
+            help_text='Search by collection manuscript number (enter 100 for MSS100 or Series 100)')
     title = forms.CharField(required=False,
             help_text='Search by collection title word or phrase.  May contain wildcards * or ?.')
     creator = forms.CharField(required=False,
@@ -88,8 +88,8 @@ class CollectionForm(XmlObjectForm):
                     choices=[(o.uri, o.label) for o in CollectionObject.top_level()],
                     help_text="Top-level collection this collection falls under.")
                     # using URI because it will be used to set a relation in RELS-EXT
-    source_id = forms.CharField(label="Source Identifier",
-                    help_text="Source archival collection number, e.g. MSS123")
+    source_id = forms.IntegerField(label="Source Identifier",
+                    help_text="Source archival collection number, e.g. 123")
     title = forms.CharField(help_text="Title of the archival collection",
                     widget=forms.TextInput(attrs={'class': 'long'}))
     # NOTE: handling date range with custom input forms and logic on update_instance
