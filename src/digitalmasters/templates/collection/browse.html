@@ -8,7 +8,7 @@
         <li>{{ coll.label }}
             <ul>
             {% for subcoll in coll.subcollections %}
-            <li>{{ subcoll.mods.content.source_id|floatformat|default:'' }}
+            <li>{{ subcoll.mods.content.source_id|default:'' }}
                 <a href="{% url collection:edit subcoll.pid %}">
                     {{ subcoll.mods.content.title }}</a>
                     {{ subcoll.mods.content.name }}

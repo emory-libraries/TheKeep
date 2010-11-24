@@ -143,11 +143,11 @@ class CollectionObjectTest(TestCase):
 
             source_ids = [ coll.mods.content.source_id
                            for coll in collections ]
-            self.assert_("1000" in source_ids,
+            self.assert_(1000 in source_ids,
                     "MSS# 1000 included in item collections")
-            self.assert_("123" in source_ids,
+            self.assert_(123 in source_ids,
                     "MSS# 123 included in item collections")
-            self.assert_("309" in source_ids,
+            self.assert_(309 in source_ids,
                     "MSS# 309 included in item collections")
 
             pids = [ coll.pid for coll in collections ]
@@ -531,7 +531,7 @@ class CollectionViewsTest(TestCase):
         for obj in rushdie, esterbrook, engdocs:
             self.assertContains(response, obj.mods.content.title,
                 msg_prefix="subcollection title for %s is listed on collection browse page" % obj.pid)
-            self.assertContains(response, obj.mods.content.source_id,
+            self.assertContains(response, str(obj.mods.content.source_id),
                 msg_prefix="subcollection MSS # for %s is listed on collection browse page" % obj.pid)
             self.assertContains(response, unicode(obj.mods.content.name),
                 msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
@@ -584,7 +584,7 @@ class FindingAidTest(EulcoreTestCase):
         # TODO: test single date
 
         # source id
-        self.assertEqual('244', coll.mods.content.source_id)
+        self.assertEqual(244, coll.mods.content.source_id)
 
         # access restrictions
         self.assertEqual('Unrestricted access.', coll.mods.content.restrictions_on_access.text)
