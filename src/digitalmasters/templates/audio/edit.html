@@ -6,10 +6,42 @@
 <h2>{{ obj.label }}</h2>
 <p>{{ obj.pid }} - <a href="{% url audio:download-audio obj.pid %}">download audio</a></p>
 
-<form method="post">{% csrf_token %}
+<form method="post" name="edit_form">{% csrf_token %}
 <table id="mods_edit">
-{{ form.as_table }}
+  <table width="100%" border="0" cellpadding="2" cellspacing="2">
+    <tr>
+       <td width="125"><strong>Title:</strong> </td>
+       <td>{{ form.title }}</td>
+    </tr>
+    
+    <tr>
+       <td><strong>Identifier:</strong> </td>
+       <td>{{ form.identifier }}</td>
+    </tr>
+    <tr>
+       <td><strong>Collection:</strong> </td>
+       <td>{{ form.collection }}<br><div style="font-size:px;">({{ form.collection.help_text }})</div></td>
+    </tr>
+    <tr>
+      <td><strong>Origin Info:</strong></td>
+      <td>{{ form.subforms.origin_info.as_p }}</td>
+    </tr>
+    <tr>
+      <td><strong>General Note:</strong></td>
+      <td>{{ form.subforms.general_note.as_p }}</td>
+    </tr>
+    <tr>
+      <td><strong>Part Note:</strong></td>
+      <td>{{ form.subforms.part_note.as_p }}</td>
+    </tr>
+  </table>
+
+
 </table>
-<input type="submit" value="save"/>
+<center><input type="submit" value="Save" style="width:200px; height:30px; font-size:16px; font-weight:bold;"/></center>
 </form>
+
+<script type="text/javascript">
+  window.onload = document.edit_form.title.focus();
+</script>
 {% endblock %}
