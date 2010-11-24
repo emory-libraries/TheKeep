@@ -5,9 +5,22 @@
       <p class="fieldWrapper">
           {{ field.errors }}
           {{ field.label_tag }}: {{ field }}
-          {# suppressing help text for space reasons; might be nice to have pop-up help #}
+          {# show help test as a pop-up/tooltip #}
+          {% if field.help_text %}
+            <span class="search-tips">{{ field.help_text }}</span>
+          {% endif %}
+          {# show help text on input focus, hide on blur #}
+          <script> 
+            $("#id_{{field.name}}").focus(function(){$(this).next("span.search-tips").show();})
+            $("#id_{{field.name}}").blur(function(){$(this).next("span.search-tips").hide();})
+          </script>
       </p>
       {% endfor %}
+    <div class="help">
+    <a onMouseOver="jQuery('#collection-search-help').show()"
+       onMouseOut="jQuery('#collection-search-help').hide()">?</a>
+    <div id="collection-search-help" class="search-tips">{{ collection_search.search_tips }}</div>
+    </div>
     {# might be nice to have a clear (not reset) button #}
     <input class="form-submit" type="submit" value="Search" />
   </form>

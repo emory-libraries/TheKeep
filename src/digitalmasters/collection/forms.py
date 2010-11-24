@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.safestring import mark_safe
 
 from eulcore.django.forms import XmlObjectForm, SubformField
 
@@ -7,12 +8,18 @@ from digitalmasters.collection.models import CollectionMods, CollectionObject
 
 
 class CollectionSearch(forms.Form):
+    search_tips = mark_safe('''Search is case-sensitive and matches whole words only, including
+      punctuation.  You should use wildcards <b>*</b> and <b>?</b> to get around
+      this limitation.  <br/>For example, if a creator name is entered as
+      <b>Rushdie, Salman</b>, you may want to search for <b>Rushdie*</b>.''')
+    wildcard_tip = '''May contain wildcards <b>*</b> or <b>?</b>.'''
     mss = forms.IntegerField(required=False, label='Manuscript Number',
-            help_text='Search by collection manuscript number (enter 100 for MSS100 or Series 100)')
+            help_text=mark_safe('''Search by collection manuscript <b>number</b> (enter 100 for
+                        MSS100). ''' + wildcard_tip))
     title = forms.CharField(required=False,
-            help_text='Search by collection title word or phrase.  May contain wildcards * or ?.')
+            help_text=mark_safe('Search by collection title word or phrase. ' + wildcard_tip))
     creator = forms.CharField(required=False,
-            help_text='Search by collection creator')
+            help_text=mark_safe('Search by collection creator. '  + wildcard_tip))
     # NOTE: this only sets choices on load time (should be OK for search)
     collection_list = [(o.uri, o.label) for o in CollectionObject.top_level()]
     collection_list.insert(0, ('', '--'))   # add a blank option first
@@ -89,7 +96,7 @@ class CollectionForm(XmlObjectForm):
                     help_text="Top-level collection this collection falls under.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",
-                    help_text="Source archival collection number, e.g. 123")
+                    help_text="Source archival collection number (enter 100 for MSS100 or Series 100)")
     title = forms.CharField(help_text="Title of the archival collection",
                     widget=forms.TextInput(attrs={'class': 'long'}))
     # NOTE: handling date range with custom input forms and logic on update_instance
