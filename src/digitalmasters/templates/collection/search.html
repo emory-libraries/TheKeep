@@ -9,7 +9,7 @@
     <tr><th>MSS #</th><th>Title</th><th>Creator</th><th>Collection</th></tr>
 {% for obj in results %}
     <tr>
-        <td>{{ obj.mods.content.source_id|default:'' }}</td>
+        <td>{{ obj.mods.content.source_id|floatformat|default:'' }}</td>
         <td><a href="{% url collection:edit obj.pid %}">{{ obj.mods.content.title }}</a></td>
         <td>{{ obj.mods.content.name }}</td>
         <td>{{ obj.collection_label }}</td>
