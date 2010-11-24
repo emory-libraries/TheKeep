@@ -51,8 +51,10 @@ class OriginInfoForm(XmlObjectForm):
     of bare-minimum date entry for date created and issued.
     """
     #Create the subform fields from fields (xmlmap) in eulcore.
-    created = SubformField(formclass=xmlobjectform_factory(mods.DateCreated, form=SimpleDateForm, maxNum=1))
-    issued = SubformField(formclass=xmlobjectform_factory(mods.DateIssued, form=SimpleDateForm, maxNum=1))
+    created = SubformField(formclass=xmlobjectform_factory(mods.DateCreated,
+                            form=SimpleDateForm, max_num=1))
+    issued = SubformField(formclass=xmlobjectform_factory(mods.DateIssued,
+                            form=SimpleDateForm, max_num=1))
     class Meta:
         model = mods.OriginInfo
 
