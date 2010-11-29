@@ -259,7 +259,7 @@ def edit(request, pid):
                 # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with MODS content from the object
-            form = audioforms.EditForm(instance=obj)    
+            form = audioforms.EditForm(instance=obj)
 
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
