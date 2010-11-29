@@ -4,7 +4,6 @@ import urlparse
 import stat
 import sys
 import tempfile
-import logging
 from time import sleep
 
 from django.http import HttpRequest
@@ -402,13 +401,12 @@ class AudioViewsTest(TestCase):
         self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
             'collection id in fedora matches posted collection')
 
-        #FIXME: Test not currently working.
         # force a schema-validation error (shouldn't happen normally)
-        #obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.MODS)
-        #obj.save("schema-invalid MODS")
-        #response = self.client.post(edit_url, mods_data)
-   
-	#self.assertContains(response, '<ul class="errorlist">')
+        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.MODS)
+        obj.save("schema-invalid MODS")
+        response = self.client.post(edit_url, mods_data)
+       
+	self.assertContains(response, '<ul class="errorlist">')
 
         # edit non-existent record - exception  -- TODO: should actually be a 404
         fakepid = 'bogus-pid:1'
