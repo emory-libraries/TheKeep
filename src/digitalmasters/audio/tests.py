@@ -402,11 +402,10 @@ class AudioViewsTest(TestCase):
             'collection id in fedora matches posted collection')
 
         # force a schema-validation error (shouldn't happen normally)
-        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, mods.MODS)
+        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, AudioMods)
         obj.save("schema-invalid MODS")
         response = self.client.post(edit_url, mods_data)
-       
-	self.assertContains(response, '<ul class="errorlist">')
+        self.assertContains(response, '<ul class="errorlist">')
 
         # edit non-existent record - exception  -- TODO: should actually be a 404
         fakepid = 'bogus-pid:1'
@@ -718,6 +717,57 @@ class TestAudioObject(TestCase):
 
         # verify that the owner id is set in repo copy.
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
+
+    def test_update_dc(self):
+        # set values in MODS, RELS-EXT, digtech
+        title, res_type = 'new title in mods', 'text'
+        self.obj.mods.content.title = title
+        self.obj.mods.content.resource_type = res_type
+        cdate, idate = '2010-01-03', '2010-05-05'
+        self.obj.mods.content.origin_info.created.append(mods.DateCreated(date=cdate))
+        self.obj.mods.content.origin_info.issued.append(mods.DateIssued(date=idate))
+        general_note = 'The Inspector General generally inspects'
+        self.obj.mods.content.general_note.text = general_note
+        dig_purpose = 'patron request'
+        self.obj.digtech.content.digitization_purpose.append(dig_purpose)
+        restriction, use = ['personal photos unavailable', 'Tuesdays only']
+        self.obj.mods.content.access_conditions.extend([
+            mods.AccessCondition(type='restriction', text=restriction),
+            mods.AccessCondition(type='use', text=use)])
+        collection = 'collection:123'
+        self.obj.collection_uri = 'collection:123'
+        self.obj._update_dc()
+        
+        self.assertEqual(title, self.obj.dc.content.title)
+        self.assertEqual(res_type, self.obj.dc.content.type)
+        self.assert_(cdate in self.obj.dc.content.date_list)
+        self.assert_(idate in self.obj.dc.content.date_list)
+        self.assert_(general_note in self.obj.dc.content.description_list)
+        self.assert_(dig_purpose in self.obj.dc.content.description_list)
+        # currently using accessCondition type as a prefix in dc:rights
+        self.assert_('restriction: ' + restriction in self.obj.dc.content.rights_list)
+        self.assert_('use: ' + use in self.obj.dc.content.rights_list)
+
+        # collection URI in dc:relation (for findObjects search)
+        self.assertEqual('collection:123', self.obj.dc.content.relation)
+        # cmodel in dc:format (for findObject search)
+        self.assertEqual(self.obj.AUDIO_CONTENT_MODEL, self.obj.dc.content.format)
+
+        # clear out data and confirm DC gets cleared out appropriately
+        del(self.obj.mods.content.origin_info.created)
+        del(self.obj.mods.content.origin_info.issued)
+        del(self.obj.mods.content.general_note)
+        del(self.obj.digtech.content.digitization_purpose)
+        del(self.obj.mods.content.access_conditions)
+        self.obj._update_dc()
+        self.assertEqual([], self.obj.dc.content.date_list,
+            'there should be no dc:date when dateCreated or dateIssued are not set in MODS')
+        self.assertEqual([], self.obj.dc.content.description_list,
+            'there should be no dc:description when general note in MODS and digitization ' +
+            'purpose in digital tech are not set')
+        self.assertEqual([], self.obj.dc.content.rights_list,
+            'there should be no dc:rights when no MODS accessCondition is set')        
+        
         
     def test_file_checksum(self):
         #This is just a sanity check that eulcore is working as expected with checksums.

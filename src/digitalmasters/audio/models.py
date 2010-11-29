@@ -56,22 +56,67 @@ class AudioObject(DigitalObject):
     _collection_uri = None
 
     def save(self, logMessage=None):
-        if self.mods.isModified():
-            # MODS is master metadata
-            # if it has changed, update DC and object label to keep them in sync
-            if self.mods.content.title:
-                self.label = self.mods.content.title
-                self.dc.content.title = self.mods.content.title
-            if self.mods.content.resource_type:
-                self.dc.content.type = self.mods.content.resource_type
-            if len(self.mods.content.origin_info.created) and \
-                self.mods.content.origin_info.created[0].date:
-                # UGH: this will add originInfo and dateCreated if they aren't already in the xml
-                # because of our instantiate-on-get hack
-                # FIXME: creating origin_info without at least one field may result in invalid MODS
-                self.dc.content.date = self.mods.content.origin_info.created[0].date
-                
+        if self.mods.isModified() or self.rels_ext.isModified or \
+            self.digtech.isModified():
+            # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
+            # if any of them have changed, update DC
+            self._update_dc()
+
+        # for now, keep object label in sync with MODS title
+        if self.mods.isModified() and self.mods.content.title:
+            self.label = self.mods.content.title
+
         return super(AudioObject, self).save(logMessage)
+
+    def _update_dc(self):
+        '''Update Dublin Core (derivative metadata) based on master metadata
+        from MODS, RELS-EXT, and digital tech metadata in order to keep data
+        synchronized and make fields that need to be searchable accessible to
+        Fedora findObjects API method.
+         '''
+        if self.mods.content.title:
+            self.label = self.mods.content.title
+            self.dc.content.title = self.mods.content.title
+        if self.mods.content.resource_type:
+            self.dc.content.type = self.mods.content.resource_type
+
+        # clear out any dates previously in DC
+        del(self.dc.content.date_list)
+        if len(self.mods.content.origin_info.created) and \
+                self.mods.content.origin_info.created[0].date:
+            # UGH: this will add originInfo and dateCreated if they aren't already in the xml
+            # because of our instantiate-on-get hack
+            # FIXME: creating origin_info without at least one field may result in invalid MODS
+            self.dc.content.date_list.append(self.mods.content.origin_info.created[0].date)
+        if len(self.mods.content.origin_info.issued) and \
+                self.mods.content.origin_info.issued[0].date:
+            # ditto on UGH/FIXME for date created
+            self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)        
+
+        # clear out any descriptions previously in DC and set from MODS/DigTech
+        del(self.dc.content.description_list)
+        if self.mods.content.general_note.text:
+            self.dc.content.description_list.append(self.mods.content.general_note.text)
+        # digitization_purpose
+        if self.digtech.content.digitization_purpose:
+            self.dc.content.description_list.extend(self.digtech.content.digitization_purpose)
+        # Currently not indexing general note in digital tech
+
+        # clear out any rights previously in DC and set contents from MODS accessCondition
+        del(self.dc.content.rights_list)
+        if self.mods.content.access_conditions:
+            # use access condition type as a label
+            for access in self.mods.content.access_conditions:
+                self.dc.content.rights_list.append('%s: %s' % \
+                    (access.type, access.text))
+
+        # TEMPORARY: collection relation and cmodel must be in DC for find_objects
+        # - these can be removed once we implement gsearch
+        if self.collection_uri is not None:
+            # store collection membership as dc:relation
+            self.dc.content.relation = str(self.collection_uri)
+        # set collection content model URI as dc:format
+        self.dc.content.format = self.AUDIO_CONTENT_MODEL
 
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None, checksum=None):
