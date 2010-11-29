@@ -10,6 +10,7 @@
 <form method="post" name="edit_form">{% csrf_token %}
 <table id="mods_edit">
   <table width="100%" border="0" cellpadding="2" cellspacing="2">
+    {{ form.non_field_errors }}
     <tr>
        <td width="125"><strong>Title:</strong> </td>
        <td>{{ form.title }}</td>
