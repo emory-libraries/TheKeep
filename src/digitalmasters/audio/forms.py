@@ -17,15 +17,38 @@ class UploadForm(forms.Form):
     label = forms.CharField(max_length=255, # fedora label maxes out at 255 characters
                 help_text='Preliminary title for the object in Fedora. 255 characters max.')
     audio = forms.FileField(label="Audio file")
-  
 
-class SearchForm(forms.Form):
-    pid = forms.CharField(required=False, help_text='Search by fedora pid.',
-            initial='%s:' % settings.FEDORA_PIDSPACE)
+
+def _cmp_collections(a, b):
+    # compare pidspaces alphabetically, then compare pid length numerically
+    # (so that short pids sort before long ones), then compare pids
+    # alphabetically)
+    return cmp((a.pidspace, len(a.pid), a.pid),
+               (b.pidspace, len(b.pid), b.pid))
+
+def _collection_options():
+        collections = [ c for c in CollectionObject.item_collections()
+                        if c.pidspace == settings.FEDORA_PIDSPACE ]
+        collections.sort(cmp=_cmp_collections)
+        logging.debug('Calculated collections: ' + repr(collections))
+        return [(c.uri, c.label) for c in collections]
+
+
+class ItemSearch(forms.Form):
     title = forms.CharField(required=False,
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
+    description = forms.CharField(required=False,
+            help_text='Search for word or phrase in general note or digitization purpose.  May contain wildcards * or ?.')
+    collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
+                    help_text="Limit to items in the specified collection.", required=False)
+    pid = forms.CharField(required=False, help_text='Search by fedora pid.',
+            initial='%s:' % settings.FEDORA_PIDSPACE)
+    date = forms.CharField(required=False,
+            help_text='Search date created or issued.  May contain wildcards * or ?.')
+    rights = forms.CharField(required=False,
+            help_text='Search for word or phrase within access conditions.  May contain wildcards * or ?.')
 
-
+    
 class SimpleNoteForm(XmlObjectForm):
     """Custom XmlObjectForm to simplify editing a MODS note.  Displays text content
     input only, as a textarea with no label; no other note attributes are displayed.
@@ -58,20 +81,6 @@ class OriginInfoForm(XmlObjectForm):
     class Meta:
         model = mods.OriginInfo
 
-
-def _cmp_collections(a, b):
-    # compare pidspaces alphabetically, then compare pid length numerically
-    # (so that short pids sort before long ones), then compare pids
-    # alphabetically)
-    return cmp((a.pidspace, len(a.pid), a.pid),
-               (b.pidspace, len(b.pid), b.pid))
-
-def _collection_options():
-        collections = [ c for c in CollectionObject.item_collections()
-                        if c.pidspace == settings.FEDORA_PIDSPACE ]
-        collections.sort(cmp=_cmp_collections)
-        logging.debug('Calculated collections: ' + repr(collections))
-        return [(c.uri, c.label) for c in collections]
 
 class EditForm(XmlObjectForm):
     """XmlObjectForm for metadata on a :class:`AudioObject`.

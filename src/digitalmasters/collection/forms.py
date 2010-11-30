@@ -10,7 +10,7 @@ from digitalmasters.collection.models import CollectionMods, CollectionObject
 class CollectionSearch(forms.Form):
     search_tips = mark_safe('''Search is case-sensitive and matches whole words only, including
       punctuation.  You should use wildcards <b>*</b> and <b>?</b> to get around
-      this limitation.  <br/>For example, if a creator name is entered as
+      this limitation.  <br/>For example, if a name is entered as
       <b>Rushdie, Salman</b>, you may want to search for <b>Rushdie*</b>.''')
     wildcard_tip = '''May contain wildcards <b>*</b> or <b>?</b>.'''
     mss = forms.IntegerField(required=False, label='Manuscript Number',

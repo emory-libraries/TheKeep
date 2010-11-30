@@ -21,6 +21,14 @@
   {% if collection_search %}
     {% include 'collection/_search_form.html' %}
   {% endif %}
+  {% if item_search %}
+    {% include 'audio/_search_form.html' %}
+  {% endif %}
+  <div class="help">
+    <a onMouseOver="jQuery('#search-help').show()"
+       onMouseOut="jQuery('#search-help').hide()">?</a>
+    <div id="search-help" class="search-tips">{{ collection_search.search_tips }}</div>
+   </div>
 {% endblock %}
 
 {% block message %}

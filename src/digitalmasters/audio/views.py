@@ -27,7 +27,7 @@ allowed_audio_types = ['audio/x-wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
 def index(request):
-    search = audioforms.SearchForm()
+    search = audioforms.ItemSearch()
     return render_to_response('audio/index.html', {'search' : search},
             context_instance=RequestContext(request))
 
@@ -207,7 +207,7 @@ def md5sum(fname):
 def search(request):
     "Search for fedora objects by pid or title."
     response_code = None
-    form = audioforms.SearchForm(request.GET)
+    form = audioforms.ItemSearch(request.GET)
     ctx_dict = {'search': form}
     if form.is_valid():
         search_opts = {}

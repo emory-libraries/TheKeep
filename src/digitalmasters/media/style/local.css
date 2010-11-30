@@ -17,12 +17,19 @@ div#sidebar-left-inner > div {
     margin-bottom: 10px;
     font-size: 90%;
 }
-div#collection-search input {
+div#sidebar-left div.search input {
     margin: 0px;
 }
-div#collection-search p {
+div#sidebar-left div.search p {
     margin: 0px;
 }
+div#sidebar-left div.search label {
+    display: block;
+}
+div#sidebar-left div.search select {
+    width: 95%;
+}
+
 
 /* form buttons styled to look sort of like form-submit */
 input.form-button {
@@ -49,9 +56,9 @@ input.form-button:hover {
 }
 
 div.help {
-    float:right;
-    background-color:white;
-    border:2px solid green;
+    float:left;
+    background-color:white !important;
+    border:2px solid green !important;
     margin:0px;
     padding:3px;
     font-size:medium;
