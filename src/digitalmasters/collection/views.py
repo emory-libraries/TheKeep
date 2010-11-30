@@ -90,7 +90,7 @@ def search(request):
     instances.
     '''
     response_code = None
-    form = CollectionSearch(request.GET)
+    form = CollectionSearch(request.GET, prefix='collection')
     context = {'search': form}
     if form.is_valid():
         search_opts = {
