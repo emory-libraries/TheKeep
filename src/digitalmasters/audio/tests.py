@@ -67,11 +67,6 @@ class AudioViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, audio_index))
 
-        self.assert_(isinstance(response.context['search'], audioforms.SearchForm))
-        self.assertContains(response, '<input')
-        self.assertContains(response, 'Pid:')
-        self.assertContains(response, 'Title:')
-
     def test_upload_html5(self):
         # test upload form
         HTML5_upload_url = reverse('audio:HTML5FileUpload')
