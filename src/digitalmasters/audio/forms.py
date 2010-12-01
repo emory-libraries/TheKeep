@@ -26,13 +26,19 @@ def _cmp_collections(a, b):
     return cmp((a.pidspace, len(a.pid), a.pid),
                (b.pidspace, len(b.pid), b.pid))
 
-def _collection_options():
+def _collection_options(include_blank=False):
         collections = [ c for c in CollectionObject.item_collections()
                         if c.pidspace == settings.FEDORA_PIDSPACE ]
         collections.sort(cmp=_cmp_collections)
         logging.debug('Calculated collections: ' + repr(collections))
-        return [(c.uri, c.label) for c in collections]
+        options = [(c.uri, '%s - %s' % (c.mods.content.source_id, c.label)) for c in collections]
+        if include_blank:
+            options.insert(0, ('', '--'))
+        return options
 
+def _collection_options_with_blank():
+    # collection is optional for search but not for edit form
+    return _collection_options(include_blank=True)
 
 class ItemSearch(forms.Form):
     title = forms.CharField(required=False,
@@ -40,8 +46,10 @@ class ItemSearch(forms.Form):
     description = forms.CharField(required=False,
             help_text='Search for word or phrase in general note or digitization purpose.  May contain wildcards * or ?.')
     # FIXME: should we cache these choices ? 
-    collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
-                    help_text="Limit to items in the specified collection.", required=False)
+    collection = DynamicChoiceField(label="Collection",  choices=_collection_options_with_blank,
+                    help_text='''Limit to items in the specified collection.
+                    Start typing collection number to let your browser search within the list.''',
+                    required=False)
     pid = forms.CharField(required=False, help_text='Search by fedora pid.',
             initial='%s:' % settings.FEDORA_PIDSPACE)
     date = forms.CharField(required=False,
