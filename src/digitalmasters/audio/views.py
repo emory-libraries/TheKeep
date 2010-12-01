@@ -215,9 +215,8 @@ def search(request):
             # restrict to objects in configured pidspace
             'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
             # restrict by cmodel in dc:format
-            'format': AudioObject.AUDIO_CONTENT_MODEL,
+            'format__contains': AudioObject.AUDIO_CONTENT_MODEL,
         }
-        search_opts = {}
         if form.cleaned_data['pid']:
             search_opts['pid__contains'] = '%s' % form.cleaned_data['pid']
             # add a wildcard if the search pid is the initial value

@@ -8,14 +8,19 @@ from digitalmasters.collection.models import CollectionMods, CollectionObject
 
 
 class CollectionSearch(forms.Form):
-    search_tips = mark_safe('''Search is case-sensitive and matches whole words only, including
-      punctuation.  You should use wildcards <b>*</b> and <b>?</b> to get around
-      this limitation.  <br/>For example, if a name is entered as
-      <b>Rushdie, Salman</b>, you may want to search for <b>Rushdie*</b>.''')
+    search_tips = mark_safe('''<ul>
+    <li>Search is NOT case sensitive.</li>
+    <li>Search matches whole words only, including  punctuation.
+      You should use wildcards <b>*</b> and <b>?</b> to get around
+      this limitation.  For example, if a name is entered as
+      <b>Rushdie, Salman</b>, you may want to search for <b>rushdie*</b>.</li>
+    <li>If search terms are entered in multiple inputs, only records matching
+      values in <b>all</b> search fields are returned.</li>
+    </ul>''')
     wildcard_tip = '''May contain wildcards <b>*</b> or <b>?</b>.'''
-    mss = forms.IntegerField(required=False, label='Manuscript Number',
-            help_text=mark_safe('''Search by collection manuscript <b>number</b> (enter 100 for
-                        MSS100). ''' + wildcard_tip))
+    mss = forms.IntegerField(required=False, label='Collection Number',
+            help_text=mark_safe('''Search by manuscript or series number (e.g.,
+                enter <b>100</b> for <b>MSS100</b> or <b>Series 100</b>). ''' + wildcard_tip))
     title = forms.CharField(required=False,
             help_text=mark_safe('Search by collection title word or phrase. ' + wildcard_tip))
     creator = forms.CharField(required=False,
