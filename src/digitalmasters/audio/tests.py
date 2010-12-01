@@ -244,15 +244,16 @@ class AudioViewsTest(TestCase):
 
         # create some test objects to search for
         repo = Repository()
-        obj = repo.get_object()
-        obj.dc.content.title = 'test search object 1'
-        obj.dc.content.description = 'general note'
-        obj.dc.content.relation = self.rushdie.uri
-        obj.dc.content.date = '1492-05'
+        obj = repo.get_object(type=AudioObject)
+        obj.mods.content.title = 'test search object 1'
+        obj.mods.content.general_note.text = 'general note'
+        obj.collection_uri = self.rushdie.uri
+        obj.mods.content.origin_info.created.append(mods.DateCreated(date='1492-05'))
         obj.save()
-        obj2 = repo.get_object()
-        obj2.dc.content.title = 'test search object 2'
-        obj2.dc.content.rights = 'no photos'
+        obj2 = repo.get_object(type=AudioObject)
+        obj2.mods.content.title = 'test search object 2'
+        obj2.mods.content.access_conditions.append(mods.AccessCondition(type='restriction',
+                                                                    text='no photos'))
         obj2.save()
         # add pids to list for clean-up in tearDown
         self.pids.extend([obj.pid, obj2.pid])
@@ -274,14 +275,15 @@ class AudioViewsTest(TestCase):
         # search by title phrase
         response = self.client.get(search_url,
             {'audio-title': 'test search', 'audio-pid': '%s:' % settings.FEDORA_PIDSPACE })
+        found = [o.pid for o in response.context['results']]
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertContains(response, obj.pid,
-                msg_prefix="test object 1 listed in results when searching by title")
-        self.assertContains(response, obj2.pid,
-                msg_prefix="test object 2 listed in results when searching by title")
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by title")
+        self.assert_(obj2.pid in found,
+                "test object 2 listed in results when searching by title")
 
         download_url = reverse('audio:download-audio', args=[obj.pid])
         self.assertContains(response, download_url,
@@ -293,10 +295,11 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertContains(response, obj.pid,
-                msg_prefix="test object 1 listed in results when searching by description")
-        self.assertNotContains(response, obj2.pid,
-                msg_prefix="test object 2 not listed in results when searching by description")
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by description")
+        self.assert_(obj2.pid not in found,
+                "test object 2 not listed in results when searching by description")
 
         # search by date
         response = self.client.get(search_url, {'audio-date': '1492*'})
@@ -304,10 +307,11 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertContains(response, obj.pid,
-                msg_prefix="test object 1 listed in results when searching by date")
-        self.assertNotContains(response, obj2.pid,
-                msg_prefix="test object 2 not listed in results when searching by date")
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by date")
+        self.assert_(obj2.pid not in found,
+                "test object 2 not listed in results when searching by date")
 
         # search by rights
         response = self.client.get(search_url, {'audio-rights': 'no photos'})
@@ -315,10 +319,11 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertNotContains(response, obj.pid,
-                msg_prefix="test object 1 not listed in results when searching by rights")
-        self.assertContains(response, obj2.pid,
-                msg_prefix="test object 2 listed in results when searching by rights")
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid not in found,
+                "test object 1 not listed in results when searching by rights")
+        self.assert_(obj2.pid in found,
+                "test object 2 listed in results when searching by rights")
 
         # collection
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri})
@@ -326,12 +331,13 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertContains(response, obj.pid,
-                msg_prefix="test object 1 listed in results when searching by collection")
-        self.assertNotContains(response, obj2.pid,
-                msg_prefix="test object 2 not listed in results when searching by collection")
-        self.assertNotContains(response, self.rushdie.created,
-                msg_prefix="collection object not listed in results when searching by collection")
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by collection")
+        self.assert_(obj2.pid not in found,
+                "test object 2 not listed in results when searching by collection")
+        self.assert_(self.rushdie.pid not in found,
+                "collection object not listed in results when searching by collection")
 
         # multiple fields
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri,
@@ -340,10 +346,11 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertContains(response, obj.pid,
-                msg_prefix="test object 1 listed in results when searching by collection + title + date")
-        self.assertNotContains(response, obj2.pid,
-                msg_prefix="test object 2 not listed in results when searching by collection + title + date")
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by collection + title + date")
+        self.assert_(obj2.pid not in found,
+                "test object 2 not listed in results when searching by collection + title + date")
 
     def test_download_audio(self):
         # create a test audio object
@@ -385,7 +392,7 @@ class AudioViewsTest(TestCase):
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         obj.save()
         # add pids to list for clean-up in tearDown
-        self.pids(extend[obj.pid, obj2.pid])
+        self.pids.extend([obj.pid, obj2.pid])
         
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
