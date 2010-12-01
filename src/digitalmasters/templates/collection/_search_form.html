@@ -1,9 +1,11 @@
 <div id="collection-search" class="search">
   <h2>Search Collections</h2>
   <form action="{% url collection:search %}" method="get">
-      {% for field in collection_search %}
-        {% include "_form_field.html" %}
-      {% endfor %}
+      {% with collection_search as form %}
+        {% for field in collection_search %}
+          {% include "_form_field.html" %}
+        {% endfor %}
+       {% endwith %}
     {# might be nice to have a clear (not reset) button #}
     <input class="form-submit" type="submit" value="Search" />
   </form>

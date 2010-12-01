@@ -207,16 +207,33 @@ def md5sum(fname):
 def search(request):
     "Search for fedora objects by pid or title."
     response_code = None
-    form = audioforms.ItemSearch(request.GET)
+    form = audioforms.ItemSearch(request.GET, prefix='audio')
     ctx_dict = {'search': form}
     if form.is_valid():
+        search_opts = {
+            'type': AudioObject,
+            # restrict to objects in configured pidspace
+            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
+            # restrict by cmodel in dc:format
+            'format': AudioObject.AUDIO_CONTENT_MODEL,
+        }
         search_opts = {}
         if form.cleaned_data['pid']:
-            # NOTE: adding wildcard to match all records in an instance
-            search_opts['pid__contains'] = "%s*" % form.cleaned_data['pid']
+            search_opts['pid__contains'] = '%s' % form.cleaned_data['pid']
+            # add a wildcard if the search pid is the initial value
+            if form.cleaned_data['pid'] == form.fields['pid'].initial:
+                search_opts['pid__contains'] += '*'
         if form.cleaned_data['title']:
             search_opts['title__contains'] = form.cleaned_data['title']
-
+        if form.cleaned_data['description']:
+            search_opts['description__contains'] = form.cleaned_data['description']
+        if form.cleaned_data['collection']:
+            search_opts['relation__contains'] = form.cleaned_data['collection']
+        if form.cleaned_data['date']:
+            search_opts['date__contains'] = form.cleaned_data['date']
+        if form.cleaned_data['rights']:
+            search_opts['rights__contains'] = form.cleaned_data['rights']
+        
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.

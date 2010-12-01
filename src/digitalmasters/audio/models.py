@@ -91,7 +91,9 @@ class AudioObject(DigitalObject):
         if len(self.mods.content.origin_info.issued) and \
                 self.mods.content.origin_info.issued[0].date:
             # ditto on UGH/FIXME for date created
-            self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)        
+            self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
+
+        # FIXME: detect if origin info is empty & remove it so we don't get invalid MODS
 
         # clear out any descriptions previously in DC and set from MODS/DigTech
         del(self.dc.content.description_list)

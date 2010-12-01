@@ -1,15 +1,15 @@
 {% comment %}
 Display a form field with help text as javascript tool-tip style pop-up
-Expects form field object as a template variable named 'field', and expects
-form object to have a prefix defined for unique field id names.
+Expects form field object as a template variable named 'field' and form object
+as a template variable named 'form', with aprefix defined for unique field id names.
 {% endcomment %}
 <p class="fieldWrapper">
   {{ field.errors }} {{ field.label_tag }} {{ field }}
   {% if field.help_text %} {# show help test as a pop-up/tooltip #}
     <span class="search-tips">{{ field.help_text }}</span>
   {% endif %}  
- <script> {# show help text on input focus, hide on blur #}
-    $("#id_{{item_search.prefix}}-{{field.name}}").focus(function(){$(this).next("span.search-tips").show();})
-    $("#id_{{item_search.prefix}}-{{field.name}}").blur(function(){$(this).next("span.search-tips").hide();})
+ <script> // {# show help text on input focus, hide on blur #}
+    $("#id_{{form.prefix}}-{{field.name}}").focus(function(){$(this).next("span.search-tips").show();})
+    $("#id_{{form.prefix}}-{{field.name}}").blur(function(){$(this).next("span.search-tips").hide();})
   </script>
 </p>

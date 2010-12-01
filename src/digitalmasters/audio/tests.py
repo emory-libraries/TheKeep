@@ -43,10 +43,16 @@ class AudioViewsTest(TestCase):
         self.englishdocs = FedoraFixtures.englishdocs_collection()
         self.englishdocs.save()
 
+        self.pids = []
+
     def tearDown(self):
         FedoraFixtures.repo.purge_object(self.rushdie.pid)
         FedoraFixtures.repo.purge_object(self.esterbrook.pid)
         FedoraFixtures.repo.purge_object(self.englishdocs.pid)
+
+        # purge any objects created by individual tests
+        for pid in self.pids:
+            FedoraFixtures.repo.purge_object(pid)
 
     def test_index(self):
         # test audio app index page permissions
@@ -239,17 +245,23 @@ class AudioViewsTest(TestCase):
         # create some test objects to search for
         repo = Repository()
         obj = repo.get_object()
-        obj.dc.content.title = "test search object 1"
+        obj.dc.content.title = 'test search object 1'
+        obj.dc.content.description = 'general note'
+        obj.dc.content.relation = self.rushdie.uri
+        obj.dc.content.date = '1492-05'
         obj.save()
         obj2 = repo.get_object()
-        obj2.dc.content.title = "test search object 2"
+        obj2.dc.content.title = 'test search object 2'
+        obj2.dc.content.rights = 'no photos'
         obj2.save()
-
+        # add pids to list for clean-up in tearDown
+        self.pids.extend([obj.pid, obj2.pid])
+        
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
         # search by exact pid
-        response = self.client.get(search_url, {'pid': obj.pid})
+        response = self.client.get(search_url, {'audio-pid': obj.pid})
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
@@ -261,7 +273,7 @@ class AudioViewsTest(TestCase):
 
         # search by title phrase
         response = self.client.get(search_url,
-            {'title': 'test search', 'pid': '%s:' % settings.FEDORA_PIDSPACE })
+            {'audio-title': 'test search', 'audio-pid': '%s:' % settings.FEDORA_PIDSPACE })
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
@@ -275,6 +287,64 @@ class AudioViewsTest(TestCase):
         self.assertContains(response, download_url,
                 msg_prefix="search results link to audio download")
 
+        # search by description
+        response = self.client.get(search_url, {'audio-description': 'general note'})
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertContains(response, obj.pid,
+                msg_prefix="test object 1 listed in results when searching by description")
+        self.assertNotContains(response, obj2.pid,
+                msg_prefix="test object 2 not listed in results when searching by description")
+
+        # search by date
+        response = self.client.get(search_url, {'audio-date': '1492*'})
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertContains(response, obj.pid,
+                msg_prefix="test object 1 listed in results when searching by date")
+        self.assertNotContains(response, obj2.pid,
+                msg_prefix="test object 2 not listed in results when searching by date")
+
+        # search by rights
+        response = self.client.get(search_url, {'audio-rights': 'no photos'})
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertNotContains(response, obj.pid,
+                msg_prefix="test object 1 not listed in results when searching by rights")
+        self.assertContains(response, obj2.pid,
+                msg_prefix="test object 2 listed in results when searching by rights")
+
+        # collection
+        response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri})
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertContains(response, obj.pid,
+                msg_prefix="test object 1 listed in results when searching by collection")
+        self.assertNotContains(response, obj2.pid,
+                msg_prefix="test object 2 not listed in results when searching by collection")
+        self.assertNotContains(response, self.rushdie.created,
+                msg_prefix="collection object not listed in results when searching by collection")
+
+        # multiple fields
+        response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri,
+            'audio-title': 'search', 'audio-date': '1492*'})
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, search_url))
+        self.assertContains(response, obj.pid,
+                msg_prefix="test object 1 listed in results when searching by collection + title + date")
+        self.assertNotContains(response, obj2.pid,
+                msg_prefix="test object 2 not listed in results when searching by collection + title + date")
+
     def test_download_audio(self):
         # create a test audio object
         repo = Repository()
@@ -282,6 +352,8 @@ class AudioViewsTest(TestCase):
         obj.label = "my audio test object"
         obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
         obj.save()
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
@@ -312,6 +384,9 @@ class AudioViewsTest(TestCase):
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         obj.save()
+        # add pids to list for clean-up in tearDown
+        self.pids(extend[obj.pid, obj2.pid])
+        
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 

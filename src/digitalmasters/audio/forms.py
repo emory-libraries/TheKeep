@@ -39,6 +39,7 @@ class ItemSearch(forms.Form):
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
     description = forms.CharField(required=False,
             help_text='Search for word or phrase in general note or digitization purpose.  May contain wildcards * or ?.')
+    # FIXME: should we cache these choices ? 
     collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
                     help_text="Limit to items in the specified collection.", required=False)
     pid = forms.CharField(required=False, help_text='Search by fedora pid.',
