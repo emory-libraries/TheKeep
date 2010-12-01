@@ -391,8 +391,8 @@ class AudioViewsTest(TestCase):
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         obj.save()
-        # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid])
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
         
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
