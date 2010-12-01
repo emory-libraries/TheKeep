@@ -1,8 +1,8 @@
 Installation & Upgrade instructions
 ===================================
 
-Release 0.7 - Min Items
------------------------
+Release 0.7 - Min Items, part I
+-------------------------------
 * The new batch-upload/ingest process may result in uploaded files
   that will need to be cleaned up.  There is a custom manage.py script
   to handle this which should be configured to run as a cron job.
@@ -18,6 +18,22 @@ Release 0.7 - Min Items
   settings in the localsettings example file should be configured for access
   to an eXist 1.4.x instance with Finding Aids content.  It is recommended to
   configure eXist access using guest access or a non-privileged account.
+* Dependencies changed slightly. The current version depends on an updated
+  version of eulcore, and we swapped our python-magic dependency for better
+  Windows support. Remove the old dependencies and refresh them::
+    $ . /home/euterpe/env/bin/activate
+    $ pip uninstall eulcore python-magic
+    $ pip install -r pip-dependencies
+* After installation and configuration, ensure required numbering scheme
+  objects are defined in fedora::
+    $ ./manage.py syncrepo
+* After defining numbering schemes, admins may want to load collections from
+  Finding Aids:
+    $ ./manage.py load_ead euterpe:marbl 10 59 265 494 539 558 572 579 612 \
+        616 618 622 629 644 653 663 673 682 685 687 689 741 745 771 797 \
+        800 807 832 840 845 853 855 856 869 890 892 923 926 927 932 937 \
+        960 966 968 981 1000 1002 1025 1032 1054 1056 1061
+    $ ./manage.py load_ead euterpe:university-archives 8 11 26 60 113 1002
 
 
 Release 0.6

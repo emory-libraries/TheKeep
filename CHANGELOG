@@ -1,11 +1,23 @@
-Release 0.7 - Min Items
------------------------
-Date: TBD
+Release 0.7 - Min Items, part I
+-------------------------------
+Date: December 2010
 
-Minimal functionality necessary to support storage, metadata creation,
-search and kiosk RSS feed for newly digitized sound recordings.
+**NOT FOR PRODUCTION RELEASE**
 
-[TODO: add user stories here as/when they are completed]
+Support for audio file uploads and basic descriptive metadata for for newly
+digitized sound recordings.
+
+* A curator can ingest a batch of digitized audio files so that he doesn’t
+  have to pause his workflow for several minutes for each one to upload
+  individually.
+* When a curator ingests audio files, additional metadata is generated from
+  the file’s content and stored in reposited metadata to maintain accurate
+  records.
+* A curator can use a web form to associate a digitized audio file with
+  basic “stub” descriptive metadata.
+* A system administrator deploying the application can run a script to
+  create a pre-selected list of collection objects based on the
+  corresponding Finding Aids EAD XML for those collections.
 
 
 Release 0.6
