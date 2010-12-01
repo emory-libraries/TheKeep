@@ -299,9 +299,16 @@ class TestCollectionForm(TestCase):
 
 class CollectionViewsTest(TestCase):
     fixtures =  ['users']
+    repo = Repository()
 
     def setUp(self):
         self.client = Client()
+        self.pids = []
+
+    def tearDown(self):
+        # purge any objects created by individual tests
+        for pid in self.pids:
+            self.repo.purge_object(pid)
 
     def test_create(self):
         # test creating a collection object
@@ -365,6 +372,7 @@ class CollectionViewsTest(TestCase):
         # store initial collection id from fixture
         collection_uri = obj.collection_id
         obj.save()  # save to fedora for editing
+        self.pids.append(obj.pid)
 
         # log in as staff
         # NOTE: using admin view so user credentials will be used to access fedora
@@ -444,9 +452,6 @@ class CollectionViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (non-existing pid)'
                              % (expected, code, edit_url))
 
-        # clean up - remove test object
-        repo.purge_object(obj.pid, "removing unit test object")
-
     def test_collection_search(self):
         search_url = reverse('collection:search')
 
@@ -458,52 +463,53 @@ class CollectionViewsTest(TestCase):
         esterbrook.save()
         engdocs = FedoraFixtures.englishdocs_collection()
         engdocs.save()
-        pids = [rushdie.pid, esterbrook.pid, engdocs.pid]
+        self.pids.extend([rushdie.pid, esterbrook.pid, engdocs.pid])
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
         # search by MSS #
-        response = self.client.get(search_url, {'mss': '1000'})
-        self.assertContains(response, rushdie.pid,
-                msg_prefix="Rushdie test collection object found when searching by Rushdie MSS #")
-        self.assertNotContains(response, esterbrook.pid,
-                msg_prefix="Esterbrook collection object not found when searching by Rushdie MSS #")
+        response = self.client.get(search_url, {'collection-mss': '1000'})
+        found = [o.pid for o in response.context['results']]
+        self.assert_(rushdie.pid in found,
+                "Rushdie test collection object found when searching by Rushdie MSS #")
+        self.assert_(esterbrook.pid not in found,
+                "Esterbrook collection object not found when searching by Rushdie MSS #")
 
         # search by title phrase
-        response = self.client.get(search_url, {'title': 'collection'})
-        self.assertContains(response, rushdie.pid,
-                msg_prefix="Rushdie collection found for title contains 'collection'")
-        self.assertContains(response, engdocs.pid,
-                msg_prefix="English Documents collection found for title contains 'collection'")
-        self.assertNotContains(response, esterbrook.pid,
-                msg_prefix="Esterbrook not found when searching for title contains 'collection'")
+        response = self.client.get(search_url, {'collection-title': 'collection'})
+        found = [o.pid for o in response.context['results']]
+        self.assert_(rushdie.pid in found,
+                "Rushdie collection found for title contains 'collection'")
+        self.assert_(engdocs.pid in found,
+                "English Documents collection found for title contains 'collection'")
+        self.assert_(esterbrook.pid not in found,
+                "Esterbrook not found when searching for title contains 'collection'")
 
         # search by creator
-        response = self.client.get(search_url, {'creator': 'esterbrook'})
-        self.assertNotContains(response, rushdie.pid,
-                msg_prefix="Rushdie collection not found for creator 'esterbrook'")
-        self.assertContains(response, esterbrook.pid,
-                msg_prefix="Esterbrook found when searching for creator 'esterbrook'")
+        response = self.client.get(search_url, {'collection-creator': 'esterbrook'})
+        found = [o.pid for o in response.context['results']]
+        self.assert_(rushdie.pid not in found,
+                "Rushdie collection not found for creator 'esterbrook'")
+        self.assert_(esterbrook.pid in found,
+                "Esterbrook found when searching for creator 'esterbrook'")
 
-        # search by collection
+        # search by numbering scheme
         collection = FedoraFixtures.top_level_collections[1].uri
-        response = self.client.get(search_url, {'collection': collection })
-        self.assertContains(response, rushdie.pid,
-                msg_prefix="Rushdie collection found for collection %s" % collection)
-        self.assertNotContains(response, esterbrook.pid,
-                msg_prefix="Esterbrook not found when searching for collection %s" % collection)
-        self.assertContains(response, engdocs.pid,
-                msg_prefix="English Documents collection found for collection %s" % collection)
+        response = self.client.get(search_url, {'collection-collection': collection })
+        found = [o.pid for o in response.context['results']]
+        self.assert_(rushdie.pid in found,
+                "Rushdie collection found for collection %s" % collection)
+        self.assert_(esterbrook.pid not in found,
+                "Esterbrook not found when searching for collection %s" % collection)
+        self.assert_(engdocs.pid in found,
+                "English Documents collection found for collection %s" % collection)
 
         # no match
-        response = self.client.get(search_url, {'title': 'not-a-collection' })
+        response = self.client.get(search_url, {'collection-title': 'not-a-collection' })
         self.assertContains(response, 'no results',
                 msg_prefix='Message should be displayed to user when search finds no matches')
 
-        # clean up
-        for p in pids:
-            repo.purge_object(p)
 
     def test_collection_browse(self):
         browse_url = reverse('collection:browse')
@@ -516,7 +522,7 @@ class CollectionViewsTest(TestCase):
         esterbrook.save()
         engdocs = FedoraFixtures.englishdocs_collection()
         engdocs.save()
-        pids = [rushdie.pid, esterbrook.pid, engdocs.pid]
+        self.pids.extend([rushdie.pid, esterbrook.pid, engdocs.pid])
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -537,10 +543,6 @@ class CollectionViewsTest(TestCase):
                 msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
 
         # test errors?
-
-        # clean up
-        for p in pids:
-            repo.purge_object(p)
 
 
 
