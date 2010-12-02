@@ -9,6 +9,7 @@ from time import sleep
 from django.http import HttpRequest
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
@@ -34,6 +35,8 @@ class AudioViewsTest(TestCase):
     fixtures =  ['users']
 
     def setUp(self):
+        # delete cached collections so test collections will be used
+        cache.delete(audioforms._COLLECTION_OPTIONS_CACHE_KEY)
         self.client = Client()
 
         self.rushdie = FedoraFixtures.rushdie_collection()
@@ -267,10 +270,15 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        self.assertContains(response, obj.pid,
-                msg_prefix="test object 1 listed in results when searching by pid")
-        self.assertNotContains(response, obj2.pid,
-                msg_prefix="test object 2 not listed in results when searching by pid for test object 1")
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by pid")
+        self.assert_(obj2.pid not in found,
+                "test object 2 not listed in results when searching by pid for test object 1")
+        self.assertContains(response, '''Displaying record
+1
+of 1''',
+            msg_prefix='search results include total number of records found')
 
         # search by title phrase
         response = self.client.get(search_url,
@@ -284,6 +292,10 @@ class AudioViewsTest(TestCase):
                 "test object 1 listed in results when searching by title")
         self.assert_(obj2.pid in found,
                 "test object 2 listed in results when searching by title")
+        self.assertContains(response, '''Displaying records
+1 - 2
+of 2''',
+            msg_prefix='search results include total number of records found')
 
         download_url = reverse('audio:download-audio', args=[obj.pid])
         self.assertContains(response, download_url,

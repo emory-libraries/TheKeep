@@ -1,12 +1,17 @@
 {% extends "site_base.html" %}
 {% load fedora %}
 
-{% block content-title %}Search results{% endblock %}
+{% block page-subtitle %}: Search Results{% endblock %}
+{% block content-title %}Search Results{% endblock %}
 
 {% block content-body %}
   {{ block.super }}
 
 {% if results %}
+<p>Displaying record{{ page.object_list|pluralize }}
+{{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
+of {{ page.paginator.count }}.</p>
+
 <table>
   <tr><th>PID</th><th>Title</th><th>Created</th><th>Last Modified</th></tr>
   {% for obj in results %}
@@ -33,4 +38,11 @@
 You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
 {% endif %}
 
+{% if page.paginator.num_pages > 1 %} {# if more than one page of results, display & link them #}
+  <p>Pages:
+    {% for p in page.paginator.page_range %}
+      {% if p == page.number %} {{ p }} {% else %}<a href="?{{search_opts}}&page={{p}}">{{p}}</a>{% endif %}
+    {% endfor %}
+  </p>
+{% endif %}
 {% endblock %}

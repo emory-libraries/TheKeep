@@ -8,6 +8,7 @@ import sys
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.shortcuts import render_to_response
@@ -239,8 +240,21 @@ def search(request):
             try:
                 repo = Repository(request=request)
                 found = repo.find_objects(**search_opts)
-                ctx_dict['results'] = list(found)
-        
+                paginator = Paginator(list(found), 30)
+
+                try:
+                    page = int(request.GET.get('page', '1'))
+                except ValueError:
+                    page = 1
+                try:
+                    results = paginator.page(page)
+                except (EmptyPage, InvalidPage):
+                    results = paginator.page(paginator.num_pages)
+
+                ctx_dict['results'] = results.object_list
+                ctx_dict['page'] = results
+                # pass search term query opts to view for pagination links
+                ctx_dict['search_opts'] = request.GET.urlencode()
             except:
                 response_code = 500
                 ctx_dict['server_error'] = 'There was an error ' + \
