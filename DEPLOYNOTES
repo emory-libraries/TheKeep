@@ -1,6 +1,12 @@
 Installation & Upgrade instructions
 ===================================
 
+
+Release 0.8 (?) - Min Items, part II
+-------------------------------
+* Django caching for lists based on Fedora objects requires defining a
+  CACHE_BACKEND in localsettings.py (see localsettings-sample.py)
+
 Release 0.7 - Min Items, part I
 -------------------------------
 * The new batch-upload/ingest process may result in uploaded files

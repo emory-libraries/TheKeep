@@ -1,7 +1,8 @@
 from operator import attrgetter
 import re
-
 from rdflib import URIRef
+
+from django.core.cache import cache
 
 from eulcore import xmlmap
 from eulcore.django.existdb.manager import Manager
@@ -133,22 +134,31 @@ class CollectionObject(DigitalObject):
         :returns: list of :class:`CollectionObject`
         :rtype: list
         """
+        cache_key = 'top-level-collection-pids'
+        # these objects are not expected to change frequently - caching for an hour at a time
+        # NOTE: could set a different cache duration for development environment, if useful
+        cache_duration = 60*60
+        # NOTE: can't pickle digital objects, so caching list of pids instead
+        collection_pids = cache.get(cache_key, None)
         repo = Repository()
-        # find all objects with cmodel collection-1.1 and no parents
-        query = '''SELECT ?coll
-        WHERE {
-            ?coll <%(has_model)s> <%(cmodel)s>
-            OPTIONAL { ?coll <%(member_of)s> ?parent }
-            FILTER ( ! bound(?parent) )
-        }
-        ''' % {
-            'has_model': URI_HAS_MODEL,
-            'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
-            'member_of': relsext.isMemberOfCollection,
-        }
-        collections = repo.risearch.find_statements(query, language='sparql',
-                                                         type='tuples', flush=True)
-        return [repo.get_object(result['coll'], type=CollectionObject) for result in collections]
+        if collection_pids is None:
+            # find all objects with cmodel collection-1.1 and no parents
+            query = '''SELECT ?coll
+            WHERE {
+                ?coll <%(has_model)s> <%(cmodel)s>
+                OPTIONAL { ?coll <%(member_of)s> ?parent }
+                FILTER ( ! bound(?parent) )
+            }
+            ''' % {
+                'has_model': URI_HAS_MODEL,
+                'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
+                'member_of': relsext.isMemberOfCollection,
+            }
+            collection_pids = list(repo.risearch.find_statements(query, language='sparql',
+                                                             type='tuples', flush=True))
+            cache.set(cache_key, collection_pids, cache_duration)
+
+        return [repo.get_object(result['coll'], type=CollectionObject) for result in collection_pids]
 
     @staticmethod
     def item_collections():
@@ -236,6 +246,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
         # title
         # remove trailing dates in these formats: , NNNN-NNN. , NNNN. , NNNN-
+        # TODO: get rid of regex - use unittitle *without* any content inside unitdate (circa, bulk, etc)
         title = re.sub(r',\s*\d{4}-?(\d{4})?.?$', '', unicode(self.unittitle))        
         coll.mods.content.title = title  
         # main entry/name - origination, if any

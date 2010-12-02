@@ -49,6 +49,9 @@ EXISTDB_ROOT_COLLECTION = ''
 # use this to explicitly set test collection; by default, uses collection_test
 # EXISTDB_TEST_COLLECTION = ''
 
+# django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
+CACHE_BACKEND = 'file:///tmp/euterpe_cache'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

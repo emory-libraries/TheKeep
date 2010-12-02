@@ -3,6 +3,7 @@ import logging
 import mods
 from django import forms
 from django.conf import settings
+from django.core.cache import cache
 
 from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcore.django.forms.fields import W3CDateField, DynamicChoiceField
@@ -27,11 +28,22 @@ def _cmp_collections(a, b):
                (b.pidspace, len(b.pid), b.pid))
 
 def _collection_options(include_blank=False):
-        collections = [ c for c in CollectionObject.item_collections()
-                        if c.pidspace == settings.FEDORA_PIDSPACE ]
-        collections.sort(cmp=_cmp_collections)
-        logging.debug('Calculated collections: ' + repr(collections))
-        options = [(c.uri, '%s - %s' % (c.mods.content.source_id, c.label)) for c in collections]
+        cache_key = 'collection-options'
+        # by default only cache for a minute at a time so users can see changes quickly
+        cache_duration = 60
+        # when running in development environment, cache for longer
+        if settings.DEV_ENV:
+            cache_duration = 60*30
+        options = cache.get(cache_key, None)
+        if options is None:
+            collections = [ c for c in CollectionObject.item_collections()
+                            if c.pidspace == settings.FEDORA_PIDSPACE ]
+            collections.sort(cmp=_cmp_collections)
+            logging.debug('Calculated collections: ' + repr(collections))
+            options = [(c.uri, '%s - %s' % (c.mods.content.source_id, c.label)) for c in collections]
+            cache.set(cache_key, options, cache_duration)
+
+        # if include_blank is requested, insert an empty option at the beginning of the list
         if include_blank:
             options.insert(0, ('', '--'))
         return options
