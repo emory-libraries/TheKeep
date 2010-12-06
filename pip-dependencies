@@ -1,19 +1,3 @@
-# inherited from eulcore
-lxml
-django
-mimeparse
-rdflib>=3.0
-python-dateutil
-soaplib==0.8.1
-python-ldap
-
-# local dependencies
-http://waterhouse.library.emory.edu:8080/hudson/job/python-eulcore/lastSuccessfulBuild/artifact/trunk/dist/eulcore-0.11-pre.tar.gz
+-e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/setup-dependencies
 python-magic
 pycrypto
-
-# dev dependencies
-unittest-xml-reporting
-sphinx
-coverage
-MySQL-python
