@@ -32,24 +32,68 @@ class SourceTechMeasure(_BaseSourceTech):
 class SourceTech(_BaseSourceTech):
     'Source Technical Metadata'
     ROOT_NAME = 'sourcetech'
+
+    # option lists for controlled vocabulary source tech fields
+    form_options = ('audio cassette', 'open reel tape', 'LP', 'CD', 'sound file (WAV)',
+        'sound file (MP3)', 'sound file (M4A)', 'sound file (AIFF)', 'microcassette',
+        'DAT', '78', '45 RPM', 'acetate disc', 'aluminum disc', 'glass disc',
+        'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
+        'dictabelt', 'other')
+    housing_options = ('Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
+        'Tape Cartridge', 'VHS', 'Other')
+    reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
+    reel_size_options = [(size, size) for size in reel_sizes]
+    sound_characteristic_options = ('mono', 'stereo')
+    speed_options = (
+        ('tape', (
+            ('15/16 inches/sec', '15/16 ips'),
+            ('1 7/8 inches/sec', '1 7/8 ips'),
+            ('3 3/4 inches/sec', '3 3/4 ips'),
+            ('7 1/2 inches/sec', '7 1/2 ips'),
+            ('15 inches/sec', '15 ips'),
+            ('30 inches/sec', '30 ips'),
+            )
+         ), # Other ?
+        ('phono disc', (
+            ('16 rpm', '16 rpm'),
+            ('33 1/3 rpm', '33 1/3 rpm'),
+            ('45 rpm', '45 rpm'),
+            ('78 rpm', '78 rpm'),
+            )
+        ), # other ?
+        ('cylinder disc', (
+            ('90 rpm', '90 rpm'),
+            ('120 rpm', '120 rpm'),
+            ('160 rpm', '160 rpm'), # other?
+            )
+        )
+    )
+    # NOTE: speed should be displayed as ips but saved to xml as inches/sec
+    # speed options is formatted for grouped options in django select widget
+
     # planned schema location (schema not yet available)
     #XSD_SCHEMA = 'http://pid.emory.edu/ns/2010/sourcetech/v1/sourcetech-1.xsd'
     #xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
-    note = xmlmap.StringListField('st:note[@type="general"]')
+    note = xmlmap.StringField('st:note[@type="general"]')
+    note_list = xmlmap.StringListField('st:note[@type="general"]')
     related_files = xmlmap.StringField('st:note[@type="relatedFiles"]')
-    conservation_history = xmlmap.StringListField('st:note[@type="conservationHistory"]')
-    manufacturer = xmlmap.StringListField('st:manufacturer')
+    conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]')
+    conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
+    manufacturer = xmlmap.StringField('st:manufacturer')
+    manufacturer_list = xmlmap.StringListField('st:manufacturer')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-                             SourceTechMeasure, instantiate_on_get=True)
+            SourceTechMeasure, instantiate_on_get=True)
     sublocation = xmlmap.StringField('st:sublocation')
-    form = xmlmap.StringField('st:form[@type="sound"]')
-    sound_characteristics = xmlmap.StringField('st:soundChar')
-    housing = xmlmap.StringField('st:housing[@type="sound"]')
+    form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options)
+    sound_characteristics = xmlmap.StringField('st:soundChar', choices=sound_characteristic_options)
+    housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options)
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
-                                  SourceTechMeasure, instantiate_on_get=True)
+            SourceTechMeasure, instantiate_on_get=True)
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]')
+
     
+
 
 class DigitalTech(xmlmap.XmlObject):
     # ROUGH version of xmlmap for digital technical metadata - incomplete
@@ -81,6 +125,11 @@ class AudioObject(DigitalObject):
             'versionable': True,
         })
     digtech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
+        defaults={
+            'control_group': 'M',
+            'versionable': True,
+        })
+    sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", SourceTech,
         defaults={
             'control_group': 'M',
             'versionable': True,
