@@ -275,10 +275,10 @@ def edit(request, pid):
     repo = Repository(request=request)
 
     try:
-        obj = repo.get_object(pid, type=AudioObject)        
+        obj = repo.get_object(pid, type=AudioObject)
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = audioforms.EditForm(request.POST, instance=obj)
+            form = audioforms.AudioObjectEditForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
                 # update foxml object with MODS from the form
                 form.update_instance()      # instance is reference to mods object
@@ -288,9 +288,9 @@ def edit(request, pid):
                     return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
         else:
-            # GET - display the form for editing, pre-populated with MODS content from the object
-            form = audioforms.EditForm(instance=obj)
-
+            # GET - display the form for editing, pre-populated with content from the object
+            form = audioforms.AudioObjectEditForm(instance=obj)
+        
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 

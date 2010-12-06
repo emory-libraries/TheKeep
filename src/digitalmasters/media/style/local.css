@@ -5,6 +5,18 @@ table#mods_edit table.subform {
 table#mods_edit table.subform th {
     padding-left: 5px;
 }
+table#audio-edit th {
+   width:125px;
+   vertical-align: top;
+}
+table#audio-edit tr.section-head {
+    background-color:#efefef;
+    border-bottom:3px double black;
+}
+table#audio-edit div.help-text {
+    display:inline; /* keep on same line as input if the whole text fits */
+    white-space:nowrap;
+}
 
 textarea, input.long {
     width:85%;

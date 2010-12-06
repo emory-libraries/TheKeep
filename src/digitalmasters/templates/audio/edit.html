@@ -9,39 +9,44 @@
 <p>{{ obj.pid }} - <a href="{% url audio:download-audio obj.pid %}">download audio</a></p>
 
 <form method="post" name="edit_form">{% csrf_token %}
-<table id="mods_edit">
-  <table width="100%" border="0" cellpadding="2" cellspacing="2">
-    {{ form.non_field_errors }}
+<table id="audio-edit">
+  <tr class="section-head"><th colspan="2">Descriptive Metadata</th></tr>
+  {% if form.mods.non_field_errors %}
+    <tr><td colspan="2">{{ form.non_field_errors }}</td></tr>
+  {% endif %}
+  {% for field in form %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+  {% if form.mods.non_field_errors %}
+    <tr><td colspan="2">{{ form.mods.non_field_errors }}</td></tr>
+  {% endif %}
+  {% for field in form.mods %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+  {% comment %} TODO/FIXME: something like this should work, but need a way to get subform labels
+   {% for name, subform in form.mods.subforms.items %}
     <tr>
-       <td width="125"><strong>Title:</strong> </td>
-       <td>{{ form.title }}</td>
+       <th>{{ subform.label }}{{ name }}</th>
+       <td>{{ subform.as_p }}</td>
     </tr>
-    
-    <tr>
-       <td><strong>Identifier:</strong> </td>
-       <td>{{ form.identifier }}</td>
-    </tr>
-    <tr>
-       <td><strong>Collection:</strong> </td>
-       <td>{{ form.collection }}<br><div style="font-size:px;">({{ form.collection.help_text }})</div></td>
-    </tr>
-    <tr>
-      <td><strong>Origin Info:</strong></td>
-      <td>{{ form.subforms.origin_info.as_p }}</td>
-    </tr>
-    <tr>
-      <td><strong>General Note:</strong></td>
-      <td>{{ form.subforms.general_note.as_p }}</td>
+  {% endfor %}
+  {% endcomment %}
+  <tr>
+      <th>Origin Info:</th>
+      <td>{{ form.mods.subforms.origin_info.as_p }}</td>
     </tr>
     <tr>
-      <td><strong>Part Note:</strong></td>
-      <td>{{ form.subforms.part_note.as_p }}</td>
+      <th>General Note:</th>
+      <td>{{ form.mods.subforms.general_note.as_p }}</td>
     </tr>
-  </table>
+    <tr>
+      <th>Part Note:</th>
+      <td>{{ form.mods.subforms.part_note.as_p }}</td>
+    </tr>
 
-
+    <tr class="section-head"><th colspan="2">Source Technical Metadata</th></tr>
+    {% if form.source_tech.non_field_errors %}
+      <tr><td colspan="2">{{ form.source_tech.non_field_errors }}</td></tr>
+    {% endif %}
+    {% for field in form.source_tech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
 </table>
-<center><input type="submit" value="Save" style="width:200px; height:30px; font-size:16px; font-weight:bold;"/></center>
+<input class="form-submit" type="submit" value="Save"/>
 </form>
 
 <script type="text/javascript">

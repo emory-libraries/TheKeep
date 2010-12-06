@@ -416,10 +416,10 @@ of 2''',
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, edit_url))
-        self.assert_(isinstance(response.context['form'], audioforms.EditForm),
+        self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
                 "MODS EditForm is set in response context")
-        self.assert_(isinstance(response.context['form'].instance, AudioMods),
-                "form instance is an AudioMods xmlobject")
+        self.assert_(isinstance(response.context['form'].object_instance, AudioObject),
+                "form instance is an AudioObject")
         self.assertContains(response, self.rushdie.pid)
         self.assertContains(response, self.esterbrook.pid)
         self.assertContains(response, self.englishdocs.pid)
@@ -457,6 +457,17 @@ of 2''',
                     'created-MAX_NUM_FORMS': '',
                     'created-0-date_year': '1980',
                     'created-0-date_month': '03',
+                    # source-tech data now required for form submission
+                    'note': 'general note',
+                    'related_files': '1-3',
+                    'conservation_history': 'on loan',
+                    'manufacturer': 'sony',
+                    'sublocation': 'box 2',
+                    'form': 'audio cassette',
+                    'sound_characteristics': 'mono',
+                    'housing': 'Open reel',
+                    'reel': '3',
+                    '_speed': '15/16 inches/sec',
                     }
         response = self.client.post(edit_url, mods_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
@@ -496,6 +507,9 @@ of 2''',
         obj.save("schema-invalid MODS")
         response = self.client.post(edit_url, mods_data)
         self.assertContains(response, '<ul class="errorlist">')
+
+        # TODO: add a field validation error & check that error message is displayed
+        # to test that our custom templates don't lose any built-in functionality
 
         # edit non-existent record - exception  -- TODO: should actually be a 404
         fakepid = 'bogus-pid:1'
@@ -668,10 +682,10 @@ class SourceTechTest(TestCase):
 
     def test_fields(self):
         # check field values correctly accessible from fixture
-        self.assertEqual('Right channel has squeal throughout recording.', self.sourcetech.note[0])
+        self.assertEqual('Right channel has squeal throughout recording.', self.sourcetech.note_list[0])
         self.assertEqual('a89, g3jll, 443b', self.sourcetech.related_files)
-        self.assertEqual('Repaired broken tape 2010-03-12', self.sourcetech.conservation_history[0])
-        self.assertEqual('Maxell', self.sourcetech.manufacturer[0])
+        self.assertEqual('Repaired broken tape 2010-03-12', self.sourcetech.conservation_history_list[0])
+        self.assertEqual('Maxell', self.sourcetech.manufacturer_list[0])
         self.assertEqual('inches/sec', self.sourcetech.speed.unit)
         self.assertEqual('tape', self.sourcetech.speed.aspect)
         self.assertEqual('1.875', self.sourcetech.speed.value)
@@ -689,10 +703,10 @@ class SourceTechTest(TestCase):
     def test_create(self):
         # test creating sourcetech metadata from scratch
         st = SourceTech()
-        st.note.append('general note')
+        st.note_list.append('general note')
         st.related_fields = '1, 2, 3'
-        st.conservation_history.append('loaned for digitization')
-        st.manufacturer.append('Sony')
+        st.conservation_history_list.append('loaned for digitization')
+        st.manufacturer_list.append('Sony')
         st.speed.unit = 'rpm'
         st.speed.aspect = 'phonograph disc'
         st.speed.value = '120'
