@@ -19,7 +19,8 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters import mods
 from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.models import AudioObject, AudioMods, SourceTech, SourceTechMeasure
+from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration, \
+        SourceTech, SourceTechMeasure
 from digitalmasters.audio.management.commands import ingest_cleanup
 from digitalmasters.collection.fixtures import FedoraFixtures
 
