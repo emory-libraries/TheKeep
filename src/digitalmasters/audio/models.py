@@ -17,11 +17,44 @@ class AudioMods(mods.MODS):
                                           mods.Note, instantiate_on_get=True)
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
                                           mods.Note, instantiate_on_get=True)
+
+class _BaseSourceTech(xmlmap.XmlObject):
+    'Base class for Source Technical Metadata objects'
+    ROOT_NS = 'http://pid.emory.edu/ns/2010/sourcetech'
+    ROOT_NAMESPACES = {'st': ROOT_NS }
+
+class SourceTechMeasure(_BaseSourceTech):
+    ROOT_NAME = 'measure'
+    unit = xmlmap.StringField('@unit')
+    aspect = xmlmap.StringField('@aspect')
+    value = xmlmap.StringField('.')
+
+class SourceTech(_BaseSourceTech):
+    'Source Technical Metadata'
+    ROOT_NAME = 'sourcetech'
+    # planned schema location (schema not yet available)
+    #XSD_SCHEMA = 'http://pid.emory.edu/ns/2010/sourcetech/v1/sourcetech-1.xsd'
+    #xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
+    note = xmlmap.StringListField('st:note[@type="general"]')
+    related_files = xmlmap.StringField('st:note[@type="relatedFiles"]')
+    conservation_history = xmlmap.StringListField('st:note[@type="conservationHistory"]')
+    manufacturer = xmlmap.StringListField('st:manufacturer')
+    speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
+                             SourceTechMeasure, instantiate_on_get=True)
+    sublocation = xmlmap.StringField('st:sublocation')
+    form = xmlmap.StringField('st:form[@type="sound"]')
+    sound_characteristics = xmlmap.StringField('st:soundChar')
+    housing = xmlmap.StringField('st:housing[@type="sound"]')
+    reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
+                                  SourceTechMeasure, instantiate_on_get=True)
+    # tech_note is migrate/view only
+    technical_note = xmlmap.StringListField('st:note[@type="technical"]')
     
+
 class DigitalTech(xmlmap.XmlObject):
     # ROUGH version of xmlmap for digital technical metadata - incomplete
     "Digital Technical Metadata."
-    ROOT_NS = 'http://pid.emory.edu/ns/2010/digital-tech-metadata' 
+    ROOT_NS = 'http://pid.emory.edu/ns/2010/digitaltech' 
     ROOT_NAMESPACES = {'dt': ROOT_NS }
     ROOT_NAME = 'dt'    # tentative/temporary
     date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdft"]')

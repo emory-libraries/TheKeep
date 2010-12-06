@@ -19,7 +19,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters import mods
 from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration
+from digitalmasters.audio.models import AudioObject, AudioMods, SourceTech, SourceTechMeasure
 from digitalmasters.audio.management.commands import ingest_cleanup
 from digitalmasters.collection.fixtures import FedoraFixtures
 
@@ -636,6 +636,77 @@ class TestMods(TestCase):
         invalid_mods = load_xmlobject_from_string(self.invalid_xml, mods.MODS)
         self.assertFalse(invalid_mods.is_valid())
 
+class SourceTechTest(TestCase):
+    FIXTURE = '''<?xml version="1.0" encoding="UTF-8"?>
+<st:sourcetech version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:st="http://pid.emory.edu/ns/2010/sourcetech"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/sourcetech-1.xsd">
+    <st:note type="general">Right channel has squeal throughout recording.</st:note>
+    <st:note type="relatedFiles">a89, g3jll, 443b</st:note>
+    <st:note type="conservationHistory">Repaired broken tape 2010-03-12</st:note>
+    <st:manufacturer>Maxell</st:manufacturer>
+    <st:speed>
+        <st:measure type="speed" unit="inches/sec" aspect="tape">1.875</st:measure>
+    </st:speed>
+    <st:sublocation>box 3, folder 7</st:sublocation>
+    <st:form type="sound">audio cassette</st:form>
+    <st:soundChar>mono</st:soundChar>
+    <st:stock>IMT C-60</st:stock>
+    <st:housing type="sound">Plastic container</st:housing>
+    <st:reelSize>
+        <st:measure type="width" unit="inches" aspect="reel size">3</st:measure>
+    </st:reelSize>
+    <st:note type="technical">May be a duplicate of 222</st:note>
+</st:sourcetech>'''
+
+    def setUp(self):
+        self.sourcetech = load_xmlobject_from_string(self.FIXTURE, SourceTech)
+
+    def test_init_types(self):
+        self.assert_(isinstance(self.sourcetech, SourceTech))
+        self.assert_(isinstance(self.sourcetech.speed, SourceTechMeasure))
+        self.assert_(isinstance(self.sourcetech.reel_size, SourceTechMeasure))
+
+    def test_fields(self):
+        # check field values correctly accessible from fixture
+        self.assertEqual('Right channel has squeal throughout recording.', self.sourcetech.note[0])
+        self.assertEqual('a89, g3jll, 443b', self.sourcetech.related_files)
+        self.assertEqual('Repaired broken tape 2010-03-12', self.sourcetech.conservation_history[0])
+        self.assertEqual('Maxell', self.sourcetech.manufacturer[0])
+        self.assertEqual('inches/sec', self.sourcetech.speed.unit)
+        self.assertEqual('tape', self.sourcetech.speed.aspect)
+        self.assertEqual('1.875', self.sourcetech.speed.value)
+        self.assertEqual(u'1.875', unicode(self.sourcetech.speed))
+        self.assertEqual('box 3, folder 7', self.sourcetech.sublocation)
+        self.assertEqual('audio cassette', self.sourcetech.form)
+        self.assertEqual('mono', self.sourcetech.sound_characteristics)
+        self.assertEqual('Plastic container', self.sourcetech.housing)
+        self.assertEqual('inches', self.sourcetech.reel_size.unit)
+        self.assertEqual('reel size', self.sourcetech.reel_size.aspect)
+        self.assertEqual('3', self.sourcetech.reel_size.value)
+        self.assertEqual(u'3', unicode(self.sourcetech.reel_size))
+        self.assertEqual('May be a duplicate of 222', self.sourcetech.technical_note[0])
+
+    def test_create(self):
+        # test creating sourcetech metadata from scratch
+        st = SourceTech()
+        st.note.append('general note')
+        st.related_fields = '1, 2, 3'
+        st.conservation_history.append('loaned for digitization')
+        st.manufacturer.append('Sony')
+        st.speed.unit = 'rpm'
+        st.speed.aspect = 'phonograph disc'
+        st.speed.value = '120'
+        st.sublocation = 'box 2'
+        st.form = 'CD'
+        st.sound_characteristics = 'stereo'
+        st.housing = 'Jewel case'
+        st.reel_size.unit = 'inches'
+        st.reel_size.value = '5'
+        st.technical_note.append('Recorded at Rockhill recording studio.')
+
+        # for now, just testing that all fields can be set without error
+        self.assert_('<st:sourcetech' in st.serialize())
+
+        # TODO: validate against schema when we have one
 
 # tests for (prototype) Audio DigitalObject
 class TestAudioObject(TestCase):

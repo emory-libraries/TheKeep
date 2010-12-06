@@ -6,6 +6,18 @@ Release 0.8 (?) - Min Items, part II
 -------------------------------
 * Django caching for lists based on Fedora objects requires defining a
   CACHE_BACKEND in localsettings.py (see localsettings-sample.py)
+* The namespace for Digital Technical metadata was modified; any Audio objects
+  loaded in the staging environment should be removed when this update is
+  deployed.  This can be done in the django console as follows::
+
+    python manage.py shell
+    from digitalmasters.fedora import Repository
+    from digitalmasters.audio.models import AudioObject
+    repo = Repository()
+    repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
+    objs = repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
+    for o in objs:
+        repo.purge_object(o.pid)
 
 Release 0.7 - Min Items, part I
 -------------------------------
