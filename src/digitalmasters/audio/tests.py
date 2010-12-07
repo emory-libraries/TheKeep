@@ -685,7 +685,7 @@ class SourceTechTest(TestCase):
         self.assertEqual('Right channel has squeal throughout recording.', self.sourcetech.note_list[0])
         self.assertEqual('a89, g3jll, 443b', self.sourcetech.related_files)
         self.assertEqual('Repaired broken tape 2010-03-12', self.sourcetech.conservation_history_list[0])
-        self.assertEqual('Maxell', self.sourcetech.manufacturer_list[0])
+        self.assertEqual('Maxell', self.sourcetech.manufacturer)
         self.assertEqual('inches/sec', self.sourcetech.speed.unit)
         self.assertEqual('tape', self.sourcetech.speed.aspect)
         self.assertEqual('1.875', self.sourcetech.speed.value)
@@ -693,6 +693,7 @@ class SourceTechTest(TestCase):
         self.assertEqual('box 3, folder 7', self.sourcetech.sublocation)
         self.assertEqual('audio cassette', self.sourcetech.form)
         self.assertEqual('mono', self.sourcetech.sound_characteristics)
+        self.assertEqual('IMT C-60', self.sourcetech.stock)
         self.assertEqual('Plastic container', self.sourcetech.housing)
         self.assertEqual('inches', self.sourcetech.reel_size.unit)
         self.assertEqual('reel size', self.sourcetech.reel_size.aspect)
@@ -706,13 +707,14 @@ class SourceTechTest(TestCase):
         st.note_list.append('general note')
         st.related_fields = '1, 2, 3'
         st.conservation_history_list.append('loaned for digitization')
-        st.manufacturer_list.append('Sony')
+        st.manufacturer = 'Sony'
         st.speed.unit = 'rpm'
         st.speed.aspect = 'phonograph disc'
         st.speed.value = '120'
         st.sublocation = 'box 2'
         st.form = 'CD'
         st.sound_characteristics = 'stereo'
+        st.stock = '60-min cassette'
         st.housing = 'Jewel case'
         st.reel_size.unit = 'inches'
         st.reel_size.value = '5'

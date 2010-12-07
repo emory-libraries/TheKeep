@@ -80,12 +80,12 @@ class SourceTech(_BaseSourceTech):
     conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]')
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
     manufacturer = xmlmap.StringField('st:manufacturer')
-    manufacturer_list = xmlmap.StringListField('st:manufacturer')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
             SourceTechMeasure, instantiate_on_get=True)
     sublocation = xmlmap.StringField('st:sublocation')
     form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options)
     sound_characteristics = xmlmap.StringField('st:soundChar', choices=sound_characteristic_options)
+    stock = xmlmap.StringField('st:stock')
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options)
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
             SourceTechMeasure, instantiate_on_get=True)
