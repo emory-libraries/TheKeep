@@ -159,7 +159,8 @@ class SourceTechForm(XmlObjectForm):
         # temporarily making repeating fields into single fields
         # (stringlistfields not yet supported by xmlobjectform)
         fields = ['note', 'related_files', 'conservation_history', 'manufacturer',
-            '_speed', 'sublocation', 'form', 'sound_characteristics', 'housing', 'reel']
+            '_speed', 'sublocation', 'form', 'sound_characteristics', 'stock',
+            'housing', 'reel']
 
     # TODO: handle update instance for speed, reel
 
