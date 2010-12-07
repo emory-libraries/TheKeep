@@ -161,6 +161,7 @@ class SourceTechForm(XmlObjectForm):
         fields = ['note', 'related_files', 'conservation_history', 'manufacturer',
             '_speed', 'sublocation', 'form', 'sound_characteristics', 'housing', 'reel']
 
+    # TODO: handle update instance for speed, reel
 
 class AudioObjectEditForm(forms.Form):
     """XmlObjectForm for metadata on a :class:`AudioObject`.
@@ -183,6 +184,10 @@ class AudioObjectEditForm(forms.Form):
     mods = ModsEditForm()
     source_tech = SourceTechForm()
 
+    # TODO: propagate to sub-objects/forms
+    error_css_class = 'error'
+    required_css_class = 'required'
+
     def __init__(self, data=None, instance=None, initial={}, **kwargs):       
         if instance is None:
             mods_instance = None
@@ -203,7 +208,7 @@ class AudioObjectEditForm(forms.Form):
 
         # FIXME: use prefixes to ensure uniqueness?
         self.mods = ModsEditForm(data=data, instance=mods_instance, initial=initial)
-        self.sourcetech = SourceTechForm(data=data, prefix='st', instance=st_instance, initial=initial)
+        self.sourcetech = SourceTechForm(data=data, instance=st_instance, initial=initial)
         super(AudioObjectEditForm, self).__init__(data=data, initial=initial)
         #super_init(data=data, instance=mods_instance, initial=initial, **kwargs)
 
@@ -214,8 +219,8 @@ class AudioObjectEditForm(forms.Form):
     def update_instance(self):
         # override default update to handle extra fields
         #super(AudioObjectEditForm, self).update_instance()
-        self.mods.update_instance()
-        self.sourcetech.update_instance()
+        self.object_instance.mods.content = self.mods.update_instance()
+        self.object_instance.sourcetech.content = self.sourcetech.update_instance()
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
