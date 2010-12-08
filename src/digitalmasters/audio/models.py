@@ -42,7 +42,8 @@ class SourceTech(_BaseSourceTech):
     housing_options = ('Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
         'Tape Cartridge', 'VHS', 'Other')
     reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
-    reel_size_options = [(size, size) for size in reel_sizes]
+    reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
+    reel_size_options.append((None, 'Other'))
     sound_characteristic_options = ('mono', 'stereo')
     speed_options = (
         ('tape', (

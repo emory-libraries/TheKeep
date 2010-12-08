@@ -35,28 +35,30 @@ wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
 
-    def setUp(self):
-        # delete cached collections so test collections will be used
-        cache.delete(audioforms._COLLECTION_OPTIONS_CACHE_KEY)
-        self.client = Client()
+    # delete cached collections so test collections will be used
+    cache.delete(audioforms._COLLECTION_OPTIONS_CACHE_KEY)
+    client = Client()
 
-        self.rushdie = FedoraFixtures.rushdie_collection()
-        self.rushdie.save()
-        self.esterbrook = FedoraFixtures.esterbrook_collection()
-        self.esterbrook.save()
-        self.englishdocs = FedoraFixtures.englishdocs_collection()
-        self.englishdocs.save()
+    # collection fixtures are not modified, so only load & purge once
+    rushdie = FedoraFixtures.rushdie_collection()
+    rushdie.save()
+    esterbrook = FedoraFixtures.esterbrook_collection()
+    esterbrook.save()
+    englishdocs = FedoraFixtures.englishdocs_collection()
+    englishdocs.save()
 
+    def setUp(self):        
         self.pids = []
 
     def tearDown(self):
-        FedoraFixtures.repo.purge_object(self.rushdie.pid)
-        FedoraFixtures.repo.purge_object(self.esterbrook.pid)
-        FedoraFixtures.repo.purge_object(self.englishdocs.pid)
-
         # purge any objects created by individual tests
         for pid in self.pids:
             FedoraFixtures.repo.purge_object(pid)
+
+    def __del__(self):
+        FedoraFixtures.repo.purge_object(self.rushdie.pid)
+        FedoraFixtures.repo.purge_object(self.esterbrook.pid)
+        FedoraFixtures.repo.purge_object(self.englishdocs.pid)
 
     def test_index(self):
         # test audio app index page permissions
@@ -403,6 +405,16 @@ of 2''',
         obj.mods.content.part_note.text = 'Side 1'
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
+        # pre-populate source tech metadata so we can check it in form instance
+        obj.sourcetech.content.note = 'source note'
+        obj.sourcetech.content.related_files = '1-3'
+        obj.sourcetech.content.sound_characteristics = 'mono'
+        # speed in xml maps to a single custom field
+        obj.sourcetech.content.speed.unit = 'rpm'
+        obj.sourcetech.content.speed.aspect = 'phonograph disc'
+        obj.sourcetech.content.speed.value = '120'
+        # reel size also maps to a custom field
+        obj.sourcetech.content.reel_size.value = '3'
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
@@ -438,6 +450,15 @@ of 2''',
         self.assertEqual(item_mods.origin_info.issued[0].date,
             initial_data['origin_info-issued-0-date'],
             'object MODS date issued is pre-populated in form initial data')
+        # source tech from object in initial data
+        initial_data = response.context['form'].sourcetech.initial
+        item_st = obj.sourcetech.content
+        self.assertEqual(item_st.note, initial_data['note'])
+        self.assertEqual(item_st.related_files, initial_data['related_files'])
+        self.assertEqual(item_st.sound_characteristics, initial_data['sound_characteristics'])
+        # semi-custom fields based on multiple values in initial data
+        self.assertEqual(item_st.speed.value + ' ' + item_st.speed.unit, initial_data['_speed'])
+        self.assertEqual(item_st.reel_size.value, initial_data['reel'])
 
         # POST data to update MODS in fedora
         mods_data = {'title': 'new title',
@@ -466,6 +487,7 @@ of 2''',
                     'form': 'audio cassette',
                     'sound_characteristics': 'mono',
                     'housing': 'Open reel',
+                    'stock': '60 minute cassette',
                     'reel': '3',
                     '_speed': '15/16 inches/sec',
                     }
@@ -501,6 +523,23 @@ of 2''',
             'mods date created in fedora matches posted date created')
         self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
             'collection id in fedora matches posted collection')
+
+        # check that source tech fields were updated correctly
+        st = updated_obj.sourcetech.content
+        self.assertEqual(mods_data['note'], st.note)
+        self.assertEqual(mods_data['related_files'], st.related_files)
+        self.assertEqual(mods_data['conservation_history'], st.conservation_history)
+        self.assertEqual(mods_data['manufacturer'], st.manufacturer)
+        self.assertEqual(mods_data['form'], st.form)
+        self.assertEqual(mods_data['sound_characteristics'], st.sound_characteristics)
+        self.assertEqual(mods_data['housing'], st.housing)
+        self.assertEqual(mods_data['stock'], st.stock)
+        # reel size has custom logic
+        self.assertEqual(mods_data['reel'], st.reel_size.value)
+        self.assertEqual('inches', st.reel_size.unit)
+        # speed has custom logic - 15/16 inches/sec gets split into two fields
+        self.assertEqual('15/16', st.speed.value)
+        self.assertEqual('inches/sec', st.speed.unit)
 
         # force a schema-validation error (shouldn't happen normally)
         obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, AudioMods)
