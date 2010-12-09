@@ -17,6 +17,16 @@
     <li><a href="{% url collection:browse %}">Collections</a></li>
 {% endblock %}
 
+{% block content-header %}
+ {% if user.is_authenticated %}
+   <div id="logged-in">
+     <p>Welcome, {% firstof user.first_name user.username %}.
+        <a href="{% url accounts:logout %}">Logout</a></p>
+   </div>
+ {% endif %}
+ {{ block.super }}
+{% endblock %}
+
 {% block sidebar-left %}
   {% if collection_search %}
     {% include 'collection/_search_form.html' %}

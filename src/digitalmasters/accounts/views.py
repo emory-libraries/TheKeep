@@ -4,6 +4,7 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth import views as authviews
+from django.core.urlresolvers import reverse
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,9 @@ def login(request):
         # on successful login, encrypt and store user's password to use for fedora access
         request.session['fedora_password'] = encrypt(request.POST.get('password'))
     return response
+
+def logout(request):
+    return authviews.logout(request, next_page=reverse('audio:index'))
 
 # NOTE: current encryption logic should be easily adapted to most of the
 # encryption algorithms supported by Crypto that allow for variable key length

@@ -60,3 +60,15 @@ class AccountViewsTest(TestCase):
             decrypt(self.client.session['fedora_password']),
             'user password stored in session is encrypted')
 
+    def test_logout(self):
+        index_url = reverse('audio:index')
+        logout_url = reverse('accounts:logout')
+
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(index_url)
+        self.assertContains(response, logout_url,
+            msg_prefix='when a user is logged in, response page should include logout url')
+
+        response = self.client.get(logout_url, follow=True)
+        self.assertNotContains(response, logout_url,
+            msg_prefix='when a user is not logged in, response page should not include logout url')

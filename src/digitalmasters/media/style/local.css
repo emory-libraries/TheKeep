@@ -110,3 +110,9 @@ div.help > a {
     display:none;
 }
 
+div#logged-in {
+    float:right;
+}
+div#logged-in a {
+    font-weight: bold;
+}
