@@ -1,6 +1,5 @@
 import logging
 
-import mods
 from django import forms
 from django.conf import settings
 from django.core.cache import cache
