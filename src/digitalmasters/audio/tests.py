@@ -457,7 +457,8 @@ of 2''',
         self.assertEqual(item_st.related_files, initial_data['related_files'])
         self.assertEqual(item_st.sound_characteristics, initial_data['sound_characteristics'])
         # semi-custom fields based on multiple values in initial data
-        self.assertEqual(item_st.speed.value + ' ' + item_st.speed.unit, initial_data['_speed'])
+        self.assertEqual('|'.join([item_st.speed.aspect, item_st.speed.value,
+                                  item_st.speed.unit]), initial_data['_speed'])
         self.assertEqual(item_st.reel_size.value, initial_data['reel'])
 
         # POST data to update MODS in fedora
@@ -489,7 +490,7 @@ of 2''',
                     'housing': 'Open reel',
                     'stock': '60 minute cassette',
                     'reel': '3',
-                    '_speed': '15/16 inches/sec',
+                    '_speed': 'tape|15/16|inches/sec',
                     }
         response = self.client.post(edit_url, mods_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
@@ -538,6 +539,7 @@ of 2''',
         self.assertEqual(mods_data['reel'], st.reel_size.value)
         self.assertEqual('inches', st.reel_size.unit)
         # speed has custom logic - 15/16 inches/sec gets split into two fields
+        self.assertEqual('tape', st.speed.aspect)
         self.assertEqual('15/16', st.speed.value)
         self.assertEqual('inches/sec', st.speed.unit)
 

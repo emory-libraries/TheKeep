@@ -46,28 +46,37 @@ class SourceTech(_BaseSourceTech):
     reel_size_options.append((None, 'Other'))
     sound_characteristic_options = ('mono', 'stereo')
     speed_options = (
+        # delimited format is aspect, value, unit
         ('tape', (
-            ('15/16 inches/sec', '15/16 ips'),
-            ('1 7/8 inches/sec', '1 7/8 ips'),
-            ('3 3/4 inches/sec', '3 3/4 ips'),
-            ('7 1/2 inches/sec', '7 1/2 ips'),
-            ('15 inches/sec', '15 ips'),
-            ('30 inches/sec', '30 ips'),
+            ('tape|15/16|inches/sec', '15/16 ips'),
+            ('tape|1 7/8|inches/sec', '1 7/8 ips'),
+            ('tape|3 3/4|inches/sec', '3 3/4 ips'),
+            ('tape|7 1/2|inches/sec', '7 1/2 ips'),
+            ('tape|15|inches/sec', '15 ips'),
+            ('tape|30|inches/sec', '30 ips'),
+            ('tape|other|other', 'Other'),
             )
-         ), # Other ?
+         ),
         ('phono disc', (
-            ('16 rpm', '16 rpm'),
-            ('33 1/3 rpm', '33 1/3 rpm'),
-            ('45 rpm', '45 rpm'),
-            ('78 rpm', '78 rpm'),
+            ('phono disc|16|rpm', '16 rpm'),
+            ('phono disc|33 1/3|rpm', '33 1/3 rpm'),
+            ('phono disc|45|rpm', '45 rpm'),
+            ('phono disc|78|rpm', '78 rpm'),
+            ('phono disc|other|other', 'Other'),
             )
-        ), # other ?
+        ),
         ('cylinder disc', (
-            ('90 rpm', '90 rpm'),
-            ('120 rpm', '120 rpm'),
-            ('160 rpm', '160 rpm'), # other?
-            )
-        )
+            ('cylinder disc|90|rpm', '90 rpm'),
+            ('cylinder disc|120|rpm', '120 rpm'),
+            ('cylinder disc|160|rpm', '160 rpm'),
+            ('cylinder disc|other|other', 'Other'),
+            ),
+        ),
+        ('other', (
+            ('other|other|other', 'Other'),
+            ),
+        ),
+        ('na|Not applicable|na', 'Not Applicable'),
     )
     # NOTE: speed should be displayed as ips but saved to xml as inches/sec
     # speed options is formatted for grouped options in django select widget
@@ -102,7 +111,7 @@ class SourceTech(_BaseSourceTech):
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
             SourceTechMeasure, instantiate_on_get=True, required=False)
     # tech_note is migrate/view only
-    technical_note = xmlmap.StringListField('st:note[@type="technical"]')
+    technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
 
     
 

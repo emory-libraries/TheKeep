@@ -170,7 +170,8 @@ class SourceTechForm(XmlObjectForm):
         # speed in xml maps to a single custom field
         if '_speed' not in self.initial and 'speed-value' in self.initial \
             and 'speed-unit' in self.initial:
-            self.initial['_speed'] = ' '.join([self.initial['speed-value'],
+            self.initial['_speed'] = '|'.join([self.initial['speed-aspect'],
+                                               self.initial['speed-value'],
                                                self.initial['speed-unit']])
         if 'reel' not in self.initial and 'reel_size-value' in self.initial:
             self.initial['reel'] = self.initial['reel_size-value']
@@ -185,7 +186,8 @@ class SourceTechForm(XmlObjectForm):
             if '_speed' in self.cleaned_data:
                 # format of option list is 'value unit' (e.g., 16 rpm or 15 inches/sec
                 # - split and save in appropriate fields
-                value, unit = self.cleaned_data['_speed'].rsplit(' ', 1)
+                aspect, value, unit = self.cleaned_data['_speed'].split('|')
+                self.instance.speed.aspect = aspect
                 self.instance.speed.value = value
                 self.instance.speed.unit = unit
             if 'reel' in self.cleaned_data:
@@ -209,9 +211,9 @@ class AudioObjectEditForm(forms.Form):
     deals with the MODS datastream.
     """
     collection = DynamicChoiceField(label="Collection",
-                    choices=_collection_options,
-                    help_text="Collection this item belongs to.", required=False)
-                    # using URI because it will be used to set a relation in RELS-EXT
+        choices=_collection_options, required=False,
+        help_text="Collection this item belongs to. " +
+        "Start typing collection number to let your browser search within the list.")
 
     error_css_class = 'error'
     required_css_class = 'required'
