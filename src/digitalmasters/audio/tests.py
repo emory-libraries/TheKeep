@@ -20,7 +20,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 from digitalmasters import mods
 from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration, \
-        SourceTech, SourceTechMeasure
+        SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, CodecCreator
 from digitalmasters.audio.management.commands import ingest_cleanup
 from digitalmasters.collection.fixtures import FedoraFixtures
 
@@ -764,6 +764,68 @@ class SourceTechTest(TestCase):
 
         # TODO: validate against schema when we have one
 
+class DigitalTechTest(TestCase):
+    FIXTURE = '''<?xml version="1.0" encoding="UTF-8"?>
+<dt:digitaltech version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dt="http://pid.emory.edu/ns/2010/digitaltech"  xsi="http://pid.emory.edu/ns/2010/digitaltech/v1/digitaltech-1.xsd">
+    <dt:dateCaptured encoding="w3cdtf">2010-11-29T05:13:01-05:00</dt:dateCaptured>
+    <dt:codecQuality>lossless</dt:codecQuality>
+    <dt:duration>
+        <dt:measure type="time" unit="seconds" aspect="duration of playing time">186</dt:measure>
+    </dt:duration>
+    <dt:note type="general">Interview ends at 00:33:50.  Tape silent until end.</dt:note>
+    <dt:note type="purpose of digitization">patron request</dt:note>
+    <dt:codecCreator>
+        <dt:codecCreatorID>1</dt:codecCreatorID>
+        <dt:hardware>MAC G4</dt:hardware>
+        <dt:software>DigiDesign ProTools LE</dt:software>
+        <dt:softwareVersion>5.2</dt:softwareVersion>
+    </dt:codecCreator>
+    <dt:transferEngineer id="tbunn" idType="ldap">Trey Bunn</dt:transferEngineer>
+</dt:digitaltech>'''
+
+    def setUp(self):
+        self.digitaltech = load_xmlobject_from_string(self.FIXTURE, DigitalTech)
+
+    def test_init_types(self):
+        self.assert_(isinstance(self.digitaltech, DigitalTech))
+        self.assert_(isinstance(self.digitaltech.transfer_engineer, TransferEngineer))
+        self.assert_(isinstance(self.digitaltech.codec_creator, CodecCreator))
+
+    def test_fields(self):
+        # check field values correctly accessible from fixture
+        self.assertEqual('2010-11-29T05:13:01-05:00', self.digitaltech.date_captured)
+        self.assertEqual('lossless', self.digitaltech.codec_quality)
+        self.assertEqual(186, self.digitaltech.duration)
+        self.assertEqual('Interview ends at 00:33:50.  Tape silent until end.',
+            self.digitaltech.note)
+        self.assertEqual('patron request', self.digitaltech.digitization_purpose)
+        self.assertEqual('1', self.digitaltech.codec_creator.id)
+        self.assertEqual('MAC G4', self.digitaltech.codec_creator.hardware)
+        self.assertEqual('DigiDesign ProTools LE', self.digitaltech.codec_creator.software)
+        self.assertEqual('5.2', self.digitaltech.codec_creator.software_version)
+        self.assertEqual('tbunn', self.digitaltech.transfer_engineer.id)
+        self.assertEqual('ldap', self.digitaltech.transfer_engineer.id_type)
+        self.assertEqual('Trey Bunn', self.digitaltech.transfer_engineer.name)
+
+    def test_create(self):
+        # test creating digitaltech metadata from scratch
+        dt = DigitalTech()
+        dt.date_captured = '2010-01-01'
+        dt.codec_quality = 'lossy'
+        dt.duration = 33
+        dt.note = 'Transferred slowly'
+        dt.digitization_purpose = 'Dawson exhibit'
+        dt.codec_creator.id = '2'
+        dt.codec_creator.hardware = 'Dell Optiplex'
+        dt.codec_creator.software = 'iTunes'
+        dt.codec_creator.sotfware_version = '9'
+
+        # for now, just testing that all fields can be set without error
+        self.assert_('<dt:digitaltech' in dt.serialize())
+
+        # TODO: validate against schema when we have one
+
+
 # tests for (prototype) Audio DigitalObject
 class TestAudioObject(TestCase):
     fixtures =  ['users']
@@ -824,7 +886,7 @@ class TestAudioObject(TestCase):
         general_note = 'The Inspector General generally inspects'
         self.obj.mods.content.general_note.text = general_note
         dig_purpose = 'patron request'
-        self.obj.digtech.content.digitization_purpose.append(dig_purpose)
+        self.obj.digtech.content.digitization_purpose = dig_purpose
         restriction, use = ['personal photos unavailable', 'Tuesdays only']
         self.obj.mods.content.access_conditions.extend([
             mods.AccessCondition(type='restriction', text=restriction),

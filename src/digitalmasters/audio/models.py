@@ -79,7 +79,7 @@ class SourceTech(_BaseSourceTech):
         verbose_name='General Note', help_text='General note about the physical item')
     note_list = xmlmap.StringListField('st:note[@type="general"]')
     related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False,
-        help_text='IDs of other digitized files for the same item, separated by semicolons')
+        help_text='IDs of other digitized files for the same item, separated by semicolons. Required for multi-part items.')
         # NOTE: according to spec, related_files is required if multi-part--
         # - not tracking multi-part for Min Items (that I know of)
     conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]',
@@ -106,21 +106,47 @@ class SourceTech(_BaseSourceTech):
 
     
 
-
-class DigitalTech(xmlmap.XmlObject):
-    # ROUGH version of xmlmap for digital technical metadata - incomplete
-    "Digital Technical Metadata."
-    ROOT_NS = 'http://pid.emory.edu/ns/2010/digitaltech' 
+class _BaseDigitalTech(xmlmap.XmlObject):
+    'Base class for Digital Technical Metadata objects'
+    ROOT_NS = 'http://pid.emory.edu/ns/2010/digitaltech'
     ROOT_NAMESPACES = {'dt': ROOT_NS }
-    ROOT_NAME = 'dt'    # tentative/temporary
-    date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdft"]')
-    codec_quality = xmlmap.StringField('dt:codecQuality')
-    duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]')
-    note = xmlmap.StringListField('dt:note[@type="general"]')
-    digitization_purpose = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
-    transfer_engineer = xmlmap.StringField('transferEngineerID')
-    # TODO: split out transfer engineer into sub object with attributes
-    # TODO: codec creator
+
+class TransferEngineer(_BaseDigitalTech):
+    ROOT_NAME = 'transferEngineer'
+    id = xmlmap.StringField('@id')
+    id_type = xmlmap.StringField('@idType')
+    name = xmlmap.StringField('.')
+
+class CodecCreator(_BaseDigitalTech):
+    ROOT_NAME = 'codecCreator'
+    id = xmlmap.StringField('dt:codecCreatorID')
+    hardware = xmlmap.StringField('dt:hardware')
+    software = xmlmap.StringField('dt:software')
+    software_version = xmlmap.StringField('dt:softwareVersion')
+
+class DigitalTech(_BaseDigitalTech):
+    "Digital Technical Metadata."
+    ROOT_NAME = 'digitaltech'
+    date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdtf"]',
+        help_text='Date digital capture was made', required=True)
+    codec_quality = xmlmap.StringField('dt:codecQuality', required=True,
+        help_text='Whether the data compression method was lossless or lossy')
+    duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]',
+        help_text='Duration of audio playing time', required=True)
+    # FIXME/TODO: note and digitization purpose could be plural
+    note = xmlmap.StringField('dt:note[@type="general"]', required=False,
+        help_text='Additional information that may be helpful in describing the surrogate')
+    note_list = xmlmap.StringListField('dt:note[@type="general"]')
+    digitization_purpose = xmlmap.StringField('dt:note[@type="purpose of digitization"]',
+        required=True,
+        help_text='The reason why the digital surrogate was createde (e.g., exhibit, patron request, preservation)')
+    digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
+    transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
+        instantiate_on_get=True, required=True,
+        help_text='The person who performed the digitization or conversion that produced the file')
+    codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
+        instantiate_on_get=True, required=True, # required is "Y?" in spec
+        help_text='Hardware, software, and software version used to create the digital file')
     
 
 class AudioObject(DigitalObject):
@@ -195,7 +221,7 @@ class AudioObject(DigitalObject):
             self.dc.content.description_list.append(self.mods.content.general_note.text)
         # digitization_purpose
         if self.digtech.content.digitization_purpose:
-            self.dc.content.description_list.extend(self.digtech.content.digitization_purpose)
+            self.dc.content.description_list.extend(self.digtech.content.digitization_purpose_list)
         # Currently not indexing general note in digital tech
 
         # clear out any rights previously in DC and set contents from MODS accessCondition
