@@ -1,6 +1,6 @@
 {# display a single audio edit form field - expects form field named 'field' #}
-<tr>
+<tr>     {# FIXME: CSS classes for required/error ? #}
    <th>{{ field.label }}</th>
-   <td>{{ field }} {{ field.errors }}
+   <td>{{ field }} {{ field.errors }} 
    <div class="help-text">{{ field.help_text }}</div></td>
 </tr>

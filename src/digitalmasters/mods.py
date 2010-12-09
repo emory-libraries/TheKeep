@@ -39,8 +39,13 @@ class DateIssued(Date):
 class OriginInfo(Common):
     "MODS originInfo element (incomplete)"
     ROOT_NAME = 'originInfo'
-    created = xmlmap.NodeListField('mods:dateCreated', DateCreated)
-    issued = xmlmap.NodeListField('mods:dateIssued', DateIssued)
+    created = xmlmap.NodeListField('mods:dateCreated', DateCreated,
+        verbose_name='Date Created',
+        help_text='Date the resource was first created (e.g., date of recording,' +
+            ' photograph taken, or letter written)')
+    issued = xmlmap.NodeListField('mods:dateIssued', DateIssued,
+        verbose_name='Date Created',
+        help_text='Date the resource was published, released, or issued')
 
 class Note(Common):
     "MODS note element"

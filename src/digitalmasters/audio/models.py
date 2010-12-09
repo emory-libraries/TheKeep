@@ -14,7 +14,7 @@ class AudioMods(mods.MODS):
     """AudioObject-specific MODS, based on :class:`mods.MODS`."""
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
-                                          mods.Note, instantiate_on_get=True)
+          mods.Note, instantiate_on_get=True, required=False)
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
                                           mods.Note, instantiate_on_get=True)
 
@@ -75,21 +75,32 @@ class SourceTech(_BaseSourceTech):
     # planned schema location (schema not yet available)
     #XSD_SCHEMA = 'http://pid.emory.edu/ns/2010/sourcetech/v1/sourcetech-1.xsd'
     #xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
-    note = xmlmap.StringField('st:note[@type="general"]', required=False)
+    note = xmlmap.StringField('st:note[@type="general"]', required=False,
+        verbose_name='General Note', help_text='General note about the physical item')
     note_list = xmlmap.StringListField('st:note[@type="general"]')
-    related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False)
-    conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]')
+    related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False,
+        help_text='IDs of other digitized files for the same item, separated by semicolons')
+        # NOTE: according to spec, related_files is required if multi-part--
+        # - not tracking multi-part for Min Items (that I know of)
+    conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]',
+        required=False)
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
-    manufacturer = xmlmap.StringField('st:manufacturer')
+    manufacturer = xmlmap.StringField('st:manufacturer', required=False,
+        verbose_name='Tape Manufacturer', help_text='The manufacturer of the magnetic tape')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-            SourceTechMeasure, instantiate_on_get=True)
-    sublocation = xmlmap.StringField('st:sublocation')
-    form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options, required=False)
-    sound_characteristics = xmlmap.StringField('st:soundChar', choices=sound_characteristic_options)
-    stock = xmlmap.StringField('st:stock')
-    housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options)
+        SourceTechMeasure, instantiate_on_get=True, required=True)
+    sublocation = xmlmap.StringField('st:sublocation', required=True,
+        help_text='Storage location within the collection (e.g., box and folder)')
+    form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options,
+        required=False, help_text='The physical form or medium of the resource')
+    sound_characteristics = xmlmap.StringField('st:soundChar',
+        choices=sound_characteristic_options, required=False)
+    stock = xmlmap.StringField('st:stock', verbose_name='Tape Brand/Stock',
+       help_text='The brand or stock of the magnetic tape', required=False)
+    housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
+        required=True, help_text='Type of housing for magnetic tape')
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
-            SourceTechMeasure, instantiate_on_get=True)
+            SourceTechMeasure, instantiate_on_get=True, required=False)
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]')
 

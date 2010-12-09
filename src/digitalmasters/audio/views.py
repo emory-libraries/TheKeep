@@ -290,7 +290,7 @@ def edit(request, pid):
         else:
             # GET - display the form for editing, pre-populated with content from the object
             form = audioforms.AudioObjectEditForm(instance=obj)
-        
+
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 

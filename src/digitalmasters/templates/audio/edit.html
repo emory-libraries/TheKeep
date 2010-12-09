@@ -8,9 +8,16 @@
 <h2>{{ obj.label }}</h2>
 <p>{{ obj.pid }} - <a href="{% url audio:download-audio obj.pid %}">download audio</a></p>
 
+<div id="audio-edit">
 <form method="post" name="edit_form">{% csrf_token %}
-<table id="audio-edit">
-  <tr class="section-head"><th colspan="2">Descriptive Metadata</th></tr>
+
+<a class="toggle" onClick="jQuery('#mods').toggle()">+</a> {# TODO: image/icon for toggle? #}
+<h3 class="section-head">Descriptive Metadata</h3>
+<div id="mods">    
+    {% if form.mods.non_field_errors %}
+    {{ form.mods.non_field_errors }}
+    {% endif %}
+<table class="audio-edit">
   {% if form.mods.non_field_errors %}
     <tr><td colspan="2">{{ form.non_field_errors }}</td></tr>
   {% endif %}
@@ -27,7 +34,7 @@
     </tr>
   {% endfor %}
   {% endcomment %}
-  <tr>
+  <tr id="origin_info">
       <th>Origin Info:</th>
       <td>{{ form.mods.subforms.origin_info.as_p }}</td>
     </tr>
@@ -39,17 +46,22 @@
       <th>Part Note:</th>
       <td>{{ form.mods.subforms.part_note.as_p }}</td>
     </tr>
-
-    <tr class="section-head"><th colspan="2">Source Technical Metadata</th></tr>
-    {% if form.source_tech.non_field_errors %}
-      <tr><td colspan="2">{{ form.source_tech.non_field_errors }}</td></tr>
-    {% endif %}
-    {% for field in form.source_tech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
 </table>
+</div>
+
+<a class="toggle" onClick="jQuery('#source-tech').toggle()">+</a>
+<h3 class="section-head">Source Technical Metadata</h3>
+<div id="source-tech">
+    {{ form.sourcetech.non_field_errors }}
+    <table class="audio-edit">
+        {% for field in form.sourcetech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+    </table>
+</div>
 <input class="form-submit" type="submit" value="Save"/>
 </form>
+</div>
 
 <script type="text/javascript">
-  window.onload = document.edit_form.title.focus();
+  window.onload = document.edit_form.elements[1].focus();
 </script>
 {% endblock %}
