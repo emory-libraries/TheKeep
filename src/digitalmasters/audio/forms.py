@@ -2,13 +2,15 @@ import logging
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.utils.safestring import mark_safe
 
 from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcore.django.forms.fields import W3CDateField, DynamicChoiceField
 
 from digitalmasters import mods
-from digitalmasters.audio.models import AudioMods, SourceTech
+from digitalmasters.audio.models import AudioMods, SourceTech, DigitalTech
 from digitalmasters.collection.models import CollectionObject
 
 logger = logging.getLogger(__name__)
@@ -140,7 +142,6 @@ class ModsEditForm(XmlObjectForm):
             }
 
 
-
 class SourceTechForm(XmlObjectForm):
     """Custom XmlObjectForm to edit SourceTech metadata.
     """
@@ -169,7 +170,9 @@ class SourceTechForm(XmlObjectForm):
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
         # speed in xml maps to a single custom field
         if '_speed' not in self.initial and 'speed-value' in self.initial \
-            and 'speed-unit' in self.initial:
+            and 'speed-unit' in self.initial and 'speed-aspect' in self.initial \
+            and self.initial['speed-aspect'] and self.initial['speed-value'] \
+            and self.initial['speed-unit']:
             self.initial['_speed'] = '|'.join([self.initial['speed-aspect'],
                                                self.initial['speed-value'],
                                                self.initial['speed-unit']])
@@ -198,6 +201,17 @@ class SourceTechForm(XmlObjectForm):
         # return object instance
         return self.instance
 
+class DigitalTechForm(XmlObjectForm):
+    """Custom XmlObjectForm to edit DigitalTech metadata.
+    """
+    class Meta:
+        model = DigitalTech
+        fields = ['date_captured', 'note', 'digitization_purpose']
+        widgets = {
+            'note': forms.Textarea,
+            'digitization_purpose': forms.TextInput(attrs={'class': 'long'}),
+        }
+
 class AudioObjectEditForm(forms.Form):
     """XmlObjectForm for metadata on a :class:`AudioObject`.
 
@@ -222,9 +236,11 @@ class AudioObjectEditForm(forms.Form):
         if instance is None:
             mods_instance = None
             st_instance = None
+            dt_instance = None
         else:
             mods_instance = instance.mods.content
             st_instance = instance.sourcetech.content
+            dt_instance = instance.digtech.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
@@ -239,6 +255,7 @@ class AudioObjectEditForm(forms.Form):
         # FIXME: use prefixes to ensure uniqueness? (not yet fully supported by XmlObjectForm)
         self.mods = ModsEditForm(data=data, instance=mods_instance, initial=initial)
         self.sourcetech = SourceTechForm(data=data, instance=st_instance, initial=initial)
+        self.digitaltech = DigitalTechForm(data=data, instance=dt_instance, initial=initial)
         self.mods.error_css_class = self.error_css_class
         self.sourcetech.error_css_class = self.error_css_class
         self.mods.required_css_class = self.required_css_class
@@ -248,13 +265,15 @@ class AudioObjectEditForm(forms.Form):
 
     def is_valid(self):
         return super(AudioObjectEditForm, self).is_valid() and \
-                self.mods.is_valid() and self.sourcetech.is_valid()
+                self.mods.is_valid() and self.sourcetech.is_valid() and \
+                self.digitaltech.is_valid()
 
     def update_instance(self):
         # override default update to handle extra fields
         #super(AudioObjectEditForm, self).update_instance()
         self.object_instance.mods.content = self.mods.update_instance()
         self.object_instance.sourcetech.content = self.sourcetech.update_instance()
+        self.object_instance.digtech.content = self.digitaltech.update_instance()
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance

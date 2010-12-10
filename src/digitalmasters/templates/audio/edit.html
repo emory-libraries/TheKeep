@@ -57,6 +57,17 @@
         {% for field in form.sourcetech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
     </table>
 </div>
+
+
+<a class="toggle" onClick="jQuery('#digital-tech').toggle()">+</a>
+<h3 class="section-head">Digital Technical Metadata</h3>
+<div id="digital-tech">
+    {{ form.digitaltech.non_field_errors }}
+    <table class="audio-edit">
+        {% for field in form.digitaltech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+    </table>
+</div>
+
 <input class="form-submit" type="submit" value="Save"/>
 </form>
 </div>
