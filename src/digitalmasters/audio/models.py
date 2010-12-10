@@ -3,7 +3,7 @@ from rdflib import URIRef
 import wave
 
 from eulcore import xmlmap
-from eulcore.fedora.models import FileDatastream, XmlDatastream, URI_HAS_MODEL
+from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
 
 from digitalmasters.fedora import DigitalObject, Repository

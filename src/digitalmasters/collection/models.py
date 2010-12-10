@@ -7,7 +7,8 @@ from django.core.cache import cache
 from eulcore import xmlmap
 from eulcore.django.existdb.manager import Manager
 from eulcore.django.existdb.models import XmlModel
-from eulcore.fedora.models import XmlDatastream, URI_HAS_MODEL
+from eulcore.fedora.rdfns import model as modelns
+from eulcore.fedora.models import XmlDatastream
 from eulcore.fedora.rdfns import relsext
 from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
@@ -150,7 +151,7 @@ class CollectionObject(DigitalObject):
                 FILTER ( ! bound(?parent) )
             }
             ''' % {
-                'has_model': URI_HAS_MODEL,
+                'has_model': modelns.hasModel,
                 'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
                 'member_of': relsext.isMemberOfCollection,
             }
@@ -175,7 +176,7 @@ class CollectionObject(DigitalObject):
             ?coll <%(member_of)s> ?parent
         }
         ''' % {
-            'has_model': URI_HAS_MODEL,
+            'has_model': modelns.hasModel,
             'cmodel': CollectionObject.CONTENT_MODELS[0],
             'member_of': relsext.isMemberOfCollection,
         }
@@ -198,7 +199,7 @@ class CollectionObject(DigitalObject):
             ?coll <%(member_of)s> <%(parent)s>
         }
         ''' % {
-            'has_model': URI_HAS_MODEL,
+            'has_model': modelns.hasModel,
             'cmodel': CollectionObject.CONTENT_MODELS[0],
             'member_of': relsext.isMemberOfCollection,
             'parent': self.uri,
