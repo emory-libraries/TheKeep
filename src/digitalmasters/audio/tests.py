@@ -438,61 +438,65 @@ of 2''',
 
         initial_data = response.context['form'].initial
         item_mods = obj.mods.content
-        self.assertEqual(item_mods.title, initial_data['title'],
+        self.assertEqual(item_mods.title, initial_data['mods-title'],
             'object MODS title is pre-populated in form initial data')
-        self.assertEqual(item_mods.general_note.text, initial_data['general_note-text'],
+        self.assertEqual(item_mods.general_note.text, initial_data['mods-general_note-text'],
             'object MODS general note is pre-populated in form initial data')
-        self.assertEqual(item_mods.part_note.text, initial_data['part_note-text'],
+        self.assertEqual(item_mods.part_note.text, initial_data['mods-part_note-text'],
             'object MODS part note is pre-populated in form initial data')
         self.assertEqual(item_mods.origin_info.created[0].date, 
-            initial_data['origin_info-created-0-date'],
+            initial_data['mods-origin_info-created-0-date'],
             'object MODS date created is pre-populated in form initial data')
         self.assertEqual(item_mods.origin_info.issued[0].date,
-            initial_data['origin_info-issued-0-date'],
+            initial_data['mods-origin_info-issued-0-date'],
             'object MODS date issued is pre-populated in form initial data')
         # source tech from object in initial data
         initial_data = response.context['form'].sourcetech.initial
         item_st = obj.sourcetech.content
-        self.assertEqual(item_st.note, initial_data['note'])
-        self.assertEqual(item_st.related_files, initial_data['related_files'])
-        self.assertEqual(item_st.sound_characteristics, initial_data['sound_characteristics'])
+        self.assertEqual(item_st.note, initial_data['st-note'])
+        self.assertEqual(item_st.related_files, initial_data['st-related_files'])
+        self.assertEqual(item_st.sound_characteristics, initial_data['st-sound_characteristics'])
         # semi-custom fields based on multiple values in initial data
         self.assertEqual('|'.join([item_st.speed.aspect, item_st.speed.value,
-                                  item_st.speed.unit]), initial_data['_speed'])
-        self.assertEqual(item_st.reel_size.value, initial_data['reel'])
+                                  item_st.speed.unit]), initial_data['st-_speed'])
+        self.assertEqual(item_st.reel_size.value, initial_data['st-reel'])
 
-        # POST data to update MODS in fedora
-        mods_data = {'title': 'new title',
-                    'collection': self.rushdie.uri,
-                    'note-label' : 'a general note',
-                    'general_note-text': 'remember to ...',
-                    'part_note-text': 'side A',
+        # POST data to update audio object in fedora
+        audio_data = {'collection': self.rushdie.uri,
+                    'mods-title': 'new title',
+                    'mods-note-label' : 'a general note',
+                    'mods-general_note-text': 'remember to ...',
+                    'mods-part_note-text': 'side A',
                     # 'management' form data is required for django to process formsets/subforms
-                    'issued-INITIAL_FORMS': '0',
-                    'issued-TOTAL_FORMS': '1',
-                    'issued-MAX_NUM_FORMS': '',
-                    'issued-0-date_year': '2010',
-                    'issued-0-date_month': '01',
-                    'issued-0-date_day': '11',
-                    'created-INITIAL_FORMS': '0',
-                    'created-TOTAL_FORMS': '1',
-                    'created-MAX_NUM_FORMS': '',
-                    'created-0-date_year': '1980',
-                    'created-0-date_month': '03',
+                    'mods-origin_info-issued-INITIAL_FORMS': '0',
+                    'mods-origin_info-issued-TOTAL_FORMS': '1',
+                    'mods-origin_info-issued-MAX_NUM_FORMS': '',
+                    'mods-origin_info-issued-0-date_year': '2010',
+                    'mods-origin_info-issued-0-date_month': '01',
+                    'mods-origin_info-issued-0-date_day': '11',
+                    'mods-origin_info-created-INITIAL_FORMS': '0',
+                    'mods-origin_info-created-TOTAL_FORMS': '1',
+                    'mods-origin_info-created-MAX_NUM_FORMS': '',
+                    'mods-origin_info-created-0-date_year': '1980',
+                    'mods-origin_info-created-0-date_month': '03',
                     # source-tech data now required for form submission
-                    'note': 'general note',
-                    'related_files': '1-3',
-                    'conservation_history': 'on loan',
-                    'manufacturer': 'sony',
-                    'sublocation': 'box 2',
-                    'form': 'audio cassette',
-                    'sound_characteristics': 'mono',
-                    'housing': 'Open reel',
-                    'stock': '60 minute cassette',
-                    'reel': '3',
-                    '_speed': 'tape|15/16|inches/sec',
+                    'st-note': 'general note',
+                    'st-related_files': '1-3',
+                    'st-conservation_history': 'on loan',
+                    'st-manufacturer': 'sony',
+                    'st-sublocation': 'box 2',
+                    'st-form': 'audio cassette',
+                    'st-sound_characteristics': 'mono',
+                    'st-housing': 'Open reel',
+                    'st-stock': '60 minute cassette',
+                    'st-reel': '3',
+                    'st-_speed': 'tape|15/16|inches/sec',
+                     # digital-tech data
+                    'dt-digitization_purpose': 'patron request',
+                    'dt-date_captured': '2010',    # ?? may or may not be required on the form
+                    'dt-engineer': User.objects.get(username='ldap_user').id,
                     }
-        response = self.client.post(edit_url, mods_data, follow=True)
+        response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assertEqual("Updated MODS for %s" % obj.pid, messages[0],
             "successful save message set in response context")
@@ -508,18 +512,20 @@ of 2''',
         # retrieve the modified object from Fedora to check for updates
         repo = Repository()
         updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
-        self.assertEqual(mods_data['title'], updated_obj.mods.content.title,
+        self.assertEqual(audio_data['mods-title'], updated_obj.mods.content.title,
             'mods title in fedora matches posted title')        
-        self.assertEqual(mods_data['general_note-text'], updated_obj.mods.content.general_note.text,
+        self.assertEqual(audio_data['mods-general_note-text'], updated_obj.mods.content.general_note.text,
             'mods general note text in fedora matches posted note text')
-        self.assertEqual(mods_data['part_note-text'], updated_obj.mods.content.part_note.text,
+        self.assertEqual(audio_data['mods-part_note-text'], updated_obj.mods.content.part_note.text,
             'mods part note text in fedora matches posted note text')
         # date issued and created are multi-part fields
-        issued = '-'.join([mods_data['issued-0-date_year'], mods_data['issued-0-date_month'],
-            mods_data['issued-0-date_day']])
+        issued = '-'.join([audio_data['mods-origin_info-issued-0-date_year'],
+            audio_data['mods-origin_info-issued-0-date_month'],
+            audio_data['mods-origin_info-issued-0-date_day']])
         self.assertEqual(issued, updated_obj.mods.content.origin_info.issued[0].date,
             'mods issued date in fedora matches posted issued date')
-        created = '-'.join([mods_data['created-0-date_year'], mods_data['created-0-date_month']])
+        created = '-'.join([audio_data['mods-origin_info-created-0-date_year'],
+            audio_data['mods-origin_info-created-0-date_month']])
         self.assertEqual(created, updated_obj.mods.content.origin_info.created[0].date,
             'mods date created in fedora matches posted date created')
         self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
@@ -527,16 +533,16 @@ of 2''',
 
         # check that source tech fields were updated correctly
         st = updated_obj.sourcetech.content
-        self.assertEqual(mods_data['note'], st.note)
-        self.assertEqual(mods_data['related_files'], st.related_files)
-        self.assertEqual(mods_data['conservation_history'], st.conservation_history)
-        self.assertEqual(mods_data['manufacturer'], st.manufacturer)
-        self.assertEqual(mods_data['form'], st.form)
-        self.assertEqual(mods_data['sound_characteristics'], st.sound_characteristics)
-        self.assertEqual(mods_data['housing'], st.housing)
-        self.assertEqual(mods_data['stock'], st.stock)
+        self.assertEqual(audio_data['st-note'], st.note)
+        self.assertEqual(audio_data['st-related_files'], st.related_files)
+        self.assertEqual(audio_data['st-conservation_history'], st.conservation_history)
+        self.assertEqual(audio_data['st-manufacturer'], st.manufacturer)
+        self.assertEqual(audio_data['st-form'], st.form)
+        self.assertEqual(audio_data['st-sound_characteristics'], st.sound_characteristics)
+        self.assertEqual(audio_data['st-housing'], st.housing)
+        self.assertEqual(audio_data['st-stock'], st.stock)
         # reel size has custom logic
-        self.assertEqual(mods_data['reel'], st.reel_size.value)
+        self.assertEqual(audio_data['st-reel'], st.reel_size.value)
         self.assertEqual('inches', st.reel_size.unit)
         # speed has custom logic - 15/16 inches/sec gets split into two fields
         self.assertEqual('tape', st.speed.aspect)
@@ -546,7 +552,7 @@ of 2''',
         # force a schema-validation error (shouldn't happen normally)
         obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, AudioMods)
         obj.save("schema-invalid MODS")
-        response = self.client.post(edit_url, mods_data)
+        response = self.client.post(edit_url, audio_data)
         self.assertContains(response, '<ul class="errorlist">')
 
         # TODO: add a field validation error & check that error message is displayed

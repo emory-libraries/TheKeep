@@ -169,15 +169,22 @@ class SourceTechForm(XmlObjectForm):
         super(SourceTechForm, self).__init__(**kwargs)
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
         # speed in xml maps to a single custom field
-        if '_speed' not in self.initial and 'speed-value' in self.initial \
-            and 'speed-unit' in self.initial and 'speed-aspect' in self.initial \
-            and self.initial['speed-aspect'] and self.initial['speed-value'] \
-            and self.initial['speed-unit']:
-            self.initial['_speed'] = '|'.join([self.initial['speed-aspect'],
-                                               self.initial['speed-value'],
-                                               self.initial['speed-unit']])
-        if 'reel' not in self.initial and 'reel_size-value' in self.initial:
-            self.initial['reel'] = self.initial['reel_size-value']
+
+        speed = self.add_prefix('_speed')
+        speed_value = self.add_prefix('speed-value')
+        speed_aspect = self.add_prefix('speed-aspect')
+        speed_unit = self.add_prefix('speed-unit')
+        if speed not in self.initial and speed_value in self.initial \
+            and speed_unit in self.initial and speed_aspect in self.initial \
+            and self.initial[speed_aspect] and self.initial[speed_value] \
+            and self.initial[speed_unit]:
+            self.initial[speed] = '|'.join([self.initial[speed_aspect],
+                                               self.initial[speed_value],
+                                               self.initial[speed_unit]])
+        reel = self.add_prefix('reel')
+        reel_value = self.add_prefix('reel_size-value')
+        if reel not in self.initial and reel_value in self.initial:
+            self.initial[reel] = self.initial[reel_value]
 
     def update_instance(self):
         # override default update to handle extra fields
@@ -193,6 +200,7 @@ class SourceTechForm(XmlObjectForm):
                 self.instance.speed.aspect = aspect
                 self.instance.speed.value = value
                 self.instance.speed.unit = unit
+
             if 'reel' in self.cleaned_data:
                 self.instance.reel_size.value = self.cleaned_data['reel']
                 # for now, all values are inches - may need to refine later
@@ -201,16 +209,55 @@ class SourceTechForm(XmlObjectForm):
         # return object instance
         return self.instance
 
+class UserChoiceField(forms.ModelChoiceField):
+    'Extend django choice field to set a custom label for displaying user objects'
+    def label_from_instance(self, obj):
+        return '%s (%s)' % (', '.join([obj.last_name, obj.first_name]),
+                            obj.username)
+
 class DigitalTechForm(XmlObjectForm):
     """Custom XmlObjectForm to edit DigitalTech metadata.
     """
+    engineer = UserChoiceField(label='Transfer Engineer',
+        queryset=User.objects.filter(password='!').order_by('last_name'),
+        # limit to LDAP users (no password in django db) and sort by last name
+        help_text=mark_safe('''The person who performed the digitization or
+        conversion that produced the file.<br/>
+        Search by typing first letters of the last name.
+        (Users must log in to this site once to be listed.)'''))
     class Meta:
         model = DigitalTech
-        fields = ['date_captured', 'note', 'digitization_purpose']
+        fields = ['date_captured', 'note', 'digitization_purpose', 'engineer']
         widgets = {
             'note': forms.Textarea,
             'digitization_purpose': forms.TextInput(attrs={'class': 'long'}),
         }
+
+    def __init__(self, **kwargs):
+        super(DigitalTechForm, self).__init__(**kwargs)
+        # populate initial data for fields not auto-generated & handled by XmlObjectForm
+        engineer = self.add_prefix('engineer')
+        engineer_id = self.add_prefix('transfer_engineer-id')
+        if engineer_id in self.initial and self.initial[engineer_id]:
+            # find corresponding User object based on transfer engineer id (ldap only for now)
+            self.initial[engineer] = User.objects.get(username=self.initial[engineer_id]).id
+
+    def update_instance(self):
+        # override default update to handle extra fields
+        super(DigitalTechForm, self).update_instance()
+
+        # cleaned data only available when the form is valid,
+        # but xmlobjectform is_valid calls update_instance
+        if hasattr(self, 'cleaned_data'):
+            # set transfer engineer id and name based on User object
+            user = self.cleaned_data['engineer']
+            self.instance.transfer_engineer.id = user.username
+            self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
+            self.instance.transfer_engineer.name = user.get_full_name()
+            
+        # return object instance
+        return self.instance
+
 
 class AudioObjectEditForm(forms.Form):
     """XmlObjectForm for metadata on a :class:`AudioObject`.
@@ -252,10 +299,11 @@ class AudioObjectEditForm(forms.Form):
             # passed-in initial values override ones calculated here
             initial.update(orig_initial)
 
+        common_opts = {'data': data, 'initial': initial}
         # FIXME: use prefixes to ensure uniqueness? (not yet fully supported by XmlObjectForm)
-        self.mods = ModsEditForm(data=data, instance=mods_instance, initial=initial)
-        self.sourcetech = SourceTechForm(data=data, instance=st_instance, initial=initial)
-        self.digitaltech = DigitalTechForm(data=data, instance=dt_instance, initial=initial)
+        self.mods = ModsEditForm(instance=mods_instance, prefix='mods', **common_opts)
+        self.sourcetech = SourceTechForm(instance=st_instance, prefix='st', **common_opts)
+        self.digitaltech = DigitalTechForm(instance=dt_instance, prefix='dt', **common_opts)
         self.mods.error_css_class = self.error_css_class
         self.sourcetech.error_css_class = self.error_css_class
         self.mods.required_css_class = self.required_css_class

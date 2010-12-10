@@ -15,5 +15,23 @@
       "email": "euterpe@library.emory.edu",
       "date_joined": "2010-05-28 16:55:27"
     }
+  },
+  {
+    "pk": 4,
+    "model": "auth.user",
+    "fields": {
+      "username": "ldap_user",
+      "first_name": "",
+      "last_name": "",
+      "is_active": true,
+      "is_superuser": true,
+      "is_staff": true,
+      "last_login": "2010-05-28 16:55:27",
+      "groups": [],
+      "user_permissions": [],
+      "password": "!",
+      "email": "euterpe@library.emory.edu",
+      "date_joined": "2010-05-28 16:55:27"
+    }
   }
 ]
