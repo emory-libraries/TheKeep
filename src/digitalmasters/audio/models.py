@@ -128,6 +128,18 @@ class TransferEngineer(_BaseDigitalTech):
 
 class CodecCreator(_BaseDigitalTech):
     ROOT_NAME = 'codecCreator'
+    configurations = {
+        # current format is     id :  hardware, software, software version
+        '1': ('Mac G4', 'DigiDesign ProTools LE',  '5.2'),
+        '2': ('Mac G5', 'DigiDesign ProTools LE',  '6.7'),
+        '3': ('Dell Optiplex 755', 'Apogee Rosetta',  '200'),
+        '4': ('Dell Optiplex 755', 'Sound Forge',  '9.0'),
+        '5': ('Dell Optiplex 755', 'iTunes',  None),
+        '6': ('Unknown', 'Unknown',  None),
+    }
+    options = [(id, '%s - %s %s' % (c[0], c[1], c[2] if c[2] is not None else ''))
+                    for id, c in configurations.iteritems()]
+
     id = xmlmap.StringField('dt:codecCreatorID')
     hardware = xmlmap.StringField('dt:hardware')
     software = xmlmap.StringField('dt:software')

@@ -10,7 +10,7 @@ from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_fact
 from eulcore.django.forms.fields import W3CDateField, DynamicChoiceField
 
 from digitalmasters import mods
-from digitalmasters.audio.models import AudioMods, SourceTech, DigitalTech
+from digitalmasters.audio.models import AudioMods, SourceTech, DigitalTech, CodecCreator
 from digitalmasters.collection.models import CollectionObject
 
 logger = logging.getLogger(__name__)
@@ -225,9 +225,12 @@ class DigitalTechForm(XmlObjectForm):
         conversion that produced the file.<br/>
         Search by typing first letters of the last name.
         (Users must log in to this site once to be listed.)'''))
+    hardware = forms.ChoiceField(CodecCreator.options, label='Codec Creator',
+                    help_text='Hardware, software, and software version used to create the digital file',
+                    required=False) # TBD: required is "Y?" in spec
     class Meta:
         model = DigitalTech
-        fields = ['date_captured', 'note', 'digitization_purpose', 'engineer']
+        fields = ['date_captured', 'note', 'digitization_purpose', 'engineer', 'hardware']
         widgets = {
             'note': forms.Textarea,
             'digitization_purpose': forms.TextInput(attrs={'class': 'long'}),
@@ -242,6 +245,11 @@ class DigitalTechForm(XmlObjectForm):
             # find corresponding User object based on transfer engineer id (ldap only for now)
             self.initial[engineer] = User.objects.get(username=self.initial[engineer_id]).id
 
+        hardware = self.add_prefix('hardware')
+        codec_creator_id = self.add_prefix('codec_creator-id')
+        if codec_creator_id in self.initial:
+            self.initial[hardware] = self.initial[codec_creator_id]
+
     def update_instance(self):
         # override default update to handle extra fields
         super(DigitalTechForm, self).update_instance()
@@ -254,6 +262,17 @@ class DigitalTechForm(XmlObjectForm):
             self.instance.transfer_engineer.id = user.username
             self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
             self.instance.transfer_engineer.name = user.get_full_name()
+
+            cc_id = self.cleaned_data['hardware']
+            # TODO: correct logic once we know for sure if required or not
+            if cc_id:
+                hardware, software, version = CodecCreator.configurations[cc_id]
+                self.instance.codec_creator.id = cc_id
+                self.instance.codec_creator.hardware = hardware
+                self.instance.codec_creator.software = software
+                self.instance.codec_creator.software_version = version
+            # if not required, should unset / remove if not set
+
             
         # return object instance
         return self.instance
@@ -309,7 +328,6 @@ class AudioObjectEditForm(forms.Form):
         self.mods.required_css_class = self.required_css_class
         self.sourcetech.required_css_class = self.required_css_class
         super(AudioObjectEditForm, self).__init__(data=data, initial=initial)
-        #super_init(data=data, instance=mods_instance, initial=initial, **kwargs)
 
     def is_valid(self):
         return super(AudioObjectEditForm, self).is_valid() and \
