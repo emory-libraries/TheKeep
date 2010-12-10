@@ -148,7 +148,7 @@ class DigitalTech(_BaseDigitalTech):
     note_list = xmlmap.StringListField('dt:note[@type="general"]')
     digitization_purpose = xmlmap.StringField('dt:note[@type="purpose of digitization"]',
         required=True,
-        help_text='The reason why the digital surrogate was createde (e.g., exhibit, patron request, preservation)')
+        help_text='The reason why the digital surrogate was created (e.g., exhibit, patron request, preservation)')
     digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
     transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
         instantiate_on_get=True, required=True,
