@@ -195,16 +195,16 @@ COLLECTION_DATA = {
     'name-type': 'personal',
     'name-authority': 'local',
     # 'management' form data is required for django to process formsets
-    'name_parts-INITIAL_FORMS': '0',
-    'name_parts-TOTAL_FORMS': '1',
-    'name_parts-MAX_NUM_FORMS': '',
-    'name_parts-0-text':'Mr. So and So',
-    'roles-TOTAL_FORMS': '1',
-    'roles-INITIAL_FORMS': '0',
-    'roles-MAX_NUM_FORMS': '',
-    'roles-0-authority': 'local',
-    'roles-0-type': 'text',
-    'roles-0-text': 'curator',
+    'name-name_parts-INITIAL_FORMS': '0',
+    'name-name_parts-TOTAL_FORMS': '1',
+    'name-name_parts-MAX_NUM_FORMS': '',
+    'name-name_parts-0-text':'Mr. So and So',
+    'name-roles-TOTAL_FORMS': '1',
+    'name-roles-INITIAL_FORMS': '0',
+    'name-roles-MAX_NUM_FORMS': '',
+    'name-roles-0-authority': 'local',
+    'name-roles-0-type': 'text',
+    'name-roles-0-text': 'curator',
 }
 
 class TestCollectionForm(TestCase):
