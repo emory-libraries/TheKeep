@@ -191,7 +191,7 @@ class AudioViewsTest(TestCase):
         self.assertEqual('example.wav', new_obj.label,
             'initial object label set from original file name (not temporary upload filename)')
         # check that init from file worked correctly
-        self.assertEqual(3, new_obj.digtech.content.duration,
+        self.assertEqual(3, new_obj.digitaltech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
             
     def test_upload_fallback(self):
@@ -242,7 +242,7 @@ class AudioViewsTest(TestCase):
             self.assertEqual(wav.read(), new_obj.audio.content.read(),
                 "audio file content on new object corresponds to uploaded file data")
             # check that init from file worked correctly
-            self.assertEqual(3, new_obj.digtech.content.duration,
+            self.assertEqual(3, new_obj.digitaltech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
                     
     def test_search(self):
@@ -493,7 +493,7 @@ of 2''',
                     'st-_speed': 'tape|15/16|inches/sec',
                      # digital-tech data
                     'dt-digitization_purpose': 'patron request',
-                    'dt-date_captured': '2010',    # ?? may or may not be required on the form
+                    'dt-date_captured_year': '2010',
                     'dt-engineer': User.objects.get(username='ldap_user').id,
                     'dt-hardware': '3',
                     }
@@ -551,9 +551,9 @@ of 2''',
         self.assertEqual('inches/sec', st.speed.unit)
 
         # check that digital tech fields were updated correctly
-        dt = updated_obj.digtech.content
+        dt = updated_obj.digitaltech.content
         self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
-        self.assertEqual(audio_data['dt-date_captured'], dt.date_captured)
+        self.assertEqual(audio_data['dt-date_captured_year'], dt.date_captured)
         engineer = User.objects.get(username='ldap_user')
         self.assertEqual('ldap', dt.transfer_engineer.id_type)
         self.assertEqual(engineer.username, dt.transfer_engineer.id)
@@ -572,7 +572,7 @@ of 2''',
         response = self.client.post(edit_url, data)
         # get the latest copy of the object 
         updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
-        dt = updated_obj.digtech.content
+        dt = updated_obj.digitaltech.content
         # codec creator - id 4 only has one two hardware and no software version
         hardware, software, version = CodecCreator.configurations[data['dt-hardware']]
         self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
@@ -928,7 +928,7 @@ class TestAudioObject(TestCase):
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
     def test_update_dc(self):
-        # set values in MODS, RELS-EXT, digtech
+        # set values in MODS, RELS-EXT, digitaltech
         title, res_type = 'new title in mods', 'text'
         self.obj.mods.content.title = title
         self.obj.mods.content.resource_type = res_type
@@ -938,7 +938,7 @@ class TestAudioObject(TestCase):
         general_note = 'The Inspector General generally inspects'
         self.obj.mods.content.general_note.text = general_note
         dig_purpose = 'patron request'
-        self.obj.digtech.content.digitization_purpose = dig_purpose
+        self.obj.digitaltech.content.digitization_purpose = dig_purpose
         restriction, use = ['personal photos unavailable', 'Tuesdays only']
         self.obj.mods.content.access_conditions.extend([
             mods.AccessCondition(type='restriction', text=restriction),
@@ -966,7 +966,7 @@ class TestAudioObject(TestCase):
         del(self.obj.mods.content.origin_info.created)
         del(self.obj.mods.content.origin_info.issued)
         del(self.obj.mods.content.general_note)
-        del(self.obj.digtech.content.digitization_purpose)
+        del(self.obj.digitaltech.content.digitization_purpose)
         del(self.obj.mods.content.access_conditions)
         self.obj._update_dc()
         self.assertEqual([], self.obj.dc.content.date_list,
@@ -1014,10 +1014,10 @@ class TestAudioObject(TestCase):
         self.assertEqual('sound recording', new_obj.mods.content.resource_type,
             'mods:typeOfResource initialized to "sound recording"')
         # codec quality
-        self.assertEqual('lossless', new_obj.digtech.content.codec_quality,
+        self.assertEqual('lossless', new_obj.digitaltech.content.codec_quality,
             'codec quality should be initialized to "lossless"')
         # duration
-        self.assertEqual(3, new_obj.digtech.content.duration,
+        self.assertEqual(3, new_obj.digitaltech.content.duration,
             'duration should be calculated and stored in duration, rounded to the nearest second')
 
         # specify an initial label

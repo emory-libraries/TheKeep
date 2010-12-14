@@ -183,7 +183,7 @@ class AudioObject(DigitalObject):
             'mimetype': 'audio/x-wav',
             'versionable': True,
         })
-    digtech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
+    digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
         defaults={
             'control_group': 'M',
             'versionable': True,
@@ -198,7 +198,7 @@ class AudioObject(DigitalObject):
 
     def save(self, logMessage=None):
         if self.mods.isModified() or self.rels_ext.isModified or \
-            self.digtech.isModified():
+            self.digitaltech.isModified():
             # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
             # if any of them have changed, update DC
             self._update_dc()
@@ -236,13 +236,13 @@ class AudioObject(DigitalObject):
 
         # FIXME: detect if origin info is empty & remove it so we don't get invalid MODS
 
-        # clear out any descriptions previously in DC and set from MODS/DigTech
+        # clear out any descriptions previously in DC and set from MODS/digitaltech
         del(self.dc.content.description_list)
         if self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
         # digitization_purpose
-        if self.digtech.content.digitization_purpose:
-            self.dc.content.description_list.extend(self.digtech.content.digitization_purpose_list)
+        if self.digitaltech.content.digitization_purpose:
+            self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
         # Currently not indexing general note in digital tech
 
         # clear out any rights previously in DC and set contents from MODS accessCondition
@@ -292,9 +292,9 @@ class AudioObject(DigitalObject):
         obj.mods.content.resource_type = 'sound recording'
         # set codec quality to lossless in digital tech metadata 
         # - default for AudioObjects, should only accept lossless audio for master file
-        obj.digtech.content.codec_quality = 'lossless'
+        obj.digitaltech.content.codec_quality = 'lossless'
         # get wav duration and store in digital tech metadata
-        obj.digtech.content.duration = '%d' % round(wav_duration(filename))
+        obj.digitaltech.content.duration = '%d' % round(wav_duration(filename))
 
         return obj
 

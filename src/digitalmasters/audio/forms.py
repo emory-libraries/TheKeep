@@ -228,6 +228,7 @@ class DigitalTechForm(XmlObjectForm):
     hardware = forms.ChoiceField(CodecCreator.options, label='Codec Creator',
                     help_text='Hardware, software, and software version used to create the digital file',
                     required=True)
+    date_captured = W3CDateField(help_text='Date digital capture was made', required=True)
     class Meta:
         model = DigitalTech
         fields = ['date_captured', 'note', 'digitization_purpose', 'engineer', 'hardware']
@@ -312,7 +313,7 @@ class AudioObjectEditForm(forms.Form):
         else:
             mods_instance = instance.mods.content
             st_instance = instance.sourcetech.content
-            dt_instance = instance.digtech.content
+            dt_instance = instance.digitaltech.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
@@ -345,7 +346,7 @@ class AudioObjectEditForm(forms.Form):
         #super(AudioObjectEditForm, self).update_instance()
         self.object_instance.mods.content = self.mods.update_instance()
         self.object_instance.sourcetech.content = self.sourcetech.update_instance()
-        self.object_instance.digtech.content = self.digitaltech.update_instance()
+        self.object_instance.digitaltech.content = self.digitaltech.update_instance()
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
