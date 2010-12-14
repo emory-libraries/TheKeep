@@ -297,7 +297,7 @@ def edit(request, pid):
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 
-    except:
+    except RequestFailed:
         # FIXME: should 404 when object is not found
         # eventually we will need better error handling... 
         # this could mean the object doesn't exist OR it exists but has no

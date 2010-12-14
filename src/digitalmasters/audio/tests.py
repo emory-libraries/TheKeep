@@ -415,6 +415,16 @@ of 2''',
         obj.sourcetech.content.speed.value = '120'
         # reel size also maps to a custom field
         obj.sourcetech.content.reel_size.value = '3'
+        # pre-populate digital tech metadata
+        obj.digitaltech.content.date_captured = '2008'
+        obj.digitaltech.content.codec_quality = 'lossy'
+        obj.digitaltech.content.note = 'technician details'
+        obj.digitaltech.content.digitization_purpose = 'dawson exhibit'
+        # retrieve test user object to use for transfer engineer - also used to test
+        ldap_user = User.objects.get(username='ldap_user')
+        # engineer & codec creator are initialized based on id values
+        obj.digitaltech.content.transfer_engineer.id = ldap_user.username
+        obj.digitaltech.content.codec_creator.id = '1'
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
@@ -460,6 +470,15 @@ of 2''',
         self.assertEqual('|'.join([item_st.speed.aspect, item_st.speed.value,
                                   item_st.speed.unit]), initial_data['st-_speed'])
         self.assertEqual(item_st.reel_size.value, initial_data['st-reel'])
+        # digital tech from object initial data
+        initial_data = response.context['form'].digitaltech.initial
+        item_dt = obj.digitaltech.content
+        self.assertEqual(item_dt.date_captured, initial_data['dt-date_captured'])
+        self.assertEqual(item_dt.codec_quality, initial_data['dt-codec_quality'])
+        self.assertEqual(item_dt.note, initial_data['dt-note'])
+        self.assertEqual(item_dt.digitization_purpose, initial_data['dt-digitization_purpose'])
+        self.assertEqual(ldap_user.id, initial_data['dt-engineer'])
+        self.assertEqual(item_dt.codec_creator.id, initial_data['dt-hardware'])
 
         # POST data to update audio object in fedora
         audio_data = {'collection': self.rushdie.uri,
@@ -494,7 +513,7 @@ of 2''',
                      # digital-tech data
                     'dt-digitization_purpose': 'patron request',
                     'dt-date_captured_year': '2010',
-                    'dt-engineer': User.objects.get(username='ldap_user').id,
+                    'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
                     }
         response = self.client.post(edit_url, audio_data, follow=True)
@@ -553,11 +572,10 @@ of 2''',
         # check that digital tech fields were updated correctly
         dt = updated_obj.digitaltech.content
         self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
-        self.assertEqual(audio_data['dt-date_captured_year'], dt.date_captured)
-        engineer = User.objects.get(username='ldap_user')
+        self.assertEqual(audio_data['dt-date_captured_year'], dt.date_captured)        
         self.assertEqual('ldap', dt.transfer_engineer.id_type)
-        self.assertEqual(engineer.username, dt.transfer_engineer.id)
-        self.assertEqual(engineer.get_full_name(), dt.transfer_engineer.name)
+        self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
+        self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
         # codec creator - used id 3, which has two hardware fields
         hardware, software, version = CodecCreator.configurations[audio_data['dt-hardware']]
         self.assertEqual(audio_data['dt-hardware'], dt.codec_creator.id)
