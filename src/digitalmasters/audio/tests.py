@@ -495,7 +495,7 @@ of 2''',
                     'dt-digitization_purpose': 'patron request',
                     'dt-date_captured': '2010',    # ?? may or may not be required on the form
                     'dt-engineer': User.objects.get(username='ldap_user').id,
-                    'dt-hardware': 1,
+                    'dt-hardware': '3',
                     }
         response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
@@ -549,6 +549,37 @@ of 2''',
         self.assertEqual('tape', st.speed.aspect)
         self.assertEqual('15/16', st.speed.value)
         self.assertEqual('inches/sec', st.speed.unit)
+
+        # check that digital tech fields were updated correctly
+        dt = updated_obj.digtech.content
+        self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
+        self.assertEqual(audio_data['dt-date_captured'], dt.date_captured)
+        engineer = User.objects.get(username='ldap_user')
+        self.assertEqual('ldap', dt.transfer_engineer.id_type)
+        self.assertEqual(engineer.username, dt.transfer_engineer.id)
+        self.assertEqual(engineer.get_full_name(), dt.transfer_engineer.name)
+        # codec creator - used id 3, which has two hardware fields
+        hardware, software, version = CodecCreator.configurations[audio_data['dt-hardware']]
+        self.assertEqual(audio_data['dt-hardware'], dt.codec_creator.id)
+        self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
+        self.assertEqual(hardware[1], dt.codec_creator.hardware_list[1])
+        self.assertEqual(software, dt.codec_creator.software)
+        self.assertEqual(version, dt.codec_creator.software_version)
+
+        # change data and confirm codec creator is updated correctly
+        data = audio_data.copy()
+        data['dt-hardware'] = '4' # only one hardware, no software version
+        response = self.client.post(edit_url, data)
+        # get the latest copy of the object 
+        updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
+        dt = updated_obj.digtech.content
+        # codec creator - id 4 only has one two hardware and no software version
+        hardware, software, version = CodecCreator.configurations[data['dt-hardware']]
+        self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
+        self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
+        self.assertEqual(1, len(dt.codec_creator.hardware_list)) # should only be one now
+        self.assertEqual(software, dt.codec_creator.software)
+        self.assertEqual(None, dt.codec_creator.software_version)
 
         # test logic for save and continue editing
         data = audio_data.copy()

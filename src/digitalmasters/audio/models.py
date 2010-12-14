@@ -133,8 +133,8 @@ class CodecCreator(_BaseDigitalTech):
         '1': ( ('Mac G4',), 'DigiDesign ProTools LE',  '5.2'),
         '2': ( ('Mac G5',), 'DigiDesign ProTools LE',  '6.7'),
         '3': (('Dell Optiplex 755', 'Apogee Rosetta 200'), 'Sound Forge',  '9.0'),
-        '5': (('Dell Optiplex 755',), 'iTunes',  None),
-        '6': (('Unknown',), 'Unknown',  None),
+        '4': (('Dell Optiplex 755',), 'iTunes',  None),
+        '5': (('Unknown',), 'Unknown',  None),
     }
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
                     for id, c in configurations.iteritems()]
