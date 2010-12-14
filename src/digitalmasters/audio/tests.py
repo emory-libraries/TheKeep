@@ -495,6 +495,7 @@ of 2''',
                     'dt-digitization_purpose': 'patron request',
                     'dt-date_captured': '2010',    # ?? may or may not be required on the form
                     'dt-engineer': User.objects.get(username='ldap_user').id,
+                    'dt-hardware': 1,
                     }
         response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
@@ -549,11 +550,23 @@ of 2''',
         self.assertEqual('15/16', st.speed.value)
         self.assertEqual('inches/sec', st.speed.unit)
 
+        # test logic for save and continue editing
+        data = audio_data.copy()
+        data['_save_continue'] = True   # simulate submit via 'save and continue' button
+        response = self.client.post(edit_url, data)
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assertEqual('Updated MODS for %s' % obj.pid, messages[0],
+            'successful audio update message displayed to user on save and continue editing')
+        self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
+                "MODS EditForm is set in response context after save and continue editing")
+
         # force a schema-validation error (shouldn't happen normally)
         obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, AudioMods)
         obj.save("schema-invalid MODS")
         response = self.client.post(edit_url, audio_data)
         self.assertContains(response, '<ul class="errorlist">')
+
+
 
         # TODO: add a field validation error & check that error message is displayed
         # to test that our custom templates don't lose any built-in functionality

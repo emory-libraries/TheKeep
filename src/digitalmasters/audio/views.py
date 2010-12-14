@@ -284,8 +284,11 @@ def edit(request, pid):
                 form.update_instance()      # instance is reference to mods object
                 if obj.mods.content.is_valid():
                     obj.save()
+                    # TODO: correct this message (also update unit test that looks for it)
                     messages.success(request, 'Updated MODS for %s' % pid)
-                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
+                    # save & continue functionality - same as collection edit
+                    if '_save_continue' not in request.POST:
+                        return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with content from the object
