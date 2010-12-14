@@ -263,20 +263,26 @@ class DigitalTechForm(XmlObjectForm):
             self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
             self.instance.transfer_engineer.name = user.get_full_name()
 
+            # set codec creator
             cc_id = self.cleaned_data['hardware']
-            # TODO: correct logic once we know for sure if required or not
+            # required, so should always be present and overwrite any previous data
             if cc_id:
                 hardware, software, version = CodecCreator.configurations[cc_id]
                 self.instance.codec_creator.id = cc_id
-                self.instance.codec_creator.hardware = hardware
+                # hardware may be multiple, so treat as a list
+                for old_hw in self.instance.codec_creator.hardware_list:
+                    self.instance.codec_creator.hardware_list.remove(old_hw)
+                self.instance.codec_creator.hardware_list.extend(hardware)
                 self.instance.codec_creator.software = software
                 self.instance.codec_creator.software_version = version
-            # if not required, should unset / remove if not set
 
             
         # return object instance
         return self.instance
 
+
+# TODO: standardize on empty label
+# django default (for ModelChoiceField at least) is "---------"
 
 class AudioObjectEditForm(forms.Form):
     """XmlObjectForm for metadata on a :class:`AudioObject`.
