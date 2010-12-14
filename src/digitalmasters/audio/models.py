@@ -166,7 +166,7 @@ class DigitalTech(_BaseDigitalTech):
         instantiate_on_get=True, required=True,
         help_text='The person who performed the digitization or conversion that produced the file')
     codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
-        instantiate_on_get=True, required=True, # required is "Y?" in spec
+        instantiate_on_get=True, required=True,
         help_text='Hardware, software, and software version used to create the digital file')
     
 

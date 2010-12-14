@@ -227,7 +227,7 @@ class DigitalTechForm(XmlObjectForm):
         (Users must log in to this site once to be listed.)'''))
     hardware = forms.ChoiceField(CodecCreator.options, label='Codec Creator',
                     help_text='Hardware, software, and software version used to create the digital file',
-                    required=False) # TBD: required is "Y?" in spec
+                    required=True)
     class Meta:
         model = DigitalTech
         fields = ['date_captured', 'note', 'digitization_purpose', 'engineer', 'hardware']
