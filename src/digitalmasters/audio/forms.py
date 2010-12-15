@@ -28,6 +28,8 @@ def _cmp_collections(a, b):
     return cmp((a.pidspace, len(a.pid), a.pid),
                (b.pidspace, len(b.pid), b.pid))
 
+EMPTY_LABEL_TEXT = ''
+
 _COLLECTION_OPTIONS_CACHE_KEY = 'collection-options'
 def _collection_options(include_blank=False):
         # by default only cache for a minute at a time so users can see changes quickly
@@ -46,7 +48,7 @@ def _collection_options(include_blank=False):
 
         # if include_blank is requested, insert an empty option at the beginning of the list
         if include_blank:
-            options.insert(0, ('', '--'))
+            options.insert(0, ('', EMPTY_LABEL_TEXT))
         return options
 
 def _collection_options_with_blank():
@@ -220,6 +222,7 @@ class DigitalTechForm(XmlObjectForm):
     """
     engineer = UserChoiceField(label='Transfer Engineer',
         queryset=User.objects.filter(password='!').order_by('last_name'),
+        empty_label=EMPTY_LABEL_TEXT,
         # limit to LDAP users (no password in django db) and sort by last name
         help_text=mark_safe('''The person who performed the digitization or
         conversion that produced the file.<br/>
@@ -280,10 +283,6 @@ class DigitalTechForm(XmlObjectForm):
             
         # return object instance
         return self.instance
-
-
-# TODO: standardize on empty label
-# django default (for ModelChoiceField at least) is "---------"
 
 class AudioObjectEditForm(forms.Form):
     """XmlObjectForm for metadata on a :class:`AudioObject`.
