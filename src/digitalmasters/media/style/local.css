@@ -12,10 +12,27 @@ table.audio-edit th {
 #audio-edit .section-head {
     background-color:#efefef;
     border-bottom:3px double black;
+    padding-left: 8px;
+    padding-bottom: 5px;
 }
+#audio-edit .toggle {
+    background-image: url('../genlib_media/style/images/menu-expanded.png');
+    background-position: 99% 50%;    /* nearly right edge */
+    background-repeat: no-repeat;
+    padding: 5px;
+}
+#audio-edit .collapsed {
+    background-image: url('../genlib_media/style/images/menu-collapsed.png');
+}
+
 table.audio-edit div.help-text {
     display:inline; /* keep on same line as input if the whole text fits */
     white-space:nowrap;
+    color: gray;
+}
+table.audio-edit select {
+    width: 15em; /* close to default text input length */
+    /* NOTE: setting text input default length messes up YYYY-MM-DD text inputs */
 }
 
 textarea, input.long {
@@ -30,14 +47,6 @@ input.readonly {
     font-weight:bold;
     float:left;
     clear:left;
-}
-
-#audio-edit .toggle {
-    font-size: 14px;
-    font-weight: bold;
-    display:block;
-    float:right;
-    padding: 5px;
 }
 
 div#sidebar-left-inner > div {

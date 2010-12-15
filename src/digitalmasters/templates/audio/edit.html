@@ -1,18 +1,28 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: Edit Record : {{ obj.label }}{% endblock %}
-{% block content-title %}Edit Record{% endblock %}
+{% block page-subtitle %}: Edit Audio File : {{ obj.label }}{% endblock %}
+{% block content-title %}Edit Audio File{% endblock %}
 
 {% block content-body %}
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p>{{ obj.pid }} - <a href="{% url audio:download-audio obj.pid %}">download audio</a></p>
+<script type="text/javascript">
+    /* simple javascript section to toggle display of sections and label css classes */
+    function toggle_section(section_id, toggle_id) {
+        var section = jQuery(section_id);
+        section.toggle();
+        var label = jQuery(toggle_id);
+        label.toggleClass('collapsed', section.is(':hidden'));
+    }
+</script>
 
 <div id="audio-edit">
 <form method="post" name="edit_form">{% csrf_token %}
 
-<a class="toggle" onClick="jQuery('#mods').toggle()">+</a> {# TODO: image/icon for toggle? #}
-<h3 class="section-head">Descriptive Metadata</h3>
+<a onClick="javascript:toggle_section('#mods', '#mods-label');"> {#jQuery('#mods').toggle()"> #}
+  <h3 id="mods-label" class="section-head toggle open">Descriptive Metadata</h3>
+</a>
 <div id="mods">    
     {% if form.mods.non_field_errors %}
     {{ form.mods.non_field_errors }}
@@ -49,8 +59,9 @@
 </table>
 </div>
 
-<a class="toggle" onClick="jQuery('#source-tech').toggle()">+</a>
-<h3 class="section-head">Source Technical Metadata</h3>
+<a onClick="javascript:toggle_section('#source-tech', '#source-tech-label')">
+  <h3 id="source-tech-label" class="section-head toggle">Source Technical Metadata</h3>
+</a>
 <div id="source-tech">
     {{ form.sourcetech.non_field_errors }}
     <table class="audio-edit">
@@ -58,9 +69,9 @@
     </table>
 </div>
 
-
-<a class="toggle" onClick="jQuery('#digital-tech').toggle()">+</a>
-<h3 class="section-head">Digital Technical Metadata</h3>
+<a onClick="javascript:toggle_section('#digital-tech', '#digital-tech-label')">
+  <h3 id="digital-tech-label" class="section-head toggle">Digital Technical Metadata</h3>
+</a>
 <div id="digital-tech">
     {{ form.digitaltech.non_field_errors }}
     <table class="audio-edit">
