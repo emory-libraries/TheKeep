@@ -62,18 +62,19 @@ if 'VIRTUAL_ENV' in os.environ:
     TEMPLATE_DIRS.append(genlib_path)
 
 INSTALLED_APPS = (
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.admin',
+    'django.contrib.sessions',
+    'django.contrib.sites',
     'eulcore.django.emory_ldap',
-    'eulcore.django.util',
-    'eulcore.django.testsetup',
-    'eulcore.django.fedora',
     'eulcore.django.existdb',
-    'digitalmasters.audio',
+    'eulcore.django.fedora',
+    'eulcore.django.testsetup',
+    'eulcore.django.util',
     'digitalmasters.accounts',
+    'digitalmasters.audio',
     'digitalmasters.collection',
 )
 

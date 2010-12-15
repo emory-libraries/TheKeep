@@ -19,6 +19,14 @@ from digitalmasters.collection.models import CollectionObject
 from digitalmasters.fedora import Repository
 
 @permission_required('is_staff')
+def view(request, pid):
+    # this view isn't implemented yet, but we want to be able to use the
+    # uri. so if someone requests the uri, send them straight to the edit
+    # page for now.
+    return HttpResponseSeeOtherRedirect(reverse('collection:edit',
+                kwargs={'pid': pid}))
+
+@permission_required('is_staff')
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
     :class:`~digitalmasters.collection.models.CollectionObject` with MODS
@@ -75,7 +83,7 @@ def edit(request, pid=None):
             raise Http404
         # otherwise, re-raise and handle as a common fedora connection error
         else:
-            raise e
+            raise
 
     context = {'form': form}
     if pid is not None:

@@ -1,7 +1,7 @@
 from operator import attrgetter
 import re
-from rdflib import URIRef
 
+from rdflib import URIRef
 from django.core.cache import cache
 
 from eulcore import xmlmap
@@ -33,6 +33,7 @@ class CollectionMods(mods.MODS):
 class CollectionObject(DigitalObject):
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
+    NEW_OBJECT_VIEW = 'collection:view'
 
     mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
             'control_group': 'M',

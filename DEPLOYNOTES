@@ -4,12 +4,16 @@ Installation & Upgrade instructions
 
 Release 0.8 (?) - Min Items, part II
 -------------------------------
+* The app now depends on the standard django ``sites`` module. This module
+  stores some data in the relational database. To initialize it, sync the db::
+    $ ./manage.py syncdb
+  After restarting the web app, configure the default site by replacing the
+  ``example.com`` domain with the domain of the live webapp.
 * Django caching for lists based on Fedora objects requires defining a
   CACHE_BACKEND in localsettings.py (see localsettings-sample.py)
 * The namespace for Digital Technical metadata was modified; any Audio objects
   loaded in the staging environment should be removed when this update is
   deployed.  This can be done in the django console as follows::
-
     python manage.py shell
     from digitalmasters.fedora import Repository
     from digitalmasters.audio.models import AudioObject
@@ -18,6 +22,15 @@ Release 0.8 (?) - Min Items, part II
     objs = repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
     for o in objs:
         repo.purge_object(o.pid)
+* Support added for fetching new object pids from the pid manager. To
+  configure it, add the following configuration options::
+    PIDMAN_HOST = 'https://pid.emory.edu/' # the web root where we'll ask for pids
+    PIDMAN_USER = 'exampleuser'
+    PIDMAN_PASSWORD = 'examplepass'
+    PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
+  Note that commenting or removing any of these will raise an error if the
+  ``DEV_ENV`` setting is ``False`` (as is normal for a production install).
+
 
 Release 0.7 - Min Items, part I
 -------------------------------

@@ -270,6 +270,14 @@ def search(request):
     return response
 
 @permission_required('is_staff')
+def view(request, pid):
+    # this view isn't implemented yet, but we want to be able to use the
+    # uri. so if someone requests the uri, send them straight to the edit
+    # page for now.
+    return HttpResponseSeeOtherRedirect(reverse('audio:edit',
+                kwargs={'pid': pid}))
+
+@permission_required('is_staff')
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~digitalmasters.audio.models.AudioObject`.'''
     repo = Repository(request=request)

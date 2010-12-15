@@ -49,6 +49,12 @@ EXISTDB_ROOT_COLLECTION = ''
 # use this to explicitly set test collection; by default, uses collection_test
 # EXISTDB_TEST_COLLECTION = ''
 
+# pidman PID generation
+PIDMAN_HOST = 'https://pid.emory.edu/' # the web root where we'll ask for pids
+PIDMAN_USER = 'exampleuser'
+PIDMAN_PASSWORD = 'examplepass'
+PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
+
 # django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
 CACHE_BACKEND = 'file:///tmp/euterpe_cache'
 

@@ -173,6 +173,7 @@ class DigitalTech(_BaseDigitalTech):
 class AudioObject(DigitalObject):
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'
     CONTENT_MODELS = [ AUDIO_CONTENT_MODEL ]
+    NEW_OBJECT_VIEW = 'audio:view'
 
     mods = XmlDatastream("MODS", "MODS Metadata", AudioMods, defaults={
             'control_group': 'M',
