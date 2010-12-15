@@ -228,7 +228,7 @@ class DigitalTechForm(XmlObjectForm):
         conversion that produced the file.<br/>
         Search by typing first letters of the last name.
         (Users must log in to this site once to be listed.)'''))
-    hardware = forms.ChoiceField(CodecCreator.options, label='Codec Creator',
+    hardware = forms.ChoiceField(sorted(CodecCreator.options), label='Codec Creator',
                     help_text='Hardware, software, and software version used to create the digital file',
                     required=True)
     date_captured = W3CDateField(help_text='Date digital capture was made', required=True)
