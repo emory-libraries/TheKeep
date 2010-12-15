@@ -15,6 +15,9 @@ table.audio-edit th {
     padding-left: 8px;
     padding-bottom: 5px;
 }
+#audio-edit td, #audio-edit table {
+    border: none;   /* suppress inherited borders */
+}
 #audio-edit .toggle {
     background-image: url('../genlib_media/style/images/menu-expanded.png');
     background-position: 99% 50%;    /* nearly right edge */
@@ -31,11 +34,11 @@ table.audio-edit div.help-text {
     color: gray;
 }
 table.audio-edit select {
-    width: 15em; /* close to default text input length */
+    min-width: 15em; /* close to default text input length in Firefox */
     /* NOTE: setting text input default length messes up YYYY-MM-DD text inputs */
 }
 
-textarea, input.long {
+textarea, input.long, select.long {
     width:85%;
 }
 input.readonly {
