@@ -6,7 +6,14 @@
 {% block content-body %}
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
-<p>{{ obj.pid }} - <a href="{% url audio:download-audio obj.pid %}">download audio</a></p>
+<p class='extra'>
+  {% if obj and obj.ark %}
+    This file is <a href='{{obj.ark_access_uri}}'>{{obj.ark}}</a>.
+  {% else %}
+    This file has no ARK. Its pid is {{obj.pid}}.
+  {% endif %}
+  <a href="{% url audio:download-audio obj.pid %}">download audio</a>
+</p>
 <script type="text/javascript">
     /* simple javascript section to toggle display of sections and label css classes */
     function toggle_section(section_id, toggle_id) {

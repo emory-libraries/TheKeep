@@ -28,6 +28,10 @@ table.audio-edit th {
     background-image: url('../genlib_media/style/images/menu-collapsed.png');
 }
 
+.extra {
+  color: gray;
+}
+
 table.audio-edit div.help-text {
     display:inline; /* keep on same line as input if the whole text fits */
     white-space:nowrap;

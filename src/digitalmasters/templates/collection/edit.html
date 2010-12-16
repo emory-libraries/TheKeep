@@ -4,6 +4,15 @@
 {% block content-title %}{% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
 
 {% block content-body %}
+{% with form.object_instance as obj %}
+  <p class='extra'>
+    {% if obj and obj.ark %}
+      This collection is <a href='{{obj.ark_access_uri}}'>{{obj.ark}}</a>.
+    {% else %}
+      This collection has no ARK. Its pid is {{obj.pid}}.
+    {% endif %}
+  </p>
+{% endwith %}
 <form method="post">{% csrf_token %}
 <table id="mods_edit">
 {{ form.as_table }}

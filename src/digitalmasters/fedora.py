@@ -7,6 +7,17 @@ from eulcore.django.fedora import server
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from digitalmasters.accounts.views import decrypt
 
+# try to configure a pidman client to get pids.
+try:
+    pidman = DjangoPidmanRestClient()
+except:
+    # if we're in dev mode then we can fall back on the fedora default
+    # pid allocator. in non-dev, though, we really need pidman
+    if getattr(settings, 'DEV_ENV', False):
+        pidman = None
+    else:
+        raise
+
 class DigitalObject(models.DigitalObject):
     """Extend the default fedora DigitalObject class. Objects derived from
     this one will automatically have their owner set to
@@ -22,11 +33,47 @@ class DigitalObject(models.DigitalObject):
 
     default_owner = getattr(settings, 'FEDORA_OBJECT_OWNERID', None)
 
+    def __init__(self, *args, **kwargs):
+        super(DigitalObject, self).__init__(*args, **kwargs)
+        self._default_target_data = None
+
     def _init_as_new_object(self):
         super(DigitalObject, self)._init_as_new_object()
 
         if self.default_owner:
             self.info.owner = self.default_owner
+
+    @property
+    def noid(self):
+        pidspace, noid = self.pid.split(':')
+        return noid
+
+    @property
+    def ark(self):
+        idx = self.ark_access_uri.find('ark:')
+        if idx < 0: # this would be an error in pidman-derived data
+            return None
+        return self.ark_access_uri[idx:]
+
+    @property
+    def ark_access_uri(self):
+        return self.default_target_data['access_uri']
+
+    @property
+    def default_target_data(self):
+        if self._default_target_data is None:
+            try:
+                ark_data = pidman.get_ark(self.noid)
+            except:
+                return None
+            ark_uri = ark_data['uri']
+            default_target = ark_uri + '/'
+            for target in ark_data['targets']:
+                if target['uri'] == default_target:
+                    self._default_target_data = target
+                    break
+
+        return self._default_target_data
 
 
 class Repository(server.Repository):
@@ -37,17 +84,6 @@ class Repository(server.Repository):
     """
 
     default_object_type = DigitalObject
-
-    # try to configure a pidman client to get pids.
-    try:
-        pidman = DjangoPidmanRestClient()
-    except:
-        # if we're in dev mode then we can fall back on the fedora default
-        # pid allocator. in non-dev, though, we really need pidman
-        if getattr(settings, 'DEV_ENV', False):
-            pidman = None
-        else:
-            raise
 
     def __init__(self, username=None, password=None, request=None):        
         if request is not None and request.user.is_authenticated() and \
@@ -60,7 +96,7 @@ class Repository(server.Repository):
         # if no pid is specified, and if we're on speaking terms with
         # pidman, then tell the eulcore Repository code that we want to use
         # pidman for this object's pid.
-        if pid is None and self.pidman is not None:
+        if pid is None and pidman is not None:
             pid = self.pid_getter(type)
 
         super_get = super(Repository, self).get_object
@@ -76,7 +112,7 @@ class Repository(server.Repository):
         # generate the new pid the first time the new object is saved
         def get_next_pid():
             # ask pidman for a new ark in the configured pidman domain
-            ark = self.pidman.create_ark(settings.PIDMAN_DOMAIN, target)
+            ark = pidman.create_ark(settings.PIDMAN_DOMAIN, target)
             # grab the noid from the tail end of the ark
             arkbase, slash, noid = ark.rpartition('/')
             # and construct a pid in the configured pidspace
