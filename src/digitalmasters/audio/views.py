@@ -24,7 +24,7 @@ from digitalmasters.fedora import Repository
 
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
-allowed_audio_types = ['audio/x-wav']
+allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
 def index(request):
