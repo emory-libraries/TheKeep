@@ -1,7 +1,8 @@
-from operator import attrgetter
+import logging
 import re
-
 from rdflib import URIRef
+
+from django.conf import settings
 from django.core.cache import cache
 
 from eulcore import xmlmap
@@ -15,6 +16,7 @@ from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 from digitalmasters import mods
 from digitalmasters.fedora import DigitalObject, Repository
 
+logger = logging.getLogger(__name__)
 
 class CollectionMods(mods.MODS):
     """Collection-specific MODS, based on :class:`mods.MODS`."""
@@ -84,7 +86,10 @@ class CollectionObject(DigitalObject):
             # if either has changed, update DC and object label to keep them in sync
             self._update_dc()
 
-        return super(CollectionObject, self).save(logMessage)
+        save_result = super(CollectionObject, self).save(logMessage)
+        # after a collection is successfully saved, update the cache
+        set_cached_collection_dict(self)
+        return save_result
 
     @property
     def collection_id(self):
@@ -164,9 +169,11 @@ class CollectionObject(DigitalObject):
 
     @staticmethod
     def item_collections():
-        """Find all collection objects that can contain items. Today this
-        includes all those collections that are not top-level.
-        :returns: list of :class:`CollectionObject`
+        """Find all collection objects in the configured Fedora pidspace that
+        can contain items. Today this includes all those collections that are
+        not top-level.
+        
+        :returns: list of dict
         :rtype: list
         """
         repo = Repository()
@@ -183,15 +190,17 @@ class CollectionObject(DigitalObject):
         }
         collection_pids = repo.risearch.find_statements(query, language='sparql',
                                                         type='tuples', flush=True)
-        collections = [ repo.get_object(result['coll'], type=CollectionObject)
-                        for result in collection_pids ]
-        return collections
+        return [get_cached_collection_dict(result['coll'])
+                        for result in collection_pids
+                            if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
+        # use dictsort and regroupe in templates for sorting where appropriate
 
     def subcollections(self):
-        """Find all sub-collections that are members of the current collection.
+        """Find all sub-collections that are members of the current collection
+        in the configured Fedora pidspace.
 
-        :rtype: list of :class:`CollectionObject`
-        """
+        :rtype: list of dict
+        """        
         repo = Repository()
         # find all objects with cmodel collection-1.1 and this object for parent
         query = '''SELECT ?coll
@@ -207,13 +216,44 @@ class CollectionObject(DigitalObject):
         }
         collection_pids = repo.risearch.find_statements(query, language='sparql',
                                                          type='tuples', flush=True)
-        collections = [repo.get_object(result['coll'], type=CollectionObject)
-                                            for result in collection_pids]
-        # for now, very simple sort on source identifier (MSS###)
-        collections = sorted(collections, key=attrgetter('mods.content.source_id'))
-        return collections
+        return [get_cached_collection_dict(result['coll'])
+                        for result in collection_pids
+                            if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
+        # use dictsort in template for sorting where appropriate
 
+def get_cached_collection_dict(pid):
+    '''Retrieve minimal collection object information in dictionary form.
+    A cached copy will be used when available; when not previously cached,
+    the dictionary will be stored in the cache.
 
+    :param pid: collection object pid or uri
+    :rtype: dict
+    '''  
+    if pid.startswith('info:fedora/'): # allow passing in uri
+        pid = pid[len('info:fedora/'):]        
+    # use pid for cache key
+    coll_dict = cache.get(pid, None)
+    if coll_dict is None:
+        repo = Repository()
+        coll_dict = set_cached_collection_dict(repo.get_object(pid, type=CollectionObject))
+    return coll_dict
+
+def set_cached_collection_dict(collection):
+    cache_duration = 60*60  # FIXME: make this configurable ? keep for a long time, since we will recache
+    # DigitalObjects can't be cached, and django templates can sort and regroup
+    # dictionaries much better, so cache important collction info as dictionary 
+    coll_dict = {
+        'pid': collection.pid,
+        'label': collection.label,
+        'source_id': collection.mods.content.source_id,
+        'title': unicode(collection.mods.content.title),
+        'creator': unicode(collection.mods.content.name),
+        'collection_id': collection.collection_id,
+        'collection_label': collection.collection_label,
+    }
+    logger.debug('caching collection %s: %r' % (collection.pid, coll_dict))
+    cache.set(collection.pid, coll_dict, cache_duration)
+    return coll_dict
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
     """

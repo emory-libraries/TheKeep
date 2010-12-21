@@ -138,11 +138,8 @@ class CollectionObjectTest(TestCase):
 
         with self.ingest_test_collections():
             collections = CollectionObject.item_collections()
-            self.assert_(isinstance(collections[0], CollectionObject),
-                    "item collection is instance of CollectionObject")
 
-            source_ids = [ coll.mods.content.source_id
-                           for coll in collections ]
+            source_ids = [ coll['source_id']  for coll in collections ]
             self.assert_(1000 in source_ids,
                     "MSS# 1000 included in item collections")
             self.assert_(123 in source_ids,
@@ -150,7 +147,7 @@ class CollectionObjectTest(TestCase):
             self.assert_(309 in source_ids,
                     "MSS# 309 included in item collections")
 
-            pids = [ coll.pid for coll in collections ]
+            pids = [ coll['pid'] for coll in collections ]
             top_levels = CollectionObject.top_level()
             self.assert_(top_levels[0].pid not in pids,
                     "top level collection %s should not be in item collections." % (top_levels[0].pid,))
@@ -158,11 +155,8 @@ class CollectionObjectTest(TestCase):
     def test_subcollections(self):
         with self.ingest_test_collections():
             # rushdie & engdocs are in the same collection
-            collection = self.repo.get_object(type=CollectionObject, pid=self.rushdie.collection_id)
-            subcolls = collection.subcollections()
-            self.assert_(isinstance(subcolls[0], CollectionObject),
-                "subcollections methods returns instances of CollectionObject")
-            subcoll_pids = [coll.pid for coll in subcolls]
+            collection = self.repo.get_object(type=CollectionObject, pid=self.rushdie.collection_id)            
+            subcoll_pids = [coll['pid'] for coll in collection.subcollections()]
             self.assert_(self.rushdie.pid in subcoll_pids,
                 "rushdie should be included in subcollection for %s" % collection.pid)
             self.assert_(self.engdocs.pid in subcoll_pids,
@@ -173,7 +167,7 @@ class CollectionObjectTest(TestCase):
             # esterbrook is in a different collection
             collection = self.repo.get_object(type=CollectionObject, pid=self.esterbrook.collection_id)
             subcolls = collection.subcollections()
-            subcoll_pids = [coll.pid for coll in subcolls]
+            subcoll_pids = [coll['pid'] for coll in subcolls]
             self.assert_(self.rushdie.pid not in subcoll_pids,
                 "rushdie should be excluded from subcollections for %s" % collection.pid)
             self.assert_(self.engdocs.pid not in subcoll_pids,
@@ -470,7 +464,7 @@ class CollectionViewsTest(TestCase):
 
         # search by MSS #
         response = self.client.get(search_url, {'collection-mss': '1000'})
-        found = [o.pid for o in response.context['results']]
+        found = [o['pid'] for o in response.context['results']]
         self.assert_(rushdie.pid in found,
                 "Rushdie test collection object found when searching by Rushdie MSS #")
         self.assert_(esterbrook.pid not in found,
@@ -478,7 +472,7 @@ class CollectionViewsTest(TestCase):
 
         # search by title phrase
         response = self.client.get(search_url, {'collection-title': 'collection'})
-        found = [o.pid for o in response.context['results']]
+        found = [o['pid'] for o in response.context['results']]
         self.assert_(rushdie.pid in found,
                 "Rushdie collection found for title contains 'collection'")
         self.assert_(engdocs.pid in found,
@@ -488,7 +482,7 @@ class CollectionViewsTest(TestCase):
 
         # search by creator
         response = self.client.get(search_url, {'collection-creator': 'esterbrook'})
-        found = [o.pid for o in response.context['results']]
+        found = [o['pid'] for o in response.context['results']]
         self.assert_(rushdie.pid not in found,
                 "Rushdie collection not found for creator 'esterbrook'")
         self.assert_(esterbrook.pid in found,
@@ -497,7 +491,7 @@ class CollectionViewsTest(TestCase):
         # search by numbering scheme
         collection = FedoraFixtures.top_level_collections[1].uri
         response = self.client.get(search_url, {'collection-collection': collection })
-        found = [o.pid for o in response.context['results']]
+        found = [o['pid'] for o in response.context['results']]
         self.assert_(rushdie.pid in found,
                 "Rushdie collection found for collection %s" % collection)
         self.assert_(esterbrook.pid not in found,

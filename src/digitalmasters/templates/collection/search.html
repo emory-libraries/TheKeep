@@ -1,5 +1,6 @@
 {% extends "site_base.html" %}
 
+{% block page-subtitle %}: Collections : Search{% endblock %}
 {% block content-title %}Search for Collections{% endblock %}
 
 {% block content-body %}
@@ -9,9 +10,9 @@
     <tr><th>MSS #</th><th>Title</th><th>Creator</th><th>Collection</th></tr>
 {% for obj in results %}
     <tr>
-        <td>{{ obj.mods.content.source_id|default:'' }}</td>
-        <td><a href="{% url collection:edit obj.pid %}">{{ obj.mods.content.title }}</a></td>
-        <td>{{ obj.mods.content.name }}</td>
+        <td>{{ obj.source_id|default:'' }}</td>
+        <td><a href="{% url collection:edit obj.pid %}">{{ obj.title }}</a></td>
+        <td>{{ obj.creator }}</td>
         <td>{{ obj.collection_label }}</td>
     </tr>
 {% empty %}

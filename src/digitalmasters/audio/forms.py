@@ -39,11 +39,13 @@ def _collection_options(include_blank=False):
             cache_duration = 60*30
         options = cache.get(_COLLECTION_OPTIONS_CACHE_KEY, None)
         if options is None:
-            collections = [ c for c in CollectionObject.item_collections()
-                            if c.pidspace == settings.FEDORA_PIDSPACE ]
-            collections.sort(cmp=_cmp_collections)
-            logging.debug('Calculated collections: ' + repr(collections))
-            options = [(c.uri, '%s - %s' % (c.mods.content.source_id, c.label)) for c in collections]
+            collections = [c for c in CollectionObject.item_collections()
+                            if settings.FEDORA_PIDSPACE in c['pid'] ]
+            logging.debug('Calculated collections: ' + ' '.join(c['pid'] for c in collections))
+            # generate option list with URI as value and source id - title display
+            # sort on source id
+            options = [('info:fedora/' + c['pid'], '%s - %s' % (c['source_id'], c['title']))
+                    for c in sorted(collections, key=lambda k: k['source_id'])]
             cache.set(_COLLECTION_OPTIONS_CACHE_KEY, options, cache_duration)
 
         # if include_blank is requested, insert an empty option at the beginning of the list

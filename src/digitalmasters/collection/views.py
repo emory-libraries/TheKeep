@@ -15,7 +15,7 @@ from eulcore.django.http import HttpResponseSeeOtherRedirect
 from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.collection.forms import CollectionForm, CollectionSearch
-from digitalmasters.collection.models import CollectionObject
+from digitalmasters.collection.models import CollectionObject, get_cached_collection_dict
 from digitalmasters.fedora import Repository
 
 @permission_required('is_staff')
@@ -122,9 +122,9 @@ def search(request):
         # If no user-specified search terms are entered, find all collections
         try:
             repo = Repository(request=request)
-            found = repo.find_objects(**search_opts)
-            context['results'] = list(found)
-        except:
+            context['results'] = [get_cached_collection_dict(o.pid)
+                                    for o in repo.find_objects(**search_opts) ]
+        except RequestFailed:
             response_code = 500
             # FIXME: this is duplicate logic from generic search view
             context['server_error'] = 'There was an error ' + \
@@ -147,8 +147,9 @@ def browse(request):
     response_code = None
     context = {}
     try:
-        context['collections'] = CollectionObject.top_level()
-    except:
+        # retrieve all collections - they will be grouped in the template
+        context['collections'] = CollectionObject.item_collections()
+    except RequestFailed:
         response_code = 500
         # FIXME: this is duplicate logic from generic search view
         context['server_error'] = 'There was an error ' + \
