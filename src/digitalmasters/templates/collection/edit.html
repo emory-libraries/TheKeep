@@ -4,15 +4,17 @@
 {% block content-title %}{% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
 
 {% block content-body %}
-{% with form.object_instance as obj %}
-  <p class='extra'>
-    {% if obj and obj.ark %}
-      This collection is <a href='{{obj.ark_access_uri}}'>{{obj.ark}}</a>.
+<p class='extra'>
+  {% if collection %}
+    {% if collection.ark %}
+      This collection is <a href='{{collection.ark_access_uri}}'>{{collection.ark}}</a>.
     {% else %}
-      This collection has no ARK. Its pid is {{obj.pid}}.
+      This collection has no ARK. Its pid is {{collection.pid}}.
     {% endif %}
-  </p>
-{% endwith %}
+  {% else %}
+    This is a new collection. Its ARK has not yet been assigned.
+  {% endif %}
+</p>
 <form method="post">{% csrf_token %}
 <table id="mods_edit">
 {{ form.as_table }}
