@@ -148,7 +148,9 @@ def browse(request):
     context = {}
     try:
         # retrieve all collections - they will be grouped in the template
-        context['collections'] = CollectionObject.item_collections()
+        collections = CollectionObject.item_collections()
+        collections.sort(key=lambda c: c['collection_label'])
+        context['collections'] = collections
     except RequestFailed:
         response_code = 500
         # FIXME: this is duplicate logic from generic search view
