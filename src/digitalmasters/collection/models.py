@@ -45,6 +45,7 @@ class CollectionObject(DigitalObject):
 
     _collection_id = None
     _collection_label = None
+    _top_level_collections = None
 
     def _update_dc(self):
         # FIXME: some duplicated logic from AudioObject save
@@ -148,7 +149,8 @@ class CollectionObject(DigitalObject):
         # NOTE: can't pickle digital objects, so caching list of pids instead
         collection_pids = cache.get(cache_key, None)
         repo = Repository()
-        if collection_pids is None:
+        if collection_pids is None or \
+                CollectionObject._top_level_collections is None:
             # find all objects with cmodel collection-1.1 and no parents
             query = '''SELECT ?coll
             WHERE {
@@ -164,8 +166,10 @@ class CollectionObject(DigitalObject):
             collection_pids = list(repo.risearch.find_statements(query, language='sparql',
                                                              type='tuples', flush=True))
             cache.set(cache_key, collection_pids, cache_duration)
+            CollectionObject._top_level_collections = [repo.get_object(result['coll'], type=CollectionObject)
+                                                       for result in collection_pids]
 
-        return [repo.get_object(result['coll'], type=CollectionObject) for result in collection_pids]
+        return CollectionObject._top_level_collections
 
     @staticmethod
     def item_collections():
@@ -244,7 +248,6 @@ def set_cached_collection_dict(collection):
     # dictionaries much better, so cache important collction info as dictionary 
     coll_dict = {
         'pid': collection.pid,
-        'label': collection.label,
         'source_id': collection.mods.content.source_id,
         'title': unicode(collection.mods.content.title),
         'creator': unicode(collection.mods.content.name),
@@ -252,7 +255,7 @@ def set_cached_collection_dict(collection):
         'collection_label': collection.collection_label,
     }
     logger.debug('caching collection %s: %r' % (collection.pid, coll_dict))
-    cache.set(collection.pid, coll_dict, cache_duration)
+    cache.set(collection.pid, coll_dict)
     return coll_dict
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
