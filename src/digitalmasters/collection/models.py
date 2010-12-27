@@ -145,7 +145,7 @@ class CollectionObject(DigitalObject):
         cache_key = 'top-level-collection-pids'
         # these objects are not expected to change frequently - caching for an hour at a time
         # NOTE: could set a different cache duration for development environment, if useful
-        cache_duration = 60*60
+        cache_duration = 60*60*12
         # NOTE: can't pickle digital objects, so caching list of pids instead
         collection_pids = cache.get(cache_key, None)
         repo = Repository()
@@ -243,7 +243,7 @@ def get_cached_collection_dict(pid):
     return coll_dict
 
 def set_cached_collection_dict(collection):
-    cache_duration = 60*60  # FIXME: make this configurable ? keep for a long time, since we will recache
+    cache_duration = 60*60*12  # FIXME: make this configurable ? keep for a long time, since we will recache
     # DigitalObjects can't be cached, and django templates can sort and regroup
     # dictionaries much better, so cache important collction info as dictionary 
     coll_dict = {
@@ -255,7 +255,7 @@ def set_cached_collection_dict(collection):
         'collection_label': collection.collection_label,
     }
     logger.debug('caching collection %s: %r' % (collection.pid, coll_dict))
-    cache.set(collection.pid, coll_dict)
+    cache.set(collection.pid, coll_dict, cache_duration)
     return coll_dict
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
