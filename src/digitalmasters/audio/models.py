@@ -9,6 +9,9 @@ from eulcore.fedora.rdfns import relsext
 from digitalmasters.fedora import DigitalObject, Repository
 from digitalmasters import mods
 
+##
+## MODS
+##
 
 class AudioMods(mods.MODS):
     """AudioObject-specific MODS, based on :class:`mods.MODS`."""
@@ -17,6 +20,11 @@ class AudioMods(mods.MODS):
           mods.Note, instantiate_on_get=True, required=False)
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
                                           mods.Note, instantiate_on_get=True)
+
+
+##
+## Source technical metadata
+##
 
 class _BaseSourceTech(xmlmap.XmlObject):
     'Base class for Source Technical Metadata objects'
@@ -113,7 +121,10 @@ class SourceTech(_BaseSourceTech):
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
 
-    
+
+##
+## Digital technical metadata
+##
 
 class _BaseDigitalTech(xmlmap.XmlObject):
     'Base class for Digital Technical Metadata objects'
@@ -168,7 +179,35 @@ class DigitalTech(_BaseDigitalTech):
     codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
         instantiate_on_get=True, required=True,
         help_text='Hardware, software, and software version used to create the digital file')
-    
+
+
+##
+## Rights
+##
+
+class _BaseRights(xmlmap.XmlObject):
+    'Base class for Rights metadata objects'
+    ROOT_NS = 'http://pid.emory.edu/ns/2010/rights'
+    ROOT_NAMESPACES = { 'rt': ROOT_NS }
+
+class AccessCondition(_BaseRights):
+    ROOT_NAME = 'accessCondition'
+    code = xmlmap.StringField('@code', required=True)
+    text = xmlmap.StringField('.')
+
+class Rights(_BaseRights):
+    'Rights metadata'
+    ROOT_NAME = 'rights'
+    access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
+        instantiate_on_get=True, required=True,
+        help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
+    copyright_holder_name = xmlmap.StringField('rt:copyrightholderName')
+    copyright_date = xmlmap.StringField('rt:copyrightDate[@encoding="w3cdtf"]')
+
+
+##
+## Fedora AudioObject
+##
 
 class AudioObject(DigitalObject):
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'

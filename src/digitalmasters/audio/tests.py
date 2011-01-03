@@ -20,7 +20,8 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 from digitalmasters import mods
 from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration, \
-        SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, CodecCreator
+        SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, \
+        CodecCreator, Rights, AccessCondition
 from digitalmasters.audio.management.commands import ingest_cleanup
 from digitalmasters.collection.fixtures import FedoraFixtures
 
@@ -910,6 +911,42 @@ class DigitalTechTest(TestCase):
 
         # for now, just testing that all fields can be set without error
         self.assert_('<dt:digitaltech' in dt.serialize())
+
+        # TODO: validate against schema when we have one
+
+
+class RightsXmlTest(TestCase):
+    FIXTURE =  '''<?xml version="1.0" encoding="UTF-8"?>
+<rt:rights version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rt="http://pid.emory.edu/ns/2010/rights"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/rights-1.xsd">
+    <rt:accessCondition code="C108-UNRESTRICT">Under copyright; copy allowed by Sec. 108;  no contract restriction; only available within library</rt:accessCondition>
+    <rt:copyrightholderName>Hughes, Carol</rt:copyrightholderName>
+    <rt:copyrightDate encoding="w3cdtf">1923</rt:copyrightDate>
+</rt:rights>'''
+
+    def setUp(self):
+        self.rights = load_xmlobject_from_string(self.FIXTURE, Rights)
+
+    def test_init_types(self):
+        self.assert_(isinstance(self.rights, Rights))
+        self.assert_(isinstance(self.rights.access_condition, AccessCondition))
+
+    def test_fields(self):
+        # check field values correctly accessible from fixture
+        self.assertEqual('C108-UNRESTRICT', self.rights.access_condition.code)
+        self.assertEqual('Under copyright; copy allowed by Sec. 108;  no contract restriction; only available within library', self.rights.access_condition.text)
+        self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
+        self.assertEqual('1923', self.rights.copyright_date)
+
+    def test_create(self):
+        # test creating digitaltech metadata from scratch
+        rt = Rights()
+        rt.access_condition.code = 'PD-UNRESTRICT'
+        rt.access_condition.text = 'In public domain, no contract restriction'
+        rt.copyright_holder_name = 'Mouse, Mickey'
+        rt.copyright_date = '1928'
+
+        # for now, just testing that all fields can be set without error
+        self.assert_('<rt:rights' in rt.serialize())
 
         # TODO: validate against schema when we have one
 
