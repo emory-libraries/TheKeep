@@ -223,6 +223,10 @@ class AudioObject(DigitalObject):
             'mimetype': 'audio/x-wav',
             'versionable': True,
         })
+    compressed_audio = FileDatastream("CompressedAudio", "Compressed audio datastream", defaults={
+            'mimetype': 'audio/mpeg',
+            'versionable': True,
+        })
     digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
         defaults={
             'control_group': 'M',

@@ -8,4 +8,5 @@ urlpatterns = patterns('digitalmasters.audio.views',
     url(r'^(?P<pid>[^/]+)/$', 'view', name='view'),
     url(r'^(?P<pid>[^/]+)/edit$', 'edit', name='edit'),
     url(r'^(?P<pid>[^/]+)/audio$', 'download_audio', name='download-audio'),
+    url(r'^(?P<pid>[^/]+)/audio$', 'download_compressed_audio', name='download-compressed-audio'),
 )

@@ -24,6 +24,8 @@ from digitalmasters.fedora import Repository
 
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
+from digitalmasters.audio.tasks import convertWAVtoMP3
+
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
@@ -56,6 +58,8 @@ def upload(request):
                     obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
                                                      uploaded_file.name, request, md5sum(uploaded_file.temporary_file_path()))
                     obj.save()
+                    #Start the task to convert the WAV audio to a compressed format.
+		    convertWAVtoMP3.delay(obj.pid)
                     messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                             % (uploaded_file.name, obj.pid))
                 except Exception as e:
@@ -106,6 +110,8 @@ def upload(request):
                                                      request,
                                                      file_md5sum_list[index])
                                 obj.save()
+                                #Start the task to convert the WAV audio to a compressed format.
+				convertWAVtoMP3.delay(obj.pid)
                                 messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                                                 % (file_original_name_list[index], obj.pid))
                                 # clean up temporary upload file after successful ingest
@@ -284,6 +290,10 @@ def edit(request, pid):
 
     try:
         obj = repo.get_object(pid, type=AudioObject)
+        try:
+        	logging.debug(obj.audio.__dir__)
+        except Exception as e:
+                logging.debug(e)
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = audioforms.AudioObjectEditForm(request.POST, instance=obj)
@@ -321,6 +331,50 @@ def download_audio(request, pid):
     # NOTE: this will probably need some work to be able to handle large datastreams
     try:
         response = HttpResponse(obj.audio.content, mimetype=obj.audio.mimetype)
+        response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
+        return response
+    except:
+        msg = 'There was an error contacting the digital repository. ' + \
+              'This prevented us from accessing audio data. If this ' + \
+              'problem persists, please alert the repository ' + \
+              'administrator.'
+        return HttpResponse(msg, mimetype='text/plain', status=500)
+
+@permission_required('is_staff')
+def is_compressed_audio_available(pid):
+    "Serve out the compressed audio datastream for the fedora object specified by pid."
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=AudioObject)
+    if obj.compressed_audio._content == None:
+        return false
+    else:
+        return true
+
+@permission_required('is_staff')
+def download_compressed_audio(request, pid):
+    "Serve out the compressed audio datastream for the fedora object specified by pid."
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=AudioObject)
+    # NOTE: this will probably need some work to be able to handle large datastreams
+    try:
+        response = HttpResponse(obj.compressed_audio.content, mimetype=obj.compressed_audio.mimetype)
+        response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
+        return response
+    except:
+        msg = 'There was an error contacting the digital repository. ' + \
+              'This prevented us from accessing audio data. If this ' + \
+              'problem persists, please alert the repository ' + \
+              'administrator.'
+        return HttpResponse(msg, mimetype='text/plain', status=500)
+
+@permission_required('is_staff')
+def download_compressed_audio(request, pid):
+    "Serve out the compressed audio datastream for the fedora object specified by pid."
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=AudioObject)
+    # NOTE: this will probably need some work to be able to handle large datastreams
+    try:
+        response = HttpResponse(obj.compressed_audio.content, mimetype=obj.compressed_audio.mimetype)
         response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
         return response
     except:

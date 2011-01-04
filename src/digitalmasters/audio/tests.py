@@ -24,6 +24,7 @@ from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration, \
         CodecCreator, Rights, AccessCondition
 from digitalmasters.audio.management.commands import ingest_cleanup
 from digitalmasters.collection.fixtures import FedoraFixtures
+from digitalmasters.audio.tasks import convertWAVtoMP3
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -184,6 +185,9 @@ class AudioViewsTest(TestCase):
         # pull the pid of the newly created object from the message and inspect in fedora
         pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
                                       '').rstrip('.')
+        #Add pid to be removed.
+        self.pids.append(pid)
+
         repo = Repository()
         new_obj = repo.get_object(pid, type=AudioObject)
         # check object was created with audio cmodel
@@ -233,6 +237,9 @@ class AudioViewsTest(TestCase):
             # pull the pid of the newly created object from the message and inspect in fedora
             pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
                                       '').rstrip('.')
+            #Add pid to be removed.
+            self.pids.append(pid)
+
             repo = Repository()
             new_obj = repo.get_object(pid, type=AudioObject)
             # check object was created with audio cmodel
@@ -263,6 +270,28 @@ class AudioViewsTest(TestCase):
             # check that init from file worked correctly
             self.assertEqual(3, new_obj.digitaltech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
+        
+
+    def test_compressed_audio_task(self):
+            wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
+            obj = AudioObject.init_from_file(wav_filename,
+                                             'test only',
+                                              checksum=wav_md5)
+            obj.save()
+            
+            #Add pid to be removed.
+            self.pids.append(obj.pid)
+
+            
+            result = convertWAVtoMP3(obj.pid)
+            self.assertEqual(result, "Successfully converted file")
+
+            #Old test code that relys on a broker.
+            #result = convertWAVtoMP3.delay(obj.pid)
+            #self.assertEqual(result.get(), "Successfully converted file")
+            #self.assertEqual(result.successful(), True,
+                #"conversion of audio wav to compressed audio format did not succeed.")
+
                     
     def test_search(self):
         search_url = reverse('audio:search')
