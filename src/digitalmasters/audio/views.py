@@ -26,6 +26,8 @@ from eulcore.fedora.models import DigitalObjectSaveFailure
 
 from digitalmasters.audio.tasks import convertWAVtoMP3
 
+from digitalmasters.audio.utils import md5sum
+
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
@@ -190,25 +192,6 @@ def HTML5FileUpload(request):
         logging.debug(e)
 
     return HttpResponse(newFileName)
-
-def md5sum(fname):
-    '''Returns an md5 hash for file fname.'''
-    #Try to open the file.
-    try:
-        f = file(fname, 'rb')
-    except:
-        return 'Failed to open file'
-    
-    #Calculate the md5
-    m = hashlib.md5()
-    while True:
-        d = f.read(8096)
-        if not d:
-            break
-        m.update(d)
-        
-    f.close()
-    return m.hexdigest()
     
 @permission_required('is_staff')
 def search(request):
