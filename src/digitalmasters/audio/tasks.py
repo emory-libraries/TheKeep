@@ -45,6 +45,7 @@ def convertWAVtoMP3(pid):
         #Ensure success from output, and if so, save the file and remove the temporary files.
         if "(100%)|" in stdout_value[1] and "Writing LAME Tag...done" in stdout_value[1] and return_code == 0:
 	    obj.compressed_audio.content = open(returnedMkStemp[1] + ".mp3")
+            obj.compressed_audio.checksum = md5sum(returnedMkStemp[1] + ".mp3")
     	    obj.save()
             os.remove(returnedMkStemp[1])
             os.remove(returnedMkStemp[1] + ".mp3")
