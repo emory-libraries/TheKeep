@@ -12,7 +12,12 @@
   {% else %}
     This file has no ARK. Its pid is {{obj.pid}}.
   {% endif %}
-  <a href="{% url audio:download-audio obj.pid %}">download audio</a>
+  <a href="{% url audio:download-audio obj.pid %}">download original audio</a> &nbsp;&nbsp; | &nbsp;&nbsp;
+  {% if obj.compressed_audio.exists %}
+     <a href="{% url audio:download-compressed-audio obj.pid %}">download compressed audio</a>
+  {% else %}
+     download compressed audio
+  {% endif %}
 </p>
 <script type="text/javascript">
     /* simple javascript section to toggle display of sections and label css classes */
