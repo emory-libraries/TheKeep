@@ -1,3 +1,14 @@
+Release 0.9 - Min Items, part III
+----------------------------------
+
+Installation notes for this release:
+* Need to install LAME. Can do so with: sudo apt-get install lame . This is for the WAV to MP3 conversion.
+
+* Need to configure a celery broker server. More information on this type of server can be found at: 
+  http://celeryq.org/docs/getting-started/broker-installation.html .
+
+* General Celery/Django combination configuration notes: http://celeryq.org/docs/django-celery/getting-started/first-steps-with-django.html .
+
 Release 0.7 - Min Items, part I
 -------------------------------
 Date: December 2010

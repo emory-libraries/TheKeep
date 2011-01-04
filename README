@@ -23,6 +23,13 @@ management in this and other Python projects. If you don't have them
 installed we recommend `sudo easy_install pip` and then `sudo pip install
 virtualenv`.
 
+Additionally, LAME must be installed for the WAV to MP3 encoding. For this,
+one can do: sudo apt-get install lame on ubuntu.
+
+A RabbitMQ instance must also be available for the above conversion task.
+For more information on configuring this, please see:
+http://celeryq.org/docs/getting-started/broker-installation.html .
+
 Configure the environment
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 

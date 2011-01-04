@@ -2,3 +2,4 @@
 -e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/trunk
 python-magic
 pycrypto
+django-celery
