@@ -1,5 +1,16 @@
 # Django local settings for digital masters project.
 
+#Celery Config
+import djcelery
+djcelery.setup_loader()
+
+BROKER_HOST = "" # e.g "localhost"
+BROKER_PORT =    # e.g 5672
+BROKER_USER = "" # e.g "user"
+BROKER_PASSWORD = "" #e.g. "password"
+BROKER_VHOST = "" # e.g. "digitalmasters_vhost"
+CELERY_RESULT_BACKEND = "" # e.g "amqp"
+
 # all settings in debug section should be false in production environment
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
