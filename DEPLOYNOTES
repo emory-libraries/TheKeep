@@ -24,6 +24,13 @@ Installation notes for this release:
       BROKER_VHOST = "" # e.g. "digitalmasters_vhost"
       CELERY_RESULT_BACKEND = "" # e.g "amqp"
 
+* The application now provides a RSS podcast feed intended for iTunes on the
+  MARBL reading room kiosk.  URLs for the feed and MP3 files should be IP
+  restricted to only those machines that should have access.
+  The url patterns that should be restricted are:
+    /audio/feed/
+    /audio/*/access.mp3         (* is the fedora object pid)
+
 Release 0.8 (?) - Min Items, part II
 -------------------------------
 * The app now depends on the standard django ``sites`` module. This module
