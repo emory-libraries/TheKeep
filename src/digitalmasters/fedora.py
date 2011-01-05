@@ -125,7 +125,8 @@ class Repository(server.Repository):
         '''Get a pidman-ready target for a named view.'''
 
         # first just reverse the view name.
-        target = reverse(view_name, kwargs={'pid': self.PID_TOKEN})
+        pid = '%s:%s' % (settings.FEDORA_PIDSPACE, self.PID_TOKEN)
+        target = reverse(view_name, kwargs={'pid': pid})
         # reverse() encodes the PID_TOKEN, so unencode just that part
         target = target.replace(self.ENCODED_PID_TOKEN, self.PID_TOKEN)
 
