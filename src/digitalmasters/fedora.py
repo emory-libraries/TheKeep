@@ -50,19 +50,22 @@ class DigitalObject(models.DigitalObject):
 
     @property
     def ark(self):
-        idx = self.ark_access_uri.find('ark:')
-        if idx < 0: # this would be an error in pidman-derived data
-            return None
-        return self.ark_access_uri[idx:]
+        if self.ark_access_uri is not None:
+            idx = self.ark_access_uri.find('ark:')
+            if idx < 0: # this would be an error in pidman-derived data
+                return None
+            return self.ark_access_uri[idx:]
 
     @property
     def ark_access_uri(self):
-        return self.default_target_data['access_uri']
+        if self.default_target_data is not None:
+            return self.default_target_data['access_uri']
 
     @property
     def default_target_data(self):
         if self._default_target_data is None:
             try:
+                self._default_target_data = pidman.get_ark_target(self.noid, '')
                 ark_data = pidman.get_ark(self.noid)
             except:
                 return None
