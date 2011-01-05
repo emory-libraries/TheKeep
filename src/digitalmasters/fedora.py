@@ -6,6 +6,7 @@ from eulcore.fedora import models
 from eulcore.django.fedora import server
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from digitalmasters.accounts.views import decrypt
+from digitalmasters.common.utils import absolutize_url
 
 # try to configure a pidman client to get pids.
 try:
@@ -133,13 +134,5 @@ class Repository(server.Repository):
         # reverse() encodes the PID_TOKEN, so unencode just that part
         target = target.replace(self.ENCODED_PID_TOKEN, self.PID_TOKEN)
 
-        # reverse() returns a full path, but it doesn't include the scheme
-        # and server (i.e., the http://example.com). add those back on based
-        # on the django Sites infrastructure.
-        root = Site.objects.get_current().domain
-        # but also add the http:// if necessary, since most sites docs
-        # suggest using just the domain name
-        if not root.startswith('http'):
-            root = 'http://' + root
-
-        return root + target
+        # reverse() returns a full path - absolutize so we get scheme & server also
+        return absolutize_url(target)
