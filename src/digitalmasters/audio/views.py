@@ -358,7 +358,7 @@ def download_compressed_audio(request, pid):
     # NOTE: this will probably need some work to be able to handle large datastreams
     try:
         response = HttpResponse(obj.compressed_audio.content, mimetype=obj.compressed_audio.mimetype)
-        response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
+        response['Content-Disposition'] = "attachment; filename=%s.mp3" % slugify(obj.label)
         return response
     except:
         msg = 'There was an error contacting the digital repository. ' + \
