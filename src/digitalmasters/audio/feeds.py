@@ -52,7 +52,10 @@ class PodcastFeed(Feed):
         return reverse('audio:podcast-feed')
 
     def items(self):
-        # TODO: make this a static method of AudioObject & unit test it
+        # Find all items that should be included in the feed
+        # Until we have a better way to do this, find all Audio objects
+        # and then filter out any without compressed audio
+        # or with rights that do not allow them to be included (rights still TODO)
         search_opts = {
             'type': AudioObject,
             # restrict to objects in configured pidspace
@@ -60,7 +63,6 @@ class PodcastFeed(Feed):
             # restrict by cmodel in dc:format
             'format__contains': AudioObject.AUDIO_CONTENT_MODEL,
         }
-
         repo = Repository()
         # limit to objects with access-copy audio files available
         # TODO: filter on rights
