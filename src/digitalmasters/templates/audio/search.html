@@ -19,12 +19,11 @@ of {{ page.paginator.count }}.</p>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
         <td><a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a></td>
-        <td>{{ obj.label }} <br/> <a href="{% url audio:download-audio obj.pid %}">download original audio</a> <br />
-        {% if obj.compressed_audio.exists %}
-     		<a href="{% url audio:download-compressed-audio obj.pid %}">download compressed audio</a>
-  	{% else %}
-     		download compressed audio
-  	{% endif %}
+        <td>{{ obj.label }} <br/>
+            <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
+            {% if obj.compressed_audio.exists %}
+     		  | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
+  	        {% endif %}
         </td>
         <td>{{ obj.created }}</td>
         <td>{{ obj.modified }}</td>
