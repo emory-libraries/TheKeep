@@ -2,6 +2,8 @@ import os
 from rdflib import URIRef
 import wave
 
+from django.db.models import permalink
+
 from eulcore import xmlmap
 from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
@@ -252,6 +254,10 @@ class AudioObject(DigitalObject):
             self.label = self.mods.content.title
 
         return super(AudioObject, self).save(logMessage)
+
+    @permalink
+    def get_absolute_url(self):
+        return ('audio:view', [str(self.pid)])
 
     def _update_dc(self):
         '''Update Dublin Core (derivative metadata) based on master metadata
