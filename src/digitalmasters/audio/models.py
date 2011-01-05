@@ -332,6 +332,8 @@ class AudioObject(DigitalObject):
         obj.audio.content = open(filename)  # FIXME: at what point does/should this get closed?
         #Set the file checksum, if set.
         obj.audio.checksum=checksum
+        #Get the label, minus the ".wav" (mimetype indicates that)
+        obj.audio.label = initial_label[:-4]
         # set initial mods:typeOfResource - all AudioObjects default to sound recording
         obj.mods.content.resource_type = 'sound recording'
         # set codec quality to lossless in digital tech metadata 

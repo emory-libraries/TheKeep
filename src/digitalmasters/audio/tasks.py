@@ -47,6 +47,7 @@ def convertWAVtoMP3(pid,overrideErrors=False):
         if (overrideErrors == True) or ("(100%)|" in stdout_value[1] and "Writing LAME Tag...done" in stdout_value[1] and return_code == 0):
 	    obj.compressed_audio.content = open(returnedMkStemp[1] + ".mp3")
             obj.compressed_audio.checksum = md5sum(returnedMkStemp[1] + ".mp3")
+            obj.compressed_audio.label = obj.audio.label
     	    obj.save()
             os.remove(returnedMkStemp[1])
             os.remove(returnedMkStemp[1] + ".mp3")
