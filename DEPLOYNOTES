@@ -50,8 +50,10 @@ Release 0.8 (?) - Min Items, part II
     PIDMAN_USER = 'exampleuser'
     PIDMAN_PASSWORD = 'examplepass'
     PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
-  Note that commenting or removing any of these will raise an error if the
-  ``DEV_ENV`` setting is ``False`` (as is normal for a production install).
+  Note that commenting or removing any of these configuration options will
+  raise an error if the ``DEV_ENV`` setting is ``False`` (as is normal for a
+  production install). The configured user must have permission inside the
+  pid manager to add pids and targets.
 
 
 Release 0.7 - Min Items, part I
