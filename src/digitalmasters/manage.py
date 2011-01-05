@@ -15,4 +15,9 @@ except ImportError:
     sys.exit(1)
 
 if __name__ == "__main__":
+    import sys
+    if sys.argv[1] == 'test':
+        # load test settings when running tests
+        import testsettings as settings
+        
     execute_manager(settings)
