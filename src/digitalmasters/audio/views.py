@@ -16,7 +16,7 @@ from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
 from eulcore.django.http import HttpResponseSeeOtherRedirect
-from eulcore.fedora.util import RequestFailed
+from eulcore.fedora.util import RequestFailed, PermissionDenied
 
 from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject
@@ -267,6 +267,25 @@ def view(request, pid):
                 kwargs={'pid': pid}))
 
 @permission_required('is_staff')
+def raw_datastream(request, pid, dsid):
+    'Access raw object datastreams (mods, rels-ext, dc, digitaltech, sourcetech)'
+    # RSK TODO: write unit test
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=AudioObject)
+    dsid = dsid.replace('-', '_')
+    try:
+        if obj.ds_list.has_key(dsid):
+            ds = getattr(obj, dsid)
+            return HttpResponse(ds.content.serialize(pretty=True), mimetype=ds.mimetype)
+    except PermissionDenied:
+        pass
+    # fedora seems to return 401 unauthorized when either the object does not
+    # exist or the datastream does not but object does
+    # for now, assuming any permission denied is a 404
+
+    raise Http404
+
+@permission_required('is_staff')
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~digitalmasters.audio.models.AudioObject`.'''
     repo = Repository(request=request)
@@ -323,7 +342,7 @@ def download_audio(request, pid):
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
-@permission_required('is_staff')
+# download audio must be accessed by kiosk - should be IP restricted at apache level
 def download_compressed_audio(request, pid):
     "Serve out the compressed audio datastream for the fedora object specified by pid."
     repo = Repository(request=request)

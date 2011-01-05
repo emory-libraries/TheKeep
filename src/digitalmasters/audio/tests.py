@@ -683,6 +683,53 @@ of 2''',
         self.assertEqual(code, expected,
             'Expected %s but returned %s for %s (edit non-existent record)'  % (expected, code, edit_url))
 
+    def test_podcast_feed(self):
+        feed_url = reverse('audio:podcast-feed')
+
+        # create some test objects to show up in the feed
+        repo = Repository()
+        obj = repo.get_object(type=AudioObject)
+        obj.mods.content.title = 'Dylan Thomas reads anthology'
+        obj.mods.content.part_note.text = 'Side A'
+        obj.collection_uri = self.rushdie.uri
+        obj.compressed_audio.content = open(mp3_filename)
+        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
+        obj.save()
+        obj2 = repo.get_object(type=AudioObject)
+        obj2.mods.content.title = 'Patti Smith Live in New York'
+        obj2.compressed_audio.content = open(mp3_filename)
+        obj2.collection_uri = self.esterbrook.uri
+        obj2.save()
+        obj3 = repo.get_object(type=AudioObject)
+        obj3.mods.content.title = 'No Access copy'
+        obj3.save()
+        # add pids to list for clean-up in tearDown
+        self.pids.extend([obj.pid, obj2.pid, obj3.pid])
+
+        response = self.client.get(feed_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
+                             % (expected, code, feed_url))        
+        self.assertContains(response, obj.noid,
+            msg_prefix='noid for first test object should be included in feed')
+        self.assertContains(response, obj2.noid,
+            msg_prefix='noid for second test object should be included in feed')
+        self.assertNotContains(response, obj3.noid,
+            msg_prefix='noid for test object with no access copy should NOT be included in feed')
+        self.assertContains(response, obj.mods.content.title,
+            msg_prefix='title for first test object should be included in feed')
+        self.assertContains(response, obj2.mods.content.title,
+            msg_prefix='title for second test object should be included in feed')
+        self.assertContains(response, '%s - %s' % (self.rushdie.mods.content.source_id,
+            self.rushdie.mods.content.title),
+            msg_prefix='collection title & number for first test object should be included in feed')
+        self.assertContains(response, '%s - %s' % (self.esterbrook.mods.content.source_id,
+            self.esterbrook.mods.content.title),
+            msg_prefix='collection title & number for second test object should be included in feed')         
+        self.assertContains(response, obj.mods.content.part_note.text,
+            msg_prefix='part note for first test object should be included in feed')
+        self.assertContains(response, 'May 1976',
+            msg_prefix='dateIssued should be included in feed')
 
 
 # TODO: mock out the fedora connection and find a way to verify that we

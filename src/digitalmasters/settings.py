@@ -76,6 +76,7 @@ INSTALLED_APPS = (
     'digitalmasters.accounts',
     'digitalmasters.audio',
     'digitalmasters.collection',
+    'digitalmasters.common',
 )
 
 
