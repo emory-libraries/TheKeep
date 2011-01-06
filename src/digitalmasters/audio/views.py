@@ -22,7 +22,7 @@ from eulcore.fedora.models import DigitalObjectSaveFailure
 
 from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject
-from digitalmasters.audio.tasks import convertWAVtoMP3
+from digitalmasters.audio.tasks import convert_wav_to_mp3
 from digitalmasters.audio.utils import md5sum
 from digitalmasters.common.fedora import Repository
 
@@ -59,8 +59,9 @@ def upload(request):
                     obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
                                                      uploaded_file.name, request, md5sum(uploaded_file.temporary_file_path()))
                     obj.save()
-                    #Start the task to convert the WAV audio to a compressed format.
-                    result = convertWAVtoMP3.delay(obj.pid)
+                    #Start the task to convert the WAV audio to a compressed format. This task will also delete
+                    #the existing file upon completion.
+                    result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=fullFilePath)
                     task = TaskResult(label='Generate MP3', object_id=obj.pid,
                         url=obj.get_absolute_url(), task_id=result.task_id)
                     task.save()
@@ -115,15 +116,14 @@ def upload(request):
                                                      request,
                                                      file_md5sum_list[index])
                                 obj.save()
-                                #Start the task to convert the WAV audio to a compressed format.
-                                result = convertWAVtoMP3.delay(obj.pid)
+                                #Start the task to convert the WAV audio to a compressed format. This task will also delete
+                                #the existing file upon completion.
+                                result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=fullFilePath)
                                 task = TaskResult(label='Generate MP3', object_id=obj.pid,
                                     url=obj.get_absolute_url(), task_id=result.task_id)
                                 task.save()
                                 messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                                                 % (file_original_name_list[index], obj.pid))
-                                # clean up temporary upload file after successful ingest
-                                os.remove(fullFilePath)
                             except Exception as e:
                                 logging.debug(e)
                                 messages.error(request, 'Failed to ingest file %s in fedora (fedora is either down or the checksum is incorrect).'
@@ -351,13 +351,24 @@ def download_audio(request, pid):
 # download audio must be accessed by kiosk - should be IP restricted at apache level
 def download_compressed_audio(request, pid):
     "Serve out the compressed audio datastream for the fedora object specified by pid."
-    repo = Repository(request=request)
-    obj = repo.get_object(pid, type=AudioObject)
-    # NOTE: this will probably need some work to be able to handle large datastreams
     try:
-        response = HttpResponse(obj.compressed_audio.content, mimetype=obj.compressed_audio.mimetype)
-        response['Content-Disposition'] = "attachment; filename=%s.mp3" % slugify(obj.label)
-        return response
+        repo = Repository(request=request)
+        obj = repo.get_object(pid, type=AudioObject)
+    
+        #Check that the stream has been added.
+        if(obj.compressed_audio.exists):
+            # NOTE: this will probably need some work to be able to handle large datastreams
+        
+            response = HttpResponse(obj.compressed_audio.content, mimetype=obj.compressed_audio.mimetype)
+            response['Content-Disposition'] = "attachment; filename=%s.mp3" % slugify(obj.label)
+            return response
+        #if the compressed stream has not been added, ie. it conversion not done.
+        msg = 'The compressed audio stream does not currently exist. ' + \
+                  'This likely means the the audio conversion process ' + \
+                  'for this file is in progress or has failed. Please ' + \
+                  'try again shortly, and if the problem persists, contact .' + \
+                  'an adminstrator.' 
+        return HttpResponse(msg, mimetype='text/plain', status=404)
     except:
         msg = 'There was an error contacting the digital repository. ' + \
               'This prevented us from accessing audio data. If this ' + \

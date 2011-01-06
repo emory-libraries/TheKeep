@@ -25,7 +25,7 @@ from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration, \
         CodecCreator, Rights, AccessCondition
 from digitalmasters.audio.management.commands import ingest_cleanup
 from digitalmasters.collection.fixtures import FedoraFixtures
-from digitalmasters.audio.tasks import convertWAVtoMP3
+from digitalmasters.audio.tasks import convert_wav_to_mp3
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -33,7 +33,6 @@ ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 # fixture filenames used in multiple tests
 mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
 wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
-
 
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
@@ -280,26 +279,6 @@ class AudioViewsTest(TestCase):
             self.assert_(isinstance(new_obj.conversion_result, TaskResult),
                 'ingested object should have a conversion result to track mp3 generation')
 
-    def test_compressed_audio_task(self):
-            wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
-            obj = AudioObject.init_from_file(wav_filename,
-                                             'test only',
-                                              checksum=wav_md5)
-            obj.save()
-            
-            #Add pid to be removed.
-            self.pids.append(obj.pid)
-
-            
-            result = convertWAVtoMP3(obj.pid)
-            self.assertEqual(result, "Successfully converted file")
-
-            #Old test code that relys on a broker.
-            #result = convertWAVtoMP3.delay(obj.pid)
-            #self.assertEqual(result.get(), "Successfully converted file")
-            #self.assertEqual(result.successful(), True,
-                #"conversion of audio wav to compressed audio format did not succeed.")
-
                     
     def test_search(self):
         search_url = reverse('audio:search')
@@ -449,6 +428,48 @@ of 2''',
                         (expected, response['Content-Type'], download_url))
                         
         expected = 'attachment; filename=my-audio-test-object.wav'
+        self.assertEqual(response['Content-Disposition'], expected,
+                        "Expected '%s' but returned '%s' for %s content disposition" % \
+                        (expected, response['Content-Type'], download_url))
+
+    def test_download_compressed_audio(self):
+        # create a test audio object
+        repo = Repository()
+        obj = repo.get_object(type=AudioObject)
+        obj.label = "my audio test object"
+        obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        obj.save()
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        download_url = reverse('audio:download-compressed-audio', args=[obj.pid])
+
+        response = self.client.get(download_url)
+        code = response.status_code
+        expected = 404
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin for non-existant audio file'
+                             % (expected, code, download_url))
+
+        #Set a compressed audio stream.
+        result = convert_wav_to_mp3(obj.pid)
+        self.assertEqual(result, "Successfully converted file")
+        self.assertTrue(result.successful())
+        
+        response = self.client.get(download_url)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, download_url))
+                             
+        expected = 'audio/mpeg'
+        self.assertEqual(response['Content-Type'], expected,
+                        "Expected '%s' but returned '%s' for %s mimetype" % \
+                        (expected, response['Content-Type'], download_url))
+                        
+        expected = 'attachment; filename=my-audio-test-object.mp3'
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
@@ -1228,6 +1249,34 @@ class TestWavDuration(TestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
 
+class Source_Audio_Conversions(TestCase):
+    def setUp(self):        
+        self.pids = []
+
+    def tearDown(self):
+        # purge any objects created by individual tests
+        for pid in self.pids:
+            FedoraFixtures.repo.purge_object(pid)
+
+    def test_wav_to_mp3_task(self):
+            wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
+            obj = AudioObject.init_from_file(wav_filename,
+                                             'test only',
+                                              checksum=wav_md5)
+            obj.save()
+            
+            #Add pid to be removed.
+            self.pids.append(obj.pid)
+
+            
+            result = convert_wav_to_mp3(obj.pid)
+            self.assertEqual(result, "Successfully converted file")
+            self.assertTrue(result.successful())
+
+            #Test that the audio was actually added
+            repo = Repository()
+            obj = repo.get_object(pid, type=AudioObject)
+            self.assertTrue(self.obj.compressed_audio.exists)
 
 class TestIngestCleanupCommand(ingest_cleanup.Command):
     # extend command class to simplify calling as if running from the commandline
