@@ -30,6 +30,7 @@ table.audio-edit th {
 
 .extra {
   color: gray;
+  margin: 2px;
 }
 
 table.audio-edit div.help-text {

@@ -71,12 +71,14 @@ INSTALLED_APPS = (
     'eulcore.django.emory_ldap',
     'eulcore.django.existdb',
     'eulcore.django.fedora',
+    'eulcore.django.taskresult',
     'eulcore.django.testsetup',
     'eulcore.django.util',
     'digitalmasters.accounts',
     'digitalmasters.audio',
     'digitalmasters.collection',
     'digitalmasters.common',
+    'djcelery',
 )
 
 

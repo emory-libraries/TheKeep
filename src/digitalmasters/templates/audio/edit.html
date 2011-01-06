@@ -12,13 +12,24 @@
   {% else %}
     This file has no ARK. Its pid is {{obj.pid}}.
   {% endif %}
-  <a href="{% url audio:download-audio obj.pid %}">download original audio</a> &nbsp;&nbsp; | &nbsp;&nbsp;
+  <a href="{% url audio:download-audio obj.pid %}">original audio</a>
   {% if obj.compressed_audio.exists %}
-     <a href="{% url audio:download-compressed-audio obj.pid %}">download compressed audio</a>
-  {% else %}
-     download compressed audio
+     | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
   {% endif %}
 </p>
+{% with obj.conversion_result as conversion %}
+  {% if conversion %}
+  <p class="extra">
+    Access copy conversion requested at {{ conversion.created }};
+    {% if conversion.task_end %}
+       completed {{ obj.conversion_result.task_end|timesince }} ago,
+       took {{ obj.conversion_result.duration }}.
+    {% endif %}
+    {{ conversion.task.status }} {{ conversion.task.result|default:'' }}
+  </p>
+  {% endif %}
+{% endwith %}
+
 <p class="extra">
   View raw datastreams:
    <a href="{% url audio:raw-ds obj.pid 'mods' %}">MODS</a> |

@@ -5,6 +5,7 @@ import wave
 from django.db.models import permalink
 
 from eulcore import xmlmap
+from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
 
@@ -258,6 +259,15 @@ class AudioObject(DigitalObject):
     @permalink
     def get_absolute_url(self):
         return ('audio:view', [str(self.pid)])
+
+    @property
+    def conversion_result(self):
+        '''Return the :class:`~eulcore.django.taskresult.models.TaskResult'
+        for the most recently requested access copy conversion (if any).
+        '''
+        conversions = TaskResult.objects.filter(object_id=self.pid).order_by('-created')
+        if conversions:
+            return conversions[0]
 
     def _update_dc(self):
         '''Update Dublin Core (derivative metadata) based on master metadata

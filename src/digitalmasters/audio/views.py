@@ -16,16 +16,14 @@ from django.template import RequestContext
 from django.template.defaultfilters import slugify
 
 from eulcore.django.http import HttpResponseSeeOtherRedirect
+from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.util import RequestFailed, PermissionDenied
-
-from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.models import AudioObject
-from digitalmasters.fedora import Repository
-
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
+from digitalmasters.fedora import Repository
+from digitalmasters.audio import forms as audioforms
+from digitalmasters.audio.models import AudioObject
 from digitalmasters.audio.tasks import convertWAVtoMP3
-
 from digitalmasters.audio.utils import md5sum
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
@@ -56,12 +54,17 @@ def upload(request):
                 messages.error(request, 'The file uploaded is not of an accepted type (got %s)' % type)
             else:
                 try:
+                    # TODO: consolidate common logic for single & multiple file ingest
                     # initialize from the file itself; use original name as initial object label
                     obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
                                                      uploaded_file.name, request, md5sum(uploaded_file.temporary_file_path()))
                     obj.save()
                     #Start the task to convert the WAV audio to a compressed format.
-		    convertWAVtoMP3.delay(obj.pid)
+                    result = convertWAVtoMP3.delay(obj.pid)
+                    task = TaskResult(label='Generate MP3', object_id=obj.pid,
+                        url=obj.get_absolute_url(), task_id=result.task_id)
+                    task.save()
+
                     messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                             % (uploaded_file.name, obj.pid))
                 except Exception as e:
@@ -113,7 +116,10 @@ def upload(request):
                                                      file_md5sum_list[index])
                                 obj.save()
                                 #Start the task to convert the WAV audio to a compressed format.
-				convertWAVtoMP3.delay(obj.pid)
+                                result = convertWAVtoMP3.delay(obj.pid)
+                                task = TaskResult(label='Generate MP3', object_id=obj.pid,
+                                    url=obj.get_absolute_url(), task_id=result.task_id)
+                                task.save()
                                 messages.success(request, 'Successfully ingested file %s in fedora as %s.'
                                                 % (file_original_name_list[index], obj.pid))
                                 # clean up temporary upload file after successful ingest

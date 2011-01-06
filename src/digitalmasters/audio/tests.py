@@ -15,6 +15,7 @@ from django.core.management.base import CommandError
 from django.test import Client, TestCase
 
 from eulcore.django.fedora.server import Repository
+from eulcore.django.taskresult.models import TaskResult
 from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters import mods
@@ -198,6 +199,10 @@ class AudioViewsTest(TestCase):
         # check that init from file worked correctly
         self.assertEqual(3, new_obj.digitaltech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
+
+        # task result should have been created to track mp3 conversion
+        self.assert_(isinstance(new_obj.conversion_result, TaskResult),
+            'ingested object should have a conversion result to track mp3 generation')
             
     def test_upload_fallback(self):
         # test upload form
@@ -270,7 +275,10 @@ class AudioViewsTest(TestCase):
             # check that init from file worked correctly
             self.assertEqual(3, new_obj.digitaltech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
-        
+
+            # task result should have been created to track mp3 conversion
+            self.assert_(isinstance(new_obj.conversion_result, TaskResult),
+                'ingested object should have a conversion result to track mp3 generation')
 
     def test_compressed_audio_task(self):
             wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
@@ -1196,6 +1204,16 @@ class TestAudioObject(TestCase):
         obj = self.repo.get_object(self.obj.pid, type=AudioObject)
         self.assertEqual(FAKE_COLLECTION, str(obj.collection_uri))
 
+    def test_conversion_result(self):
+        self.assertEqual(None, self.obj.conversion_result)
+        conv1 = TaskResult(label='genmp3', object_id=self.obj.pid,
+            url=self.obj.get_absolute_url(), task_id='foo')
+        conv1.save()
+        sleep(1)    # ensure different task creation times
+        conv2 = TaskResult(label='genmp3', object_id=self.obj.pid,
+            url=self.obj.get_absolute_url(), task_id='bar')
+        conv2.save()
+        self.assertEqual(conv2, self.obj.conversion_result)
 
 class TestWavDuration(TestCase):
 
