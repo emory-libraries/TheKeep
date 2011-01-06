@@ -7,8 +7,9 @@ from django.core.urlresolvers import reverse
 
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.collection.models import get_cached_collection_dict
+from digitalmasters.common.fedora import Repository
 from digitalmasters.common.utils import absolutize_url
-from digitalmasters.fedora import Repository
+
 
 class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
     'Extend RSS Feed generator to add fields specific to iTunes podcast feeds'

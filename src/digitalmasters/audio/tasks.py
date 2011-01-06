@@ -1,6 +1,6 @@
 from celery.decorators import task
 from digitalmasters.audio.models import AudioObject
-from digitalmasters.fedora import Repository
+from digitalmasters.common.fedora import Repository
 from django.conf import settings
 from digitalmasters.audio.utils import md5sum
 import subprocess

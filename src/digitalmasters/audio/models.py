@@ -9,7 +9,7 @@ from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
 
-from digitalmasters.fedora import DigitalObject, Repository
+from digitalmasters.common.fedora import DigitalObject, Repository
 from digitalmasters import mods
 
 ##

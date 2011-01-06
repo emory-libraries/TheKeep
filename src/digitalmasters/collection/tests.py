@@ -14,7 +14,7 @@ from digitalmasters.collection.fixtures import FedoraFixtures
 from digitalmasters.collection import forms as cforms
 from digitalmasters.collection import views
 from digitalmasters.collection.models import CollectionObject, CollectionMods, FindingAid
-from digitalmasters.fedora import Repository
+from digitalmasters.common.fedora import Repository
 from digitalmasters import mods
 
 # NOTE: this user must be defined as a fedora user for certain tests to work

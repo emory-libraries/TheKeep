@@ -1,5 +1,5 @@
 from digitalmasters.collection.models import CollectionObject
-from digitalmasters.fedora import Repository
+from digitalmasters.common.fedora import Repository
 from digitalmasters import mods
 
 # fixture objects for use with unit tests

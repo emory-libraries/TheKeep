@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.utils.encoding import iri_to_uri
 from eulcore.fedora import models
@@ -7,6 +6,8 @@ from eulcore.django.fedora import server
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from digitalmasters.accounts.views import decrypt
 from digitalmasters.common.utils import absolutize_url
+
+# TODO: write unit tests now that this code is an app and django knows how to run tests for it
 
 # try to configure a pidman client to get pids.
 try:

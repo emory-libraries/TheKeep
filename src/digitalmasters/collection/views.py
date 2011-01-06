@@ -16,7 +16,7 @@ from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.collection.forms import CollectionForm, CollectionSearch
 from digitalmasters.collection.models import CollectionObject, get_cached_collection_dict
-from digitalmasters.fedora import Repository
+from digitalmasters.common.fedora import Repository
 
 @permission_required('is_staff')
 def view(request, pid):

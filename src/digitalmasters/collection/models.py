@@ -14,7 +14,7 @@ from eulcore.fedora.rdfns import relsext
 from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from digitalmasters import mods
-from digitalmasters.fedora import DigitalObject, Repository
+from digitalmasters.common.fedora import DigitalObject, Repository
 
 logger = logging.getLogger(__name__)
 

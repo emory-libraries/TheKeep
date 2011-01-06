@@ -20,11 +20,11 @@ from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
-from digitalmasters.fedora import Repository
 from digitalmasters.audio import forms as audioforms
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.audio.tasks import convertWAVtoMP3
 from digitalmasters.audio.utils import md5sum
+from digitalmasters.common.fedora import Repository
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
