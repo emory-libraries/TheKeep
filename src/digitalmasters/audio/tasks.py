@@ -8,6 +8,7 @@ import logging
 import sys
 import tempfile
 import os
+import traceback
 
 @task
 def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
@@ -86,7 +87,8 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
         msg = traceback.format_exc() 
         logging.error("Failed to convert audio file (try...except exception), pid is: " + pid + " and exception is: " + msg)
         #If a file was passed in, still remove it:
-        os.remove(existingFilePath)
+        if existingFilePath != None:
+            os.remove(existingFilePath)
         #Still raise the error.
         raise
 

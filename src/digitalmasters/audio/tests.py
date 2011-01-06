@@ -434,10 +434,10 @@ of 2''',
 
     def test_download_compressed_audio(self):
         # create a test audio object
-        repo = Repository()
-        obj = repo.get_object(type=AudioObject)
-        obj.label = "my audio test object"
-        obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
+        obj = AudioObject.init_from_file(wav_filename,
+                                             'my audio test object',
+                                              checksum=wav_md5)
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
@@ -456,7 +456,6 @@ of 2''',
         #Set a compressed audio stream.
         result = convert_wav_to_mp3(obj.pid)
         self.assertEqual(result, "Successfully converted file")
-        self.assertTrue(result.successful())
         
         response = self.client.get(download_url)
         code = response.status_code
