@@ -61,7 +61,7 @@ def upload(request):
                     obj.save()
                     #Start the task to convert the WAV audio to a compressed format. This task will also delete
                     #the existing file upon completion.
-                    result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=fullFilePath)
+                    result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=uploaded_file.temporary_file_path())
                     task = TaskResult(label='Generate MP3', object_id=obj.pid,
                         url=obj.get_absolute_url(), task_id=result.task_id)
                     task.save()

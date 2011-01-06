@@ -1271,12 +1271,11 @@ class Source_Audio_Conversions(TestCase):
             
             result = convert_wav_to_mp3(obj.pid)
             self.assertEqual(result, "Successfully converted file")
-            self.assertTrue(result.successful())
 
             #Test that the audio was actually added
             repo = Repository()
-            obj = repo.get_object(pid, type=AudioObject)
-            self.assertTrue(self.obj.compressed_audio.exists)
+            new_obj = repo.get_object(obj.pid, type=AudioObject)
+            self.assertTrue(new_obj.compressed_audio.exists)
 
 class TestIngestCleanupCommand(ingest_cleanup.Command):
     # extend command class to simplify calling as if running from the commandline
