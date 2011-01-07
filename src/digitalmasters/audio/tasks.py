@@ -43,12 +43,21 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
         else:
             #tempfile.mkstemp returns a tuple with a file descriptor in the first position and the full path in the 2nd position.
             tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)
+            
             try:
                 destination = os.fdopen(tmpfd, 'wb+')
+            except:
+                msg = traceback.format_exc() 
+                logging.error("Failed to convert audio file (file could not be open from file descriptor), pid is: " + pid + " and exception is: " + msg)
+                os.close(tmpfd)
+                raise
+            
+            try:
                 destination.write(obj.audio.content.read())
             except:
                 msg = traceback.format_exc() 
                 logging.error("Failed to convert audio file (file could not be open or written), pid is: " + pid + " and exception is: " + msg)
+                raise
             finally:
                 destination.close()
 
@@ -72,7 +81,7 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
                 obj.compressed_audio.content = f
                 obj.compressed_audio.checksum = md5sum(tmpname + ".mp3")
                 obj.compressed_audio.label = obj.audio.label
-    	        obj.save()
+    	        obj.save("Added compressed mp3 audio stream from LAME conversion output.")
             os.remove(tmpname)
             os.remove(tmpname+".mp3")
             return "Successfully converted file"

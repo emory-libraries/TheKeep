@@ -1276,6 +1276,32 @@ class Source_Audio_Conversions(TestCase):
             new_obj = repo.get_object(obj.pid, type=AudioObject)
             self.assertTrue(new_obj.compressed_audio.exists)
 
+            #test conversion when wav file on hard-disk is specified.
+
+            #As the file is deleted when ingested, need to make a copy on the hard-drive.
+            tempdir = settings.INGEST_STAGING_TEMP_DIR
+            tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)
+            
+            try:
+                destination = os.fdopen(tmpfd, 'wb+')
+            except:
+                os.close(tmpfd)
+                raise
+            
+            try:
+                destination.write(obj.audio.content.read())
+            except:
+                raise
+            finally:
+                destination.close()
+
+            result = convert_wav_to_mp3(obj.pid,existingFilePath=tmpname)
+            self.assertEqual(result, "Successfully converted file")
+
+            #Test with invalid pid
+            #TODO Not currently able to catch this error?
+            #self.assertRaises(convert_wav_to_mp3('emory-steven:DoesNotExist'))
+
 class TestIngestCleanupCommand(ingest_cleanup.Command):
     # extend command class to simplify calling as if running from the commandline
     # base command will set up default args before calling handle method
