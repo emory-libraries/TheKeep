@@ -522,39 +522,39 @@ of 2''',
         self.assertContains(response, self.esterbrook.pid)
         self.assertContains(response, self.englishdocs.pid)
 
-        initial_data = response.context['form'].initial
+        initial_data = response.context['form'].mods.initial
         item_mods = obj.mods.content
-        self.assertEqual(item_mods.title, initial_data['mods-title'],
+        self.assertEqual(item_mods.title, initial_data['title'],
             'object MODS title is pre-populated in form initial data')
-        self.assertEqual(item_mods.general_note.text, initial_data['mods-general_note-text'],
+        self.assertEqual(item_mods.general_note.text, initial_data['general_note-text'],
             'object MODS general note is pre-populated in form initial data')
-        self.assertEqual(item_mods.part_note.text, initial_data['mods-part_note-text'],
+        self.assertEqual(item_mods.part_note.text, initial_data['part_note-text'],
             'object MODS part note is pre-populated in form initial data')
         self.assertEqual(item_mods.origin_info.created[0].date, 
-            initial_data['mods-origin_info-created-0-date'],
+            initial_data['origin_info-created-0-date'],
             'object MODS date created is pre-populated in form initial data')
         self.assertEqual(item_mods.origin_info.issued[0].date,
-            initial_data['mods-origin_info-issued-0-date'],
+            initial_data['origin_info-issued-0-date'],
             'object MODS date issued is pre-populated in form initial data')
         # source tech from object in initial data
         initial_data = response.context['form'].sourcetech.initial
         item_st = obj.sourcetech.content
-        self.assertEqual(item_st.note, initial_data['st-note'])
-        self.assertEqual(item_st.related_files, initial_data['st-related_files'])
-        self.assertEqual(item_st.sound_characteristics, initial_data['st-sound_characteristics'])
+        self.assertEqual(item_st.note, initial_data['note'])
+        self.assertEqual(item_st.related_files, initial_data['related_files'])
+        self.assertEqual(item_st.sound_characteristics, initial_data['sound_characteristics'])
         # semi-custom fields based on multiple values in initial data
         self.assertEqual('|'.join([item_st.speed.aspect, item_st.speed.value,
-                                  item_st.speed.unit]), initial_data['st-_speed'])
-        self.assertEqual(item_st.reel_size.value, initial_data['st-reel'])
+                                  item_st.speed.unit]), initial_data['_speed'])
+        self.assertEqual(item_st.reel_size.value, initial_data['reel'])
         # digital tech from object initial data
         initial_data = response.context['form'].digitaltech.initial
         item_dt = obj.digitaltech.content
-        self.assertEqual(item_dt.date_captured, initial_data['dt-date_captured'])
-        self.assertEqual(item_dt.codec_quality, initial_data['dt-codec_quality'])
-        self.assertEqual(item_dt.note, initial_data['dt-note'])
-        self.assertEqual(item_dt.digitization_purpose, initial_data['dt-digitization_purpose'])
-        self.assertEqual(ldap_user.id, initial_data['dt-engineer'])
-        self.assertEqual(item_dt.codec_creator.id, initial_data['dt-hardware'])
+        self.assertEqual(item_dt.date_captured, initial_data['date_captured'])
+        self.assertEqual(item_dt.codec_quality, initial_data['codec_quality'])
+        self.assertEqual(item_dt.note, initial_data['note'])
+        self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
+        self.assertEqual(ldap_user.id, initial_data['engineer'])
+        self.assertEqual(item_dt.codec_creator.id, initial_data['hardware'])
 
         # POST data to update audio object in fedora
         audio_data = {'collection': self.rushdie.uri,
@@ -586,12 +586,12 @@ of 2''',
                     'st-stock': '60 minute cassette',
                     'st-reel': '3',
                     'st-_speed': 'tape|15/16|inches/sec',
-                     # digital-tech data
+                    # digital-tech data
                     'dt-digitization_purpose': 'patron request',
                     'dt-date_captured_year': '2010',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
-                    }
+        }
         response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assertEqual("Updated MODS for %s" % obj.pid, messages[0],

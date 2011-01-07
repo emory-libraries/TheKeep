@@ -174,10 +174,10 @@ class SourceTechForm(XmlObjectForm):
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
         # speed in xml maps to a single custom field
 
-        speed = self.add_prefix('_speed')
-        speed_value = self.add_prefix('speed-value')
-        speed_aspect = self.add_prefix('speed-aspect')
-        speed_unit = self.add_prefix('speed-unit')
+        speed = '_speed'
+        speed_value = 'speed-value'
+        speed_aspect = 'speed-aspect'
+        speed_unit = 'speed-unit'
         if speed not in self.initial and speed_value in self.initial \
             and speed_unit in self.initial and speed_aspect in self.initial \
             and self.initial[speed_aspect] and self.initial[speed_value] \
@@ -185,8 +185,8 @@ class SourceTechForm(XmlObjectForm):
             self.initial[speed] = '|'.join([self.initial[speed_aspect],
                                                self.initial[speed_value],
                                                self.initial[speed_unit]])
-        reel = self.add_prefix('reel')
-        reel_value = self.add_prefix('reel_size-value')
+        reel = 'reel'
+        reel_value = 'reel_size-value'
         if reel not in self.initial and reel_value in self.initial:
             self.initial[reel] = self.initial[reel_value]
 
@@ -245,14 +245,14 @@ class DigitalTechForm(XmlObjectForm):
     def __init__(self, **kwargs):
         super(DigitalTechForm, self).__init__(**kwargs)
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
-        engineer = self.add_prefix('engineer')
-        engineer_id = self.add_prefix('transfer_engineer-id')
+        engineer = 'engineer'
+        engineer_id = 'transfer_engineer-id'
         if engineer_id in self.initial and self.initial[engineer_id]:
             # find corresponding User object based on transfer engineer id (ldap only for now)
             self.initial[engineer] = User.objects.get(username=self.initial[engineer_id]).id
 
-        hardware = self.add_prefix('hardware')
-        codec_creator_id = self.add_prefix('codec_creator-id')
+        hardware = 'hardware'
+        codec_creator_id = 'codec_creator-id'
         if codec_creator_id in self.initial:
             self.initial[hardware] = self.initial[codec_creator_id]
 
@@ -327,7 +327,6 @@ class AudioObjectEditForm(forms.Form):
             initial.update(orig_initial)
 
         common_opts = {'data': data, 'initial': initial}
-        # FIXME: use prefixes to ensure uniqueness? (not yet fully supported by XmlObjectForm)
         self.mods = ModsEditForm(instance=mods_instance, prefix='mods', **common_opts)
         self.sourcetech = SourceTechForm(instance=st_instance, prefix='st', **common_opts)
         self.digitaltech = DigitalTechForm(instance=dt_instance, prefix='dt', **common_opts)
