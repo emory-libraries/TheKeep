@@ -146,12 +146,21 @@ var HTML5DropBox = Class.create({
                 reader.file = file;
                 
                 this.itemIndex = this.itemIndex + 1;
-                
+
                 if(this.checkFileType(file.type))
                 {
                   this.uploadFileCount = this.uploadFileCount + 1;
-                  reader.onloadend = function (event){ self.buildImageListItem(event); };
-                  reader.readAsDataURL(file);
+                  if(file.type.startsWith('image/'))
+	          {
+		        reader.onloadend = function (event){ self.processPlaceholderForImages(event); };
+                        reader.readAsDataURL(file);
+		  }
+		  else {
+                       self.processPlaceholderForNonImages(reader.index, file);
+                       reader.onloadend = function (evt){ self.processXHR(file, reader.index, evt.target.result); };
+        	       reader.readAsBinaryString(file);
+                  }
+
                 }
                 else {
                   //handle non correct file here. Better implementation needed than just alert.
@@ -168,7 +177,7 @@ var HTML5DropBox = Class.create({
         }
       },
       
-      buildImageListItem: function (event) {
+      processPlaceholderForImages: function (event) {
       
         var data = event.target.result,
           index = event.target.index,
@@ -177,16 +186,8 @@ var HTML5DropBox = Class.create({
           
         var self = this;
         
-        if(file.type.startsWith('image/'))
-        {
-          srcValue = data // base64 encoded string of local file(s) 
-        }
-        else if(file.type.startsWith('audio/')) {
-          srcValue = "/static/HTML5/music_placeholder.jpg" // placeholder image to represent the audio.
-        }
-        else {
-          srcValue= ''; //Add some other placeholder here.
-        }
+        srcValue = data // base64 encoded string of local file(s) 
+      
         //create the insert string values.
         var insertString = '<li id="item' + index + '">';
         insertString = insertString + '<a><img height="' + this.imageHeight + '" width="' + this.imageWidth + '" src="' + srcValue + '" /></a>';
@@ -194,22 +195,47 @@ var HTML5DropBox = Class.create({
         insertString = insertString + '</li>';
         
         this.dropListing.insert({bottom:insertString});
+
+        var container = $("item"+index); 
+        var progressString = '<div class="progressBar"><p>0%</p></div>';
+        
+        container.insert({bottom:progressString});
         
         getBinaryDataReader.onloadend = function (evt){ self.processXHR(file, index, evt.target.result); };
         
         getBinaryDataReader.readAsBinaryString(file);
       },
+
+      processPlaceholderForNonImages: function(index, file) {
+        
+        if(file.type.startsWith('audio/')) {
+          srcValue = "/static/HTML5/music_placeholder.jpg" // placeholder image to represent the audio.
+        }
+        else {
+          srcValue= ''; //Add some other placeholder here.
+        }
+
+        var insertString = '<li id="item' + index + '">';
+        insertString = insertString + '<a><img height="' + this.imageHeight + '" width="' + this.imageWidth + '" src="' + srcValue + '" /></a>';
+        insertString = insertString + '<p>' + file.name + '</p>';
+        insertString = insertString + '</li>';
+        
+        this.dropListing.insert({bottom:insertString});
+
+        var container = $("item"+index); 
+        var progressString = '<div class="progressBar"><p>0%</p></div>';
+        
+        container.insert({bottom:progressString});
+      },
+
       
       processXHR: function (file, index, bin) {
           var xhr = new XMLHttpRequest();
           var container = $("item"+index);
           var fileUpload = xhr.upload;
-          
-          var progressString = '<div class="progressBar"><p>0%</p></div>'
-          
           var self = this;
-        
-           container.insert({bottom:progressString});
+          
+
            
            //Currently not implemented.... will implement later...
            /*var deleteXString = '<div class="redX"><img src="/static/genlib_media/resources/redx.jpg" width="20" height="20" /></div>';
@@ -270,11 +296,11 @@ var HTML5DropBox = Class.create({
                 }
                 else if(xhr.responseText.strip().include("Error - Incorrect File Type"))
                 {
-                  alert('Incorrect type for the file "' + file.name + '" from the server side check. If you has selected to ingest, you will need to click the button again.');
+                  alert('Incorrect type for the file "' + file.name + '" from the server side check. If you have selected to ingest, you will need to click the button again.');
                 }
                 else if(xhr.responseText.strip().include("Error - MD5 Did Not Match"))
                 {
-                  alert('The MD5 checksum for the file "' + file.name + '" did not match what the server generated (likely a corrupted upload). If you has selected to ingest, you will need to click the button again.');
+                  alert('The MD5 checksum for the file "' + file.name + '" did not match what the server generated (likely a corrupted upload). If you have selected to ingest, you will need to click the button again.');
                 }
                 else {
                   alert('HTTP 400 response - unspecified.')
