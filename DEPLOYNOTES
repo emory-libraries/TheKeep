@@ -25,10 +25,15 @@ Installation notes for this release:
       CELERY_RESULT_BACKEND = "" # e.g "amqp"
 
 * The application now provides a RSS podcast feed intended for iTunes on the
-  MARBL reading room kiosk.  URLs for the feed and MP3 files should be IP
-  restricted to only those machines that should have access.
+  MARBL reading room kiosk.  Due to limitations in the amount of data that iTunes
+  can harvest in a single feed, the podcast feed generation logic expects a setting
+  for MAX_ITEMS_PER_PODCAST_FEED (current recommended value is 2000).  See
+  localsettings.py.sample for example configuration.
+
+  URLs for the podcast feeds and MP3 files should be IP restricted to only those
+  machines that are permitted access to the content.
   The url patterns that should be restricted are:
-    /audio/feed/
+    /audio/feeds/*/             (* is the number of the feed, starting with 1)
     /audio/*/access.mp3         (* is the fedora object pid)
 
 Release 0.8 (?) - Min Items, part II

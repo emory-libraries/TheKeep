@@ -1,0 +1,14 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: iTunes Podcast Feeds{% endblock %}
+{% block content-title %}iTunes Podcast Feeds{% endblock %}
+
+{% block content-body %}
+<p>Currently configured to include no more than <b>{{ per_page }}</b> items
+per feed.</p>
+<ul>
+{% for page in pages %}
+  <li><a href="{% url audio:podcast-feed page %}">{% url audio:podcast-feed page %}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

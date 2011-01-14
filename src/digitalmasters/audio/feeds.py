@@ -1,15 +1,20 @@
 import datetime
+import logging
 
 from django.conf import settings
 from django.contrib.syndication.views import Feed
-from django.utils.feedgenerator import Rss201rev2Feed
 from django.core.urlresolvers import reverse
+from django.core.paginator import Paginator
+from django.utils.feedgenerator import Rss201rev2Feed
+
+from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.collection.models import get_cached_collection_dict
 from digitalmasters.common.fedora import Repository
 from digitalmasters.common.utils import absolutize_url
 
+logger = logging.getLogger(__name__)
 
 class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
     'Extend RSS Feed generator to add fields specific to iTunes podcast feeds'
@@ -38,9 +43,16 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         if 'keywords' in item:
             handler.addQuickElement(u'itunes:keywords', ', '.join(item['keywords']))
 
-
 class PodcastFeed(Feed):
-    '''Podcast Feed for Audio objects with MP3 access copy available. '''
+    '''Podcast Feed for Audio objects with MP3 access copy available.
+
+    Due to limitations in the amount of data iTunes can handle in a single feed,
+    this PodcastFeed is designed to paginated content into chunks using the configured
+    MAX_ITEMS_PER_PODCAST_FEED setting, and expects to be initialized with a page
+    number, e.g.::
+    
+        url(r'^feeds/(?P<page>[0-9]+)/$', PodcastFeed())
+    '''
     
     # set information about this feed
     title = 'The Keep - iTunes Feed'
@@ -49,26 +61,37 @@ class PodcastFeed(Feed):
     # could also set the following feed-level attributes:
     #  owner, itunes subtitle, author, summary; itunes owner, image, category
 
-    def link(self):
-        return reverse('audio:podcast-feed')
+    def get_object(self, request, page):
+        return page
 
-    def items(self):
+    def link(self, page):
+        return reverse('audio:podcast-feed', args=[page])
+
+    def items(self, page):
         # Find all items that should be included in the feed
         # Until we have a better way to do this, find all Audio objects
         # and then filter out any without compressed audio
         # or with rights that do not allow them to be included (rights still TODO)
-        search_opts = {
-            'type': AudioObject,
-            # restrict to objects in configured pidspace
-            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
-            # restrict by cmodel in dc:format
-            'format__contains': AudioObject.AUDIO_CONTENT_MODEL,
-        }
-        repo = Repository()
-        # limit to objects with access-copy audio files available
-        # TODO: filter on rights
-        return (obj for obj in repo.find_objects(**search_opts)
-                                if obj.compressed_audio.exists)
+
+        # NOTE: for simplicity & efficiency (to reduce the number of Fedora API 
+        # calls), items are being paginated *before* excluding objects based on
+        # rights & compressed audio available - this means that many feeds may have
+        # fewer than the configured max items.
+        paginated_objects = Paginator(list(AudioObject.all()),
+                                      settings.MAX_ITEMS_PER_PODCAST_FEED)
+        current_chunk = paginated_objects.page(page)
+        for obj in current_chunk.object_list:
+            try:
+                # limit to objects with access-copy audio files available
+                if not obj.compressed_audio.exists:
+                    logger.debug('%s does not have compressed audio, excluding from podcast feed ' \
+                                 % obj.pid)
+                # TODO: filter on rights
+                else:
+                    yield obj
+            except RequestFailed as rf:
+                # if there is any Fedora error accessing an object, skip it
+                logger.warn('Error accessing %s, excluding from feed ' % obj.pid + rf)
 
     def item_title(self, item):
         return item.mods.content.title

@@ -2,6 +2,7 @@ import os
 from rdflib import URIRef
 import wave
 
+from django.conf import settings
 from django.db.models import permalink
 
 from eulcore import xmlmap
@@ -382,6 +383,18 @@ class AudioObject(DigitalObject):
 
     collection_uri = property(_get_collection_uri, _set_collection_uri)
 
+    @staticmethod
+    def all():
+        'Find all Audio objects by content model with the configured pidspace.'
+        search_opts = {
+            'type': AudioObject,
+            # restrict to objects in configured pidspace
+            'pid__contains': '%s:*' % settings.FEDORA_PIDSPACE,
+            # restrict by cmodel in dc:format
+            'format__contains': AudioObject.AUDIO_CONTENT_MODEL,
+        }
+        repo = Repository()
+        return repo.find_objects(**search_opts)
 
 def wav_duration(filename):
     '''Calculate the duration of a WAV file using Python's built in :mod:`wave`

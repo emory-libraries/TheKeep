@@ -1,4 +1,3 @@
-import magic
 import logging
 import os
 import tempfile
@@ -21,6 +20,7 @@ from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
 from digitalmasters.audio import forms as audioforms
+from digitalmasters.audio.feeds import PodcastFeed
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.audio.tasks import convert_wav_to_mp3
 from digitalmasters.audio.utils import md5sum
@@ -375,3 +375,12 @@ def download_compressed_audio(request, pid):
               'problem persists, please alert the repository ' + \
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
+
+@permission_required('is_staff')
+def feed_list(request):
+    'List and link to all current iTunes podcast feeds based on number of objects/pages.'
+    paginated_objects = Paginator(list(AudioObject.all()), settings.MAX_ITEMS_PER_PODCAST_FEED)
+    return render_to_response('audio/feed_list.html', {
+                'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,
+                'pages': paginated_objects.page_range,
+                }, context_instance=RequestContext(request))

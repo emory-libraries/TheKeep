@@ -69,6 +69,9 @@ PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain 
 # django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
 CACHE_BACKEND = 'file:///tmp/euterpe_cache'
 
+# maximum number of items to include in a single iTunes podcast feed
+MAX_ITEMS_PER_PODCAST_FEED = 2000 
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
