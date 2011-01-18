@@ -1,6 +1,6 @@
 {% extends "genlib_templates/bluegray_site_base.xhtml" %}
 
-{% block page-title %}Euterpe Prototype {% block page-subtitle %}: Home{% endblock %}{% endblock %}
+{% block page-title %}The Keep {% block page-subtitle %}: Home{% endblock %}{% endblock %}
 
 {% block style %}
     {{ block.super }}
@@ -8,8 +8,12 @@
    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/local.css" />
 {% endblock %}
 
-{% block site-name %}Euterpe Prototype{% endblock %}
-{% block site-slogan %}digital masters audio{% endblock %}
+{% block site-name %}
+<img id="keep-logo" src="{{ MEDIA_URL }}/images/keep.png" />
+The Keep
+
+{% endblock %}
+{% block site-slogan %}{# ??? #}{% endblock %}
 
 {% load eulcore_tags %}
 

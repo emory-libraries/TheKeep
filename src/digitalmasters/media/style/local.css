@@ -133,3 +133,7 @@ div#logged-in {
 div#logged-in a {
     font-weight: bold;
 }
+img#keep-logo {
+    float:left;
+    padding-right:5px;
+}

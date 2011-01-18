@@ -1,6 +1,6 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: {% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
+{% block page-subtitle %}: Collections : {% if collection %}Edit{% else %}Create{% endif %} {{ collection.pid|default:'' }}{% endblock %}
 {% block content-title %}{% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
 
 {% block content-body %}
