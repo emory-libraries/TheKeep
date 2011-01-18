@@ -37,7 +37,9 @@ def index(request):
 
 @permission_required('is_staff')
 def upload(request):
-    "Upload file(s) and create new fedora object(s).  Only accepts audio/x-wav currently."
+    '''Upload file(s) and create new fedora
+    :class:`~digitalmasters.audio.models.AudioObject`(s).  Only accepts
+    audio/x-wav currently.'''
 
     ctx_dict = {}
     response_code = None
@@ -202,7 +204,8 @@ def HTML5FileUpload(request):
     
 @permission_required('is_staff')
 def search(request):
-    "Search for fedora objects by pid or title."
+    '''Search for  :class:`~digitalmasters.audio.models.AudioObject` by pid,
+    title, description, collection, date, or rights.'''
     response_code = None
     form = audioforms.ItemSearch(request.GET, prefix='audio')
     ctx_dict = {'search': form}
@@ -267,6 +270,9 @@ def search(request):
 
 @permission_required('is_staff')
 def view(request, pid):
+     '''View a single :class:`~digitalmasters.audio.models.AudioObject`.
+    Not yet implemented; for now, redirects to :meth:`edit` view.
+    '''
     # this view isn't implemented yet, but we want to be able to use the
     # uri. so if someone requests the uri, send them straight to the edit
     # page for now.

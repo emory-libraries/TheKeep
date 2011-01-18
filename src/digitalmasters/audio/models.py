@@ -18,13 +18,15 @@ from digitalmasters import mods
 ##
 
 class AudioMods(mods.MODS):
-    """AudioObject-specific MODS, based on :class:`mods.MODS`."""
+    '''Customized MODS for :class:`AudioObject`, based on
+    :class:`~digitalmasters.mods.MODS`.'''
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
           mods.Note, instantiate_on_get=True, required=False)
+    ':class:`~digitalmasters.mods.Note` with `type="general"`'
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
                                           mods.Note, instantiate_on_get=True)
-
+    ':class:`~digitalmasters.mods.Note` with `type="part number"`'
 
 ##
 ## Source technical metadata
@@ -36,13 +38,18 @@ class _BaseSourceTech(xmlmap.XmlObject):
     ROOT_NAMESPACES = {'st': ROOT_NS }
 
 class SourceTechMeasure(_BaseSourceTech):
+    ''':class:`~eulcore.xmlmap.XmlObject` for :class:`SourceTech` measurement
+    information'''
     ROOT_NAME = 'measure'
     unit = xmlmap.StringField('@unit')
+    'unit of measurement'
     aspect = xmlmap.StringField('@aspect')
+    'aspect of measurement'
     value = xmlmap.StringField('.')
+    'value (actual measurement)'
 
 class SourceTech(_BaseSourceTech):
-    'Source Technical Metadata'
+    ':class:`~eulcore.xmlmap.XmlObject` for Source Technical Metadata.'
     ROOT_NAME = 'sourcetech'
 
     # option lists for controlled vocabulary source tech fields
@@ -51,12 +58,16 @@ class SourceTech(_BaseSourceTech):
         'DAT', '78', '45 RPM', 'acetate disc', 'aluminum disc', 'glass disc',
         'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
         'dictabelt', 'other')
+    'controlled vocabulary for :class:`SourceTech.form`'
     housing_options = ('Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
         'Tape Cartridge', 'VHS', 'Other')
+    'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
+    'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
     reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
     reel_size_options.append((None, 'Other'))
     sound_characteristic_options = ('mono', 'stereo')
+    'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
     speed_options = (
         # delimited format is aspect, value, unit
         ('tape', (
@@ -90,6 +101,7 @@ class SourceTech(_BaseSourceTech):
         ),
         ('na|Not applicable|na', 'Not Applicable'),
     )
+    'controlled vocabulary for :class:`SourceTech.speed`, grouped by format'
     # NOTE: speed should be displayed as ips but saved to xml as inches/sec
     # speed options is formatted for grouped options in django select widget
 
@@ -98,32 +110,44 @@ class SourceTech(_BaseSourceTech):
     #xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
     note = xmlmap.StringField('st:note[@type="general"]', required=False,
         verbose_name='General Note', help_text='General note about the physical item')
+    'general note'
     note_list = xmlmap.StringListField('st:note[@type="general"]')
     related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False,
         help_text='IDs of other digitized files for the same item, separated by semicolons. Required for multi-part items.')
+    'related files (string of IDs delimited by semicolons'
         # NOTE: according to spec, related_files is required if multi-part--
         # - not tracking multi-part for Min Items (that I know of)
     conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]',
         required=False)
+    'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
     manufacturer = xmlmap.StringField('st:manufacturer', required=False,
         verbose_name='Tape Manufacturer', help_text='The manufacturer of the magnetic tape')
+    'manufacturer of the media'
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
         SourceTechMeasure, instantiate_on_get=True, required=True)
+    ':class:`SourceTechMeasure`'
     sublocation = xmlmap.StringField('st:sublocation', required=True,
         help_text='Storage location within the collection (e.g., box and folder)')
+    'storage location within the collection'
     form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options,
         required=False, help_text='The physical form or medium of the resource')
+    'physical format - options controlled by :class:`SourceTech.form_options`'
     sound_characteristics = xmlmap.StringField('st:soundChar',
         choices=sound_characteristic_options, required=False)
+    'sound characteristics - options controlled by :class:`SourceTech.sound_characteristic_options`'
     stock = xmlmap.StringField('st:stock', verbose_name='Tape Brand/Stock',
        help_text='The brand or stock of the magnetic tape', required=False)
+    'Stock or brand of source media'
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
         required=True, help_text='Type of housing for magnetic tape')
+    'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
             SourceTechMeasure, instantiate_on_get=True, required=False)
+    ':class:`SourceTechMeasure`'
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
+    'note with type="technical"'
 
 
 ##
@@ -136,12 +160,17 @@ class _BaseDigitalTech(xmlmap.XmlObject):
     ROOT_NAMESPACES = {'dt': ROOT_NS }
 
 class TransferEngineer(_BaseDigitalTech):
+    ''':class:`~eulcore.xmlmap.XmlObject` for :class:`DigitalTech` transfer engineer'''
     ROOT_NAME = 'transferEngineer'
     id = xmlmap.StringField('@id')
+    'unique id to identify the transfer engineer'
     id_type = xmlmap.StringField('@idType')
+    'type of id used'
     name = xmlmap.StringField('.')
+    'full display name for the transfer engineer'
 
 class CodecCreator(_BaseDigitalTech):
+    ''':class:`~eulcore.xmlmap.XmlObject` for :class:`DigitalTech` codec creator'''
     ROOT_NAME = 'codecCreator'
     configurations = {
         # current format is     id :  hardware, software, software version
@@ -151,38 +180,51 @@ class CodecCreator(_BaseDigitalTech):
         '4': (('Dell Optiplex 755',), 'iTunes',  None),
         '5': (('Unknown',), 'Unknown',  None),
     }
+    'controlled vocabulary for codec creator configurations'
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
                     for id, c in configurations.iteritems()]
 
     id = xmlmap.StringField('dt:codecCreatorID')
+    'codec creator id - `dt:codecCreatorId`'
     hardware = xmlmap.StringField('dt:hardware')
+    'hardware  - `dt:hardware` (first hardware only, even if there are multiple)'
     hardware_list = xmlmap.StringListField('dt:hardware')
+    'list of all hardware'
     software = xmlmap.StringField('dt:software')
+    'software  - `dt:software` (first software only, even if there are multiple)'
     software_version = xmlmap.StringField('dt:softwareVersion')
+    'list of all software'
 
 class DigitalTech(_BaseDigitalTech):
-    "Digital Technical Metadata."
+    ":class:`~eulcore.xmlmap.XmlObject` for Digital Technical Metadata."
     ROOT_NAME = 'digitaltech'
     date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdtf"]',
         help_text='Date digital capture was made', required=True)
+    'date digital capture was made (string)'
     codec_quality = xmlmap.StringField('dt:codecQuality', required=True,
         help_text='Whether the data compression method was lossless or lossy')
+    'codec quality - lossless or lossy'
     duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]',
         help_text='Duration of audio playing time', required=True)
+    'duration of the audio file'
     # FIXME/TODO: note and digitization purpose could be plural
     note = xmlmap.StringField('dt:note[@type="general"]', required=False,
         help_text='Additional information that may be helpful in describing the surrogate')
+    'general note'
     note_list = xmlmap.StringListField('dt:note[@type="general"]')
     digitization_purpose = xmlmap.StringField('dt:note[@type="purpose of digitization"]',
         required=True,
         help_text='The reason why the digital surrogate was created (e.g., exhibit, patron request, preservation)')
+    'reason the item was digitized'
     digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
     transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
         instantiate_on_get=True, required=True,
         help_text='The person who performed the digitization or conversion that produced the file')
+    ':class:`TransferEngineer` - person who digitized the item'
     codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
         instantiate_on_get=True, required=True,
         help_text='Hardware, software, and software version used to create the digital file')
+    ':class:`CodecCreator` - hardware & software used to digitize the item'
 
 
 ##
@@ -195,9 +237,12 @@ class _BaseRights(xmlmap.XmlObject):
     ROOT_NAMESPACES = { 'rt': ROOT_NS }
 
 class AccessCondition(_BaseRights):
+    ':class:`~eulcore.xmlmap.XmlObject` for :class:`Rights` access condition'
     ROOT_NAME = 'accessCondition'
     code = xmlmap.StringField('@code', required=True)
+    'access code'
     text = xmlmap.StringField('.')
+    'text description of rights access code'
 
 class Rights(_BaseRights):
     'Rights metadata'
@@ -205,8 +250,11 @@ class Rights(_BaseRights):
     access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
         instantiate_on_get=True, required=True,
         help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
+    ':class:`AccessCondition`'
     copyright_holder_name = xmlmap.StringField('rt:copyrightholderName')
+    'name of the copyright holder'
     copyright_date = xmlmap.StringField('rt:copyrightDate[@encoding="w3cdtf"]')
+    'copyright date (string)'
 
 
 ##
@@ -214,6 +262,7 @@ class Rights(_BaseRights):
 ##
 
 class AudioObject(DigitalObject):
+    '''Fedora Audio Object.  Extends :class:`~eulcore.fedora.models.DigitalObject`.'''
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'
     CONTENT_MODELS = [ AUDIO_CONTENT_MODEL ]
     NEW_OBJECT_VIEW = 'audio:view'
@@ -223,28 +272,41 @@ class AudioObject(DigitalObject):
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
         })
+    'MODS :class:`~eulcore.fedora.models.XmlDatastream` with content as :class:`AudioMods`'
     audio = FileDatastream("AUDIO", "Audio datastream", defaults={
             'mimetype': 'audio/x-wav',
             'versionable': True,
         })
+    'master audio :class:`~eulcore.fedora.models.FileDatastream`'
     compressed_audio = FileDatastream("CompressedAudio", "Compressed audio datastream", defaults={
             'mimetype': 'audio/mpeg',
             'versionable': True,
         })
+    'access copy of audio :class:`~eulcore.fedora.models.FileDatastream`'
     digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
         defaults={
             'control_group': 'M',
             'versionable': True,
         })
+    '''digital technical metadata :class:`~eulcore.fedora.models.XmlDatastream`
+    with content as :class:`DigitalTech`'''
     sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", SourceTech,
         defaults={
             'control_group': 'M',
             'versionable': True,
         })
+    '''source technical metadata :class:`~eulcore.fedora.models.XmlDatastream` with content as
+    :class:`SourceTech`'''
 
     _collection_uri = None
 
     def save(self, logMessage=None):
+        '''Save the object.  If the content of any :class:`~AudioObject.mods`,
+        :class:`AudioObject.rels_ext`, or :class:`AudioObject.digitaltech`
+        datastreams have been changed, the DC will be updated and saved as well.
+
+        :param logMessage: optional log message
+        '''
         if self.mods.isModified() or self.rels_ext.isModified or \
             self.digitaltech.isModified():
             # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
@@ -259,11 +321,12 @@ class AudioObject(DigitalObject):
 
     @permalink
     def get_absolute_url(self):
+        'Absolute url to view this object within the site'
         return ('audio:view', [str(self.pid)])
 
     @property
     def conversion_result(self):
-        '''Return the :class:`~eulcore.django.taskresult.models.TaskResult'
+        '''Return the :class:`~eulcore.django.taskresult.models.TaskResult`
         for the most recently requested access copy conversion (if any).
         '''
         conversions = TaskResult.objects.filter(object_id=self.pid).order_by('-created')
@@ -326,9 +389,10 @@ class AudioObject(DigitalObject):
     def init_from_file(filename, initial_label=None, request=None, checksum=None):
         '''Static method to create a new :class:`AudioObject` instance from
         a file.  Sets the object label and metadata title based on the initial
-        label specified, or file basename.  Also sets the following default
-        metadata values:
+        label specified, or file basename.  Calculates and stores the duration
+        based on the file. Also sets the following default metadata values:
             * mods:typeOfResource = "sound recording"
+            * dt:codecQuality = "lossless"
 
         :param filename: full path to the audio file, as a string
         :param initial_label: optional initial label to use; if not specified,
@@ -382,10 +446,11 @@ class AudioObject(DigitalObject):
         self._collection_uri = None
 
     collection_uri = property(_get_collection_uri, _set_collection_uri)
+    ':class:`~rdflib.URIRef` for the collection this object belongs to'
 
     @staticmethod
     def all():
-        'Find all Audio objects by content model with the configured pidspace.'
+        'Find all Audio objects by content model within the configured pidspace.'
         search_opts = {
             'type': AudioObject,
             # restrict to objects in configured pidspace
