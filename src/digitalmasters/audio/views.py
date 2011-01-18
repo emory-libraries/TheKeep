@@ -3,6 +3,7 @@ import os
 import tempfile
 import hashlib
 import sys
+import magic
 
 from django.conf import settings
 from django.contrib import messages
