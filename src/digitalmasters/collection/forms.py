@@ -8,6 +8,8 @@ from digitalmasters.collection.models import CollectionMods, CollectionObject
 
 
 class CollectionSearch(forms.Form):
+    '''Form for searching for :class:`~digitalmasters.collection.models.CollectionObject`
+    instances.'''
     search_tips = mark_safe('''<ul>
     <li>Search is NOT case sensitive.</li>
     <li>Search matches whole words only, including  punctuation.
@@ -33,30 +35,34 @@ class CollectionSearch(forms.Form):
                                 
 
 class AccessConditionForm(XmlObjectForm):
-    """Custom XmlObjectForm to edit MODS accessCondition fields:
-     * suppress default label 'text'
-     * use Textarea
+    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
+    :class:`~digitalmasters.mods.AccessCondition`:
+     * suppress default label of 'text'
+     * use :class:`~django.forms.Textarea` widget
      * make not required
-    """
+    '''
     text = forms.CharField(label='', widget=forms.Textarea, required=False)
     class Meta:
         model = mods.AccessCondition
         exclude = ['type']
 
 class NamePartForm(XmlObjectForm):
-    """Custom XmlObjectForm to edit MODS name namePart
+    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
+    :class:`~digitalmasters.mods.NamePart`
      * suppress default label 'text'
-    """
+     * use :class:`~django.forms.TextInput` with class *long*
+    '''
     text = forms.CharField(label='Name Part',
                             widget=forms.TextInput(attrs={'class': 'long'}))
     class Meta:
         model = mods.NamePart
 
 class RoleForm(XmlObjectForm):
-    """Custom XmlObjectForm to edit MODS name role information
+    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS name
+    :class:`~digitalmasters.mods.Role` information
      * suppress default label 'text'
      * configure type with initial value 'text' and make read-only
-    """
+    '''
     text = forms.CharField(label='Role',
                             widget=forms.TextInput(attrs={'class': 'long'}))
     # for our purposes, all roles will be type='text': set as initial value & make read only
@@ -66,11 +72,13 @@ class RoleForm(XmlObjectForm):
         model = mods.Role
 
 class NameForm(XmlObjectForm):
-    """Custom XmlObjectForm to edit MODS name information
-     * use custom namePart and role forms
+    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
+    :class:`~digitalmasters.mods.Name` information
+     * use custom :class:`~digitalmasters.mods.NamePart` and
+       :class:`~digitalmasters.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
      * customize id field label & help text
-     * suppress displayForm and affiliation
-    """
+     * suppress displayForm and affiliation fields
+    '''
     id = forms.CharField(required=False, label='Identifier',
                         help_text="Optional; supply for NAF names.")
     name_parts = SubformField(formclass=NamePartForm)
@@ -80,19 +88,20 @@ class NameForm(XmlObjectForm):
         exclude = ['display_form', 'affiliation']
 
 
-
 class CollectionForm(XmlObjectForm):
-    """Custom XmlObjectForm to edit descriptive metadata on a :class:`CollectionObject`.
+    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit descriptive
+    metadata on a :class:`~digitalmasters.collection.models.CollectionObject`.
 
-    Takes a :class:`CollectionObject` as form instance.  This stands in contrast
-    to a regular :class:`eulcore.django.forms.XmlObjectForm`, which would take
-    an :class:`eulcore.xmlmap.XmlObject`. This form edits a whole
-    :class:`CollectionObject`, although most of the editing is on the MODS
-    datastream (which is an :class:`eulcore.xmlmap.XmlObject`). The most expedient
-    way to make a :class:`CollectionObject` editable was to make a customized
-    :class:`eulcore.django.forms.XmlObjectForm` that mostly deals with the
-    MODS datastream.
-    """
+    Takes a :class:`~digitalmasters.collection.models.CollectionObject` as form instance.
+    This stands in contrast to a regular :class:`~eulcore.django.forms.XmlObjectForm`,
+    which would take an :class:`~eulcore.xmlmap.XmlObject`. This form edits a whole
+    :class:`~digitalmasters.collection.models.CollectionObject`, although most of the editing
+    is on the MODS datastream (which is an :class:`~eulcore.xmlmap.XmlObject`).
+    The most expedient way to make a :class:`~digitalmasters.collection.models.CollectionObject`
+    editable was to make a customized :class:`~eulcore.django.forms.XmlObjectForm`
+    that mostly deals with the  MODS datastream.
+    '''
+    # FIXME: update docstring to reflect multiple xml edit forms / datastreams
 
     # NOTE: this only sets choices on load time
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField

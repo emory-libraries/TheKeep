@@ -19,20 +19,25 @@ from digitalmasters.common.fedora import DigitalObject, Repository
 logger = logging.getLogger(__name__)
 
 class CollectionMods(mods.MODS):
-    """Collection-specific MODS, based on :class:`mods.MODS`."""
+    '''Collection-specific MODS, based on :class:`digitalmasters.mods.MODS`.'''
     source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
+    'local source identifier as an integer'
     # possibly map identifier type uri as well ?
     # TODO: (maybe) - single name here, multiple names on standard MODS
     # relatedItem type host - not editable on form, but may want mapping for easy access
     # - same for relatedItem type isReferencedyBy
     restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
                                               mods.AccessCondition, instantiate_on_get=True)
+    ':class:`digitalmasters.mods.AccessCondition`'
     use_and_reproduction = xmlmap.NodeField('mods:accessCondition[@type="use and reproduction"]',
                                               mods.AccessCondition, instantiate_on_get=True)
+    ':class:`digitalmasters.mods.AccessCondition`'
 
 
 
 class CollectionObject(DigitalObject):
+    '''Fedora Collection Object.  Extends :class:`~eulcore.fedora.models.DigitalObject`.
+    '''
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
     NEW_OBJECT_VIEW = 'collection:view'
@@ -42,6 +47,7 @@ class CollectionObject(DigitalObject):
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
         })
+    'MODS :class:`~eulcore.fedora.models.XmlDatastream` with content as :class:`CollectionMods`'
 
     _collection_id = None
     _collection_label = None
@@ -82,6 +88,14 @@ class CollectionObject(DigitalObject):
 
 
     def save(self, logMessage=None):
+        '''Save the object.  If the content of the MODS or RELS-EXT datastreams
+        have been changed, the DC will be updated and saved as well.
+
+        After a successful save, information for this collection object
+        will be updated in the local cache using :meth:`set_cached_collection_dict`.
+
+        :param logMessage: optional log message
+        '''
         if self.mods.isModified() or self.rels_ext.isModified:
             # DC is derivative metadata based on MODS/RELS-EXT
             # if either has changed, update DC and object label to keep them in sync
@@ -95,7 +109,8 @@ class CollectionObject(DigitalObject):
     @property
     def collection_id(self):
         """Fedora URI for the top-level collection this object is a member of.
-        :rtype: string
+        
+        :type: string
         """
         # for now, a collection should only have one isMemberOfCollection relation
         if self._collection_id is None:
@@ -108,7 +123,8 @@ class CollectionObject(DigitalObject):
     @property
     def collection_label(self):
         """Label of the top-level collection this object is a member of.
-        :rtype: string
+        
+        :type: string
         """
         if self._collection_label is None:
             for coll in CollectionObject.top_level():
@@ -139,6 +155,7 @@ class CollectionObject(DigitalObject):
     @staticmethod
     def top_level():
         """Find top-level collection objects.
+        
         :returns: list of :class:`CollectionObject`
         :rtype: list
         """
@@ -228,7 +245,7 @@ class CollectionObject(DigitalObject):
 def get_cached_collection_dict(pid):
     '''Retrieve minimal collection object information in dictionary form.
     A cached copy will be used when available; when not previously cached,
-    the dictionary will be stored in the cache.
+    the cache will be populated before the dictionary is returned.
 
     :param pid: collection object pid or uri
     :rtype: dict
@@ -243,6 +260,17 @@ def get_cached_collection_dict(pid):
     return coll_dict
 
 def set_cached_collection_dict(collection):
+    '''Save minimal information about a :class:`CollectionObject` to a local
+    cache in dictionary format.  Stores the following fields:
+     * pid
+     * source_id (from :class:`CollectionMods.source_id`)
+     * title
+     * creator
+     * collection_id  - id for the collection/numbering scheme object this collection belongs to
+     * collection_label - label for parent collection/numbering scheme object
+
+    :param collection: class:`CollectionObject` to be cached
+    '''
     cache_duration = 60*60*12  # FIXME: make this configurable ? keep for a long time, since we will recache
     # DigitalObjects can't be cached, and django templates can sort and regroup
     # dictionaries much better, so cache important collction info as dictionary 
@@ -260,9 +288,9 @@ def set_cached_collection_dict(collection):
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
     """
-    :class:`~eulcore.django.existdb.models.XmlModel` version of
-    :class:`eulcore.xmlmap.eadmap.EncodedArchivalDescription`EAD object, for
-    querying EAD content in an eXist DB.
+    This is an :class:`~eulcore.django.existdb.models.XmlModel` version of
+    :class:`~eulcore.xmlmap.eadmap.EncodedArchivalDescription` (EAD) object, to
+    simplify querying for EAD content in an eXist DB.
     """
     ROOT_NAMESPACES = {
         'e': EAD_NAMESPACE,
@@ -361,10 +389,11 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         This method assumes a single Finding Aid should be found, so uses the
         :meth:`eulcore.existdb.query.QuerySet.get` method, which raises the following
         exceptions if anything other than a single match is found:
+        
           * :class:`eulcore.existdb.exceptions.DoesNotExist` when no matches
-             are found
+            are found
           * :class:`eulcore.existdb.exceptions.ReturnedMultiple` if more than
-             one match is found
+            one match is found
 
         :param id: integer unitid to search on
         :param archive_name: name of the repository/subarea (numbering scheme)

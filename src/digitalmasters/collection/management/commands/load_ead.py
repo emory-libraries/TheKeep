@@ -5,7 +5,17 @@ from digitalmasters.fedora import Repository
 from digitalmasters.collection.models import CollectionObject, FindingAid
 
 class Command(BaseCommand):
+    '''Create :class:`~digitalmasters.collection.models.CollectionObject` objects
+    based on corresponding :class:`~digitalmasters.collection.models.FindingAid` EAD.
 
+    Takes the PID for the numbering scheme object that the collections should
+    belong to (will be used to ensure the correct document is found when searching
+    for EAD, and created collections will belong to the specified numbering scheme
+    object).  Also takes a list of collection ids; for each id specified, this script
+    will look for the corresponding EAD document within the requested numbering
+    scheme and generate a new :class:`~digitalmasters.collection.models.CollectionObject`.
+    '''
+    help = __doc__
     args = 'num-scheme-pid collection-id [...]'
 
     option_list = BaseCommand.option_list + (

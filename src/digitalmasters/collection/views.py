@@ -20,6 +20,9 @@ from digitalmasters.common.fedora import Repository
 
 @permission_required('is_staff')
 def view(request, pid):
+    '''View a single :class:`~digitalmasters.collection.models.CollectionObject`.
+    Not yet implemented; for now, redirects to :meth:`edit` view.
+    '''
     # this view isn't implemented yet, but we want to be able to use the
     # uri. so if someone requests the uri, send them straight to the edit
     # page for now.
@@ -29,9 +32,8 @@ def view(request, pid):
 @permission_required('is_staff')
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
-    :class:`~digitalmasters.collection.models.CollectionObject` with MODS
-    metadata.    If a pid is specified, attempts to retrieve an existing object.
-    Otherwise, creates a new one.
+    :class:`~digitalmasters.collection.models.CollectionObject`.  If a pid is
+    specified, attempts to retrieve an existing object.  Otherwise, creates a new one.
     '''
     repo = Repository(request=request)
     try:
