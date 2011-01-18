@@ -1,7 +1,8 @@
 '''
-:mod:`eulcore.xmlmap` classes for dealing with the MODS metadata format
+:mod:`eulcore.xmlmap` classes for dealing with the MODS_ metadata format
 (Metadata Object Description Schema).
 
+.. MODS_: http://www.loc.gov/standards/mods/
 '''
 
 from eulcore import xmlmap
@@ -19,7 +20,8 @@ class Common(xmlmap.XmlObject):
     ROOT_NAMESPACES = {'mods': MODS_NAMESPACE }
 
 class Date(Common):
-    '''MODS date element (common fields for the dates under mods:originInfo).'''
+    ''':class:`~eulcore.xmlmap.XmlObject` for MODS date element (common fields
+    for the dates under mods:originInfo).'''
     # this class not meant for direct use; should be extended for specific dates.
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
@@ -37,7 +39,7 @@ class DateIssued(Date):
     ROOT_NAME = 'dateIssued'
 
 class OriginInfo(Common):
-    "MODS originInfo element (incomplete)"
+    ":class:`~eulcore.xmlmap.XmlObject` for MODS originInfo element (incomplete)"
     ROOT_NAME = 'originInfo'
     created = xmlmap.NodeListField('mods:dateCreated', DateCreated,
         verbose_name='Date Created',
@@ -48,7 +50,7 @@ class OriginInfo(Common):
         help_text='Date the resource was published, released, or issued')
 
 class Note(Common):
-    "MODS note element"
+    ":class:`~eulcore.xmlmap.XmlObject` for MODS note element"
     ROOT_NAME = 'note'
     label = xmlmap.StringField('@displayLabel')
     type = xmlmap.StringField('@type',
@@ -58,20 +60,20 @@ class Note(Common):
     text = xmlmap.StringField('.')      # actual text value of the note
 
 class Identifier(Common):
-    'MODS identifier'
+    ':class:`~eulcore.xmlmap.XmlObject` for MODS identifier'
     ROOT_NAME = 'identifier'
     type = xmlmap.StringField('@type')
     text = xmlmap.StringField('.')
 
 class AccessCondition(Common):
-    "MODS accessCondition"
+    ':class:`~eulcore.xmlmap.XmlObject` for MODS accessCondition'
     ROOT_NAME = 'accessCondition'
     type = xmlmap.StringField('@type',
             choices=['restrictions on access', 'use and reproduction'])
     text = xmlmap.StringField('.')
 
 class NamePart(Common):
-    "MODS namePart"
+    ':class:`~eulcore.xmlmap.XmlObject` for MODS namePart'
     ROOT_NAME = 'namePart'
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
@@ -82,14 +84,14 @@ class NamePart(Common):
     text = xmlmap.StringField('.')
 
 class Role(Common):
-    "MODS role"
+    ':class:`~eulcore.xmlmap.XmlObject` for MODS role'
     ROOT_NAME = 'role'
     type = xmlmap.StringField('mods:roleTerm/@type')
     authority = xmlmap.StringField('mods:roleTerm/@authority', choices=['', 'marcrelator', 'local'])
     text = xmlmap.StringField('mods:roleTerm')
 
 class Name(Common):
-    "MODS name"
+    ':class:`~eulcore.xmlmap.XmlObject` for MODS name'
     ROOT_NAME = 'name'
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
@@ -110,8 +112,8 @@ class Name(Common):
         return ' '.join([unicode(part) for part in self.name_parts])
 
 class BaseMods(Common):
-    """Common field declarations for all top-level MODS elements; base class for
-    :class:`MODS` and :class:`RelatedItem`."""
+    ''':class:`~eulcore.xmlmap.XmlObject` with common field declarations for all
+    top-level MODS elements; base class for :class:`MODS` and :class:`RelatedItem`.'''
     XSD_SCHEMA = MODS_SCHEMA
     xmlschema = _mods_xmlschema
 
@@ -125,7 +127,8 @@ class BaseMods(Common):
     access_conditions = xmlmap.NodeListField('mods:accessCondition', AccessCondition)
 
 class RelatedItem(BaseMods):
-    "MODS relatedItem: contains all the top-level MODS fields, plus a type attribute."
+    ''':class:`~eulcore.xmlmap.XmlObject` for MODS relatedItem: contains all the
+    top-level MODS fields defined by :class:`BaseMods`, plus a type attribute.'''
     ROOT_NAME = 'relatedItem'
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
@@ -133,8 +136,9 @@ class RelatedItem(BaseMods):
     type = xmlmap.SchemaField("@type", 'relatedItemTypeAttributeDefinition')
 
 class MODS(BaseMods):
-    '''Top-level XmlObject for a MODS metadata record.  Inherits all standard top-level
-    MODS fields from :class:`BaseMods` and adds a mapping for :class:`RelatedItem`.
+    '''Top-level :class:`~eulcore.xmlmap.XmlObject` for a MODS metadata record.
+    Inherits all standard top-level MODS fields from :class:`BaseMods` and adds
+    a mapping for :class:`RelatedItem`.
     '''
     ROOT_NAME = 'mods'
     XSD_SCHEMA = MODS_SCHEMA
@@ -143,8 +147,9 @@ class MODS(BaseMods):
 
 
 class MODSv34(MODS):
-    '''MODS version 3.4.  Currently consists of all the same fields as
-    :class:`MODS`, but loads the MODS version 3.4 schema for validation.
+    ''':class:`~eulcore.xmlmap.XmlObject` for MODS version 3.4.  Currently
+    consists of all the same fields as :class:`MODS`, but loads the MODS version
+    3.4 schema for validation.
     '''
     XSD_SCHEMA = MODSv34_SCHEMA
     xmlschema = xmlmap.loadSchema(XSD_SCHEMA)

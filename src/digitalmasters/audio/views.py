@@ -270,7 +270,7 @@ def search(request):
 
 @permission_required('is_staff')
 def view(request, pid):
-     '''View a single :class:`~digitalmasters.audio.models.AudioObject`.
+    '''View a single :class:`~digitalmasters.audio.models.AudioObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
     '''
     # this view isn't implemented yet, but we want to be able to use the

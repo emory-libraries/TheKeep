@@ -9,6 +9,10 @@ from django.core.urlresolvers import reverse
 logger = logging.getLogger(__name__)
 
 def login(request):
+    '''Custom login view.  Calls the standard Django authentication, but on
+    successful login, stores encrypted user credentials in order to allow
+    accessing the Fedora repository as the currently logged in user.
+    '''
     response = authviews.login(request, 'accounts/login.html')
     if request.method == "POST" and request.user.is_authenticated():
         # on successful login, encrypt and store user's password to use for fedora access
