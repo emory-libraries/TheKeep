@@ -64,18 +64,35 @@ Context Processors
 .. automodule:: digitalmasters.audio.context_processors
     :members:
 
+Accounts
+--------
+This app adds custom login & logout views with supporting functionality to allow
+accessing the repository as the user logged into the website.
+
+Views
+^^^^^^
+.. automodule:: digitalmasters.accounts.views
+    :members:
+
 
 Common code
 -----------
 
-.. automodule:: digitalmasters.common.models
-    :members:
+This is a module of common code and utility methods used by multiple apps.  It
+is placed in a common module for convenience (including simplifying
+running unit tests, since Django only knows how to test apps).
 
+Fedora
+^^^^^^
 .. automodule:: digitalmasters.common.fedora
     :members:
 
-.. automodule:: digitalmasters.common.utils
+MODS
+^^^^
+.. automodule:: digitalmasters.mods
     :members:
 
-.. automodule:: digitalmasters.mods
+Utilities
+^^^^^^^^^
+.. automodule:: digitalmasters.common.utils
     :members:

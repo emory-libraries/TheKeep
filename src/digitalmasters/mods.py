@@ -1,8 +1,7 @@
 '''
-:mod:`eulcore.xmlmap` classes for dealing with the MODS_ metadata format
+:mod:`eulcore.xmlmap` classes for dealing with the
+`MODS <http://www.loc.gov/standards/mods/>`_ metadata format
 (Metadata Object Description Schema).
-
-.. MODS_: http://www.loc.gov/standards/mods/
 '''
 
 from eulcore import xmlmap
