@@ -37,9 +37,8 @@ def index(request):
 
 @permission_required('is_staff')
 def upload(request):
-    '''Upload file(s) and create new fedora
-    :class:`~digitalmasters.audio.models.AudioObject`(s).  Only accepts
-    audio/x-wav currently.'''
+    '''Upload file(s) and create new fedora :class:`~digitalmasters.audio.models.AudioObject` (s).
+    Only accepts audio/x-wav currently.'''
 
     ctx_dict = {}
     response_code = None
