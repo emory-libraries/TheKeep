@@ -1333,6 +1333,9 @@ class Source_Audio_Conversions(TestCase):
 
             #As the file is deleted when ingested, need to make a copy on the hard-drive.
             tempdir = settings.INGEST_STAGING_TEMP_DIR
+            if not os.path.exists(tempdir):
+                os.makedirs(tempdir)
+
             tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)
             
             try:
