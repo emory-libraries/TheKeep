@@ -1,8 +1,8 @@
 Installation & Upgrade instructions
 ===================================
 
-Release 0.9 (?) - Min Items, part III
-----------------------------------
+Release 0.9 - Min Items, part III
+---------------------------------
 
 Installation notes for this release:
 * Need to install LAME. Can do so with: sudo apt-get install lame . This is for the WAV to MP3 conversion.
@@ -12,7 +12,9 @@ Installation notes for this release:
 
 * General Celery/Django combination configuration notes: http://celeryq.org/docs/django-celery/getting-started/first-steps-with-django.html .
 
-* Configuration setting examples have been added to the localsettings.sampple file. These settings are: 
+* Configuration setting examples have been added to the localsettings.sampple file.
+  These settings are::
+
       #Celery Config
       import djcelery
       djcelery.setup_loader()
@@ -32,15 +34,18 @@ Installation notes for this release:
 
   URLs for the podcast feeds and MP3 files should be IP restricted to only those
   machines that are permitted access to the content.
-  The url patterns that should be restricted are:
-    /audio/feeds/*/             (* is the number of the feed, starting with 1)
-    /audio/*/access.mp3         (* is the fedora object pid)
+  The url patterns that should be restricted are::
 
-Release 0.8 (?) - Min Items, part II
--------------------------------
+    /audio/feeds/*/             * is the number of the feed, starting at 1
+    /audio/*/access.mp3         * is the fedora object pid
+
+Release 0.8 - Min Items, part II
+--------------------------------
 * The app now depends on the standard django ``sites`` module. This module
   stores some data in the relational database. To initialize it, sync the db::
+
     $ ./manage.py syncdb
+
   After restarting the web app, configure the default site by replacing the
   ``example.com`` domain with the domain of the live webapp.
 * Django caching for lists based on Fedora objects requires defining a
@@ -48,6 +53,7 @@ Release 0.8 (?) - Min Items, part II
 * The namespace for Digital Technical metadata was modified; any Audio objects
   loaded in the staging environment should be removed when this update is
   deployed.  This can be done in the django console as follows::
+
     python manage.py shell
     from digitalmasters.fedora import Repository
     from digitalmasters.audio.models import AudioObject
@@ -56,12 +62,15 @@ Release 0.8 (?) - Min Items, part II
     objs = repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
     for o in objs:
         repo.purge_object(o.pid)
+
 * Support added for fetching new object pids from the pid manager. To
   configure it, add the following configuration options::
+
     PIDMAN_HOST = 'https://pid.emory.edu/' # the web root where we'll ask for pids
     PIDMAN_USER = 'exampleuser'
     PIDMAN_PASSWORD = 'examplepass'
     PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
+
   Note that commenting or removing any of these configuration options will
   raise an error if the ``DEV_ENV`` setting is ``False`` (as is normal for a
   production install). The configured user must have permission inside the
@@ -76,7 +85,9 @@ Release 0.7 - Min Items, part I
   This script relies on the following django settings:
   INGEST_STAGING_TEMP_DIR and INGEST_STAGING_KEEP_AGE.  If run with
   verbosity 0, only errors will be reported, i.e.::
-     ``python manage.py  ingest_cleanup -v 0``
+
+     python manage.py  ingest_cleanup -v 0
+
   NOTE: this script will delete all files older than a specified age
   in the configured directory, so it should **not** be run as a
   privileged user.
@@ -88,14 +99,19 @@ Release 0.7 - Min Items, part I
 * Dependencies changed slightly. The current version depends on an updated
   version of eulcore, and we swapped our python-magic dependency for better
   Windows support. Remove the old dependencies and refresh them::
+
     $ . /home/euterpe/env/bin/activate
     $ pip uninstall eulcore python-magic
     $ pip install -r pip-dependencies
+
 * After installation and configuration, ensure required numbering scheme
   objects are defined in fedora::
+
     $ ./manage.py syncrepo
+
 * After defining numbering schemes, admins may want to load collections from
-  Finding Aids:
+  Finding Aids::
+
     $ ./manage.py load_ead euterpe:marbl 10 59 265 494 539 558 572 579 612 \
         616 618 622 629 644 653 663 673 682 685 687 689 741 745 771 797 \
         800 807 832 840 845 853 855 856 869 890 892 923 926 927 932 937 \
@@ -107,8 +123,10 @@ Release 0.6
 -------------
 * Requires Fedora 3.4 or greater with LDAP login configured.
 * Requires Fedora XACML policies (bundled with other local policies in
-  https://svn.library.emory.edu/svn/fedora/repository-policies/
+  https://svn.library.emory.edu/svn/fedora/repository-policies/ )
 * After django application and Fedora are both configured, run
   syncrepo to load Fedora fixtures and control objects::
-  ``python manage.py syncrepo``
+
+    $ python manage.py syncrepo
+
 

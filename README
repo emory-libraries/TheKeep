@@ -4,12 +4,12 @@ README
 System Dependencies
 -------------------
 
-Digital Masters (a.k.a. Euterpe) requires the following network resources::
+Digital Masters (a.k.a. Euterpe) requires the following network resources:
 
   * LDAP for user authentication
   * Fedora 3.4 with risearch enabled. It should be configured for FeSL LDAP
     authentication. Note that the localsettings.py requests user
-    credentials. These are used by command line applications: Users logged
+    credentials. These are used by command line applications; users logged
     into the web application use their own LDAP credentials when accessing
     fedora.
   * A relational database for user and session information
@@ -125,31 +125,38 @@ Magic:
   3. In <installaion directory>\GnuWin32\bin, make a copy of magic1.dll to magic.dll.
   4. Add <installaion directory>\GnuWin32\bin to your system PATH value.
   5. Copy the contents of <installaion directory>\GnuWin32\share\file\ into C:\Program Files\File\share\file
+
     a. Alternatively, you could possibly configure this directory. See thread: http://www.mail-archive.com/python-list@python.org/msg195285.html
     b. Alternate thread locations: http://mail.python.org/pipermail/python-list/2008-May/1145223.html or copied in install files.
+
   6. In the command prompt, do pip install python-magic.
   7. Test the install by running the following in Python, if no errors, it is installed right:
+
     a. >>> import magic
     b. >>> test = magic.Magic()
+
   8. Shouldn't be needed for any of the above, but I also installed Microsoft Visual C++ 2008 Express Edition and MinGW when attempted to compile Magic that failed.
+
+    a. Alternatively, you could possibly configure this directory. See thread: http://www.mail-archive.com/python-list@python.org/msg195285.html
+    b. Alternate thread locations: http://mail.python.org/pipermail/python-list/2008-May/1145223.html or copied in install files.
   
 Config of base urls.py for Windows:
   Due to differences in directory structure, have hard-coded paths at the end of this file. 
-  For me, the changes looked like:
+  For me, the changes looked like::
   
   
-      # if there's not a genlib_media dir/link in the media directory, then
+    # if there's not a genlib_media dir/link in the media directory, then
     # look for it in the virtualenv themes.
-#    if not os.path.exists(os.path.join(settings.MEDIA_ROOT, 'genlib_media')) and \
-#            'VIRTUAL_ENV' in os.environ:
-#        genlib_media_root = os.path.join(os.environ['VIRTUAL_ENV'],
-#                                         'themes', 'genlib', 'genlib_media')
-#        urlpatterns += patterns('',
-#            (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
-#                'document_root': genlib_media_root,
-#                }),
-#        )
-
+    # if not os.path.exists(os.path.join(settings.MEDIA_ROOT, 'genlib_media')) and \
+    #            'VIRTUAL_ENV' in os.environ:
+    #        genlib_media_root = os.path.join(os.environ['VIRTUAL_ENV'],
+    #                                         'themes', 'genlib', 'genlib_media')
+    #        urlpatterns += patterns('',
+    #            (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
+    #                'document_root': genlib_media_root,
+    #                }),
+    #        )
+ 
     genlib_media_root = 'C:/Users/Bluewolf/root/EUL_CORE/themes/genlib/genlib_media/'
     urlpatterns += patterns('',
         (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
