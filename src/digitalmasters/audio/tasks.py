@@ -45,8 +45,8 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
             tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)
             
             try:
-                #destination = os.fdopen(tmpfd, 'wb+')
-                destination = open(tmpname, 'wb+')
+                destination = os.fdopen(tmpfd, 'wb+')
+                #destination = open(tmpname, 'wb+')
             except:
                 msg = traceback.format_exc() 
                 logging.error("Failed to convert audio file (file could not be open from file descriptor), pid is: " + pid + " and exception is: " + msg)
