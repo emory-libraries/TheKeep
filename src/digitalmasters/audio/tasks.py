@@ -1,13 +1,15 @@
+import logging
+import os
+import subprocess
+import tempfile
+import traceback
 from celery.decorators import task
+
+from django.conf import settings
+
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.common.fedora import Repository
-from django.conf import settings
-from digitalmasters.audio.utils import md5sum
-import subprocess
-import logging
-import tempfile
-import os
-import traceback
+from digitalmasters.common.utils import md5sum
 
 @task
 def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
