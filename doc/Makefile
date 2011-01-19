@@ -1,7 +1,7 @@
 # Makefile for Sphinx documentation
 #
 
-export PYTHONPATH=.:../src
+export PYTHONPATH:=$(PYTHONPATH):.:../src
 # sphinx needs django settings while loading eulcore.django.* to introspect
 # those modules for autodocs
 export DJANGO_SETTINGS_MODULE=digitalmasters.settings
