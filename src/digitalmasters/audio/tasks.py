@@ -55,7 +55,8 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
             try:
                 destination.write(obj.audio.content.read())
             except:
-                msg = traceback.format_exc() 
+                msg = traceback.format_exc()
+                # TODO: log traceback at a lower level, exception summary only at error level
                 logging.error("Failed to convert audio file (file could not be open or written), pid is: " + pid + " and exception is: " + msg)
                 raise
             finally:

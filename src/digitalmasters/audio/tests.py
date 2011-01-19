@@ -15,6 +15,7 @@ from django.test import Client, TestCase
 
 from eulcore.django.fedora.server import Repository
 from eulcore.django.taskresult.models import TaskResult
+from eulcore.fedora.util import RequestFailed
 from eulcore.xmlmap  import load_xmlobject_from_string
 
 from digitalmasters import mods
@@ -32,6 +33,10 @@ ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 # fixture filenames used in multiple tests
 mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
 wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
+# MD5 checksums for fixture files
+# md5 checksums for the two fixture audio files
+mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
+wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
@@ -109,10 +114,6 @@ class AudioViewsTest(TestCase):
             'HTTP_X_FILE_NAME': 'example.wav',
             'content_type': 'multipart/form-data',
         }
-        # md5 checksums for the two fixture audio files
-        mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
-        wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
-        
         # POST non-wav file to AJAX Upload view results in an error
         with open(mp3_filename, 'rb') as mp3:
             opts = post_options.copy()
@@ -441,7 +442,6 @@ of 2''',
 
     def test_download_compressed_audio(self):
         # create a test audio object
-        wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
         obj = AudioObject.init_from_file(wav_filename,
                                              'my audio test object',
                                               checksum=wav_md5)
@@ -1305,62 +1305,38 @@ class TestWavDuration(TestCase):
         self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
 
 class SourceAudioConversions(TestCase):
-    def setUp(self):        
-        self.pids = []
+    def setUp(self):
+        # create an audio object to test conversion with
+        self.obj = AudioObject.init_from_file(wav_filename,
+                                         'test only',  checksum=wav_md5)
+        self.obj.save()
+        self.pids = [self.obj.pid]
 
     def tearDown(self):
         # purge any objects created by individual tests
         for pid in self.pids:
             FedoraFixtures.repo.purge_object(pid)
 
-    def test_wav_to_mp3_task(self):
-            wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
-            obj = AudioObject.init_from_file(wav_filename,
-                                             'test only',
-                                              checksum=wav_md5)
-            obj.save()
-            
-            #Add pid to be removed.
-            self.pids.append(obj.pid)
+    def test_wav_to_mp3(self):
+        result = convert_wav_to_mp3(self.obj.pid)
+        self.assertEqual(result, "Successfully converted file")
 
-            
-            result = convert_wav_to_mp3(obj.pid)
-            self.assertEqual(result, "Successfully converted file")
+        # inspect the object in fedora to confirm that the audio was added
+        repo = Repository()
+        obj = repo.get_object(self.obj.pid, type=AudioObject)
+        self.assertTrue(obj.compressed_audio.exists)
+        # any other settings/info on the mp3 datastream that should be checked?
 
-            #Test that the audio was actually added
-            repo = Repository()
-            new_obj = repo.get_object(obj.pid, type=AudioObject)
-            self.assertTrue(new_obj.compressed_audio.exists)
+    def test_wav_to_mp3_localfile(self):
+        #test conversion when wav file on hard-disk is specified.
+        result = convert_wav_to_mp3(self.obj.pid, existingFilePath=wav_filename)
+        self.assertEqual(result, "Successfully converted file")
 
-            #test conversion when wav file on hard-disk is specified.
-            #TODO: Below test works locally, but fails on hudson?
+    def test_nonexistent(self):
+        # test with invalid
+        self.assertRaises(RequestFailed, convert_wav_to_mp3, 'bogus:DoesNotExist')
 
-            #As the file is deleted when ingested, need to make a copy on the hard-drive.
-            #tempdir = settings.INGEST_STAGING_TEMP_DIR
-            #if not os.path.exists(tempdir):
-                #os.makedirs(tempdir)
-
-            #tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)
-            
-            #try:
-                #destination = os.fdopen(tmpfd, 'wb+')
-            #except:
-                #os.close(tmpfd)
-                #raise
-            
-            #try:
-                #destination.write(obj.audio.content.read())
-            #except:
-                #raise
-            #finally:
-                #destination.close()
-
-            #result = convert_wav_to_mp3(obj.pid,existingFilePath=tmpname)
-            #self.assertEqual(result, "Successfully converted file")
-
-            #Test with invalid pid
-            #TODO Not currently able to catch this error?
-            #self.assertRaises(convert_wav_to_mp3('emory-steven:DoesNotExist'))
+    # TODO: test failures, error handling, etc.
 
 class TestIngestCleanupCommand(ingest_cleanup.Command):
     # extend command class to simplify calling as if running from the commandline
