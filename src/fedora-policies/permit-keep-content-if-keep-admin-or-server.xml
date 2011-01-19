@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Policy xmlns="urn:oasis:names:tc:xacml:1.0:policy"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        PolicyId="permit-euterpe-if-euadmin-or-euserver"
+        PolicyId="permit-keep-content-if-keep-admin-or-server.xml"
         RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable">
-  <Description>Allow objects that are part of the Euterpe Project
+  <Description>Allow objects that are part of the "The Keep"
 (identified by a project owner id) to be accessed and modified by
-specific Euterpe admin users and from a Euterpe application server.</Description>
+specific Keep admin users and from Keep application server.</Description>
   <Target>
     <Subjects>
       <AnySubject/>
     </Subjects>
     <Resources>
 
-<!-- restrict to euterpe objects -->
+<!-- restrict to objects that are part of The Keep -->
 
       <Resource>
         <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
             <AttributeValue
-		DataType="http://www.w3.org/2001/XMLSchema#string">euterpe-project</AttributeValue>
+		DataType="http://www.w3.org/2001/XMLSchema#string">thekeep-project</AttributeValue>
             <ResourceAttributeDesignator
 		AttributeId="urn:fedora:names:fedora:2.1:resource:object:owner"
                 DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
@@ -30,7 +30,7 @@ specific Euterpe admin users and from a Euterpe application server.</Description
     </Actions>    
   </Target>
 
-  <Rule RuleId="euterpe-admin" Effect="Permit">
+  <Rule RuleId="keep-admin" Effect="Permit">
     <Target>
       <Subjects>
         <AnySubject/>
@@ -43,7 +43,7 @@ specific Euterpe admin users and from a Euterpe application server.</Description
       </Actions>
     </Target>
 
-      <!-- usernames for euterpe admins -->
+      <!-- usernames for admins -->
       <Condition FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
         <SubjectAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:subject:loginId" DataType="http://www.w3.org/2001/XMLSchema#string"/>
         <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
@@ -56,8 +56,8 @@ specific Euterpe admin users and from a Euterpe application server.</Description
 
   </Rule>
 
-  <Rule RuleId="permit-euservers" Effect="Permit">
-  <!-- permit access to euterpe objects from configured servers by IP address -->
+  <Rule RuleId="permit-keep-servers" Effect="Permit">
+  <!-- permit access to keep objects from configured servers by IP address -->
     <Target>
       <Subjects>
         <AnySubject/>
