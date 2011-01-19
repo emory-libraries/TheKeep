@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from eulcore.existdb.exceptions import DoesNotExist, ReturnedMultiple
-from digitalmasters.fedora import Repository
+from digitalmasters.common.fedora import Repository
 from digitalmasters.collection.models import CollectionObject, FindingAid
 
 class Command(BaseCommand):
