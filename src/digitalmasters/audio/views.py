@@ -1,8 +1,6 @@
 import logging
 import os
 import tempfile
-import hashlib
-import sys
 import magic
 
 from django.conf import settings
@@ -21,11 +19,10 @@ from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
 from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.feeds import PodcastFeed
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.audio.tasks import convert_wav_to_mp3
-from digitalmasters.audio.utils import md5sum
 from digitalmasters.common.fedora import Repository
+from digitalmasters.common.utils import md5sum
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
@@ -59,11 +56,13 @@ def upload(request):
                     # TODO: consolidate common logic for single & multiple file ingest
                     # initialize from the file itself; use original name as initial object label
                     obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
-                                                     uploaded_file.name, request, md5sum(uploaded_file.temporary_file_path()))
+                                                     uploaded_file.name, request,
+                                                     md5sum(uploaded_file.temporary_file_path()))
                     obj.save()
                     #Start the task to convert the WAV audio to a compressed format. This task will also delete
                     #the existing file upon completion.
-                    result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=uploaded_file.temporary_file_path())
+                    result = convert_wav_to_mp3.delay(obj.pid,
+                            existingFilePath=uploaded_file.temporary_file_path())
                     task = TaskResult(label='Generate MP3', object_id=obj.pid,
                         url=obj.get_absolute_url(), task_id=result.task_id)
                     task.save()
