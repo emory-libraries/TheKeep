@@ -1,5 +1,5 @@
-:mod:`digitalmasters`
-=====================
+:mod:`digitalmasters` Code Documentation
+========================================
 
 Collections
 -----------
