@@ -11,7 +11,6 @@ from eulcore.fedora.util import RequestFailed
 
 from digitalmasters.audio.models import AudioObject
 from digitalmasters.collection.models import get_cached_collection_dict
-from digitalmasters.common.fedora import Repository
 from digitalmasters.common.utils import absolutize_url
 
 logger = logging.getLogger(__name__)
@@ -77,8 +76,8 @@ class PodcastFeed(Feed):
         # calls), items are being paginated *before* excluding objects based on
         # rights & compressed audio available - this means that many feeds may have
         # fewer than the configured max items.
-        paginated_objects = Paginator(list(AudioObject.all()),
-                                      settings.MAX_ITEMS_PER_PODCAST_FEED)
+        items_per_feed = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', 2000)
+        paginated_objects = Paginator(list(AudioObject.all()), per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
         for obj in current_chunk.object_list:
             try:

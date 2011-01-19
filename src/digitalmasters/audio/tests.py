@@ -1,6 +1,5 @@
 import cStringIO
 import os
-import urlparse
 import stat
 import sys
 import tempfile
@@ -59,7 +58,11 @@ class AudioViewsTest(TestCase):
         for pid in self.pids:
             FedoraFixtures.repo.purge_object(pid)
         # restore podcast pagination setting
-        settings.MAX_ITEMS_PER_PODCAST_FEED = self.max_per_podcast
+        if self.max_per_podcast is not None:
+            settings.MAX_ITEMS_PER_PODCAST_FEED = self.max_per_podcast
+        elif hasattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED'):
+            # if not originally set but added by a test, remove the setting
+            del settings.MAX_ITEMS_PER_PODCAST_FEED
 
     def __del__(self):
         FedoraFixtures.repo.purge_object(self.rushdie.pid)
