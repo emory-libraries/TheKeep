@@ -742,12 +742,12 @@ of 2''',
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
                              % (expected, code, feed_url))        
-        self.assertContains(response, obj.noid,
-            msg_prefix='noid for first test object should be included in feed')
-        self.assertContains(response, obj2.noid,
-            msg_prefix='noid for second test object should be included in feed')
-        self.assertNotContains(response, obj3.noid,
-            msg_prefix='noid for test object with no access copy should NOT be included in feed')
+        self.assertContains(response, obj.pid,
+            msg_prefix='pid for first test object should be included in feed')
+        self.assertContains(response, obj2.pid,
+            msg_prefix='pid for second test object should be included in feed')
+        self.assertNotContains(response, obj3.pid,
+            msg_prefix='pid for test object with no access copy should NOT be included in feed')
         self.assertContains(response, obj.mods.content.title,
             msg_prefix='title for first test object should be included in feed')
         self.assertContains(response, obj2.mods.content.title,
@@ -766,16 +766,16 @@ of 2''',
         # test pagination
         settings.MAX_ITEMS_PER_PODCAST_FEED = 1
         response = self.client.get(feed_url)
-        self.assertContains(response, obj.noid,
-            msg_prefix='noid for first test object should be included in paginated feed')
-        self.assertNotContains(response, obj2.noid,
-            msg_prefix='noid for second test object should not be included in paginated feed')
+        self.assertContains(response, obj.pid,
+            msg_prefix='pid for first test object should be included in paginated feed')
+        self.assertNotContains(response, obj2.pid,
+            msg_prefix='pid for second test object should not be included in paginated feed')
         feed2_url = reverse('audio:podcast-feed', args=[2])
         response = self.client.get(feed2_url)
-        self.assertNotContains(response, obj.noid,
-            msg_prefix='noid for first test object should not be included in second paginated feed')
-        self.assertContains(response, obj2.noid,
-            msg_prefix='noid for second test object should be included in second paginated feed')
+        self.assertNotContains(response, obj.pid,
+            msg_prefix='pid for first test object should not be included in second paginated feed')
+        self.assertContains(response, obj2.pid,
+            msg_prefix='pid for second test object should be included in second paginated feed')
 
     def test_podcast_feed_list(self):
         feed_list_url = reverse('audio:feed-list')
