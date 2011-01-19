@@ -11,6 +11,8 @@ from digitalmasters.audio.models import AudioObject
 from digitalmasters.common.fedora import Repository
 from digitalmasters.common.utils import md5sum
 
+logger = logging.getLogger(__name__)
+
 @task
 def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
     """Converts a wav file to mp3. Accepted parameters are:
@@ -32,7 +34,8 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
         repo = Repository()
         obj = repo.get_object(pid, type=AudioObject)
     
-        #Setup the directory for the file download. Currently the staging directory.
+        # set up temp directory where file to be converted will be downloaded
+        # (if necessary) and where the generated mp3 will be created
         tempdir = settings.INGEST_STAGING_TEMP_DIR
         if not os.path.exists(tempdir):
             os.makedirs(tempdir)
@@ -40,35 +43,39 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
         if existingFilePath != None:
             tmpname = existingFilePath
         else:
-            #tempfile.mkstemp returns a tuple with a file descriptor in the first position and the full path in the 2nd position.
-            tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)
-            
+            # download the master audio file from the object in fedora
+            # mkstemp returns file descriptor and full path to the temp file
+            tmpfd, tmpname = tempfile.mkstemp(dir=tempdir)       
             try:
                 destination = os.fdopen(tmpfd, 'wb+')
-                #destination = open(tmpname, 'wb+')
-            except:
-                msg = traceback.format_exc() 
-                logging.error("Failed to convert audio file (file could not be open from file descriptor), pid is: " + pid + " and exception is: " + msg)
+            except Exception as e:
+                logger.error("Error opening temporary file, cannot download master audio for conversion : %s" % e)
+                logger.debug("Stack trace for file error:\n" + traceback.format_exc())
                 os.close(tmpfd)
-                raise
+                raise e
             
             try:
                 destination.write(obj.audio.content.read())
-            except:
-                msg = traceback.format_exc()
-                # TODO: log traceback at a lower level, exception summary only at error level
-                logging.error("Failed to convert audio file (file could not be open or written), pid is: " + pid + " and exception is: " + msg)
-                raise
+            except Exception as e:                
+                logger.error("Error downloading master audio file for conversion: %s" % e)
+                logger.debug("Stack trace for download error:\n" + traceback.format_exc())
+                raise e
             finally:
                 destination.close()
 
-        if obj.audio.checksum != md5sum(tmpname):
-            logging.error("Audio file checksum did not match for conversion - pid is: " + pid)
-            os.remove(tmpname)
-            raise Exception("celery","Audio file checksum did not match for conversion - pid is: " + pid)
+            # check file size against datastream? os.path.getsize(path)
+
+        # TODO: document that file MUST match checksum in fedora
+        calculated_checksum = md5sum(tmpname)
+        if obj.audio.checksum != calculated_checksum:
+            os.remove(tmpname)  # FIXME: only remove if non-local!
+            raise Exception("Checksum for local audio file %s does not match Fedora datastream checksum %s" % \
+                (calculated_checksum, obj.audio.checksum))            
 
         #Call the conversion utility. 
-        process  = subprocess.Popen(['lame', '--preset', 'insane', tmpname, tmpname + '.mp3'], stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE, stderr=subprocess.PIPE,)
+        process  = subprocess.Popen(['lame', '--preset', 'insane', tmpname, tmpname + '.mp3'],
+                stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
+                stderr=subprocess.PIPE)
 
         #stdout_value will be tuple with stdout in place 0, stderr in place 1. The output of the program will be in place 1.
         stdout_value = process.communicate()
@@ -90,7 +97,7 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
             os.remove(tmpname+".mp3")
             return "Successfully converted file"
     
-        logging.error("Failed to convert audio file (LAME failed), pid is: " + pid)
+        logger.error("Failed to convert audio file (LAME failed), pid is: " + pid)
         #Remove temporary files before returning error.
         # only delete temp file when not passed in
         # TODO: consolidate file clean-up with success above
@@ -98,10 +105,12 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
             os.remove(tmpname)
         os.remove(tmpname+".mp3")
         raise Exception("celery","Failed to convert audio file (LAME failed), pid is: " + pid)
-    #General exception catch for logging.
-    except:
-        msg = traceback.format_exc() 
-        logging.error("Failed to convert audio file (try...except exception), pid is: " + pid + " and exception is: " + msg)
-        #Still raise the error.
-        raise
+    # General exception catch for logging.
+    # possible more specific exceptions:
+    # OSError - file open/write error
+    # RequestFailed - fedora communication error 
+    except Exception as e:
+        # log the error and then re-raise it
+        logger.error("Failed to convert audio for %s : %s" % (pid, e))
+        raise e
 

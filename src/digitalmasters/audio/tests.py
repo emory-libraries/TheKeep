@@ -1337,6 +1337,8 @@ class SourceAudioConversions(TestCase):
         self.assertRaises(RequestFailed, convert_wav_to_mp3, 'bogus:DoesNotExist')
 
     # TODO: test failures, error handling, etc.
+    # - trigger tempfile error - make temp dir non-writable
+    # TODO: also test updating/replacing an mp3 (e.g., second conversion)
 
 class TestIngestCleanupCommand(ingest_cleanup.Command):
     # extend command class to simplify calling as if running from the commandline
