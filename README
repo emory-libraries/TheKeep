@@ -20,8 +20,8 @@ Software Dependencies
 We recommend the use of `pip <http://pip.openplans.org/>`_ and `virtualenv
 <http://virtualenv.openplans.org/>`_ for environment and dependency
 management in this and other Python projects. If you don't have them
-installed we recommend `sudo easy_install pip` and then `sudo pip install
-virtualenv`.
+installed we recommend ``sudo easy_install pip`` and then ``sudo pip install
+virtualenv``.
 
 Additionally, LAME must be installed for the WAV to MP3 encoding. For this,
 one can do: sudo apt-get install lame on ubuntu.
@@ -77,6 +77,20 @@ directory::
 
 After this step, your virtual environment should contain all of the
 dependencies for Digital Masters (Euterpe).
+
+Known Issues
+^^^^^^^^^^^^
+
+* As of 01/2011, there is a problem installing **python-magic** with pip; this
+  is apparently caused by either an incorrect dependency on a ctypes PyPi package
+  or a problem with the PyPi ctypes package that causes it to be uninstallable.
+  As a work-around, python-magic can be manually installed::
+
+    $ pip install --no-deps python-magic
+
+  You may need to comment out python-magic in the pip-dependencies file to allow
+  the other packages to install correctly.
+
 
 
 Installation
