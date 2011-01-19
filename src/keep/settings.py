@@ -1,4 +1,4 @@
-# Django settings for digitalmasters project.
+# Django settings for keep project.
 
 from os import path
 
@@ -36,9 +36,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",
     # additional context processors
     "django.core.context_processors.request", # always include request in render context
-    "digitalmasters.collection.context_processors.collection_search",  # collection search form on every page
-    "digitalmasters.audio.context_processors.item_search",  # audio item search form on every page
-    "digitalmasters.version_context", # include app version
+    "keep.collection.context_processors.collection_search",  # collection search form on every page
+    "keep.audio.context_processors.item_search",  # audio item search form on every page
+    "keep.version_context", # include app version
 )
 
 MIDDLEWARE_CLASSES = (
@@ -49,7 +49,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-ROOT_URLCONF = 'digitalmasters.urls'
+ROOT_URLCONF = 'keep.urls'
 
 TEMPLATE_DIRS = [
     path.join(BASE_DIR, 'templates'),
@@ -74,10 +74,10 @@ INSTALLED_APPS = (
     'eulcore.django.taskresult',
     'eulcore.django.testsetup',
     'eulcore.django.util',
-    'digitalmasters.accounts',
-    'digitalmasters.audio',
-    'digitalmasters.collection',
-    'digitalmasters.common',
+    'keep.accounts',
+    'keep.audio',
+    'keep.collection',
+    'keep.common',
     'djcelery',
 )
 

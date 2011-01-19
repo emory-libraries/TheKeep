@@ -4,7 +4,7 @@
 export PYTHONPATH:=$(PYTHONPATH):.:../src
 # sphinx needs django settings while loading eulcore.django.* to introspect
 # those modules for autodocs
-export DJANGO_SETTINGS_MODULE=digitalmasters.settings
+export DJANGO_SETTINGS_MODULE=keep.settings
 
 
 

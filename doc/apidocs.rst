@@ -1,5 +1,5 @@
-:mod:`digitalmasters` Code Documentation
-========================================
+:mod:`keep` Code Documentation for The Keep
+===========================================
 
 Collections
 -----------
@@ -8,27 +8,27 @@ are used to aggregate audio content.
 
 Models
 ^^^^^^
-.. automodule:: digitalmasters.collection.models
+.. automodule:: keep.collection.models
     :members:
 
 Forms
 ^^^^^
-.. automodule:: digitalmasters.collection.forms
+.. automodule:: keep.collection.forms
     :members:
 
 Views
 ^^^^^^
-.. automodule:: digitalmasters.collection.views
+.. automodule:: keep.collection.views
     :members:
 
 Management Commands/Scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: digitalmasters.collection.management.commands.load_ead.Command
+.. autoclass:: keep.collection.management.commands.load_ead.Command
     :members:
 
 Context Processors
 ^^^^^^^^^^^^^^^^^^
-.. automodule:: digitalmasters.collection.context_processors
+.. automodule:: keep.collection.context_processors
     :members:
 
 
@@ -40,28 +40,28 @@ searching audio objects.
 
 Models
 ^^^^^^
-.. automodule:: digitalmasters.audio.models
+.. automodule:: keep.audio.models
     :members:
 
 Forms
 ^^^^^
-.. automodule:: digitalmasters.audio.forms
+.. automodule:: keep.audio.forms
     :members:
 
 Views
 ^^^^^^
-.. automodule:: digitalmasters.audio.views
+.. automodule:: keep.audio.views
     :members:
 
 Management Commands/Scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: digitalmasters.audio.management.commands.ingest_cleanup
+.. automodule:: keep.audio.management.commands.ingest_cleanup
     :members:
 
 Context Processors
 ^^^^^^^^^^^^^^^^^^
-.. automodule:: digitalmasters.audio.context_processors
+.. automodule:: keep.audio.context_processors
     :members:
 
 Accounts
@@ -71,7 +71,7 @@ accessing the repository as the user logged into the website.
 
 Views
 ^^^^^^
-.. automodule:: digitalmasters.accounts.views
+.. automodule:: keep.accounts.views
     :members:
 
 
@@ -84,15 +84,15 @@ running unit tests, since Django only knows how to test apps).
 
 Fedora
 ^^^^^^
-.. automodule:: digitalmasters.common.fedora
+.. automodule:: keep.common.fedora
     :members:
 
 MODS
 ^^^^
-.. automodule:: digitalmasters.mods
+.. automodule:: keep.mods
     :members:
 
 Utilities
 ^^^^^^^^^
-.. automodule:: digitalmasters.common.utils
+.. automodule:: keep.common.utils
     :members:

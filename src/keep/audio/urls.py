@@ -1,7 +1,7 @@
 from django.conf.urls.defaults import *
-from digitalmasters.audio.feeds import PodcastFeed
+from keep.audio.feeds import PodcastFeed
 
-urlpatterns = patterns('digitalmasters.audio.views',
+urlpatterns = patterns('keep.audio.views',
     url(r'^$', 'index', name='index'),
     url(r'^upload/$', 'upload', name='upload'),
     url(r'^HTML5FileUpload/', 'HTML5FileUpload', name='HTML5FileUpload'),

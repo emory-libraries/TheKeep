@@ -7,9 +7,9 @@ from celery.decorators import task
 
 from django.conf import settings
 
-from digitalmasters.audio.models import AudioObject
-from digitalmasters.common.fedora import Repository
-from digitalmasters.common.utils import md5sum
+from keep.audio.models import AudioObject
+from keep.common.fedora import Repository
+from keep.common.utils import md5sum
 
 logger = logging.getLogger(__name__)
 

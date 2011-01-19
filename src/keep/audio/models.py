@@ -10,8 +10,8 @@ from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
 
-from digitalmasters.common.fedora import DigitalObject, Repository
-from digitalmasters import mods
+from keep.common.fedora import DigitalObject, Repository
+from keep import mods
 
 ##
 ## MODS
@@ -19,14 +19,14 @@ from digitalmasters import mods
 
 class AudioMods(mods.MODS):
     '''Customized MODS for :class:`AudioObject`, based on
-    :class:`~digitalmasters.mods.MODS`.'''
+    :class:`~keep.mods.MODS`.'''
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
           mods.Note, instantiate_on_get=True, required=False)
-    ':class:`~digitalmasters.mods.Note` with `type="general"`'
+    ':class:`~keep.mods.Note` with `type="general"`'
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
                                           mods.Note, instantiate_on_get=True)
-    ':class:`~digitalmasters.mods.Note` with `type="part number"`'
+    ':class:`~keep.mods.Note` with `type="part number"`'
 
 ##
 ## Source technical metadata

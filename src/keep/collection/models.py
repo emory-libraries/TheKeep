@@ -13,13 +13,13 @@ from eulcore.fedora.models import XmlDatastream
 from eulcore.fedora.rdfns import relsext
 from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
-from digitalmasters import mods
-from digitalmasters.common.fedora import DigitalObject, Repository
+from keep import mods
+from keep.common.fedora import DigitalObject, Repository
 
 logger = logging.getLogger(__name__)
 
 class CollectionMods(mods.MODS):
-    '''Collection-specific MODS, based on :class:`digitalmasters.mods.MODS`.'''
+    '''Collection-specific MODS, based on :class:`keep.mods.MODS`.'''
     source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
     'local source identifier as an integer'
     # possibly map identifier type uri as well ?
@@ -28,10 +28,10 @@ class CollectionMods(mods.MODS):
     # - same for relatedItem type isReferencedyBy
     restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
                                               mods.AccessCondition, instantiate_on_get=True)
-    ':class:`digitalmasters.mods.AccessCondition`'
+    ':class:`keep.mods.AccessCondition`'
     use_and_reproduction = xmlmap.NodeField('mods:accessCondition[@type="use and reproduction"]',
                                               mods.AccessCondition, instantiate_on_get=True)
-    ':class:`digitalmasters.mods.AccessCondition`'
+    ':class:`keep.mods.AccessCondition`'
 
 
 
@@ -304,7 +304,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
     objects = Manager('/e:ead')
     """:class:`eulcore.django.existdb.manager.Manager` - similar to an object manager
     for django db objects, used for finding and retrieving
-    :class:`~digitalmasters.collection.models.FindingAid` objects from eXist.
+    :class:`~keep.collection.models.FindingAid` objects from eXist.
 
     Configured to use */e:ead* as base search path.
     """
@@ -397,7 +397,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
         :param id: integer unitid to search on
         :param archive_name: name of the repository/subarea (numbering scheme)
-        :returns: :class:`~digitalmasters.collection.models.FindingAid` instance
+        :returns: :class:`~keep.collection.models.FindingAid` instance
         '''
         return FindingAid.objects.filter(archdesc__did__unitid__identifier=id,
                 repository=archive_name).get()

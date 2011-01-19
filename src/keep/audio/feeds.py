@@ -9,9 +9,9 @@ from django.utils.feedgenerator import Rss201rev2Feed
 
 from eulcore.fedora.util import RequestFailed
 
-from digitalmasters.audio.models import AudioObject
-from digitalmasters.collection.models import get_cached_collection_dict
-from digitalmasters.common.utils import absolutize_url
+from keep.audio.models import AudioObject
+from keep.collection.models import get_cached_collection_dict
+from keep.common.utils import absolutize_url
 
 logger = logging.getLogger(__name__)
 

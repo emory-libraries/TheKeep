@@ -1,6 +1,6 @@
-from digitalmasters.collection.models import CollectionObject
-from digitalmasters.common.fedora import Repository
-from digitalmasters import mods
+from keep.collection.models import CollectionObject
+from keep.common.fedora import Repository
+from keep import mods
 
 # fixture objects for use with unit tests
 # objects are generated each time, so content is reliable

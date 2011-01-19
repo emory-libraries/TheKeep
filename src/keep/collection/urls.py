@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 
-urlpatterns = patterns('digitalmasters.collection.views',
+urlpatterns = patterns('keep.collection.views',
     url(r'^$', 'browse', name='browse'),
     url(r'^new$', 'edit', name='new'),
     url(r'^search/$', 'search', name='search'),

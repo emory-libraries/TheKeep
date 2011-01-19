@@ -3,12 +3,12 @@ from django.utils.safestring import mark_safe
 
 from eulcore.django.forms import XmlObjectForm, SubformField
 
-from digitalmasters import mods
-from digitalmasters.collection.models import CollectionMods, CollectionObject
+from keep import mods
+from keep.collection.models import CollectionMods, CollectionObject
 
 
 class CollectionSearch(forms.Form):
-    '''Form for searching for :class:`~digitalmasters.collection.models.CollectionObject`
+    '''Form for searching for :class:`~keep.collection.models.CollectionObject`
     instances.'''
     search_tips = mark_safe('''<ul>
     <li>Search is NOT case sensitive.</li>
@@ -36,7 +36,7 @@ class CollectionSearch(forms.Form):
 
 class AccessConditionForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
-    :class:`~digitalmasters.mods.AccessCondition`:
+    :class:`~keep.mods.AccessCondition`:
      * suppress default label of 'text'
      * use :class:`~django.forms.Textarea` widget
      * make not required
@@ -48,7 +48,7 @@ class AccessConditionForm(XmlObjectForm):
 
 class NamePartForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
-    :class:`~digitalmasters.mods.NamePart`
+    :class:`~keep.mods.NamePart`
      * suppress default label 'text'
      * use :class:`~django.forms.TextInput` with class *long*
     '''
@@ -59,7 +59,7 @@ class NamePartForm(XmlObjectForm):
 
 class RoleForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS name
-    :class:`~digitalmasters.mods.Role` information
+    :class:`~keep.mods.Role` information
      * suppress default label 'text'
      * configure type with initial value 'text' and make read-only
     '''
@@ -73,9 +73,9 @@ class RoleForm(XmlObjectForm):
 
 class NameForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
-    :class:`~digitalmasters.mods.Name` information
-     * use custom :class:`~digitalmasters.mods.NamePart` and
-       :class:`~digitalmasters.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
+    :class:`~keep.mods.Name` information
+     * use custom :class:`~keep.mods.NamePart` and
+       :class:`~keep.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
      * customize id field label & help text
      * suppress displayForm and affiliation fields
     '''
@@ -90,14 +90,14 @@ class NameForm(XmlObjectForm):
 
 class CollectionForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit descriptive
-    metadata on a :class:`~digitalmasters.collection.models.CollectionObject`.
+    metadata on a :class:`~keep.collection.models.CollectionObject`.
 
-    Takes a :class:`~digitalmasters.collection.models.CollectionObject` as form instance.
+    Takes a :class:`~keep.collection.models.CollectionObject` as form instance.
     This stands in contrast to a regular :class:`~eulcore.django.forms.XmlObjectForm`,
     which would take an :class:`~eulcore.xmlmap.XmlObject`. This form edits a whole
-    :class:`~digitalmasters.collection.models.CollectionObject`, although most of the editing
+    :class:`~keep.collection.models.CollectionObject`, although most of the editing
     is on the MODS datastream (which is an :class:`~eulcore.xmlmap.XmlObject`).
-    The most expedient way to make a :class:`~digitalmasters.collection.models.CollectionObject`
+    The most expedient way to make a :class:`~keep.collection.models.CollectionObject`
     editable was to make a customized :class:`~eulcore.django.forms.XmlObjectForm`
     that mostly deals with the  MODS datastream.
     '''

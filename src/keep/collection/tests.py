@@ -10,12 +10,12 @@ from django.test import Client, TestCase
 from eulcore.django.test import TestCase as EulcoreTestCase
 from eulcore.fedora.rdfns import relsext
 
-from digitalmasters.collection.fixtures import FedoraFixtures 
-from digitalmasters.collection import forms as cforms
-from digitalmasters.collection import views
-from digitalmasters.collection.models import CollectionObject, CollectionMods, FindingAid
-from digitalmasters.common.fedora import Repository
-from digitalmasters import mods
+from keep.collection.fixtures import FedoraFixtures 
+from keep.collection import forms as cforms
+from keep.collection import views
+from keep.collection.models import CollectionObject, CollectionMods, FindingAid
+from keep.common.fedora import Repository
+from keep import mods
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}

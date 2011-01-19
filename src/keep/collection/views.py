@@ -1,6 +1,6 @@
 '''
 View methods for creating, editing, searching, and browsing
-:class:`~digitalmasters.collection.models.CollectionObject` instances in Fedora.
+:class:`~keep.collection.models.CollectionObject` instances in Fedora.
 '''
 
 from django.conf import settings
@@ -14,13 +14,13 @@ from django.template import RequestContext
 from eulcore.django.http import HttpResponseSeeOtherRedirect
 from eulcore.fedora.util import RequestFailed
 
-from digitalmasters.collection.forms import CollectionForm, CollectionSearch
-from digitalmasters.collection.models import CollectionObject, get_cached_collection_dict
-from digitalmasters.common.fedora import Repository
+from keep.collection.forms import CollectionForm, CollectionSearch
+from keep.collection.models import CollectionObject, get_cached_collection_dict
+from keep.common.fedora import Repository
 
 @permission_required('is_staff')
 def view(request, pid):
-    '''View a single :class:`~digitalmasters.collection.models.CollectionObject`.
+    '''View a single :class:`~keep.collection.models.CollectionObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
     '''
     # this view isn't implemented yet, but we want to be able to use the
@@ -32,7 +32,7 @@ def view(request, pid):
 @permission_required('is_staff')
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
-    :class:`~digitalmasters.collection.models.CollectionObject`.  If a pid is
+    :class:`~keep.collection.models.CollectionObject`.  If a pid is
     specified, attempts to retrieve an existing object.  Otherwise, creates a new one.
     '''
     repo = Repository(request=request)
@@ -96,7 +96,7 @@ def edit(request, pid=None):
 
 @permission_required('is_staff')
 def search(request):
-    '''Search for :class:`~digitalmasters.collection.models.CollectionObject`
+    '''Search for :class:`~keep.collection.models.CollectionObject`
     instances.
     '''
     response_code = None
@@ -143,7 +143,7 @@ def search(request):
 
 @permission_required('is_staff')
 def browse(request):
-    '''Browse :class:`~digitalmasters.collection.models.CollectionObject` by
+    '''Browse :class:`~keep.collection.models.CollectionObject` by
     hierarchy, grouped by top-level collection.
     '''
     response_code = None

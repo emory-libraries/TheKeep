@@ -4,7 +4,7 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.test import TestCase
 
-from digitalmasters.common.utils import absolutize_url, md5sum
+from keep.common.utils import absolutize_url, md5sum
 
 class TestAbsolutizeUrl(TestCase):
     site = Site.objects.get_current()

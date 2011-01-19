@@ -7,10 +7,10 @@ urlpatterns = patterns('',
     (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
     (r'^admin/',  include(admin.site.urls)),
     # NOTE: temporary - added because theme requires it
-    url(r'^index$', 'digitalmasters.audio.views.index', name="site-index"),
-    url(r'^audio/', include('digitalmasters.audio.urls', namespace='audio')),
-    url(r'^collections/', include('digitalmasters.collection.urls', namespace='collection')),
-    url(r'^accounts/', include('digitalmasters.accounts.urls', namespace='accounts')),
+    url(r'^index$', 'keep.audio.views.index', name="site-index"),
+    url(r'^audio/', include('keep.audio.urls', namespace='audio')),
+    url(r'^collections/', include('keep.collection.urls', namespace='collection')),
+    url(r'^accounts/', include('keep.accounts.urls', namespace='accounts')),
     url(r'^tasks/', include('eulcore.django.taskresult.urls', namespace='tasks')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 

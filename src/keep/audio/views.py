@@ -18,11 +18,11 @@ from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
-from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.models import AudioObject
-from digitalmasters.audio.tasks import convert_wav_to_mp3
-from digitalmasters.common.fedora import Repository
-from digitalmasters.common.utils import md5sum
+from keep.audio import forms as audioforms
+from keep.audio.models import AudioObject
+from keep.audio.tasks import convert_wav_to_mp3
+from keep.common.fedora import Repository
+from keep.common.utils import md5sum
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
@@ -34,7 +34,7 @@ def index(request):
 
 @permission_required('is_staff')
 def upload(request):
-    '''Upload file(s) and create new fedora :class:`~digitalmasters.audio.models.AudioObject` (s).
+    '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.'''
 
     ctx_dict = {}
@@ -202,7 +202,7 @@ def HTML5FileUpload(request):
     
 @permission_required('is_staff')
 def search(request):
-    '''Search for  :class:`~digitalmasters.audio.models.AudioObject` by pid,
+    '''Search for  :class:`~keep.audio.models.AudioObject` by pid,
     title, description, collection, date, or rights.'''
     response_code = None
     form = audioforms.ItemSearch(request.GET, prefix='audio')
@@ -268,7 +268,7 @@ def search(request):
 
 @permission_required('is_staff')
 def view(request, pid):
-    '''View a single :class:`~digitalmasters.audio.models.AudioObject`.
+    '''View a single :class:`~keep.audio.models.AudioObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
     '''
     # this view isn't implemented yet, but we want to be able to use the
@@ -298,7 +298,7 @@ def raw_datastream(request, pid, dsid):
 
 @permission_required('is_staff')
 def edit(request, pid):
-    '''Edit the metadata for a single :class:`~digitalmasters.audio.models.AudioObject`.'''
+    '''Edit the metadata for a single :class:`~keep.audio.models.AudioObject`.'''
     repo = Repository(request=request)
 
     try:

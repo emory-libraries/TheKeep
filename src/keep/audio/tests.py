@@ -18,14 +18,14 @@ from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.util import RequestFailed
 from eulcore.xmlmap  import load_xmlobject_from_string
 
-from digitalmasters import mods
-from digitalmasters.audio import forms as audioforms
-from digitalmasters.audio.models import AudioObject, AudioMods, wav_duration, \
+from keep import mods
+from keep.audio import forms as audioforms
+from keep.audio.models import AudioObject, AudioMods, wav_duration, \
         SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, \
         CodecCreator, Rights, AccessCondition
-from digitalmasters.audio.management.commands import ingest_cleanup
-from digitalmasters.collection.fixtures import FedoraFixtures
-from digitalmasters.audio.tasks import convert_wav_to_mp3
+from keep.audio.management.commands import ingest_cleanup
+from keep.collection.fixtures import FedoraFixtures
+from keep.audio.tasks import convert_wav_to_mp3
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -820,7 +820,7 @@ of 2''',
 # handle fedora outages appropriately
 
 # tests for MODS XmlObject
-# FIXME: mods objects no longer part of digitalmasters.audio - where should these tests live?
+# FIXME: mods objects no longer part of keep.audio - where should these tests live?
 class TestMods(TestCase):
     FIXTURE = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
   <mods:titleInfo>
