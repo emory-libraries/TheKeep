@@ -1301,7 +1301,7 @@ class TestWavDuration(TestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
 
-class Source_Audio_Conversions(TestCase):
+class SourceAudioConversions(TestCase):
     def setUp(self):        
         self.pids = []
 
