@@ -39,6 +39,24 @@ Installation notes for this release:
     /audio/feeds/*/             * is the number of the feed, starting at 1
     /audio/*/access.mp3         * is the fedora object pid
 
+* As part of branding this project with its new name, "The Keep", the pseudo-owner
+  used for repository-level permissions has been changed.  The Fedora repository
+  policies should be updated (repo-policies RELEASE/TAG TODO), and any
+  existing objects will need to be either removed and re-generated or updated
+  with the new owner ID.  Updating existing objects can be done in the django
+  console as follows::
+
+    python manage.py shell
+    from digitalmasters.fedora import Repository
+    from django.conf import settings
+    from digitalmasters.audio.models import AudioObject
+    repo = Repository()
+    objs = repo.find_objects(owner='euterpe-project')
+    for o in objs:
+        o.owner = settings.FEDORA_OBJECT_OWNERID
+        o.save()
+
+
 Release 0.8 - Min Items, part II
 --------------------------------
 * The app now depends on the standard django ``sites`` module. This module
