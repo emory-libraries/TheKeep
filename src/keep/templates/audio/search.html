@@ -21,9 +21,9 @@ of {{ page.paginator.count }}.</p>
         <td><a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a></td>
         <td>{{ obj.label }} <br/>
             <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
-            {% if obj.compressed_audio.exists %}
+            
      		  | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
-  	        {% endif %}
+  	        
         </td>
         <td>{{ obj.created }}</td>
         <td>{{ obj.modified }}</td>
