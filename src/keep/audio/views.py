@@ -390,12 +390,13 @@ def download_compressed_audio(request, pid):
             response['Content-Disposition'] = "attachment; filename=%s.mp3" % slugify(obj.label)
             return response
         #if the compressed stream has not been added, ie. it conversion not done.
-        msg = 'The compressed audio stream does not currently exist. ' + \
+        msg = '<div style="width:800px; font-size:16px;">The compressed audio stream does not currently exist. ' + \
                   'This likely means the the audio conversion process ' + \
                   'for this file is in progress or has failed. Please ' + \
-                  'try again shortly, and if the problem persists, contact .' + \
-                  'an adminstrator.' 
-        return HttpResponse(msg, mimetype='text/plain', status=404)
+                  'try again shortly, and if the problem persists, contact ' + \
+                  'an adminstrator.<br /><br /> To return to the previous ' + \
+                  'page, please <a href="javascript:history.go(-1);">[click here]</a>.</div>' 
+        return HttpResponse(msg, mimetype='text/html', status=404)
     except:
         msg = 'There was an error contacting the digital repository. ' + \
               'This prevented us from accessing audio data. If this ' + \
