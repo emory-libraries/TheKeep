@@ -62,11 +62,11 @@
   {% if form.mods.non_field_errors %}
     <tr><td colspan="2">{{ form.non_field_errors }}</td></tr>
   {% endif %}
-  {% for field in form %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+  {% for field in form %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
   {% if form.mods.non_field_errors %}
     <tr><td colspan="2">{{ form.mods.non_field_errors }}</td></tr>
   {% endif %}
-  {% for field in form.mods %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+  {% for field in form.mods %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
   {% comment %} TODO/FIXME: something like this should work, but need a way to get subform labels
    {% for name, subform in form.mods.subforms.items %}
     <tr>
@@ -96,7 +96,7 @@
 <div id="source-tech">
     {{ form.sourcetech.non_field_errors }}
     <table class="audio-edit">
-        {% for field in form.sourcetech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+        {% for field in form.sourcetech %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
     </table>
 </div>
 
@@ -106,7 +106,7 @@
 <div id="digital-tech">
     {{ form.digitaltech.non_field_errors }}
     <table class="audio-edit">
-        {% for field in form.digitaltech %}{% include 'audio/_edit_form_field.html' %}{% endfor %}
+        {% for field in form.digitaltech %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
     </table>
 </div>
 
