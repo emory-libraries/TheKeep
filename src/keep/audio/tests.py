@@ -601,7 +601,7 @@ of 2''',
         }
         response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assertEqual("Updated MODS for %s" % obj.pid, messages[0],
+        self.assertEqual("Updated %s" % obj.pid, messages[0],
             "successful save message set in response context")
         # currently redirects to audio index
         (redirect_url, code) = response.redirect_chain[0]
@@ -687,7 +687,7 @@ of 2''',
         data['_save_continue'] = True   # simulate submit via 'save and continue' button
         response = self.client.post(edit_url, data)
         messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assertEqual('Updated MODS for %s' % obj.pid, messages[0],
+        self.assertEqual('Updated %s' % obj.pid, messages[0],
             'successful audio update message displayed to user on save and continue editing')
         self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
                 "MODS EditForm is set in response context after save and continue editing")
@@ -703,20 +703,24 @@ of 2''',
         # TODO: add a field validation error & check that error message is displayed
         # to test that our custom templates don't lose any built-in functionality
 
-        # edit non-existent record - exception  -- TODO: should actually be a 404
+        # edit non-existent record should 404
         fakepid = 'bogus-pid:1'
         edit_url = reverse('audio:edit', args=[fakepid])
-        response = self.client.get(edit_url, follow=True)  # follow redirect to check error message
-        messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assertEqual("Error: failed to load %s MODS for editing" % fakepid, messages[0],
-            "load error message set in context when attempting to edit a non-existent pid")
-        # currently redirects to audio index 
-        (redirect_url, code) = response.redirect_chain[0]
-        self.assert_(reverse('audio:index') in redirect_url,
-            "attempting to edit non-existent pid redirects to audio index page")
-        expected = 303      # redirect
-        self.assertEqual(code, expected,
-            'Expected %s but returned %s for %s (edit non-existent record)'  % (expected, code, edit_url))
+        response = self.client.get(edit_url)  # follow redirect to check error message
+        expected, got = 404, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (edit non-existent object)' \
+                % (expected, got, edit_url))
+
+        # attempt to edit non-audio object should 404
+        edit_url = reverse('audio:edit', args=[self.rushdie.pid])
+        response = self.client.get(edit_url)
+        expected, got = 404, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (edit non-audio object)' \
+                % (expected, got, edit_url))
+
+        # how to test fedora permission denied scenario?
 
     def test_podcast_feed(self):
         feed_url = reverse('audio:podcast-feed', args=[1])
@@ -1111,7 +1115,7 @@ class RightsXmlTest(TestCase):
         # TODO: validate against schema when we have one
 
 
-# tests for (prototype) Audio DigitalObject
+# tests for Audio DigitalObject
 class TestAudioObject(TestCase):
     fixtures =  ['users']
     repo = Repository()

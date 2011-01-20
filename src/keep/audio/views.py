@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseForbidden, HttpResponseBadRequest
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
@@ -59,8 +59,7 @@ def upload(request):
                                                      uploaded_file.name, request,
                                                      md5sum(uploaded_file.temporary_file_path()))
                     obj.save()
-                    #Start the task to convert the WAV audio to a compressed format. This task will also delete
-                    #the existing file upon completion.
+                    #Start the task to convert the WAV audio to a compressed format.
                     result = convert_wav_to_mp3.delay(obj.pid,
                             existingFilePath=uploaded_file.temporary_file_path())
                     task = TaskResult(label='Generate MP3', object_id=obj.pid,
@@ -289,24 +288,23 @@ def raw_datastream(request, pid, dsid):
             ds = getattr(obj, dsid)
             return HttpResponse(ds.content.serialize(pretty=True), mimetype=ds.mimetype)
     except PermissionDenied:
-        pass
-    # fedora seems to return 401 unauthorized when either the object does not
-    # exist or the datastream does not but object does
-    # for now, assuming any permission denied is a 404
-
-    raise Http404
+        # if not actually an AudioObject or if either the object
+        # or the requested datastream doesn't exist, 404
+        if not obj.has_requisite_content_models or not obj.exists \
+            or not obj.dsid.exists:
+            raise Http404
+    # for any other errors, let fall through to Django's default 500 error
 
 @permission_required('is_staff')
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.audio.models.AudioObject`.'''
     repo = Repository(request=request)
-
+    obj = repo.get_object(pid, type=AudioObject)
     try:
-        obj = repo.get_object(pid, type=AudioObject)
-        try:
-        	logging.debug(obj.audio.__dir__)
-        except Exception as e:
-                logging.debug(e)
+        # if this is not actually an AudioObject, then 404 (object is not available at this url)
+        if not obj.has_requisite_content_models:
+            raise Http404
+        
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = audioforms.AudioObjectEditForm(request.POST, instance=obj)
@@ -315,8 +313,7 @@ def edit(request, pid):
                 form.update_instance()      # instance is reference to mods object
                 if obj.mods.content.is_valid():
                     obj.save()
-                    # TODO: correct this message (also update unit test that looks for it)
-                    messages.success(request, 'Updated MODS for %s' % pid)
+                    messages.success(request, 'Updated %s' % pid)
                     # save & continue functionality - same as collection edit
                     if '_save_continue' not in request.POST:
                         return HttpResponseSeeOtherRedirect(reverse('audio:index'))
@@ -328,13 +325,31 @@ def edit(request, pid):
         return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
             context_instance=RequestContext(request))
 
-    except RequestFailed:
-        # FIXME: should 404 when object is not found
-        # eventually we will need better error handling... 
-        # this could mean the object doesn't exist OR it exists but has no
-        # MODS or even that we couldn't contact the server
-        messages.error(request, "Error: failed to load %s MODS for editing" % pid)
-        return HttpResponseSeeOtherRedirect(reverse('audio:index'))
+    except PermissionDenied:
+        # Fedora may return a PermissionDenied error when accessing a datastream
+        # where the datastream does not exist, object does not exist, or user
+        # does not have permission to access the datastream
+
+        # check that the object exists - if not, 404        
+        if not obj.exists:
+            raise Http404
+        # for now, assuming that if object exists and has correct content models,
+        # it will have all the datastreams required for this view
+
+        return HttpResponseForbidden('Permission Denied to access %s' % pid,
+                                     mimetype='text/plain')
+
+    except RequestFailed as rf:
+        # if fedora actually returned a 404, propagate it
+        if rf.code == 404:
+            raise Http404
+        
+        msg = 'There was an error contacting the digital repository. ' + \
+              'This prevented us from accessing audio data. If this ' + \
+              'problem persists, please alert the repository ' + \
+              'administrator.'
+        return HttpResponse(msg, mimetype='text/plain', status=500)
+        
          
 @permission_required('is_staff')
 def download_audio(request, pid):
