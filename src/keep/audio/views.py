@@ -279,21 +279,28 @@ def view(request, pid):
 @permission_required('is_staff')
 def raw_datastream(request, pid, dsid):
     'Access raw object datastreams (mods, rels-ext, dc, digitaltech, sourcetech)'
-    # RSK TODO: write unit test
     repo = Repository(request=request)
     obj = repo.get_object(pid, type=AudioObject)
-    dsid = dsid.replace('-', '_')
+    dsid = dsid.replace('-', '_')   # convert url dsid to datastream variable form
     try:
-        if obj.ds_list.has_key(dsid):
-            ds = getattr(obj, dsid)
+        # NOTE: could test that pid is actually an AudioObject using
+        # obj.has_requisite_content_models but that would mean
+        # an extra API call for every datastream but RELS-EXT
+        # Leaving out for now, for efficiency
+        ds = getattr(obj, dsid)
+        if ds.exists:
             return HttpResponse(ds.content.serialize(pretty=True), mimetype=ds.mimetype)
-    except PermissionDenied:
+        else:
+            raise Http404
+    except RequestFailed as rf:
         # if not actually an AudioObject or if either the object
         # or the requested datastream doesn't exist, 404
-        if not obj.has_requisite_content_models or not obj.exists \
-            or not obj.dsid.exists:
+        if rf.code == 404 or not obj.has_requisite_content_models or \
+                not obj.exists or not obj.dsid.exists:
             raise Http404
-    # for any other errors, let fall through to Django's default 500 error
+
+        # for anything else, re-raise & let Django's default 500 logic handle it
+        raise
 
 @permission_required('is_staff')
 def edit(request, pid):

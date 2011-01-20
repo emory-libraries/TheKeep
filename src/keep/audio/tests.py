@@ -722,6 +722,94 @@ of 2''',
 
         # how to test fedora permission denied scenario?
 
+    def test_raw_datastream(self):
+        # create a test audio object to edit
+        obj = AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj.mods.content.title = 'test audio object'
+        obj.sourcetech.content.note = 'source note'
+        # pre-populate digital tech metadata
+        obj.digitaltech.content.date_captured = '2008'
+        obj.save()
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
+
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # MODS
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'mods'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (MODS datastream)' \
+                % (expected, got, ds_url))
+        expected, got = 'text/xml', response['Content-Type']
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for mimetype on %s (MODS datastream)' \
+                % (expected, got, ds_url))
+        self.assertContains(response, '<mods:title>%s</mods:title>' % \
+                            obj.mods.content.title)
+        # RELS-EXT
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'rels-ext'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (RELS-EXT datastream)' \
+                % (expected, got, ds_url))
+        expected, got = 'application/rdf+xml', response['Content-Type']
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for mimetype on %s (RELS-EXT datastream)' \
+                % (expected, got, ds_url))
+        self.assertContains(response, obj.AUDIO_CONTENT_MODEL)
+        # Source Tech
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'sourcetech'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (SourceTech datastream)' \
+                % (expected, got, ds_url))
+        expected, got = 'text/xml', response['Content-Type']
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for mimetype on %s (SourceTech datastream)' \
+                % (expected, got, ds_url))
+        self.assertContains(response, '<st:sourcetech')
+        self.assertContains(response, obj.sourcetech.content.note)
+        # Digital Tech
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'digitaltech'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (DigitalTech datastream)' \
+                % (expected, got, ds_url))
+        expected, got = 'text/xml', response['Content-Type']
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for mimetype on %s (DigitalTech datastream)' \
+                % (expected, got, ds_url))
+        self.assertContains(response, '<dt:digitaltech')
+        self.assertContains(response, obj.digitaltech.content.date_captured)
+
+        # not testing bogus datastream id because url config currently does not
+        # allow it
+
+         # non-existent record should 404
+        fakepid = 'bogus-pid:1'
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': fakepid, 'dsid': 'mods'})
+        response = self.client.get(ds_url)  # follow redirect to check error message
+        expected, got = 404, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (datastream on non-existent object)' \
+                % (expected, got, ds_url))
+
+        # object without requested datastream 404
+        # (currently view does not check cmodels for efficiency reasons)
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': self.rushdie.pid, 'dsid': 'sourcetech'})
+        response = self.client.get(ds_url)
+        expected, got = 404, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (datastream non-audio object)' \
+                % (expected, got, ds_url))
+
+
+
     def test_podcast_feed(self):
         feed_url = reverse('audio:podcast-feed', args=[1])
 
