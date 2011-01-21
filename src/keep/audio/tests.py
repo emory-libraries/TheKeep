@@ -508,6 +508,11 @@ of 2''',
         # engineer & codec creator are initialized based on id values
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
         obj.digitaltech.content.codec_creator.id = '1'
+        # pre-populate rights metadata
+        obj.rights.content.access_condition.code = 'UNKNOWN'
+        obj.rights.content.access_condition.text = 'Rights status unknown; no access to files or metadata'
+        obj.rights.content.copyright_holder_name = 'User, Example'
+        obj.rights.content.copyright_date = '1978'
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
@@ -562,6 +567,12 @@ of 2''',
         self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
         self.assertEqual(ldap_user.id, initial_data['engineer'])
         self.assertEqual(item_dt.codec_creator.id, initial_data['hardware'])
+        # rights in initial data
+        initial_data = response.context['form'].rights.initial
+        item_rights = obj.rights.content
+        self.assertEqual(item_rights.access_condition.code, initial_data['access'])
+        self.assertEqual(item_rights.copyright_holder_name, initial_data['copyright_holder_name'])
+        self.assertEqual(item_rights.copyright_date, initial_data['copyright_date'])
 
         # POST data to update audio object in fedora
         audio_data = {'collection': self.rushdie.uri,

@@ -293,16 +293,19 @@ class AudioObject(DigitalObject):
             'versionable': True,
         })
     'MODS :class:`~eulcore.fedora.models.XmlDatastream` with content as :class:`AudioMods`'
+
     audio = FileDatastream("AUDIO", "Audio datastream", defaults={
             'mimetype': 'audio/x-wav',
             'versionable': True,
         })
     'master audio :class:`~eulcore.fedora.models.FileDatastream`'
+
     compressed_audio = FileDatastream("CompressedAudio", "Compressed audio datastream", defaults={
             'mimetype': 'audio/mpeg',
             'versionable': True,
         })
     'access copy of audio :class:`~eulcore.fedora.models.FileDatastream`'
+
     digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
         defaults={
             'control_group': 'M',
@@ -310,6 +313,7 @@ class AudioObject(DigitalObject):
         })
     '''digital technical metadata :class:`~eulcore.fedora.models.XmlDatastream`
     with content as :class:`DigitalTech`'''
+
     sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", SourceTech,
         defaults={
             'control_group': 'M',
@@ -317,6 +321,14 @@ class AudioObject(DigitalObject):
         })
     '''source technical metadata :class:`~eulcore.fedora.models.XmlDatastream` with content as
     :class:`SourceTech`'''
+
+    rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
+        defaults={
+            'control_group': 'M',
+            'versionable': True,
+        })
+    '''access control metadata :class:`~eulcore.fedora.models.XmlDatastream`
+    with content as :class:`Rights`'''
 
     _collection_uri = None
 

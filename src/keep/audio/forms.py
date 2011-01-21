@@ -294,7 +294,7 @@ class RightsForm(XmlObjectForm):
     """
     # In data the access_condition is pretty flexible. In web editing we
     # only want to offer a simple dropdown based on our controlled vocab.
-    access_options = [ (item[0], item[2]) for item in Rights.acccess_terms ]
+    access_options = [ (item[0], item[2]) for item in Rights.access_terms ]
     access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField()
@@ -305,6 +305,17 @@ class RightsForm(XmlObjectForm):
         widgets = {
             'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
         }
+
+    def __init__(self, **kwargs):
+        super(RightsForm, self).__init__(**kwargs)
+
+        # XmlObjectForm magically populates fields based directly on
+        # XmlObject field names, but we have a couple form fields that
+        # aren't.
+        access = 'access'
+        access_condition_code = 'access_condition-code'
+        if access_condition_code in self.initial:
+            self.initial[access] = self.initial[access_condition_code]
 
 
 class AudioObjectEditForm(forms.Form):
@@ -332,10 +343,12 @@ class AudioObjectEditForm(forms.Form):
             mods_instance = None
             st_instance = None
             dt_instance = None
+            rights_instance = None
         else:
             mods_instance = instance.mods.content
             st_instance = instance.sourcetech.content
             dt_instance = instance.digitaltech.content
+            rights_instance = instance.rights.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
@@ -351,7 +364,7 @@ class AudioObjectEditForm(forms.Form):
         self.mods = ModsEditForm(instance=mods_instance, prefix='mods', **common_opts)
         self.sourcetech = SourceTechForm(instance=st_instance, prefix='st', **common_opts)
         self.digitaltech = DigitalTechForm(instance=dt_instance, prefix='dt', **common_opts)
-        self.rights = RightsForm(instance=None, prefix='rights', **common_opts)
+        self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
 
         for form in ( self.mods, self.sourcetech, self.digitaltech,
                       self.rights ):
