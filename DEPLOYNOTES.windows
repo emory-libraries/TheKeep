@@ -1,0 +1,110 @@
+.. _DEPLOYNOTES.windows:
+
+Windows Installation Notes
+--------------------------
+
+Because ``pip`` cannot has difficulty installing some packages in
+Windows (particulary packages with dependencies on other libraries or
+that require compliation, including lxml and pycrypto), the
+installation instructions in :ref:`DEPLOYNOTES` may not work on
+Windows.
+
+What follows is partial installation instructions / working notes
+about installing python dependencies in Windows.  Be forewarned that
+these notes do not guarantee a complete or fully-working installation
+of The Keep.
+
+----
+
+Installation for Python 2.7 under 32-bit Windows.
+
+Contact Steven Anderson at Steven.Anderson@emory.edu for the files if
+any of the below links no longer function.
+
+setuptools
+  Windows installer available at http://pypi.python.org/pypi/setuptools#downloads
+
+PyCrypto
+  http://www.voidspace.org.uk/python/modules.shtml#pycrypto
+
+MySQL-python
+  http://www.codegood.com/downloads?dl_cat=2
+
+python-ldap
+  http://pypi.python.org/pypi/python-ldap/
+
+python-magic
+  * Download and install **File** for Windows from http://gnuwin32.sourceforge.net/packages/file.htm
+  * In <installation directory>\GnuWin32\bin,  copy magic1.dll to magic.dll.
+  * Add <installation directory>\GnuWin32\bin to your system PATH
+  * Copy the contents of <installation directory>\GnuWin32\share\file\ into C:\Program Files\File\share\file
+
+    * It may be possible to configure this directory; see
+      http://www.mail-archive.com/python-list@python.org/msg195285.html and
+      http://mail.python.org/pipermail/python-list/2008-May/1145223.html 
+
+  * Run ``pip install python-magic``
+  * Test installation in the python console::
+
+    >>> import magic
+    >>> test = magic.Magic()
+
+    If this does not generate an error, python-magic and the File
+    library are installed correctly.
+	
+
+Windows install with pip/virtualenv
+-----------------------------------
+
+This is a second attempt to install dependencies using pip and
+virtualenv as much as possible.
+
+* Install Python 2.7 for Windows from
+  http://www.python.org/download/releases/2.7.1/ . Add python install
+  and python scripts directories (e.g.,
+  ``c:\Python27;c:\Python27\Scripts``) to your system PATH.
+* Install setuptools manually using the link above (this includes
+  easy_install, which should now be in your python scripts directory).
+* Install mingw for python packages that require compilation.
+  Available from http://sourceforge.net/projects/mingw/files/ .
+  Add mingw install directory with compile commands to your system
+  PATH.
+* Create a distutils config file to configure pip installations
+  to automatically use mingw when compilation is required.  Create a
+  file named **pydistutils.cfg** in the settings directory for your
+  user account, e.g. ``c:\Users\myusername\`` or ``c:\Documents and
+  Settings\myusername\`` with the following contents::
+
+    [build]
+    compiler = mingw32
+
+  For more information on distutils configuration file, including
+  possible installation locations on various systems, see
+  http://docs.python.org/install/index.html#distutils-configuration-files .
+
+* It should be possible to install the necessary libraries to allow
+  pip to install lxml (see
+  http://codespeak.net/lxml/build.html#static-linking-on-windows for
+  more information and ftp://ftp.zlatkovic.com/pub/libxml/ for windows
+  versions of the necessary libraries).  However, a simpler solution
+  is to just use easy_install::
+
+    $ easy_install lxml
+
+* Install openldap libraries for python-ldap from 
+  http://www.voxgratia.org/bin/openldap-2.1.17_bin.zip and libsasl
+  dll and include files from ftp://ftp.andrew.cmu.edu/pub/cyrus-mail/
+
+* Follow steps from standard install instructions::
+
+    easy_install.py pip
+    pip install virtualenv
+
+* Create a virtualenv as in standard install instructions, then
+  activate, e.g.::
+
+    $ . c:\thekeep\env\Scripts\activate.bat
+
+* ... using ``pip install -r pip-dependencies`` is still currently
+  resulting in some unresolved problems...
+	 
