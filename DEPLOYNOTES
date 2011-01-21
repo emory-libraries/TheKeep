@@ -47,9 +47,8 @@ Installation notes for this release:
   console as follows::
 
     python manage.py shell
-    from digitalmasters.fedora import Repository
+    from keep.common.fedora import Repository
     from django.conf import settings
-    from digitalmasters.audio.models import AudioObject
     repo = Repository()
     objs = repo.find_objects(owner='euterpe-project')
     for o in objs:
