@@ -24,7 +24,9 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
                       the generated result regardless of LAME's status for these files.
 
     * existingFilePath: Rather than getting the WAV content from the fedora object,
-                        this will use the file path provided instead.
+                        this will use the file path provided instead.  The file
+                        provided **must** match the checksum for the master audio
+                        datastream in the fedora object, or conversion will fail.
 
     In addition, this function currently stores all temporary files in the temporary
     ingest directory (to make cleanup easier and as it is usually part of the ingest
@@ -52,20 +54,19 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
                 logger.error("Error opening temporary file, cannot download master audio for conversion : %s" % e)
                 logger.debug("Stack trace for file error:\n" + traceback.format_exc())
                 os.close(tmpfd)
-                raise e
+                raise
             
             try:
                 destination.write(obj.audio.content.read())
             except Exception as e:                
                 logger.error("Error downloading master audio file for conversion: %s" % e)
                 logger.debug("Stack trace for download error:\n" + traceback.format_exc())
-                raise e
+                raise
             finally:
                 destination.close()
 
             # check file size against datastream? os.path.getsize(path)
 
-        # TODO: document that file MUST match checksum in fedora
         calculated_checksum = md5sum(tmpname)
         if obj.audio.checksum != calculated_checksum:
             os.remove(tmpname)  # FIXME: only remove if non-local!
@@ -112,5 +113,5 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
     except Exception as e:
         # log the error and then re-raise it
         logger.error("Failed to convert audio for %s : %s" % (pid, e))
-        raise e
+        raise
 
