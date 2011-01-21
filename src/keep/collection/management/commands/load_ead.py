@@ -42,10 +42,10 @@ class Command(BaseCommand):
                 fa = FindingAid.find_by_unitid(id, numbering_title)
                 coll = fa.generate_collection()
                 coll.set_collection(numbering.uri)
-                if verbosity:
-                    print 'Adding %s for collection %s: %s (from %s)' % (coll.pid, id, coll.mods.content.title, numbering_title)
                 if not options['dryrun']:
                     coll.save()
+                if verbosity:
+                    print 'Added %s for collection %s: %s (from %s)' % (coll, id, coll.mods.content.title, numbering_title)
                 created += 1
             except DoesNotExist:
                 print 'No EAD found for id %s in %s' % (id, numbering_title)
@@ -53,6 +53,9 @@ class Command(BaseCommand):
             except ReturnedMultiple:
                 print 'Multiple EADs found for id %s in %s' % (id, numbering_title)
                 errors += 1
+            except:
+                print 'Failed to save %s for collection %s: %s (from %s)' %  (coll, id, coll.mods.content.title, numbering_title)
+                raise
 
         if verbosity > 1:
             print '%d records created' % (created,)
