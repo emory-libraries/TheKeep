@@ -247,13 +247,33 @@ class AccessCondition(_BaseRights):
 class Rights(_BaseRights):
     'Rights metadata'
     ROOT_NAME = 'rights'
+
+    access_options = (
+        #code                text
+        ('UNR-PD',           'In public domain, no contract restriction'),
+        ('RES-PD',           'In public domain, contract restriction, no access to content until X date'),
+        ('X-RES-PD',         'In public domain, contract restriction, no access including metadata'),
+        ('C108-UNR',         'Under copyright; copy allowed by Sec. 108; no contract restriction; only available within library'),
+        ('RES-C108',         'Under copyright; copy allowed by Sec. 108; contract restriction; no access to content until X date and then only available within library until copyright expires'),
+        ('X-RES-C108',       'Under copyright; copy allowed by Sec. 108; contract restriction; no access, including metadata'),
+        ('EUSERS-C',         'Under copyright; permission of rights holder granted to copy and give access to Emory community users only (including in-library users)'),
+        ('UNR-C-PERMISSION', 'Under copyright; permission of rights holder granted to copy and give access to the public'),
+        ('UNR-C-SELL',       'Under copyright; permission of rights holder granted to copy, provide access to the public, and sell the content'),
+        ('C-SELL-NOACCESS',  'Under copyright; permission of rights holder granted to sell content under certain conditions, but not to provide unlimited access to the public '),
+        ('EUSERS-OR',        'Under copyright but orphaned work, special circumstance, made available to Emory community users only (including in-Library use)'),
+        ('UNKNOWN',          'Rights status unknown; no access to files or metadata'),
+    ) 
+    'controlled vocabulary for access condition'
+
     access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
         instantiate_on_get=True, required=True,
         help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     ':class:`AccessCondition`'
-    copyright_holder_name = xmlmap.StringField('rt:copyrightholderName')
+    copyright_holder_name = xmlmap.StringField('rt:copyrightholderName',
+        help_text='Name of a copyright holder in last, first order')
     'name of the copyright holder'
-    copyright_date = xmlmap.StringField('rt:copyrightDate[@encoding="w3cdtf"]')
+    copyright_date = xmlmap.StringField('rt:copyrightDate[@encoding="w3cdtf"]',
+        help_text='Date of copyright')
     'copyright date (string)'
 
 

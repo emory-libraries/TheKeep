@@ -110,6 +110,16 @@
     </table>
 </div>
 
+<a onClick="javascript:toggle_section('#rights', '#rights-label')">
+  <h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
+</a>
+<div id="rights">
+    {{ form.rights.non_field_errors }}
+    <table class="audio-edit">
+        {% for field in form.rights %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
+    </table>
+</div>
+
 <input class="form-submit" type="submit" name="_save" value="Save"/>
 <input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
 </form>

@@ -10,7 +10,7 @@ from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_fact
 from eulcore.django.forms.fields import W3CDateField, DynamicChoiceField
 
 from keep import mods
-from keep.audio.models import AudioMods, SourceTech, DigitalTech, CodecCreator
+from keep.audio.models import AudioMods, SourceTech, DigitalTech, Rights, CodecCreator
 from keep.collection.models import CollectionObject
 
 logger = logging.getLogger(__name__)
@@ -287,6 +287,26 @@ class DigitalTechForm(XmlObjectForm):
         # return object instance
         return self.instance
 
+
+class RightsForm(XmlObjectForm):
+    """:class:`~eulcore.django.forms.XmlObjectForm` to edit
+    :class:`~keep.audio.models.Rights` metadata.
+    """
+    # In data the access_condition is pretty flexible. In web editing we
+    # should only allow nodes whose contents match our controlled
+    # vocabulary.
+    access = forms.ChoiceField(Rights.access_options, label='Access Condition',
+                    help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
+    copyright_date = W3CDateField()
+
+    class Meta:
+        model = Rights
+        fields = [ 'access', 'copyright_holder_name', 'copyright_date' ]
+        widgets = {
+            'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
+        }
+
+
 class AudioObjectEditForm(forms.Form):
     """:class:`~django.forms.Form` for metadata on an
     :class:`~keep.audio.models.AudioObject`.
@@ -331,16 +351,22 @@ class AudioObjectEditForm(forms.Form):
         self.mods = ModsEditForm(instance=mods_instance, prefix='mods', **common_opts)
         self.sourcetech = SourceTechForm(instance=st_instance, prefix='st', **common_opts)
         self.digitaltech = DigitalTechForm(instance=dt_instance, prefix='dt', **common_opts)
-        self.mods.error_css_class = self.error_css_class
-        self.sourcetech.error_css_class = self.error_css_class
-        self.mods.required_css_class = self.required_css_class
-        self.sourcetech.required_css_class = self.required_css_class
+        self.rights = RightsForm(instance=None, prefix='rights', **common_opts)
+
+        for form in ( self.mods, self.sourcetech, self.digitaltech,
+                      self.rights ):
+            form.error_css_class = self.error_css_class
+            form.required_css_class = self.error_css_class
+
         super(AudioObjectEditForm, self).__init__(data=data, initial=initial)
 
     def is_valid(self):
-        return super(AudioObjectEditForm, self).is_valid() and \
-                self.mods.is_valid() and self.sourcetech.is_valid() and \
-                self.digitaltech.is_valid()
+        return all(form.is_valid() for form in \
+                    [ super(AudioObjectEditForm, self),
+                      self.mods,
+                      self.sourcetech,
+                      self.digitaltech,
+                    ])
 
     def update_instance(self):
         # override default update to handle extra fields
