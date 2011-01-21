@@ -36,10 +36,11 @@ class CollectionSearch(forms.Form):
 
 class AccessConditionForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.AccessCondition`:
-     * suppress default label of 'text'
-     * use :class:`~django.forms.Textarea` widget
-     * make not required
+    :class:`~keep.mods.AccessCondition` :
+
+        * suppress default label of 'text'
+        * use :class:`~django.forms.Textarea` widget
+        * make not required
     '''
     text = forms.CharField(label='', widget=forms.Textarea, required=False)
     class Meta:
@@ -49,8 +50,9 @@ class AccessConditionForm(XmlObjectForm):
 class NamePartForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
     :class:`~keep.mods.NamePart`
-     * suppress default label 'text'
-     * use :class:`~django.forms.TextInput` with class *long*
+
+        * suppress default label 'text'
+        * use :class:`~django.forms.TextInput` with class *long*
     '''
     text = forms.CharField(label='Name Part',
                             widget=forms.TextInput(attrs={'class': 'long'}))
@@ -60,8 +62,9 @@ class NamePartForm(XmlObjectForm):
 class RoleForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS name
     :class:`~keep.mods.Role` information
-     * suppress default label 'text'
-     * configure type with initial value 'text' and make read-only
+
+        * suppress default label 'text'
+        * configure type with initial value 'text' and make read-only
     '''
     text = forms.CharField(label='Role',
                             widget=forms.TextInput(attrs={'class': 'long'}))
@@ -73,11 +76,12 @@ class RoleForm(XmlObjectForm):
 
 class NameForm(XmlObjectForm):
     '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.Name` information
-     * use custom :class:`~keep.mods.NamePart` and
-       :class:`~keep.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
-     * customize id field label & help text
-     * suppress displayForm and affiliation fields
+    :class:`~keep.mods.Name` information.
+
+        * use custom :class:`~keep.mods.NamePart` and
+          :class:`~keep.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
+        * customize id field label & help text
+        * suppress displayForm and affiliation fields
     '''
     id = forms.CharField(required=False, label='Identifier',
                         help_text="Optional; supply for NAF names.")

@@ -391,6 +391,7 @@ class AudioObject(DigitalObject):
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Calculates and stores the duration
         based on the file. Also sets the following default metadata values:
+        
             * mods:typeOfResource = "sound recording"
             * dt:codecQuality = "lossless"
 

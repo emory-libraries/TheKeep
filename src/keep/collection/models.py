@@ -262,12 +262,14 @@ def get_cached_collection_dict(pid):
 def set_cached_collection_dict(collection):
     '''Save minimal information about a :class:`CollectionObject` to a local
     cache in dictionary format.  Stores the following fields:
-     * pid
-     * source_id (from :class:`CollectionMods.source_id`)
-     * title
-     * creator
-     * collection_id  - id for the collection/numbering scheme object this collection belongs to
-     * collection_label - label for parent collection/numbering scheme object
+
+        * pid
+        * source_id (from :class:`CollectionMods.source_id`)
+        * title
+        * creator
+        * collection_id  - id for the collection/numbering scheme object this
+          collection belongs to
+        * collection_label - label for parent collection/numbering scheme object
 
     :param collection: class:`CollectionObject` to be cached
     '''
