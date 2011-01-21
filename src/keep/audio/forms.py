@@ -293,9 +293,9 @@ class RightsForm(XmlObjectForm):
     :class:`~keep.audio.models.Rights` metadata.
     """
     # In data the access_condition is pretty flexible. In web editing we
-    # should only allow nodes whose contents match our controlled
-    # vocabulary.
-    access = forms.ChoiceField(Rights.access_options, label='Access Condition',
+    # only want to offer a simple dropdown based on our controlled vocab.
+    access_options = [ (item[0], item[2]) for item in Rights.acccess_terms ]
+    access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField()
 
