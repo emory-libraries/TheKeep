@@ -1,182 +1,69 @@
+.. _README:
+
 README
 ======
+
+Overview
+--------
+
+The Keep is a repository-based Django web application for managing digital
+surrogates or "masters" of archival (and other) source materials.  For the first
+phase of the project, The Keep is intended to handle audio materials only.
+
+The Keep is intended to replace (eventually) the previous system that handled
+some of this functionality, a Ruby-on-Rails application known as
+"Digital Masters".
+
+Components
+----------
+
+Collection
+~~~~~~~~~~
+Functionality for creating, editing, and searching Collection objects that are
+used to aggregate item-level content, and roughly correspond (in most cases) to
+a manuscript or archival collection.
+
+Audio
+~~~~~
+Functionality for ingesting audio content (via single-file or batch upload) into
+Fedora, editing metadata to describe the audio item, and searching across audio
+items.
+
+Accounts
+~~~~~~~~
+Custom login/logout functionality in support of passing user LDAP credentials
+to Fedora so that objects in the repository will be accessed and updated
+by the individual user rather than by a single site-wide account.
+
+Common
+~~~~~~
+Common code used by multiple components that does not clearly belong to a single
+component is placed here.  This currently includes a customized Fedora Repository
+server connection class (:class:`~keep.common.fedora.Repository`), which
+has logic for accessing Fedora with the credentials of the currently-logged in
+user, as well as utility methods.
 
 System Dependencies
 -------------------
 
-Digital Masters (a.k.a. Euterpe) requires the following network resources:
+The Keep requires the following network resources:
 
   * LDAP for user authentication
   * Fedora 3.4 with risearch enabled. It should be configured for FeSL LDAP
-    authentication. Note that the localsettings.py requests user
-    credentials. These are used by command line applications; users logged
+    authentication. Note that the localsettings.py requests Fedora user
+    credentials; these are used by command line applications. Users logged
     into the web application use their own LDAP credentials when accessing
-    fedora.
+    Fedora.
   * A relational database for user and session information
+  * Persistent ID manager for minting ARKs to use as object identifiers.
+  * eXist-db XML database for auto-generating Fedora Collection objects
+    from the corresponding EAD Finding Aids
+  * RabbitMQ for brokering asynchronous tasks
 
-Software Dependencies
----------------------
+-----
 
-We recommend the use of `pip <http://pip.openplans.org/>`_ and `virtualenv
-<http://virtualenv.openplans.org/>`_ for environment and dependency
-management in this and other Python projects. If you don't have them
-installed we recommend ``sudo easy_install pip`` and then ``sudo pip install
-virtualenv``.
-
-Additionally, LAME must be installed for the WAV to MP3 encoding. For this,
-one can do: sudo apt-get install lame on ubuntu.
-
-A RabbitMQ instance must also be available for the above conversion task.
-For more information on configuring this, please see:
-http://celeryq.org/docs/getting-started/broker-installation.html .
-
-Configure the environment
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-If you've never used virtualenv to set up a virtual environment for this
-project, you'll need to create a virtual environment for it. The environment
-is just a directory. You can store it anywhere you like; in this
-documentation it’ll live right next to the source. For instance, if the
-source is in /home/euterpe/src, consider creating an environment in
-/home/euterpe/env. To create such an environment, su into apache's user
-and::
-
-  $ virtualenv --no-site-packages /home/euterpe/env
-
-This creates a new virtual environment in that directory. Use pip to
-activate it::
-
-  $ . /home/euterpe/env/bin/activate
-
-Once the environment has been activated inside a shell, Python programs
-spawned from that shell will read their environment only from this
-directory, not from the system-wide site packages. Installations will
-correspondingly be installed into this environment.
-
-Installation instructions below assume all installations are invoked from an
-activated shell.
-
-Install dependencies
-~~~~~~~~~~~~~~~~~~~~
-
-Digital Masters (a.k.a. Euterpe) has several dependencies. The installation
-is mostly automated, but it had to be broken into two stages. Each stage
-will print status messages as it installs. If there are any errors, pip
-should announce them very loudly.
-
-To install the first stage of dependencies, cd into the repository checkout
-and::
-
-  $ pip install -r pip-predepends
-
-The second stage looks like the first. It will produce much more output,
-though, as it installs most of the dependencies. From the checkout
-directory::
-
-  $ pip install -r pip-dependencies
-
-After this step, your virtual environment should contain all of the
-dependencies for Digital Masters (Euterpe).
-
-Known Issues
-^^^^^^^^^^^^
-
-* As of 01/2011, there is a problem installing **python-magic** with pip; this
-  is apparently caused by either an incorrect dependency on a ctypes PyPi package
-  or a problem with the PyPi ctypes package that causes it to be uninstallable.
-  As a work-around, python-magic can be manually installed::
-
-    $ pip install --no-deps python-magic
-
-  You may need to comment out python-magic in the pip-dependencies file to allow
-  the other packages to install correctly.
+For more detailed information, including installation instructions and upgrade
+notes, see :ref:`DEPLOYNOTES`.  For details about the features included in each release,
+see :ref:`CHANGELOG`.
 
 
-
-Installation
-------------
-
-After installing dependencies, copy and edit the wsgi and apache
-configuration files in src/apache inside the source code checkout. Both will
-probably require some tweaking for paths and such. 
-
-Configure application settings by copying localsettings.py.sample to
-localsettings.py and editing for local database, LDAP, fedora, and key
-configuration.
-
-
-Test Setup
-----------
-
-Certain unit tests pass test user credentials to Fedora, in order to test and 
-simulate accessing Fedora as the logged in user.  For tests to work properly,
-the unit test user should be defined (with appropriate permissions)
-as a fedora account.  See digitalmasters.audio.tests for account details.
-
-
-Windows Installation Help
--------------------------
-
-Installation for Python 2.7 under 32-bit Windows:
-  1. Contact Steven Anderson at Steven.Anderson@emory.edu for the files if any of the below
-  links no longer function.
-
-Setup Tools (Pip?):
-  1. Install from Windows installer at: http://pypi.python.org/pypi/setuptools#downloads
-  
-PyCrypto:
-  1. Install located at: http://www.voidspace.org.uk/python/modules.shtml#pycrypto
-  
-MySQL-python:
-  1. Install located at: http://www.codegood.com/downloads?dl_cat=2
-  
-Python-ldap:
-  1. Install located at: http://pypi.python.org/pypi/python-ldap/
-
-Magic: 
-  1. Download "File" from the following site: http://gnuwin32.sourceforge.net/packages.html
-  2. Install the above program.
-  3. In <installaion directory>\GnuWin32\bin, make a copy of magic1.dll to magic.dll.
-  4. Add <installaion directory>\GnuWin32\bin to your system PATH value.
-  5. Copy the contents of <installaion directory>\GnuWin32\share\file\ into C:\Program Files\File\share\file
-
-    a. Alternatively, you could possibly configure this directory. See thread: http://www.mail-archive.com/python-list@python.org/msg195285.html
-    b. Alternate thread locations: http://mail.python.org/pipermail/python-list/2008-May/1145223.html or copied in install files.
-
-  6. In the command prompt, do pip install python-magic.
-  7. Test the install by running the following in Python, if no errors, it is installed right:
-
-    a. >>> import magic
-    b. >>> test = magic.Magic()
-
-  8. Shouldn't be needed for any of the above, but I also installed Microsoft Visual C++ 2008 Express Edition and MinGW when attempted to compile Magic that failed.
-
-    a. Alternatively, you could possibly configure this directory. See thread: http://www.mail-archive.com/python-list@python.org/msg195285.html
-    b. Alternate thread locations: http://mail.python.org/pipermail/python-list/2008-May/1145223.html or copied in install files.
-  
-Config of base urls.py for Windows:
-  Due to differences in directory structure, have hard-coded paths at the end of this file. 
-  For me, the changes looked like::
-  
-  
-    # if there's not a genlib_media dir/link in the media directory, then
-    # look for it in the virtualenv themes.
-    # if not os.path.exists(os.path.join(settings.MEDIA_ROOT, 'genlib_media')) and \
-    #            'VIRTUAL_ENV' in os.environ:
-    #        genlib_media_root = os.path.join(os.environ['VIRTUAL_ENV'],
-    #                                         'themes', 'genlib', 'genlib_media')
-    #        urlpatterns += patterns('',
-    #            (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
-    #                'document_root': genlib_media_root,
-    #                }),
-    #        )
- 
-    genlib_media_root = 'C:/Users/Bluewolf/root/EUL_CORE/themes/genlib/genlib_media/'
-    urlpatterns += patterns('',
-        (r'^static/genlib_media/(?P<path>.*)$', 'django.views.static.serve', {
-            'document_root': genlib_media_root,
-            }),
-        (r'^static/(?P<path>.*)$', 'django.views.static.serve', {
-            'document_root': settings.MEDIA_ROOT,
-            }),
-    )

@@ -1,52 +1,254 @@
-Installation & Upgrade instructions
-===================================
+.. _DEPLOYNOTES:
+
+DEPLOYNOTES
+===========
+
+Instructions for installation & upgrade notes.
+
+Installation
+------------
+
+Software Dependencies
+~~~~~~~~~~~~~~~~~~~~~
+
+We recommend the use of `pip <http://pip.openplans.org/>`_ and `virtualenv
+<http://virtualenv.openplans.org/>`_ for environment and dependency
+management in this and other Python projects. If you don't have them
+installed we recommend ``sudo easy_install pip`` and then ``sudo pip install
+virtualenv``.
+
+
+Configure the environment
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When first installing this project, you'll need to create a virtual environment
+for it. The environment is just a directory. You can store it anywhere you like;
+in this documentation it’ll live right next to the source. For instance, if the
+source is in /home/thekeep/src, consider creating an environment in
+/home/thekeep/env. To create such an environment, su into apache's user
+and::
+
+  $ virtualenv --no-site-packages /home/thekeep/env
+
+This creates a new virtual environment in that directory. Source the activation
+file to invoke the virtual environment (requires that you use the bash shell)::
+
+  $ . /home/thekeep/env/bin/activate
+
+Once the environment has been activated inside a shell, Python programs
+spawned from that shell will read their environment only from this
+directory, not from the system-wide site packages. Installations will
+correspondingly be installed into this environment.
+
+.. Note::
+  Installation instructions and upgrade notes below assume that
+  you are already in an activated shell.
+
+Install python dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Keep depends on several python libraries. The installation is mostly
+automated, and will print status messages as packages are installed. If there
+are any errors, pip should announce them very loudly.
+
+To install python dependencies, cd into the repository checkout and::
+
+  $ pip install -r pip-dependencies
+
+If you are a developer or are installing to a continuous ingration server
+where you plan to run unit tests, code coverage reports, or build sphinx
+documentation, you probably will also want to::
+
+  $ pip install -r build-dependencies
+
+After this step, your virtual environment should contain all of the
+dependencies for The Keep.
+
+Known Issues
+""""""""""""
+
+* As of 01/2011, there is a problem installing **python-magic** with pip; this
+  is apparently caused by either an incorrect dependency on a ctypes PyPi package
+  or a problem with the PyPi ctypes package that causes it to be uninstallable.
+  As a work-around, python-magic can be manually installed without dependencies::
+
+    $ pip install --no-deps python-magic
+
+  You may need to comment out python-magic in the pip-dependencies file to allow
+  the other packages to install correctly.
+
+Install/Configure System Dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Fedora
+""""""
+
+The Keep expects to connect to a Fedora-Commons repository version
+3.4.x.  Fedora should be configured as follows:
+
+*  LDAP login filter
+*  XACML policy enforcement enabled with  a combining algorithm of
+   Permit-Overrides.  You should have the following in the fedora.fcfg:
+
+.. code-block:: xml
+
+  <param name="XACML-COMBINING-ALGORITHM" value="com.sun.xacml.combine.OrderedPermitOverridesPolicyAlg"/>
+  <param name="ENFORCE-MODE" value="enforce-policies"/>
+
+Fedora xacml repository policies should be installed from
+https://svn.library.emory.edu/svn/fedora/repository-policies/
+
+Celery/RabbitMQ
+"""""""""""""""
+
+We use celery for asynchronous tasks (currently only WAV to MP3 audio
+encoding), which requires a task broker.  We recommend RabbitMQ.  For
+more information on configuring this, please see
+http://celeryq.org/docs/getting-started/broker-installation.html
+
+Misc
+""""
+
+The WAV to MP3 audio conversion task uses LAME to do the actual
+encoding.  On Ubuntu systems, this can be installed using ``sudo
+apt-get install lame``.
+
+
+Install the Application
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Apache
+^^^^^^
+After installing dependencies, copy and edit the wsgi and apache
+configuration files in src/apache inside the source code checkout. Both will
+probably require some tweaking for paths and such.
+
+
+The application provides an RSS podcast feed intended for iTunes on
+the MARBL reading room kiosk.  The URLs for the podcast feeds and MP3
+files should be IP restricted at the Apache level to allow only those
+machines that are permitted access to the content.  The url patterns
+that should be restricted are::
+
+    /audio/feeds/[0-9]+/             
+    /audio/*/access.mp3         * is the fedora object pid
+
+
+Configuration
+^^^^^^^^^^^^^
+Configure application settings by copying localsettings.py.sample to
+localsettings.py and editing for local database, LDAP, fedora, PID manager,
+eXist-DB and key configuration.
+
+eXist-DB
+""""""""
+
+The Keep requires access to an eXist Database in order to
+auto-generate Fedora collection objects based on EAD Finding Aid
+documents.  All EXISTDB_* settings in the localsettings example file
+should be configured for access to an eXist 1.4.x instance with
+Finding Aids content.  It is recommended to configure eXist access
+using guest access or a non-privileged account.
+
+PID Manager
+"""""""""""
+
+Commenting out or removing any of the PIDMAN_* configuration options will
+raise an error if the ``DEV_ENV`` setting is ``False`` (as is normal for a
+production install). 
+
+The configured PIDMAN_USER must have permission inside the pid
+manager to add pids and targets.
+
+----
+
+After configuring all settings, initialize the db with all needed
+tables and initial data using::
+
+    $ python manage.py syncdb
+
+Load Fedora fixtures and control objects to the configured repository
+using::
+
+     $ python manage.py syncrepo
+
+Ingest clean-up cron job
+^^^^^^^^^^^^^^^^^^^^^^^^
+Configure the ingest cleanup script to run as a cron job.  This is a custom
+manage.py script that cleans up the ingest staging temp directory so that
+any uploaded files that are not successfully ingested into Fedora will 
+be cleaned up.  The script cleans up files older than the age specified in 
+localsettings.py.  When run with verbosity 0, only errors will be reported::
+
+     $ python manage.py  ingest_cleanup -v 0
+
+.. NOTE::
+  This script will delete all files older than a specified age
+  in the configured directory, so it should **not** be run as a
+  privileged user.
+
+Celery Daemon
+^^^^^^^^^^^^^
+The celery worker needs to be running for asynchronous tasks.  To run through
+django do::
+
+    $ python manage.py celeryd
+
+See http://ask.github.com/celery/cookbook/daemonizing.html for instructions
+on configuring celery to run as a daemon.
+
+
+Test Setup
+~~~~~~~~~~
+
+Certain unit tests pass test user credentials to Fedora, in order to test and
+simulate accessing Fedora as the logged in user.  For tests to work properly,
+the unit test user should be defined (with appropriate permissions)
+as a fedora account.  See :mod:`keep.audio.tests` for account details.
+
+
+Upgrade Notes
+-------------
 
 Release 0.9 - Min Items, part III
----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Installation notes for this release:
-* Need to install LAME. Can do so with: sudo apt-get install lame . This is for the WAV to MP3 conversion.
+* The application now includes an asynchronous task for generating MP3 files,
+  which requires LAME, celery configuration, and a celery broker.  See
+  `Celery/RabbitMQ`_ and `Misc`_ in  `Install/Configure System
+  Dependencies`_.  Celery and broker configurations are now required in
+  localsettings.py (see localsettings.py.sample; search for BROKER).
+  Running tasks requires that a celery worker process be run; see the
+  `Celery Daemon`_ section in `Install the Application`_.
 
-* Need to configure a celery broker server. More information on this type of server can be found at: 
-  http://celeryq.org/docs/getting-started/broker-installation.html .
+  New database tables in the relational database are required for the
+  celery functionality.  To initialize them, run::
 
-* General Celery/Django combination configuration notes: http://celeryq.org/docs/django-celery/getting-started/first-steps-with-django.html .
+    $ ./manage.py syncdb
 
-* Configuration setting examples have been added to the localsettings.sampple file.
-  These settings are::
-
-      #Celery Config
-      import djcelery
-      djcelery.setup_loader()
-
-      BROKER_HOST = "" # e.g "localhost"
-      BROKER_PORT =    # e.g 5672
-      BROKER_USER = "" # e.g "user"
-      BROKER_PASSWORD = "" #e.g. "password"
-      BROKER_VHOST = "" # e.g. "digitalmasters_vhost"
-      CELERY_RESULT_BACKEND = "" # e.g "amqp"
-
-* The application now provides a RSS podcast feed intended for iTunes on the
+* The application now provides an RSS podcast feed intended for iTunes on the
   MARBL reading room kiosk.  Due to limitations in the amount of data that iTunes
   can harvest in a single feed, the podcast feed generation logic expects a setting
-  for MAX_ITEMS_PER_PODCAST_FEED (current recommended value is 2000).  See
-  localsettings.py.sample for example configuration.
+  for MAX_ITEMS_PER_PODCAST_FEED.  See localsettings.py.sample for example 
+  configuration and recommended value.
 
-  URLs for the podcast feeds and MP3 files should be IP restricted to only those
-  machines that are permitted access to the content.
-  The url patterns that should be restricted are::
-
-    /audio/feeds/*/             * is the number of the feed, starting at 1
-    /audio/*/access.mp3         * is the fedora object pid
+  Apache should be configured to restrict access to the podcast feed
+  and MP3 URLs. See the `Apache`_ section of `Install the
+  Application`_ for details.
 
 * As part of branding this project with its new name, "The Keep", the pseudo-owner
   used for repository-level permissions has been changed.  The Fedora repository
   policies should be updated (repo-policies RELEASE/TAG TODO), and any
   existing objects will need to be either removed and re-generated or updated
   with the new owner ID.  Updating existing objects can be done in the django
-  console as follows::
+  console.  Start the console::
 
-    python manage.py shell
+    $ python manage.py shell
+
+  Then run the following:
+
+  .. code-block:: python
+
     from keep.common.fedora import Repository
     from django.conf import settings
     repo = Repository()
@@ -54,10 +256,11 @@ Installation notes for this release:
     for o in objs:
         o.owner = settings.FEDORA_OBJECT_OWNERID
         o.save()
+    
 
 
 Release 0.8 - Min Items, part II
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * The app now depends on the standard django ``sites`` module. This module
   stores some data in the relational database. To initialize it, sync the db::
 
@@ -66,55 +269,46 @@ Release 0.8 - Min Items, part II
   After restarting the web app, configure the default site by replacing the
   ``example.com`` domain with the domain of the live webapp.
 * Django caching for lists based on Fedora objects requires defining a
-  CACHE_BACKEND in localsettings.py (see localsettings-sample.py)
+  CACHE_BACKEND in localsettings.py (see localsettings.py.sample)
 * The namespace for Digital Technical metadata was modified; any Audio objects
   loaded in the staging environment should be removed when this update is
-  deployed.  This can be done in the django console as follows::
+  deployed.  This can be done in the django console as follows. Start
+  the console::
 
-    python manage.py shell
-    from digitalmasters.fedora import Repository
-    from digitalmasters.audio.models import AudioObject
+    $ python manage.py shell
+
+  And then run:
+
+  .. code-block:: python
+
+    from keep.fedora import Repository
+    from keep.audio.models import AudioObject
     repo = Repository()
     repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
     objs = repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
     for o in objs:
         repo.purge_object(o.pid)
 
-* Support added for fetching new object pids from the pid manager. To
-  configure it, add the following configuration options::
+* Support added for fetching new object pids from the pid manager. PID
+  Manager configuration is now required in localsettings.py.  For
+  example settings, see localsettings.py.sample (search for PIDMAN).
 
-    PIDMAN_HOST = 'https://pid.emory.edu/' # the web root where we'll ask for pids
-    PIDMAN_USER = 'exampleuser'
-    PIDMAN_PASSWORD = 'examplepass'
-    PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
-
-  Note that commenting or removing any of these configuration options will
-  raise an error if the ``DEV_ENV`` setting is ``False`` (as is normal for a
-  production install). The configured user must have permission inside the
-  pid manager to add pids and targets.
+  See `PID Manager`_ in the `Configuration`_ section for additional details.
 
 
 Release 0.7 - Min Items, part I
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * The new batch-upload/ingest process may result in uploaded files
-  that will need to be cleaned up.  There is a custom manage.py script
-  to handle this which should be configured to run as a cron job.
-  This script relies on the following django settings:
-  INGEST_STAGING_TEMP_DIR and INGEST_STAGING_KEEP_AGE.  If run with
-  verbosity 0, only errors will be reported, i.e.::
+  that will need to be cleaned up.  See `Ingest clean-up cron job`_ .
 
-     python manage.py  ingest_cleanup -v 0
-
-  NOTE: this script will delete all files older than a specified age
-  in the configured directory, so it should **not** be run as a
-  privileged user.
 * Now requires access to eXist Database for the purpose of generating
-  Fedora collection objects based on EAD Finding Aid documents.  All EXISTDB
-  settings in the localsettings example file should be configured for access
-  to an eXist 1.4.x instance with Finding Aids content.  It is recommended to
-  configure eXist access using guest access or a non-privileged account.
+  Fedora collection objects based on EAD Finding Aid documents; new
+  configurations are required in localsettings.py; search
+  localsettings.py.sample for EXISTDB.  See also the `eXist-DB`_
+  section of `Configuration`_.
+
 * Dependencies changed slightly. The current version depends on an updated
-  version of eulcore, and we swapped our python-magic dependency for better
+  version of :mod:`eulcore`, and we swapped our python-magic dependency for better
   Windows support. Remove the old dependencies and refresh them::
 
     $ . /home/euterpe/env/bin/activate
@@ -137,7 +331,7 @@ Release 0.7 - Min Items, part I
 
 
 Release 0.6
--------------
+~~~~~~~~~~~
 * Requires Fedora 3.4 or greater with LDAP login configured.
 * Requires Fedora XACML policies (bundled with other local policies in
   https://svn.library.emory.edu/svn/fedora/repository-policies/ )
@@ -147,3 +341,8 @@ Release 0.6
     $ python manage.py syncrepo
 
 
+
+
+--------------
+
+.. include:: DEPLOYNOTES.windows
