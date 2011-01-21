@@ -609,6 +609,10 @@ of 2''',
                     'dt-date_captured_year': '2010',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
+                    # rights metadata
+                    'rights-access': 'UNR-PD',
+                    'rights-copyright_holder_name': 'Mouse, Mickey',
+                    'rights-copyright_date_year': '1942',
         }
         response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
@@ -692,6 +696,13 @@ of 2''',
         self.assertEqual(1, len(dt.codec_creator.hardware_list)) # should only be one now
         self.assertEqual(software, dt.codec_creator.software)
         self.assertEqual(None, dt.codec_creator.software_version)
+
+        # check that rights fields were updated correctly
+        rights = updated_obj.rights.content
+        self.assertEqual(audio_data['rights-access'], rights.access_condition.code)
+        self.assertTrue(rights.access_condition.text.startswith('In public domain'))
+        self.assertEqual(audio_data['rights-copyright_holder_name'], rights.copyright_holder_name)
+        self.assertEqual(audio_data['rights-copyright_date_year'], rights.copyright_date)
 
         # test logic for save and continue editing
         data = audio_data.copy()

@@ -295,6 +295,7 @@ class RightsForm(XmlObjectForm):
     # In data the access_condition is pretty flexible. In web editing we
     # only want to offer a simple dropdown based on our controlled vocab.
     access_options = [ (item[0], item[2]) for item in Rights.access_terms ]
+    access_terms_dict = dict((item[0], item) for item in Rights.access_terms)
     access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField()
@@ -316,6 +317,19 @@ class RightsForm(XmlObjectForm):
         access_condition_code = 'access_condition-code'
         if access_condition_code in self.initial:
             self.initial[access] = self.initial[access_condition_code]
+
+    def update_instance(self):
+        super(RightsForm, self).update_instance()
+
+        # cleaned data only available when the form is valid,
+        # but xmlobjectform is_valid calls update_instance
+        if hasattr(self, 'cleaned_data'):
+            access_code = self.cleaned_data['access']
+            access_text = self.access_terms_dict[access_code][2]
+            self.instance.access_condition.code = access_code
+            self.instance.access_condition.text = access_text
+
+        return self.instance
 
 
 class AudioObjectEditForm(forms.Form):
@@ -379,6 +393,7 @@ class AudioObjectEditForm(forms.Form):
                       self.mods,
                       self.sourcetech,
                       self.digitaltech,
+                      self.rights,
                     ])
 
     def update_instance(self):
@@ -387,6 +402,7 @@ class AudioObjectEditForm(forms.Form):
         self.object_instance.mods.content = self.mods.update_instance()
         self.object_instance.sourcetech.content = self.sourcetech.update_instance()
         self.object_instance.digitaltech.content = self.digitaltech.update_instance()
+        self.object_instance.rights.content = self.rights.update_instance()
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
