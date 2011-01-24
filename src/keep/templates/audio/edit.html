@@ -33,22 +33,11 @@
    <a href="{% url audio:raw-ds obj.pid 'sourcetech' %}">SourceTech</a> |
    <a href="{% url audio:raw-ds obj.pid 'digitaltech' %}">DigitalTech</a>
 </p>
-<script type="text/javascript">
-    /* simple javascript section to toggle display of sections and label css classes */
-    function toggle_section(section_id, toggle_id) {
-        var section = jQuery(section_id);
-        section.toggle();
-        var label = jQuery(toggle_id);
-        label.toggleClass('collapsed', section.is(':hidden'));
-    }
-</script>
 
 <div id="audio-edit">
 <form method="post" name="edit_form">{% csrf_token %}
 
-<a onClick="javascript:toggle_section('#mods', '#mods-label');"> {#jQuery('#mods').toggle()"> #}
-  <h3 id="mods-label" class="section-head toggle open">Descriptive Metadata</h3>
-</a>
+<h3 id="mods-label" class="section-head toggle open">Descriptive Metadata</h3>
 <div id="mods">    
     {% if form.mods.non_field_errors %}
     {{ form.mods.non_field_errors }}
@@ -85,9 +74,7 @@
 </table>
 </div>
 
-<a onClick="javascript:toggle_section('#source-tech', '#source-tech-label')">
-  <h3 id="source-tech-label" class="section-head toggle">Source Technical Metadata</h3>
-</a>
+<h3 id="source-tech-label" class="section-head toggle">Source Technical Metadata</h3>
 <div id="source-tech">
     {{ form.sourcetech.non_field_errors }}
     <table class="audio-edit">
@@ -95,9 +82,7 @@
     </table>
 </div>
 
-<a onClick="javascript:toggle_section('#digital-tech', '#digital-tech-label')">
-  <h3 id="digital-tech-label" class="section-head toggle">Digital Technical Metadata</h3>
-</a>
+<h3 id="digital-tech-label" class="section-head toggle">Digital Technical Metadata</h3>
 <div id="digital-tech">
     {{ form.digitaltech.non_field_errors }}
     <table class="audio-edit">
@@ -105,9 +90,7 @@
     </table>
 </div>
 
-<a onClick="javascript:toggle_section('#rights', '#rights-label')">
-  <h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
-</a>
+<h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
 <div id="rights">
     {{ form.rights.non_field_errors }}
     <table class="audio-edit">
@@ -122,5 +105,13 @@
 
 <script type="text/javascript">
   window.onload = document.edit_form.elements[1].focus();
+
+  $(document).ready(function() {
+    $(".toggle").click(function () {
+      var header = $(this);
+      header.toggleClass('collapsed');
+      header.next().toggle();
+    });
+  });
 </script>
 {% endblock %}
