@@ -270,9 +270,11 @@ class Rights(_BaseRights):
         help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     ':class:`AccessCondition`'
     copyright_holder_name = xmlmap.StringField('rt:copyrightholderName',
+        required=False,
         help_text='Name of a copyright holder in last, first order')
     'name of the copyright holder'
     copyright_date = xmlmap.StringField('rt:copyrightDate[@encoding="w3cdtf"]',
+        required=False,
         help_text='Date of copyright')
     'copyright date (string)'
 

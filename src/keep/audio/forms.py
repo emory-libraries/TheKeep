@@ -293,7 +293,7 @@ class RightsForm(XmlObjectForm):
     access_terms_dict = dict((item[0], item) for item in Rights.access_terms)
     access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
-    copyright_date = W3CDateField()
+    copyright_date = W3CDateField(required=False)
 
     class Meta:
         model = Rights
@@ -340,7 +340,7 @@ class AudioObjectEditForm(forms.Form):
     for each XML datastream.
     """
     collection = DynamicChoiceField(label="Collection",
-        choices=_collection_options, required=False,
+        choices=_collection_options, required=True,
         help_text="Collection this item belongs to. " +
         "Start typing collection number to let your browser search within the list.")
 
