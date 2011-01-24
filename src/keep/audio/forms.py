@@ -119,11 +119,6 @@ class ModsEditForm(XmlObjectForm):
     """:class:`~eulcore.django.forms.XmlObjectForm` for editing
     :class:`~keep.audio.models.AudioMods`.
     """
-    #collection = DynamicChoiceField(label="Collection",
-    #                choices=_collection_options,
-    #                help_text="Collection this item belongs to.", required=False)
-                    # using URI because it will be used to set a relation in RELS-EXT
-                    
     # TODO: ARK will need to be set on form init from instance
     # read-only text input to display ARK (not editable)
     identifier = forms.CharField(label="Identifier", required=False,
@@ -136,8 +131,8 @@ class ModsEditForm(XmlObjectForm):
     class Meta:
         model = AudioMods
         fields = (
-            'collection', 'identifier', 'title', 
-            'origin_info', 'general_note', 'part_note',
+            'identifier', 'title', 'origin_info',
+            'general_note', 'part_note',
             )
         widgets = {
             'title': forms.TextInput(attrs={'class': 'long'}),
@@ -370,6 +365,11 @@ class AudioObjectEditForm(forms.Form):
             # populate fields not auto-generated & handled by XmlObjectForm
             if self.object_instance.collection_uri:
                 initial['collection'] = str(self.object_instance.collection_uri)
+
+            if self.object_instance.ark:
+                initial['identifier'] = self.object_instance.ark
+            else:
+                initial['identifier'] = self.object_instance.pid + ' (PID)'
 
             # passed-in initial values override ones calculated here
             initial.update(orig_initial)

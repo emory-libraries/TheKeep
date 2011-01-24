@@ -7,11 +7,6 @@
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p class='extra'>
-  {% if obj and obj.ark %}
-    This file is <a href='{{obj.ark_access_uri}}'>{{obj.ark}}</a>.
-  {% else %}
-    This file has no ARK. Its pid is {{obj.pid}}.
-  {% endif %}
   <a href="{% url audio:download-audio obj.pid %}">original audio</a>
   {% if obj.compressed_audio.exists %}
      | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
