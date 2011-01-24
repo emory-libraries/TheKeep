@@ -28,9 +28,10 @@ table.audio-edit th {
     background-image: url('../genlib_media/style/images/menu-collapsed.png');
 }
 
-.extra {
-  color: gray;
-  margin: 2px;
+#audio-edit td.required {
+  font-weight: bold;
+  color: red;
+  padding-right: 7px; /* overrides the default 7 20 7 0 */
 }
 
 table.audio-edit div.help-text {
@@ -55,6 +56,11 @@ input.readonly {
     font-weight:bold;
     float:left;
     clear:left;
+}
+
+.extra {
+  color: gray;
+  margin: 2px;
 }
 
 div#sidebar-left-inner > div {
