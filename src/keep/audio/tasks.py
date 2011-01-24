@@ -63,13 +63,13 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
                 logger.debug("Stack trace for download error:\n" + traceback.format_exc())
                 raise
             finally:
+                #NOTE: This automatically closes the open tmpfd via Python magic, calling os.close(tmpfd) at this point will error.
                 destination.close()
 
             # check file size against datastream? os.path.getsize(path)
 
         calculated_checksum = md5sum(tmpname)
         if obj.audio.checksum != calculated_checksum:
-            os.remove(tmpname)  # FIXME: only remove if non-local!
             raise Exception("Checksum for local audio file %s does not match Fedora datastream checksum %s" % \
                 (calculated_checksum, obj.audio.checksum))            
 
@@ -91,20 +91,10 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
                 obj.compressed_audio.checksum = md5sum(tmpname + ".mp3")
                 obj.compressed_audio.label = obj.audio.label
     	        obj.save("Added compressed mp3 audio stream from LAME conversion output.")
-
-            # only delete temp file when not passed in
-            if existingFilePath is None:
-                os.remove(tmpname)
-            os.remove(tmpname+".mp3")
             return "Successfully converted file"
     
+        #Raise error if this is reached as should have returned "Successfully converted file".
         logger.error("Failed to convert audio file (LAME failed), pid is: " + pid)
-        #Remove temporary files before returning error.
-        # only delete temp file when not passed in
-        # TODO: consolidate file clean-up with success above
-        if existingFilePath is None:
-            os.remove(tmpname)
-        os.remove(tmpname+".mp3")
         raise Exception("celery","Failed to convert audio file (LAME failed), pid is: " + pid)
     # General exception catch for logging.
     # possible more specific exceptions:
@@ -114,4 +104,14 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
         # log the error and then re-raise it
         logger.error("Failed to convert audio for %s : %s" % (pid, e))
         raise
+    #Cleanup for everything.
+    finally:
+        # Only remove if file was not passed in (ie. only remove the temporary file).
+        if existingFilePath is None and tmpname is not None:
+            if os.path.exists(tmpname):
+                os.remove(tmpname)
 
+        #Remove the generated mp3 file, if it exists.
+        if os.path.exists(tmpname+".mp3"):
+            os.remove(tmpname+".mp3")
+         
