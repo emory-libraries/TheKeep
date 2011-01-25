@@ -1,5 +1,6 @@
 import cStringIO
 import os
+from shutil import copyfile
 import stat
 import sys
 import tempfile
@@ -93,76 +94,95 @@ class AudioViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, audio_index))
 
-    def test_upload_html5(self):
+    def test_upload_form(self):
         # test upload form
-        HTML5_upload_url = reverse('audio:HTML5FileUpload')
         upload_url = reverse('audio:upload')
 
         # logged in as staff
         self.client.login(**ADMIN_CREDENTIALS)
+        # on GET, should display the form
         response = self.client.get(upload_url)
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, upload_url))
         self.assertContains(response, '<input')
+        # is this sufficient? anything else to test here?
+
+    def test_ajax_file_upload(self):
+        # test uploading files via ajax
+        upload_url = reverse('audio:upload')
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
 
         # common post options used for most test cases
         post_options = {
-            'path': HTML5_upload_url,
+            'path': upload_url,
             'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest',
-            'HTTP_X_FILE_NAME': 'example.wav',
+            'HTTP_CONTENT_DISPOSITION': 'filename=example.wav',
+            'CONTENT_TYPE': 'audio/wav',
             'content_type': 'multipart/form-data',
         }
         # POST non-wav file to AJAX Upload view results in an error
         with open(mp3_filename, 'rb') as mp3:
             opts = post_options.copy()
-            opts['HTTP_X_FILE_NAME'] = 'example.mp3' 
-            response = self.client.post(data=mp3.read(), HTTP_X_FILE_MD5=mp3_md5, **opts)
+            opts['HTTP_CONTENT_DISPOSITION'] = 'filename=example.mp3'
+            response = self.client.post(data=mp3.read(), HTTP_CONTENT_MD5=mp3_md5, **opts)
             self.assertEqual('Error - Incorrect File Type',response.content)
             code = response.status_code
             expected = 400
             self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                                 % (expected, code, HTML5_upload_url))
+                                 % (expected, code, upload_url))
         
         # POST wav file to AJAX Upload view with incorrect checksum should fail
         with open(wav_filename, 'rb') as wav:
             # using mp3 checksum but uploading wav file
-            response = self.client.post(data=wav.read(), HTTP_X_FILE_MD5=mp3_md5,
+            response = self.client.post(data=wav.read(), HTTP_CONTENT_MD5=mp3_md5,
                                         **post_options)
             self.assertEqual('Error - MD5 Did Not Match',response.content)
             code = response.status_code
             expected = 400
             self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                                 % (expected, code, HTML5_upload_url))
+                                 % (expected, code, upload_url))
                 
         # POST wav file to AJAX Upload view with missing header arguments should fail
         with open(wav_filename, 'rb') as wav:
-            # expected error message if required headers are missing
-            missing_args = 'Error - missing needed headers (either HTTP-X-FILE-NAME or HTTP-X-FILE-MD5).'
+            # post without checksum
             opts = post_options.copy()
             opts['data'] = wav.read()
             # POST without MD5 header
             response = self.client.post(**opts)
-            self.assertEqual(missing_args, response.content)
+            self.assertEqual('Content-MD5 header is required', response.content)
             code = response.status_code
             expected = 400
-            self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                                 % (expected, code, HTML5_upload_url))
+            self.assertEqual(code, expected,
+                'Expected %s but returned %s for %s without Content-MD5 header'
+                        % (expected, code, upload_url))
 
             # POST without filename header
-            del(opts['HTTP_X_FILE_NAME'])
-            response = self.client.post(HTTP_X_FILE_MD5=wav_md5, **opts)
-            self.assertEqual(missing_args, response.content)
+            del(opts['HTTP_CONTENT_DISPOSITION'])
+            response = self.client.post(HTTP_CONTENT_MD5=wav_md5, **opts)
+            self.assertEqual('Content-Disposition header is required', response.content)
             code = response.status_code
             expected = 400
-            self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                                 % (expected, code, HTML5_upload_url))
+            self.assertEqual(code, expected,
+                'Expected %s but returned %s for %s without Content-Disposition header'
+                         % (expected, code, upload_url))
+
+            # POST with content-disposition but no filename
+            opts['HTTP_CONTENT_DISPOSITION'] = 'attachment'
+            response = self.client.post(HTTP_CONTENT_MD5=wav_md5, **opts)
+            self.assertEqual('Content-Disposition header must include filename', response.content)
+            code = response.status_code
+            expected = 400
+            self.assertEqual(code, expected,
+                'Expected %s but returned %s for %s with invalid Content-Disposition header'
+                         % (expected, code, upload_url))
         
         # POST wav file to AJAX Upload view should work
         with open(wav_filename) as wav:            
             response = self.client.post(data=wav.read(),
-                                        HTTP_X_FILE_MD5=wav_md5, **post_options)
+                                        HTTP_CONTENT_MD5=wav_md5, **post_options)
             # on success, response content is temporary filename
             uploaded_filename = response.content
             self.assert_(uploaded_filename.startswith('example_'),
@@ -170,10 +190,18 @@ class AudioViewsTest(TestCase):
             self.assert_(uploaded_filename.endswith('.wav'),
                 'response content should be filename on success; should end with uploaded file suffix (.wav)')
 
+    def test_batch_upload(self):
+        # test uploading files via ajax
+        upload_url = reverse('audio:upload')
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        copyfile(wav_filename,
+            os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav'))
+
         # use the returned filename from the last (successful) response to test upload
         upload_opts = {
             'originalFileNames': 'example.wav',
-            'fileUploads': uploaded_filename,
+            'fileUploads': 'example-01.wav',
             'fileMD5sum': wav_md5
         }
         # POST wav file with incorrect checksum should fail

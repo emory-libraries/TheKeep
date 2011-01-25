@@ -172,14 +172,14 @@
             }, false);
 
         xhr.open('POST', data['url'], true);
-        xhr.setRequestHeader('X-Filename', file.fileName);
-        // TODO: use standard http headers wherever possible
-        xhr.setRequestHeader('Content-Disposition', "filename=" + file.fileName);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        xhr.setRequestHeader('X-FILE-NAME', file.name);
-        xhr.setRequestHeader('X-FILE-SIZE', file.size);
-        xhr.setRequestHeader('X-FILE-TYPE', file.type);
-        xhr.setRequestHeader('X-FILE-MD5', file.md5);
+        // set required headers for processing the file
+        xhr.setRequestHeader('Content-Disposition', "filename=" + file.fileName);
+        xhr.setRequestHeader('Content-Type', file.type);
+        xhr.setRequestHeader('Content-MD5', file.md5);
+
+        // Content-Length header could be set explicitly from file.size,
+        // but should be set automatically by the browser (tested in FF and Chrome)
 
         xhr.onreadystatechange = function() {
           if (xhr.readyState == 4) {
