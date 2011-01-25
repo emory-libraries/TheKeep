@@ -10,7 +10,14 @@
   <a href="{% url audio:download-audio obj.pid %}">original audio</a>
   {% if obj.compressed_audio.exists %}
      | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
+  {% else %}
+     | access copy
   {% endif %}
+  | <a href="{% url audio:raw-ds obj.pid 'mods' %}">MODS</a>
+  | <a href="{% url audio:raw-ds obj.pid 'dc' %}">DC</a>
+  | <a href="{% url audio:raw-ds obj.pid 'rels-ext' %}">RELS-EXT</a>
+  | <a href="{% url audio:raw-ds obj.pid 'sourcetech' %}">SourceTech</a>
+  | <a href="{% url audio:raw-ds obj.pid 'digitaltech' %}">DigitalTech</a>
 </p>
 {% with obj.conversion_result as conversion %}
   {% if conversion %}
@@ -25,14 +32,6 @@
   {% endif %}
 {% endwith %}
 
-<p class="extra">
-  View raw datastreams:
-   <a href="{% url audio:raw-ds obj.pid 'mods' %}">MODS</a> |
-   <a href="{% url audio:raw-ds obj.pid 'dc' %}">DC</a> |
-   <a href="{% url audio:raw-ds obj.pid 'rels-ext' %}">RELS-EXT</a> |
-   <a href="{% url audio:raw-ds obj.pid 'sourcetech' %}">SourceTech</a> |
-   <a href="{% url audio:raw-ds obj.pid 'digitaltech' %}">DigitalTech</a>
-</p>
 
 <div id="audio-edit">
 <form method="post" name="edit_form">{% csrf_token %}
