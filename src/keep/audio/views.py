@@ -211,7 +211,8 @@ def ajax_file_upload(request):
             type, charset = type.split(';')
         if type not in allowed_audio_types:
             os.remove(tmpname)
-            return HttpResponseBadRequest('Error - Incorrect File Type')
+            # FIXME: correct http status code here? maybe 415 Unsupported Media Type ?
+            return HttpResponseBadRequest('File type %s is not allowed' % type)
     except Exception as e:
         logging.debug(e)
         
@@ -224,7 +225,7 @@ def ajax_file_upload(request):
                     (filename, calculated_md5, time.time() - start))
         if calculated_md5 != fileMD5:
             # FIXME: correct error code here? probably not 400
-            return HttpResponseBadRequest('Error - MD5 Did Not Match')
+            return HttpResponseBadRequest('Checksum mismatch; uploaded data may be incomplete or corrupted')
     except Exception as e:
         logging.debug(e)
 

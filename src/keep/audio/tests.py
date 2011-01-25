@@ -128,7 +128,7 @@ class AudioViewsTest(TestCase):
             opts = post_options.copy()
             opts['HTTP_CONTENT_DISPOSITION'] = 'filename=example.mp3'
             response = self.client.post(data=mp3.read(), HTTP_CONTENT_MD5=mp3_md5, **opts)
-            self.assertEqual('Error - Incorrect File Type',response.content)
+            self.assertEqual('File type audio/mpeg is not allowed',response.content)
             code = response.status_code
             expected = 400
             self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
@@ -139,11 +139,13 @@ class AudioViewsTest(TestCase):
             # using mp3 checksum but uploading wav file
             response = self.client.post(data=wav.read(), HTTP_CONTENT_MD5=mp3_md5,
                                         **post_options)
-            self.assertEqual('Error - MD5 Did Not Match',response.content)
+            self.assertEqual('Checksum mismatch; uploaded data may be incomplete or corrupted',
+                response.content)
             code = response.status_code
             expected = 400
-            self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                                 % (expected, code, upload_url))
+            self.assertEqual(code, expected,
+                'Expected %s but returned %s for %s with invalid MD5'
+                     % (expected, code, upload_url))
                 
         # POST wav file to AJAX Upload view with missing header arguments should fail
         with open(wav_filename, 'rb') as wav:
