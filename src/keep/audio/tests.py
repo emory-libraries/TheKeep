@@ -38,7 +38,7 @@ alternate_wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'e
 # md5 checksums for the two fixture audio files
 mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
-alternate_wav_md5 = 'ec3259161b6c51ab792649b12b21b386'
+alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
@@ -1478,7 +1478,7 @@ class SourceAudioConversions(TestCase):
 
         #Verify it no longer matches the original wav file.
         comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
-        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+        self.assertFalse(comparison_result, "WAV and MP3 durations did not match.")
 
         #Verify the new wav and mp3 durations match.
         comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=alternate_wav_filename)
