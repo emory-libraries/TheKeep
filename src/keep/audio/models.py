@@ -1,10 +1,11 @@
+from collections import namedtuple
 import os
-from rdflib import URIRef
 import wave
 import mutagen
 import math
 import tempfile
 
+from rdflib import URIRef
 from django.conf import settings
 from django.db.models import permalink
 
@@ -247,6 +248,7 @@ class AccessCondition(_BaseRights):
     text = xmlmap.StringField('.')
     'text description of rights access code'
 
+_access_term = namedtuple('_access_term', 'code access text') # wraps terms below
 class Rights(_BaseRights):
     'Rights metadata'
     ROOT_NAME = 'rights'
@@ -268,6 +270,13 @@ class Rights(_BaseRights):
     ) 
     'controlled vocabulary for access condition'
 
+    access_terms_dict = dict((term[0], _access_term(*term))
+                             for term in access_terms)
+    '''dictionary mapping access_terms codes to access term objects. Each
+    access term object has three properties: code, access, and text, which
+    map to elements of access_terms.'''
+    # e.g., access_terms_dict['UNR-PD'].access == True
+
     access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
         instantiate_on_get=True, required=True,
         help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
@@ -280,6 +289,15 @@ class Rights(_BaseRights):
         required=False,
         help_text='Date of copyright')
     'copyright date (string)'
+
+    @property
+    def researcher_access(self):
+        '''Does this rights XML indicate that researchers should be
+        allowed access to this document?'''
+        access_code = self.access_condition.code
+        access_term = self.access_terms_dict.get(access_code, None)
+        if access_term:
+            return access_term.access
 
 
 ##
@@ -369,6 +387,10 @@ class AudioObject(DigitalObject):
         conversions = TaskResult.objects.filter(object_id=self.pid).order_by('-created')
         if conversions:
             return conversions[0]
+
+    @property
+    def researcher_access(self):
+        return self.rights.content.researcher_access
 
     def _update_dc(self):
         '''Update Dublin Core (derivative metadata) based on master metadata
@@ -498,6 +520,7 @@ class AudioObject(DigitalObject):
         }
         repo = Repository()
         return repo.find_objects(**search_opts)
+
 
 def wav_duration(filename):
     '''Calculate the duration of a WAV file using Python's built in :mod:`wave`

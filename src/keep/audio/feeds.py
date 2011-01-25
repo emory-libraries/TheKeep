@@ -42,6 +42,7 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         if 'keywords' in item:
             handler.addQuickElement(u'itunes:keywords', ', '.join(item['keywords']))
 
+
 class PodcastFeed(Feed):
     '''Podcast Feed for Audio objects with MP3 access copy available.
 
@@ -70,7 +71,7 @@ class PodcastFeed(Feed):
         # Find all items that should be included in the feed
         # Until we have a better way to do this, find all Audio objects
         # and then filter out any without compressed audio
-        # or with rights that do not allow them to be included (rights still TODO)
+        # or with rights that do not allow them to be included
 
         # NOTE: for simplicity & efficiency (to reduce the number of Fedora API 
         # calls), items are being paginated *before* excluding objects based on
@@ -83,14 +84,19 @@ class PodcastFeed(Feed):
             try:
                 # limit to objects with access-copy audio files available
                 if not obj.compressed_audio.exists:
-                    logger.debug('%s does not have compressed audio, excluding from podcast feed ' \
+                    logger.debug('%s does not have compressed audio: excluding from podcast feed' \
                                  % obj.pid)
-                # TODO: filter on rights
-                else:
-                    yield obj
+                    continue
+                if not obj.researcher_access:
+                    logger.debug('%s is not researcher-accessible: excluding from podcast feed' \
+                                 % obj.pid)
+                    continue
+
+                yield obj
+
             except RequestFailed as rf:
                 # if there is any Fedora error accessing an object, skip it
-                logger.warn('Error accessing %s, excluding from feed ' % obj.pid + rf)
+                logger.warn('Error accessing %s, excluding from feed' % obj.pid + rf)
 
     def item_title(self, item):
         return item.mods.content.title

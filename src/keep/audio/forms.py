@@ -290,7 +290,6 @@ class RightsForm(XmlObjectForm):
     # In data the access_condition is pretty flexible. In web editing we
     # only want to offer a simple dropdown based on our controlled vocab.
     access_options = [ (item[0], item[2]) for item in Rights.access_terms ]
-    access_terms_dict = dict((item[0], item) for item in Rights.access_terms)
     access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)
@@ -320,7 +319,7 @@ class RightsForm(XmlObjectForm):
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
             access_code = self.cleaned_data['access']
-            access_text = self.access_terms_dict[access_code][2]
+            access_text = Rights.access_terms_dict[access_code].text
             self.instance.access_condition.code = access_code
             self.instance.access_condition.text = access_text
 

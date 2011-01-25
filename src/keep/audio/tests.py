@@ -842,20 +842,30 @@ of 2''',
         obj = repo.get_object(type=AudioObject)
         obj.mods.content.title = 'Dylan Thomas reads anthology'
         obj.mods.content.part_note.text = 'Side A'
+        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
+        obj.rights.content.access_condition.code = 'UNR-PD'
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
-        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
         obj.save()
         obj2 = repo.get_object(type=AudioObject)
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
+        obj2.rights.content.access_condition.code = 'UNR-PD'
         obj2.collection_uri = self.esterbrook.uri
         obj2.save()
         obj3 = repo.get_object(type=AudioObject)
         obj3.mods.content.title = 'No Access copy'
+        obj3.rights.content.access_condition.code = 'UNR-PD'
         obj3.save()
+        obj4 = repo.get_object(type=AudioObject)
+        obj4.rights.content.access_condition.code = 'UNKNOWN'
+        obj4.compressed_audio.content = open(mp3_filename)
+        obj4.save()
+        obj5 = repo.get_object(type=AudioObject)
+        obj5.compressed_audio.content = open(mp3_filename)
+        obj5.save()
         # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid, obj3.pid])
+        self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid])
 
         response = self.client.get(feed_url)
         expected, code = 200, response.status_code
@@ -867,6 +877,10 @@ of 2''',
             msg_prefix='pid for second test object should be included in feed')
         self.assertNotContains(response, obj3.pid,
             msg_prefix='pid for test object with no access copy should NOT be included in feed')
+        self.assertNotContains(response, obj4.pid,
+            msg_prefix='pid for test object with restricted access rights should NOT be included in feed')
+        self.assertNotContains(response, obj4.pid,
+            msg_prefix='pid for test object without rights information should NOT be included in feed')
         self.assertContains(response, obj.mods.content.title,
             msg_prefix='title for first test object should be included in feed')
         self.assertContains(response, obj2.mods.content.title,
