@@ -22,7 +22,7 @@ from keep import mods
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject, AudioMods, wav_duration, \
         SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, \
-        CodecCreator, Rights, AccessCondition
+        CodecCreator, Rights, AccessCondition, wav_and_mp3_duration_comparator
 from keep.audio.management.commands import ingest_cleanup
 from keep.collection.fixtures import FedoraFixtures
 from keep.audio.tasks import convert_wav_to_mp3
@@ -33,10 +33,12 @@ ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 # fixture filenames used in multiple tests
 mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
 wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav')
+alternate_wav_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example2.wav')
 # MD5 checksums for fixture files
 # md5 checksums for the two fixture audio files
 mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
+alternate_wav_md5 = 'ec3259161b6c51ab792649b12b21b386'
 
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
@@ -1439,6 +1441,11 @@ class SourceAudioConversions(TestCase):
         repo = Repository()
         obj = repo.get_object(self.obj.pid, type=AudioObject)
         self.assertTrue(obj.compressed_audio.exists)
+
+        #Verify the wav and mp3 durations match.
+        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid)
+        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+
         # any other settings/info on the mp3 datastream that should be checked?
 
     def test_wav_to_mp3_localfile(self):
@@ -1446,13 +1453,40 @@ class SourceAudioConversions(TestCase):
         result = convert_wav_to_mp3(self.obj.pid, existingFilePath=wav_filename)
         self.assertEqual(result, "Successfully converted file")
 
+        #Verify the wav and mp3 durations match.
+        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
+        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+
     def test_nonexistent(self):
-        # test with invalid
+        # test with invalid pid
         self.assertRaises(RequestFailed, convert_wav_to_mp3, 'bogus:DoesNotExist')
+
+        # test with invalid file.
+        self.assertRaises(IOError, convert_wav_to_mp3, self.obj.pid, False, "CompletelyBogusFile.wav")
+
+    def test_non_matching_checksum(self):
+        #Use the alternate wav file to kick off an incorrect checksum match.
+        self.assertRaises(Exception, convert_wav_to_mp3, self.obj.pid, False, alternate_wav_filename)
+
+    def test_changing_wav_file(self):
+        self.obj.audio.content = open(alternate_wav_filename)  # FIXME: at what point does/should this get closed?
+        self.obj.audio.checksum=alternate_wav_md5
+        self.obj.save()
+        
+        result = convert_wav_to_mp3(self.obj.pid)
+        self.assertEqual(result, "Successfully converted file")
+
+        #Verify it no longer matches the original wav file.
+        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
+        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+
+        #Verify the new wav and mp3 durations match.
+        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=alternate_wav_filename)
+        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+        
 
     # TODO: test failures, error handling, etc.
     # - trigger tempfile error - make temp dir non-writable
-    # TODO: also test updating/replacing an mp3 (e.g., second conversion)
 
 class TestIngestCleanupCommand(ingest_cleanup.Command):
     # extend command class to simplify calling as if running from the commandline

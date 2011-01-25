@@ -3,3 +3,4 @@
 python-magic
 pycrypto
 django-celery
+mutagen
