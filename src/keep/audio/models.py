@@ -615,15 +615,10 @@ def wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=None,mp3_file_pat
         else:
             tmp_mp3_path = mp3_file_path
 
-        print tmp_mp3_path + " Path Exists "
         #Get information on the mp3 file using mutagen:
         mp3_file_tags = mutagen.File(tmp_mp3_path)
         mp3_file_length = mp3_file_tags.info.length
         wav_file_length = wav_duration(tmp_wav_path)
-
-        print mp3_file_length 
-        print " - "
-        print wav_file_length
 
         #Verify the original file and this file are the same length to within 1.0 seconds.
         return (math.fabs(mp3_file_length - wav_file_length) < 1.0)
