@@ -1,14 +1,63 @@
 {% extends "site_base.html" %}
 
 {% block page-subtitle %}: Audio : Upload{% endblock %}
-{% block content-title %}Upload an audio file.{% endblock %}
+{% block content-title %}Upload audio files.{% endblock %}
+
+{% block scripts %}
+  {{ block.super }} {# includes jquery  #}
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/md5.js"></script>
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.dnduploader.js"></script>
+{% endblock %}
 
 {% block content-body %}
-  {{ block.super }}
+<style type="text/css"> {# TODO: move into a css file #}
+.status {float:right;}
+.remove {color: red; font-weight: bold; font-family:cursive;}
+.progress-bar	{
+    float:right;
+    width: 100px;
+    height: 10px;
+    border: 1px solid #000;
+    margin:5px;
+}
+.progress-bar p {
+    width: 5px;
+    height: 10px;
+    background-color: #1E528C;
+    color:#FFFFFF;
+    font-size: 8px;
+    line-height:10px;
+}
+div#drop_target {
+    min-height:250px;
+    border: 1px dashed gray;
+    background-color:#efefef;
+    padding: 10px;
+    margin-bottom:10px;
+}
+span.file-info {
+    font-style: italic;
+    font-size: 90%;
+}
+div#drop_target.dragover {
+  border: 3px solid green;  /* preliminary style */
+}
+    </style>
+
+{# TODO: better instructions #}
+<p>Drag the files that you want to upload into the gray box below.</p>
 
 <form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Upload" />
+ <div id="drop_target"> </div>
+ {# TODO: add file input for single file fall-back upload option #}
+ <input type="submit" value="Upload and Ingest" id='submit-upload'/>
 </form>
+
+<script type="text/javascript" charset="utf-8">
+   $("#drop_target").dndUploader({
+      url : "{% url audio:upload %}",
+      allowed_types : {{ js_allowed_types }}, 
+   });
+ </script>
 
 {% endblock %}
