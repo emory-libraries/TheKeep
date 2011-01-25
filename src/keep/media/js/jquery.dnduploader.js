@@ -14,7 +14,7 @@
        $.extend(data, options);
 
        // create a special-function ingest button
-       var ingest_button = $('<input type="button" value="Submit when uploads complete"/>');
+       var ingest_button = $('<input type="button" value="Submit when all uploads complete"/>');
        ingest_button.click(function(){
           var data = $(this).prev().data('dnduploader');
           data['ingest_on_completion'] = true;
@@ -74,8 +74,8 @@
                 $.inArray(file.type, allowed_types) != -1) {    // returns index or -1 if not found
                 // rudimentary list display
                 var p = $('<p><a class="remove">X</a> ' + file.fileName + ' ' +
-                    '<span class="file-info">' + filesize_format(file.size) +
-		    ', ' + file.type + '</span></p>');
+                    '<span class="file-info">(' + filesize_format(file.size) +
+		    ', ' + file.type + ')</span></p>');
                 obj.append(p);
                 // create status node and attach to file so it is easy to update
                 file.status = $('<span class="status">-</span>');
@@ -104,7 +104,7 @@
 	  methods.disableSubmit.apply(obj);
        }
 
-       // loop through files added on the current drog
+       // loop through files added on the current drop
        // calculate checksum and then upload 
        for (var x = start_processing; x < data['files'].length; x++) {
             var file = data['files'][x];
@@ -117,12 +117,11 @@
             reader.onloadend = function (evt){
                   file.status.html('calculating checksum');
                   file.md5 = rstr2hex(rstr_md5(evt.target.result));
-                  file.status.html('checksum: ' + file.md5);
+                  console.log(file.fileName + ' checksum ' + file.md5);
                   file.status.html('uploading');
                   methods.uploadFile.apply(obj, [file]);
                 };
             reader.readAsBinaryString(file);
-
             }
       };
 
@@ -184,7 +183,7 @@
         xhr.onreadystatechange = function() {
           if (xhr.readyState == 4) {
             if(xhr.status == 200) { // ok
-                file.status.html('checksum: ' + file.md5 + ' Successful upload!');
+                file.status.html('Ready to ingest');
                 file.upload_id = xhr.responseText;
                 // add form data for submission
                 // - adding to file dom element so we can easily remove individual files
@@ -229,7 +228,7 @@ function filesize_format(size) {
     if (size === 0) {
         return '';
     } else if (size < 100) {
-        return '' + size + 'bytes';
+        return '' + size + ' bytes';
     } else if (size < (1000 * 1000)) {
         size = size / 1000;
         size = '' + size;
