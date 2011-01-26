@@ -64,7 +64,7 @@ class SourceTech(_BaseSourceTech):
         'dictabelt', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
     housing_options = ('Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
-        'Tape Cartridge', 'VHS', 'Other')
+        'Tape Cartridge', 'VHS', 'Other', 'Not applicable')
     'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
@@ -126,7 +126,7 @@ class SourceTech(_BaseSourceTech):
     'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-        SourceTechMeasure, instantiate_on_get=True, required=True)
+        SourceTechMeasure, instantiate_on_get=True, required=False)
     ':class:`SourceTechMeasure`'
     sublocation = xmlmap.StringField('st:sublocation', required=True,
         help_text='Storage location within the collection (e.g., box and folder)')
@@ -141,7 +141,7 @@ class SourceTech(_BaseSourceTech):
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        required=True, help_text='Type of housing for magnetic tape')
+        help_text='Type of housing for magnetic tape')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, instantiate_on_get=True, required=False)
