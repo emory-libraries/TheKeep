@@ -467,7 +467,9 @@ class AudioObject(DigitalObject):
         # set initial object label from the base filename
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
+        #file_reference = open(filename)
         obj.audio.content = open(filename)  # FIXME: at what point does/should this get closed?
+        #file_reference.close()
         #Set the file checksum, if set.
         obj.audio.checksum=checksum
         #Get the label, minus the ".wav" (mimetype indicates that)

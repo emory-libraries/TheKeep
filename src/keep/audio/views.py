@@ -35,7 +35,16 @@ def index(request):
 @permission_required('is_staff')
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
-    Only accepts audio/x-wav currently.'''
+    Only accepts audio/x-wav currently.
+    
+    There are two distinct ways to upload file. The first case is kicked off when "fileManualUpload"
+    exists in the posted form. If it does, then this was not a HTML5 browser, and the file upload
+    occurs as is usual for a single file upload.
+
+    In the other approach, the file was uploaded via a HTML5 ajax upload already. In this case, we
+    are reading in various hidden generated form fields that indicate what was uploaded from the 
+    javascript code.
+    '''
 
     ctx_dict = {}
     response_code = None
@@ -145,8 +154,8 @@ def upload(request):
 
 @permission_required('is_staff')
 def HTML5FileUpload(request):
-    """Used for the AJAX HTML5 upload only. Accepts the AJAX request, checks the
-    request, uploads the file, returns its end name."""
+    '''Used for the AJAX HTML5 upload only. Accepts the AJAX request, checks the
+    request, uploads the file, returns its end name.'''
     
     #Setup the directory for the file upload.
     dir = settings.INGEST_STAGING_TEMP_DIR
