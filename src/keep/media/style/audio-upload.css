@@ -1,0 +1,32 @@
+/* styles for drag & drop file batch upload/ingest */
+div#drop_target {
+    min-height:250px;
+    border: 1px dashed gray;
+    background-color:#efefef;
+    padding: 10px;
+    margin-bottom:10px;
+}
+div#drop_target.dragover {
+  border: 3px solid green;  /* preliminary style */
+}
+div#drop_target .status {float:right;}
+.remove {color: red; font-weight: bold; font-family:cursive;}
+.progress-bar	{
+    float:right;
+    width: 100px;
+    height: 10px;
+    border: 1px solid #000;
+    margin:5px;
+}
+.progress-bar p {
+    width: 5px;
+    height: 10px;
+    background-color: #1E528C;
+    color:#FFFFFF;
+    font-size: 8px;
+    line-height:10px;
+}
+span.file-info {
+    font-style: italic;
+    font-size: 90%;
+}
