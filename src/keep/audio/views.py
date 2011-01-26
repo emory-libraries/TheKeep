@@ -16,7 +16,7 @@ from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
 
-from eulcore.django.http import HttpResponseSeeOtherRedirect
+from eulcore.django.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
@@ -49,9 +49,17 @@ def upload(request):
         # if form has been posted, process & ingest files
         if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
 
-            #See if it is manual upload due to non-HTML5 browser.
-            if request.FILES.has_key('fileManualUpload'):
-                uploaded_file = request.FILES['fileManualUpload']
+            # check for a single file upload
+            form = audioforms.UploadForm(request.POST, request.FILES)
+            # file is the only required field here, so if valid, process single file
+            if form.is_valid():
+                uploaded_file = request.FILES['audio']
+                # initial label now optional on single-file upload form
+                initial_label = form.cleaned_data['label']
+                # if not specified, use filename
+                if not initial_label:
+                    initial_label = uploaded_file.name
+                    
                 m = magic.Magic(mime=True)
                 type = m.from_file(uploaded_file.temporary_file_path())
 
@@ -64,7 +72,7 @@ def upload(request):
                         # TODO: consolidate common logic for single & multiple file ingest
                         # initialize from the file itself; use original name as initial object label
                         obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
-                                                         uploaded_file.name, request,
+                                                         initial_label, request,
                                                          md5sum(uploaded_file.temporary_file_path()))
                         obj.save()
                         #Start the task to convert the WAV audio to a compressed format.
@@ -83,13 +91,14 @@ def upload(request):
                                 'prevented us from ingesting your file. If ' + \
                                 'this problem persists, please alert the ' + \
                                 'repository administrator.'
-                        response = render_to_response('audio/uploadForm.html', ctx_dict,context_instance=RequestContext(request))
+                        response = render_to_response('audio/upload.html',
+                                ctx_dict,context_instance=RequestContext(request))
                         if response_code is not None:
                             response.status_code = response_code
                         return response
 
-            #Process the list of files.
-            elif request.POST.has_key('fileUploads'):
+            # process any batch-upload files
+            if request.POST.has_key('fileUploads'):
 
                 file_list = request.POST.getlist('fileUploads')
                 file_original_name_list = request.POST.getlist('originalFileNames')
@@ -143,10 +152,10 @@ def upload(request):
         else:
             # POST but not form data - handle ajax file upload
             return ajax_file_upload(request)
-
             
-    #non-posted form
+    # not a POST - display the form
     else:
+        ctx_dict['form'] = audioforms.UploadForm() 
         ctx_dict['allowed_audio_types'] = allowed_audio_types
         # convert for use in javascript
         ctx_dict['js_allowed_types'] = mark_safe(json.dumps(allowed_audio_types))
@@ -211,7 +220,8 @@ def ajax_file_upload(request):
             type, charset = type.split(';')
         if type not in allowed_audio_types:
             os.remove(tmpname)
-            # FIXME: correct http status code here? maybe 415 Unsupported Media Type ?
+            # TODO: send response with status 415 Unsupported Media Type
+            return HttpResponseUnsupportedMediaType('File type %s is not allowed' % type)
             return HttpResponseBadRequest('File type %s is not allowed' % type)
     except Exception as e:
         logging.debug(e)
@@ -224,11 +234,13 @@ def ajax_file_upload(request):
         logger.debug('Calculated MD5 checksum for %s: %s (took %f secs)' %
                     (filename, calculated_md5, time.time() - start))
         if calculated_md5 != fileMD5:
-            # FIXME: correct error code here? probably not 400
+            logger.debug('calculated md5 %s did not match request MD5 %s' % \
+                        (calculated_md5, fileMD5))
             return HttpResponseBadRequest('Checksum mismatch; uploaded data may be incomplete or corrupted')
     except Exception as e:
         logging.debug(e)
 
+    # success: return the name of the staging file to be used for ingest
     return HttpResponse(ingest_file)
     
 @permission_required('is_staff')

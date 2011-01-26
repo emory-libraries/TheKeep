@@ -16,18 +16,23 @@
 
 {% block content-body %}
 {# TODO: better instructions #}
-<p>Drag the files that you want to upload into the gray box below.</p>
+<p>To upload multiple files at once, select the files that you want to upload
+   on your desktop or file browser and drag them into the file area below.
+</p>
+<p>To upload a single file, or if you are using a browser that does not support
+    drag-and-drop, use the file input and submit the form.</p>
 
 <form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
- <div id="drop_target"> </div>
- {# TODO: add file input for single file fall-back upload option #}
+ <div id="drop_target">
+   {{ form.as_p }}  {# single-file upload (non HTML5 fall-back) #}
+ </div> 
  <input type="submit" value="Upload and Ingest" id='submit-upload'/>
 </form>
 
 <script type="text/javascript" charset="utf-8">
    $("#drop_target").dndUploader({
       url : "{% url audio:upload %}",
-      allowed_types : {{ js_allowed_types }}, 
+      allowed_types : {{ js_allowed_types }},
    });
  </script>
 

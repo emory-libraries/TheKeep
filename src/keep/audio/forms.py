@@ -18,8 +18,9 @@ logger = logging.getLogger(__name__)
 class UploadForm(forms.Form):
     'Single-file upload form; takes a label and a file'
     label = forms.CharField(max_length=255, # fedora label maxes out at 255 characters
-                help_text='Preliminary title for the object in Fedora. 255 characters max.')
-    audio = forms.FileField(label="Audio file")
+                help_text='Preliminary title for the object. 255 characters max. (optional)',
+                required=False)
+    audio = forms.FileField(label="File")
 
 
 def _cmp_collections(a, b):

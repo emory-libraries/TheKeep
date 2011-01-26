@@ -130,7 +130,7 @@ class AudioViewsTest(TestCase):
             response = self.client.post(data=mp3.read(), HTTP_CONTENT_MD5=mp3_md5, **opts)
             self.assertEqual('File type audio/mpeg is not allowed',response.content)
             code = response.status_code
-            expected = 400
+            expected = 415  # unsupported media type
             self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
                                  % (expected, code, upload_url))
         

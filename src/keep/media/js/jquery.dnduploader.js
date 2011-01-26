@@ -47,6 +47,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
        };
        $.extend(data, options);
 
+       // TODO: consolidate submission/wait-for-upload logic in a single
+       // form submission button
        // create a special-function ingest button and add it after uploader element
        var ingest_button = $('<input type="button" value="Submit when all uploads complete"/>');
        $this.after(ingest_button);
