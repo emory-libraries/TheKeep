@@ -1085,7 +1085,7 @@ class SourceTechTest(TestCase):
     <st:stock>IMT C-60</st:stock>
     <st:housing type="sound">Plastic container</st:housing>
     <st:reelSize>
-        <st:measure type="width" unit="inches" aspect="reel size">3</st:measure>
+        <st:measure type="diameter" unit="inches" aspect="reel size">3</st:measure>
     </st:reelSize>
     <st:note type="technical">May be a duplicate of 222</st:note>
 </st:sourcetech>'''

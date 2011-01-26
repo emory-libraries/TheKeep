@@ -146,7 +146,7 @@ class SourceTech(_BaseSourceTech):
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
         required=True, help_text='Type of housing for magnetic tape')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
-    reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="width"][@aspect="reel size"]',
+    reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, instantiate_on_get=True, required=False)
     ':class:`SourceTechMeasure`'
     # tech_note is migrate/view only
