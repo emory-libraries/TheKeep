@@ -598,7 +598,6 @@ of 2''',
                     'st-note': 'general note',
                     'st-related_files': '1-3',
                     'st-conservation_history': 'on loan',
-                    'st-manufacturer': 'sony',
                     'st-sublocation': 'box 2',
                     'st-form': 'audio cassette',
                     'st-sound_characteristics': 'mono',
@@ -656,7 +655,6 @@ of 2''',
         self.assertEqual(audio_data['st-note'], st.note)
         self.assertEqual(audio_data['st-related_files'], st.related_files)
         self.assertEqual(audio_data['st-conservation_history'], st.conservation_history)
-        self.assertEqual(audio_data['st-manufacturer'], st.manufacturer)
         self.assertEqual(audio_data['st-form'], st.form)
         self.assertEqual(audio_data['st-sound_characteristics'], st.sound_characteristics)
         self.assertEqual(audio_data['st-housing'], st.housing)
@@ -1075,7 +1073,6 @@ class SourceTechTest(TestCase):
     <st:note type="general">Right channel has squeal throughout recording.</st:note>
     <st:note type="relatedFiles">a89, g3jll, 443b</st:note>
     <st:note type="conservationHistory">Repaired broken tape 2010-03-12</st:note>
-    <st:manufacturer>Maxell</st:manufacturer>
     <st:speed>
         <st:measure type="speed" unit="inches/sec" aspect="tape">1.875</st:measure>
     </st:speed>
@@ -1103,7 +1100,6 @@ class SourceTechTest(TestCase):
         self.assertEqual('Right channel has squeal throughout recording.', self.sourcetech.note_list[0])
         self.assertEqual('a89, g3jll, 443b', self.sourcetech.related_files)
         self.assertEqual('Repaired broken tape 2010-03-12', self.sourcetech.conservation_history_list[0])
-        self.assertEqual('Maxell', self.sourcetech.manufacturer)
         self.assertEqual('inches/sec', self.sourcetech.speed.unit)
         self.assertEqual('tape', self.sourcetech.speed.aspect)
         self.assertEqual('1.875', self.sourcetech.speed.value)
@@ -1125,7 +1121,6 @@ class SourceTechTest(TestCase):
         st.note_list.append('general note')
         st.related_fields = '1, 2, 3'
         st.conservation_history_list.append('loaned for digitization')
-        st.manufacturer = 'Sony'
         st.speed.unit = 'rpm'
         st.speed.aspect = 'phonograph disc'
         st.speed.value = '120'

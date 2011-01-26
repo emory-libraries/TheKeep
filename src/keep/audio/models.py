@@ -125,9 +125,6 @@ class SourceTech(_BaseSourceTech):
         required=False)
     'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
-    manufacturer = xmlmap.StringField('st:manufacturer', required=False,
-        verbose_name='Tape Manufacturer', help_text='The manufacturer of the magnetic tape')
-    'manufacturer of the media'
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
         SourceTechMeasure, instantiate_on_get=True, required=True)
     ':class:`SourceTechMeasure`'

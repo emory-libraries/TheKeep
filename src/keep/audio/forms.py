@@ -154,7 +154,7 @@ class SourceTechForm(XmlObjectForm):
         model = SourceTech
         # temporarily making repeating fields into single fields
         # (stringlistfields not yet supported by xmlobjectform)
-        fields = ['note', 'related_files', 'conservation_history', 'manufacturer',
+        fields = ['note', 'related_files', 'conservation_history',
             '_speed', 'sublocation', 'form', 'sound_characteristics', 'stock',
             'housing', 'reel']
         widgets = {
