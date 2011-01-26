@@ -1,15 +1,15 @@
 /* styles for drag & drop file batch upload/ingest */
 div#drop_target {
-    min-height:250px;
-    border: 1px dashed gray;
-    background-color:#efefef;
     padding: 10px;
     margin-bottom:10px;
 }
 div#drop_target.dragover {
-  border: 3px solid green;  /* preliminary style */
+  border: 2px dashed green;
+  background-color:#efefef;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
 }
-div#drop_target .status {float:right;}
+div#drop_target .status { float:right; }
 .remove {color: red; font-weight: bold; font-family:cursive;}
 .progress-bar	{
     float:right;
