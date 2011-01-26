@@ -5,7 +5,7 @@ Should be initialized with a url parameter and optionally a list of allowed
 mimetypes.  For example:
 
 <script type="text/javascript" charset="utf-8">
-   $("#drop_target").dndUploader({
+   $("#drop_target").md5DropUploader({
       url : "{% url audio:upload %}",
       allowed_types : ['audio/wav', 'audio/mp3'],
    });
@@ -56,21 +56,21 @@ Adapted in part from https://github.com/texel/drag_drop_example/
        ingest_button.after('<p id="upload-submit-info"/>');
        ingest_button.click(function(){
           // set a flag to automatically ingest when upload completes for all files
-          var data = $(this).prev().data('dnduploader');
+          var data = $(this).prev().data('md5DropUploader');
           data['ingest_on_completion'] = true;
-          $(this).prev().data('dnduploader', data);
+          $(this).prev().data('md5DropUploader', data);
           $(this).nextAll('#upload-submit-info').html("Items will be submitted for ingest when all uploads complete.");
        });
 
        // following recommended practice: store data in one object with name of plugin
-       $this.data('dnduploader', data);
+       $this.data('md5DropUploader', data);
 
-       $this.bind('dragenter.dndUploader', methods.dragEnter);
-       $this.bind('dragover.dndUploader', methods.dragOver);
-       $this.bind('drop.dndUploader', methods.drop);
-       $this.bind('dragleave.dndUploader', methods.dragLeave);
+       $this.bind('dragenter.md5DropUploader', methods.dragEnter);
+       $this.bind('dragover.md5DropUploader', methods.dragOver);
+       $this.bind('drop.md5DropUploader', methods.drop);
+       $this.bind('dragleave.md5DropUploader', methods.dragLeave);
        // custom event to be triggered after a file is uploaded
-       $this.bind('afterUpload.dndUploader', methods.afterUpload);
+       $this.bind('afterUpload.md5DropUploader', methods.afterUpload);
      });
     },
 
@@ -106,7 +106,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
       event.stopPropagation();
       event.preventDefault();
 
-      var data = $this.data('dnduploader');
+      var data = $this.data('md5DropUploader');
       // store current file count - marker for where to start processing in full list of files
       var start_processing = data['file_count'];
       var allowed_types =  data['allowed_types'];
@@ -145,10 +145,10 @@ Adapted in part from https://github.com/texel/drag_drop_example/
           alert(msg);
         }
         // update stored data with count & list of files
-        $this.data('dnduploader', data);
+        $this.data('md5DropUploader', data);
 	// if there are new files to process, disable submit button until upload completes
         if (data['file_count'] > start_processing) {
-          $this.dndUploader('disableSubmit');
+          $this.md5DropUploader('disableSubmit');
         }
 
        // handle files added on the current drop
@@ -166,7 +166,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                       file.md5 = rstr2hex(rstr_md5(evt.target.result));
                       console.log(file.fileName + ' checksum ' + file.md5);
                       file.status.html('uploading');
-                      $this.dndUploader('uploadFile', file);
+                      $this.md5DropUploader('uploadFile', file);
                     };
                 // display checksum progress (currently displays file read progress)
                 // TODO: consolidate progress bar logic (duplicated in uploadFile method)
@@ -195,7 +195,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
            the form
          - otherwise, re-enable the form submit button
     */
-        var data = $(this).data('dnduploader');
+        var data = $(this).data('md5DropUploader');
         // check if all files have finished uploaded
         for (var x = 0; x < data['files'].length; x++) {
             if (! data['files'][x].upload_id) {
@@ -208,7 +208,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             // TODO: may want to display some kind of indicator here...
         }
         // otherwise, re-enable normal submit button
-        $(this).dndUploader('enableSubmit');
+        $(this).md5DropUploader('enableSubmit');
     },
 
     disableSubmit: function() {
@@ -229,7 +229,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         Triggers custom 'afterUpload' event after the request completes.
     */
         var $this = $(this);
-        var data = $this.data('dnduploader');
+        var data = $this.data('md5DropUploader');
         var xhr   = new XMLHttpRequest();
 
         // display an upload progress bar
@@ -274,7 +274,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
              }
 
              // signal the uploader for after-upload logic
-             $this.trigger('afterUpload.dndUploader');
+             $this.trigger('afterUpload.md5DropUploader');
           }
         };
 
@@ -283,13 +283,13 @@ Adapted in part from https://github.com/texel/drag_drop_example/
   };
   
 
-  $.fn.dndUploader = function( method ) {
+  $.fn.md5DropUploader = function( method ) {
     if ( methods[method] ) {
       return methods[method].apply( this, Array.prototype.slice.call( arguments, 1 ));
     } else if ( typeof method === 'object' || ! method ) {
       return methods.init.apply( this, arguments );
     } else {
-      $.error( 'Method ' +  method + ' does not exist on jQuery.dndUploader' );
+      $.error( 'Method ' +  method + ' does not exist on jQuery.md5DropUploader' );
     }
   };
 })( jQuery );

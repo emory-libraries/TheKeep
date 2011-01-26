@@ -6,7 +6,7 @@
 {% block scripts %}
   {{ block.super }} {# includes jquery  #}
   <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/md5.js"></script>
-  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.dnduploader.js"></script>
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.md5dropuploader.js"></script>
 {% endblock %}
 
 {% block style %}
@@ -30,7 +30,7 @@
 </form>
 
 <script type="text/javascript" charset="utf-8">
-   $("#drop_target").dndUploader({
+   $("#drop_target").md5DropUploader({
       url : "{% url audio:upload %}",
       allowed_types : {{ js_allowed_types }},
    });
