@@ -257,7 +257,7 @@ class AudioViewsTest(TestCase):
 
         # POST non-wav file - should fail
         with open(mp3_filename) as mp3:
-            response = self.client.post(upload_url, {'fileManualUpload': mp3},
+            response = self.client.post(upload_url, {'audio': mp3},
                                         follow=True)
             # convert messages to a list for easier inspection
             messages = [ msg for msg in response.context['messages'] ]
@@ -269,7 +269,7 @@ class AudioViewsTest(TestCase):
         
         # POST a wav file - should result in a new object
         with open(wav_filename) as wav:
-            response = self.client.post(upload_url, {'fileManualUpload': wav},
+            response = self.client.post(upload_url, {'audio': wav},
                                         follow=True)
             messages = [ msg for msg in response.context['messages'] ]
             self.assert_('Successfully ingested file example.wav' in str(messages[0]),
