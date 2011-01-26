@@ -1,27 +1,64 @@
+/**
+HTML5 drag & drop uploader with client-side MD5 checksum.
+
+Should be initialized with a url parameter and optionally a list of allowed
+mimetypes.  For example:
+
+<script type="text/javascript" charset="utf-8">
+   $("#drop_target").dndUploader({
+      url : "{% url audio:upload %}",
+      allowed_types : ['audio/wav', 'audio/mp3'],
+   });
+</script>
+
+When files are dropped on the specified element, files will be checked to
+see if they are in the list of allowed types (when specified), an MD5 checksum
+will be calculated on the client side, and then the file will be posted
+the the configured url.  On successful upload, hidden form inputs will be added
+with the original file name, the response from the ajax POST request (assumed
+here to be an upload id), and the client-side calculated MD5 checksum.
+
+File uploads are POSTed to the configured url with these HTTP headers:
+
+  Content-Disposition:  filename=original_file.ext
+  Content-Type
+  Content-MD5
+
+Adapted in part from https://github.com/texel/drag_drop_example/
+
+*/
+
 (function( $ ){
 
   var methods = {
     init : function(options) {  
 
-    return this.each(function(){      
-
+    return this.each(function(){
+    /* initialize the object:
+        configure settings, add special upload & submit button, and
+        bind methods as event handlers.
+    */
        var $this = $(this);
        var data = {
         'file_count': 0,
         'files': new Array(),
         'ingest_on_completion': false,
+        allowed_types: [],
        };
        $.extend(data, options);
 
-       // create a special-function ingest button
+       // create a special-function ingest button and add it after uploader element
        var ingest_button = $('<input type="button" value="Submit when all uploads complete"/>');
+       $this.after(ingest_button);
+       // place-holder for submit information
+       ingest_button.after('<p id="upload-submit-info"/>');
        ingest_button.click(function(){
+          // set a flag to automatically ingest when upload completes for all files
           var data = $(this).prev().data('dnduploader');
           data['ingest_on_completion'] = true;
           $(this).prev().data('dnduploader', data);
-          $(this).after("<p>Items will be submitted for ingest when all uploads complete.</p>");
+          $(this).nextAll('#upload-submit-info').html("Items will be submitted for ingest when all uploads complete.");
        });
-       $this.after(ingest_button);
 
        // following recommended practice: store data in one object with name of plugin
        $this.data('dnduploader', data);
@@ -30,6 +67,8 @@
        $this.bind('dragover.dndUploader', methods.dragOver);
        $this.bind('drop.dndUploader', methods.drop);
        $this.bind('dragleave.dndUploader', methods.dragLeave);
+       // custom event to be triggered after a file is uploaded
+       $this.bind('afterUpload.dndUploader', methods.afterUpload);
      });
     },
 
@@ -56,12 +95,16 @@
     },
 
     drop : function(event) {
-      $(this).removeClass('dragover');
+    /* Process files that are dropped.  Add any allowed types to the stored
+       list of files, then MD5 sum and upload each of them, reporting
+       status and progress to the user.
+    */
+      var $this = $(this);
+      $this.removeClass('dragover');
       event.stopPropagation();
       event.preventDefault();
 
-      var obj = $(this);
-      var data = obj.data('dnduploader');
+      var data = $this.data('dnduploader');
       // store current file count - marker for where to start processing in full list of files
       var start_processing = data['file_count'];
       var allowed_types =  data['allowed_types'];
@@ -69,14 +112,14 @@
       // display files if they are allowed type, add to list of all files
       if (event.originalEvent.dataTransfer.files.length > 0) {
         $.each(event.originalEvent.dataTransfer.files, function ( i, file ) {
-            // if allowed types are defined, check that file is one of the specified types
-            if (allowed_types.length &&
+            // if allowed types have been specified, check that file is one of the specified types
+            if (allowed_types.length == 0 ||
                 $.inArray(file.type, allowed_types) != -1) {    // returns index or -1 if not found
                 // rudimentary list display
                 var p = $('<p><a class="remove">X</a> ' + file.fileName + ' ' +
                     '<span class="file-info">(' + filesize_format(file.size) +
 		    ', ' + file.type + ')</span></p>');
-                obj.append(p);
+                $this.append(p);
                 // create status node and attach to file so it is easy to update
                 file.status = $('<span class="status">-</span>');
                 p.append(file.status);
@@ -87,48 +130,69 @@
                 not_allowed.push(file);
             }
         });
+        // TODO: support abort on checksum/upload if user removes file while processing
         $(".remove").click(function () {$(this).parent().remove(); });
 
+        // report any files that were not in the allowed types
         if (not_allowed.length) {
           var msg = "The following file(s) were not added because the " +
                 "type indicates they are not a supported upload formats:\n\n";
           $.each(not_allowed, function ( i, file ) {
             msg += "  " + file.fileName + "\t" + file.type + "\n";
-           });
-           alert(msg);
+          });
+          alert(msg);
         }
-        // update stored data
-        obj.data('dnduploader', data);
+        // update stored data with count & list of files
+        $this.data('dnduploader', data);
 	// if there are new files to process, disable submit button until upload completes
         if (data['file_count'] > start_processing) {
-	  methods.disableSubmit.apply(obj);
-       }
+          $this.dndUploader('disableSubmit');
+        }
 
-       // loop through files added on the current drop
-       // calculate checksum and then upload 
-       for (var x = start_processing; x < data['files'].length; x++) {
-            var file = data['files'][x];
-            // update status
-            file.status.html('calculating checksum');
-            // give each file a separate reader so they don't clobber each other
-            reader = new FileReader();
-            // set handler for when file reading completes
-            var obj = $(this);
-            reader.onloadend = function (evt){
-                  file.status.html('calculating checksum');
-                  file.md5 = rstr2hex(rstr_md5(evt.target.result));
-                  console.log(file.fileName + ' checksum ' + file.md5);
-                  file.status.html('uploading');
-                  methods.uploadFile.apply(obj, [file]);
+       // handle files added on the current drop
+       // calculate checksum and then upload
+       $.each(data['files'], function(i, file) {
+            // only process files added on the current drop
+            if (i >= start_processing) { 
+                // update status
+                file.status.html('calculating checksum');
+                // give each file a separate reader so they don't clobber each other
+                reader = new FileReader();
+                // set handler for when file reading completes
+                reader.onloadend = function (evt){
+                      file.status.html('calculating checksum');
+                      file.md5 = rstr2hex(rstr_md5(evt.target.result));
+                      console.log(file.fileName + ' checksum ' + file.md5);
+                      file.status.html('uploading');
+                      $this.dndUploader('uploadFile', file);
+                    };
+                // display checksum progress (currently displays file read progress)
+                // TODO: consolidate progress bar logic (duplicated in uploadFile method)
+                var indicator = $('<p/>');
+                file.progress = $('<div class="progress-bar"/>');
+                file.progress.append(indicator);
+                file.status.append(file.progress);
+                reader.onprogress = function(event) {
+                      if (event.lengthComputable) {
+                        var percentage = Math.round((event.loaded * 100) / event.total);
+                        indicator.width(percentage);
+                        indicator.html(percentage + "%");
+                      }
                 };
-            reader.readAsBinaryString(file);
+                reader.readAsBinaryString(file);
             }
+         });
       };
-
       return false;
-    },
+    },  // end drop method
 
-    afterUpload: function() {
+    afterUpload: function(event) {
+    /**  After each file finishes uploading:
+         - check if all files have finished uploading
+         - if form submission has been requested after upload completes, submit
+           the form
+         - otherwise, re-enable the form submit button
+    */
         var data = $(this).data('dnduploader');
         // check if all files have finished uploaded
         for (var x = 0; x < data['files'].length; x++) {
@@ -139,23 +203,32 @@
         // all files have completed uploading - if requested, submit the form
         if (data['ingest_on_completion']) {
             $(this).parents('form').submit();
+            // TODO: may want to display some kind of indicator here...
         }
         // otherwise, re-enable normal submit button
-        methods.enableSubmit.apply($(this));
+        $(this).dndUploader('enableSubmit');
     },
 
     disableSubmit: function() {
+    /* shortcut to disable the form submission button */
        $(this).nextAll('[type="submit"]').attr('disabled', 'disabled');
     },
 
     enableSubmit: function() {
+   /* shortcut to enable the form submission button */
       $(this).nextAll('[type="submit"]').removeAttr('disabled');
     },
 
     uploadFile: function(file) {
-       var data = $(this).data('dnduploader');
-       var obj = $(this);
-       var xhr   = new XMLHttpRequest();
+    /*  Upload a file to the configured url via XMLHttpRequest.
+        When the request returns status 200, adds hidden form inputs.
+        On any other status code, sets file.upload_id to -1 to indicate
+        upload completed but did not succeed.
+        Triggers custom 'afterUpload' event after the request completes.
+    */
+        var $this = $(this);
+        var data = $this.data('dnduploader');
+        var xhr   = new XMLHttpRequest();
 
         // display an upload progress bar
         var indicator = $('<p/>');
@@ -198,14 +271,13 @@
                 // we can report them on the form submission page
              }
 
-             methods.afterUpload.apply(obj);
+             // signal the uploader for after-upload logic
+             $this.trigger('afterUpload.dndUploader');
           }
         };
 
-
         xhr.send(file);
-    },
-   
+    },  // end uploadFile method
   };
   
 
