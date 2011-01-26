@@ -254,19 +254,19 @@ class Rights(_BaseRights):
     ROOT_NAME = 'rights'
 
     access_terms = (
-        #code                access?  text
-        ('UNR-PD',           True,    'In public domain, no contract restriction'),
-        ('RES-PD',           False,   'In public domain, contract restriction, no access to content until X date'),
-        ('X-RES-PD',         False,   'In public domain, contract restriction, no access including metadata'),
-        ('C108-UNR',         True,    'Under copyright; copy allowed by Sec. 108; no contract restriction; only available within library'),
-        ('RES-C108',         False,   'Under copyright; copy allowed by Sec. 108; contract restriction; no access to content until X date and then only available within library until copyright expires'),
-        ('X-RES-C108',       False,   'Under copyright; copy allowed by Sec. 108; contract restriction; no access, including metadata'),
-        ('EUSERS-C',         True,    'Under copyright; permission of rights holder granted to copy and give access to Emory community users only (including in-library users)'),
-        ('UNR-C-PERMISSION', True,    'Under copyright; permission of rights holder granted to copy and give access to the public'),
-        ('UNR-C-SELL',       True,    'Under copyright; permission of rights holder granted to copy, provide access to the public, and sell the content'),
-        ('C-SELL-NOACCESS',  False,   'Under copyright; permission of rights holder granted to sell content under certain conditions, but not to provide unlimited access to the public '),
-        ('EUSERS-OR',        True,    'Under copyright but orphaned work, special circumstance, made available to Emory community users only (including in-Library use)'),
-        ('UNKNOWN',          False,   'Rights status unknown; no access to files or metadata'),
+        #code                        access?  text
+        ('PD-UNRESTRICT',            True, 'In public domain, no contract restriction'),
+        ('PD-RESTRICT',              False, 'In public domain, contract restriction, no access to content until X date'),
+        ('PD-RESTRICT-NOMETA',       False, 'In public domain, contract restriction, no access including metadata'),
+        ('C108-UNRESTRICT',          True, 'Under copyright; copy allowed by Sec. 108; no contract restriction; only available within library'),
+        ('C108-RESTRICT',            False, 'Under copyright; copy allowed by Sec. 108; contract restriction; no access to content until X date and then only available within library until copyright expires'),
+        ('C108-RESTRICT-NOMETA',     False, 'Under copyright; copy allowed by Sec. 108; contract restriction; no access, including metadata'),
+        ('C-PERMIS-EUSERS',          True, 'Under copyright; permission of rights holder granted to copy and give access to Emory community users only (including in-library users)'),
+        ('C-PERMIS-UNRESTRICT',      True, 'Under copyright; permission of rights holder granted to copy and give access to the public'),
+        ('C-PERMIS-SELL-UNRESTRICT', True, 'Under copyright; permission of rights holder granted to copy, provide access to the public, and sell the content'),
+        ('C-PERMIS-SELL-NOACCESS',   False, 'Under copyright; permission of rights holder granted to sell content under certain conditions, but not to provide unlimited access to the public'),
+        ('ORPH-EUSERS',              True, 'Under copyright but orphaned work, special circumstance, made available to Emory community users only (including in-Library use)'),
+        ('UNDETERMINED',             False, 'Rights status undetermined; no access to files or metadata'),
     ) 
     'controlled vocabulary for access condition'
 

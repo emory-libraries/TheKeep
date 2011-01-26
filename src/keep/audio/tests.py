@@ -612,7 +612,7 @@ of 2''',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
                     # rights metadata
-                    'rights-access': 'UNR-PD',
+                    'rights-access': 'PD-UNRESTRICT',
                     'rights-copyright_holder_name': 'Mouse, Mickey',
                     'rights-copyright_date_year': '1942',
         }
@@ -843,22 +843,22 @@ of 2''',
         obj.mods.content.title = 'Dylan Thomas reads anthology'
         obj.mods.content.part_note.text = 'Side A'
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
-        obj.rights.content.access_condition.code = 'UNR-PD'
+        obj.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
         obj.save()
         obj2 = repo.get_object(type=AudioObject)
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
-        obj2.rights.content.access_condition.code = 'UNR-PD'
+        obj2.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj2.collection_uri = self.esterbrook.uri
         obj2.save()
         obj3 = repo.get_object(type=AudioObject)
         obj3.mods.content.title = 'No Access copy'
-        obj3.rights.content.access_condition.code = 'UNR-PD'
+        obj3.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj3.save()
         obj4 = repo.get_object(type=AudioObject)
-        obj4.rights.content.access_condition.code = 'UNKNOWN'
+        obj4.rights.content.access_condition.code = 'UNDETERMINED'
         obj4.compressed_audio.content = open(mp3_filename)
         obj4.save()
         obj5 = repo.get_object(type=AudioObject)
