@@ -126,7 +126,7 @@ class SourceTech(_BaseSourceTech):
     'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-        SourceTechMeasure, required=False)
+        SourceTechMeasure, required=True)
     ':class:`SourceTechMeasure`'
     sublocation = xmlmap.StringField('st:sublocation', required=True,
         help_text='Storage location within the collection (e.g., box and folder)')
@@ -141,7 +141,7 @@ class SourceTech(_BaseSourceTech):
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        required=False, help_text='Type of housing for magnetic tape')
+        required=True, help_text='Type of housing for magnetic tape')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
