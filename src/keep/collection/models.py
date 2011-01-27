@@ -27,10 +27,10 @@ class CollectionMods(mods.MODS):
     # relatedItem type host - not editable on form, but may want mapping for easy access
     # - same for relatedItem type isReferencedyBy
     restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
-                                              mods.AccessCondition, instantiate_on_get=True)
+                                              mods.AccessCondition)
     ':class:`keep.mods.AccessCondition`'
     use_and_reproduction = xmlmap.NodeField('mods:accessCondition[@type="use and reproduction"]',
-                                              mods.AccessCondition, instantiate_on_get=True)
+                                              mods.AccessCondition)
     ':class:`keep.mods.AccessCondition`'
 
 
@@ -66,10 +66,11 @@ class CollectionObject(DigitalObject):
                 self.dc.content.identifier_list.pop()
             self.dc.content.identifier_list.extend([id.text for id
                                             in self.mods.content.identifiers])
-        if unicode(self.mods.content.name):
+        if self.mods.content.name and unicode(self.mods.content.name):
             # for now, use unicode conversion as defined in mods.Name
             self.dc.content.creator_list[0] = unicode(self.mods.content.name)
-        if len(self.mods.content.origin_info.created):
+        if self.mods.content.origin_info and \
+                len(self.mods.content.origin_info.created):
             self.dc.content.date = self.mods.content.origin_info.created[0].date
             # if a date range in MODS, add both dates
             if len(self.mods.content.origin_info.created) > 1:
@@ -280,7 +281,7 @@ def set_cached_collection_dict(collection):
         'pid': collection.pid,
         'source_id': collection.mods.content.source_id,
         'title': unicode(collection.mods.content.title),
-        'creator': unicode(collection.mods.content.name),
+        'creator': unicode(collection.mods.content.name or ''),
         'collection_id': collection.collection_id,
         'collection_label': collection.collection_label,
     }
@@ -341,6 +342,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
                 name_type = 'corporate'
 
             if name_type is not None:
+                coll.mods.content.create_name()
                 coll.mods.content.name.type = name_type
                 
             authority = self.archdesc.did.node.xpath('string(e:origination/*/@source)',
@@ -355,6 +357,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         if self.coverage:
             date_encoding = {'encoding': 'w3cdtf'}
             # date range
+            coll.mods.content.create_origin_info()
             if '/' in self.coverage:
                 start, end = self.coverage.split('/')
                 coll.mods.content.origin_info.created.append(mods.DateCreated(date=start,
@@ -371,11 +374,13 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
         # access restriction
         if self.archdesc.access_restriction:
+            coll.mods.content.create_restrictions_on_access()
             coll.mods.content.restrictions_on_access.text =  "\n".join([
                     unicode(c) for c in self.archdesc.access_restriction.content])
 
         # use & reproduction
         if self.archdesc.use_restriction:
+            coll.mods.content.create_use_and_reproduction()
             coll.mods.content.use_and_reproduction.text =  "\n".join([
                     unicode(c) for c in self.archdesc.use_restriction.content])
 

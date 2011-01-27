@@ -20,6 +20,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 
 from keep import mods
 from keep.audio import forms as audioforms
+from keep.audio.forms import ModsEditForm
 from keep.audio.models import AudioObject, AudioMods, wav_duration, \
         SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, \
         CodecCreator, Rights, AccessCondition, wav_and_mp3_duration_comparator
@@ -297,8 +298,10 @@ class AudioViewsTest(TestCase):
         repo = Repository()
         obj = repo.get_object(type=AudioObject)
         obj.mods.content.title = 'test search object 1'
+        obj.mods.content.create_general_note()
         obj.mods.content.general_note.text = 'general note'
         obj.collection_uri = self.rushdie.uri
+        obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1492-05'))
         obj.save()
         obj2 = repo.get_object(type=AudioObject)
@@ -486,8 +489,11 @@ of 2''',
         # create a test audio object to edit
         obj = AudioObject.init_from_file(wav_filename, "my audio test object")
         # pre-populate some data to check it is set in form instance
+        obj.mods.content.create_general_note()
         obj.mods.content.general_note.text = 'Here is some general info about this item.'
+        obj.mods.content.create_part_note()
         obj.mods.content.part_note.text = 'Side 1'
+        obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         # pre-populate source tech metadata so we can check it in form instance
@@ -495,10 +501,12 @@ of 2''',
         obj.sourcetech.content.related_files = '1-3'
         obj.sourcetech.content.sound_characteristics = 'mono'
         # speed in xml maps to a single custom field
+        obj.sourcetech.content.create_speed()
         obj.sourcetech.content.speed.unit = 'rpm'
         obj.sourcetech.content.speed.aspect = 'phonograph disc'
         obj.sourcetech.content.speed.value = '120'
         # reel size also maps to a custom field
+        obj.sourcetech.content.create_reel_size()
         obj.sourcetech.content.reel_size.value = '3'
         # pre-populate digital tech metadata
         obj.digitaltech.content.date_captured = '2008'
@@ -508,9 +516,12 @@ of 2''',
         # retrieve test user object to use for transfer engineer - also used to test
         ldap_user = User.objects.get(username='ldap_user')
         # engineer & codec creator are initialized based on id values
+        obj.digitaltech.content.create_transfer_engineer()
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
+        obj.digitaltech.content.create_codec_creator()
         obj.digitaltech.content.codec_creator.id = '1'
         # pre-populate rights metadata
+        obj.rights.content.create_access_condition()
         obj.rights.content.access_condition.code = 'UNKNOWN'
         obj.rights.content.access_condition.text = 'Rights status unknown; no access to files or metadata'
         obj.rights.content.copyright_holder_name = 'User, Example'
@@ -623,7 +634,7 @@ of 2''',
         (redirect_url, code) = response.redirect_chain[0]
         self.assert_(reverse('audio:index') in redirect_url,
             "successful save redirects to audio index page")
-        expected = 303      # redirect  -- maybe this should be a 303?
+        expected = 303      # redirect
         self.assertEqual(code, expected,
             'Expected %s but returned %s for %s (successfully saved)'  % \
             (expected, code, edit_url))
@@ -744,6 +755,56 @@ of 2''',
 
         # how to test fedora permission denied scenario?
 
+    def test_edit_min_fields(self):
+        # verify that we can get away with filling in only required fields.
+
+        # create a test audio object to edit
+        obj = AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj.save()
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
+
+        # retrieve test user object to use for transfer engineer - also used to test
+        ldap_user = User.objects.get(username='ldap_user')
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        edit_url = reverse('audio:edit', args=[obj.pid])
+
+        # POST data to update audio object in fedora
+        audio_data = {'collection': self.rushdie.uri,
+                    'mods-title': 'new title',
+                    # 'management' form data is required for django to process formsets/subforms
+                    'mods-origin_info-issued-INITIAL_FORMS': '0',
+                    'mods-origin_info-issued-TOTAL_FORMS': '0',
+                    'mods-origin_info-issued-MAX_NUM_FORMS': '',
+                    'mods-origin_info-created-INITIAL_FORMS': '0',
+                    'mods-origin_info-created-TOTAL_FORMS': '0',
+                    'mods-origin_info-created-MAX_NUM_FORMS': '',
+                    'st-sublocation': 'box 3',
+                    # digital-tech data
+                    'dt-digitization_purpose': 'avoid nuclear war',
+                    'dt-date_captured_year': '2010',
+                    'dt-engineer': ldap_user.id,
+                    'dt-hardware': '3',
+                    # rights metadata
+                    'rights-access': 'PD-UNRESTRICT',
+        }
+
+        response = self.client.post(edit_url, audio_data, follow=True)
+
+        # currently redirects to audio index
+        (redirect_url, code) = response.redirect_chain[0]
+        self.assert_(reverse('audio:index') in redirect_url,
+            "successful save redirects to audio index page")
+
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assertEqual("Updated %s" % obj.pid, messages[0],
+            "successful save message set in response context")
+
+        # we'll assume (for now) that the fields were saved correctly: this
+        # should be verified in test_edit
+
     def test_raw_datastream(self):
         # create a test audio object to edit
         obj = AudioObject.init_from_file(wav_filename, "my audio test object")
@@ -839,8 +900,11 @@ of 2''',
         repo = Repository()
         obj = repo.get_object(type=AudioObject)
         obj.mods.content.title = 'Dylan Thomas reads anthology'
+        obj.mods.content.create_part_note()
         obj.mods.content.part_note.text = 'Side A'
+        obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
+        obj.rights.content.create_access_condition()
         obj.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
@@ -848,14 +912,17 @@ of 2''',
         obj2 = repo.get_object(type=AudioObject)
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
+        obj2.rights.content.create_access_condition()
         obj2.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj2.collection_uri = self.esterbrook.uri
         obj2.save()
         obj3 = repo.get_object(type=AudioObject)
         obj3.mods.content.title = 'No Access copy'
+        obj3.rights.content.create_access_condition()
         obj3.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj3.save()
         obj4 = repo.get_object(type=AudioObject)
+        obj4.rights.content.create_access_condition()
         obj4.rights.content.access_condition.code = 'UNDETERMINED'
         obj4.compressed_audio.content = open(mp3_filename)
         obj4.save()
@@ -917,9 +984,11 @@ of 2''',
         repo = Repository()
         obj = repo.get_object(type=AudioObject)
         obj.mods.content.title = 'Dylan Thomas reads anthology'
+        obj.mods.content.create_part_note()
         obj.mods.content.part_note.text = 'Side A'
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
+        obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
         obj.save()
         obj2 = repo.get_object(type=AudioObject)
@@ -1036,14 +1105,17 @@ class TestMods(TestCase):
         mymods = mods.MODS()
         mymods.title = 'A Record'
         mymods.resource_type = 'text'
+        mymods.create_name()
         mymods.name.type = 'personal'
         mymods.name.authority = 'local'
         mymods.name.name_parts.extend([mods.NamePart(type='family', text='Schmoe'),
                                     mods.NamePart(type='given', text='Joe')])
         mymods.name.roles.append(mods.Role(type='text', authority='local',
                                         text='Test Subject'))
+        mymods.create_note()
         mymods.note.type = 'general'
         mymods.note.text = 'general note'
+        mymods.create_origin_info()
         mymods.origin_info.created.append(mods.DateCreated(date='2001-10-02'))
         mymods.origin_info.issued.append(mods.DateIssued(date='2001-12-01'))
         mymods.record_id = 'id:1'
@@ -1121,6 +1193,7 @@ class SourceTechTest(TestCase):
         st.note_list.append('general note')
         st.related_fields = '1, 2, 3'
         st.conservation_history_list.append('loaned for digitization')
+        st.create_speed()
         st.speed.unit = 'rpm'
         st.speed.aspect = 'phonograph disc'
         st.speed.value = '120'
@@ -1129,6 +1202,7 @@ class SourceTechTest(TestCase):
         st.sound_characteristics = 'stereo'
         st.stock = '60-min cassette'
         st.housing = 'Jewel case'
+        st.create_reel_size()
         st.reel_size.unit = 'inches'
         st.reel_size.value = '5'
         st.technical_note.append('Recorded at Rockhill recording studio.')
@@ -1189,6 +1263,7 @@ class DigitalTechTest(TestCase):
         dt.duration = 33
         dt.note = 'Transferred slowly'
         dt.digitization_purpose = 'Dawson exhibit'
+        dt.create_codec_creator()
         dt.codec_creator.id = '2'
         dt.codec_creator.hardware = 'Dell Optiplex'
         dt.codec_creator.software = 'iTunes'
@@ -1225,6 +1300,7 @@ class RightsXmlTest(TestCase):
     def test_create(self):
         # test creating digitaltech metadata from scratch
         rt = Rights()
+        rt.create_access_condition()
         rt.access_condition.code = 'PD-UNRESTRICT'
         rt.access_condition.text = 'In public domain, no contract restriction'
         rt.copyright_holder_name = 'Mouse, Mickey'
@@ -1272,6 +1348,7 @@ class TestAudioObject(TestCase):
         title, type, date = 'new title in mods', 'text', '2010-01-03'
         self.obj.mods.content.title = title
         self.obj.mods.content.resource_type = type
+        self.obj.mods.content.create_origin_info()
         self.obj.mods.content.origin_info.created.append(mods.DateCreated(date=date))
         self.obj.save('testing custom save logic')
 
@@ -1291,9 +1368,11 @@ class TestAudioObject(TestCase):
         self.obj.mods.content.title = title
         self.obj.mods.content.resource_type = res_type
         cdate, idate = '2010-01-03', '2010-05-05'
+        self.obj.mods.content.create_origin_info()
         self.obj.mods.content.origin_info.created.append(mods.DateCreated(date=cdate))
         self.obj.mods.content.origin_info.issued.append(mods.DateIssued(date=idate))
         general_note = 'The Inspector General generally inspects'
+        self.obj.mods.content.create_general_note()
         self.obj.mods.content.general_note.text = general_note
         dig_purpose = 'patron request'
         self.obj.digitaltech.content.digitization_purpose = dig_purpose
@@ -1428,6 +1507,15 @@ class TestWavDuration(TestCase):
 
     def test_nonexistent(self):
         self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
+
+
+class TestModsEditForm(TestCase):
+    def test_no_extra_fields(self):
+        # don't create any extra fields just from binding the form
+        mods = AudioMods()
+        form = ModsEditForm(instance=mods)
+        self.assertEqual([], mods.node.getchildren())
+
 
 class SourceAudioConversions(TestCase):
     def setUp(self):

@@ -143,7 +143,8 @@ class CollectionForm(XmlObjectForm):
 
             # populate fields not auto-generated & handled by XmlObjectForm
             initial = {}
-            if mods_instance.origin_info.created:
+            if mods_instance.origin_info and \
+               mods_instance.origin_info.created:
                 initial['date_created'] = mods_instance.origin_info.created[0].date
                 if len(mods_instance.origin_info.created) > 1:
                     initial['date_end'] = mods_instance.origin_info.created[1].date
@@ -171,6 +172,7 @@ class CollectionForm(XmlObjectForm):
         if hasattr(self, 'cleaned_data'):
             # set date created - could be a single date or a date range
             # remove existing dates and re-add
+            self.instance.create_origin_info()
             for i in range(len(self.instance.origin_info.created)):
                 self.instance.origin_info.created.pop()
             self.instance.origin_info.created.append(mods.DateCreated(
@@ -179,6 +181,7 @@ class CollectionForm(XmlObjectForm):
                     ))
             # if there is a date end, store it and set end & start attributes
             if 'date_end' in self.cleaned_data and self.cleaned_data['date_end']:
+                self.instance.create_origin_info()
                 self.instance.origin_info.created.append(mods.DateCreated(
                     date=self.cleaned_data['date_end'],
                     point='end',

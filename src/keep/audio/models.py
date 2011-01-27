@@ -26,10 +26,10 @@ class AudioMods(mods.MODS):
     :class:`~keep.mods.MODS`.'''
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
-          mods.Note, instantiate_on_get=True, required=False)
+          mods.Note, required=False)
     ':class:`~keep.mods.Note` with `type="general"`'
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
-                                          mods.Note, instantiate_on_get=True)
+                                          mods.Note)
     ':class:`~keep.mods.Note` with `type="part number"`'
 
 ##
@@ -126,7 +126,7 @@ class SourceTech(_BaseSourceTech):
     'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-        SourceTechMeasure, instantiate_on_get=True, required=False)
+        SourceTechMeasure, required=False)
     ':class:`SourceTechMeasure`'
     sublocation = xmlmap.StringField('st:sublocation', required=True,
         help_text='Storage location within the collection (e.g., box and folder)')
@@ -144,7 +144,7 @@ class SourceTech(_BaseSourceTech):
         required=False, help_text='Type of housing for magnetic tape')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
-            SourceTechMeasure, instantiate_on_get=True, required=False)
+            SourceTechMeasure, required=False)
     ':class:`SourceTechMeasure`'
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
@@ -219,12 +219,10 @@ class DigitalTech(_BaseDigitalTech):
     'reason the item was digitized'
     digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
     transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
-        instantiate_on_get=True, required=True,
-        help_text='The person who performed the digitization or conversion that produced the file')
+        required=True, help_text='The person who performed the digitization or conversion that produced the file')
     ':class:`TransferEngineer` - person who digitized the item'
     codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
-        instantiate_on_get=True, required=True,
-        help_text='Hardware, software, and software version used to create the digital file')
+        required=True, help_text='Hardware, software, and software version used to create the digital file')
     ':class:`CodecCreator` - hardware & software used to digitize the item'
 
 
@@ -275,8 +273,7 @@ class Rights(_BaseRights):
     # e.g., access_terms_dict['UNR-PD'].access == True
 
     access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
-        instantiate_on_get=True, required=True,
-        help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
+        required=True, help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     ':class:`AccessCondition`'
     copyright_holder_name = xmlmap.StringField('rt:copyrightholderName',
         required=False,
@@ -291,10 +288,14 @@ class Rights(_BaseRights):
     def researcher_access(self):
         '''Does this rights XML indicate that researchers should be
         allowed access to this document?'''
+        if not self.access_condition:
+            return None
         access_code = self.access_condition.code
         access_term = self.access_terms_dict.get(access_code, None)
-        if access_term:
-            return access_term.access
+        if not access_term:
+            return None
+
+        return access_term.access
 
 
 ##
@@ -403,22 +404,21 @@ class AudioObject(DigitalObject):
 
         # clear out any dates previously in DC
         del(self.dc.content.date_list)
-        if len(self.mods.content.origin_info.created) and \
-                self.mods.content.origin_info.created[0].date:
-            # UGH: this will add originInfo and dateCreated if they aren't already in the xml
-            # because of our instantiate-on-get hack
-            # FIXME: creating origin_info without at least one field may result in invalid MODS
+        if self.mods.content.origin_info and \
+           len(self.mods.content.origin_info.created) and \
+           self.mods.content.origin_info.created[0].date:
             self.dc.content.date_list.append(self.mods.content.origin_info.created[0].date)
-        if len(self.mods.content.origin_info.issued) and \
-                self.mods.content.origin_info.issued[0].date:
-            # ditto on UGH/FIXME for date created
+        if self.mods.content.origin_info and \
+           len(self.mods.content.origin_info.issued) and \
+           self.mods.content.origin_info.issued[0].date:
             self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
 
         # FIXME: detect if origin info is empty & remove it so we don't get invalid MODS
 
         # clear out any descriptions previously in DC and set from MODS/digitaltech
         del(self.dc.content.description_list)
-        if self.mods.content.general_note.text:
+        if self.mods.content.general_note and \
+           self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
         # digitization_purpose
         if self.digitaltech.content.digitization_purpose:

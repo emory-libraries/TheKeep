@@ -60,7 +60,7 @@
   {% endcomment %}
   <tr id="origin_info">
       {# FIXME: origin info is not required, but our form explodes if both are empty #}
-      <td class='required'><span title='required'>*</span></td>
+      <td class='required'><!-- not required --></span></td>
       <th>Origin Info:</th>
       <td>{{ form.mods.subforms.origin_info.as_p }}</td>
     </tr>

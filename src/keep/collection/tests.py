@@ -67,9 +67,11 @@ class CollectionObjectTest(TestCase):
         obj.mods.content.title = 'Salman Rushdie Papers'
         obj.mods.content.resource_type = 'mixed material'
         # name
+        obj.mods.content.create_name()
         obj.mods.content.name.name_parts.append(mods.NamePart(text='Salman Rushdie'))
         obj.mods.content.name.roles.append(mods.Role(text='author', authority='local'))
         # date range
+        obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1947, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=2008, point='end'))
 
@@ -533,8 +535,9 @@ class CollectionViewsTest(TestCase):
                 msg_prefix="subcollection title for %s is listed on collection browse page" % obj.pid)
             self.assertContains(response, str(obj.mods.content.source_id),
                 msg_prefix="subcollection MSS # for %s is listed on collection browse page" % obj.pid)
-            self.assertContains(response, unicode(obj.mods.content.name),
-                msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
+            if obj.mods.content.name:
+                self.assertContains(response, unicode(obj.mods.content.name),
+                    msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
 
         # test errors?
 

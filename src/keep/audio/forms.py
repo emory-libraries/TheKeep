@@ -191,15 +191,17 @@ class SourceTechForm(XmlObjectForm):
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
-            if '_speed' in self.cleaned_data:
+            if self.cleaned_data.get('_speed', ''):
                 # format of option list is 'value unit' (e.g., 16 rpm or 15 inches/sec
                 # - split and save in appropriate fields
                 aspect, value, unit = self.cleaned_data['_speed'].split('|')
+                self.instance.create_speed()
                 self.instance.speed.aspect = aspect
                 self.instance.speed.value = value
                 self.instance.speed.unit = unit
 
             if 'reel' in self.cleaned_data:
+                self.instance.create_reel_size()
                 self.instance.reel_size.value = self.cleaned_data['reel']
                 # for now, all values are inches - may need to refine later
                 self.instance.reel_size.unit = 'inches'
@@ -261,6 +263,7 @@ class DigitalTechForm(XmlObjectForm):
         if hasattr(self, 'cleaned_data'):
             # set transfer engineer id and name based on User object
             user = self.cleaned_data['engineer']
+            self.instance.create_transfer_engineer()
             self.instance.transfer_engineer.id = user.username
             self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
             self.instance.transfer_engineer.name = user.get_full_name()
@@ -270,6 +273,7 @@ class DigitalTechForm(XmlObjectForm):
             # required, so should always be present and overwrite any previous data
             if cc_id:
                 hardware, software, version = CodecCreator.configurations[cc_id]
+                self.instance.create_codec_creator()
                 self.instance.codec_creator.id = cc_id
                 # hardware may be multiple, so treat as a list
                 for old_hw in self.instance.codec_creator.hardware_list:
@@ -320,6 +324,7 @@ class RightsForm(XmlObjectForm):
         if hasattr(self, 'cleaned_data'):
             access_code = self.cleaned_data['access']
             access_text = Rights.access_terms_dict[access_code].text
+            self.instance.create_access_condition()
             self.instance.access_condition.code = access_code
             self.instance.access_condition.text = access_text
 

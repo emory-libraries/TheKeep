@@ -118,9 +118,9 @@ class BaseMods(Common):
 
     title = xmlmap.StringField("mods:titleInfo/mods:title")
     resource_type  = xmlmap.SchemaField("mods:typeOfResource", "resourceTypeDefinition")
-    name = xmlmap.NodeField('mods:name', Name, instantiate_on_get=True)  # single name for now
-    note = xmlmap.NodeField('mods:note', Note, instantiate_on_get=True)
-    origin_info = xmlmap.NodeField('mods:originInfo', OriginInfo, instantiate_on_get=True)
+    name = xmlmap.NodeField('mods:name', Name)  # single name for now
+    note = xmlmap.NodeField('mods:note', Note)
+    origin_info = xmlmap.NodeField('mods:originInfo', OriginInfo)
     record_id = xmlmap.StringField('mods:recordInfo/mods:recordIdentifier')
     identifiers = xmlmap.NodeListField('mods:identifier', Identifier)
     access_conditions = xmlmap.NodeListField('mods:accessCondition', AccessCondition)

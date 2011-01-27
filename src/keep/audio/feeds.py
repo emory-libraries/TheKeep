@@ -114,7 +114,8 @@ class PodcastFeed(Feed):
 
     def item_pubdate(self, item):
         # if dateIssued is set, convert to python datetime
-        if item.mods.content.origin_info.issued:
+        if item.mods.content.origin_info and \
+           item.mods.content.origin_info.issued:
             pub_date = item.mods.content.origin_info.issued[0]
             date_parts = [int(p) for p in pub_date.date.split('-')]
             # if year only, use month 1
