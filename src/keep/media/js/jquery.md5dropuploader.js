@@ -133,7 +133,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             }
         });
         // TODO: support abort on checksum/upload if user removes file while processing
-        $(".remove").click(function () {$(this).parent().remove(); });
+        $this.find(".remove").click(function () {$(this).parent().remove(); });
 
         // report any files that were not in the allowed types
         if (not_allowed.length) {
