@@ -782,6 +782,8 @@ of 2''',
                     'mods-origin_info-created-TOTAL_FORMS': '0',
                     'mods-origin_info-created-MAX_NUM_FORMS': '',
                     'st-sublocation': 'box 3',
+                    'st-housing': 'Other',
+                    'st-_speed': 'other|other|other',
                     # digital-tech data
                     'dt-digitization_purpose': 'avoid nuclear war',
                     'dt-date_captured_year': '2010',
