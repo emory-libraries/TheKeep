@@ -46,6 +46,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         allowed_types: [],
        };
        $.extend(data, options);
+       $this.addClass('md5uploader');
 
        // TODO: consolidate submission/wait-for-upload logic in a single
        // form submission button
