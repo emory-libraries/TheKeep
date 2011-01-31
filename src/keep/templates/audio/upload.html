@@ -38,14 +38,13 @@
 
 {% if form %} 
 {# TODO: better instructions #}
-<p>To upload multiple files at once, select the files that you want to upload
-   on your desktop or file browser and drag them into the file area below.
-</p>
-<p>To upload a single file, or if you are using a browser that does not support
-    drag-and-drop, use the file input and submit the form.</p>
+<p>Drag files into the box below to upload them. If your browser doesn't
+  support that, then use the form below to choose a single file for
+  upload.</p>
 
 <form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
  <div id="drop_target">
+   <p class='extra instructions'>Drag files here.</p>
    {{ form.as_p }}  {# single-file upload (non HTML5 fall-back) #}
  </div> 
  <input type="submit" value="Upload and Ingest" id='submit-upload'/>

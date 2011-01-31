@@ -1,14 +1,17 @@
 /* styles for drag & drop file batch upload/ingest */
-div.md5uploader {
-    padding: 10px;
-    margin-bottom:10px;
-}
-div.md5uploader.dragover {
-  border: 2px dashed green;
-  background-color:#efefef;
+.md5uploader {
+  border: 2px dashed gray;
+  padding: 10px;
+  margin-bottom:10px;
   -moz-border-radius: 15px;
   border-radius: 15px;
 }
+.md5uploader.dragover {
+  border-color: green;
+  background-color:#efefef;
+}
+.md5uploader .extra.instructions { margin: 0px 0px 10px 0px; }
+
 .md5uploader .status { float:right; }
 .md5uploader .remove {
     color: red;
