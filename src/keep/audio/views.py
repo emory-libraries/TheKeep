@@ -1,9 +1,10 @@
+import json
 import logging
+import magic
 import os
 import tempfile
 import time
-import magic
-import json
+import traceback
 
 from django.conf import settings
 from django.contrib import messages
@@ -49,6 +50,10 @@ def upload(request):
         # if form has been posted, process & ingest files
         if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
 
+            # place-holder for files to be ingested, either from single-file upload
+            # or batch upload; should be added to the dictionary as filepath: initial label
+            files_to_ingest = {}
+
             # check for a single file upload
             form = audioforms.UploadForm(request.POST, request.FILES)
             # file is the only required field here, so if valid, process single file
@@ -59,112 +64,107 @@ def upload(request):
                 # if not specified, use filename
                 if not initial_label:
                     initial_label = uploaded_file.name
-                    
+
+                files_to_ingest[uploaded_file.temporary_file_path()] = initial_label
+
+            # check for any batch-upload files
+            if request.POST.has_key('fileUploads'):                
+                uploaded_files = request.POST.getlist('fileUploads')
+                filenames = request.POST.getlist('originalFileNames')
+
+                if len(uploaded_files) != len(filenames):
+                    # this shouldn't happen unless the javascript uploader does something weird
+                    messages.error(request,
+                        'Could not correlate uploaded files with original filenames (invalid form data)')
+                else:
+                    for index in range(len(uploaded_files)):
+                        # calculate full path to upload file and add to files to be processed
+                        filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
+                                                    uploaded_files[index])
+                        files_to_ingest[filepath] = filenames[index]
+
+            results = []
+            # results will be a list of dictionary to report per-file ingest success/failure
+            # NOTE: using this structure for easy of display in django templates (e.g., regroup)
+            
+            # process all files submitted for ingest (single or batch mode)
+            if files_to_ingest:            
                 m = magic.Magic(mime=True)
-                type = m.from_file(uploaded_file.temporary_file_path())
-
-                if ';' in type:
-                    type, charset = type.split(';')
-                if type not in allowed_audio_types:
-                    messages.error(request, 'The file uploaded is not of an accepted type (got %s)' % type)
-                else:
+                for filename, label in files_to_ingest.iteritems():
                     try:
-                        # TODO: consolidate common logic for single & multiple file ingest
-                        # initialize from the file itself; use original name as initial object label
-                        obj = AudioObject.init_from_file(uploaded_file.temporary_file_path(),
-                                                         initial_label, request,
-                                                         md5sum(uploaded_file.temporary_file_path()))
-                        obj.save()
-                        #Start the task to convert the WAV audio to a compressed format.
-                        result = convert_wav_to_mp3.delay(obj.pid,
-                                existingFilePath=uploaded_file.temporary_file_path())
-                        task = TaskResult(label='Generate MP3', object_id=obj.pid,
-                            url=obj.get_absolute_url(), task_id=result.task_id)
-                        task.save()
-
-                        messages.success(request, 'Successfully ingested file %s in fedora as %s.'
-                                % (uploaded_file.name, obj.pid))
-                    except Exception as e:
-                        response_code = 500
-                        ctx_dict['server_error'] = 'There was an error ' + \
-                                'contacting the digital repository. This ' + \
-                                'prevented us from ingesting your file. If ' + \
-                                'this problem persists, please alert the ' + \
-                                'repository administrator.'
-                        response = render_to_response('audio/upload.html',
-                                ctx_dict,context_instance=RequestContext(request))
-                        if response_code is not None:
-                            response.status_code = response_code
-                        return response
-
-            # process any batch-upload files
-            if request.POST.has_key('fileUploads'):
-
-                file_list = request.POST.getlist('fileUploads')
-                file_original_name_list = request.POST.getlist('originalFileNames')
-                file_md5sum_list = request.POST.getlist('fileMD5sum')
-
-                if len(file_list) != len(file_original_name_list) != len(file_md5sum_list):
-                    messages.error(request, 'The hidden input file lists length did not match... some type of form error')
-                else:
-                    for index in range(len(file_list)):
-                        #Add the full path qualifier of the temp directory from settings.
-                        fullFilePath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,file_list[index])
-
-                        # check mimetype of uploaded file (uploaded_file.content_type is unreliable)
-                        m = magic.Magic(mime=True)
-                        type = m.from_file(fullFilePath)
-                        del m
+                        file_info = {'label': label}
+                        
+                        # check if file is an allowed type
+                        type = m.from_file(filename)
                         if ';' in type:
                             type, charset = type.split(';')
                         if type not in allowed_audio_types:
-                            messages.error(request, 'The file %s is not of an accepted type (got %s)' % (file_original_name_list[index], type))
-                        #type is allowed
-                        else:
-                            #recheck md5sum once more before ingesting....
-                            if file_md5sum_list[index] != md5sum(fullFilePath):
-                                messages.error(request, 'The file %s has a corrupted MD5 sum on the server.' % file_original_name_list[index])
-                            else:
-                                #fedora inject code to go here....
-                                try:
-                                     # initialize from the file itself; use original name as initial object label
-                                    obj = AudioObject.init_from_file(fullFilePath,
-                                                         file_original_name_list[index],
-                                                         request,
-                                                         file_md5sum_list[index])
-                                    obj.save()
-                                    #Start the task to convert the WAV audio to a compressed format. This task will also delete
-                                    #the existing file upon completion.
-                                    result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=fullFilePath)
-                                    task = TaskResult(label='Generate MP3', object_id=obj.pid,
-                                        url=obj.get_absolute_url(), task_id=result.task_id)
-                                    task.save()
-                                    messages.success(request, 'Successfully ingested file %s in fedora as %s.'
-                                                    % (file_original_name_list[index], obj.pid))
-                                except Exception as e:
-                                    logging.debug(e)
-                                    messages.error(request, 'Failed to ingest file %s in fedora (fedora is either down or the checksum is incorrect).'
-                                                   % (file_original_name_list[index]))
+                            # store error for display on detailed result page
+                            file_info.update({'success': False,
+                                    'message': '''File type '%s' is not allowed''' % type})
+                            # if not an allowed type, no further processing
+                            continue     
 
-            #Return the response with the messages for both cases above.
-            return HttpResponseSeeOtherRedirect(reverse('audio:index'))
+                        # if there is an MD5 file (i.e., file was uploaded via ajax),
+                        # use the contents of that file as checksum
+                        if os.path.exists(filename + '.md5'):
+                             with open(filename + '.md5') as md5file:
+                                 md5 = md5file.read()
+                        # otherwise, calculate the MD5 (single-file upload)
+                        else:
+                            md5 = md5sum(filename)
+                        # initialize a new audio object from the file
+                        obj = AudioObject.init_from_file(filename,
+                                    initial_label=label, request=request,                                    
+                                    checksum=md5)
+                        obj.save()
+                        file_info.update({'success': True, 'pid': obj.pid})
+                        # Start asynchronous task to convert audio for access
+                        result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=filename)
+                        # create a task result object to track conversion status
+                        task = TaskResult(label='Generate MP3', object_id=obj.pid,
+                            url=obj.get_absolute_url(), task_id=result.task_id)
+                        task.save()
+                    except Exception as e:
+                        logging.error('Error ingesting %s: %s' % (filename, e))
+                        logger.debug("Error details:\n" + traceback.format_exc())
+                        file_info['success'] = False
+                        
+                        # check for Fedora-specific errors
+                        if isinstance(e, RequestFailed):
+                            if 'Checksum Mismatch' in e.detail:
+                                file_info['message'] = 'Ingest failed due to a checksum mismatch - ' + \
+                                    'file may have been corrupted or incompletely uploaded to Fedora'
+                            else:
+                                file_info['message'] = 'Fedora error: ' + e.message()
+
+                        # non-fedora error
+                        else:                            
+                            file_info['message'] = 'Ingest failed: ' + e.message()
+                    
+                    finally:
+                        # no matter what happened, store results for reporting to user
+                        results.append(file_info)
+
+            # add per-file ingest result status to template context
+            ctx_dict['ingest_results'] = results
+            # after processing files, fall through to display upload template
 
         else:
             # POST but not form data - handle ajax file upload
             return ajax_file_upload(request)
             
-    # not a POST - display the form
-    else:
-        ctx_dict['form'] = audioforms.UploadForm() 
-        ctx_dict['allowed_audio_types'] = allowed_audio_types
-        # convert for use in javascript
-        ctx_dict['js_allowed_types'] = mark_safe(json.dumps(allowed_audio_types))
+    # on GET or non-ajax POST, display the upload form
+    ctx_dict['form'] = audioforms.UploadForm()
+    ctx_dict['allowed_audio_types'] = allowed_audio_types
+    # convert list of allowed types for passing to javascript
+    ctx_dict['js_allowed_types'] = mark_safe(json.dumps(allowed_audio_types))
 
-    response = render_to_response('audio/upload.html', ctx_dict,
+    return render_to_response('audio/upload.html', ctx_dict,
                                   context_instance=RequestContext(request))
-    if response_code is not None:
-        response.status_code = response_code
-    return response
+    # NOTE: previously, this view set the response status code to the
+    # Fedora error status code if there was one.  Since this view now processes
+    # multiple files for ingest, simply returning 200 if processing ends normally.
 
 def ajax_file_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging 
@@ -179,6 +179,10 @@ def ajax_file_upload(request):
     checksum calculated for the uploaded file must match the checksum passed in
     the request), then the file will be stored in the ingest staging directory
     and a staging file identifier will be returned in the body of the response.
+
+    To avoid calculating MD5 checksums multiple times, the MD5 for the file
+    will also be stored in the ingest staging directory, in a file named the same
+    as the staging temporary filename with '.md5' added.
     """
     # NOTE: size and type request headers unused?
 
@@ -197,7 +201,7 @@ def ajax_file_upload(request):
     filename = content_disposition[len('filename='):]
 
     try:
-        fileMD5 = request.META['HTTP_CONTENT_MD5']
+        client_md5 = request.META['HTTP_CONTENT_MD5']
     except KeyError:
         return HttpResponseBadRequest('Content-MD5 header is required')
 
@@ -220,23 +224,27 @@ def ajax_file_upload(request):
             type, charset = type.split(';')
         if type not in allowed_audio_types:
             os.remove(tmpname)
-            # TODO: send response with status 415 Unsupported Media Type
+            # send response with status 415 Unsupported Media Type
             return HttpResponseUnsupportedMediaType('File type %s is not allowed' % type)
-            return HttpResponseBadRequest('File type %s is not allowed' % type)
     except Exception as e:
         logging.debug(e)
         
-    #Check the MD5 sum.
+    # Calculate an MD5 for the uploaded file and compare with the client-calculated
+    # MD5 to make sure that the entire file was uploaded correctly
     try:
-        # TODO: minimize the number of times we calculate a checksum for an uploaded file
         start = time.time()
         calculated_md5 = md5sum(tmpname)
         logger.debug('Calculated MD5 checksum for %s: %s (took %f secs)' %
                     (filename, calculated_md5, time.time() - start))
-        if calculated_md5 != fileMD5:
+        if calculated_md5 != client_md5:
             logger.debug('calculated md5 %s did not match request MD5 %s' % \
-                        (calculated_md5, fileMD5))
+                        (calculated_md5, client_md5))
             return HttpResponseBadRequest('Checksum mismatch; uploaded data may be incomplete or corrupted')
+        
+        # if the MD5 check passes, store the MD5 so we don't have to calculate it again 
+        with open(os.path.join(staging_dir, ingest_file + '.md5'), 'w') as md5file:
+            md5file.write(calculated_md5)
+
     except Exception as e:
         logging.debug(e)
 

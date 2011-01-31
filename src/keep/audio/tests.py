@@ -70,6 +70,9 @@ class AudioViewsTest(TestCase):
             # if not originally set but added by a test, remove the setting
             del settings.MAX_ITEMS_PER_PODCAST_FEED
 
+        # TODO: remove any test files created in staging dir
+        # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
+
     def __del__(self):
         FedoraFixtures.repo.purge_object(self.rushdie.pid)
         FedoraFixtures.repo.purge_object(self.esterbrook.pid)
@@ -191,43 +194,45 @@ class AudioViewsTest(TestCase):
                 'response content should be filename on success; should start with uploaded file base name')
             self.assert_(uploaded_filename.endswith('.wav'),
                 'response content should be filename on success; should end with uploaded file suffix (.wav)')
+            
+            # temp files should exist in staging dir
+            upload_filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
+                                                         uploaded_filename)
+            self.assertTrue(os.path.exists(upload_filepath),
+                'temp file returned in should exist in staging directory')
+            self.assertTrue(os.path.exists(upload_filepath +  '.md5'),
+                'MD5 file for temp file should exist in staging directory')
+            with open(upload_filepath + '.md5') as md5file:
+                self.assertEqual(wav_md5, md5file.read())
 
     def test_batch_upload(self):
         # test uploading files via ajax
         upload_url = reverse('audio:upload')
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
-        copyfile(wav_filename,
-            os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav'))
+        # create files in staging dir to mimic results of ajax upload
+        upload_filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav')
+        copyfile(wav_filename, upload_filepath)
+        with open(upload_filepath + '.md5', 'w') as md5file:
+            md5file.write(wav_md5)
 
         # use the returned filename from the last (successful) response to test upload
         upload_opts = {
             'originalFileNames': 'example.wav',
             'fileUploads': 'example-01.wav',
-            'fileMD5sum': wav_md5
         }
-        # POST wav file with incorrect checksum should fail
-        invalid_upload_opts = upload_opts.copy()
-        invalid_upload_opts['fileMD5sum'] = mp3_md5     # using mp3 checksum for wav file
-        response = self.client.post(upload_url, invalid_upload_opts, follow=True)
-        # convert messages to a list for easier inspection
-        messages = [ msg for msg in response.context['messages'] ]
-        self.assert_('has a corrupted MD5 sum on the server.' in str(messages[0]))
-        self.assertEqual('error', messages[0].tags)
-        
         # POST wav file with correct checksum - should succeed
-        response = self.client.post(upload_url, upload_opts, follow=True)
-        messages = [ msg for msg in response.context['messages'] ]
-        self.assert_('Successfully ingested file' in str(messages[0]))
-        self.assertEqual('success', messages[0].tags)
-        # pull the pid of the newly created object from the message and inspect in fedora
-        pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
-                                      '').rstrip('.')
-        #Add pid to be removed.
-        self.pids.append(pid)
+        response = self.client.post(upload_url, upload_opts)
+        result = response.context['ingest_results'][0]
+        self.assertTrue(result['success'],
+            'success should be True in result for successful ingest')
+        self.assertNotEqual(None, result['pid'],
+            'pid should be set in result on success')
+        # add pid to be removed in tearDown
+        self.pids.append(result['pid'])
 
         repo = Repository()
-        new_obj = repo.get_object(pid, type=AudioObject)
+        new_obj = repo.get_object(result['pid'], type=AudioObject)
         # check object was created with audio cmodel
         self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
             "audio object was created with the correct content model")
@@ -241,49 +246,41 @@ class AudioViewsTest(TestCase):
         self.assert_(isinstance(new_obj.conversion_result, TaskResult),
             'ingested object should have a conversion result to track mp3 generation')
             
+        # POST wav file with an incorrect checksum should fail
+        with open(upload_filepath + '.md5', 'w') as md5file:
+            md5file.write('bogus md5 checksum')
+        response = self.client.post(upload_url, upload_opts)
+        result = response.context['ingest_results'][0]
+        self.assertFalse(result['success'], 'success should be false on checksum mismatch')
+        self.assert_('failed due to a checksum mismatch' in result['message'],
+            'result should include explanatory message on failure')
+            
     def test_upload_fallback(self):
-        # test upload form
+        # test single-file upload 
         upload_url = reverse('audio:upload')
-
-        # logged in as staff
+        # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
-        # view the form
-        response = self.client.get(upload_url)
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, upload_url))
-        self.assertContains(response, '<input')
 
         # POST non-wav file - should fail
         with open(mp3_filename) as mp3:
-            response = self.client.post(upload_url, {'audio': mp3},
-                                        follow=True)
-            # convert messages to a list for easier inspection
-            messages = [ msg for msg in response.context['messages'] ]
-            self.assertEqual('The file uploaded is not of an accepted type (got audio/mpeg)',
-                 str(messages[0]))
-            self.assertEqual('error', messages[0].tags,
-                'message on invalid file type should have tag "error", got "%s"' \
-                % messages[0].tags)
+            response = self.client.post(upload_url, {'audio': mp3})
+            result = response.context['ingest_results'][0]
+            self.assertFalse(result['success'], 'success should be false on non-allowed type')
+            self.assertEqual('''File type 'audio/mpeg' is not allowed''',
+                            result['message'])
         
         # POST a wav file - should result in a new object
         with open(wav_filename) as wav:
-            response = self.client.post(upload_url, {'audio': wav},
-                                        follow=True)
-            messages = [ msg for msg in response.context['messages'] ]
-            self.assert_('Successfully ingested file example.wav' in str(messages[0]),
-                'successful file ingest message displayed to user')
-            self.assertEqual('success', messages[0].tags,
-                'message on successful ingest should have tag "success", got "%s"' % messages[0].tags)
-            # pull the pid of the newly created object from the message and inspect in fedora
-            pid = str(messages[0]).replace('Successfully ingested file example.wav in fedora as ',
-                                      '').rstrip('.')
-            #Add pid to be removed.
-            self.pids.append(pid)
+            response = self.client.post(upload_url, {'audio': wav})
+            result = response.context['ingest_results'][0]
+            self.assertTrue(result['success'], 'success should be true for uploaded WAV')
+            self.assertNotEqual(None, result['pid'],
+                'result should include pid of new object on successful ingest')
+            # Add pid to be removed.
+            self.pids.append(result['pid'])
 
             repo = Repository()
-            new_obj = repo.get_object(pid, type=AudioObject)
+            new_obj = repo.get_object(result['pid'], type=AudioObject)
             # check object was created with audio cmodel
             self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
                 "audio object was created with the correct content model")

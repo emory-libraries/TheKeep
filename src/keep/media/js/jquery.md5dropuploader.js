@@ -15,8 +15,8 @@ When files are dropped on the specified element, files will be checked to
 see if they are in the list of allowed types (when specified), an MD5 checksum
 will be calculated on the client side, and then the file will be posted
 the the configured url.  On successful upload, hidden form inputs will be added
-with the original file name, the response from the ajax POST request (assumed
-here to be an upload id), and the client-side calculated MD5 checksum.
+with the original file name and the response from the ajax POST request (assumed
+here to be an upload id).
 
 File uploads are POSTed to the configured url with these HTTP headers:
 
@@ -265,7 +265,6 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 // - adding to file dom element so we can easily remove individual files
                 file.status.parent().append('<input type="hidden" name="fileUploads" value="' + file.upload_id + '"/>');
                 file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.fileName + '"/>');
-                file.status.parent().append('<input type="hidden" name="fileMD5sum" value="' + file.md5 + '"/>');
 
              } else { // if(xhr.status == 400)  // bad request
                 file.status.html('Upload error: ' + xhr.responseText);
@@ -318,3 +317,10 @@ function filesize_format(size) {
     // TODO: gb ?
 }
 
+
+/* make console.log not an error even if console is not available */
+if (!window.console) console = {};
+console.log = console.log || function(){};
+console.warn = console.warn || function(){};
+console.error = console.error || function(){};
+console.info = console.info || function(){};

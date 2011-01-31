@@ -15,6 +15,28 @@
 {% endblock %}
 
 {% block content-body %}
+{% if ingest_results %} {# If any files were processed for ingest, display results. #}
+<p>Processed {{ ingest_results|length }} file{{ ingest_results|pluralize }} for upload.</p>
+<ul>
+  {# group results by success (will be True or False) #}
+  {% regroup ingest_results|dictsort:'success' by success as results %}
+    {% for status in results %}
+     <li>{{ status.list|length }} file{{ status.list|pluralize }}
+         {% if status.grouper %}successfully ingested{% else %}failed to upload{% endif %}:
+         <ul>
+             {% for file in status.list %}
+                <li><b>{{ file.label }}</b>
+                    {% if file.pid %}<a href="{% url audio:edit file.pid %}">{{ file.pid }}</a>{% endif %}
+                    {% if file.message %}{{ file.message }} {% endif %}
+                </li>
+             {% endfor %}
+         </ul>
+  {% endfor %}
+</ul>
+<hr style="clear:none;"/>
+{% endif %} {# end displaying ingest results #}
+
+{% if form %} 
 {# TODO: better instructions #}
 <p>To upload multiple files at once, select the files that you want to upload
    on your desktop or file browser and drag them into the file area below.
@@ -35,5 +57,5 @@
       allowed_types : {{ js_allowed_types }},
    });
  </script>
-
+{% endif %}
 {% endblock %}
