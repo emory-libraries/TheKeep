@@ -14,14 +14,9 @@ from keep.common.utils import md5sum
 logger = logging.getLogger(__name__)
 
 @task
-def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
+def convert_wav_to_mp3(pid,existingFilePath=None):
     """Converts a wav file to mp3. Accepted parameters are:
     * pid: the pid of the object to have its audio converted.
-    
-    * overrideErrors: For non-valid wav files (those over 2GB), LAME will never reported 
-                      a completed conversion despite generating what appears to be a
-                      valid mp3 file. Hence, this allows one to run the task and accept
-                      the generated result regardless of LAME's status for these files.
 
     * existingFilePath: Rather than getting the WAV content from the fedora object,
                         this will use the file path provided instead.  The file
@@ -81,6 +76,7 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
                 (calculated_checksum, obj.audio.checksum))            
         
         #Call the conversion utility. 
+        #NOTE: With files greater than 2GB, the visual output from LAME will not be correct, but it will convert and return 0.
         process  = subprocess.Popen(['lame', '--preset', 'insane', wav_file_path, mp3_file_path],
                 stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE)
@@ -92,7 +88,7 @@ def convert_wav_to_mp3(pid,overrideErrors=False,existingFilePath=None):
         return_code = process.returncode
     
         #Ensure success from output, and if so, save the file and remove the temporary files.
-        if ((overrideErrors == True) or ("(100%)|" in stdout_value[1] and "Writing LAME Tag...done" in stdout_value[1]) and return_code == 0):
+        if (return_code == 0):
             #Verify the original file and this file are the same length to within 0.1 seconds.
             if(not wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=wav_file_path, mp3_file_path=mp3_file_path)):
                 logger.error("Failed to convert audio file (duration of wav and mp3 did not match), pid is: " + pid)
