@@ -7,6 +7,14 @@
   {{ block.super }} {# includes jquery  #}
   <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/md5.js"></script>
   <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.md5dropuploader.js"></script>
+  <script type="text/javascript" charset="utf-8">
+     $(document).ready(function () {
+        $("#drop_target").md5DropUploader({
+            url : "{% url audio:upload %}",
+            allowed_types : {{ js_allowed_types }},
+        });
+     });
+  </script>
 {% endblock %}
 
 {% block style %}
@@ -49,12 +57,5 @@
  </div> 
  <input type="submit" value="Upload and Ingest" id='submit-upload'/>
 </form>
-
-<script type="text/javascript" charset="utf-8">
-   $("#drop_target").md5DropUploader({
-      url : "{% url audio:upload %}",
-      allowed_types : {{ js_allowed_types }},
-   });
- </script>
 {% endif %}
 {% endblock %}

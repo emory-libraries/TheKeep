@@ -20,7 +20,7 @@ here to be an upload id).
 
 File uploads are POSTed to the configured url with these HTTP headers:
 
-  Content-Disposition:  filename=original_file.ext
+  Content-Disposition:  filename="original_file.ext"
   Content-Type
   Content-MD5
 
@@ -58,7 +58,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
        ingest_button.click(function(){
           // set a flag to automatically ingest when upload completes for all files
           var data = $(this).prev().data('md5DropUploader');
-          data['ingest_on_completion'] = true;
+          data.ingest_on_completion = true;
           $(this).prev().data('md5DropUploader', data);
           $(this).nextAll('#upload-submit-info').html("Items will be submitted for ingest when all uploads complete.");
        });
@@ -109,8 +109,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 
       var data = $this.data('md5DropUploader');
       // store current file count - marker for where to start processing in full list of files
-      var start_processing = data['file_count'];
-      var allowed_types =  data['allowed_types'];
+      var start_processing = data.file_count;
+      var allowed_types =  data.allowed_types;
       var not_allowed = new Array();
       // display files if they are allowed type, add to list of all files
       if (event.originalEvent.dataTransfer.files.length > 0) {
@@ -126,8 +126,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 // create status node and attach to file so it is easy to update
                 file.status = $('<span class="status">-</span>');
                 p.append(file.status);
-                data['files'].push(file);
-                data['file_count']++;
+                data.files.push(file);
+                data.file_count++;
             } else {
                 // push dis-allowed files into a list so they can be reported all at once
                 not_allowed.push(file);
@@ -148,13 +148,13 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         // update stored data with count & list of files
         $this.data('md5DropUploader', data);
 	// if there are new files to process, disable submit button until upload completes
-        if (data['file_count'] > start_processing) {
+        if (data.file_count > start_processing) {
           $this.md5DropUploader('disableSubmit');
         }
 
        // handle files added on the current drop
        // calculate checksum and then upload
-       $.each(data['files'], function(i, file) {
+       $.each(data.files, function(i, file) {
             // only process files added on the current drop
             if (i >= start_processing) { 
                 // update status
@@ -198,13 +198,13 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     */
         var data = $(this).data('md5DropUploader');
         // check if all files have finished uploaded
-        for (var x = 0; x < data['files'].length; x++) {
-            if (! data['files'][x].upload_id) {
+        for (var x = 0; x < data.files.length; x++) {
+            if (! data.files[x].upload_id) {
                 return;
             }
         }
         // all files have completed uploading - if requested, submit the form
-        if (data['ingest_on_completion']) {
+        if (data.ingest_on_completion) {
             $(this).parents('form').submit();
             // TODO: may want to display some kind of indicator here...
         }
@@ -246,10 +246,11 @@ Adapted in part from https://github.com/texel/drag_drop_example/
               }
             }, false);
 
-        xhr.open('POST', data['url'], true);
+        xhr.open('POST', data.url, true);
+        // set header so django will exempt the ajax request from CSRF checking
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         // set required headers for processing the file
-        xhr.setRequestHeader('Content-Disposition', "filename=" + file.fileName);
+        xhr.setRequestHeader('Content-Disposition', 'filename="' + file.fileName + '"');
         xhr.setRequestHeader('Content-Type', file.type);
         xhr.setRequestHeader('Content-MD5', file.md5);
 
@@ -267,6 +268,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.fileName + '"/>');
 
              } else { // if(xhr.status == 400)  // bad request
+                // TODO: only display response body if content type is text/plain
                 file.status.html('Upload error: ' + xhr.responseText);
                 file.upload_id = -1;
                 // TODO: include upload errors in the form somehow so that

@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, Http404, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseForbidden, \
+    HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
@@ -47,8 +48,13 @@ def upload(request):
     response_code = None
 
     if request.method == 'POST':
+        content_type = request.META.get('CONTENT_TYPE', 'application/octet-stream')        
+        media_type, sep, options = content_type.partition(';')
+        # content type is technically case-insensitive; lower-case before comparing
+        media_type = media_type.strip().lower()
+
         # if form has been posted, process & ingest files
-        if request.META['CONTENT_TYPE'].startswith('multipart/form-data'):
+        if media_type  == 'multipart/form-data':
 
             # place-holder for files to be ingested, either from single-file upload
             # or batch upload; should be added to the dictionary as filepath: initial label
@@ -95,9 +101,13 @@ def upload(request):
                         file_info = {'label': label}
                         
                         # check if file is an allowed type
+                        
+                        # NOTE: for single-file upload, browser-set type is
+                        # available as UploadedFile.content_type - but since
+                        # browser mimetypes are unreliable, calculate anyway
                         type = m.from_file(filename)
                         if ';' in type:
-                            type, charset = type.split(';')
+                            type, options = type.split(';')
                         if type not in allowed_audio_types:
                             # store error for display on detailed result page
                             file_info.update({'success': False,
@@ -156,7 +166,6 @@ def upload(request):
             
     # on GET or non-ajax POST, display the upload form
     ctx_dict['form'] = audioforms.UploadForm()
-    ctx_dict['allowed_audio_types'] = allowed_audio_types
     # convert list of allowed types for passing to javascript
     ctx_dict['js_allowed_types'] = mark_safe(json.dumps(allowed_audio_types))
 
@@ -171,7 +180,7 @@ def ajax_file_upload(request):
     directory for subsequent ingest into the repository.  The request must
     include the following headers:
 
-         * Content-Disposition: filename=original_name.wav
+         * Content-Disposition: filename="original_name.wav"          
          * Content-MD5: MD5 checksum of the file calculated before upload
 
     If the file is successfully uploaded and passes checks on file type
@@ -183,6 +192,10 @@ def ajax_file_upload(request):
     To avoid calculating MD5 checksums multiple times, the MD5 for the file
     will also be stored in the ingest staging directory, in a file named the same
     as the staging temporary filename with '.md5' added.
+
+    Note that while the Content-Disposition header is technically intended for use
+    in HTTP responses, we're using it here in HTTP requests because it is a
+    good fit for our purpose.
     """
     # NOTE: size and type request headers unused?
 
@@ -195,37 +208,48 @@ def ajax_file_upload(request):
     try:
         content_disposition = request.META['HTTP_CONTENT_DISPOSITION']
     except KeyError:
-        return HttpResponseBadRequest('Content-Disposition header is required')
+        return HttpResponseBadRequest('Content-Disposition header is required',
+                content_type='text/plain')
     if 'filename=' not in content_disposition:
-        return HttpResponseBadRequest('Content-Disposition header must include filename')
-    filename = content_disposition[len('filename='):]
+        return HttpResponseBadRequest('Content-Disposition header must include filename',
+                content_type='text/plain')
+
+    # content disposition could be something like 'attachment; filename="foo"
+    if ';' in content_disposition:
+        dispo = content_disposition.split(';')
+        for d in dispo:
+            if d.strip().startswith('filename='):
+                filename = d.strip()[len('filename='):].strip('"')
+    else:
+        filename = content_disposition[len('filename='):].strip('"')
 
     try:
         client_md5 = request.META['HTTP_CONTENT_MD5']
     except KeyError:
-        return HttpResponseBadRequest('Content-MD5 header is required')
+        return HttpResponseBadRequest('Content-MD5 header is required',
+                    content_type='text/plain')
 
-    file_base, file_extension = filename.rsplit('.', 1)
+    file_base, file_extension = os.path.splitext(filename)
 
-    #TODO: try/finally os.close()
     # create a temporary file based on the name of the original file
-    tmpfd, tmpname = tempfile.mkstemp(suffix='.%s' % file_extension,
-                                       prefix='%s_' % file_base, dir=staging_dir)
-    # write the posted data to the temp file in the staging directory
-    destination = os.fdopen(tmpfd, 'wb+')
-    destination.write(request.raw_post_data)
-    destination.close()    
-    ingest_file = os.path.basename(tmpname)
+    with tempfile.NamedTemporaryFile(mode='wb+', suffix=file_extension,
+                   prefix='%s_' % file_base, dir=staging_dir, delete=False) as upload:
+        upload.write(request.raw_post_data)
+        upload_file = upload.name
+        
+    ingest_file = os.path.basename(upload_file)
     
     try:
+        # ignoring request mimetype since it is unreliable
         m = magic.Magic(mime=True)
-        type = m.from_file(tmpname)
+        type = m.from_file(upload_file)
         if ';' in type:
-            type, charset = type.split(';')
+            type, options = type.split(';')
         if type not in allowed_audio_types:
-            os.remove(tmpname)
+            os.remove(upload_file)
             # send response with status 415 Unsupported Media Type
-            return HttpResponseUnsupportedMediaType('File type %s is not allowed' % type)
+            return HttpResponseUnsupportedMediaType('File type %s is not allowed' % type,
+                        content_type='text/plain')
     except Exception as e:
         logging.debug(e)
         
@@ -233,23 +257,25 @@ def ajax_file_upload(request):
     # MD5 to make sure that the entire file was uploaded correctly
     try:
         start = time.time()
-        calculated_md5 = md5sum(tmpname)
+        calculated_md5 = md5sum(upload_file)
         logger.debug('Calculated MD5 checksum for %s: %s (took %f secs)' %
                     (filename, calculated_md5, time.time() - start))
         if calculated_md5 != client_md5:
             logger.debug('calculated md5 %s did not match request MD5 %s' % \
                         (calculated_md5, client_md5))
-            return HttpResponseBadRequest('Checksum mismatch; uploaded data may be incomplete or corrupted')
+            return HttpResponseBadRequest('Checksum mismatch; uploaded data may be incomplete or corrupted',
+                    content_type='text/plain')
         
         # if the MD5 check passes, store the MD5 so we don't have to calculate it again 
         with open(os.path.join(staging_dir, ingest_file + '.md5'), 'w') as md5file:
             md5file.write(calculated_md5)
 
     except Exception as e:
-        logging.debug(e)
+        logging.error(e)
+        logger.debug("Error details:\n" + traceback.format_exc())
 
     # success: return the name of the staging file to be used for ingest
-    return HttpResponse(ingest_file)
+    return HttpResponse(ingest_file, content_type='text/plain')
     
 @permission_required('is_staff')
 def search(request):

@@ -109,7 +109,8 @@ class AudioViewsTest(TestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, upload_url))
-        self.assertContains(response, '<input')
+        self.assertNotEqual(None, response.context['form'])
+        self.assert_(isinstance(response.context['form'], audioforms.UploadForm))
         # is this sufficient? anything else to test here?
 
     def test_ajax_file_upload(self):
@@ -122,14 +123,13 @@ class AudioViewsTest(TestCase):
         post_options = {
             'path': upload_url,
             'HTTP_X_REQUESTED_WITH': 'XMLHttpRequest',
-            'HTTP_CONTENT_DISPOSITION': 'filename=example.wav',
-            'CONTENT_TYPE': 'audio/wav',
-            'content_type': 'multipart/form-data',
+            'HTTP_CONTENT_DISPOSITION': 'filename="example.wav"',
+            'content_type': 'audio/wav',
         }
         # POST non-wav file to AJAX Upload view results in an error
         with open(mp3_filename, 'rb') as mp3:
             opts = post_options.copy()
-            opts['HTTP_CONTENT_DISPOSITION'] = 'filename=example.mp3'
+            opts['HTTP_CONTENT_DISPOSITION'] = 'attachment; filename="example.mp3"'
             response = self.client.post(data=mp3.read(), HTTP_CONTENT_MD5=mp3_md5, **opts)
             self.assertEqual('File type audio/mpeg is not allowed',response.content)
             code = response.status_code
@@ -194,6 +194,10 @@ class AudioViewsTest(TestCase):
                 'response content should be filename on success; should start with uploaded file base name')
             self.assert_(uploaded_filename.endswith('.wav'),
                 'response content should be filename on success; should end with uploaded file suffix (.wav)')
+            expected = 'text/plain'
+            self.assertEqual(response['Content-Type'], expected,
+                        "Expected '%s' but returned '%s' for %s mimetype" % \
+                        (expected, response['Content-Type'], upload_url))
             
             # temp files should exist in staging dir
             upload_filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
