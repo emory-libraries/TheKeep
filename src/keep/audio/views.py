@@ -106,8 +106,7 @@ def upload(request):
                         # available as UploadedFile.content_type - but since
                         # browser mimetypes are unreliable, calculate anyway
                         type = m.from_file(filename)
-                        if ';' in type:
-                            type, options = type.split(';')
+                        type, separator, options = type.partition(';')
                         if type not in allowed_audio_types:
                             # store error for display on detailed result page
                             file_info.update({'success': False,
@@ -243,8 +242,7 @@ def ajax_file_upload(request):
         # ignoring request mimetype since it is unreliable
         m = magic.Magic(mime=True)
         type = m.from_file(upload_file)
-        if ';' in type:
-            type, options = type.split(';')
+        type, separator, options = type.partition(';')
         if type not in allowed_audio_types:
             os.remove(upload_file)
             # send response with status 415 Unsupported Media Type
