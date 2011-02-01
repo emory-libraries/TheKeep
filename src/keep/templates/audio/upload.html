@@ -11,7 +11,7 @@
      $(document).ready(function () {
         $("#drop_target").md5DropUploader({
             url : "{% url audio:upload %}",
-            allowed_types : {{ js_allowed_types }},
+           allowed_types : {{ js_allowed_types }},
         });
      });
   </script>
@@ -55,7 +55,7 @@
    <p class='extra instructions'>Drag files here.</p>
    {{ form.as_p }}  {# single-file upload (non HTML5 fall-back) #}
  </div> 
- <input type="submit" value="Upload and Ingest" id='submit-upload'/>
+ <input class="form-submit" type="submit" value="Submit" id='submit-upload'/>
 </form>
 {% endif %}
 {% endblock %}

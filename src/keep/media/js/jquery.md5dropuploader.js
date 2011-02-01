@@ -16,7 +16,10 @@ see if they are in the list of allowed types (when specified), an MD5 checksum
 will be calculated on the client side, and then the file will be posted
 the the configured url.  On successful upload, hidden form inputs will be added
 with the original file name and the response from the ajax POST request (assumed
-here to be an upload id).
+here to be an upload id).  The md5DropUploader target element should be
+ inside a form; this plugin binds a form submission handler to work with ajax
+file uploads: when submission is requested while files are still being processed,
+the form will be submitted when all files complete.
 
 File uploads are POSTed to the configured url with these HTTP headers:
 
@@ -31,37 +34,30 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 (function( $ ){
 
   var methods = {
+
+    /**
+     * Initialize the object:
+     * configure settings, add special upload & submit button, and
+     * bind methods as event handlers.
+     * If HTML5 File API is not available, does nothing.
+     */
     init : function(options) {  
 
     return this.each(function(){
-    /* initialize the object:
-        configure settings, add special upload & submit button, and
-        bind methods as event handlers.
-    */
+        // if HTML5 file API is not supported, don't do anything
+        if (typeof window['FileReader'] != 'function') {            
+            return;
+        }
+       
        var $this = $(this);
        var data = {
         'file_count': 0,
         'files': new Array(),
         'ingest_on_completion': false,
-        allowed_types: [],
+        allowed_types: []
        };
        $.extend(data, options);
        $this.addClass('md5uploader');
-
-       // TODO: consolidate submission/wait-for-upload logic in a single
-       // form submission button
-       // create a special-function ingest button and add it after uploader element
-       var ingest_button = $('<input type="button" value="Submit when all uploads complete"/>');
-       $this.after(ingest_button);
-       // place-holder for submit information
-       ingest_button.after('<p id="upload-submit-info"/>');
-       ingest_button.click(function(){
-          // set a flag to automatically ingest when upload completes for all files
-          var data = $(this).prev().data('md5DropUploader');
-          data.ingest_on_completion = true;
-          $(this).prev().data('md5DropUploader', data);
-          $(this).nextAll('#upload-submit-info').html("Items will be submitted for ingest when all uploads complete.");
-       });
 
        // following recommended practice: store data in one object with name of plugin
        $this.data('md5DropUploader', data);
@@ -72,6 +68,12 @@ Adapted in part from https://github.com/texel/drag_drop_example/
        $this.bind('dragleave.md5DropUploader', methods.dragLeave);
        // custom event to be triggered after a file is uploaded
        $this.bind('afterUpload.md5DropUploader', methods.afterUpload);
+
+       // bind parent form submission event to custom submit handler
+       $this.parents('form').submit(methods.submitForm);
+       // add place-holder element for form submission status/information
+       $this.parents('form').append($('<span id="submit-info"/>'));
+
      });
     },
 
@@ -93,24 +95,22 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 
     dragLeave : function (event) {
       $(this).removeClass('dragover');
-
-      return false;
     },
 
+    /**
+     * Process files that are dropped.  Add any allowed types to the stored
+     * list of files, then MD5 sum and upload each of them, reporting
+     * status and progress to the user.
+     */
     drop : function(event) {
-    /* Process files that are dropped.  Add any allowed types to the stored
-       list of files, then MD5 sum and upload each of them, reporting
-       status and progress to the user.
-    */
       var $this = $(this);
       $this.removeClass('dragover');
       event.stopPropagation();
       event.preventDefault();
 
-      var data = $this.data('md5DropUploader');
       // store current file count - marker for where to start processing in full list of files
-      var start_processing = data.file_count;
-      var allowed_types =  data.allowed_types;
+      var start_processing = $this.data('md5DropUploader').file_count;
+      var allowed_types =  $this.data('md5DropUploader').allowed_types;
       var not_allowed = new Array();
       // display files if they are allowed type, add to list of all files
       if (event.originalEvent.dataTransfer.files.length > 0) {
@@ -126,8 +126,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 // create status node and attach to file so it is easy to update
                 file.status = $('<span class="status">-</span>');
                 p.append(file.status);
-                data.files.push(file);
-                data.file_count++;
+                $this.data('md5DropUploader').files.push(file);
+                $this.data('md5DropUploader').file_count++;
             } else {
                 // push dis-allowed files into a list so they can be reported all at once
                 not_allowed.push(file);
@@ -145,16 +145,10 @@ Adapted in part from https://github.com/texel/drag_drop_example/
           });
           alert(msg);
         }
-        // update stored data with count & list of files
-        $this.data('md5DropUploader', data);
-	// if there are new files to process, disable submit button until upload completes
-        if (data.file_count > start_processing) {
-          $this.md5DropUploader('disableSubmit');
-        }
-
+        
        // handle files added on the current drop
-       // calculate checksum and then upload
-       $.each(data.files, function(i, file) {
+       // - calculate checksum and then upload
+       $.each($this.data('md5DropUploader').files, function(i, file) {
             // only process files added on the current drop
             if (i >= start_processing) { 
                 // update status
@@ -183,57 +177,83 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                       }
                 };
                 reader.readAsBinaryString(file);
+               
             }
          });
       };
       return false;
     },  // end drop method
 
+    /**
+     * After each file finishes uploading, if form submission has been
+     * requested after upload completes and all dropped files have been
+     * uploaded, submit the form.
+     */
     afterUpload: function(event) {
-    /**  After each file finishes uploading:
-         - check if all files have finished uploading
-         - if form submission has been requested after upload completes, submit
-           the form
-         - otherwise, re-enable the form submit button
-    */
-        var data = $(this).data('md5DropUploader');
-        // check if all files have finished uploaded
-        for (var x = 0; x < data.files.length; x++) {
-            if (! data.files[x].upload_id) {
-                return;
+        var $this = $(this);
+        if ($this.data('md5DropUploader').submit_on_completion &&
+                $this.md5DropUploader('allFilesUploaded')) {
+            $this.parents('form').submit();
+        }
+    },
+
+    /**
+     * Check if all files that have been dragged in have completed uploading.
+     * Returns true when all files have completed uploading, false if any have not.
+     */
+    allFilesUploaded: function() {    
+        // loop through all dropped files to check if upload has completed
+        var $this = $(this);
+        for (var x = 0; x < $this.data('md5DropUploader').files.length; x++) {
+            if (! $this.data('md5DropUploader').files[x].upload_id) {
+                return false;
             }
         }
-        // all files have completed uploading - if requested, submit the form
-        if (data.ingest_on_completion) {
-            $(this).parents('form').submit();
-            // TODO: may want to display some kind of indicator here...
-        }
-        // otherwise, re-enable normal submit button
-        $(this).md5DropUploader('enableSubmit');
+        return true;
     },
 
-    disableSubmit: function() {
-    /* shortcut to disable the form submission button */
-       $(this).nextAll('[type="submit"]').attr('disabled', 'disabled');
-    },
-
-    enableSubmit: function() {
-   /* shortcut to enable the form submission button */
-      $(this).nextAll('[type="submit"]').removeAttr('disabled');
-    },
-
-    uploadFile: function(file) {
-    /*  Upload a file to the configured url via XMLHttpRequest.
-        When the request returns status 200, adds hidden form inputs.
-        On any other status code, sets file.upload_id to -1 to indicate
-        upload completed but did not succeed.
-        Triggers custom 'afterUpload' event after the request completes.
-    */
+    /* Form submission logic: don't submit the form while any dropped files are
+     * still being processed, and allow user to click the button now to submit
+     * the form after any in-progress uploads complete.
+     * Used as form submission event handler.
+     */
+    submitForm: function(event) {
         var $this = $(this);
-        var data = $this.data('md5DropUploader');
+        // retrieve the md5 upload element relative to the form
+        var uploader = $this.find('.md5uploader');
+        // check if any dropped files have not yet been uploaded
+        if (! uploader.md5DropUploader('allFilesUploaded')) {
+            // if all dropped files have not yet completed,
+            // set a flag to submit the form when uploads complete
+            uploader.data('md5DropUploader').submit_on_completion = true;
+            
+            // display a message to the user
+            $this.find('#submit-info').html('The form will submit when all uploads complete.')
+            
+            // don't propagate the submit event
+            event.stopPropagation();
+            event.preventDefault();
+            return false;            
+        }
+
+        // otherwise, all dropped files have completed upload - submit normally        
+        $this.find('#submit-info').html('Submitting...')
+        return true;
+    },
+
+    /**
+     * Upload a file to the configured url via XMLHttpRequest.
+     * When the request returns status 200, adds hidden form inputs.
+     * On any other status code, sets file.upload_id to -1 to indicate
+     * upload completed but did not succeed.
+     * Triggers custom 'afterUpload' event after the request completes.
+     */
+    uploadFile: function(file) {
+        var $this = $(this);
+        // use jQuery ajax method?        
         var xhr   = new XMLHttpRequest();
 
-        // display an upload progress bar
+        // display upload progress bar
         var indicator = $('<p/>');
         file.progress = $('<div class="progress-bar"/>');
         file.progress.append(indicator);
@@ -246,7 +266,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
               }
             }, false);
 
-        xhr.open('POST', data.url, true);
+        xhr.open('POST', $this.data('md5DropUploader').url, true);
         // set header so django will exempt the ajax request from CSRF checking
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         // set required headers for processing the file
@@ -267,12 +287,17 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 file.status.parent().append('<input type="hidden" name="fileUploads" value="' + file.upload_id + '"/>');
                 file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.fileName + '"/>');
 
-             } else { // if(xhr.status == 400)  // bad request
-                // TODO: only display response body if content type is text/plain
-                file.status.html('Upload error: ' + xhr.responseText);
-                file.upload_id = -1;
-                // TODO: include upload errors in the form somehow so that
-                // we can report them on the form submission page
+             } else {
+               // upload errors should normally return a plain-text error message
+               if (xhr.getResponseHeader('Content-Type') == 'text/plain') {
+                   file.status.html('Upload error: ' + xhr.responseText);               
+               }  else {
+                   // if not plain-text, something probably went wrong (500/exception)
+                   file.status.html('Upload error');    
+               }
+               file.upload_id = -1;
+               // TODO: include upload errors in the form somehow so that
+               // we can report them on the form submission page
              }
 
              // signal the uploader for after-upload logic
@@ -281,11 +306,11 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         };
 
         xhr.send(file);
-    },  // end uploadFile method
+    }  // end uploadFile method
   };
   
 
-  $.fn.md5DropUploader = function( method ) {
+  $.fn.md5DropUploader = function(method) {
     if ( methods[method] ) {
       return methods[method].apply( this, Array.prototype.slice.call( arguments, 1 ));
     } else if ( typeof method === 'object' || ! method ) {
@@ -302,19 +327,23 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 /* convert integer filesize in bytes to a human-readable format */
 function filesize_format(size) {
     if (size === 0) {
-        return '';
+        return '0 bytes';
     } else if (size < 100) {
         return '' + size + ' bytes';
-    } else if (size < (1000 * 1000)) {
-        size = size / 1000;
-        size = '' + size;
-        vals = size.split('.');
-        return vals[0] + '.' + vals[1].substring(0, 1) + 'kb';
+    } else if (size < (1000 * 1000)) {        
+        size = '' +  size/1000;
+        if (size.indexOf('.') != -1) {
+            vals = size.split('.');
+            size = vals[0] + '.' + vals[1].substring(0, 1);
+        }
+        return size + 'kb';
     } else {
-        size = size / (1000 * 1000);
-        size = '' + size;
-        vals = size.split('.');
-        return vals[0] + '.' + vals[1].substring(0, 1) + 'mb';
+        size = '' + size/(1000 * 1000);
+        if (size.indexOf('.') != -1) {
+            vals = size.split('.');
+            size = vals[0] + '.' + vals[1].substring(0, 1);
+        }
+        return size + 'mb';
     }
     // TODO: gb ?
 }
