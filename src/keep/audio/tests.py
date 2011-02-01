@@ -1561,11 +1561,11 @@ class SourceAudioConversions(TestCase):
         self.assertRaises(RequestFailed, convert_wav_to_mp3, 'bogus:DoesNotExist')
 
         # test with invalid file.
-        self.assertRaises(IOError, convert_wav_to_mp3, self.obj.pid, False, "CompletelyBogusFile.wav")
+        self.assertRaises(IOError, convert_wav_to_mp3, self.obj.pid, "CompletelyBogusFile.wav")
 
     def test_non_matching_checksum(self):
         #Use the alternate wav file to kick off an incorrect checksum match.
-        self.assertRaises(Exception, convert_wav_to_mp3, self.obj.pid, False, alternate_wav_filename)
+        self.assertRaises(Exception, convert_wav_to_mp3, self.obj.pid, alternate_wav_filename)
 
     def test_changing_wav_file(self):
         self.obj.audio.content = open(alternate_wav_filename)  # FIXME: at what point does/should this get closed?
