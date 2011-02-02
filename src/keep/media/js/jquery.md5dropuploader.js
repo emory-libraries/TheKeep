@@ -153,30 +153,24 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             if (i >= start_processing) { 
                 // update status
                 file.status.html('calculating checksum');
-                // give each file a separate reader so they don't clobber each other
-                reader = new FileReader();
-                // set handler for when file reading completes
-                reader.onloadend = function (evt){
-                      file.status.html('calculating checksum');
-                      file.md5 = rstr2hex(rstr_md5(evt.target.result));
-                      console.log(file.fileName + ' checksum ' + file.md5);
-                      file.status.html('uploading');
-                      $this.md5DropUploader('uploadFile', file);
-                    };
-                // display checksum progress (currently displays file read progress)
-                // TODO: consolidate progress bar logic (duplicated in uploadFile method)
+                console.log(file.fileName + ' calculating checksum')
                 var indicator = $('<p/>');
                 file.progress = $('<div class="progress-bar"/>');
                 file.progress.append(indicator);
                 file.status.append(file.progress);
-                reader.onprogress = function(event) {
-                      if (event.lengthComputable) {
-                        var percentage = Math.round((event.loaded * 100) / event.total);
-                        indicator.width(percentage);
-                        indicator.html(percentage + "%");
-                      }
+
+                // create a streaming md5 calculator for this file
+                var md5 = new MD5();
+                var next_step = function() {
+                  // this is what we'll do after checksumming is complete
+                  file.status.html('uploading');
+                  $this.md5DropUploader('uploadFile', file);
                 };
-                reader.readAsBinaryString(file);
+                // kick off the checksum process in the background.
+                var kickoff_checksum = function() {
+                  calculate_checksum(file, indicator, 0, md5, next_step);
+                };
+                setTimeout(kickoff_checksum, 0);
                
             }
          });
@@ -319,6 +313,58 @@ Adapted in part from https://github.com/texel/drag_drop_example/
       $.error( 'Method ' +  method + ' does not exist on jQuery.md5DropUploader' );
     }
   };
+
+  /* Incrementally calculate a file checksum without eliminating browser
+   * responsiveness.
+   *   :param: file = the file (an html5 file object)
+   *   :param: indicator = a dom element to update with progress
+   *   :param: start = the file offset to start checksumming at
+   *   :param: md5 = a streaming md5 calculator object
+   *   :param: next_step = a function to call after md5 calculation
+   * This method grabs a slice from the file starting at `start` and asks
+   * the browser to load that slice. When the slice is loaded, this function
+   * will update `indicator` and push the chunk's data into `md5`. If
+   * there's more file to process, it'll recurse to handle the next slice.
+   * Once all slices have been processed, it'll attach the checksum to the
+   * file object and call `next_step`.
+   */
+  function calculate_checksum(file, indicator, start, md5, next_step) {
+    var size = 4096;
+    var slice = file.slice(start, size);
+
+    // make a reader for handling the current slice.
+    var reader = new FileReader();
+    reader.onloadend = function (evt){
+      // after loading the slice update the ui
+      file.status.html('calculating checksum');
+      var percentage = Math.round((start * 100) / file.size);
+      indicator.width(percentage);
+      indicator.html(percentage + '%');
+      file.status.append(file.progress);
+
+      // then ship the data to the md5 calculator
+      md5.process_bytes(evt.target.result);
+
+      if (start + size < file.size) {
+        // if there are more chunks then kick off the next chunk.
+        var process_next_slice = function () {
+          calculate_checksum(file, indicator, start+size,
+                             md5, next_step);
+        };
+        setTimeout(process_next_slice, 0);
+      } else {
+        // if we're done with the file then record the md5sum
+        md5.finish();
+        file.md5 = md5.asString();
+        console.log(file.fileName + ' checksum ' + file.md5);
+        // and go where the original caller asked us to
+        next_step();
+      }
+    };
+    // kick off the read that we just configured
+    reader.readAsBinaryString(slice);
+  }
+
 })( jQuery );
 
 
