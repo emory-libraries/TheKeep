@@ -233,10 +233,20 @@ def ajax_file_upload(request):
     # create a temporary file based on the name of the original file
     with tempfile.NamedTemporaryFile(mode='wb+', suffix=file_extension,
                    prefix='%s_' % file_base, dir=staging_dir, delete=False) as upload:
-        upload.write(request.raw_post_data)
+        try:
+            content_length = long(request.environ['CONTENT_LENGTH'])
+        except:
+            content_length = None
+
+        # request.raw_post_data would force us to read the entire file
+        # contents into memory before writing it, which could be problematic
+        # if the file is large. reading instead straight from wsgi.input
+        # allows us to handle it a chunk at a time
+        _dump_post_data(request.environ['wsgi.input'], upload, content_length)
         upload_file = upload.name
         
     ingest_file = os.path.basename(upload_file)
+    logger.debug('wrote ' + ingest_file)
     
     try:
         # ignoring request mimetype since it is unreliable
@@ -249,7 +259,7 @@ def ajax_file_upload(request):
             return HttpResponseUnsupportedMediaType('File type %s is not allowed' % type,
                         content_type='text/plain')
     except Exception as e:
-        logging.debug(e)
+        logger.debug(e)
         
     # Calculate an MD5 for the uploaded file and compare with the client-calculated
     # MD5 to make sure that the entire file was uploaded correctly
@@ -269,11 +279,38 @@ def ajax_file_upload(request):
             md5file.write(calculated_md5)
 
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         logger.debug("Error details:\n" + traceback.format_exc())
 
     # success: return the name of the staging file to be used for ingest
     return HttpResponse(ingest_file, content_type='text/plain')
+
+_DUMP_BLOCK_SIZE = 16 * 1024 # mostly arbitrary. this size seems nice.
+def _dump_post_data(inf, outf, size=None):
+    '''Copy data from `inf` to `outf` in chunks. If the caller happens to
+    know the `size` in advance, read only that many bytes.
+    '''
+    while True:
+        # if we know the size and it's less than a block, then only read
+        # that much. if we don't know, or if it's bigger than a block, then
+        # read a whole block.
+        read_length = _DUMP_BLOCK_SIZE
+        if size is not None and size < read_length:
+            read_length = size
+
+        # copy a single block of data.
+        block = inf.read(read_length)
+        if not block: # EOF from client. that's all she wrote.
+            break
+        outf.write(block)
+
+        # if we have a content_length, then mark off the bits we copied.
+        # if we've read it all, then we're done.
+        if size:
+            size -= len(block)
+        if size == 0:
+            break
+
     
 @permission_required('is_staff')
 def search(request):
