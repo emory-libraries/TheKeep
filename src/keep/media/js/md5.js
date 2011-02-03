@@ -96,11 +96,26 @@ MD5.prototype.asArray = function() {
 
   /* Pad an end-of-file block array per MD5 algorithm. */
   function pad(block, total_bytes, block_bytes) {
-    var total_bits = total_bytes * 8;
     var block_bits = block_bytes * 8;
 
+    /* split the total bit count. md5 wants a 64-bit number. the md5
+     * algorithm implementation here is based on 32-bit numbers, so we need
+     * to represent our total bits as two 32-bit numbers: the high half and
+     * the low half of the total bit count.
+     *
+     * there are 8 bits in a byte, so the total number of bits is
+     * total_bytes * 8. multiplying by 8 is equivalent to left-shifting by
+     * 3. that means that the bottom half of our number is simply the count
+     * left-shifted by 3, and the highest 3 bits of that count carry over
+     * into the bottom 3 bits of the high half. *whew*.
+     */
+    var total_bits_lo = total_bytes << 3;
+    var total_bits_hi = total_bytes >> 29; // 32 - 3 == 29
+
     block[block_bits >> 5] |= 0x80 <<((block_bits) % 32);
-    block[(((block_bits + 64) >>> 9) << 4) + 14] = total_bits;
+    var size_offset = (((block_bits + 64) >>> 9) << 4) + 14;
+    block[size_offset] = total_bits_lo;
+    block[size_offset+1] = total_bits_hi;
   }
 
 })();
