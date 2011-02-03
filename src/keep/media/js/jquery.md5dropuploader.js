@@ -329,7 +329,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
    * file object and call `next_step`.
    */
   function calculate_checksum(file, indicator, start, md5, next_step) {
-    var size = 4096;
+    var size = 1024 * 1024; // 1MB chunks seem to work well, but might still want tweaking
     var slice = file.slice(start, size);
 
     // make a reader for handling the current slice.
