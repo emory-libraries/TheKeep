@@ -1,14 +1,61 @@
 {% extends "site_base.html" %}
 
 {% block page-subtitle %}: Audio : Upload{% endblock %}
-{% block content-title %}Upload an audio file.{% endblock %}
+{% block content-title %}Upload audio files.{% endblock %}
+
+{% block scripts %}
+  {{ block.super }} {# includes jquery  #}
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/md5.js"></script>
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.md5dropuploader.js"></script>
+  <script type="text/javascript" charset="utf-8">
+     $(document).ready(function () {
+        $("#drop_target").md5DropUploader({
+            url : "{% url audio:upload %}",
+           allowed_types : {{ js_allowed_types }},
+        });
+     });
+  </script>
+{% endblock %}
+
+{% block style %}
+    {{ block.super }}
+   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/audio-upload.css" />
+{% endblock %}
 
 {% block content-body %}
-  {{ block.super }}
+{% if ingest_results %} {# If any files were processed for ingest, display results. #}
+<p>Processed {{ ingest_results|length }} file{{ ingest_results|pluralize }} for upload.</p>
+<ul>
+  {# group results by success (will be True or False) #}
+  {% regroup ingest_results|dictsort:'success' by success as results %}
+    {% for status in results %}
+     <li>{{ status.list|length }} file{{ status.list|pluralize }}
+         {% if status.grouper %}successfully ingested{% else %}failed to upload{% endif %}:
+         <ul>
+             {% for file in status.list %}
+                <li><b>{{ file.label }}</b>
+                    {% if file.pid %}<a href="{% url audio:edit file.pid %}">{{ file.pid }}</a>{% endif %}
+                    {% if file.message %}{{ file.message }} {% endif %}
+                </li>
+             {% endfor %}
+         </ul>
+  {% endfor %}
+</ul>
+<hr style="clear:none;"/>
+{% endif %} {# end displaying ingest results #}
+
+{% if form %} 
+{# TODO: better instructions #}
+<p>Drag files into the box below to upload them. If your browser doesn't
+  support that, then use the form below to choose a single file for
+  upload.</p>
 
 <form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Upload" />
+ <div id="drop_target">
+   <p class='extra instructions'>Drag files here.</p>
+   {{ form.as_p }}  {# single-file upload (non HTML5 fall-back) #}
+ </div> 
+ <input class="form-submit" type="submit" value="Submit" id='submit-upload'/>
 </form>
-
+{% endif %}
 {% endblock %}

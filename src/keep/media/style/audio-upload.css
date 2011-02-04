@@ -1,0 +1,47 @@
+/* styles for drag & drop file batch upload/ingest */
+.md5uploader {
+  border: 2px dashed gray;
+  padding: 10px;
+  margin-bottom:10px;
+  -moz-border-radius: 15px;
+  border-radius: 15px;
+}
+.md5uploader.dragover {
+  border-color: green;
+  background-color:#efefef;
+}
+/* don't display drag/drop instructions unless md5uploader is enabled */
+.extra.instructions {display:none;}
+.md5uploader .extra.instructions { display:block; margin: 0px 0px 10px 0px; }
+
+.md5uploader .status { float:right; }
+.md5uploader .remove {
+    color: red;
+    font-weight: bold;
+    font-family:cursive;
+    cursor:pointer; 
+}
+.md5uploader .progress-bar	{
+    float:right;
+    width: 100px;
+    height: 10px;
+    border: 1px solid #000;
+    margin:5px;
+}
+.md5uploader .progress-bar p {
+    width: 5px;
+    height: 10px;
+    background-color: #1E528C;
+    color:#FFFFFF;
+    font-size: 8px;
+    line-height:10px;
+}
+.md5uploader .file-info {
+    font-style: italic;
+    font-size: 90%;
+}
+
+form #submit-info {
+    font-style: italic;
+    padding-left: 15px;
+}
