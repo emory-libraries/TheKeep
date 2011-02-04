@@ -21,10 +21,7 @@ from eulcore.xmlmap  import load_xmlobject_from_string
 
 from keep import mods
 from keep.audio import forms as audioforms
-from keep.audio.forms import ModsEditForm
-from keep.audio.models import AudioObject, AudioMods, wav_duration, \
-        SourceTech, SourceTechMeasure, DigitalTech, TransferEngineer, \
-        CodecCreator, Rights, AccessCondition, wav_and_mp3_duration_comparator
+from keep.audio import models as audiomodels
 from keep.audio.management.commands import ingest_cleanup
 from keep.collection.fixtures import FedoraFixtures
 from keep.audio.tasks import convert_wav_to_mp3
@@ -239,9 +236,9 @@ class AudioViewsTest(TestCase):
         self.pids.append(result['pid'])
 
         repo = Repository()
-        new_obj = repo.get_object(result['pid'], type=AudioObject)
+        new_obj = repo.get_object(result['pid'], type=audiomodels.AudioObject)
         # check object was created with audio cmodel
-        self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
+        self.assertTrue(new_obj.has_model(audiomodels.AudioObject.AUDIO_CONTENT_MODEL),
             "audio object was created with the correct content model")
         self.assertEqual('example.wav', new_obj.label,
             'initial object label set from original file name (not temporary upload filename)')
@@ -287,9 +284,9 @@ class AudioViewsTest(TestCase):
             self.pids.append(result['pid'])
 
             repo = Repository()
-            new_obj = repo.get_object(result['pid'], type=AudioObject)
+            new_obj = repo.get_object(result['pid'], type=audiomodels.AudioObject)
             # check object was created with audio cmodel
-            self.assertTrue(new_obj.has_model(AudioObject.AUDIO_CONTENT_MODEL),
+            self.assertTrue(new_obj.has_model(audiomodels.AudioObject.AUDIO_CONTENT_MODEL),
                 "audio object was created with the correct content model")
             # seek to 0 so we can re-read file data
             wav.seek(0)
@@ -327,7 +324,7 @@ class AudioViewsTest(TestCase):
 
         # create some test objects to search for
         repo = Repository()
-        obj = repo.get_object(type=AudioObject)
+        obj = repo.get_object(type=audiomodels.AudioObject)
         obj.mods.content.title = 'test search object 1'
         obj.mods.content.create_general_note()
         obj.mods.content.general_note.text = 'general note'
@@ -335,7 +332,7 @@ class AudioViewsTest(TestCase):
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1492-05'))
         obj.save()
-        obj2 = repo.get_object(type=AudioObject)
+        obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'test search object 2'
         obj2.mods.content.access_conditions.append(mods.AccessCondition(type='restriction',
                                                                     text='no photos'))
@@ -449,7 +446,7 @@ of 2''',
     def test_download_audio(self):
         # create a test audio object
         repo = Repository()
-        obj = repo.get_object(type=AudioObject)
+        obj = repo.get_object(type=audiomodels.AudioObject)
         obj.label = "my audio test object"
         obj.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
         obj.save()
@@ -478,7 +475,7 @@ of 2''',
 
     def test_download_compressed_audio(self):
         # create a test audio object
-        obj = AudioObject.init_from_file(wav_filename,
+        obj = audiomodels.AudioObject.init_from_file(wav_filename,
                                              'my audio test object',
                                               checksum=wav_md5)
         obj.save()
@@ -518,7 +515,7 @@ of 2''',
 
     def test_edit(self):
         # create a test audio object to edit
-        obj = AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
         # pre-populate some data to check it is set in form instance
         obj.mods.content.create_general_note()
         obj.mods.content.general_note.text = 'Here is some general info about this item.'
@@ -572,7 +569,7 @@ of 2''',
                              % (expected, code, edit_url))
         self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
                 "MODS EditForm is set in response context")
-        self.assert_(isinstance(response.context['form'].object_instance, AudioObject),
+        self.assert_(isinstance(response.context['form'].object_instance, audiomodels.AudioObject),
                 "form instance is an AudioObject")
         self.assertContains(response, self.rushdie.pid)
         self.assertContains(response, self.esterbrook.pid)
@@ -672,7 +669,7 @@ of 2''',
 
         # retrieve the modified object from Fedora to check for updates
         repo = Repository()
-        updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
+        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
         self.assertEqual(audio_data['mods-title'], updated_obj.mods.content.title,
             'mods title in fedora matches posted title')        
         self.assertEqual(audio_data['mods-general_note-text'], updated_obj.mods.content.general_note.text,
@@ -717,7 +714,7 @@ of 2''',
         self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
         self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
         # codec creator - used id 3, which has two hardware fields
-        hardware, software, version = CodecCreator.configurations[audio_data['dt-hardware']]
+        hardware, software, version = audiomodels.CodecCreator.configurations[audio_data['dt-hardware']]
         self.assertEqual(audio_data['dt-hardware'], dt.codec_creator.id)
         self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
         self.assertEqual(hardware[1], dt.codec_creator.hardware_list[1])
@@ -729,10 +726,10 @@ of 2''',
         data['dt-hardware'] = '4' # only one hardware, no software version
         response = self.client.post(edit_url, data)
         # get the latest copy of the object 
-        updated_obj = repo.get_object(pid=obj.pid, type=AudioObject)
+        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
         dt = updated_obj.digitaltech.content
         # codec creator - id 4 only has one two hardware and no software version
-        hardware, software, version = CodecCreator.configurations[data['dt-hardware']]
+        hardware, software, version = audiomodels.CodecCreator.configurations[data['dt-hardware']]
         self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
         self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
         self.assertEqual(1, len(dt.codec_creator.hardware_list)) # should only be one now
@@ -757,7 +754,7 @@ of 2''',
                 "MODS EditForm is set in response context after save and continue editing")
 
         # force a schema-validation error (shouldn't happen normally)
-        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, AudioMods)
+        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
         obj.save("schema-invalid MODS")
         response = self.client.post(edit_url, audio_data)
         self.assertContains(response, '<ul class="errorlist">')
@@ -790,7 +787,7 @@ of 2''',
         # verify that we can get away with filling in only required fields.
 
         # create a test audio object to edit
-        obj = AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
@@ -840,7 +837,7 @@ of 2''',
 
     def test_raw_datastream(self):
         # create a test audio object to edit
-        obj = AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
         obj.mods.content.title = 'test audio object'
         obj.sourcetech.content.note = 'source note'
         # pre-populate digital tech metadata
@@ -931,7 +928,7 @@ of 2''',
 
         # create some test objects to show up in the feed
         repo = Repository()
-        obj = repo.get_object(type=AudioObject)
+        obj = repo.get_object(type=audiomodels.AudioObject)
         obj.mods.content.title = 'Dylan Thomas reads anthology'
         obj.mods.content.create_part_note()
         obj.mods.content.part_note.text = 'Side A'
@@ -942,24 +939,24 @@ of 2''',
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
         obj.save()
-        obj2 = repo.get_object(type=AudioObject)
+        obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
         obj2.rights.content.create_access_condition()
         obj2.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj2.collection_uri = self.esterbrook.uri
         obj2.save()
-        obj3 = repo.get_object(type=AudioObject)
+        obj3 = repo.get_object(type=audiomodels.AudioObject)
         obj3.mods.content.title = 'No Access copy'
         obj3.rights.content.create_access_condition()
         obj3.rights.content.access_condition.code = 'PD-UNRESTRICT'
         obj3.save()
-        obj4 = repo.get_object(type=AudioObject)
+        obj4 = repo.get_object(type=audiomodels.AudioObject)
         obj4.rights.content.create_access_condition()
         obj4.rights.content.access_condition.code = 'UNDETERMINED'
         obj4.compressed_audio.content = open(mp3_filename)
         obj4.save()
-        obj5 = repo.get_object(type=AudioObject)
+        obj5 = repo.get_object(type=audiomodels.AudioObject)
         obj5.compressed_audio.content = open(mp3_filename)
         obj5.save()
         # add pids to list for clean-up in tearDown
@@ -1015,7 +1012,7 @@ of 2''',
 
         # create some test objects to show up in the feeds
         repo = Repository()
-        obj = repo.get_object(type=AudioObject)
+        obj = repo.get_object(type=audiomodels.AudioObject)
         obj.mods.content.title = 'Dylan Thomas reads anthology'
         obj.mods.content.create_part_note()
         obj.mods.content.part_note.text = 'Side A'
@@ -1024,7 +1021,7 @@ of 2''',
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
         obj.save()
-        obj2 = repo.get_object(type=AudioObject)
+        obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
         obj2.collection_uri = self.esterbrook.uri
@@ -1193,12 +1190,12 @@ class SourceTechTest(TestCase):
 </st:sourcetech>'''
 
     def setUp(self):
-        self.sourcetech = load_xmlobject_from_string(self.FIXTURE, SourceTech)
+        self.sourcetech = load_xmlobject_from_string(self.FIXTURE, audiomodels.SourceTech)
 
     def test_init_types(self):
-        self.assert_(isinstance(self.sourcetech, SourceTech))
-        self.assert_(isinstance(self.sourcetech.speed, SourceTechMeasure))
-        self.assert_(isinstance(self.sourcetech.reel_size, SourceTechMeasure))
+        self.assert_(isinstance(self.sourcetech, audiomodels.SourceTech))
+        self.assert_(isinstance(self.sourcetech.speed, audiomodels.SourceTechMeasure))
+        self.assert_(isinstance(self.sourcetech.reel_size, audiomodels.SourceTechMeasure))
 
     def test_fields(self):
         # check field values correctly accessible from fixture
@@ -1222,7 +1219,7 @@ class SourceTechTest(TestCase):
 
     def test_create(self):
         # test creating sourcetech metadata from scratch
-        st = SourceTech()
+        st = audiomodels.SourceTech()
         st.note_list.append('general note')
         st.related_fields = '1, 2, 3'
         st.conservation_history_list.append('loaned for digitization')
@@ -1265,12 +1262,12 @@ class DigitalTechTest(TestCase):
 </dt:digitaltech>'''
 
     def setUp(self):
-        self.digitaltech = load_xmlobject_from_string(self.FIXTURE, DigitalTech)
+        self.digitaltech = load_xmlobject_from_string(self.FIXTURE, audiomodels.DigitalTech)
 
     def test_init_types(self):
-        self.assert_(isinstance(self.digitaltech, DigitalTech))
-        self.assert_(isinstance(self.digitaltech.transfer_engineer, TransferEngineer))
-        self.assert_(isinstance(self.digitaltech.codec_creator, CodecCreator))
+        self.assert_(isinstance(self.digitaltech, audiomodels.DigitalTech))
+        self.assert_(isinstance(self.digitaltech.transfer_engineer, audiomodels.TransferEngineer))
+        self.assert_(isinstance(self.digitaltech.codec_creator, audiomodels.CodecCreator))
 
     def test_fields(self):
         # check field values correctly accessible from fixture
@@ -1290,7 +1287,7 @@ class DigitalTechTest(TestCase):
 
     def test_create(self):
         # test creating digitaltech metadata from scratch
-        dt = DigitalTech()
+        dt = audiomodels.DigitalTech()
         dt.date_captured = '2010-01-01'
         dt.codec_quality = 'lossy'
         dt.duration = 33
@@ -1317,11 +1314,11 @@ class RightsXmlTest(TestCase):
 </rt:rights>'''
 
     def setUp(self):
-        self.rights = load_xmlobject_from_string(self.FIXTURE, Rights)
+        self.rights = load_xmlobject_from_string(self.FIXTURE, audiomodels.Rights)
 
     def test_init_types(self):
-        self.assert_(isinstance(self.rights, Rights))
-        self.assert_(isinstance(self.rights.access_condition, AccessCondition))
+        self.assert_(isinstance(self.rights, audiomodels.Rights))
+        self.assert_(isinstance(self.rights.access_condition, audiomodels.AccessCondition))
 
     def test_fields(self):
         # check field values correctly accessible from fixture
@@ -1332,7 +1329,7 @@ class RightsXmlTest(TestCase):
 
     def test_create(self):
         # test creating digitaltech metadata from scratch
-        rt = Rights()
+        rt = audiomodels.Rights()
         rt.create_access_condition()
         rt.access_condition.code = 'PD-UNRESTRICT'
         rt.access_condition.text = 'In public domain, no contract restriction'
@@ -1353,7 +1350,7 @@ class TestAudioObject(TestCase):
     def setUp(self):
         # create a test audio object to edit
         with open(wav_filename) as wav:
-            self.obj = self.repo.get_object(type=AudioObject)
+            self.obj = self.repo.get_object(type=audiomodels.AudioObject)
             self.obj.label = "Testing, one, two"
             self.obj.dc.content.title = self.obj.label
             self.obj.audio.content = wav
@@ -1367,9 +1364,9 @@ class TestAudioObject(TestCase):
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
         self.obj.save()
-        obj = self.repo.get_object(self.obj.pid, type=AudioObject)
+        obj = self.repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, obj.info.owner)
-        self.assert_(isinstance(obj.mods.content, AudioMods))
+        self.assert_(isinstance(obj.mods.content, audiomodels.AudioMods))
 
     def test_save(self):
         # save without changing the MODS - shouldn't mess anything up
@@ -1386,7 +1383,7 @@ class TestAudioObject(TestCase):
         self.obj.save('testing custom save logic')
 
         # get updated copy from repo to check
-        obj = self.repo.get_object(self.obj.pid, type=AudioObject)
+        obj = self.repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
         self.assertEqual(title, obj.label)
         self.assertEqual(title, obj.dc.content.title)
         self.assertEqual(type, obj.dc.content.type)
@@ -1454,7 +1451,7 @@ class TestAudioObject(TestCase):
         label = 'this is a test WAV file'
         #specify an incorrect checksum
         wav_md5 = 'aaa'
-        obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
         expected_error=None
         try:
             obj.save()
@@ -1467,13 +1464,13 @@ class TestAudioObject(TestCase):
         
         # specify a correct checksum
         wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
-        obj = AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
         return_result = obj.save()
         self.assertEqual(True, return_result)
         self.repo.purge_object(obj.pid, "removing unit test fixture")
 
     def test_init_from_file(self):
-        new_obj = AudioObject.init_from_file(wav_filename)
+        new_obj = audiomodels.AudioObject.init_from_file(wav_filename)
         filename = 'example.wav'
         self.assertEqual(filename, new_obj.label)
         self.assertEqual(filename, new_obj.mods.content.title)
@@ -1492,7 +1489,7 @@ class TestAudioObject(TestCase):
 
         # specify an initial label
         label = 'this is a test WAV file'
-        new_obj = AudioObject.init_from_file(wav_filename, label)
+        new_obj = audiomodels.AudioObject.init_from_file(wav_filename, label)
         self.assertEqual(label, new_obj.label)
         self.assertEqual(label, new_obj.mods.content.title)
         self.assertEqual(label, new_obj.dc.content.title)
@@ -1504,7 +1501,7 @@ class TestAudioObject(TestCase):
         # use custom login so user credentials will be stored properly
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         rqst.session = self.client.session
-        new_obj = AudioObject.init_from_file(wav_filename, request=rqst)
+        new_obj = audiomodels.AudioObject.init_from_file(wav_filename, request=rqst)
         self.assertEqual(new_obj.api.opener.username, user,
             'object initialized with request has user credentials configured for fedora access')
 
@@ -1514,7 +1511,7 @@ class TestAudioObject(TestCase):
         self.obj.collection_uri = FAKE_COLLECTION
         self.obj.save()
 
-        obj = self.repo.get_object(self.obj.pid, type=AudioObject)
+        obj = self.repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
         self.assertEqual(FAKE_COLLECTION, str(obj.collection_uri))
 
     def test_conversion_result(self):
@@ -1531,29 +1528,29 @@ class TestAudioObject(TestCase):
 class TestWavDuration(TestCase):
 
     def test_success(self):
-        duration = wav_duration(wav_filename)
+        duration = audiomodels.wav_duration(wav_filename)
         # ffmpeg reports the duration of fixture WAV file as 00:00:03.30
         self.assertAlmostEqual(3.3, duration, 3)
 
     def test_non_wav(self):
-        self.assertRaises(StandardError, wav_duration, mp3_filename)
+        self.assertRaises(StandardError, audiomodels.wav_duration, mp3_filename)
 
     def test_nonexistent(self):
-        self.assertRaises(IOError, wav_duration, 'i-am-not-a-real-file.wav')
+        self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
 
 class TestModsEditForm(TestCase):
     def test_no_extra_fields(self):
         # don't create any extra fields just from binding the form
-        mods = AudioMods()
-        form = ModsEditForm(instance=mods)
+        mods = audiomodels.AudioMods()
+        form = audioforms.ModsEditForm(instance=mods)
         self.assertEqual([], mods.node.getchildren())
 
 
 class SourceAudioConversions(TestCase):
     def setUp(self):
         # create an audio object to test conversion with
-        self.obj = AudioObject.init_from_file(wav_filename,
+        self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
                                          'test only',  checksum=wav_md5)
         self.obj.save()
         self.pids = [self.obj.pid]
@@ -1569,11 +1566,11 @@ class SourceAudioConversions(TestCase):
 
         # inspect the object in fedora to confirm that the audio was added
         repo = Repository()
-        obj = repo.get_object(self.obj.pid, type=AudioObject)
+        obj = repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
         self.assertTrue(obj.compressed_audio.exists)
 
         #Verify the wav and mp3 durations match.
-        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid)
+        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid)
         self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
 
         # any other settings/info on the mp3 datastream that should be checked?
@@ -1584,7 +1581,7 @@ class SourceAudioConversions(TestCase):
         self.assertEqual(result, "Successfully converted file")
 
         #Verify the wav and mp3 durations match.
-        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
+        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
         self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
 
     def test_nonexistent(self):
@@ -1607,11 +1604,11 @@ class SourceAudioConversions(TestCase):
         self.assertEqual(result, "Successfully converted file")
 
         #Verify it no longer matches the original wav file.
-        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
+        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
         self.assertFalse(comparison_result, "WAV and MP3 durations did not match.")
 
         #Verify the new wav and mp3 durations match.
-        comparison_result = wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=alternate_wav_filename)
+        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=alternate_wav_filename)
         self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
         
 
