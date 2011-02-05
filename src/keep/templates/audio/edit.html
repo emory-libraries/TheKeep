@@ -3,6 +3,23 @@
 {% block page-subtitle %}: Audio : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Audio File{% endblock %}
 
+{% block scripts %}
+  {{ block.super }}
+  <script type="text/javascript">
+    $(document).ready(function() {
+      // move to the first form element for user convenience
+      document.edit_form.elements[1].focus();
+
+      // make .toggle headers hide/show the following section
+      $(".toggle").click(function () {
+        var header = $(this);
+        header.toggleClass('collapsed');
+        header.next().toggle();
+      });
+    });
+  </script>
+{% endblock %}
+
 {% block content-body %}
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
@@ -105,17 +122,4 @@
 <input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
 </form>
 </div>
-
-<script type="text/javascript">
-  window.onload = document.edit_form.elements[1].focus();
-
-  // make .toggle headers hide/show the following section
-  $(document).ready(function() {
-    $(".toggle").click(function () {
-      var header = $(this);
-      header.toggleClass('collapsed');
-      header.next().toggle();
-    });
-  });
-</script>
 {% endblock %}
