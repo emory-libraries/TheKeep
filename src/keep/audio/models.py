@@ -263,7 +263,8 @@ class Rights(_BaseRights):
         ('ORPH-EUSERS',              True, 'Under copyright but orphaned work, special circumstance, made available to Emory community users only (including in-Library use)'),
         ('UNDETERMINED',             False, 'Rights status undetermined; no access to files or metadata'),
     ) 
-    'controlled vocabulary for access condition'
+    '''controlled vocabulary for access condition, ordered the way they should
+    appear on the form widget'''
 
     access_terms_dict = dict((term[0], _access_term(*term))
                              for term in access_terms)

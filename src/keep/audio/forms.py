@@ -292,8 +292,11 @@ class RightsForm(XmlObjectForm):
     """:class:`~eulcore.django.forms.XmlObjectForm` to edit
     :class:`~keep.audio.models.Rights` metadata.
     """
-    # In data the access_condition is pretty flexible. In web editing we
-    # only want to offer a simple dropdown based on our controlled vocab.
+
+    # The model's access_condition allows arbitrary code and text. For
+    # the form, though, we want text and code to come from a single
+    # access_terms entry. Collect the options so the ChoiceField will use
+    # the code as the option @value and the text as the option text.
     access_options = [ (item[0], item[2]) for item in Rights.access_terms ]
     access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
