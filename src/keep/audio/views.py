@@ -438,14 +438,13 @@ def edit(request, pid):
             # if data has been submitted, initialize form with request data and object mods
             form = audioforms.AudioObjectEditForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
-                # update foxml object with MODS from the form
+                # update foxml object with data from the form
                 form.update_instance()      # instance is reference to mods object
-                if obj.mods.content.is_valid():
-                    obj.save()
-                    messages.success(request, 'Updated %s' % pid)
-                    # save & continue functionality - same as collection edit
-                    if '_save_continue' not in request.POST:
-                        return HttpResponseSeeOtherRedirect(reverse('audio:index'))
+                obj.save()
+                messages.success(request, 'Updated %s' % pid)
+                # save & continue functionality - same as collection edit
+                if '_save_continue' not in request.POST:
+                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
         else:
             # GET - display the form for editing, pre-populated with content from the object
