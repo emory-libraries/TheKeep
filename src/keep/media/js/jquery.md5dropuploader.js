@@ -33,6 +33,33 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 
 (function( $ ){
 
+  function browser_upload_support() {
+    // check for html5 file api
+    if (typeof window.FileReader != 'function')
+      return false;
+
+    // check for blob slicing.
+    // NB: deciding where all the conditionals and branches go and who gets
+    // else clauses is actually a little subtle.
+    var blob_slicing = false;
+    // if we have a Blob and it can slice, then we have blob slicing
+    if ((typeof window.Blob == 'function') &&
+        (typeof window.Blob.prototype.slice == 'function')) {
+          blob_slicing = true;
+    }
+    // if we have a File and it can slice, then we have blob slicing
+    if ((typeof window.File == 'function') &&
+        (typeof window.File.prototype.slice == 'function')) {
+          blob_slicing = true;
+    }
+    // otherwise, the browser doesn't have what we need.
+    if ( ! blob_slicing )
+      return false;
+
+    // looks like we have everything we need.
+    return true;
+  }
+
   var methods = {
 
     /**
@@ -44,11 +71,10 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     init : function(options) {  
 
     return this.each(function(){
-        // if HTML5 file API is not supported, don't do anything
-        if (typeof window['FileReader'] != 'function') {            
-            return;
-        }
-       
+       if ( ! browser_upload_support() ) {
+         return;
+       }
+
        var $this = $(this);
        var data = {
         'file_count': 0,
@@ -154,6 +180,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 // update status
                 file.status.html('calculating checksum');
                 console.log(file.fileName + ' calculating checksum')
+                var start_time = new Date();
                 var indicator = $('<p/>');
                 file.progress = $('<div class="progress-bar"/>');
                 file.progress.append(indicator);
@@ -163,6 +190,12 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 var md5 = new MD5();
                 var next_step = function() {
                   // this is what we'll do after checksumming is complete
+                  // TODO: ideally this should use a real js event framework
+                  var end_time = new Date();
+                  console.log(file.fileName +
+                              ' checksum calculation took ' +
+                              ((end_time - start_time) / 1000) +
+                              ' seconds.');
                   file.status.html('uploading');
                   $this.md5DropUploader('uploadFile', file);
                 };
@@ -336,6 +369,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     var reader = new FileReader();
     reader.onloadend = function (evt){
       // after loading the slice update the ui
+      // TODO: ideally ui updates should use a real js event framework and
+      // live outside this function
       file.status.html('calculating checksum');
       var percentage = Math.round((start * 100) / file.size);
       indicator.width(percentage);
