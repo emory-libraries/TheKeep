@@ -26,11 +26,11 @@ class AudioMods(mods.MODS):
     :class:`~keep.mods.MODS`.'''
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
-          mods.Note, required=False)
-    ':class:`~keep.mods.Note` with `type="general"`'
+          mods.TypedNote, required=False)
+    ':class:`~keep.mods.TypedNote` with `type="general"`'
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
-                                          mods.Note)
-    ':class:`~keep.mods.Note` with `type="part number"`'
+                                          mods.TypedNote)
+    ':class:`~keep.mods.TypedNote` with `type="part number"`'
 
 ##
 ## Source technical metadata
@@ -49,8 +49,15 @@ class SourceTechMeasure(_BaseSourceTech):
     'unit of measurement'
     aspect = xmlmap.StringField('@aspect')
     'aspect of measurement'
-    value = xmlmap.StringField('.')
+    value = xmlmap.StringField('text()')
     'value (actual measurement)'
+
+    def is_empty(self):
+        '''Returns False if no measurement value is set; returns True if any
+        measurement value is set.  Attributes are ignored for determining whether
+        or not the field should be considered empty, since aspect & unit
+        are only meaningful in reference to an actual measurement value.'''
+        return not self.node.text
 
 class SourceTech(_BaseSourceTech):
     ':class:`~eulcore.xmlmap.XmlObject` for Source Technical Metadata.'
@@ -167,7 +174,7 @@ class TransferEngineer(_BaseDigitalTech):
     'unique id to identify the transfer engineer'
     id_type = xmlmap.StringField('@idType')
     'type of id used'
-    name = xmlmap.StringField('.')
+    name = xmlmap.StringField('text()')
     'full display name for the transfer engineer'
 
 class CodecCreator(_BaseDigitalTech):
@@ -240,7 +247,7 @@ class AccessCondition(_BaseRights):
     ROOT_NAME = 'accessCondition'
     code = xmlmap.StringField('@code', required=True)
     'access code'
-    text = xmlmap.StringField('.')
+    text = xmlmap.StringField('text()')
     'text description of rights access code'
 
 _access_term = namedtuple('_access_term', 'code access text') # wraps terms below

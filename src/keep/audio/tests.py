@@ -760,7 +760,23 @@ of 2''',
         self.assertContains(response, '<ul class="errorlist">')
 
 
-
+        # sending blank origin info dates should remove them from mods
+        data = audio_data.copy()
+        data.update({
+            'mods-origin_info-issued-0-date_year': '',
+            'mods-origin_info-issued-0-date_month': '',
+            'mods-origin_info-issued-0-date_day': '',
+            'mods-origin_info-created-INITIAL_FORMS': '0',
+            'mods-origin_info-created-TOTAL_FORMS': '1',
+            'mods-origin_info-created-MAX_NUM_FORMS': '',
+            'mods-origin_info-created-0-date_year': '',
+            'mods-origin_info-created-0-date_month': '',
+        })
+        response = self.client.post(edit_url, data)
+         # get the latest copy of the object
+        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+        self.assertFalse(obj.mods.content.origin_info)
+        
         # TODO: add a field validation error & check that error message is displayed
         # to test that our custom templates don't lose any built-in functionality
 
@@ -1103,6 +1119,7 @@ class TestMods(TestCase):
         self.assertEqual('a general note', self.mods.note.label)
         self.assertEqual('general', self.mods.note.type)
         self.assertEqual(u'remember to...', unicode(self.mods.note))
+        self.assertEqual('remember to...', self.mods.note.text)
         self.assertEqual(u'2010-06-17', unicode(self.mods.origin_info.created[0]))
         self.assertEqual('2010-06-17', self.mods.origin_info.created[0].date)
         self.assertEqual(True, self.mods.origin_info.created[0].key_date)
@@ -1168,6 +1185,71 @@ class TestMods(TestCase):
         self.assertTrue(self.mods.is_valid())        
         invalid_mods = load_xmlobject_from_string(self.invalid_xml, mods.MODS)
         self.assertFalse(invalid_mods.is_valid())
+
+class TestModsTypedNote(TestCase):
+    # node fields tested in main mods test case; testing custom is_empty logic here
+
+    def setUp(self):
+        self.note = mods.TypedNote()
+        self.note.type = 'general'
+
+    def test_is_empty(self):
+        # initial note object should be considered empty (type only)
+        self.assertTrue(self.note.is_empty())
+
+    def test_is_empty__extra_attribute(self):
+        # set an attribute besides type
+        self.note.label = "Note"        
+        self.assertFalse(self.note.is_empty())
+
+    def test_is_empty_text(self):
+        # set text value
+        self.note.text = 'here is some general info'
+        self.assertFalse(self.note.is_empty())
+
+class TestModsDate(TestCase):
+    # node fields tested in main mods test case; testing custom is_empty logic here
+
+    def setUp(self):
+        self.date = mods.DateCreated() 
+
+    def test_is_empty(self):
+        # starting fixture should be considered empty (no date)
+        self.assertTrue(self.date.is_empty())
+
+    def test_is_empty_with_attributes(self):
+        # should be empty with attributes but no date value
+        self.date.keydate = True
+        self.assertTrue(self.date.is_empty())
+
+    def test_is_empty_date_value(self):
+        # set date value
+        self.date.date = '1066'
+        self.assertFalse(self.date.is_empty())
+
+class TestModsOriginInfo(TestCase):
+    # node fields tested in main mods test case; testing custom is_empty logic here
+
+    def setUp(self):
+        self.origin_info = mods.OriginInfo()
+
+    def test_is_empty(self):
+        # starting object should be considered empty (no date elements at all)
+        self.assertTrue(self.origin_info.is_empty())
+
+    def test_is_empty_with_empty_dates(self):
+        self.origin_info.created.append(mods.DateCreated())
+        self.assertTrue(self.origin_info.is_empty())
+        self.origin_info.issued.append(mods.DateIssued())
+        self.assertTrue(self.origin_info.is_empty())
+
+    def test_is_empty_date_values(self):
+        self.origin_info.created.append(mods.DateCreated(date='300'))
+        self.assertFalse(self.origin_info.is_empty())
+        self.origin_info.issued.append(mods.DateIssued(date='450'))
+        self.assertFalse(self.origin_info.is_empty())
+
+
 
 class SourceTechTest(TestCase):
     FIXTURE = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -1540,12 +1622,65 @@ class TestWavDuration(TestCase):
 
 
 class TestModsEditForm(TestCase):
-    def test_no_extra_fields(self):
-        # don't create any extra fields just from binding the form
-        mods = audiomodels.AudioMods()
-        form = audioforms.ModsEditForm(instance=mods)
-        self.assertEqual([], mods.node.getchildren())
+    MIN_DATA = {
+        'mods-title': 'new title',
+        'mods-general_note-text': '',
+        'mods-part_note-text': '',
+        # 'management' form data is required for django to process formsets/subforms
+        'mods-origin_info-issued-INITIAL_FORMS': '0',
+        'mods-origin_info-issued-TOTAL_FORMS': '1',
+        'mods-origin_info-issued-MAX_NUM_FORMS': '',
+        'mods-origin_info-issued-0-date_year': '',
+        'mods-origin_info-created-INITIAL_FORMS': '0',
+        'mods-origin_info-created-TOTAL_FORMS': '1',
+        'mods-origin_info-created-MAX_NUM_FORMS': '',
+        'mods-origin_info-created-0-date_year': '',
+    }
 
+    def test_no_extra_fields(self):
+        # don't create any extra fields when updating instance with minimal required fields
+        # NOTE: fields may be present when binding the form, but empty fields
+        # should be removed before the instance is finally updated
+        m = audiomodels.AudioMods()
+        form = audioforms.ModsEditForm(instance=m, data=self.MIN_DATA, prefix='mods')
+        self.assertTrue(form.is_valid())        
+        inst = form.update_instance()
+        self.assertEqual(1, len(inst.node.getchildren()))
+
+    def test_clean_on_update(self):
+        # POST data to update audio object in fedora
+        m = audiomodels.AudioMods()
+        form = audioforms.ModsEditForm(data=self.MIN_DATA, instance=m, prefix='mods')
+        form.is_valid()
+        inst = form.update_instance()
+        self.assertEqual(None, inst.general_note)
+        self.assertEqual(None, inst.part_note)
+        self.assertEqual(None, inst.origin_info)
+
+        # set values - ensure they do not get removed
+        data = self.MIN_DATA.copy()
+        data.update({
+            'mods-general_note-text': 'gen',
+            'mods-part_note-text': 'side a',
+            'mods-origin_info-issued-0-date_year': '2000',
+            'mods-origin_info-created-0-date_year': '',
+        })
+        form = audioforms.ModsEditForm(data, instance=m, prefix='mods')
+        form.is_valid()
+        inst = form.update_instance()
+        self.assertNotEqual(None, inst.general_note)
+        self.assertNotEqual(None, inst.part_note)
+        self.assertNotEqual(None, inst.origin_info)
+        self.assertEqual(0, len(inst.origin_info.created))
+        self.assertEqual(1, len(inst.origin_info.issued))
+
+        # remove a pre-existing date by sending empty string for date value
+        # originInfo sholud not be present with empty dates
+        data['mods-origin_info-issued-0-date_year'] = ''
+        form = audioforms.ModsEditForm(data, instance=m, prefix='mods')
+        form.is_valid()
+        inst = form.update_instance()
+        self.assertEqual(None, inst.origin_info)
 
 class SourceAudioConversions(TestCase):
     def setUp(self):

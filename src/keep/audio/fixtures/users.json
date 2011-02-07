@@ -21,8 +21,8 @@
     "model": "auth.user",
     "fields": {
       "username": "ldap_user",
-      "first_name": "",
-      "last_name": "",
+      "first_name": "Ldap",
+      "last_name": "User",
       "is_active": true,
       "is_superuser": true,
       "is_staff": true,
