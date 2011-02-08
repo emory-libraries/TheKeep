@@ -288,7 +288,8 @@ Release 0.9 - Min Items, part III
         o.owner = settings.FEDORA_OBJECT_OWNERID
         o.save()
     
-
+* As part of branding this project as "The Keep", the main source directory
+  is now ``src/keep`` instead of ``src/digitalmasters`` .
 
 Release 0.8 - Min Items, part II
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
