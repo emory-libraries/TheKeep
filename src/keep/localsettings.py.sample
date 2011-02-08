@@ -94,6 +94,8 @@ USE_L10N = True
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = ''
 
+SITE_ID = 1
+
 # settings for ingest staging directory
 INGEST_STAGING_TEMP_DIR = '/tmp/digitalmasters-ingest-staging'
 # time in seconds that files in the ingest staging directory should be kept

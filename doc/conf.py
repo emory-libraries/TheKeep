@@ -221,5 +221,5 @@ man_pages = [
 intersphinx_mapping = {
     'http://docs.python.org/': None,
     'http://waterhouse.library.emory.edu:8080/hudson/job/python-eulcore/javadoc/': None,
-    'http://docs.djangoproject.com/en/1.2/ref/': 'http://docs.djangoproject.com/en/dev/_objects',
+    'http://docs.djangoproject.com/en/1.2/ref/': 'http://docs.djangoproject.com/en/dev/_objects/',
 }
