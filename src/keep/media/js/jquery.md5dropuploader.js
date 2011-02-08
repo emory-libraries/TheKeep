@@ -27,6 +27,19 @@ File uploads are POSTed to the configured url with these HTTP headers:
   Content-Type
   Content-MD5
 
+To display different instructions depending on whether or not the browser
+supports the HTML5 methods required for this MD5 uploader, use something
+like the following:
+
+    <p class="md5upload-not-supported">[not supported text]</p>
+    <p class="md5upload-supported" style="display:none">
+      [supported instructions text] </p>
+
+When md5DropUploader detects that the browser supports required methods, it will
+ show all .md5upload-supported elements and hide all .md5upload-not-supported
+elements.
+
+
 Adapted in part from https://github.com/texel/drag_drop_example/
 
 */
@@ -74,6 +87,9 @@ Adapted in part from https://github.com/texel/drag_drop_example/
        if ( ! browser_upload_support() ) {
          return;
        }
+       // show supported text, hide not-supported text
+       $('.md5upload-supported').show();
+       $('.md5upload-not-supported').hide();
 
        var $this = $(this);
        var data = {

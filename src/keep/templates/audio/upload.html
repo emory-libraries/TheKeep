@@ -45,10 +45,22 @@
 {% endif %} {# end displaying ingest results #}
 
 {% if form %} 
-{# TODO: better instructions #}
-<p>Drag files into the box below to upload them. If your browser doesn't
-  support that, then use the form below to choose a single file for
-  upload.</p>
+{# by default, show not-supported instructions; md5uploader will toggle if supported #}
+<p class="instructions md5upload-not-supported">
+  Your browser does <b>not</b> meet the requirements needed for batch upload with client-side
+  MD5 checksum.  Please use the form below to choose a single file for
+  upload or switch to a browser that supports batch upload (currently requires
+  Chrome or Firefox 4).</p>
+<p class="instructions md5upload-supported" style="display:none">
+  Drag files from your desktop or file manager into the box below to upload them.
+  You should be able to see the status and progress for each file as the MD5
+  checksum is calculated and the file is uploaded to the server.  You may add
+  multiple sets of files.  If you accidentally drag in a file you do not wish to
+  upload, click the red X next to that file to remove it.  Once you have all
+  added all the files you wish to upload, click Submit.  If files are still
+  being processed, the form will wait to submit until all files are ready.
+  </p>
+
 
 <form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
  <div id="drop_target">
