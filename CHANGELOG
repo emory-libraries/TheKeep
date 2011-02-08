@@ -3,6 +3,58 @@
 CHANGELOG
 =========
 
+Release 0.9 - Min Items, part III
+---------------------------------
+Date: February 2011
+
+**NOT FOR PRODUCTION RELEASE**
+
+Digital technical metadata and rights metadata for audio items; automated
+access-copy audio file generation; support for batch upload of large files.
+
+* An authenticated user can log out of the Euterpe interface from any screen.
+* A curator can use a web form to associate a digitized audio file with basic
+  “stub” digital technical metadata.
+* A curator can use a web form to associate a digitized audio file with basic
+  “stub” rights metadata.
+* When a new audio file is uploaded, the system automatically generates access
+  copies in mp3 format to support kiosk access.
+* Web users can listen to uploaded audio, linked from both the metadata view/edit
+  views and search results.
+* A researcher can use the MARBL A/V kiosk to search metadata in the system and
+  listen to the audio.
+* A curator can upload large files via drag & drop batch upload. 
+* Project rebranded as "The Keep".
+
+
+Release 0.8 - Min Items, part II
+--------------------------------
+Date: December 2010
+
+**NOT FOR PRODUCTION RELEASE**
+
+Minor enhancement to search functionality, use of ARKs for Fedora object pids,
+and audio items now contain source technical metadata.
+
+* A user searching for collections by fields other than Manuscript Number will
+  not have the default “MSS” in that box interfere with their search.
+* The search interface contains a tool tip with documentation for
+  case sensitive and wildcard searching for both collection and item search.
+* Web users can search for stub records by keyword, associated manuscript
+  collection, and date created.
+* Web users can select file records from search results to view or edit file
+  metadata.
+* A curator can use a web form to associate a digitized audio file with basic
+  “stub” source technical metadata.
+* Web users can identify files by ARK in both the metadata view/edit views and
+  search results so that they can easily reference these ARKs in external systems.
+* Web users searching for files can see a count of matching records for simple
+  report generation.
+* Web users navigating to the collection browse page see the page load in under
+  5 seconds.
+
+
+
 Release 0.7 - Min Items, part I
 -------------------------------
 Date: December 2010

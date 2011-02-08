@@ -224,7 +224,7 @@ Release 0.9 - Min Items, part III
   New database tables in the relational database are required for the
   celery functionality.  To initialize them, run::
 
-    $ ./manage.py syncdb
+    $ python manage.py syncdb
 
 * The application now provides an RSS podcast feed intended for iTunes on the
   MARBL reading room kiosk.  Due to limitations in the amount of data that iTunes
@@ -232,14 +232,45 @@ Release 0.9 - Min Items, part III
   for MAX_ITEMS_PER_PODCAST_FEED.  See localsettings.py.sample for example 
   configuration and recommended value.
 
-  Apache should be configured to restrict access to the podcast feed
-  and MP3 URLs. See the `Apache`_ section of `Install the
+  When deployed in production, Apache should be configured to restrict access to
+  the podcast feed and MP3 URLs. See the `Apache`_ section of `Install the
   Application`_ for details.
+
+* Dependencies have been addded for celery tasks and MP3 error checking.
+  To install the new dependencies::
+
+    $ . /home/euterpe/env/bin/activate
+    $ pip install -r pip-dependencies
+
+* The application now uses an eulcore task result module to report on celery tasks,
+  which requires additional tables in the relational database. To initialize them,
+  sync the db::
+
+    $ python manage.py syncdb
+
+* New datastreams have been added to the Fedora Audio object.  Any audio objects
+  loaded in the staging environment should be removed when this update is deployed.
+  This can be done in the django console as follows. Start the console::
+
+    $ python manage.py shell
+
+  And then run:
+
+  .. code-block:: python
+
+    from keep.fedora import Repository
+    from keep.audio.models import AudioObject
+    repo = Repository()
+    repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
+    objs = repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
+    for o in objs:
+        repo.purge_object(o.pid)
 
 * As part of branding this project with its new name, "The Keep", the pseudo-owner
   used for repository-level permissions has been changed.  The Fedora repository
-  policies should be updated (repo-policies RELEASE/TAG TODO), and any
-  existing objects will need to be either removed and re-generated or updated
+  policies should be updated to
+  https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.3
+  Any existing objects will need to be either removed and re-generated or updated
   with the new owner ID.  Updating existing objects can be done in the django
   console.  Start the console::
 
