@@ -112,8 +112,7 @@ def search(request):
         }
 
         if form.cleaned_data['mss']:
-            # NOTE: adding wildcard to match all records in an instance
-            search_opts['identifier__contains'] = "%s*" % form.cleaned_data['mss']
+            search_opts['identifier__contains'] = str(form.cleaned_data['mss']) # convert int to string
         if form.cleaned_data['title']:
             search_opts['title__contains'] = form.cleaned_data['title']
         if form.cleaned_data['creator']:
