@@ -258,7 +258,7 @@ Release 0.9 - Min Items, part III
 
   .. code-block:: python
 
-    from keep.fedora import Repository
+    from keep.common.fedora import Repository
     from keep.audio.models import AudioObject
     repo = Repository()
     repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
