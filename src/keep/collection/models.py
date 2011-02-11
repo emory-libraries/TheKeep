@@ -321,6 +321,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         # TODO: top-level collection membership?
 
         # title - using 'short' form without unitdate, stripping any trailing whitespace & . or ,
+        # TODO/FIXME: does NOT work for unittitles with nested tags, e.g. title - see pomerantz
         coll.mods.content.title = unicode(self.unittitle.short).rstrip().rstrip('.,')
         # main entry/name - origination, if any
         if self.archdesc.did.origination:
