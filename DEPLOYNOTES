@@ -192,7 +192,10 @@ Celery Daemon
 The celery worker needs to be running for asynchronous tasks.  To run through
 django do::
 
-    $ python manage.py celeryd
+    $ python manage.py celeryd -Q keep
+
+Note that we are using a different default queue so that keep-specific tasks
+are not sent to a non-keep celery daemon.
 
 See http://ask.github.com/celery/cookbook/daemonizing.html for instructions
 on configuring celery to run as a daemon.
