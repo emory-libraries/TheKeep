@@ -17,6 +17,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt
+
+
 
 from eulcore.django.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eulcore.django.taskresult.models import TaskResult
@@ -40,6 +43,7 @@ def index(request):
             context_instance=RequestContext(request))
 
 @permission_required('is_staff')
+@csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.
@@ -183,6 +187,7 @@ def upload(request):
     # multiple files for ingest, simply returning 200 if processing ends normally.
 
 @permission_required('is_staff')
+@csrf_exempt
 def ajax_file_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging 
     directory for subsequent ingest into the repository.  The request must
