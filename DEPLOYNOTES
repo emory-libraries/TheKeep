@@ -296,7 +296,7 @@ Release 0.8 - Min Items, part II
 * The app now depends on the standard django ``sites`` module. This module
   stores some data in the relational database. To initialize it, sync the db::
 
-    $ ./manage.py syncdb
+    $ python manage.py syncdb
 
   After restarting the web app, configure the default site by replacing the
   ``example.com`` domain with the domain of the live webapp.
@@ -350,16 +350,16 @@ Release 0.7 - Min Items, part I
 * After installation and configuration, ensure required numbering scheme
   objects are defined in fedora::
 
-    $ ./manage.py syncrepo
+    $ python manage.py syncrepo
 
 * After defining numbering schemes, admins may want to load collections from
   Finding Aids::
 
-    $ ./manage.py load_ead keep:marbl 10 59 265 494 539 558 572 579 612 \
+    $ python manage.py load_ead keep:marbl 10 59 265 494 539 558 572 579 612 \
         616 618 622 629 644 653 663 673 682 685 687 689 741 745 771 797 \
         800 807 832 840 845 853 855 856 869 890 892 923 926 927 932 937 \
         960 966 968 981 1000 1002 1025 1032 1054 1056 1061
-    $ ./manage.py load_ead keep:university-archives 8 11 26 60 113 1002
+    $ python manage.py load_ead keep:university-archives 8 11 26 60 113 1002
 
 
 Release 0.6
