@@ -184,7 +184,7 @@ COLLECTION_DATA = {
     'source_id': '1000',
     'date_created': '1947',
     'date_end': '2008',
-    'collection': 'info:fedora/euterpe:marbl',
+    'collection': 'info:fedora/keep:marbl',
     'resource_type': 'mixed material',
     'use_and_reproduction-text': 'no photos',
     'restrictions_on_access-text': 'tuesdays only',
