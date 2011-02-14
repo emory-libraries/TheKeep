@@ -32,17 +32,19 @@ The Keep
 {% endblock %}
 
 {% block sidebar-left %}
-  {% if collection_search %}
-    {% include 'collection/snippets/search_form.html' %}
-  {% endif %}
+ {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
   {% if item_search %}
     {% include 'audio/snippets/search_form.html' %}
+  {% endif %}
+  {% if collection_search %}
+    {% include 'collection/snippets/search_form.html' %}
   {% endif %}
   <div class="help">
     <a onMouseOver="jQuery('#search-help').show()"
        onMouseOut="jQuery('#search-help').hide()">?</a>
     <div id="search-help" class="search-tips">{{ collection_search.search_tips }}</div>
    </div>
+ {% endif %}
 {% endblock %}
 
 {% block message %}
