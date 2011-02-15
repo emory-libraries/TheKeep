@@ -26,8 +26,10 @@ class CollectionObjectTest(TestCase):
 
     def test_top_level(self):
         collections = CollectionObject.top_level()
-        self.assertEqual(3, len(collections),
-                "top-level collection finds 3 items from fixture")
+        # NOTE: using >= because this test should not fail if there are other
+        # top-level collections present in Fedora
+        self.assert_(len(collections) >= 3,     # use assertGreaterEqual in python 2.7
+                "there should be at least 3 top-level collection (3 items from fixture)")
         self.assert_(isinstance(collections[0], CollectionObject),
                 "top-level collection is instance of CollectionObject")
         # should this test pids from fixture?
@@ -184,7 +186,7 @@ COLLECTION_DATA = {
     'source_id': '1000',
     'date_created': '1947',
     'date_end': '2008',
-    'collection': 'info:fedora/euterpe:marbl',
+    'collection': 'info:fedora/keep:marbl',
     'resource_type': 'mixed material',
     'use_and_reproduction-text': 'no photos',
     'restrictions_on_access-text': 'tuesdays only',
