@@ -50,6 +50,13 @@
 {% endwith %}
 
 
+<div class="instructions">
+    <h2>Instructions for using this form</h2>
+    <ul>
+        <li><span class="required" title='required'>*</span> indicates a field is required.</li>
+    </ul>
+    {# NOTE: some overlap with collection edit form instructions #}
+</div>
 <div id="audio-edit">
 <form method="post" name="edit_form">{% csrf_token %}
 
@@ -58,15 +65,15 @@
     {% if form.mods.non_field_errors %}
     {{ form.mods.non_field_errors }}
     {% endif %}
-<table class="audio-edit">
+<table class="edit-form">
   {% if form.mods.non_field_errors %}
     <tr><td colspan="3">{{ form.non_field_errors }}</td></tr>
   {% endif %}
-  {% for field in form %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
+  {% for field in form %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
   {% if form.mods.non_field_errors %}
     <tr><td colspan="3">{{ form.mods.non_field_errors }}</td></tr>
   {% endif %}
-  {% for field in form.mods %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
+  {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
   {% comment %} TODO/FIXME: something like this should work, but need a way to get subform labels
    {% for name, subform in form.mods.subforms.items %}
     <tr>
@@ -76,19 +83,19 @@
   {% endfor %}
   {% endcomment %}
   <tr id="origin_info">
-      {# FIXME: origin info is not required, but our form explodes if both are empty #}
-      <td class='required'><!-- not required --></span></td>
-      <th>Origin Info:</th>
+      <th>Origin Info</th>
       <td>{{ form.mods.subforms.origin_info.as_p }}</td>
     </tr>
     <tr>
-      <td class='required'><!-- not required --></td>
-      <th>General Note:</th>
+      <th>General Note
+           {% if form.mods.subforms.general_note.text.field.required %}
+              <span class="required" title='required'>*</span>{% endif %}
+      </th>
       <td>{{ form.mods.subforms.general_note.as_p }}</td>
     </tr>
     <tr>
-      <td class='required'><!-- not required --></td>
-      <th>Part Note:</th>
+      <th>Part Note {% if form.mods.subforms.part_note.text.field.required %}
+              <span class="required" title='required'>*</span>{% endif %}</th>
       <td>{{ form.mods.subforms.part_note.as_p }}</td>
     </tr>
 </table>
@@ -97,24 +104,24 @@
 <h3 id="source-tech-label" class="section-head toggle">Source Technical Metadata</h3>
 <div id="source-tech">
     {{ form.sourcetech.non_field_errors }}
-    <table class="audio-edit">
-        {% for field in form.sourcetech %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
+    <table class="edit-form">
+        {% for field in form.sourcetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
 </div>
 
 <h3 id="digital-tech-label" class="section-head toggle">Digital Technical Metadata</h3>
 <div id="digital-tech">
     {{ form.digitaltech.non_field_errors }}
-    <table class="audio-edit">
-        {% for field in form.digitaltech %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
+    <table class="edit-form">
+        {% for field in form.digitaltech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
 </div>
 
 <h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
 <div id="rights">
     {{ form.rights.non_field_errors }}
-    <table class="audio-edit">
-        {% for field in form.rights %}{% include 'audio/snippets/edit_form_field.html' %}{% endfor %}
+    <table class="edit-form">
+        {% for field in form.rights %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
 </div>
 

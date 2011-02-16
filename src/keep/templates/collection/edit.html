@@ -3,6 +3,16 @@
 {% block page-subtitle %}: Collections : {% if collection %}Edit{% else %}Create{% endif %} {{ collection.pid|default:'' }}{% endblock %}
 {% block content-title %}{% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
 
+{% block scripts %}
+  {{ block.super }}
+ <script type="text/javascript">
+    $(document).ready(function() {
+      // move to the first non-hidden form element for user convenience
+       $('#collection-edit :input[type!="hidden"]:first').focus();       
+    });
+  </script>
+{% endblock %}
+
 {% block content-body %}
 <p class='extra'>
   {% if collection %}
@@ -15,10 +25,90 @@
     This is a new collection. Its ARK has not yet been assigned.
   {% endif %}
 </p>
-<form method="post">{% csrf_token %}
-<table id="mods_edit">
-{{ form.as_table }}
-</table>
+
+<div class="instructions">
+    <h2>Instructions for using this form</h2>
+    <ul>
+        <li><span class="required" title='required'>*</span> indicates a field is required.</li>
+        <li>For repeating grouped fields (such as name parts and roles), one extra
+            empty set of fields should always be available.  If you leave all fields
+            in a name part or role empty, no additional name or role will be added.  If
+            you need more than one additional role or name, save and continue editing,
+            and a new  empty name part or role should be available.</li>
+    </ul>
+</div>
+
+<form id="collection-edit" method="post" name="edit_form">{% csrf_token %}
+{% if form.non_field_errors %}
+    {{ form.non_field_errors }}
+{% endif %}
+<table class="edit-form">
+  {% for field in form %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+  <tr id="creator">
+      <th>Creator</th>
+      <td class="multi-field">
+          {% with form.subforms.name as name %}
+              {# top-level name attributes - type, authority, identifier #}
+              {% with name.type as field %}{% include 'snippets/form_field.html' %}{% endwith %}
+              {% with name.authority as field %}{% include 'snippets/form_field.html' %}{% endwith %}
+              {% with name.id as field %}{% include 'snippets/form_field.html' %} {% endwith %}
+
+              {# name parts (formset) - display each form in a row #}
+              <div class="subform">
+              <label>Name Parts</label>
+              {{ name.formsets.name_parts.management_form }}
+              {% for namepart in name.formsets.name_parts.forms %}
+                  <div id="name-part">
+                      {% with namepart.type as field %}
+                       <div class="column">{% include 'snippets/form_field.html' %}</div>
+                      {% endwith %}
+                      {% with namepart.text as field %}
+                          <div class="column" style="width:65%">{% include 'snippets/form_field.html' %}</div>
+                      {% endwith %}
+                      <br clear="all"/>
+                  </div>
+              {% endfor %}
+              </div>
+
+              {# roles (formset) - display each form in a row #}
+              <div class="subform">
+              <label>Roles</label>
+              {{ name.formsets.roles.management_form }}
+              {% for role in name.formsets.roles.forms %}
+                  <div id="name-role">
+                   {% with role.text as field %}
+                      <div class="column" style="width:75%">
+                          {% include 'snippets/form_field.html' %}</div>
+                  {% endwith %}
+                  {% with role.authority as field %}
+                      <div class="column" style="width:11em">
+                          {% include 'snippets/form_field.html' %}
+                      </div>
+                  {% endwith %}
+                  {{ role.type }} {# hidden field, used to set default value #}
+                  <br clear="all"/>
+                  </div>
+              {% endfor %}
+              </div>
+            {% endwith %} {# name subform as name #}
+
+          </td>
+          </tr>
+    <tr>       
+        <th>Restrictions on Access
+        {% if form.subforms.restrictions_on_access.field.required %}
+                          <span class="required" title='required'>*</span>{% endif %}</th>
+        <td>{{ form.subforms.restrictions_on_access.as_p }}</td>
+    </tr>
+    <tr>
+        <th>Use and Reproduction
+            {% if form.subforms.use_and_reproduction.text.field.required %}
+                          <span class="required" title='required'>*</span>{% endif %}</th>
+        <td>
+            {{ form.subforms.use_and_reproduction.as_p }}</td>
+    </tr>
+    
+</table>   
 <input class="form-submit" type="submit" name="_save" value="Save"/>
 <input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
 </form>

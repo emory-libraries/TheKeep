@@ -5,17 +5,18 @@ table#mods_edit table.subform {
 table#mods_edit table.subform th {
     padding-left: 5px;
 }
-table.audio-edit th {
+.edit-form th {
    width:125px;
    vertical-align: top;
 }
+
 #audio-edit .section-head {
     background-color:#efefef;
     border-bottom:3px double black;
     padding-left: 8px;
     padding-bottom: 5px;
 }
-#audio-edit td, #audio-edit table {
+.edit-form td, .edit-form table {
     border: none;   /* suppress inherited borders */
 }
 #audio-edit .toggle {
@@ -27,19 +28,46 @@ table.audio-edit th {
 #audio-edit .collapsed {
     background-image: url('../genlib_media/style/images/menu-collapsed.png');
 }
+.required {
+    font-weight: bold;
+    color: red;
+}
+tr.required {
+    font-weight: normal;
+    /* could add another visual indicator here */
+}
 
-#audio-edit td.required {
+.instructions {
+    border: 2px solid #D9D9D9;
+    padding: 5px;
+    margin:5px 0px;
+    font-size:90%;
+    background-color:#ffd;
+}
+.instructions h2 {
+    padding: 0px;
+    margin: 0px;
+    font-size:105%;
+}
+#content .instructions li {
+    background: none;
+    padding: 0px;
+    margin-left: 10px;
+}
+
+.edit-form td.required {
   font-weight: bold;
   color: red;
   padding-right: 7px; /* overrides the default 7 20 7 0 */
 }
 
-table.audio-edit div.help-text {
+.edit-form .help-text {
     display:inline; /* keep on same line as input if the whole text fits */
     white-space:nowrap;
     color: gray;
+    font-weight: normal;
 }
-table.audio-edit select {
+.edit-form select {
     min-width: 15em; /* close to default text input length in Firefox */
     /* NOTE: setting text input default length messes up YYYY-MM-DD text inputs */
 }
@@ -142,4 +170,27 @@ div#logged-in a {
 img#keep-logo {
     float:left;
     padding-right:5px;
+}
+
+.column {
+    float: left;
+    padding: 0px 2px;
+}
+#name-part select, #name-role select {
+    min-width: 11em;
+}
+
+div.subform {
+    padding: 5px 0px;
+}
+
+.subform > label {
+    font-size: 15px;
+    display: block;
+    margin: 8px 0px 3px;
+    padding-bottom: 2px;
+    border-bottom: 2px solid #efefef;
+}
+td.multi-field label {
+    display:block;
 }

@@ -69,8 +69,7 @@ class RoleForm(XmlObjectForm):
     text = forms.CharField(label='Role',
                             widget=forms.TextInput(attrs={'class': 'long'}))
     # for our purposes, all roles will be type='text': set as initial value & make read only
-    type = forms.CharField(label='Type', initial='text',
-                    widget=forms.TextInput(attrs={'readonly':'readonly'}))
+    type = forms.CharField(label='Type', initial='text', widget=forms.HiddenInput)
     class Meta:
         model = mods.Role
 
@@ -84,6 +83,7 @@ class NameForm(XmlObjectForm):
         * suppress displayForm and affiliation fields
     '''
     id = forms.CharField(required=False, label='Identifier',
+                        widget=forms.TextInput(attrs={'class': 'long'}),
                         help_text="Optional; supply for NAF names.")
     name_parts = SubformField(formclass=NamePartForm)
     roles = SubformField(formclass=RoleForm)

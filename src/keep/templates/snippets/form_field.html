@@ -1,0 +1,6 @@
+{# display a single audio edit form field with minimal formatting - expects form field named 'field' #}
+<div {% if divclass %}class="{{ divclass }}"{% endif %}>
+    <label>{{ field.label }}  {% if field.field.required %}<span class="required" title='required'>*</span>{% endif %}</label>
+    {{ field }} <div class="help-text">{{ field.help_text }}</div>
+    {{ field.errors }}
+</div>
