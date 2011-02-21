@@ -251,6 +251,7 @@ class AudioViewsTest(TestCase):
             'ingested object should have a conversion result to track mp3 generation')
             
         # POST wav file with an incorrect checksum should fail
+        copyfile(wav_filename, upload_filepath)     # re-copy file, now that is removed after ingest
         with open(upload_filepath + '.md5', 'w') as md5file:
             md5file.write('bogus md5 checksum')
         response = self.client.post(upload_url, upload_opts)
@@ -258,7 +259,7 @@ class AudioViewsTest(TestCase):
         self.assertFalse(result['success'], 'success should be false on checksum mismatch')
         self.assert_('failed due to a checksum mismatch' in result['message'],
             'result should include explanatory message on failure')
-            
+
     def test_upload_fallback(self):
         # test single-file upload 
         upload_url = reverse('audio:upload')
@@ -1712,12 +1713,22 @@ class SourceAudioConversions(TestCase):
 
     def test_wav_to_mp3_localfile(self):
         #test conversion when wav file on hard-disk is specified.
-        result = convert_wav_to_mp3(self.obj.pid, existingFilePath=wav_filename)
+        result = convert_wav_to_mp3(self.obj.pid, use_wav=wav_filename)
         self.assertEqual(result, "Successfully converted file")
+
+        self.assertTrue(os.path.exists(wav_filename),
+            'specified wav file should not be removed if we did not request removal')
 
         #Verify the wav and mp3 durations match.
         comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
         self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+
+        # copy wav file so we can test removing it
+        wav_copy = os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav')
+        copyfile(wav_filename, wav_copy)
+        result = convert_wav_to_mp3(self.obj.pid, use_wav=wav_copy, remove_wav=True)
+        self.assertFalse(os.path.exists(wav_copy),
+            'specified wav file should be removed when requested')
 
     def test_nonexistent(self):
         # test with invalid pid

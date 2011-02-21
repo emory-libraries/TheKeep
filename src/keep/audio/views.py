@@ -117,7 +117,10 @@ def upload(request):
                         # NOTE: for single-file upload, browser-set type is
                         # available as UploadedFile.content_type - but since
                         # browser mimetypes are unreliable, calculate anyway
-                        type = m.from_file(filename)
+                        try:
+                            type = m.from_file(filename)
+                        except IOError:
+                            raise Exception('Uploaded file is no longer available for ingest; please try again.')
                         type, separator, options = type.partition(';')
                         if type not in allowed_audio_types:
                             # store error for display on detailed result page
@@ -141,11 +144,16 @@ def upload(request):
                         obj.save()
                         file_info.update({'success': True, 'pid': obj.pid})
                         # Start asynchronous task to convert audio for access
-                        result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=filename)
+                        result = convert_wav_to_mp3.delay(obj.pid, use_wav=filename,
+                            remove_wav=True)    # remove after, since ingest is done
                         # create a task result object to track conversion status
                         task = TaskResult(label='Generate MP3', object_id=obj.pid,
                             url=obj.get_absolute_url(), task_id=result.task_id)
                         task.save()
+
+                        # NOTE: could remove MD5 file (if any) here, but MD5 files
+                        # should be small and will get cleaned up by the cron script
+
                     except Exception as e:
                         logging.error('Error ingesting %s: %s' % (filename, e))
                         logger.debug("Error details:\n" + traceback.format_exc())
@@ -157,11 +165,11 @@ def upload(request):
                                 file_info['message'] = 'Ingest failed due to a checksum mismatch - ' + \
                                     'file may have been corrupted or incompletely uploaded to Fedora'
                             else:
-                                file_info['message'] = 'Fedora error: ' + e.message()
+                                file_info['message'] = 'Fedora error: ' + unicode(e)
 
                         # non-fedora error
-                        else:                            
-                            file_info['message'] = 'Ingest failed: ' + e.message()
+                        else:
+                            file_info['message'] = 'Ingest failed: ' + unicode(e)
                     
                     finally:
                         # no matter what happened, store results for reporting to user
