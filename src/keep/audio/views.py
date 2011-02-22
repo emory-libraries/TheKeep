@@ -459,52 +459,42 @@ def edit(request, pid):
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
         
-         
-@permission_required('is_staff')
-def download_audio(request, pid):
-    "Serve out the audio datastream for the fedora object specified by pid."
-    repo = Repository(request=request)
-    obj = repo.get_object(pid, type=AudioObject)
-    # NOTE: this will probably need some work to be able to handle large datastreams
-    try:
-        response = HttpResponse(obj.audio.content, mimetype=obj.audio.mimetype)
-        response['Content-Disposition'] = "attachment; filename=%s.wav" % slugify(obj.label)
-        return response
-    except:
-        msg = 'There was an error contacting the digital repository. ' + \
-              'This prevented us from accessing audio data. If this ' + \
-              'problem persists, please alert the repository ' + \
-              'administrator.'
-        return HttpResponse(msg, mimetype='text/plain', status=500)
 
-# download audio must be accessed by kiosk - should be IP restricted at apache level
-def download_compressed_audio(request, pid):
-    "Serve out the compressed audio datastream for the fedora object specified by pid."
-    try:
-        repo = Repository(request=request)
-        obj = repo.get_object(pid, type=AudioObject)
+# download audio must be accessed by iTunes kiosk - should be IP restricted at apache level
+# cannot be restricted to staff only here
+def download_audio(request, pid, type):
+    '''Serve out an audio datastream for the fedora object specified by pid.
+    Can be used to download original (WAV) audio file or the access copy (MP3).
     
-        #Check that the stream has been added.
-        if(obj.compressed_audio.exists):
-            # NOTE: this will probably need some work to be able to handle large datastreams
-        
-            response = HttpResponse(obj.compressed_audio.content, mimetype=obj.compressed_audio.mimetype)
-            response['Content-Disposition'] = "attachment; filename=%s.mp3" % slugify(obj.label)
-            return response
-        #if the compressed stream has not been added, ie. it conversion not done.
-        msg = '<div style="width:800px; font-size:16px;">The compressed audio stream does not currently exist. ' + \
-                  'This likely means the the audio conversion process ' + \
-                  'for this file is in progress or has failed. Please ' + \
-                  'try again shortly, and if the problem persists, contact ' + \
-                  'an adminstrator.<br /><br /> To return to the previous ' + \
-                  'page, please <a href="javascript:history.go(-1);">[click here]</a>.</div>' 
-        return HttpResponse(msg, mimetype='text/html', status=404)
-    except:
-        msg = 'There was an error contacting the digital repository. ' + \
-              'This prevented us from accessing audio data. If this ' + \
-              'problem persists, please alert the repository ' + \
-              'administrator.'
-        return HttpResponse(msg, mimetype='text/plain', status=500)
+    :param pid: pid of the :class:`~keep.audio.models.AudioObject` instance
+        from which the audio datastream should be returned
+    :param type: which audio datastream to return - should be one of 'original'
+        or 'wav'
+
+    The :class:`django.http.HttpResponse` returned will have a Content-Disposition
+    set to prompt the user to download the file with a filename based on the
+    object noid and an appropriate file extension for the type of audio requested.
+    '''
+    repo = Repository(request=request)
+    # retrieve the object so we can use it to set the download filename
+    obj = repo.get_object(pid, type=AudioObject)
+    # determine which datastream is requsted & set datastream id & file extension
+    if type == 'original':
+        dsid = AudioObject.audio.id
+        file_ext = 'wav'
+    elif type == 'access':
+        dsid = AudioObject.compressed_audio.id
+        file_ext = 'mp3'
+    else:
+        # any other type is not supported
+        raise Http404
+    extra_headers = {
+        'Content-Disposition': "attachment; filename=%s.%s" % (obj.noid, file_ext)
+    }
+    # use generic raw datastream view from eulcore
+    return raw_datastream(request, pid, dsid, type=AudioObject,
+            repo=repo, headers=extra_headers)
+    # errors accessing Fedora will fall through to default 500 error handling
 
 @permission_required('is_staff')
 def feed_list(request):

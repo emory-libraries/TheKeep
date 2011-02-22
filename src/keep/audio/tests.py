@@ -468,7 +468,7 @@ of 2''',
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
                         
-        expected = 'attachment; filename=my-audio-test-object.wav'
+        expected = 'attachment; filename=%s.wav' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
@@ -490,7 +490,7 @@ of 2''',
         response = self.client.get(download_url)
         code = response.status_code
         expected = 404
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin for non-existant audio file'
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin for non-existent audio file'
                              % (expected, code, download_url))
 
         #Set a compressed audio stream.
@@ -508,7 +508,7 @@ of 2''',
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
                         
-        expected = 'attachment; filename=my-audio-test-object.mp3'
+        expected = 'attachment; filename=%s.mp3' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
