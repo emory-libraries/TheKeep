@@ -30,7 +30,7 @@ class CollectionSearch(forms.Form):
     # NOTE: this only sets choices on load time (should be OK for search)
     collection_list = [(o.uri, o.label) for o in CollectionObject.top_level()]
     collection_list.insert(0, ('', '--'))   # add a blank option first
-    collection = forms.ChoiceField(label="Collection", required=False,
+    collection = forms.ChoiceField(label="Repository", required=False,
                     choices=collection_list, initial='')
                                 
 
@@ -109,9 +109,9 @@ class CollectionForm(XmlObjectForm):
 
     # NOTE: this only sets choices on load time
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
-    collection = forms.ChoiceField(label="Collection",
+    collection = forms.ChoiceField(label="Repository",
                     choices=[(o.uri, o.label) for o in CollectionObject.top_level()],
-                    help_text="Top-level collection this collection falls under.")
+                    help_text="Owning repository for this collection of materials.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",
                     help_text="Source archival collection number (enter 100 for MSS100 or Series 100)")

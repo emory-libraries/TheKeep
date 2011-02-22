@@ -160,6 +160,9 @@ class CollectionObject(DigitalObject):
         :returns: list of :class:`CollectionObject`
         :rtype: list
         """
+        # NOTE: top-level collections are now called Repository (for owning
+        # repository or archive), and should be labeled as such anywhere user-facing
+
         cache_key = 'top-level-collection-pids'
         # these objects are not expected to change frequently - caching for an hour at a time
         # NOTE: could set a different cache duration for development environment, if useful
