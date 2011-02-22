@@ -508,6 +508,11 @@ class CollectionViewsTest(TestCase):
         self.assertContains(response, 'no results',
                 msg_prefix='Message should be displayed to user when search finds no matches')
 
+        # no title - default text
+        rushdie.mods.content.title = ''
+        rushdie.save()
+        response = self.client.get(search_url, {'collection-mss': '1000'})
+        self.assertContains(response, '(no title present)')
 
     def test_collection_browse(self):
         browse_url = reverse('collection:browse')
