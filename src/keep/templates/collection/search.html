@@ -7,7 +7,7 @@
 {# {% include 'audio/snippets/collection_search_form.html' %} <hr/> #}
 
 <table>
-    <tr><th>MSS #</th><th>Title</th><th>Creator</th><th>Collection</th></tr>
+    <tr><th>Col. No.</th><th>Title</th><th>Creator</th><th>Collection</th></tr>
 {% for obj in results %}
     <tr>
         <td>{{ obj.source_id|default:'' }}</td>
