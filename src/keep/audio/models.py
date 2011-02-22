@@ -135,7 +135,7 @@ class SourceTech(_BaseSourceTech):
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
         SourceTechMeasure, required=True)
     ':class:`SourceTechMeasure`'
-    sublocation = xmlmap.StringField('st:sublocation', required=True,
+    sublocation = xmlmap.StringField('st:sublocation', required=False,
         help_text='Storage location within the collection (e.g., box and folder)')
     'storage location within the collection'
     form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options,
