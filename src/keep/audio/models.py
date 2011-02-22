@@ -71,7 +71,9 @@ class SourceTech(_BaseSourceTech):
         'dictabelt', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
     housing_options = ('Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
-        'Tape Cartridge', 'VHS', 'Other', 'Not applicable')
+        'Tape Cartridge', 'VHS', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
+        'Cardboard Sleeve', 'Cardboard Box', 'Other', 'Not applicable')
+
     'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
