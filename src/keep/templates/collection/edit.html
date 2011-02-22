@@ -25,7 +25,13 @@
     This is a new collection. Its ARK has not yet been assigned.
   {% endif %}
 </p>
-
+{% if collection.pid %} {# when editing existing objects, link to raw datastreams #}
+    <p class='extra'>
+      <a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a>
+      | <a href="{% url collection:raw-ds collection.pid 'DC' %}">DC</a>
+      | <a href="{% url collection:raw-ds collection.pid 'RELS-EXT' %}">RELS-EXT</a>
+    </p>
+{% endif %}
 <div class="instructions">
     <h2>Instructions for using this form</h2>
     <ul>

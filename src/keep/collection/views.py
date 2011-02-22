@@ -12,6 +12,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 
 from eulcore.django.http import HttpResponseSeeOtherRedirect
+from eulcore.django.fedora.views import raw_datastream
 from eulcore.fedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch
@@ -166,3 +167,9 @@ def browse(request):
     if response_code is not None:
         response.status_code = response_code
     return response
+
+@permission_required('is_staff')
+def view_datastream(request, pid, dsid):
+    'Access raw object datastreams (MODS, RELS-EXT, DC)'
+    # initialize local repo with logged-in user credentials & call generic view
+    return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))

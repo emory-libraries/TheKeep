@@ -30,11 +30,11 @@
   {% else %}
      | access copy
   {% endif %}
-  | <a href="{% url audio:raw-ds obj.pid 'mods' %}">MODS</a>
-  | <a href="{% url audio:raw-ds obj.pid 'dc' %}">DC</a>
-  | <a href="{% url audio:raw-ds obj.pid 'rels-ext' %}">RELS-EXT</a>
-  | <a href="{% url audio:raw-ds obj.pid 'sourcetech' %}">SourceTech</a>
-  | <a href="{% url audio:raw-ds obj.pid 'digitaltech' %}">DigitalTech</a>
+  | <a href="{% url audio:raw-ds obj.pid 'MODS' %}">MODS</a>
+  | <a href="{% url audio:raw-ds obj.pid 'DC' %}">DC</a>
+  | <a href="{% url audio:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>
+  | <a href="{% url audio:raw-ds obj.pid 'SourceTech' %}">SourceTech</a>
+  | <a href="{% url audio:raw-ds obj.pid 'DigitalTech' %}">DigitalTech</a>
 </p>
 {% with obj.conversion_result as conversion %}
   {% if conversion %}

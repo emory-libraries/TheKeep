@@ -543,6 +543,39 @@ class CollectionViewsTest(TestCase):
 
         # test errors?
 
+    def test_raw_datastream(self):
+        obj = FedoraFixtures.rushdie_collection()
+        obj.save()  # save to fedora for editing
+        self.pids.append(obj.pid)
+
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # NOTE: not testing strenuously here because this view is basically a
+        # wrapper around a generic eulcore view 
+
+        # MODS
+        ds_url = reverse('collection:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'MODS'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (MODS datastream)' \
+                % (expected, got, ds_url))
+        # RELS-EXT
+        ds_url = reverse('collection:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'RELS-EXT'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (RELS-EXT datastream)' \
+                % (expected, got, ds_url))
+
+        # DC
+        ds_url = reverse('collection:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'DC'})
+        response = self.client.get(ds_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (DC datastream)' \
+                % (expected, got, ds_url))
+
 
 
 class FindingAidTest(EulcoreTestCase):

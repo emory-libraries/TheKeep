@@ -6,4 +6,6 @@ urlpatterns = patterns('keep.collection.views',
     url(r'^search/$', 'search', name='search'),
     url(r'^(?P<pid>[^/]+)/$', 'view', name='view'),
     url(r'^(?P<pid>[^/]+)/edit/$', 'edit', name='edit'),
+     url(r'^(?P<pid>[^/]+)/(?P<dsid>(MODS|RELS-EXT|DC))/$',
+        'view_datastream', name='raw-ds'),
 )

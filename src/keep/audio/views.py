@@ -20,6 +20,7 @@ from django.utils.safestring import mark_safe
 
 from eulcore.django.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eulcore.django.taskresult.models import TaskResult
+from eulcore.django.fedora.views import raw_datastream
 from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
@@ -399,30 +400,10 @@ def view(request, pid):
                 kwargs={'pid': pid}))
 
 @permission_required('is_staff')
-def raw_datastream(request, pid, dsid):
-    'Access raw object datastreams (mods, rels-ext, dc, digitaltech, sourcetech)'
-    repo = Repository(request=request)
-    obj = repo.get_object(pid, type=AudioObject)
-    dsid = dsid.replace('-', '_')   # convert url dsid to datastream variable form
-    try:
-        # NOTE: could test that pid is actually an AudioObject using
-        # obj.has_requisite_content_models but that would mean
-        # an extra API call for every datastream but RELS-EXT
-        # Leaving out for now, for efficiency
-        ds = getattr(obj, dsid)
-        if ds.exists:
-            return HttpResponse(ds.content.serialize(pretty=True), mimetype=ds.mimetype)
-        else:
-            raise Http404
-    except RequestFailed as rf:
-        # if not actually an AudioObject or if either the object
-        # or the requested datastream doesn't exist, 404
-        if rf.code == 404 or not obj.has_requisite_content_models or \
-                not obj.exists or not obj.dsid.exists:
-            raise Http404
-
-        # for anything else, re-raise & let Django's default 500 logic handle it
-        raise
+def view_datastream(request, pid, dsid):
+    'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech)'
+    # initialize local repo with logged-in user credentials & call generic view
+    return raw_datastream(request, pid, dsid, type=AudioObject, repo=Repository(request=request))
 
 @permission_required('is_staff')
 def edit(request, pid):

@@ -865,7 +865,7 @@ of 2''',
         self.client.login(**ADMIN_CREDENTIALS)
 
         # MODS
-        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'mods'})
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'MODS'})
         response = self.client.get(ds_url)
         expected, got = 200, response.status_code
         self.assertEqual(expected, got,
@@ -878,7 +878,7 @@ of 2''',
         self.assertContains(response, '<mods:title>%s</mods:title>' % \
                             obj.mods.content.title)
         # RELS-EXT
-        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'rels-ext'})
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'RELS-EXT'})
         response = self.client.get(ds_url)
         expected, got = 200, response.status_code
         self.assertEqual(expected, got,
@@ -890,7 +890,7 @@ of 2''',
                 % (expected, got, ds_url))
         self.assertContains(response, obj.AUDIO_CONTENT_MODEL)
         # Source Tech
-        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'sourcetech'})
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'SourceTech'})
         response = self.client.get(ds_url)
         expected, got = 200, response.status_code
         self.assertEqual(expected, got,
@@ -903,7 +903,7 @@ of 2''',
         self.assertContains(response, '<st:sourcetech')
         self.assertContains(response, obj.sourcetech.content.note)
         # Digital Tech
-        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'digitaltech'})
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'DigitalTech'})
         response = self.client.get(ds_url)
         expected, got = 200, response.status_code
         self.assertEqual(expected, got,
@@ -921,7 +921,7 @@ of 2''',
 
          # non-existent record should 404
         fakepid = 'bogus-pid:1'
-        ds_url = reverse('audio:raw-ds', kwargs={'pid': fakepid, 'dsid': 'mods'})
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': fakepid, 'dsid': 'MODS'})
         response = self.client.get(ds_url)  # follow redirect to check error message
         expected, got = 404, response.status_code
         self.assertEqual(expected, got,
@@ -930,7 +930,7 @@ of 2''',
 
         # object without requested datastream 404
         # (currently view does not check cmodels for efficiency reasons)
-        ds_url = reverse('audio:raw-ds', kwargs={'pid': self.rushdie.pid, 'dsid': 'sourcetech'})
+        ds_url = reverse('audio:raw-ds', kwargs={'pid': self.rushdie.pid, 'dsid': 'SourceTech'})
         response = self.client.get(ds_url)
         expected, got = 404, response.status_code
         self.assertEqual(expected, got,
