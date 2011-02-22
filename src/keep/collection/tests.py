@@ -512,7 +512,8 @@ class CollectionViewsTest(TestCase):
         rushdie.mods.content.title = ''
         rushdie.save()
         response = self.client.get(search_url, {'collection-mss': '1000'})
-        self.assertContains(response, '(no title present)')
+        self.assertContains(response, '(no title present)',
+            msg_prefix='when a collection has no title, default no-title text is displayed')
 
     def test_collection_browse(self):
         browse_url = reverse('collection:browse')
@@ -545,6 +546,13 @@ class CollectionViewsTest(TestCase):
             if obj.mods.content.name:
                 self.assertContains(response, unicode(obj.mods.content.name),
                     msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
+
+        # no title - default text
+        rushdie.mods.content.title = ''
+        rushdie.save()
+        response = self.client.get(browse_url)
+        self.assertContains(response, '(no title present)',
+            msg_prefix='when a collection has no title, default no-title text is displayed')
 
         # test errors?
 
