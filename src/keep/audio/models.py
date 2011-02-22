@@ -221,7 +221,7 @@ class DigitalTech(_BaseDigitalTech):
     'general note'
     note_list = xmlmap.StringListField('dt:note[@type="general"]')
     digitization_purpose = xmlmap.StringField('dt:note[@type="purpose of digitization"]',
-        required=True,
+        required=False,
         help_text='The reason why the digital surrogate was created (e.g., exhibit, patron request, preservation)')
     'reason the item was digitized'
     digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
