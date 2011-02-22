@@ -12,7 +12,7 @@
             {% for subcoll in collection.list|dictsort:'source_id' %}
             <li>{{ subcoll.source_id|default:'' }}
                 <a href="{% url collection:edit subcoll.pid %}">
-                    {{ subcoll.title }}</a>
+                    {{ subcoll.title|default:'(no title present)' }}</a>
                     {{ subcoll.name }}
                 </li>
             {% empty %}
