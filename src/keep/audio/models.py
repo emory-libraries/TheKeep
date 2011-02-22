@@ -99,11 +99,11 @@ class SourceTech(_BaseSourceTech):
             ('phono disc|other|other', 'Other'),
             )
         ),
-        ('cylinder disc', (
-            ('cylinder disc|90|rpm', '90 rpm'),
-            ('cylinder disc|120|rpm', '120 rpm'),
-            ('cylinder disc|160|rpm', '160 rpm'),
-            ('cylinder disc|other|other', 'Other'),
+        ('phono cylinder', (
+            ('phono cylinder|90|rpm', '90 rpm'),
+            ('phono cylinder|120|rpm', '120 rpm'),
+            ('phono cylinder|160|rpm', '160 rpm'),
+            ('phono cylinder|other|other', 'Other'),
             ),
         ),
         ('other', (
