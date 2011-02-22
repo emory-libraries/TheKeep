@@ -44,7 +44,9 @@
        completed {{ obj.conversion_result.task_end|timesince }} ago,
        took {{ obj.conversion_result.duration }}.
     {% endif %}
-    {{ conversion.task.status }} {{ conversion.task.result|default:'' }}
+    {{ conversion.task.status }}    
+    {{ conversion.task.result|default:'' }}
+    {# NOTE: task result could potentially have full LAME output (hopefully unlikely);  truncate? #}
   </p>
   {% endif %}
 {% endwith %}

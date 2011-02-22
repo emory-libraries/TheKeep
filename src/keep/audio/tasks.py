@@ -60,7 +60,7 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
             try:
                 destination = os.fdopen(tmpfd, 'wb+')
             except Exception as e:
-                logger.error("Error opening temporary file, cannot download master audio for conversion : %s" % e)
+                logger.error("Error opening temporary file; cannot download master audio for conversion : %s" % e)
                 logger.debug("Stack trace for file error:\n" + traceback.format_exc())
                 os.close(tmpfd)
                 raise
@@ -88,8 +88,8 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
-        #stdout_value will be tuple with stdout in place 0, stderr in place 1. The output of the program will be in place 1.
-        stdout_value = process.communicate()
+        # returns a tuple of stdout, stderr. The output of the LAME goes to stderr.
+        stdout_output, stderr_output = process.communicate()
 
         #Return code of the process.
         return_code = process.returncode
@@ -98,8 +98,8 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
         if (return_code == 0):
             #Verify the original file and this file are the same length to within 0.1 seconds.
             if(not wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=wav_file_path, mp3_file_path=mp3_file_path)):
-                logger.error("Failed to convert audio file (duration of wav and mp3 did not match), pid is: " + pid)
-                raise Exception("Failed to convert audio file (duration of wav and mp3 did not match), pid is: " + pid)
+                logger.error("Failed to convert audio file (duration of wav and mp3 did not match) for %s " % pid)
+                raise Exception("Error generating MP3 (duration of wav and mp3 did not match)")
 
 	    with open(mp3_file_path) as f: 
                 obj.compressed_audio.content = f
@@ -107,10 +107,12 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 obj.compressed_audio.label = obj.audio.label
     	        obj.save("Added compressed mp3 audio stream from LAME conversion output.")
             return "Successfully converted file"
+
+        # Raise error if this is reached - if conversion succeded, should have already returned        
+        logger.error("Failed to convert audio file (LAME failed) for %s" % pid)                
+        logger.error("LAME output: %s" % stderr_output)
+        raise Exception("Failed to convert audio (LAME failed): %s" % stderr_output)
     
-        # Raise error if this is reached as should have returned "Successfully converted file".
-        logger.error("Failed to convert audio file (LAME failed), pid is: " + pid)
-        raise Exception("Failed to convert audio file (LAME failed), pid is: " + pid + " output: " + stdout_value[1])
     # General exception catch for logging.
     # possible more specific exceptions:
     # OSError - file open/write error
@@ -118,17 +120,26 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
     except Exception as e:
         # log the error and then re-raise it
         logger.error("Failed to convert audio for %s : %s" % (pid, e))
+        # TODO: may want to return a more detailed error message here
         raise
     #Cleanup for everything.
     finally:
         # remove if file was not passed in or if removal was requested for passed in file
         if (use_wav is None or (use_wav is not None and remove_wav)) \
                             and wav_file_path is not None:
-            if os.path.exists(wav_file_path):
-                os.remove(wav_file_path)
+            try:
+                if os.path.exists(wav_file_path):
+                    os.remove(wav_file_path)
+            except OSError as e:
+                # log the exception but don't raise it - not a conversion error to report to user
+                logger.error("Error removing wav file %s: %s" %  (wav_file_path, e))
 
         # Remove the generated mp3 file, if it exists.
         if mp3_file_path is not None:
-            if os.path.exists(mp3_file_path):
-                os.remove(mp3_file_path)
+            try:
+                if os.path.exists(mp3_file_path):
+                    os.remove(mp3_file_path)
+            except OSError as e:
+                # log the exception but don't raise it - not a conversion error to report to user
+                logger.error("Error removing mp3 file %s: %s" %  (mp3_file_path, e))
          
