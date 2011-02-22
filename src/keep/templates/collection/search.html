@@ -6,6 +6,8 @@
 {% block content-body %}
 {# {% include 'audio/snippets/collection_search_form.html' %} <hr/> #}
 
+{% include 'snippets/search_info.html' %}
+
 <table>
     <tr><th>MSS #</th><th>Title</th><th>Creator</th><th>Collection</th></tr>
 {% for obj in results %}

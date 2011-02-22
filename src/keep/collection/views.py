@@ -120,6 +120,19 @@ def search(request):
         if form.cleaned_data['collection']:
             search_opts['relation'] = form.cleaned_data['collection']
 
+        # collect non-empty, non-default search terms to display to user on results page
+        search_info = {}
+        for field, val in form.cleaned_data.iteritems():
+            key = form.fields[field].label  # use form display label
+            if key is None:     # if field label is not set, use field name as a fall-back
+                key = field 
+            if val:     # if search value is not empty, selectively add it
+                if field == 'collection':       # for collections, get collection info
+                    search_info[key] = get_cached_collection_dict(val)
+                elif val != form.fields[field].initial:     # ignore default values
+                    search_info[key] = val
+        context['search_info'] = search_info
+
         # If no user-specified search terms are entered, find all collections
         try:
             repo = Repository(request=request)

@@ -16,6 +16,7 @@ from django.test import Client, TestCase
 
 from eulcore.django.fedora.server import Repository
 from eulcore.django.taskresult.models import TaskResult
+from eulcore.django.test import TestCase as EulDjangoTestCase
 from eulcore.fedora.util import RequestFailed
 from eulcore.xmlmap  import load_xmlobject_from_string
 
@@ -39,7 +40,7 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
-class AudioViewsTest(TestCase):
+class AudioViewsTest(EulDjangoTestCase):
     fixtures =  ['users']
 
     # delete cached collections so test collections will be used
@@ -372,10 +373,14 @@ of 1''',
                 "test object 1 listed in results when searching by title")
         self.assert_(obj2.pid in found,
                 "test object 2 listed in results when searching by title")
-        self.assertContains(response, '''Displaying records
-1 - 2
-of 2''',
+        self.assertPattern('Displaying records.*1 - 2.*of 2', response.content,
             msg_prefix='search results include total number of records found')
+        self.assertPattern('title:.*test search', response.content,
+            msg_prefix='search results page should include search term (title)')
+        self.assertNotContains(response, 'pid: ',
+            msg_prefix='search results page should not include default search terms (pid)')
+        self.assertNotContains(response, 'description: ',
+            msg_prefix='search results page should not include empty search terms (description)')
 
         download_url = reverse('audio:download-audio', args=[obj.pid])
         self.assertContains(response, download_url,
@@ -392,6 +397,8 @@ of 2''',
                 "test object 1 listed in results when searching by description")
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by description")
+        self.assertPattern('description:.*general note', response.content,
+            msg_prefix='search results page should include search term (description)')
 
         # search by date
         response = self.client.get(search_url, {'audio-date': '1492*'})
@@ -404,6 +411,8 @@ of 2''',
                 "test object 1 listed in results when searching by date")
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by date")
+        self.assertPattern('date:.*1492\*', response.content,
+            msg_prefix='search results page should include search term (date)')
 
         # search by rights
         response = self.client.get(search_url, {'audio-rights': 'no photos'})
@@ -416,6 +425,8 @@ of 2''',
                 "test object 1 not listed in results when searching by rights")
         self.assert_(obj2.pid in found,
                 "test object 2 listed in results when searching by rights")
+        self.assertPattern('rights:.*no photos', response.content,
+            msg_prefix='search results page should include search term (rights)')
 
         # collection
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri})
@@ -430,6 +441,8 @@ of 2''',
                 "test object 2 not listed in results when searching by collection")
         self.assert_(self.rushdie.pid not in found,
                 "collection object not listed in results when searching by collection")
+        self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
+            msg_prefix='search results page should include search term (collection by name)')
 
         # multiple fields
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri,
@@ -443,6 +456,12 @@ of 2''',
                 "test object 1 listed in results when searching by collection + title + date")
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by collection + title + date")
+        self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
+            msg_prefix='search results page should include all search terms used (collection)')
+        self.assertPattern('date:.*1492\*', response.content,
+            msg_prefix='search results page should include all search terms used (date)')
+        self.assertPattern('title:.*test search', response.content,
+            msg_prefix='search results page should include all search terms used (title)')
 
     def test_download_audio(self):
         # create a test audio object

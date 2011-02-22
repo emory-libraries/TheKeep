@@ -29,6 +29,7 @@ from eulcore.fedora.models import DigitalObjectSaveFailure
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject
 from keep.audio.tasks import convert_wav_to_mp3
+from keep.collection.models import get_cached_collection_dict
 from keep.common.fedora import Repository
 from keep.common.utils import md5sum
 
@@ -364,7 +365,20 @@ def search(request):
             search_opts['date__contains'] = form.cleaned_data['date']
         if form.cleaned_data['rights']:
             search_opts['rights__contains'] = form.cleaned_data['rights']
-        
+
+        # collect non-empty, non-default search terms to display to user on results page
+        search_info = {}
+        for field, val in form.cleaned_data.iteritems():
+            key = form.fields[field].label  # use form display label when available
+            if key is None:     # if field label is not set, use field name as a fall-back
+                key = field 
+            if val:     # if search value is not empty, selectively add it
+                if field == 'collection':       # for collections, get collection info
+                    search_info[key] = get_cached_collection_dict(val)
+                elif val != form.fields[field].initial:     # ignore default values
+                    search_info[key] = val
+        ctx_dict['search_info'] = search_info
+
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.
