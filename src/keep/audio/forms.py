@@ -136,7 +136,7 @@ class ModsEditForm(XmlObjectForm):
             'general_note', 'part_note',
             )
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'long'}),
+            'title': forms.Textarea,
             }
 
 
