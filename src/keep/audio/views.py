@@ -9,7 +9,7 @@ import traceback
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
@@ -356,31 +356,35 @@ def search(request):
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.
+            #try:
+            repo = Repository(request=request)
+            found = list(repo.find_objects(**search_opts))
+            # default Fedora sorting appears to be by created date (oldest first)
+            # reverse the list in order to display most recent first
+            # - could explicitly sort on create date here, but that would be SLOW
+            found.reverse()
+            paginator = Paginator(found, 30)
+
             try:
-                repo = Repository(request=request)
-                found = repo.find_objects(**search_opts)
-                paginator = Paginator(list(found), 30)
+                page = int(request.GET.get('page', '1'))
+            except ValueError:
+                page = 1
+            try:
+                results = paginator.page(page)
+            except (EmptyPage, InvalidPage):
+                results = paginator.page(paginator.num_pages)
 
-                try:
-                    page = int(request.GET.get('page', '1'))
-                except ValueError:
-                    page = 1
-                try:
-                    results = paginator.page(page)
-                except (EmptyPage, InvalidPage):
-                    results = paginator.page(paginator.num_pages)
-
-                ctx_dict['results'] = results.object_list
-                ctx_dict['page'] = results
-                # pass search term query opts to view for pagination links
-                ctx_dict['search_opts'] = request.GET.urlencode()
-            except:
-                response_code = 500
-                ctx_dict['server_error'] = 'There was an error ' + \
-                    'contacting the digital repository. This ' + \
-                    'prevented us from completing your search. If ' + \
-                    'this problem persists, please alert the ' + \
-                    'repository administrator.'
+            ctx_dict['results'] = results.object_list
+            ctx_dict['page'] = results
+            # pass search term query opts to view for pagination links
+            ctx_dict['search_opts'] = request.GET.urlencode()
+            #except:
+            #    response_code = 500
+            #    ctx_dict['server_error'] = 'There was an error ' + \
+            #        'contacting the digital repository. This ' + \
+            #        'prevented us from completing your search. If ' + \
+            #        'this problem persists, please alert the ' + \
+            #        'repository administrator.'
 
     response = render_to_response('audio/search.html', ctx_dict,
                     context_instance=RequestContext(request))

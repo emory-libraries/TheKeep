@@ -443,6 +443,21 @@ of 2''',
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by collection + title + date")
 
+        # by default, list most recently created items first
+        obj3 = repo.get_object(type=audiomodels.AudioObject)
+        obj3.label = "most recent upload"
+        obj3.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
+        obj3.save()
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj3.pid)
+        # default search
+        response = self.client.get(search_url)
+        found = [o.pid for o in response.context['results']]
+        self.assert_(len(found) >= 3,
+            'default search should find at least 3 items')
+        self.assertEqual(found[0], obj3.pid,
+            'most recently created object should be listed first in search results')
+
     def test_download_audio(self):
         # create a test audio object
         repo = Repository()
