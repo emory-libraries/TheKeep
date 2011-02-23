@@ -7,6 +7,10 @@ from keep import mods
 from keep.collection.models import CollectionMods, CollectionObject
 
 
+# NOTE: this only sets choices on load time (should be OK for search)
+repository_choices = [(o.uri, o.label) for o in CollectionObject.top_level()]
+repository_choices.insert(0, ('', ''))   # blank option at the beginning (default)
+
 class CollectionSearch(forms.Form):
     '''Form for searching for :class:`~keep.collection.models.CollectionObject`
     instances.'''
@@ -27,11 +31,8 @@ class CollectionSearch(forms.Form):
             help_text=mark_safe('Search by collection title word or phrase. ' + wildcard_tip))
     creator = forms.CharField(required=False,
             help_text=mark_safe('Search by collection creator. '  + wildcard_tip))
-    # NOTE: this only sets choices on load time (should be OK for search)
-    collection_list = [(o.uri, o.label) for o in CollectionObject.top_level()]
-    collection_list.insert(0, ('', '--'))   # add a blank option first
     collection = forms.ChoiceField(label="Repository", required=False,
-                    choices=collection_list, initial='')
+                    choices=repository_choices, initial='')
                                 
 
 class AccessConditionForm(XmlObjectForm):
@@ -107,10 +108,10 @@ class CollectionForm(XmlObjectForm):
     '''
     # FIXME: update docstring to reflect multiple xml edit forms / datastreams
 
-    # NOTE: this only sets choices on load time
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
+    # TODO: update to use DynamicChoiceField now in use for audio?
     collection = forms.ChoiceField(label="Repository",
-                    choices=[(o.uri, o.label) for o in CollectionObject.top_level()],
+                    choices=repository_choices,
                     help_text="Owning repository for this collection of materials.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",

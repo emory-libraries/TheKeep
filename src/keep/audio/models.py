@@ -64,25 +64,27 @@ class SourceTech(_BaseSourceTech):
     ROOT_NAME = 'sourcetech'
 
     # option lists for controlled vocabulary source tech fields
-    form_options = ('audio cassette', 'open reel tape', 'LP', 'CD', 'sound file (WAV)',
+    form_options = ('', 'audio cassette', 'open reel tape', 'LP', 'CD', 'sound file (WAV)',
         'sound file (MP3)', 'sound file (M4A)', 'sound file (AIFF)', 'microcassette',
         'DAT', '78', '45 RPM', 'acetate disc', 'aluminum disc', 'glass disc',
         'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
         'dictabelt', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
-    housing_options = ('Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
+    housing_options = ('', 'Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
         'Tape Cartridge', 'VHS', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
         'Cardboard Sleeve', 'Cardboard Box', 'Other', 'Not applicable')
-
     'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
     reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
-    reel_size_options.append((None, 'Other'))
-    sound_characteristic_options = ('mono', 'stereo')
+    reel_size_options.append(('Other', 'Other'))
+    # add an empty value at the beginning of the list to force active selection
+    reel_size_options.insert(0, ('', ''))
+    sound_characteristic_options = ('', 'mono', 'stereo')
     'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
     speed_options = (
         # delimited format is aspect, value, unit
+        ('', ''),
         ('tape', (
             ('tape|15/16|inches/sec', '15/16 ips'),
             ('tape|1 7/8|inches/sec', '1 7/8 ips'),
@@ -193,6 +195,7 @@ class CodecCreator(_BaseDigitalTech):
     'controlled vocabulary for codec creator configurations'
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
                     for id, c in configurations.iteritems()]
+    options.insert(0, ('', '')) # empty value at beginning of list (initial default)
 
     id = xmlmap.StringField('dt:codecCreatorID')
     'codec creator id - `dt:codecCreatorId`'

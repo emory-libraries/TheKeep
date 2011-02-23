@@ -50,14 +50,10 @@ def _collection_options(include_blank=False):
                     for c in sorted(collections, key=lambda k: k['source_id'])]
             cache.set(_COLLECTION_OPTIONS_CACHE_KEY, options, cache_duration)
 
-        # if include_blank is requested, insert an empty option at the beginning of the list
-        if include_blank:
-            options.insert(0, ('', EMPTY_LABEL_TEXT))
+        # always include a blank option at the beginning of the list
+        # - not specified for search, force user to search for edit form
+        options.insert(0, ('', EMPTY_LABEL_TEXT))
         return options
-
-def _collection_options_with_blank():
-    # collection is optional for search but not for edit form
-    return _collection_options(include_blank=True)
 
 class ItemSearch(forms.Form):
     '''Form for searching for :class:`~keep.audio.models.AudioObject`
@@ -66,8 +62,7 @@ class ItemSearch(forms.Form):
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
     description = forms.CharField(required=False,
             help_text='Search for word or phrase in general note or digitization purpose.  May contain wildcards * or ?.')
-    # FIXME: should we cache these choices ? 
-    collection = DynamicChoiceField(label="Collection",  choices=_collection_options_with_blank,
+    collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',
                     required=False)
@@ -298,6 +293,7 @@ class RightsForm(XmlObjectForm):
     # access_terms entry. Collect the options so the ChoiceField will use
     # the code as the option @value and the text as the option text.
     access_options = [ (item[0], item[2]) for item in Rights.access_terms ]
+    access_options.insert(0, ('', ''))
     access = forms.ChoiceField(access_options, label='Access Condition',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)

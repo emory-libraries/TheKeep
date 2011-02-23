@@ -83,7 +83,7 @@
   {% endfor %}
   {% endcomment %}
   <tr id="origin_info">
-      <th>Origin Info</th>
+      <th>Origin Info</th> {# FIXME: formatting gets wonky when validation errors display #}
       <td>{{ form.mods.subforms.origin_info.as_p }}</td>
     </tr>
     <tr>

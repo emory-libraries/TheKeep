@@ -121,7 +121,7 @@ class Name(Common):
     xmlschema = _mods_xmlschema
 
     type = xmlmap.SchemaField('@type', 'nameTypeAttributeDefinition')
-    authority = xmlmap.StringField('@authority', choices=['local', 'naf']) # naf = NACO authority file
+    authority = xmlmap.StringField('@authority', choices=['', 'local', 'naf']) # naf = NACO authority file
     id = xmlmap.StringField('@ID')  # optional
     name_parts = xmlmap.NodeListField('mods:namePart', NamePart)
     display_form = xmlmap.StringField('mods:displayForm')
