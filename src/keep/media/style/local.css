@@ -194,3 +194,28 @@ div.subform {
 td.multi-field label {
     display:block;
 }
+
+/* style for error/sucess messages (!important required to counteract #content ul li styles */
+ul.messages {
+    list-style-type: none;
+    border: 1px solid #D9D9D9;
+    background-color: #F2F3F5;
+    margin-bottom: 10px !important;
+}
+ul.messages li {
+    background: none !important;
+    /*padding-left: 10px !important;*/
+    padding: 5px 0px !important;
+    margin-left: 25px !important;
+    font-weight: bold;
+}
+.messages .success {
+    list-style-image: url('../images/check.png');
+    color: green;
+}
+.messages .error {
+    list-style-image: url('../images/x.png');
+    color: red;
+}
+/* NOTE: could use this selector to highlight form sections with errors
+.edit-form .error {}    */

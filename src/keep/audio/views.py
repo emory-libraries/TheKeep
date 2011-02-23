@@ -426,11 +426,21 @@ def edit(request, pid):
                 # update foxml object with data from the form
                 form.update_instance()      # instance is reference to mods object
                 obj.save()
-                messages.success(request, 'Updated %s' % pid)
+                messages.success(request, 'Successfully updated <a href="%s">%s</a>' % \
+                        (reverse('audio:edit', args=[pid]), pid))
                 # save & continue functionality - same as collection edit
                 if '_save_continue' not in request.POST:
                     return HttpResponseSeeOtherRedirect(reverse('audio:index'))
                 # otherwise - fall through to display edit form again
+
+            # form was posted but not valid
+            else:
+                # if we attempted to save and failed, add a message since the error
+                # may not be obvious or visible in the first screenful of the form
+                messages.error(request,
+                    '''Your changes were not saved due to a validation error.
+                    Please correct any required or invalid fields indicated below and save again.''')
+
         else:
             # GET - display the form for editing, pre-populated with content from the object
             form = audioforms.AudioObjectEditForm(instance=obj)

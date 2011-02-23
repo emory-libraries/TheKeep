@@ -1,5 +1,7 @@
 {# display a single audio edit form field in a table row - expects form field named 'field' #}
-<tr class="{% if field.field.required %}required{% endif %}"> {# FIXME: add a class for error? #}
+{# if template variable 'form' is available, required & error css classes will be used from the form #}
+<tr class="{% if field.field.required %}{{ form.required_css_class|default:'required'}}{% endif %}
+    {% if field.errors %}{{ form.error_css.class|default:'error' }}{% endif %}">
   <th>{{ field.label }}
       {% if field.field.required %}<span title='required' class='required'>*</span>{% endif %}
   </th>

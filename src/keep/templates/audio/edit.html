@@ -61,7 +61,7 @@
 <form method="post" name="edit_form">{% csrf_token %}
 
 <h3 id="mods-label" class="section-head toggle open">Descriptive Metadata</h3>
-<div id="mods">    
+<div id="mods">
     {% if form.mods.non_field_errors %}
     {{ form.mods.non_field_errors }}
     {% endif %}

@@ -671,7 +671,7 @@ of 2''',
         }
         response = self.client.post(edit_url, audio_data, follow=True)
         messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assertEqual("Updated %s" % obj.pid, messages[0],
+        self.assert_(messages[0].startswith("Successfully updated"),
             "successful save message set in response context")
         # currently redirects to audio index
         (redirect_url, code) = response.redirect_chain[0]
@@ -763,7 +763,7 @@ of 2''',
         data['_save_continue'] = True   # simulate submit via 'save and continue' button
         response = self.client.post(edit_url, data)
         messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assertEqual('Updated %s' % obj.pid, messages[0],
+        self.assert_(messages[0].startswith("Successfully updated"),
             'successful audio update message displayed to user on save and continue editing')
         self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
                 "MODS EditForm is set in response context after save and continue editing")
@@ -788,12 +788,37 @@ of 2''',
             'mods-origin_info-created-0-date_month': '',
         })
         response = self.client.post(edit_url, data)
-         # get the latest copy of the object
+        # get the latest copy of the object
         updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
         self.assertFalse(obj.mods.content.origin_info)
         
-        # TODO: add a field validation error & check that error message is displayed
-        # to test that our custom templates don't lose any built-in functionality
+        # validation errors - post incomplete/bogus data & check for validation errors
+        data = audio_data.copy()
+        data.update({
+            'mods-title': '',       # title is required
+            'mods-origin_info-issued-0-date_year': 'abcf',  # not a year 
+        })
+        response = self.client.post(edit_url, data)
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assert_(messages[0].startswith("Your changes were not saved due to a validation error"),
+            "form validation error message set in response context")
+        self.assertContains(response, 'This field is required',
+            msg_prefix='required error message displayed (empty title)')
+        self.assertContains(response, 'Enter a date in one of these formats',
+            msg_prefix='date validation error message displayed')
+
+        # sending blank origin info dates should remove them from mods
+        data = audio_data.copy()
+        data.update({
+            'mods-origin_info-issued-0-date_year': '',
+            'mods-origin_info-issued-0-date_month': '',
+            'mods-origin_info-issued-0-date_day': '',
+            'mods-origin_info-created-INITIAL_FORMS': '0',
+            'mods-origin_info-created-TOTAL_FORMS': '1',
+            'mods-origin_info-created-MAX_NUM_FORMS': '',
+            'mods-origin_info-created-0-date_year': '',
+            'mods-origin_info-created-0-date_month': '',
+        })
 
         # edit non-existent record should 404
         fakepid = 'bogus-pid:1'
@@ -860,7 +885,7 @@ of 2''',
             "successful save redirects to audio index page")
 
         messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assertEqual("Updated %s" % obj.pid, messages[0],
+        self.assert_(messages[0].startswith("Successfully updated"),
             "successful save message set in response context")
 
         # we'll assume (for now) that the fields were saved correctly: this
