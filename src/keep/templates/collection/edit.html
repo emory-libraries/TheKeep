@@ -71,6 +71,9 @@
                       {% with namepart.text as field %}
                           <div class="column" style="width:65%">{% include 'snippets/form_field.html' %}</div>
                       {% endwith %}
+                      {% with namepart.DELETE as field %}
+                          <div class="column" style="width:4em">{% include 'snippets/form_field.html' %}</div>
+                      {% endwith %}
                       <br clear="all"/>
                   </div>
               {% endfor %}
@@ -83,15 +86,18 @@
               {% for role in name.formsets.roles.forms %}
                   <div id="name-role">
                    {% with role.text as field %}
-                      <div class="column" style="width:75%">
+                      <div class="column" style="width:68%">
                           {% include 'snippets/form_field.html' %}</div>
                   {% endwith %}
                   {% with role.authority as field %}
-                      <div class="column" style="width:11em">
+                      <div class="column" style="width:11.5em">
                           {% include 'snippets/form_field.html' %}
                       </div>
                   {% endwith %}
                   {{ role.type }} {# hidden field, used to set default value #}
+                  {% with role.DELETE as field %}
+                      <div class="column" style="width:4em">{% include 'snippets/form_field.html' %}</div>
+                  {% endwith %}
                   <br clear="all"/>
                   </div>
               {% endfor %}

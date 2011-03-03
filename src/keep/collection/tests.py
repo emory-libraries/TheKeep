@@ -397,6 +397,11 @@ class CollectionViewsTest(TestCase):
                 msg_prefix='Parent collection from existing object pre-selected')
         self.assertContains(response, 'Edit Collection',
                 msg_prefix='page title indicates user is editing an existing collection')
+        self.assertContains(response, 'name="name-name_parts-0-DELETE"',
+                msg_prefix='namePart delete option is available')
+        self.assertContains(response, 'name="name-roles-0-DELETE"',
+                msg_prefix='namePart delete option is available')
+
 
         # POST and update existing object, verify in fedora
         response = self.client.post(edit_url, COLLECTION_DATA, follow=True)

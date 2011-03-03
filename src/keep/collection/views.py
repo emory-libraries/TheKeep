@@ -73,6 +73,12 @@ def edit(request, pid=None):
                         return HttpResponseSeeOtherRedirect(reverse('collection:edit',
                                                             args=[obj.pid]))
 
+                    # if form was valid & object was saved but user has requested
+                    # "save & continue editing" re-init the form so that formsets
+                    # will display correctly
+                    else:
+                        form = CollectionForm(instance=obj)
+
             # in any other case - fall through to display edit form again
         else:
             # GET - display the form for editing
