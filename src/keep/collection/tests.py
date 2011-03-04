@@ -140,8 +140,8 @@ class CollectionObjectTest(TestCase):
     def test_item_collections(self):
         pids = self.ingest_test_collections()
 
-        # populate the cache and confirm it is equal
-        self.assertEqual([], CollectionObject.item_collections(refresh_cache=True))
+        # populate the cache *before* ingesting test objects 
+        CollectionObject.item_collections(refresh_cache=True)
         
         with self.ingest_test_collections():
             # all tests here confirm cache is updated correctly when a collection is created
