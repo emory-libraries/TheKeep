@@ -772,13 +772,6 @@ of 2''',
         self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
                 "MODS EditForm is set in response context after save and continue editing")
 
-        # force a schema-validation error (shouldn't happen normally)
-        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
-        obj.save("schema-invalid MODS")
-        response = self.client.post(edit_url, audio_data)
-        self.assertContains(response, '<ul class="errorlist">')
-
-
         # sending blank origin info dates should remove them from mods
         data = audio_data.copy()
         data.update({
@@ -794,7 +787,9 @@ of 2''',
         response = self.client.post(edit_url, data)
         # get the latest copy of the object
         updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertFalse(obj.mods.content.origin_info)
+        self.assertFalse(updated_obj.mods.content.origin_info)
+        # get a page to clear any session messages
+        response = self.client.get(edit_url)
         
         # validation errors - post incomplete/bogus data & check for validation errors
         data = audio_data.copy()
@@ -811,19 +806,23 @@ of 2''',
         self.assertContains(response, 'Enter a date in one of these formats',
             msg_prefix='date validation error message displayed')
 
-        # sending blank origin info dates should remove them from mods
+        # sending blank engineer should remove from digital tech
         data = audio_data.copy()
-        data.update({
-            'mods-origin_info-issued-0-date_year': '',
-            'mods-origin_info-issued-0-date_month': '',
-            'mods-origin_info-issued-0-date_day': '',
-            'mods-origin_info-created-INITIAL_FORMS': '0',
-            'mods-origin_info-created-TOTAL_FORMS': '1',
-            'mods-origin_info-created-MAX_NUM_FORMS': '',
-            'mods-origin_info-created-0-date_year': '',
-            'mods-origin_info-created-0-date_month': '',
-        })
+        data['dt-engineer'] = ''
+        response = self.client.post(edit_url, data)
+        #print response
+        # get the latest copy of the object
+        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+        #print updated_obj.digitaltech.content.serialize(pretty=True)
+        self.assertFalse(updated_obj.digitaltech.content.transfer_engineer)
 
+        # force a schema-validation error (shouldn't happen normally)
+        # NOTE: invalid mods test should happen after all other tests that modify this object
+        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
+        obj.save("schema-invalid MODS")
+        response = self.client.post(edit_url, audio_data)
+        self.assertContains(response, '<ul class="errorlist">')
+        
         # edit non-existent record should 404
         fakepid = 'bogus-pid:1'
         edit_url = reverse('audio:edit', args=[fakepid])

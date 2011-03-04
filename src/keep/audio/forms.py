@@ -213,7 +213,7 @@ class DigitalTechForm(XmlObjectForm):
     """
     engineer = UserChoiceField(label='Transfer Engineer',
         queryset=User.objects.filter(password='!').order_by('last_name'),
-        empty_label=EMPTY_LABEL_TEXT,
+        empty_label=EMPTY_LABEL_TEXT, required=False,  # FIXME: pull from the xmlobject field?
         # limit to LDAP users (no password in django db) and sort by last name
         help_text=mark_safe('''The person who performed the digitization or
         conversion that produced the file.<br/>
@@ -254,10 +254,14 @@ class DigitalTechForm(XmlObjectForm):
         if hasattr(self, 'cleaned_data'):
             # set transfer engineer id and name based on User object
             user = self.cleaned_data['engineer']
-            self.instance.create_transfer_engineer()
-            self.instance.transfer_engineer.id = user.username
-            self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
-            self.instance.transfer_engineer.name = user.get_full_name()
+            # transfer engineer is optional - set in xml if present, otherwise remove
+            if user:
+                self.instance.create_transfer_engineer()
+                self.instance.transfer_engineer.id = user.username
+                self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
+                self.instance.transfer_engineer.name = user.get_full_name()
+            else:
+                del(self.instance.transfer_engineer)
 
             # set codec creator
             cc_id = self.cleaned_data['hardware']

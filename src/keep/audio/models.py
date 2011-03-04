@@ -231,7 +231,7 @@ class DigitalTech(_BaseDigitalTech):
     'reason the item was digitized'
     digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
     transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
-        required=True, help_text='The person who performed the digitization or conversion that produced the file')
+        required=False, help_text='The person who performed the digitization or conversion that produced the file')
     ':class:`TransferEngineer` - person who digitized the item'
     codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
         required=True, help_text='Hardware, software, and software version used to create the digital file')
