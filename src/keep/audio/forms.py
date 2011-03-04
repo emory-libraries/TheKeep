@@ -32,6 +32,11 @@ def _cmp_collections(a, b):
 
 EMPTY_LABEL_TEXT = ''
 
+# rights access status code options - used in edit & search forms
+# use code for value, display code + abbreviation so code can be used for short-cut selection
+rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
+rights_access_options.insert(0, ('', ''))
+
 _COLLECTION_OPTIONS_CACHE_KEY = 'collection-options'
 def _collection_options(include_blank=False):
         # by default only cache for a minute at a time so users can see changes quickly
@@ -70,8 +75,8 @@ class ItemSearch(forms.Form):
             initial='%s:' % settings.FEDORA_PIDSPACE)
     date = forms.CharField(required=False,
             help_text='Search date created or issued.  May contain wildcards * or ?.')
-    rights = forms.CharField(required=False,
-            help_text='Search for word or phrase within access conditions.  May contain wildcards * or ?.')
+    rights = forms.ChoiceField(rights_access_options, required=False,
+                    help_text='Search for items with the specified Rights access condition')
 
     
 class SimpleNoteForm(XmlObjectForm):
@@ -288,13 +293,7 @@ class RightsForm(XmlObjectForm):
     :class:`~keep.audio.models.Rights` metadata.
     """
 
-    # The model's access_condition allows arbitrary code and text. For
-    # the form, though, we want text and code to come from a single
-    # access_terms entry. Collect the options so the ChoiceField will use
-    # the code as the option @value and the text as the option text.
-    access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
-    access_options.insert(0, ('', ''))
-    access = forms.ChoiceField(access_options, label='Access Status',
+    access = forms.ChoiceField(rights_access_options, label='Access Status',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)
 
