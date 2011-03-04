@@ -83,8 +83,19 @@
   {% endfor %}
   {% endcomment %}
   <tr id="origin_info">
-      <th>Origin Info</th> {# FIXME: formatting gets wonky when validation errors display #}
-      <td>{{ form.mods.subforms.origin_info.as_p }}</td>
+      <th>Origin Info</th> 
+      <td>{# dates are list fields/formsets, but we only allow one for now #}
+          <label>Date Issued</label>
+          {{ form.mods.subforms.origin_info.formsets.issued.management_form }}
+          {% for form in form.mods.subforms.origin_info.formsets.issued.forms %}
+            {% with form.date as field %}{% include 'snippets/form_field.html' %}{% endwith %}
+          {% endfor %}
+          <label>Date Created</label>
+          {{ form.mods.subforms.origin_info.formsets.created.management_form }}
+          {% for form in form.mods.subforms.origin_info.formsets.created.forms %}
+            {% with form.date as field %}{% include 'snippets/form_field.html' %}{% endwith %}
+          {% endfor %}
+      </td>
     </tr>
     <tr>
       <th>General Note
