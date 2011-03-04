@@ -35,6 +35,7 @@
   | <a href="{% url audio:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>
   | <a href="{% url audio:raw-ds obj.pid 'SourceTech' %}">SourceTech</a>
   | <a href="{% url audio:raw-ds obj.pid 'DigitalTech' %}">DigitalTech</a>
+  | <a href="{% url audio:raw-ds obj.pid 'Rights' %}">Rights</a>
 </p>
 {% with obj.conversion_result as conversion %}
   {% if conversion %}
