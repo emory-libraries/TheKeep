@@ -18,6 +18,10 @@ from keep.common.fedora import DigitalObject, Repository
 
 logger = logging.getLogger(__name__)
 
+# items cached here should be cached for a "long time"; the cache will be refreshed
+# when collections are modified or created
+LONG_CACHE_DURATION = 60*60*12   # time in seconds
+
 class CollectionMods(mods.MODS):
     '''Collection-specific MODS, based on :class:`keep.mods.MODS`.'''
     source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
@@ -53,6 +57,9 @@ class CollectionObject(DigitalObject):
     _collection_label = None
     _top_level_collections = None
 
+    _collection_pids_cache_key = 'item-collection-pids'
+    _toplevel_collection_cache_key = 'top-level-collection-pids'
+    
     def _update_dc(self):
         # FIXME: some duplicated logic from AudioObject save
         if self.mods.content.title:
@@ -102,9 +109,15 @@ class CollectionObject(DigitalObject):
             # if either has changed, update DC and object label to keep them in sync
             self._update_dc()
 
+        # before save/ingest, store whether or not this is a new object
+        new_collection = self._create
+
         save_result = super(CollectionObject, self).save(logMessage)
         # after a collection is successfully saved, update the cache
         set_cached_collection_dict(self)
+        # if this is a brand-new collection, the list of items needs to be refreshed
+        if new_collection:
+            self.item_collections(refresh_cache=True)
         return save_result
 
     @property
@@ -163,12 +176,8 @@ class CollectionObject(DigitalObject):
         # NOTE: top-level collections are now called Repository (for owning
         # repository or archive), and should be labeled as such anywhere user-facing
 
-        cache_key = 'top-level-collection-pids'
-        # these objects are not expected to change frequently - caching for an hour at a time
-        # NOTE: could set a different cache duration for development environment, if useful
-        cache_duration = 60*60*12
         # NOTE: can't pickle digital objects, so caching list of pids instead
-        collection_pids = cache.get(cache_key, None)
+        collection_pids = cache.get(CollectionObject._toplevel_collection_cache_key, None)
         repo = Repository()
         if collection_pids is None or \
                 CollectionObject._top_level_collections is None:
@@ -186,39 +195,44 @@ class CollectionObject(DigitalObject):
             }
             collection_pids = list(repo.risearch.find_statements(query, language='sparql',
                                                              type='tuples', flush=True))
-            cache.set(cache_key, collection_pids, cache_duration)
+            # these objects are not expected to change frequently - caching for a long time
+            cache.set(CollectionObject._toplevel_collection_cache_key, collection_pids, LONG_CACHE_DURATION)
             CollectionObject._top_level_collections = [repo.get_object(result['coll'], type=CollectionObject)
                                                        for result in collection_pids]
 
         return CollectionObject._top_level_collections
 
     @staticmethod
-    def item_collections():
+    def item_collections(refresh_cache=False):
         """Find all collection objects in the configured Fedora pidspace that
         can contain items. Today this includes all those collections that are
-        not top-level.
+        not top-level. 
         
         :returns: list of dict
         :rtype: list
         """
-        repo = Repository()
-        # find all objects with cmodel collection-1.1 and any parent
-        query = '''SELECT DISTINCT ?coll
-        WHERE {
-            ?coll <%(has_model)s> <%(cmodel)s> .
-            ?coll <%(member_of)s> ?parent
-        }
-        ''' % {
-            'has_model': modelns.hasModel,
-            'cmodel': CollectionObject.CONTENT_MODELS[0],
-            'member_of': relsext.isMemberOfCollection,
-        }
-        collection_pids = repo.risearch.find_statements(query, language='sparql',
-                                                        type='tuples', flush=True)
-        return [get_cached_collection_dict(result['coll'])
-                        for result in collection_pids
-                            if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
-        # use dictsort and regroupe in templates for sorting where appropriate
+        pids = cache.get(CollectionObject._collection_pids_cache_key, None)
+        if pids is None or refresh_cache:
+            repo = Repository()
+            # find all objects with cmodel collection-1.1 and any parent
+            query = '''SELECT DISTINCT ?coll
+            WHERE {
+                ?coll <%(has_model)s> <%(cmodel)s> .
+                ?coll <%(member_of)s> ?parent
+            }
+            ''' % {
+                'has_model': modelns.hasModel,
+                'cmodel': CollectionObject.CONTENT_MODELS[0],
+                'member_of': relsext.isMemberOfCollection,
+            }
+            collection_pids = repo.risearch.find_statements(query, language='sparql',
+                                                            type='tuples', flush=True)
+            pids = [result['coll'] for result in collection_pids
+                                if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
+            
+            cache.set(CollectionObject._collection_pids_cache_key, pids, LONG_CACHE_DURATION)
+        return [get_cached_collection_dict(p) for p in pids]
+        # use dictsort and regroup in templates for sorting where appropriate
 
     def subcollections(self):
         """Find all sub-collections that are members of the current collection
@@ -277,7 +291,6 @@ def set_cached_collection_dict(collection):
 
     :param collection: class:`CollectionObject` to be cached
     '''
-    cache_duration = 60*60*12  # FIXME: make this configurable ? keep for a long time, since we will recache
     # DigitalObjects can't be cached, and django templates can sort and regroup
     # dictionaries much better, so cache important collction info as dictionary 
     coll_dict = {
@@ -289,7 +302,7 @@ def set_cached_collection_dict(collection):
         'collection_label': collection.collection_label,
     }
     logger.debug('caching collection %s: %r' % (collection.pid, coll_dict))
-    cache.set(collection.pid, coll_dict, cache_duration)
+    cache.set(collection.pid, coll_dict, LONG_CACHE_DURATION)   # keep for a long time, since we will recache
     return coll_dict
 
 class FindingAid(XmlModel, EncodedArchivalDescription):

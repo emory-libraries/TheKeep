@@ -140,7 +140,11 @@ class CollectionObjectTest(TestCase):
     def test_item_collections(self):
         pids = self.ingest_test_collections()
 
+        # populate the cache and confirm it is equal
+        self.assertEqual([], CollectionObject.item_collections(refresh_cache=True))
+        
         with self.ingest_test_collections():
+            # all tests here confirm cache is updated correctly when a collection is created
             collections = CollectionObject.item_collections()
 
             source_ids = [ coll['source_id']  for coll in collections ]
@@ -155,6 +159,7 @@ class CollectionObjectTest(TestCase):
             top_levels = CollectionObject.top_level()
             self.assert_(top_levels[0].pid not in pids,
                     "top level collection %s should not be in item collections." % (top_levels[0].pid,))
+
 
     def test_subcollections(self):
         with self.ingest_test_collections():

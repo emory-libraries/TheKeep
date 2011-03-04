@@ -3,7 +3,6 @@ import logging
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.utils.safestring import mark_safe
 
 from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_factory
@@ -37,26 +36,17 @@ EMPTY_LABEL_TEXT = ''
 rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
 rights_access_options.insert(0, ('', ''))
 
-_COLLECTION_OPTIONS_CACHE_KEY = 'collection-options'
-def _collection_options(include_blank=False):
-        # by default only cache for a minute at a time so users can see changes quickly
-        cache_duration = 60
-        # when running in development environment, cache for longer
-        if settings.DEV_ENV:
-            cache_duration = 60*30
-        options = cache.get(_COLLECTION_OPTIONS_CACHE_KEY, None)
-        if options is None:
-            collections = [c for c in CollectionObject.item_collections()
-                            if settings.FEDORA_PIDSPACE in c['pid'] ]
-            logging.debug('Calculated collections: ' + ' '.join(c['pid'] for c in collections))
-            # generate option list with URI as value and source id - title display
-            # sort on source id
-            options = [('info:fedora/' + c['pid'], '%s - %s' % (c['source_id'], c['title']))
-                    for c in sorted(collections, key=lambda k: k['source_id'])]
-            cache.set(_COLLECTION_OPTIONS_CACHE_KEY, options, cache_duration)
+def _collection_options():
+        collections = [c for c in CollectionObject.item_collections()
+                        if settings.FEDORA_PIDSPACE in c['pid'] ]
+        logging.debug('Calculated collections: ' + ' '.join(c['pid'] for c in collections))
+        # generate option list with URI as value and source id - title display
+        # sort on source id
+        options = [('info:fedora/' + c['pid'], '%s - %s' % (c['source_id'], c['title']))
+                for c in sorted(collections, key=lambda k: k['source_id'])]
 
         # always include a blank option at the beginning of the list
-        # - not specified for search, force user to search for edit form
+        # - not specified for search, force user to select on the edit form
         options.insert(0, ('', EMPTY_LABEL_TEXT))
         return options
 
