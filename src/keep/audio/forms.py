@@ -292,9 +292,9 @@ class RightsForm(XmlObjectForm):
     # the form, though, we want text and code to come from a single
     # access_terms entry. Collect the options so the ChoiceField will use
     # the code as the option @value and the text as the option text.
-    access_options = [ (item[0], item[2]) for item in Rights.access_terms ]
+    access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
     access_options.insert(0, ('', ''))
-    access = forms.ChoiceField(access_options, label='Access Condition',
+    access = forms.ChoiceField(access_options, label='Access Status',
                     help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)
 

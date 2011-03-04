@@ -565,7 +565,7 @@ of 2''',
         obj.digitaltech.content.codec_creator.id = '1'
         # pre-populate rights metadata
         obj.rights.content.create_access_condition()
-        obj.rights.content.access_condition.code = 'UNKNOWN'
+        obj.rights.content.access_condition.code = 10   # undetermined
         obj.rights.content.access_condition.text = 'Rights status unknown; no access to files or metadata'
         obj.rights.content.copyright_holder_name = 'User, Example'
         obj.rights.content.copyright_date = '1978'
@@ -665,7 +665,7 @@ of 2''',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
                     # rights metadata
-                    'rights-access': 'PD-UNRESTRICT',
+                    'rights-access': '8',       # public domain
                     'rights-copyright_holder_name': 'Mouse, Mickey',
                     'rights-copyright_date_year': '1942',
         }
@@ -754,7 +754,7 @@ of 2''',
         # check that rights fields were updated correctly
         rights = updated_obj.rights.content
         self.assertEqual(audio_data['rights-access'], rights.access_condition.code)
-        self.assertTrue(rights.access_condition.text.startswith('In public domain'))
+        self.assertTrue(rights.access_condition.text.endswith('in public domain'))
         self.assertEqual(audio_data['rights-copyright_holder_name'], rights.copyright_holder_name)
         self.assertEqual(audio_data['rights-copyright_date_year'], rights.copyright_date)
 
@@ -874,7 +874,7 @@ of 2''',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
                     # rights metadata
-                    'rights-access': 'PD-UNRESTRICT',
+                    'rights-access': 8,   # public domain
         }
 
         response = self.client.post(edit_url, audio_data, follow=True)
@@ -991,7 +991,7 @@ of 2''',
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
         obj.rights.content.create_access_condition()
-        obj.rights.content.access_condition.code = 'PD-UNRESTRICT'
+        obj.rights.content.access_condition.code = 8 # public domain
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
         obj.save()
@@ -999,17 +999,17 @@ of 2''',
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
         obj2.rights.content.create_access_condition()
-        obj2.rights.content.access_condition.code = 'PD-UNRESTRICT'
+        obj2.rights.content.access_condition.code = 8 # public domain
         obj2.collection_uri = self.esterbrook.uri
         obj2.save()
         obj3 = repo.get_object(type=audiomodels.AudioObject)
         obj3.mods.content.title = 'No Access copy'
         obj3.rights.content.create_access_condition()
-        obj3.rights.content.access_condition.code = 'PD-UNRESTRICT'
+        obj3.rights.content.access_condition.code = 8 # public domain
         obj3.save()
         obj4 = repo.get_object(type=audiomodels.AudioObject)
         obj4.rights.content.create_access_condition()
-        obj4.rights.content.access_condition.code = 'UNDETERMINED'
+        obj4.rights.content.access_condition.code = 10 # undetermined
         obj4.compressed_audio.content = open(mp3_filename)
         obj4.save()
         obj5 = repo.get_object(type=audiomodels.AudioObject)
@@ -1430,7 +1430,7 @@ class DigitalTechTest(TestCase):
 class RightsXmlTest(TestCase):
     FIXTURE =  '''<?xml version="1.0" encoding="UTF-8"?>
 <rt:rights version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rt="http://pid.emory.edu/ns/2010/rights"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/rights-1.xsd">
-    <rt:accessCondition code="C108-UNRESTRICT">Under copyright; copy allowed by Sec. 108;  no contract restriction; only available within library</rt:accessCondition>
+    <rt:accessCondition code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessCondition>
     <rt:copyrightholderName>Hughes, Carol</rt:copyrightholderName>
     <rt:copyrightDate encoding="w3cdtf">1923</rt:copyrightDate>
 </rt:rights>'''
@@ -1444,8 +1444,9 @@ class RightsXmlTest(TestCase):
 
     def test_fields(self):
         # check field values correctly accessible from fixture
-        self.assertEqual('C108-UNRESTRICT', self.rights.access_condition.code)
-        self.assertEqual('Under copyright; copy allowed by Sec. 108;  no contract restriction; only available within library', self.rights.access_condition.text)
+        self.assertEqual('2', self.rights.access_condition.code)
+        self.assertEqual('Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement',
+            self.rights.access_condition.text)
         self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
         self.assertEqual('1923', self.rights.copyright_date)
 
@@ -1453,7 +1454,7 @@ class RightsXmlTest(TestCase):
         # test creating digitaltech metadata from scratch
         rt = audiomodels.Rights()
         rt.create_access_condition()
-        rt.access_condition.code = 'PD-UNRESTRICT'
+        rt.access_condition.code = 8    # public domain
         rt.access_condition.text = 'In public domain, no contract restriction'
         rt.copyright_holder_name = 'Mouse, Mickey'
         rt.copyright_date = '1928'
