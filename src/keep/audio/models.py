@@ -450,11 +450,9 @@ class AudioObject(DigitalObject):
 
         # clear out any rights previously in DC and set contents from MODS accessCondition
         del(self.dc.content.rights_list)
-        if self.mods.content.access_conditions:
-            # use access condition type as a label
-            for access in self.mods.content.access_conditions:
-                self.dc.content.rights_list.append('%s: %s' % \
-                    (access.type, access.text))
+        if self.rights.content.access_condition:
+            access = self.rights.content.access_condition
+            self.dc.content.rights_list.append('%s: %s' % (access.code, access.text))
 
         # TEMPORARY: collection relation and cmodel must be in DC for find_objects
         # - these can be removed once we implement gsearch

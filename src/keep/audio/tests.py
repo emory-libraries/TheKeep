@@ -1529,12 +1529,11 @@ class TestAudioObject(TestCase):
         self.obj.mods.content.general_note.text = general_note
         dig_purpose = 'patron request'
         self.obj.digitaltech.content.digitization_purpose = dig_purpose
-        restriction, use = ['personal photos unavailable', 'Tuesdays only']
-        self.obj.mods.content.access_conditions.extend([
-            mods.AccessCondition(type='restriction', text=restriction),
-            mods.AccessCondition(type='use', text=use)])
+        self.obj.rights.content.create_access_condition()
+        self.obj.rights.content.access_condition.code = '8'
+        self.obj.rights.content.access_condition.text = 'Material is in public domain'
         collection = 'collection:123'
-        self.obj.collection_uri = 'collection:123'
+        self.obj.collection_uri = collection
         self.obj._update_dc()
         
         self.assertEqual(title, self.obj.dc.content.title)
@@ -1543,12 +1542,15 @@ class TestAudioObject(TestCase):
         self.assert_(idate in self.obj.dc.content.date_list)
         self.assert_(general_note in self.obj.dc.content.description_list)
         self.assert_(dig_purpose in self.obj.dc.content.description_list)
-        # currently using accessCondition type as a prefix in dc:rights
-        self.assert_('restriction: ' + restriction in self.obj.dc.content.rights_list)
-        self.assert_('use: ' + use in self.obj.dc.content.rights_list)
+        # currently using rights access condition code & text in dc:rights
+        # should only be one in dc:rights - mods access condition not included
+        self.assertEqual(1, len(self.obj.dc.content.rights_list))
+        access = self.obj.rights.content.access_condition
+        self.assert_(self.obj.dc.content.rights.startswith('%s: ' % access.code))
+        self.assert_(self.obj.dc.content.rights.endswith(access.text))        
 
         # collection URI in dc:relation (for findObjects search)
-        self.assertEqual('collection:123', self.obj.dc.content.relation)
+        self.assertEqual(collection, self.obj.dc.content.relation)
         # cmodel in dc:format (for findObject search)
         self.assertEqual(self.obj.AUDIO_CONTENT_MODEL, self.obj.dc.content.format)
 
@@ -1557,7 +1559,7 @@ class TestAudioObject(TestCase):
         del(self.obj.mods.content.origin_info.issued)
         del(self.obj.mods.content.general_note)
         del(self.obj.digitaltech.content.digitization_purpose)
-        del(self.obj.mods.content.access_conditions)
+        del(self.obj.rights.content.access_condition)
         self.obj._update_dc()
         self.assertEqual([], self.obj.dc.content.date_list,
             'there should be no dc:date when dateCreated or dateIssued are not set in MODS')
@@ -1565,7 +1567,7 @@ class TestAudioObject(TestCase):
             'there should be no dc:description when general note in MODS and digitization ' +
             'purpose in digital tech are not set')
         self.assertEqual([], self.obj.dc.content.rights_list,
-            'there should be no dc:rights when no MODS accessCondition is set')        
+            'there should be no dc:rights when no Rights access_condition is set')
         
         
     def test_file_checksum(self):
