@@ -255,25 +255,35 @@ class AccessCondition(_BaseRights):
     text = xmlmap.StringField('text()')
     'text description of rights access code'
 
-_access_term = namedtuple('_access_term', 'code access text') # wraps terms below
+_access_term = namedtuple('_access_term', 'code abbreviation access text') # wraps terms below
 class Rights(_BaseRights):
     'Rights metadata'
     ROOT_NAME = 'rights'
 
     access_terms = (
-        #code                        access?  text
-        ('PD-UNRESTRICT',            True, 'In public domain, no contract restriction'),
-        ('PD-RESTRICT',              False, 'In public domain, contract restriction, no access to content until X date'),
-        ('PD-RESTRICT-NOMETA',       False, 'In public domain, contract restriction, no access including metadata'),
-        ('C108-UNRESTRICT',          True, 'Under copyright; copy allowed by Sec. 108; no contract restriction; only available within library'),
-        ('C108-RESTRICT',            False, 'Under copyright; copy allowed by Sec. 108; contract restriction; no access to content until X date and then only available within library until copyright expires'),
-        ('C108-RESTRICT-NOMETA',     False, 'Under copyright; copy allowed by Sec. 108; contract restriction; no access, including metadata'),
-        ('C-PERMIS-EUSERS',          True, 'Under copyright; permission of rights holder granted to copy and give access to Emory community users only (including in-library users)'),
-        ('C-PERMIS-UNRESTRICT',      True, 'Under copyright; permission of rights holder granted to copy and give access to the public'),
-        ('C-PERMIS-SELL-UNRESTRICT', True, 'Under copyright; permission of rights holder granted to copy, provide access to the public, and sell the content'),
-        ('C-PERMIS-SELL-NOACCESS',   False, 'Under copyright; permission of rights holder granted to sell content under certain conditions, but not to provide unlimited access to the public'),
-        ('ORPH-EUSERS',              True, 'Under copyright but orphaned work, special circumstance, made available to Emory community users only (including in-Library use)'),
-        ('UNDETERMINED',             False, 'Rights status undetermined; no access to files or metadata'),
+        # code  abbreviation                     file access allowed?        (full description next line)
+        ('1', 'C108-a donor request',              False,     # metadata ok
+            'Material under copyright; digital copy made under Section 108a, per donor/ copyright holder request'),
+        ('2', 'C108-b or c',                       True,
+            'Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement'),
+        ('3', 'C108-b or c + MARBL use',           True,
+            'Material under copyright; digital copy made under Section 108b or c; permission received from copyright holder for Emory University Libraries to use digitized copy in public display, exhibition, etc.'),
+        ('4', 'C108-b or c + donor restriction',   False,
+            'Material under copyright; digital copy made under Section 108b or c; restriction on item per donor agreement'),
+        ('5', 'C108-b or c + Emory Restriction',   False,
+            'Material under copyright; digital copy made under Section 108b or c; restriction on item per Emory University Libraries'),
+        ('6', 'C held Emory U',                    True,
+            'Material under copyright; Emory University holds copyright'),
+        ('7', 'C trans to Emory U',                True,
+            'Material under copyright; copyright transferred to Emory University'),
+        ('8', 'Public Domain',                     True,
+            'Material is in public domain'),
+        ('9', 'PD - Restricted by Donor or MARBL', False,
+            'Material is in public domain; restriction on item per a non-copyright reason in the donor agreement or by Emory University Libraries'),
+        ('10', 'Undetermined',                     False,     # metadata ok
+            'Access status undetermined'),
+        ('11', 'Unknown from Old DM',              True,
+            'Material from previous Digital Masters database that cannot be mapped to other codes'),
     ) 
     '''controlled vocabulary for access condition, ordered the way they should
     appear on the form widget'''
@@ -283,7 +293,7 @@ class Rights(_BaseRights):
     '''dictionary mapping access_terms codes to access term objects. Each
     access term object has three properties: code, access, and text, which
     map to elements of access_terms.'''
-    # e.g., access_terms_dict['UNR-PD'].access == True
+    # e.g., access_terms_dict['11'].access == True
 
     access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
         required=True, help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
