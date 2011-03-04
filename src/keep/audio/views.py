@@ -351,7 +351,7 @@ def search(request):
         if form.cleaned_data['date']:
             search_opts['date__contains'] = form.cleaned_data['date']
         if form.cleaned_data['rights']:
-            search_opts['rights__contains'] = form.cleaned_data['rights']
+            search_opts['rights__contains'] = '%s:' % form.cleaned_data['rights']
         
         if search_opts:
             # If they didn't specify any search options, don't bother

@@ -334,8 +334,9 @@ class AudioViewsTest(TestCase):
         obj.save()
         obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'test search object 2'
-        obj2.mods.content.access_conditions.append(mods.AccessCondition(type='restriction',
-                                                                    text='no photos'))
+        obj2.rights.content.create_access_condition()
+        obj2.rights.content.access_condition.code = 8
+        obj2.rights.content.access_condition.text = 'public domain'
         obj2.save()
         # add pids to list for clean-up in tearDown
         self.pids.extend([obj.pid, obj2.pid])
@@ -405,7 +406,7 @@ of 2''',
                 "test object 2 not listed in results when searching by date")
 
         # search by rights
-        response = self.client.get(search_url, {'audio-rights': 'no photos'})
+        response = self.client.get(search_url, {'audio-rights': '8'})
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
