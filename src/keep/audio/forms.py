@@ -289,9 +289,10 @@ class RightsForm(XmlObjectForm):
 
     class Meta:
         model = Rights
-        fields = [ 'access', 'copyright_holder_name', 'copyright_date' ]
+        fields = [ 'access', 'copyright_holder_name', 'copyright_date', 'ip_note' ]
         widgets = {
             'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
+            'ip_note': forms.Textarea,
         }
 
     def __init__(self, **kwargs):
