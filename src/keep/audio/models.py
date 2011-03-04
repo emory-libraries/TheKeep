@@ -307,6 +307,10 @@ class Rights(_BaseRights):
         help_text='Date of copyright')
     'copyright date (string)'
 
+    ip_note = xmlmap.StringField('rt:ipNotes', required=False,
+        help_text='Additional information about the intellectual property rights of the associated work.')
+    # NOTE: eventually should be repeatable/StringListField
+
     @property
     def researcher_access(self):
         '''Does this rights XML indicate that researchers should be

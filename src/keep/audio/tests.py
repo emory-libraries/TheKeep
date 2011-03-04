@@ -9,7 +9,6 @@ from time import sleep
 from django.http import HttpRequest
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
@@ -24,6 +23,7 @@ from keep.audio import forms as audioforms
 from keep.audio import models as audiomodels
 from keep.audio.management.commands import ingest_cleanup
 from keep.collection.fixtures import FedoraFixtures
+from keep.collection.models import CollectionObject
 from keep.audio.tasks import convert_wav_to_mp3
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
@@ -42,8 +42,6 @@ alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 class AudioViewsTest(TestCase):
     fixtures =  ['users']
 
-    # delete cached collections so test collections will be used
-    cache.delete(audioforms._COLLECTION_OPTIONS_CACHE_KEY)
     client = Client()
 
     # collection fixtures are not modified, so only load & purge once
@@ -77,6 +75,9 @@ class AudioViewsTest(TestCase):
         FedoraFixtures.repo.purge_object(self.rushdie.pid)
         FedoraFixtures.repo.purge_object(self.esterbrook.pid)
         FedoraFixtures.repo.purge_object(self.englishdocs.pid)
+
+        # refresh cached collections after objects are deleted
+        CollectionObject.item_collections(refresh_cache=True)
 
     def test_index(self):
         # test audio app index page permissions
@@ -1434,6 +1435,7 @@ class RightsXmlTest(TestCase):
     <rt:accessCondition code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessCondition>
     <rt:copyrightholderName>Hughes, Carol</rt:copyrightholderName>
     <rt:copyrightDate encoding="w3cdtf">1923</rt:copyrightDate>
+    <rt:ipNotes>Written permission required.</rt:ipNotes>
 </rt:rights>'''
 
     def setUp(self):
@@ -1450,6 +1452,7 @@ class RightsXmlTest(TestCase):
             self.rights.access_condition.text)
         self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
         self.assertEqual('1923', self.rights.copyright_date)
+        self.assertEqual('Written permission required.', self.rights.ip_note)
 
     def test_create(self):
         # test creating digitaltech metadata from scratch
@@ -1459,6 +1462,7 @@ class RightsXmlTest(TestCase):
         rt.access_condition.text = 'In public domain, no contract restriction'
         rt.copyright_holder_name = 'Mouse, Mickey'
         rt.copyright_date = '1928'
+        rt.ip_note = 'See WATCH list for copyright contact info'
 
         # for now, just testing that all fields can be set without error
         self.assert_('<rt:rights' in rt.serialize())
