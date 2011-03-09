@@ -1020,6 +1020,14 @@ of 2''',
         obj5 = repo.get_object(type=audiomodels.AudioObject)
         obj5.compressed_audio.content = open(mp3_filename)
         obj5.save()
+        obj6 = repo.get_object(type=audiomodels.AudioObject)
+        obj6.mods.content.title = 'Moses reads Ten Commandments'
+        obj6.compressed_audio.content = open(mp3_filename)
+        obj6.rights.content.create_access_condition()
+        obj6.rights.content.access_condition.code = 8 # public domain
+        obj6.rights.content.block_external_access = True
+        obj6.collection_uri = self.esterbrook.uri
+        obj6.save()
         # add pids to list for clean-up in tearDown
         self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid])
 
@@ -1037,6 +1045,8 @@ of 2''',
             msg_prefix='pid for test object with restricted access rights should NOT be included in feed')
         self.assertNotContains(response, obj4.pid,
             msg_prefix='pid for test object without rights information should NOT be included in feed')
+        self.assertNotContains(response, obj6.pid,
+            msg_prefix='pid for test object with negative override should NOT be included in feed')
         self.assertContains(response, obj.mods.content.title,
             msg_prefix='title for first test object should be included in feed')
         self.assertContains(response, obj2.mods.content.title,

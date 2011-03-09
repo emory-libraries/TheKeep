@@ -326,6 +326,9 @@ class Rights(_BaseRights):
     def researcher_access(self):
         '''Does this rights XML indicate that researchers should be
         allowed access to this document?'''
+        if self.block_external_access:
+            return False
+
         if not self.access_condition:
             return None
         access_code = self.access_condition.code
