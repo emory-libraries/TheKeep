@@ -1480,10 +1480,10 @@ class RightsXmlTest(TestCase):
         rt.block_external_access = True
 
         # quick sanity check
-        self.assertContains(rt.serialize(), '<rt:rights')
+        self.assertTrue('<rt:rights' in rt.serialize())
 
         # also, did block_external_access actually create its subelement?
-        self.assertContains(rt.serialize(), '<rt:externalAccess>deny</')
+        self.assertTrue('<rt:externalAccess>deny</' in rt.serialize())
 
         # TODO: more fields tests; validate against schema when we have one
 
