@@ -670,6 +670,7 @@ of 2''',
                     'rights-access': '8',       # public domain
                     'rights-copyright_holder_name': 'Mouse, Mickey',
                     'rights-copyright_date_year': '1942',
+                    'rights-block_external_access': '1',
                     'rights-ip_note': 'Written permission required',
         }
         response = self.client.post(edit_url, audio_data, follow=True)
@@ -760,6 +761,7 @@ of 2''',
         self.assertTrue(rights.access_condition.text.endswith('in public domain'))
         self.assertEqual(audio_data['rights-copyright_holder_name'], rights.copyright_holder_name)
         self.assertEqual(audio_data['rights-copyright_date_year'], rights.copyright_date)
+        self.assertTrue(rights.block_external_access)
         self.assertEqual(audio_data['rights-ip_note'], rights.ip_note)
 
         # test logic for save and continue editing

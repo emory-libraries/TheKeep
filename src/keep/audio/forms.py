@@ -293,7 +293,8 @@ class RightsForm(XmlObjectForm):
 
     class Meta:
         model = Rights
-        fields = [ 'access', 'copyright_holder_name', 'copyright_date', 'ip_note' ]
+        fields = [ 'access', 'copyright_holder_name', 'copyright_date',
+                   'block_external_access', 'ip_note' ]
         widgets = {
             'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
             'ip_note': forms.Textarea,

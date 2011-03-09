@@ -308,7 +308,9 @@ class Rights(_BaseRights):
     'copyright date (string)'
 
     block_external_access = xmlmap.SimpleBooleanField('rt:externalAccess',
-        'deny', None)
+        'deny', None,
+        help_text='''Block library patrons from accessing this file,
+            irrespective of Access Status''')
     '''block external access. If this is True then refuse patron access to this
     item irrespective of :attr:access_condition.'''
     # NOTE: users have also requested a <rt:externalAccess>allow</rt:externalAccess>
