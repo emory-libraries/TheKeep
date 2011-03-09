@@ -1454,6 +1454,7 @@ class RightsXmlTest(TestCase):
         self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
         self.assertEqual('1923', self.rights.copyright_date)
         self.assertEqual('Written permission required.', self.rights.ip_note)
+        self.assertEqual(False, self.rights.block_external_access)
 
     def test_create(self):
         # test creating digitaltech metadata from scratch
@@ -1464,11 +1465,15 @@ class RightsXmlTest(TestCase):
         rt.copyright_holder_name = 'Mouse, Mickey'
         rt.copyright_date = '1928'
         rt.ip_note = 'See WATCH list for copyright contact info'
+        rt.block_external_access = True
 
-        # for now, just testing that all fields can be set without error
-        self.assert_('<rt:rights' in rt.serialize())
+        # quick sanity check
+        self.assertContains(rt.serialize(), '<rt:rights')
 
-        # TODO: validate against schema when we have one
+        # also, did block_external_access actually create its subelement?
+        self.assertContains(rt.serialize(), '<rt:externalAccess>deny</')
+
+        # TODO: more fields tests; validate against schema when we have one
 
 
 # tests for Audio DigitalObject

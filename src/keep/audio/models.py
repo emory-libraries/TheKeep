@@ -307,6 +307,15 @@ class Rights(_BaseRights):
         help_text='Date of copyright')
     'copyright date (string)'
 
+    block_external_access = xmlmap.SimpleBooleanField('rt:externalAccess',
+        'deny', None)
+    '''block external access. If this is True then refuse patron access to this
+    item irrespective of :attr:access_condition.'''
+    # NOTE: users have also requested a <rt:externalAccess>allow</rt:externalAccess>
+    # to allow access irrespective of access_condition. when we implement
+    # that, we'll probably want to incorporate it into this property and
+    # rename
+
     ip_note = xmlmap.StringField('rt:ipNotes', required=False, verbose_name='IP Note',
         help_text='Additional information about the intellectual property rights of the associated work.')
     # NOTE: eventually should be repeatable/StringListField
