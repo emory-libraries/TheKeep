@@ -67,6 +67,10 @@ tr.required {
     color: gray;
     font-weight: normal;
 }
+.edit-form .help-text.warning {
+    color: red;
+    font-weight: bold;
+}
 .edit-form select {
     min-width: 15em; /* close to default text input length in Firefox */
     /* NOTE: setting text input default length messes up YYYY-MM-DD text inputs */
