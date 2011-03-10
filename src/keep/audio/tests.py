@@ -1,4 +1,5 @@
 import cStringIO
+from datetime import date
 import os
 from shutil import copyfile
 import stat
@@ -1558,6 +1559,8 @@ class TestAudioObject(TestCase):
         self.assertEqual(res_type, self.obj.dc.content.type)
         self.assert_(cdate in self.obj.dc.content.date_list)
         self.assert_(idate in self.obj.dc.content.date_list)
+        self.assert_(self.obj.created.strftime('%Y-%m-%d') in self.obj.dc.content.date_list,
+                 'object creation date for ingested object should be included in dc:date in YYYY-MM-DD format')
         self.assert_(general_note in self.obj.dc.content.description_list)
         self.assert_(dig_purpose in self.obj.dc.content.description_list)
         # currently using rights access condition code & text in dc:rights
@@ -1579,15 +1582,20 @@ class TestAudioObject(TestCase):
         del(self.obj.digitaltech.content.digitization_purpose)
         del(self.obj.rights.content.access_condition)
         self.obj._update_dc()
-        self.assertEqual([], self.obj.dc.content.date_list,
-            'there should be no dc:date when dateCreated or dateIssued are not set in MODS')
+        self.assertEqual(1, len(self.obj.dc.content.date_list),
+            'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
         self.assertEqual([], self.obj.dc.content.description_list,
             'there should be no dc:description when general note in MODS and digitization ' +
             'purpose in digital tech are not set')
         self.assertEqual([], self.obj.dc.content.rights_list,
             'there should be no dc:rights when no Rights access_condition is set')
-        
-        
+
+        # un-ingested object - should not error, should get current date
+        obj = self.repo.get_object(type=audiomodels.AudioObject)
+        obj._update_dc()
+        self.assert_(date.today().strftime('%Y-%m-%d') in obj.dc.content.date_list,
+             'current date should be set in dc:date for un-ingested object')
+               
     def test_file_checksum(self):
         #This is just a sanity check that eulcore is working as expected with checksums.
         filename = 'example.wav'

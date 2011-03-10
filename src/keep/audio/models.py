@@ -1,4 +1,5 @@
 from collections import namedtuple
+from datetime import date
 import os
 import wave
 import mutagen
@@ -444,7 +445,7 @@ class AudioObject(DigitalObject):
             self.dc.content.type = self.mods.content.resource_type
 
         # clear out any dates previously in DC
-        del(self.dc.content.date_list)
+        del(self.dc.content.date_list)        
         if self.mods.content.origin_info and \
            len(self.mods.content.origin_info.created) and \
            self.mods.content.origin_info.created[0].date:
@@ -454,7 +455,15 @@ class AudioObject(DigitalObject):
            self.mods.content.origin_info.issued[0].date:
             self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
 
-        # FIXME: detect if origin info is empty & remove it so we don't get invalid MODS
+        # Date Uploaded
+        # if the object has already been ingested into fedora, add object creation
+        # to dc:date in YYYY-MM-DD format (for searching purposes)
+        if self.exists:
+            self.dc.content.date_list.append(self.created.strftime('%Y-%m-%d'))
+        else:
+            # not yet ingested - use the current date
+            # should be accurate enough, since this should be called just prior to ingest
+            self.dc.content.date_list.append(date.today().strftime('%Y-%m-%d'))
 
         # clear out any descriptions previously in DC and set from MODS/digitaltech
         del(self.dc.content.description_list)
