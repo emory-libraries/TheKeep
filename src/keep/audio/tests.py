@@ -554,7 +554,6 @@ of 2''',
         obj.sourcetech.content.create_reel_size()
         obj.sourcetech.content.reel_size.value = '3'
         # pre-populate digital tech metadata
-        obj.digitaltech.content.date_captured = '2008'
         obj.digitaltech.content.codec_quality = 'lossy'
         obj.digitaltech.content.note = 'technician details'
         obj.digitaltech.content.digitization_purpose = 'dawson exhibit'
@@ -619,7 +618,6 @@ of 2''',
         # digital tech from object initial data
         initial_data = response.context['form'].digitaltech.initial
         item_dt = obj.digitaltech.content
-        self.assertEqual(item_dt.date_captured, initial_data['date_captured'])
         self.assertEqual(item_dt.codec_quality, initial_data['codec_quality'])
         self.assertEqual(item_dt.note, initial_data['note'])
         self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
@@ -663,7 +661,6 @@ of 2''',
                     'st-_speed': 'tape|15/16|inches/sec',
                     # digital-tech data
                     'dt-digitization_purpose': 'patron request',
-                    'dt-date_captured_year': '2010',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
                     # rights metadata
@@ -728,7 +725,6 @@ of 2''',
         # check that digital tech fields were updated correctly
         dt = updated_obj.digitaltech.content
         self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
-        self.assertEqual(audio_data['dt-date_captured_year'], dt.date_captured)        
         self.assertEqual('ldap', dt.transfer_engineer.id_type)
         self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
         self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
@@ -875,7 +871,6 @@ of 2''',
                     'st-_speed': 'other|other|other',
                     # digital-tech data
                     'dt-digitization_purpose': 'avoid nuclear war',
-                    'dt-date_captured_year': '2010',
                     'dt-engineer': ldap_user.id,
                     'dt-hardware': '3',
                     # rights metadata

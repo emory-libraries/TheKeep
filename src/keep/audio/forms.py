@@ -222,10 +222,9 @@ class DigitalTechForm(XmlObjectForm):
     hardware = forms.ChoiceField(sorted(CodecCreator.options), label='Codec Creator',
                     help_text='Hardware, software, and software version used to create the digital file',
                     required=True)
-    date_captured = W3CDateField(help_text='Date digital capture was made', required=True)
     class Meta:
         model = DigitalTech
-        fields = ['date_captured', 'note', 'digitization_purpose', 'engineer', 'hardware']
+        fields = ['note', 'digitization_purpose', 'engineer', 'hardware']
         widgets = {
             'note': forms.Textarea,
             'digitization_purpose': forms.TextInput(attrs={'class': 'long'}),
