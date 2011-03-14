@@ -100,6 +100,13 @@ AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
 # the default owner of all fedora objects created by this app
 FEDORA_OBJECT_OWNERID = 'thekeep-project'
 
+# Celery Config - standard stuff that will not change from project to project
+import djcelery
+djcelery.setup_loader()
+# use a differently-named default queue to keep separate from other projects using celery
+CELERY_DEFAULT_QUEUE = 'keep'
+
+
 try:
     from localsettings import *
 except ImportError:

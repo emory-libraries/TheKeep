@@ -1,9 +1,6 @@
 # Django local settings for digital masters project.
 
 #Celery Config
-import djcelery
-djcelery.setup_loader()
-
 BROKER_HOST = "" # e.g "localhost"
 BROKER_PORT =    # e.g 5672
 BROKER_USER = "" # e.g "user"

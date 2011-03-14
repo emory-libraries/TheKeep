@@ -336,11 +336,9 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         coll = repo.get_object(type=CollectionObject)
         # TODO: top-level collection membership?
 
-        # title
-        # remove trailing dates in these formats: , NNNN-NNN. , NNNN. , NNNN-
-        # TODO: get rid of regex - use unittitle *without* any content inside unitdate (circa, bulk, etc)
-        title = re.sub(r',\s*\d{4}-?(\d{4})?.?$', '', unicode(self.unittitle))        
-        coll.mods.content.title = title  
+        # title - using 'short' form without unitdate, stripping any trailing whitespace & . or ,
+        # TODO/FIXME: does NOT work for unittitles with nested tags, e.g. title - see pomerantz
+        coll.mods.content.title = unicode(self.unittitle.short).rstrip().rstrip('.,')
         # main entry/name - origination, if any
         if self.archdesc.did.origination:
             name_text = unicode(self.archdesc.did.origination)

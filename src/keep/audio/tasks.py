@@ -7,25 +7,32 @@ from celery.decorators import task
 
 from django.conf import settings
 
-from keep.audio.models import AudioObject, wav_duration, wav_and_mp3_duration_comparator
+from keep.audio.models import AudioObject, wav_and_mp3_duration_comparator
 from keep.common.fedora import Repository
 from keep.common.utils import md5sum
 
 logger = logging.getLogger(__name__)
 
 @task
-def convert_wav_to_mp3(pid,existingFilePath=None):
-    """Converts a wav file to mp3. Accepted parameters are:
-    * pid: the pid of the object to have its audio converted.
+def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
+    """Generate an mp3 file from a wav file associated with an
+    :class:`~keep.audio.models.AudioObject`.  When conversion is successful,
+    save the generated file as the compressed audio datastream of the AudioObject
+    in Fedora.
 
-    * existingFilePath: Rather than getting the WAV content from the fedora object,
-                        this will use the file path provided instead.  The file
-                        provided **must** match the checksum for the master audio
-                        datastream in the fedora object, or conversion will fail.
+    :param pid: the pid of the object to generate an MP3 for. Expected to be an
+        instance of :class:`~keep.audio.models.AudioObject`.
+    :param use_wav: Rather than downloading the WAV content from the fedora object,
+        this will use the file path provided instead.  The file provided
+        **must** match the checksum for the master audio datastream in the
+        fedora object, or conversion will fail.
+    :param remove_wav: If use_wav is specified, setting remove_wav to True
+        will remove the file passed in when conversion task has completed.
+        Optional, defaults to False.
 
-    In addition, this function currently stores all temporary files in the temporary
-    ingest directory (to make cleanup easier and as it is usually part of the ingest
-    process.
+    This function currently stores all temporary files in the ingest staging
+    directory configured in django settings (to make cleanup easier, and since
+    this task will normally be part of the ingest process).
     """
     try:
         #Initialize temporary file names.
@@ -42,8 +49,8 @@ def convert_wav_to_mp3(pid,existingFilePath=None):
         if not os.path.exists(tempdir):
             os.makedirs(tempdir)
         
-        if existingFilePath != None:
-            wav_file_path = existingFilePath
+        if use_wav != None:
+            wav_file_path = use_wav
             mp3_file_path = wav_file_path + ".mp3"
         else:
             # download the master audio file from the object in fedora
@@ -53,7 +60,7 @@ def convert_wav_to_mp3(pid,existingFilePath=None):
             try:
                 destination = os.fdopen(tmpfd, 'wb+')
             except Exception as e:
-                logger.error("Error opening temporary file, cannot download master audio for conversion : %s" % e)
+                logger.error("Error opening temporary file; cannot download master audio for conversion : %s" % e)
                 logger.debug("Stack trace for file error:\n" + traceback.format_exc())
                 os.close(tmpfd)
                 raise
@@ -81,8 +88,8 @@ def convert_wav_to_mp3(pid,existingFilePath=None):
                 stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
-        #stdout_value will be tuple with stdout in place 0, stderr in place 1. The output of the program will be in place 1.
-        stdout_value = process.communicate()
+        # returns a tuple of stdout, stderr. The output of the LAME goes to stderr.
+        stdout_output, stderr_output = process.communicate()
 
         #Return code of the process.
         return_code = process.returncode
@@ -91,8 +98,8 @@ def convert_wav_to_mp3(pid,existingFilePath=None):
         if (return_code == 0):
             #Verify the original file and this file are the same length to within 0.1 seconds.
             if(not wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=wav_file_path, mp3_file_path=mp3_file_path)):
-                logger.error("Failed to convert audio file (duration of wav and mp3 did not match), pid is: " + pid)
-                raise Exception("celery","Failed to convert audio file (duration of wav and mp3 did not match), pid is: " + pid)
+                logger.error("Failed to convert audio file (duration of wav and mp3 did not match) for %s " % pid)
+                raise Exception("Error generating MP3 (duration of wav and mp3 did not match)")
 
 	    with open(mp3_file_path) as f: 
                 obj.compressed_audio.content = f
@@ -100,10 +107,12 @@ def convert_wav_to_mp3(pid,existingFilePath=None):
                 obj.compressed_audio.label = obj.audio.label
     	        obj.save("Added compressed mp3 audio stream from LAME conversion output.")
             return "Successfully converted file"
+
+        # Raise error if this is reached - if conversion succeded, should have already returned        
+        logger.error("Failed to convert audio file (LAME failed) for %s" % pid)                
+        logger.error("LAME output: %s" % stderr_output)
+        raise Exception("Failed to convert audio (LAME failed): %s" % stderr_output)
     
-        #Raise error if this is reached as should have returned "Successfully converted file".
-        logger.error("Failed to convert audio file (LAME failed), pid is: " + pid)
-        raise Exception("celery","Failed to convert audio file (LAME failed), pid is: " + pid + " output: " + stdout_value[1])
     # General exception catch for logging.
     # possible more specific exceptions:
     # OSError - file open/write error
@@ -111,16 +120,26 @@ def convert_wav_to_mp3(pid,existingFilePath=None):
     except Exception as e:
         # log the error and then re-raise it
         logger.error("Failed to convert audio for %s : %s" % (pid, e))
+        # TODO: may want to return a more detailed error message here
         raise
     #Cleanup for everything.
     finally:
-        # Only remove if file was not passed in (ie. only remove the temporary file).
-        if existingFilePath is None and wav_file_path is not None:
-            if os.path.exists(wav_file_path):
-                os.remove(wav_file_path)
+        # remove if file was not passed in or if removal was requested for passed in file
+        if (use_wav is None or (use_wav is not None and remove_wav)) \
+                            and wav_file_path is not None:
+            try:
+                if os.path.exists(wav_file_path):
+                    os.remove(wav_file_path)
+            except OSError as e:
+                # log the exception but don't raise it - not a conversion error to report to user
+                logger.error("Error removing wav file %s: %s" %  (wav_file_path, e))
 
-        #Remove the generated mp3 file, if it exists.
+        # Remove the generated mp3 file, if it exists.
         if mp3_file_path is not None:
-            if os.path.exists(mp3_file_path):
-                os.remove(mp3_file_path)
+            try:
+                if os.path.exists(mp3_file_path):
+                    os.remove(mp3_file_path)
+            except OSError as e:
+                # log the exception but don't raise it - not a conversion error to report to user
+                logger.error("Error removing mp3 file %s: %s" %  (mp3_file_path, e))
          

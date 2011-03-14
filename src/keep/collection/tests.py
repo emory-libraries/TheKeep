@@ -300,7 +300,7 @@ class TestCollectionForm(TestCase):
             % (expected, got))
 
 
-class CollectionViewsTest(TestCase):
+class CollectionViewsTest(EulcoreTestCase):
     fixtures =  ['users']
     repo = Repository()
 
@@ -460,7 +460,7 @@ class CollectionViewsTest(TestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (non-existing pid)'
                              % (expected, code, edit_url))
 
-    def test_collection_search(self):
+    def test_search(self):
         search_url = reverse('collection:search')
 
         # ingest some test objects to search for
@@ -483,6 +483,8 @@ class CollectionViewsTest(TestCase):
                 "Rushdie test collection object found when searching by Rushdie MSS #")
         self.assert_(esterbrook.pid not in found,
                 "Esterbrook collection object not found when searching by Rushdie MSS #")
+        self.assertPattern('Collection Number:.*1000', response.content,
+            msg_prefix='search results page should include search term (MSS #)')
 
         # search by title phrase
         response = self.client.get(search_url, {'collection-title': 'collection'})
@@ -493,6 +495,8 @@ class CollectionViewsTest(TestCase):
                 "English Documents collection found for title contains 'collection'")
         self.assert_(esterbrook.pid not in found,
                 "Esterbrook not found when searching for title contains 'collection'")
+        self.assertPattern('title:.*collection', response.content,
+            msg_prefix='search results page should include search term (title)')
 
         # search by creator
         response = self.client.get(search_url, {'collection-creator': 'esterbrook'})
@@ -501,17 +505,21 @@ class CollectionViewsTest(TestCase):
                 "Rushdie collection not found for creator 'esterbrook'")
         self.assert_(esterbrook.pid in found,
                 "Esterbrook found when searching for creator 'esterbrook'")
+        self.assertPattern('creator:.*esterbrook', response.content,
+            msg_prefix='search results page should include search term (creator)')
 
         # search by numbering scheme
-        collection = FedoraFixtures.top_level_collections[1].uri
-        response = self.client.get(search_url, {'collection-collection': collection })
+        collection = FedoraFixtures.top_level_collections[1]
+        response = self.client.get(search_url, {'collection-collection': collection.uri })
         found = [o['pid'] for o in response.context['results']]
         self.assert_(rushdie.pid in found,
-                "Rushdie collection found for collection %s" % collection)
+                "Rushdie collection found for collection %s" % collection.uri)
         self.assert_(esterbrook.pid not in found,
-                "Esterbrook not found when searching for collection %s" % collection)
+                "Esterbrook not found when searching for collection %s" % collection.uri)
         self.assert_(engdocs.pid in found,
-                "English Documents collection found for collection %s" % collection)
+                "English Documents collection found for collection %s" % collection.uri)
+        self.assertPattern('Collection:.*%s' % collection.label, response.content,
+            msg_prefix='search results page should include search term (numbering scheme)')
 
         # no match
         response = self.client.get(search_url, {'collection-title': 'not-a-collection' })
@@ -525,7 +533,7 @@ class CollectionViewsTest(TestCase):
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
-    def test_collection_browse(self):
+    def test_browse(self):
         browse_url = reverse('collection:browse')
 
         # ingest test objects to browse

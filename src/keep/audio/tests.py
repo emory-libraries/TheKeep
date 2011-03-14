@@ -16,6 +16,7 @@ from django.test import Client, TestCase
 
 from eulcore.django.fedora.server import Repository
 from eulcore.django.taskresult.models import TaskResult
+from eulcore.django.test import TestCase as EulDjangoTestCase
 from eulcore.fedora.util import RequestFailed
 from eulcore.xmlmap  import load_xmlobject_from_string
 
@@ -40,7 +41,7 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
-class AudioViewsTest(TestCase):
+class AudioViewsTest(EulDjangoTestCase):
     fixtures =  ['users']
 
     client = Client()
@@ -253,6 +254,7 @@ class AudioViewsTest(TestCase):
             'ingested object should have a conversion result to track mp3 generation')
             
         # POST wav file with an incorrect checksum should fail
+        copyfile(wav_filename, upload_filepath)     # re-copy file, now that is removed after ingest
         with open(upload_filepath + '.md5', 'w') as md5file:
             md5file.write('bogus md5 checksum')
         response = self.client.post(upload_url, upload_opts)
@@ -260,7 +262,7 @@ class AudioViewsTest(TestCase):
         self.assertFalse(result['success'], 'success should be false on checksum mismatch')
         self.assert_('failed due to a checksum mismatch' in result['message'],
             'result should include explanatory message on failure')
-            
+
     def test_upload_fallback(self):
         # test single-file upload 
         upload_url = reverse('audio:upload')
@@ -374,10 +376,14 @@ of 1''',
                 "test object 1 listed in results when searching by title")
         self.assert_(obj2.pid in found,
                 "test object 2 listed in results when searching by title")
-        self.assertContains(response, '''Displaying records
-1 - 2
-of 2''',
+        self.assertPattern('Displaying records.*1 - 2.*of 2', response.content,
             msg_prefix='search results include total number of records found')
+        self.assertPattern('title:.*test search', response.content,
+            msg_prefix='search results page should include search term (title)')
+        self.assertNotContains(response, 'pid: ',
+            msg_prefix='search results page should not include default search terms (pid)')
+        self.assertNotContains(response, 'description: ',
+            msg_prefix='search results page should not include empty search terms (description)')
 
         download_url = reverse('audio:download-audio', args=[obj.pid])
         self.assertContains(response, download_url,
@@ -394,6 +400,8 @@ of 2''',
                 "test object 1 listed in results when searching by description")
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by description")
+        self.assertPattern('description:.*general note', response.content,
+            msg_prefix='search results page should include search term (description)')
 
         # search by date
         response = self.client.get(search_url, {'audio-date': '1492*'})
@@ -406,6 +414,8 @@ of 2''',
                 "test object 1 listed in results when searching by date")
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by date")
+        self.assertPattern('date:.*1492\*', response.content,
+            msg_prefix='search results page should include search term (date)')
 
         # search by rights
         response = self.client.get(search_url, {'audio-rights': '8'})
@@ -418,6 +428,8 @@ of 2''',
                 "test object 1 not listed in results when searching by rights")
         self.assert_(obj2.pid in found,
                 "test object 2 listed in results when searching by rights")
+        self.assertPattern('rights:.*no photos', response.content,
+            msg_prefix='search results page should include search term (rights)')
 
         # collection
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri})
@@ -432,6 +444,8 @@ of 2''',
                 "test object 2 not listed in results when searching by collection")
         self.assert_(self.rushdie.pid not in found,
                 "collection object not listed in results when searching by collection")
+        self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
+            msg_prefix='search results page should include search term (collection by name)')
 
         # multiple fields
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri,
@@ -445,6 +459,12 @@ of 2''',
                 "test object 1 listed in results when searching by collection + title + date")
         self.assert_(obj2.pid not in found,
                 "test object 2 not listed in results when searching by collection + title + date")
+        self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
+            msg_prefix='search results page should include all search terms used (collection)')
+        self.assertPattern('date:.*1492\*', response.content,
+            msg_prefix='search results page should include all search terms used (date)')
+        self.assertPattern('title:.*test search', response.content,
+            msg_prefix='search results page should include all search terms used (title)')
 
         # by default, list most recently created items first
         obj3 = repo.get_object(type=audiomodels.AudioObject)
@@ -1781,12 +1801,22 @@ class SourceAudioConversions(TestCase):
 
     def test_wav_to_mp3_localfile(self):
         #test conversion when wav file on hard-disk is specified.
-        result = convert_wav_to_mp3(self.obj.pid, existingFilePath=wav_filename)
+        result = convert_wav_to_mp3(self.obj.pid, use_wav=wav_filename)
         self.assertEqual(result, "Successfully converted file")
+
+        self.assertTrue(os.path.exists(wav_filename),
+            'specified wav file should not be removed if we did not request removal')
 
         #Verify the wav and mp3 durations match.
         comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
         self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+
+        # copy wav file so we can test removing it
+        wav_copy = os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav')
+        copyfile(wav_filename, wav_copy)
+        result = convert_wav_to_mp3(self.obj.pid, use_wav=wav_copy, remove_wav=True)
+        self.assertFalse(os.path.exists(wav_copy),
+            'specified wav file should be removed when requested')
 
     def test_nonexistent(self):
         # test with invalid pid

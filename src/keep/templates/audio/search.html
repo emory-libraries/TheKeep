@@ -7,6 +7,8 @@
 {% block content-body %}
   {{ block.super }}
 
+{% include 'snippets/search_info.html' %}
+
 {% if results %}
 <p>Displaying record{{ page.object_list|pluralize }}
 {{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
