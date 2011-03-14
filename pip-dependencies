@@ -1,5 +1,5 @@
 -e svn+https://svn.library.emory.edu/svn/python-eulcore/tags/release-0.11.0
--e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/branches/release-1.1.x
+-e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/tags/release-1.1.0
 python-magic
 pycrypto
 django-celery
