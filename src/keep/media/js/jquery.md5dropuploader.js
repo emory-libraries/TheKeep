@@ -54,14 +54,16 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     // check for blob slicing.
     // NB: deciding where all the conditionals and branches go and who gets
     // else clauses is actually a little subtle.
+    // NOTE: Chrome considers window.Blob and window.File to be functions, but
+    // Firefox considers them objects - either should be OK for our purposes
     var blob_slicing = false;
     // if we have a Blob and it can slice, then we have blob slicing
-    if ((typeof window.Blob == 'function') &&
+    if ((typeof window.Blob == 'function' || typeof window.Blob == 'object') &&
         (typeof window.Blob.prototype.slice == 'function')) {
           blob_slicing = true;
     }
     // if we have a File and it can slice, then we have blob slicing
-    if ((typeof window.File == 'function') &&
+    if ((typeof window.File == 'function' || typeof window.File == 'object') &&
         (typeof window.File.prototype.slice == 'function')) {
           blob_slicing = true;
     }

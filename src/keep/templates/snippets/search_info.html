@@ -1,0 +1,14 @@
+{# display search terms for a search results page #}
+{# expects a dictionary search_info with field names and value or collection dictionary #}
+{% if search_info %}
+  <p>Results for
+    {% for field, val in search_info.iteritems %}
+      {{ field }}:
+      {# link to regular collections, but not to top-level collections/owning repos #}
+      <b>{% if val.pid and val.collection_id %} <a href="{% url collection:edit val.pid %}">{{ val.title }}</a>        
+        {% else %}{# display title of a collection dict, string-only (NOT title-cased) otherwise #}
+            {% if val.pid %}{{ val.title }}{% else %}{{ val }}{% endif %}
+        {% endif %}</b>{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+{% endif %}

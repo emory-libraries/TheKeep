@@ -17,6 +17,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
+from django.views.decorators.csrf import csrf_exempt
+
+
 
 from eulcore.django.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eulcore.django.taskresult.models import TaskResult
@@ -27,6 +30,7 @@ from eulcore.fedora.models import DigitalObjectSaveFailure
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject
 from keep.audio.tasks import convert_wav_to_mp3
+from keep.collection.models import get_cached_collection_dict
 from keep.common.fedora import Repository
 from keep.common.utils import md5sum
 
@@ -41,6 +45,7 @@ def index(request):
             context_instance=RequestContext(request))
 
 @permission_required('is_staff')
+@csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.
@@ -114,7 +119,10 @@ def upload(request):
                         # NOTE: for single-file upload, browser-set type is
                         # available as UploadedFile.content_type - but since
                         # browser mimetypes are unreliable, calculate anyway
-                        type = m.from_file(filename)
+                        try:
+                            type = m.from_file(filename)
+                        except IOError:
+                            raise Exception('Uploaded file is no longer available for ingest; please try again.')
                         type, separator, options = type.partition(';')
                         if type not in allowed_audio_types:
                             # store error for display on detailed result page
@@ -138,11 +146,16 @@ def upload(request):
                         obj.save()
                         file_info.update({'success': True, 'pid': obj.pid})
                         # Start asynchronous task to convert audio for access
-                        result = convert_wav_to_mp3.delay(obj.pid,existingFilePath=filename)
+                        result = convert_wav_to_mp3.delay(obj.pid, use_wav=filename,
+                            remove_wav=True)    # remove after, since ingest is done
                         # create a task result object to track conversion status
                         task = TaskResult(label='Generate MP3', object_id=obj.pid,
                             url=obj.get_absolute_url(), task_id=result.task_id)
                         task.save()
+
+                        # NOTE: could remove MD5 file (if any) here, but MD5 files
+                        # should be small and will get cleaned up by the cron script
+
                     except Exception as e:
                         logging.error('Error ingesting %s: %s' % (filename, e))
                         logger.debug("Error details:\n" + traceback.format_exc())
@@ -154,11 +167,11 @@ def upload(request):
                                 file_info['message'] = 'Ingest failed due to a checksum mismatch - ' + \
                                     'file may have been corrupted or incompletely uploaded to Fedora'
                             else:
-                                file_info['message'] = 'Fedora error: ' + e.message()
+                                file_info['message'] = 'Fedora error: ' + unicode(e)
 
                         # non-fedora error
-                        else:                            
-                            file_info['message'] = 'Ingest failed: ' + e.message()
+                        else:
+                            file_info['message'] = 'Ingest failed: ' + unicode(e)
                     
                     finally:
                         # no matter what happened, store results for reporting to user
@@ -184,6 +197,7 @@ def upload(request):
     # multiple files for ingest, simply returning 200 if processing ends normally.
 
 @permission_required('is_staff')
+@csrf_exempt
 def ajax_file_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging 
     directory for subsequent ingest into the repository.  The request must
@@ -352,7 +366,20 @@ def search(request):
             search_opts['date__contains'] = form.cleaned_data['date']
         if form.cleaned_data['rights']:
             search_opts['rights__contains'] = '%s:' % form.cleaned_data['rights']
-        
+
+        # collect non-empty, non-default search terms to display to user on results page
+        search_info = {}
+        for field, val in form.cleaned_data.iteritems():
+            key = form.fields[field].label  # use form display label when available
+            if key is None:     # if field label is not set, use field name as a fall-back
+                key = field 
+            if val:     # if search value is not empty, selectively add it
+                if field == 'collection':       # for collections, get collection info
+                    search_info[key] = get_cached_collection_dict(val)
+                elif val != form.fields[field].initial:     # ignore default values
+                    search_info[key] = val
+        ctx_dict['search_info'] = search_info
+
         if search_opts:
             # If they didn't specify any search options, don't bother
             # searching.
