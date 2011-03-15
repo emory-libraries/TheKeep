@@ -15,7 +15,6 @@ from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.template.defaultfilters import slugify
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
@@ -28,7 +27,7 @@ from eulcore.fedora.util import RequestFailed, PermissionDenied
 from eulcore.fedora.models import DigitalObjectSaveFailure
 
 from keep.audio import forms as audioforms
-from keep.audio.models import AudioObject
+from keep.audio.models import AudioObject, Rights
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import get_cached_collection_dict
 from keep.common.fedora import Repository
@@ -376,6 +375,8 @@ def search(request):
             if val:     # if search value is not empty, selectively add it
                 if field == 'collection':       # for collections, get collection info
                     search_info[key] = get_cached_collection_dict(val)
+                elif field == 'rights':         # for rights, numeric code + abbreviation
+                    search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         ctx_dict['search_info'] = search_info

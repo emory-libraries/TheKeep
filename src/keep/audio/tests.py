@@ -428,7 +428,7 @@ of 1''',
                 "test object 1 not listed in results when searching by rights")
         self.assert_(obj2.pid in found,
                 "test object 2 listed in results when searching by rights")
-        self.assertPattern('rights:.*no photos', response.content,
+        self.assertPattern('rights:.*8 - Public Domain', response.content,
             msg_prefix='search results page should include search term (rights)')
 
         # collection
