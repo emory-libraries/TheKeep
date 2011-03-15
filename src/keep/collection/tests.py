@@ -518,8 +518,8 @@ class CollectionViewsTest(EulcoreTestCase):
                 "Esterbrook not found when searching for collection %s" % collection.uri)
         self.assert_(engdocs.pid in found,
                 "English Documents collection found for collection %s" % collection.uri)
-        self.assertPattern('Collection:.*%s' % collection.label, response.content,
-            msg_prefix='search results page should include search term (numbering scheme)')
+        self.assertPattern('Repository:.*%s' % collection.label, response.content,
+            msg_prefix='search results page should include search term (owning repository)')
 
         # no match
         response = self.client.get(search_url, {'collection-title': 'not-a-collection' })
