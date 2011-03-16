@@ -222,6 +222,15 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 -------------
 
+Release 1.8 - Min Items, part IV
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* We are using a newer version of python-eulcore. To update::
+
+    $ . /home/keep/env/bin/activate
+    $ pip install -r pip-dependencies
+
+
 Release 0.9 - Min Items, part III
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
