@@ -75,10 +75,11 @@ class SourceTech(_BaseSourceTech):
         'Tape Cartridge', 'VHS', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
         'Cardboard Sleeve', 'Cardboard Box', 'Other', 'Not applicable')
     'controlled vocabulary for :class:`SourceTech.housing`'
-    reel_sizes = ('3', '5', '7', '10', '12', '14') # also Other -> empty field
+    reel_sizes = ('3', '4', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
     reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
     reel_size_options.append(('Other', 'Other'))
+    reel_size_options.append(('Not Applicable', 'Not Applicable'))
     # add an empty value at the beginning of the list to force active selection
     reel_size_options.insert(0, ('', ''))
     sound_characteristic_options = ('', 'mono', 'stereo')
