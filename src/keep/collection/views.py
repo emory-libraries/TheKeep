@@ -79,6 +79,14 @@ def edit(request, pid=None):
                     else:
                         form = CollectionForm(instance=obj)
 
+            # form was posted but not valid
+            else:
+                # if we attempted to save and failed, add a message since the error
+                # may not be obvious or visible in the first screenful of the form
+                messages.error(request,
+                    '''Your changes were not saved due to a validation error.
+                    Please correct any required or invalid fields indicated below and save again.''')
+
             # in any other case - fall through to display edit form again
         else:
             # GET - display the form for editing

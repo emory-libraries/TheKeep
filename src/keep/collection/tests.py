@@ -431,6 +431,16 @@ class CollectionViewsTest(EulcoreTestCase):
         self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
                 "MODS CollectionForm is set in response context after save and continue editing")
 
+        # validation errors - post incomplete/bogus data & check for validation errors
+        data = COLLECTION_DATA.copy()
+        data.update({
+            'title': '',       # title is required
+        })
+        response = self.client.post(edit_url, data)
+        messages = [ str(msg) for msg in response.context['messages'] ]
+        self.assert_(messages[0].startswith("Your changes were not saved due to a validation error"),
+            "form validation error message set in response context")
+
         # save & continue when creating a new record
         new_collection_url = reverse('collection:new')
         data = COLLECTION_DATA.copy()
