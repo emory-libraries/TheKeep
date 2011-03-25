@@ -1553,6 +1553,11 @@ class TestAudioObject(TestCase):
         # verify that the owner id is set in repo copy.
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
+        # test saving with a title longer than 255 characters
+        self.obj.mods.content.title = ' '.join(['this is the song that never ends' for i in range(0,10)])
+        # save will cause an exception if the object label is not truncated correctly
+        self.obj.save()
+
     def test_update_dc(self):
         # set values in MODS, RELS-EXT, digitaltech
         title, res_type = 'new title in mods', 'text'
