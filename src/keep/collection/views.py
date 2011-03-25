@@ -51,16 +51,17 @@ def edit(request, pid=None):
                 if pid is None:
                     # new object
                     log_message = 'Creating new collection'
-                    action = 'Created new'
+                    action = 'created'
                 else:
                     # existing object
                     log_message = 'Updating collection'
-                    action = 'Updated'
+                    action = 'updated'
 
                 # NOTE: by sending a log message, we force Fedora to store an
                 # audit trail entry for object creation, which doesn't happen otherwise
                 obj.save(log_message)
-                messages.success(request, '%s collection %s' % (action, obj.pid))
+                messages.success(request, 'Successfully %s collection <a href="%s">%s</a>' % \
+                        (action, reverse('collection:edit', args=[obj.pid]), obj.pid))
 
                 # form submitted via normal save button - redirect to main audio page
                 if '_save_continue' not in request.POST:
