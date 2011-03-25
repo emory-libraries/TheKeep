@@ -343,20 +343,17 @@ class CollectionViewsTest(EulcoreTestCase):
             msg_prefix='error message for collection pid not in list')
 
         # POST and create new object, verify in fedora
-        response = self.client.post(new_coll_url, COLLECTION_DATA, follow=True)
+        data = COLLECTION_DATA.copy()
+        data['_save_continue'] = True   # use 'save and continue' so we can get created object from response
+        response = self.client.post(new_coll_url, data, follow=True)
         # do we need to test actual response, redirect ?
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assert_('Successfully created collection' in messages[0],
             'successful collection creation message displayed to user')
-        # get pid of created object and inspect in fedora
-
-        # FIXME: get pid somehow!
-        # TODO: use save and continue to get pid for inspecting ?
-        return
-        #print response.context #['collection']
-        pid = messages[0].replace('Created new collection ', '')
+        # inspect newly created object and in fedora
+        
         repo = Repository()
-        new_coll = repo.get_object(pid, type=CollectionObject)
+        new_coll = repo.get_object(response.context['collection'].pid, type=CollectionObject)
         # check object creation and init-specific logic handled by view (isMemberOf)
         self.assertTrue(new_coll.has_model(CollectionObject.COLLECTION_CONTENT_MODEL),
             "collection object was created with the correct content model")
