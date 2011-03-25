@@ -290,7 +290,7 @@ class RightsForm(XmlObjectForm):
     """
 
     access = forms.ChoiceField(rights_access_options, label='Access Status',
-                    help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
+           help_text='File access status, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)
 
     class Meta:
@@ -309,9 +309,9 @@ class RightsForm(XmlObjectForm):
         # XmlObject field names, but we have a couple form fields that
         # aren't.
         access = 'access'
-        access_condition_code = 'access_condition-code'
-        if access_condition_code in self.initial:
-            self.initial[access] = self.initial[access_condition_code]
+        access_status_code = 'access_status-code'
+        if access_status_code in self.initial:
+            self.initial[access] = self.initial[access_status_code]
 
     def update_instance(self):
         super(RightsForm, self).update_instance()
@@ -321,9 +321,9 @@ class RightsForm(XmlObjectForm):
         if hasattr(self, 'cleaned_data'):
             access_code = self.cleaned_data['access']
             access_text = Rights.access_terms_dict[access_code].text
-            self.instance.create_access_condition()
-            self.instance.access_condition.code = access_code
-            self.instance.access_condition.text = access_text
+            self.instance.create_access_status()
+            self.instance.access_status.code = access_code
+            self.instance.access_status.text = access_text
 
         return self.instance
 
