@@ -71,9 +71,8 @@ class SourceTech(_BaseSourceTech):
         'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
         'dictabelt', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
-    housing_options = ('', 'Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
-        'Tape Cartridge', 'VHS', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
-        'Cardboard Sleeve', 'Cardboard Box', 'Other', 'Not applicable')
+    housing_options = ('', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
+        'Cardboard Sleeve', 'Cardboard Box', 'Other', 'None')
     'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '4', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
@@ -154,7 +153,7 @@ class SourceTech(_BaseSourceTech):
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        required=True, help_text='Type of housing for magnetic tape')
+        required=True, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
