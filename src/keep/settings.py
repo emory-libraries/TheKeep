@@ -92,6 +92,12 @@ FILE_UPLOAD_HANDLERS = (
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 )
 
+# session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'    # use same cache in use elsewhere
+SESSION_COOKIE_AGE = 604800   # 1 week (Django default is 2 weeks)
+SESSION_COOKIE_SECURE = True  # mark cookie as secure, only transfer via HTTPS
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 # using default django login url
 LOGIN_URL = '/accounts/login/'
 
