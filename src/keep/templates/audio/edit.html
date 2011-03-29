@@ -17,16 +17,14 @@
         header.next().toggle();
       });
 
-      // whenever block_external_access is selected, make its help text loud
-      var block_external_access = $("#id_rights-block_external_access");
-      block_external_access.change(function() {
-        var val = $(this).val();
-        var help_text = $(this).siblings('.help-text');
-        help_text.toggleClass("warning", val);
-      });
-      if (block_external_access.val()) {
-        block_external_access.trigger('change');
-      }
+     /* Toggle help-text warning based on checkbox value for items with class checkbox-warning.
+        (Currently used by Rights block external access field).
+      */
+     $('.checkbox-warning').change(function() {
+         $(this).siblings('.help-text').toggleClass('warning', $(this).attr('checked'));
+     });
+     /* trigger change once manually so initial display will reflect field starting value */
+     $('.checkbox-warning').change();
 
     });
   </script>

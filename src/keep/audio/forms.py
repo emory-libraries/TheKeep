@@ -300,6 +300,7 @@ class RightsForm(XmlObjectForm):
         widgets = {
             'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
             'ip_note': forms.Textarea,
+            'block_external_access': forms.CheckboxInput(attrs={'class': 'checkbox-warning'}),
         }
 
     def __init__(self, **kwargs):
