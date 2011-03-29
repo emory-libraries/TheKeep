@@ -229,7 +229,7 @@ you will need to override this in your ``localsettings.py``.  See the commented 
 Upgrade Notes
 -------------
 
-Release 1.8 - Min Items, part IV
+Release 1.0 - Min Items, part IV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * We are using a newer version of python-eulcore. To update::
@@ -244,7 +244,7 @@ Release 1.8 - Min Items, part IV
   options, see `Django Sessions documentation <http://docs.djangoproject.com/en/1.2/topics/http/sessions/>`_ .
 
 .. Note::
-  Developers are affected by this configuration change and should consult `Notes for Developers`_.              s
+  Developers are affected by this configuration change and should consult `Notes for Developers`_.
 
 Release 0.9 - Min Items, part III
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
