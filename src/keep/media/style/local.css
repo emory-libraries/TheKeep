@@ -180,6 +180,15 @@ img#keep-logo {
     float: left;
     padding: 0px 2px;
 }
+.delete-col {
+    width: 4em;
+}
+.textinput-col {
+    width: 68%;
+}
+.dropdown-col {
+    width:11.5em;
+}
 #name-part select, #name-role select {
     min-width: 11em;
 }

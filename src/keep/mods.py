@@ -120,9 +120,9 @@ class Name(Common):
     XSD_SCHEMA = MODS_SCHEMA
     xmlschema = _mods_xmlschema
 
-    type = xmlmap.SchemaField('@type', 'nameTypeAttributeDefinition')
-    authority = xmlmap.StringField('@authority', choices=['', 'local', 'naf']) # naf = NACO authority file
-    id = xmlmap.StringField('@ID')  # optional
+    type = xmlmap.SchemaField('@type', 'nameTypeAttributeDefinition', required=False)
+    authority = xmlmap.StringField('@authority', choices=['', 'local', 'naf'], required=False) # naf = NACO authority file
+    id = xmlmap.StringField('@ID', required=False)  # optional
     name_parts = xmlmap.NodeListField('mods:namePart', NamePart)
     display_form = xmlmap.StringField('mods:displayForm')
     affiliation = xmlmap.StringField('mods:affiliation')

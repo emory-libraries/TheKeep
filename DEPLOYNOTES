@@ -218,11 +218,18 @@ simulate accessing Fedora as the logged in user.  For tests to work properly,
 the unit test user should be defined (with appropriate permissions)
 as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
+Notes for Developers
+~~~~~~~~~~~~~~~~~~~~
+
+As of `Release 1.8 - Min Items, part IV`_ the project default Session configuration is set to mark
+cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
+you will need to override this in your ``localsettings.py``.  See the commented out example in
+``localsettings.py.sample``.
 
 Upgrade Notes
 -------------
 
-Release 1.8 - Min Items, part IV
+Release 1.0 - Min Items, part IV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * We are using a newer version of python-eulcore. To update::
@@ -230,6 +237,14 @@ Release 1.8 - Min Items, part IV
     $ . /home/keep/env/bin/activate
     $ pip install -r pip-dependencies
 
+* Django Session default configuration has been modified in ``settings.py``.  By default,
+  the application will now store session data in the django cache (already in use by the application and configured via
+  ``CACHE_BACKEND``), mark cookies as secure (HTTPS transfer only), expire after one week, and expire when the browser
+  is closed.  Any of these configurations may be overridden in ``localsettings.py``.  For more details on configuration
+  options, see `Django Sessions documentation <http://docs.djangoproject.com/en/1.2/topics/http/sessions/>`_ .
+
+.. Note::
+  Developers are affected by this configuration change and should consult `Notes for Developers`_.
 
 Release 0.9 - Min Items, part III
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

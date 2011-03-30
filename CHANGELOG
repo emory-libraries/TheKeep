@@ -3,6 +3,57 @@
 CHANGELOG
 =========
 
+Release 1.0 - Min Items, part IV
+---------------------------------
+Date: March 2011
+
+Changes and fixes to Min items I-III that were needed for an initial production release.
+
+* A curator will see a message, “Changes not saved,” if they attempt to save changes to a metadata record but the
+  changes are not saved because of validation errors.
+* When editing an audio file, drop-down selectors should default to blank, even when a nonblank selection is required.
+* When a user (staff or public) downloads a file, the filename given to the downloaded file (copy of archival
+  master, or derived use copy format) will be based on the "noid" part of the PID number.
+* When a user searches for audio items, the “Rights” field should search the numeric rt:accessStatus/@code and should
+  be called “Rights code.”
+* A curator has an easy way (within a single-click or so) to find the most recently created items (new uploads) so
+  that they can easily perform initial metadata on them. (Reversing the current item default search, which
+  returns all items in chronological order, is expected to be an easy way to provide this.)
+* The Collection metadata edit form will make field labels and field contents visually distinct to the user by use of
+  different fonts, in the same way that the Audio File edit form does.
+* Users creating or editing Collection metadata will not be required to add a Name element. If a Name element is
+  created, adding a Role and/or Role term will be optional as well.
+* A curator will have sufficient room to input and view a fairly long title for an item.
+* A curator or archivist can select from revised rights access status codes (numeric),
+  displayed with mnemonic abbreviations.
+* A curator or archivist can add an "IP Note" field to Rights metadata.
+* An archivist can over-ride an access status code that would grant access to the public to digitized file through
+  the MARBL Kiosk, by selecting a checkbox in the form.  Checking the box will cause "Deny access" to appear in red
+  letters next to the field.
+* A curator can choose from revised selections for the Source Tech Housing field; new choices are jewel case;
+  plastic container; paper sleeve; cardboard sleeve; cardboard box; other; none.
+* A curator can choose from 2 additional selections for Source Technical - Reel Size: "not applicable",
+  and " 4" " (four inches) and the field will no longer be required.
+* A curator can choose from revised selections for Source Technical - Recording Speed: aspect term "cylinder disk"
+  should be changed to "phono cylinder" in the drop-down list and in the metadata.
+* A curator will no longer be required to enter metadata in the Source Technical Sublocation field.
+* A curator will no longer be required to enter metadata in the Digital Technical  Digitization Purpose field.
+* The Digital Technical Transfer Engineer field will no longer be a required field (until non-LDAP choices are
+  available).
+* Change label for Collection search result column from MSS# to Col. No., to better reflect meaning for users.
+* Change label for Collection search result column from "Collection" to "Repository" to better reflect its revised
+  meaning.
+* In Collection search results, if there is no mods:title element (or it is empty) in a record retrieved by the
+  search, users will see “(no title present)” as a hyperlink to the record,  so that they can access the record
+  to add a title.
+* Metadata specialists and archivists will have access to links to view MODS, DC and RELS-EXT datastreams at
+  the top of the Collection metadata editing form so that they can view the XML for Collection objects.
+* When a user creates a new Collection object, the object will be available within a short time (less than 2 minutes)
+  in drop-down selections for the Audio Files Search by Collection and Audio Files Edit, Collection choice.
+* A user can search for Audio Files by Date Uploaded in order to enable date-based report generation. The Audio Files
+  input box for Date Captured should no longer appear to users, as it is no longer needed.
+
+
 Release 0.9 - Min Items, part III
 ---------------------------------
 Date: February 2011

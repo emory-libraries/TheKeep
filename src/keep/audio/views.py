@@ -19,7 +19,7 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
 
-
+from eulcore.django.auth.decorators import permission_required_with_ajax
 from eulcore.django.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eulcore.django.taskresult.models import TaskResult
 from eulcore.django.fedora.views import raw_datastream
@@ -43,7 +43,7 @@ def index(request):
     return render_to_response('audio/index.html', {'search' : search},
             context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@permission_required_with_ajax('is_staff')
 @csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
@@ -195,7 +195,7 @@ def upload(request):
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
 
-@permission_required('is_staff')
+@permission_required_with_ajax('is_staff')
 @csrf_exempt
 def ajax_file_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging 

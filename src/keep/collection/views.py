@@ -51,16 +51,17 @@ def edit(request, pid=None):
                 if pid is None:
                     # new object
                     log_message = 'Creating new collection'
-                    action = 'Created new'
+                    action = 'created'
                 else:
                     # existing object
                     log_message = 'Updating collection'
-                    action = 'Updated'
+                    action = 'updated'
 
                 # NOTE: by sending a log message, we force Fedora to store an
                 # audit trail entry for object creation, which doesn't happen otherwise
                 obj.save(log_message)
-                messages.success(request, '%s collection %s' % (action, obj.pid))
+                messages.success(request, 'Successfully %s collection <a href="%s">%s</a>' % \
+                        (action, reverse('collection:edit', args=[obj.pid]), obj.pid))
 
                 # form submitted via normal save button - redirect to main audio page
                 if '_save_continue' not in request.POST:
@@ -78,6 +79,14 @@ def edit(request, pid=None):
                     # will display correctly
                     else:
                         form = CollectionForm(instance=obj)
+
+            # form was posted but not valid
+            else:
+                # if we attempted to save and failed, add a message since the error
+                # may not be obvious or visible in the first screenful of the form
+                messages.error(request,
+                    '''Your changes were not saved due to a validation error.
+                    Please correct any required or invalid fields indicated below and save again.''')
 
             # in any other case - fall through to display edit form again
         else:

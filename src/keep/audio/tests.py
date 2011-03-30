@@ -338,9 +338,9 @@ class AudioViewsTest(EulDjangoTestCase):
         obj.save()
         obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'test search object 2'
-        obj2.rights.content.create_access_condition()
-        obj2.rights.content.access_condition.code = 8
-        obj2.rights.content.access_condition.text = 'public domain'
+        obj2.rights.content.create_access_status()
+        obj2.rights.content.access_status.code = 8
+        obj2.rights.content.access_status.text = 'public domain'
         obj2.save()
         # add pids to list for clean-up in tearDown
         self.pids.extend([obj.pid, obj2.pid])
@@ -586,9 +586,9 @@ of 1''',
         obj.digitaltech.content.create_codec_creator()
         obj.digitaltech.content.codec_creator.id = '1'
         # pre-populate rights metadata
-        obj.rights.content.create_access_condition()
-        obj.rights.content.access_condition.code = 10   # undetermined
-        obj.rights.content.access_condition.text = 'Rights status unknown; no access to files or metadata'
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = 10   # undetermined
+        obj.rights.content.access_status.text = 'Rights status unknown; no access to files or metadata'
         obj.rights.content.copyright_holder_name = 'User, Example'
         obj.rights.content.copyright_date = '1978'
         obj.save()
@@ -647,7 +647,7 @@ of 1''',
         # rights in initial data
         initial_data = response.context['form'].rights.initial
         item_rights = obj.rights.content
-        self.assertEqual(item_rights.access_condition.code, initial_data['access'])
+        self.assertEqual(item_rights.access_status.code, initial_data['access'])
         self.assertEqual(item_rights.copyright_holder_name, initial_data['copyright_holder_name'])
         self.assertEqual(item_rights.copyright_date, initial_data['copyright_date'])
 
@@ -676,7 +676,7 @@ of 1''',
                     'st-sublocation': 'box 2',
                     'st-form': 'audio cassette',
                     'st-sound_characteristics': 'mono',
-                    'st-housing': 'Open reel',
+                    'st-housing': 'Cardboard Box',
                     'st-stock': '60 minute cassette',
                     'st-reel': '3',
                     'st-_speed': 'tape|15/16|inches/sec',
@@ -774,8 +774,8 @@ of 1''',
 
         # check that rights fields were updated correctly
         rights = updated_obj.rights.content
-        self.assertEqual(audio_data['rights-access'], rights.access_condition.code)
-        self.assertTrue(rights.access_condition.text.endswith('in public domain'))
+        self.assertEqual(audio_data['rights-access'], rights.access_status.code)
+        self.assertTrue(rights.access_status.text.endswith('in public domain'))
         self.assertEqual(audio_data['rights-copyright_holder_name'], rights.copyright_holder_name)
         self.assertEqual(audio_data['rights-copyright_date_year'], rights.copyright_date)
         self.assertTrue(rights.block_external_access)
@@ -829,7 +829,6 @@ of 1''',
         data = audio_data.copy()
         data['dt-engineer'] = ''
         response = self.client.post(edit_url, data)
-        #print response
         # get the latest copy of the object
         updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
         #print updated_obj.digitaltech.content.serialize(pretty=True)
@@ -1011,26 +1010,26 @@ of 1''',
         obj.mods.content.part_note.text = 'Side A'
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
-        obj.rights.content.create_access_condition()
-        obj.rights.content.access_condition.code = 8 # public domain
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = 8 # public domain
         obj.collection_uri = self.rushdie.uri
         obj.compressed_audio.content = open(mp3_filename)
         obj.save()
         obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'Patti Smith Live in New York'
         obj2.compressed_audio.content = open(mp3_filename)
-        obj2.rights.content.create_access_condition()
-        obj2.rights.content.access_condition.code = 8 # public domain
+        obj2.rights.content.create_access_status()
+        obj2.rights.content.access_status.code = 8 # public domain
         obj2.collection_uri = self.esterbrook.uri
         obj2.save()
         obj3 = repo.get_object(type=audiomodels.AudioObject)
         obj3.mods.content.title = 'No Access copy'
-        obj3.rights.content.create_access_condition()
-        obj3.rights.content.access_condition.code = 8 # public domain
+        obj3.rights.content.create_access_status()
+        obj3.rights.content.access_status.code = 8 # public domain
         obj3.save()
         obj4 = repo.get_object(type=audiomodels.AudioObject)
-        obj4.rights.content.create_access_condition()
-        obj4.rights.content.access_condition.code = 10 # undetermined
+        obj4.rights.content.create_access_status()
+        obj4.rights.content.access_status.code = 10 # undetermined
         obj4.compressed_audio.content = open(mp3_filename)
         obj4.save()
         obj5 = repo.get_object(type=audiomodels.AudioObject)
@@ -1039,8 +1038,8 @@ of 1''',
         obj6 = repo.get_object(type=audiomodels.AudioObject)
         obj6.mods.content.title = 'Moses reads Ten Commandments'
         obj6.compressed_audio.content = open(mp3_filename)
-        obj6.rights.content.create_access_condition()
-        obj6.rights.content.access_condition.code = 8 # public domain
+        obj6.rights.content.create_access_status()
+        obj6.rights.content.access_status.code = 8 # public domain
         obj6.rights.content.block_external_access = True
         obj6.collection_uri = self.esterbrook.uri
         obj6.save()
@@ -1461,7 +1460,7 @@ class DigitalTechTest(TestCase):
 class RightsXmlTest(TestCase):
     FIXTURE =  '''<?xml version="1.0" encoding="UTF-8"?>
 <rt:rights version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rt="http://pid.emory.edu/ns/2010/rights"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/rights-1.xsd">
-    <rt:accessCondition code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessCondition>
+    <rt:accessStatus code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessStatus>
     <rt:copyrightholderName>Hughes, Carol</rt:copyrightholderName>
     <rt:copyrightDate encoding="w3cdtf">1923</rt:copyrightDate>
     <rt:ipNotes>Written permission required.</rt:ipNotes>
@@ -1472,13 +1471,13 @@ class RightsXmlTest(TestCase):
 
     def test_init_types(self):
         self.assert_(isinstance(self.rights, audiomodels.Rights))
-        self.assert_(isinstance(self.rights.access_condition, audiomodels.AccessCondition))
+        self.assert_(isinstance(self.rights.access_status, audiomodels.AccessStatus))
 
     def test_fields(self):
         # check field values correctly accessible from fixture
-        self.assertEqual('2', self.rights.access_condition.code)
+        self.assertEqual('2', self.rights.access_status.code)
         self.assertEqual('Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement',
-            self.rights.access_condition.text)
+            self.rights.access_status.text)
         self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
         self.assertEqual('1923', self.rights.copyright_date)
         self.assertEqual('Written permission required.', self.rights.ip_note)
@@ -1487,9 +1486,9 @@ class RightsXmlTest(TestCase):
     def test_create(self):
         # test creating digitaltech metadata from scratch
         rt = audiomodels.Rights()
-        rt.create_access_condition()
-        rt.access_condition.code = 8    # public domain
-        rt.access_condition.text = 'In public domain, no contract restriction'
+        rt.create_access_status()
+        rt.access_status.code = 8    # public domain
+        rt.access_status.text = 'In public domain, no contract restriction'
         rt.copyright_holder_name = 'Mouse, Mickey'
         rt.copyright_date = '1928'
         rt.ip_note = 'See WATCH list for copyright contact info'
@@ -1554,6 +1553,11 @@ class TestAudioObject(TestCase):
         # verify that the owner id is set in repo copy.
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
+        # test saving with a title longer than 255 characters
+        self.obj.mods.content.title = ' '.join(['this is the song that never ends' for i in range(0,10)])
+        # save will cause an exception if the object label is not truncated correctly
+        self.obj.save()
+
     def test_update_dc(self):
         # set values in MODS, RELS-EXT, digitaltech
         title, res_type = 'new title in mods', 'text'
@@ -1568,9 +1572,9 @@ class TestAudioObject(TestCase):
         self.obj.mods.content.general_note.text = general_note
         dig_purpose = 'patron request'
         self.obj.digitaltech.content.digitization_purpose = dig_purpose
-        self.obj.rights.content.create_access_condition()
-        self.obj.rights.content.access_condition.code = '8'
-        self.obj.rights.content.access_condition.text = 'Material is in public domain'
+        self.obj.rights.content.create_access_status()
+        self.obj.rights.content.access_status.code = '8'
+        self.obj.rights.content.access_status.text = 'Material is in public domain'
         collection = 'collection:123'
         self.obj.collection_uri = collection
         self.obj._update_dc()
@@ -1586,7 +1590,7 @@ class TestAudioObject(TestCase):
         # currently using rights access condition code & text in dc:rights
         # should only be one in dc:rights - mods access condition not included
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
-        access = self.obj.rights.content.access_condition
+        access = self.obj.rights.content.access_status
         self.assert_(self.obj.dc.content.rights.startswith('%s: ' % access.code))
         self.assert_(self.obj.dc.content.rights.endswith(access.text))        
 
@@ -1600,7 +1604,7 @@ class TestAudioObject(TestCase):
         del(self.obj.mods.content.origin_info.issued)
         del(self.obj.mods.content.general_note)
         del(self.obj.digitaltech.content.digitization_purpose)
-        del(self.obj.rights.content.access_condition)
+        del(self.obj.rights.content.access_status)
         self.obj._update_dc()
         self.assertEqual(1, len(self.obj.dc.content.date_list),
             'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
@@ -1608,7 +1612,7 @@ class TestAudioObject(TestCase):
             'there should be no dc:description when general note in MODS and digitization ' +
             'purpose in digital tech are not set')
         self.assertEqual([], self.obj.dc.content.rights_list,
-            'there should be no dc:rights when no Rights access_condition is set')
+            'there should be no dc:rights when no Rights access_status is set')
 
         # un-ingested object - should not error, should get current date
         obj = self.repo.get_object(type=audiomodels.AudioObject)

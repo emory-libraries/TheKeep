@@ -1,6 +1,8 @@
--e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/release-0.11.x
--e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/branches/release-1.1.x
+django==1.2.5
+-e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/release-0.12.x
+-e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/tags/release-1.1.0
 python-magic
 pycrypto
 django-celery
 mutagen
+poster

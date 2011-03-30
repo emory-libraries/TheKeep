@@ -333,12 +333,16 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.fileName + '"/>');
 
              } else {
-               // upload errors should normally return a plain-text error message
-               if (xhr.getResponseHeader('Content-Type') == 'text/plain') {
-                   file.status.html('Upload error: ' + xhr.responseText);               
-               }  else {
+                console.log('response status is ' + xhr.status)
+                var err_msg = 'Upload error'
+                if (xhr.status == 0) {      // request aborted; could happen if not authorized/login session times out
+                   file.status.html(err_msg + ': Request Aborted');
+                } else if (xhr.status >= 400 && xhr.getResponseHeader('Content-Type') == 'text/plain') {
+                  // other upload errors should normally return a plain-text error message
+                   file.status.html('Upload error: ' + xhr.responseText);
+                } else {
                    // if not plain-text, something probably went wrong (500/exception)
-                   file.status.html('Upload error');    
+                   file.status.html('Upload error');
                }
                file.upload_id = -1;
                // TODO: include upload errors in the form somehow so that

@@ -71,9 +71,8 @@ class SourceTech(_BaseSourceTech):
         'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
         'dictabelt', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
-    housing_options = ('', 'Open reel', 'Compact Audio Cassette', 'R-DAT', 'Minicassette',
-        'Tape Cartridge', 'VHS', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
-        'Cardboard Sleeve', 'Cardboard Box', 'Other', 'Not applicable')
+    housing_options = ('', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
+        'Cardboard Sleeve', 'Cardboard Box', 'Other', 'None')
     'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '4', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
@@ -154,7 +153,7 @@ class SourceTech(_BaseSourceTech):
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        required=True, help_text='Type of housing for magnetic tape')
+        required=True, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
@@ -249,9 +248,9 @@ class _BaseRights(xmlmap.XmlObject):
     ROOT_NS = 'http://pid.emory.edu/ns/2010/rights'
     ROOT_NAMESPACES = { 'rt': ROOT_NS }
 
-class AccessCondition(_BaseRights):
-    ':class:`~eulcore.xmlmap.XmlObject` for :class:`Rights` access condition'
-    ROOT_NAME = 'accessCondition'
+class AccessStatus(_BaseRights):
+    ':class:`~eulcore.xmlmap.XmlObject` for :class:`Rights` access status'
+    ROOT_NAME = 'accessStatus'
     code = xmlmap.StringField('@code', required=True)
     'access code'
     text = xmlmap.StringField('text()')
@@ -297,9 +296,10 @@ class Rights(_BaseRights):
     map to elements of access_terms.'''
     # e.g., access_terms_dict['11'].access == True
 
-    access_condition = xmlmap.NodeField('rt:accessCondition', AccessCondition,
-        required=True, help_text='File access conditions, as determined by analysis of copyright, donor agreements, permissions, etc.')
-    ':class:`AccessCondition`'
+    access_status = xmlmap.NodeField('rt:accessStatus', AccessStatus,
+        required=True,
+        help_text='File access status, as determined by analysis of copyright, donor agreements, permissions, etc.')
+    ':class:`AccessStatus`'
     copyright_holder_name = xmlmap.StringField('rt:copyrightholderName',
         required=False,
         help_text='Name of a copyright holder in last, first order')
@@ -311,12 +311,11 @@ class Rights(_BaseRights):
 
     block_external_access = xmlmap.SimpleBooleanField('rt:externalAccess',
         'deny', None,
-        help_text='''Block library patrons from accessing this file,
-            irrespective of Access Status''')
+        help_text='''DENY ACCESS to library patrons irrespective of Access Status.''')
     '''block external access. If this is True then refuse patron access to this
-    item irrespective of :attr:access_condition.'''
+    item irrespective of :attr:access_status.'''
     # NOTE: users have also requested a <rt:externalAccess>allow</rt:externalAccess>
-    # to allow access irrespective of access_condition. when we implement
+    # to allow access irrespective of access_status. when we implement
     # that, we'll probably want to incorporate it into this property and
     # rename
 
@@ -331,9 +330,9 @@ class Rights(_BaseRights):
         if self.block_external_access:
             return False
 
-        if not self.access_condition:
+        if not self.access_status:
             return None
-        access_code = self.access_condition.code
+        access_code = self.access_status.code
         access_term = self.access_terms_dict.get(access_code, None)
         if not access_term:
             return None
@@ -476,10 +475,10 @@ class AudioObject(DigitalObject):
             self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
         # Currently not indexing general note in digital tech
 
-        # clear out any rights previously in DC and set contents from MODS accessCondition
+        # clear out any rights previously in DC and set contents from Rights accessStatus
         del(self.dc.content.rights_list)
-        if self.rights.content.access_condition:
-            access = self.rights.content.access_condition
+        if self.rights.content.access_status:
+            access = self.rights.content.access_status
             self.dc.content.rights_list.append('%s: %s' % (access.code, access.text))
 
         # TEMPORARY: collection relation and cmodel must be in DC for find_objects

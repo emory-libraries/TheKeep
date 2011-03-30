@@ -66,6 +66,9 @@ PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain 
 # django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
 CACHE_BACKEND = 'file:///tmp/euterpe_cache'
 
+# for Developers only: to use sessions in runserver, uncomment this line (override configuration in settings.py)
+#SESSION_COOKIE_SECURE = False
+
 # maximum number of items to include in a single iTunes podcast feed
 MAX_ITEMS_PER_PODCAST_FEED = 2000 
 
