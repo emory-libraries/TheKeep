@@ -221,7 +221,7 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Notes for Developers
 ~~~~~~~~~~~~~~~~~~~~
 
-As of `Release 1.8 - Min Items, part IV`_ the project default Session configuration is set to mark
+As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
 cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
 you will need to override this in your ``localsettings.py``.  See the commented out example in
 ``localsettings.py.sample``.
