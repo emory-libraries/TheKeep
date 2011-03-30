@@ -405,9 +405,11 @@ class CollectionViewsTest(EulcoreTestCase):
         self.assertContains(response, 'Edit Collection',
                 msg_prefix='page title indicates user is editing an existing collection')
         self.assertContains(response, 'name="name-name_parts-0-DELETE"',
-                msg_prefix='namePart delete option is available')
-        self.assertContains(response, 'name="name-roles-0-DELETE"',
-                msg_prefix='namePart delete option is available')
+                msg_prefix='namePart delete option is available for first name part')
+        self.assertNotContains(response, 'name="name-name_parts-1-DELETE"',
+                msg_prefix='namePart delete option is not available for extra name part')
+        self.assertNotContains(response, 'name="name-roles-0-DELETE"',
+                msg_prefix='name role delete option is not available (no initial role data)')
 
 
         # POST and update existing object, verify in fedora
