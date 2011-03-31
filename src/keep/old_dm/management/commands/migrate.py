@@ -23,6 +23,7 @@ class Command(BaseCommand):
         for item in Content.audio_objects.all():
             print 'Item %d' % item.id
             item.descriptive_metadata()
+            item.source_tech_metadata()
             print '\n'
 
 

@@ -127,6 +127,37 @@ class Content(models.Model):   # individual item
             print 'Item Genre: %s' % unicode(genre)
         
 
+    def source_tech_metadata(self):
+        print '--- Source Technical Metadata ---'
+
+        # XXX since source_sound is repeatable, check all fields'
+        # repeatability in tech metadata spec
+
+        for source_sound in self.source_sounds.all():
+            if source_sound.source_note:
+                print 'Note - General: %s' % source_sound.source_note
+            if source_sound.sound_field:
+                print 'Note - General: %s' % source_sound.sound_field
+            if source_sound.related_item:
+                print 'Note - Related Files: %s' % source_sound.related_item
+            if source_sound.conservation_history:
+                print 'Note - Conservation History: %s' % source_sound.conservation_history
+            if source_sound.speed:
+                print 'Speed: %s (unit: %s)' % (source_sound.speed.speed, source_sound.speed.unit)
+            if source_sound.item_location:
+                print 'Item Sub-Location: %s' % source_sound.item_location
+            if source_sound.form:
+                print 'Item Form: %s' % source_sound.form.short_form
+            if source_sound.sound_field:
+                print 'Sound Characteristics: %s' % source_sound.sound_field
+            if source_sound.stock:
+                print 'Tape - Brand/Stock: %s' % source_sound.stock
+            if source_sound.housing:
+                # FIXME: cleanup "Moving Image/Sound:" in front of desc?
+                print 'Tape - Housing: %s' % source_sound.housing.description
+            if source_sound.reel_size:
+                # FIXME: cleanup '"' at end of reel_size?
+                print 'Tape - Reel Size: %s' % source_sound.reel_size
         
 
 class AccessRights(models.Model):
@@ -201,7 +232,7 @@ class Locations(models.Model):
         db_table = u'locations'
         managed = False
 
-class Forms(models.Model):
+class Form(models.Model):
     id = models.IntegerField(primary_key=True)
     form = models.CharField(max_length=150)
     support_material = models.CharField(max_length=50)
@@ -211,6 +242,16 @@ class Forms(models.Model):
     class Meta:
         db_table = u'forms'
         managed = False
+
+    def __unicode__(self):
+        return '%s' % self.id
+
+    @property
+    def short_form(self):
+        form = self.form
+        if form.startswith('Sound - '):
+            form = form[len('Sound - '):]
+        return form
 
 class Languages(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -228,7 +269,7 @@ class Roles(models.Model):
         db_table = u'roles'
         managed = False
 
-class Speeds(models.Model):
+class Speed(models.Model):
     id = models.IntegerField(primary_key=True)
     speed = models.CharField(max_length=255)
     speed_alt = models.CharField(max_length=255)
@@ -236,6 +277,23 @@ class Speeds(models.Model):
     class Meta:
         db_table = u'speeds'
         managed = False
+
+    def __unicode__(self):
+        return '%s' % self.id
+
+    @property
+    def unit(self):
+        if self.speed_alt == 'Multiple':
+            return 'multiple'
+        elif self.speed_alt == 'Other':
+            return 'other'
+        elif self.speed_alt.endswith('rpm'):
+            return 'rpm'
+        elif self.speed_alt.endswith('Kilohertz'):
+            return 'Kilohertz'
+        elif 'ips' in self.speed_alt:
+            return 'inches/sec'
+
 
 class SrcMovingImages(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -313,12 +371,15 @@ class FeedCollections(models.Model):
 
 
 
-class Housings(models.Model):
+class Housing(models.Model):
     id = models.IntegerField(primary_key=True)
     description = models.CharField(max_length=50)
     class Meta:
         db_table = u'housings'
         managed = False
+
+    def __unicode__(self):
+        return '%s' % self.id
 
 class Names(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -506,7 +567,6 @@ class ContentsSubjects(models.Model):
 
 class SourceSound(models.Model):
     id = models.IntegerField(primary_key=True)
-    form_id = models.IntegerField()
     reel_size = models.CharField(max_length=50)
     dimension_note = models.CharField(max_length=255)
     disposition = models.CharField(max_length=50)
@@ -515,7 +575,6 @@ class SourceSound(models.Model):
     length = models.CharField(max_length=50)
     source_note = models.TextField()
     sound_field = models.CharField(max_length=50)
-    speed_id = models.IntegerField()
     stock = models.CharField(max_length=255)
     tape_thick = models.CharField(max_length=50)
     track_format = models.CharField(max_length=50)
@@ -523,11 +582,34 @@ class SourceSound(models.Model):
     item_location = models.CharField(max_length=255)
     content = models.ForeignKey(Content, related_name='source_sounds')# db_column='content_id',
     # related_name='source_sounds')
-    housing_id = models.IntegerField()
     conservation_history = models.TextField()
     source_date = models.CharField(max_length=50)
     publication_date = models.CharField(max_length=50)
     transfer_engineer_staff_id = models.IntegerField()
+
+    # XXX clean up code for these 0-as-null fields:
+
+    # speed_id == 0 means no speed.
+    speed_id = models.IntegerField()
+    @property
+    def speed(self):
+        if self.speed_id:
+            return Speed.objects.get(pk=self.speed_id)
+
+    # form_id == 0 means no form.
+    form_id = models.IntegerField()
+    @property
+    def form(self):
+        if self.form_id:
+            return Form.objects.get(pk=self.form_id)
+
+    # housing_id == 0 means no form.
+    housing_id = models.IntegerField()
+    @property
+    def housing(self):
+        if self.housing_id:
+            return Housing.objects.get(pk=self.housing_id)
+
     class Meta:
         db_table = u'src_sounds'
         managed = False
