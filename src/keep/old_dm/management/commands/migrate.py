@@ -1,3 +1,5 @@
+import csv
+
 from django.core.management.base import BaseCommand, CommandError
 
 from keep.old_dm.models import Content
@@ -20,11 +22,17 @@ class Command(BaseCommand):
         #verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
         #v_normal = 1
 
-        for item in Content.audio_objects.all():
-            print 'Item %d' % item.id
-            item.descriptive_metadata()
-            item.source_tech_metadata()
-            print '\n'
+        with open('migrate.csv', 'wb') as f:           # TODO: make filename configurable
+            csvfile = csv.writer(f)
+            csvfile.writerow(Content.descriptive_fields)
+
+            for item in Content.audio_objects.all():
+                # TODO: make it possible to suppress item info based on verbosity setting
+                print 'Item %d' % item.id
+                row_data = item.descriptive_metadata()
+                item.source_tech_metadata()
+                print '\n'
+                csvfile.writerow(row_data)
 
 
         print '\n\n%d audio items (%d total items)' % (Content.audio_objects.count(), Content.objects.count())

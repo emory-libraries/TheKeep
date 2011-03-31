@@ -181,35 +181,54 @@ class Content(models.Model):   # individual item
     def __unicode__(self):
         return '%s' % self.id
 
+    # list of fields that will be returned by descriptive_metadata method 
+    descriptive_fields = ['ID', 'Other ID', 'Title', 'Note', 'Type of Resource', 'Record Origin',
+                          'Genre', 'Language', 'Location', 'Subjects - Geographic']
+
     def descriptive_metadata(self):
+        # print out descriptive fields and return a list of values
         print '--- Descriptive Metadata ---'
         # TODO: collection
         print 'Identifier: %s' % self.id
         print 'Other ID: %s' % self.other_id
+        data = [self.id, self.other_id]
         # source_sound could be multiple; which one do we use?
-        if self.source_sounds.count() > 1:
-            print '# source sounds = ', self.source_sounds.count()
         for source_sound in self.source_sounds.all():
             print 'Item Date Created: %s' % source_sound.source_date
             print 'Item Date Issued: %s' % source_sound.publication_date
+        print 'Item Title: %s' % unicode(self.title)
         print 'Item Note: %s' % self.note
-        print 'Item Title: %s' % self.title
         print 'Item Type of Resource: %s' % self.resource_type.type
+        data.extend([unicode(self.title), self.note, self.resource_type.type])
+
         if self.data_entered_by:
             print 'Item recordOrigin: %s' % self.data_entered_by.name
+            data.append(self.data_entered_by.name)
+        else:
+            data.append(None)
+
         for genre in self.genres.all():
             print 'Item Genre: %s' % unicode(genre)
+        data.append('\n'.join(unicode(genre) for genre in self.genres.all()))
+
         for namerole in self.namerole_set.all():
             print 'Item Name (Creator): %s' % unicode(namerole.name)
             print "Item Name Role: %s" % namerole.role
+        # TODO: how to put names + roles into CSV ?
+
         for lang in self.languages.all():
             print 'Item Language: %s' % unicode(lang)
+        data.append('\n'.join(unicode(lang) for lang in self.languages.all()))
+
         print 'Item Physical Location: %s' % self.location.name
+        data.append(self.location.name)
         # NOTE: documentation has locations:location as db field, which does not exist
 
         # subjects are filtered into type of subject by field name codes
-        for subject in self.subjects.filter(fieldnames=Subject.geographic):
+        geographic_subjects = self.subjects.filter(fieldnames=Subject.geographic)
+        for subject in geographic_subjects:
             print 'Item Subject Geographic: %s' % unicode(subject)
+        data.append('\n'.join(unicode(subj) for subj in geographic_subjects))
         for subject in self.subjects.filter(fieldnames=Subject.name_personal):
             print 'Item Subject Name (personal): %s' % unicode(subject)
         for subject in self.subjects.filter(fieldnames=Subject.name_corporate):
@@ -223,6 +242,8 @@ class Content(models.Model):   # individual item
 
         print 'Item recordChangeDate: %s' % self.modified_at
         print 'Item recordCreationDate: %s' % self.created_at
+
+        return data
         
 
     def source_tech_metadata(self):
