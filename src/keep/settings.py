@@ -78,6 +78,7 @@ INSTALLED_APPS = (
     'keep.audio',
     'keep.collection',
     'keep.common',
+    'keep.old_dm',
     'djcelery',
 )
 
@@ -91,6 +92,9 @@ FILE_UPLOAD_HANDLERS = (
     # removing default MemoryFileUploadHandler so all uploaded files can be treated the same
     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
 )
+
+# custom router to make old_dm database is only used for old_dm models & vice versa
+DATABASE_ROUTERS = ['keep.old_dm.db.OldDMRouter']
 
 # session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'    # use same cache in use elsewhere
