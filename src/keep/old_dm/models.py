@@ -61,6 +61,77 @@ class Genre(models.Model):
     def __unicode__(self):
         return '%s [authority = %s, field = %d]' % (self.genre, self.authority.authority, self.fieldnames)
 
+class Name(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(unique=True, max_length=255)
+    authority = models.ForeignKey(Authority)
+    name_type = models.CharField(max_length=50)
+    class Meta:
+        db_table = u'names'
+        managed = False
+
+    def __unicode__(self):
+        return '%s [%s, authority=%s]' % (self.name, self.name_type, self.authority.authority)
+
+class Role(models.Model):
+    id = models.IntegerField(primary_key=True)
+    title = models.CharField(max_length=255)
+    code = models.CharField(max_length=255)
+    class Meta:
+        db_table = u'roles'
+        managed = False
+
+    def __unicode__(self):
+        return '%s [%s]' % (self.title, self.code)
+
+class Language(models.Model):
+    id = models.IntegerField(primary_key=True)
+    language = models.CharField(max_length=255)
+    code = models.CharField(max_length=255)
+    class Meta:
+        db_table = u'languages'
+        managed = False
+
+    def __unicode__(self):
+        return '%s [%s]' % (self.language, self.code)
+
+
+class Location(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=100)
+    address = models.CharField(max_length=255)
+    phone = models.CharField(max_length=50)
+    fax = models.CharField(max_length=50)
+    email = models.CharField(max_length=50)
+    url = models.URLField()
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=2)
+    zip = models.CharField(max_length=10)
+    class Meta:
+        db_table = u'locations'
+        managed = False
+
+class Subject(models.Model):
+    subject = models.CharField(max_length=255)
+    id = models.IntegerField(primary_key=True)
+    authority = models.ForeignKey(Authority)
+    fieldnames = models.IntegerField()
+
+    # fieldname codes for type of subject
+    geographic = 651
+    name_personal = 600
+    name_corporate = 610
+    name_conference = 611
+    topic = 650
+    title = 630
+
+    class Meta:
+        db_table = u'subjects'
+        managed = False
+
+    def __unicode__(self):
+        return '%s [authority = %s, field %s]' % (self.subject, self.authority.authority, self.fieldnames)
+
 class AudioItemManager(models.Manager):
     # custom manager to find audio items only, using resource type
     def get_query_set(self):
@@ -77,7 +148,7 @@ class Content(models.Model):   # individual item
     title = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255)
     resource_type = models.ForeignKey(ResourceType)
-    location_id = models.IntegerField()
+    location = models.ForeignKey(Location)
     abstract = models.TextField()
     toc = models.TextField()
     note = models.TextField(db_column='content_notes')
@@ -95,6 +166,9 @@ class Content(models.Model):   # individual item
 
     # source_sounds (one to many; most items seem to have 0 or 1)
     genres = models.ManyToManyField(Genre)
+    names = models.ManyToManyField(Name, through='NameRole')
+    languages = models.ManyToManyField(Language)
+    subjects = models.ManyToManyField(Subject)
 
     # default manager & custom audio-only manager
     objects = models.Manager()
@@ -108,7 +182,7 @@ class Content(models.Model):   # individual item
         return '%s' % self.id
 
     def descriptive_metadata(self):
-        print '--- Descriptive Metadata --'
+        print '--- Descriptive Metadata ---'
         # TODO: collection
         print 'Identifier: %s' % self.id
         print 'Other ID: %s' % self.other_id
@@ -125,6 +199,30 @@ class Content(models.Model):   # individual item
             print 'Item recordOrigin: %s' % self.data_entered_by.name
         for genre in self.genres.all():
             print 'Item Genre: %s' % unicode(genre)
+        for namerole in self.namerole_set.all():
+            print 'Item Name (Creator): %s' % unicode(namerole.name)
+            print "Item Name Role: %s" % namerole.role
+        for lang in self.languages.all():
+            print 'Item Language: %s' % unicode(lang)
+        print 'Item Physical Location: %s' % self.location.name
+        # NOTE: documentation has locations:location as db field, which does not exist
+
+        # subjects are filtered into type of subject by field name codes
+        for subject in self.subjects.filter(fieldnames=Subject.geographic):
+            print 'Item Subject Geographic: %s' % unicode(subject)
+        for subject in self.subjects.filter(fieldnames=Subject.name_personal):
+            print 'Item Subject Name (personal): %s' % unicode(subject)
+        for subject in self.subjects.filter(fieldnames=Subject.name_corporate):
+            print 'Item Subject Name (corporate): %s' % unicode(subject)
+        for subject in self.subjects.filter(fieldnames=Subject.name_conference):
+            print 'Item Subject Name (conference): %s' % unicode(subject)
+        for subject in self.subjects.filter(fieldnames=Subject.topic):
+            print 'Item Subject Topic: %s' % unicode(subject)
+        for subject in self.subjects.filter(fieldnames=Subject.title):
+            print 'Item Subject Title: %s' % unicode(subject)
+
+        print 'Item recordChangeDate: %s' % self.modified_at
+        print 'Item recordCreationDate: %s' % self.created_at
         
 
     def source_tech_metadata(self):
@@ -159,6 +257,15 @@ class Content(models.Model):   # individual item
                 # FIXME: cleanup '"' at end of reel_size?
                 print 'Tape - Reel Size: %s' % source_sound.reel_size
         
+
+class NameRole(models.Model):
+    content = models.ForeignKey(Content)
+    name = models.ForeignKey(Name)
+    role = models.ForeignKey(Role)
+    class Meta:
+        db_table = u'contents_names'
+        managed = False
+
 
 class AccessRights(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -201,36 +308,6 @@ class ContentsConditions(models.Model):
         db_table = u'contents_conditions'
         managed = False
 
-class ContentsGenres(models.Model):
-    id = models.IntegerField(primary_key=True)
-    content_id = models.IntegerField()
-    genre_id = models.IntegerField()
-    class Meta:
-        db_table = u'contents_genres'
-        managed = False
-
-class ContentsLanguages(models.Model):
-    content_id = models.IntegerField()
-    language_id = models.IntegerField()
-    id = models.IntegerField(primary_key=True)
-    class Meta:
-        db_table = u'contents_languages'
-        managed = False
-
-class Locations(models.Model):
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=100)
-    address = models.CharField(max_length=255)
-    phone = models.CharField(max_length=50)
-    fax = models.CharField(max_length=50)
-    email = models.CharField(max_length=50)
-    url = models.TextField()
-    city = models.CharField(max_length=100)
-    state = models.TextField() # This field type is a guess.
-    zip = models.TextField() # This field type is a guess.
-    class Meta:
-        db_table = u'locations'
-        managed = False
 
 class Form(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -252,22 +329,6 @@ class Form(models.Model):
         if form.startswith('Sound - '):
             form = form[len('Sound - '):]
         return form
-
-class Languages(models.Model):
-    id = models.IntegerField(primary_key=True)
-    language = models.CharField(max_length=255)
-    code = models.CharField(max_length=255)
-    class Meta:
-        db_table = u'languages'
-        managed = False
-
-class Roles(models.Model):
-    id = models.IntegerField(primary_key=True)
-    title = models.CharField(max_length=255)
-    code = models.CharField(max_length=255)
-    class Meta:
-        db_table = u'roles'
-        managed = False
 
 class Speed(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -329,23 +390,7 @@ class SrcMovingImages(models.Model):
         db_table = u'src_moving_images'
         managed = False
 
-class Subjects(models.Model):
-    subject = models.CharField(max_length=255)
-    id = models.IntegerField(primary_key=True)
-    authority_id = models.IntegerField()
-    fieldnames = models.IntegerField()
-    class Meta:
-        db_table = u'subjects'
-        managed = False
 
-class ContentsNames(models.Model):
-    content_id = models.IntegerField()
-    name_id = models.IntegerField()
-    role_id = models.IntegerField()
-    id = models.IntegerField(primary_key=True)
-    class Meta:
-        db_table = u'contents_names'
-        managed = False
 
 class DigitalProvenances(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -380,16 +425,6 @@ class Housing(models.Model):
 
     def __unicode__(self):
         return '%s' % self.id
-
-class Names(models.Model):
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(unique=True, max_length=255)
-    authority_id = models.IntegerField()
-    name_type = models.CharField(max_length=50)
-    class Meta:
-        db_table = u'names'
-        managed = False
-
 
 
 class Restrictions(models.Model):
@@ -557,14 +592,6 @@ class TmpExport(models.Model):
         db_table = u'tmp_export'
         managed = False
 
-class ContentsSubjects(models.Model):
-    id = models.IntegerField(primary_key=True)
-    content_id = models.IntegerField()
-    subject_id = models.IntegerField()
-    class Meta:
-        db_table = u'contents_subjects'
-        managed = False
-
 class SourceSound(models.Model):
     id = models.IntegerField(primary_key=True)
     reel_size = models.CharField(max_length=50)
@@ -580,8 +607,7 @@ class SourceSound(models.Model):
     track_format = models.CharField(max_length=50)
     related_item = models.TextField()
     item_location = models.CharField(max_length=255)
-    content = models.ForeignKey(Content, related_name='source_sounds')# db_column='content_id',
-    # related_name='source_sounds')
+    content = models.ForeignKey(Content, related_name='source_sounds')
     conservation_history = models.TextField()
     source_date = models.CharField(max_length=50)
     publication_date = models.CharField(max_length=50)
