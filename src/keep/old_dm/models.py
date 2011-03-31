@@ -19,13 +19,55 @@ class ResourceType(models.Model):
     def __unicode__(self):
         return self.type
 
+class DescriptionData(models.Model):
+    id = models.IntegerField(primary_key=True)
+    #main_entry = models.CharField()
+    #title_statement = models.CharField()
+
+    class Meta:
+        db_table = u'description_datas'
+        managed = False
+
+class StaffName(models.Model):
+    id = models.IntegerField(primary_key=True)
+    name = models.CharField(max_length=100)
+    class Meta:
+        db_table = u'staff_names'
+        managed = False
+
+    def __unicode__(self):
+        return self.name
+
+
+class Authority(models.Model):
+    id = models.IntegerField(primary_key=True)
+    authority = models.CharField(max_length=255)
+    class Meta:
+        db_table = u'authorities'
+        managed = False
+
+    def __unicode__(self):
+        return self.authority
+
+class Genre(models.Model):
+    id = models.IntegerField(primary_key=True)
+    genre = models.CharField(max_length=255)
+    authority = models.ForeignKey(Authority)
+    fieldnames = models.IntegerField()
+    class Meta:
+        db_table = u'genres'
+        managed = False
+
+    def __unicode__(self):
+        return '%s [authority = %s, field = %d]' % (self.genre, self.authority.authority, self.fieldnames)
+
 class AudioItemManager(models.Manager):
     # custom manager to find audio items only, using resource type
     def get_query_set(self):
         # filter on resource type: starting with sound recording, will also match musical & nonmusical variant types
         return super(AudioItemManager, self).get_query_set().filter(resource_type__type__startswith='sound recording')
 
-class Item(models.Model):   # AKA contents
+class Content(models.Model):   # individual item
     id = models.IntegerField(primary_key=True)
     record_id_type = models.CharField(max_length=50)
     other_id = models.CharField(max_length=255)
@@ -38,15 +80,21 @@ class Item(models.Model):   # AKA contents
     location_id = models.IntegerField()
     abstract = models.TextField()
     toc = models.TextField()
-    content_notes = models.TextField()
+    note = models.TextField(db_column='content_notes')
     completed_by = models.IntegerField()
     completed_date = models.DateTimeField()
-    data_entered_by = models.IntegerField()
+    data_entered_by = models.ForeignKey(StaffName, db_column='data_entered_by',
+                                        related_name='entered_data', null=True)
     data_entered_date = models.DateTimeField()
-    authority_work_by = models.IntegerField()
+    authority_work_by = models.ForeignKey(StaffName, db_column='authority_work_by',
+                                          related_name='authority_work', null=True)
     authority_work_date = models.DateTimeField()
-    initial_qc_by = models.IntegerField()
+    initial_qc_by = models.ForeignKey(StaffName, db_column='initial_qc_by',
+                                      related_name='quality_control', null=True)
     initial_qc_date = models.DateTimeField()
+
+    # source_sounds (one to many; most items seem to have 0 or 1)
+    genres = models.ManyToManyField(Genre)
 
     # default manager & custom audio-only manager
     objects = models.Manager()
@@ -55,6 +103,31 @@ class Item(models.Model):   # AKA contents
     class Meta:
         db_table = u'contents'
         managed = False
+
+    def __unicode__(self):
+        return '%s' % self.id
+
+    def descriptive_metadata(self):
+        print '--- Descriptive Metadata --'
+        # TODO: collection
+        print 'Identifier: %s' % self.id
+        print 'Other ID: %s' % self.other_id
+        # source_sound could be multiple; which one do we use?
+        if self.source_sounds.count() > 1:
+            print '# source sounds = ', self.source_sounds.count()
+        for source_sound in self.source_sounds.all():
+            print 'Item Date Created: %s' % source_sound.source_date
+            print 'Item Date Issued: %s' % source_sound.publication_date
+        print 'Item Note: %s' % self.note
+        print 'Item Title: %s' % self.title
+        print 'Item Type of Resource: %s' % self.resource_type.type
+        if self.data_entered_by:
+            print 'Item recordOrigin: %s' % self.data_entered_by.name
+        for genre in self.genres.all():
+            print 'Item Genre: %s' % unicode(genre)
+        
+
+        
 
 class AccessRights(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -65,13 +138,6 @@ class AccessRights(models.Model):
     copyright_date = models.CharField(max_length=50)
     class Meta:
         db_table = u'access_rights'
-        managed = False
-
-class Authorities(models.Model):
-    id = models.IntegerField(primary_key=True)
-    authority = models.CharField(max_length=255)
-    class Meta:
-        db_table = u'authorities'
         managed = False
 
 class CodecCreatorSounds(models.Model):
@@ -245,14 +311,7 @@ class FeedCollections(models.Model):
         db_table = u'feed_collections'
         managed = False
 
-class Genres(models.Model):
-    id = models.IntegerField(primary_key=True)
-    genre = models.CharField(max_length=255)
-    authority_id = models.IntegerField()
-    fieldnames = models.IntegerField()
-    class Meta:
-        db_table = u'genres'
-        managed = False
+
 
 class Housings(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -422,13 +481,6 @@ class TechSounds(models.Model):
         db_table = u'tech_sounds'
         managed = False
 
-class StaffNames(models.Model):
-    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=100)
-    class Meta:
-        db_table = u'staff_names'
-        managed = False
-
 class TmpExport(models.Model):
     image = models.IntegerField(db_column='Image') # Field name made lowercase.
     title = models.CharField(max_length=255)
@@ -452,7 +504,7 @@ class ContentsSubjects(models.Model):
         db_table = u'contents_subjects'
         managed = False
 
-class SrcSounds(models.Model):
+class SourceSound(models.Model):
     id = models.IntegerField(primary_key=True)
     form_id = models.IntegerField()
     reel_size = models.CharField(max_length=50)
@@ -469,7 +521,8 @@ class SrcSounds(models.Model):
     track_format = models.CharField(max_length=50)
     related_item = models.TextField()
     item_location = models.CharField(max_length=255)
-    content_id = models.IntegerField()
+    content = models.ForeignKey(Content, related_name='source_sounds')# db_column='content_id',
+    # related_name='source_sounds')
     housing_id = models.IntegerField()
     conservation_history = models.TextField()
     source_date = models.CharField(max_length=50)

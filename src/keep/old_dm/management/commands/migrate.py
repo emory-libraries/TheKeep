@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from keep.old_dm.models import Item
+from keep.old_dm.models import Content
 
 class Command(BaseCommand):
     '''Migrate metadata for items from the old Digital Masters database into the
@@ -20,8 +20,10 @@ class Command(BaseCommand):
         #verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
         #v_normal = 1
 
-        for item in Item.audio_objects.all():
-            print '%d:\t%s' % (item.id, item.title)
+        for item in Content.audio_objects.all():
+            print 'Item %d' % item.id
+            item.descriptive_metadata()
+            print '\n'
 
 
-        print '\n\n%d audio items (%d total items)' % (Item.audio_objects.count(), Item.objects.count())
+        print '\n\n%d audio items (%d total items)' % (Content.audio_objects.count(), Content.objects.count())
