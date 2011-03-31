@@ -9,7 +9,23 @@
 
 from django.db import models
 
-class Contents(models.Model):
+class ResourceType(models.Model):
+    id = models.IntegerField(primary_key=True)
+    type = models.CharField(max_length=100, db_column='resource_type')
+    class Meta:
+        db_table = u'resource_types'
+        managed = False
+
+    def __unicode__(self):
+        return self.type
+
+class AudioItemManager(models.Manager):
+    # custom manager to find audio items only, using resource type
+    def get_query_set(self):
+        # filter on resource type: starting with sound recording, will also match musical & nonmusical variant types
+        return super(AudioItemManager, self).get_query_set().filter(resource_type__type__startswith='sound recording')
+
+class Item(models.Model):   # AKA contents
     id = models.IntegerField(primary_key=True)
     record_id_type = models.CharField(max_length=50)
     other_id = models.CharField(max_length=255)
@@ -18,7 +34,7 @@ class Contents(models.Model):
     collection_number = models.IntegerField()
     title = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255)
-    resource_type_id = models.IntegerField()
+    resource_type = models.ForeignKey(ResourceType)
     location_id = models.IntegerField()
     abstract = models.TextField()
     toc = models.TextField()
@@ -31,6 +47,11 @@ class Contents(models.Model):
     authority_work_date = models.DateTimeField()
     initial_qc_by = models.IntegerField()
     initial_qc_date = models.DateTimeField()
+
+    # default manager & custom audio-only manager
+    objects = models.Manager()
+    audio_objects = AudioItemManager()
+
     class Meta:
         db_table = u'contents'
         managed = False
@@ -249,12 +270,7 @@ class Names(models.Model):
         db_table = u'names'
         managed = False
 
-class ResourceTypes(models.Model):
-    id = models.IntegerField(primary_key=True)
-    resource_type = models.CharField(max_length=100)
-    class Meta:
-        db_table = u'resource_types'
-        managed = False
+
 
 class Restrictions(models.Model):
     id = models.IntegerField(primary_key=True)
