@@ -24,13 +24,13 @@ class Command(BaseCommand):
 
         with open('migrate.csv', 'wb') as f:           # TODO: make filename configurable
             csvfile = csv.writer(f)
-            csvfile.writerow(Content.descriptive_fields)
+            csvfile.writerow(Content.all_fields)
 
             for item in Content.audio_objects.all():
                 # TODO: make it possible to suppress item info based on verbosity setting
                 print 'Item %d' % item.id
                 row_data = item.descriptive_metadata()
-                item.source_tech_metadata()
+                row_data += item.source_tech_metadata()
                 print '\n'
                 csvfile.writerow(row_data)
 

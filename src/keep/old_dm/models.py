@@ -245,39 +245,92 @@ class Content(models.Model):   # individual item
 
         return data
         
+    # fields returned by source_tech_metadata_method
+    source_tech_fields = ['Note - General', 'Note - Related Files',
+                          'Note - Conservation History', 'Speed',
+                          'Item Sub-Location', 'Item Form',
+                          'Sound Characteristics', 'Tape - Brand/Stock',
+                          'Tape - Housing', 'Tape - Reel Size']
 
     def source_tech_metadata(self):
         print '--- Source Technical Metadata ---'
+        data = []
 
         # XXX since source_sound is repeatable, check all fields'
         # repeatability in tech metadata spec
 
-        for source_sound in self.source_sounds.all():
-            if source_sound.source_note:
-                print 'Note - General: %s' % source_sound.source_note
-            if source_sound.sound_field:
-                print 'Note - General: %s' % source_sound.sound_field
-            if source_sound.related_item:
-                print 'Note - Related Files: %s' % source_sound.related_item
-            if source_sound.conservation_history:
-                print 'Note - Conservation History: %s' % source_sound.conservation_history
-            if source_sound.speed:
-                print 'Speed: %s (unit: %s)' % (source_sound.speed.speed, source_sound.speed.unit)
-            if source_sound.item_location:
-                print 'Item Sub-Location: %s' % source_sound.item_location
-            if source_sound.form:
-                print 'Item Form: %s' % source_sound.form.short_form
-            if source_sound.sound_field:
-                print 'Sound Characteristics: %s' % source_sound.sound_field
-            if source_sound.stock:
-                print 'Tape - Brand/Stock: %s' % source_sound.stock
-            if source_sound.housing:
-                # FIXME: cleanup "Moving Image/Sound:" in front of desc?
-                print 'Tape - Housing: %s' % source_sound.housing.description
-            if source_sound.reel_size:
-                # FIXME: cleanup '"' at end of reel_size?
-                print 'Tape - Reel Size: %s' % source_sound.reel_size
+        # we'll be using this a lot below
+        sounds = list(self.source_sounds.all())
+
+        notes = [ s.source_note for s in sounds
+                  if s.source_note ] + \
+                [ s.sound_field for s in sounds
+                  if s.sound_field ]
+        for note in notes:
+            print 'Note - General: %s' % note
+        data.append('\n'.join(notes))
+
+        relfiles = [ s.related_item for s in sounds
+                     if s.related_item ]
+        for rel in relfiles:
+            print 'Note - Related Files: %s' % rel
+        data.append('\n'.join(relfiles))
+
+        cons = [ s.conservation_history for s in sounds
+                 if s.conservation_history ]
+        for con in cons:
+            print 'Note - Conservation History: %s' % con
+        data.append('\n'.join(cons))
+
+        speeds = [ (s.speed.speed, s.speed.unit) for s in sounds
+                   if s.speed ]
+        for speed in speeds:
+            print 'Speed: %s (unit: %s)' % speed
+        data.append('\n'.join('%s %s' % speed for speed in speeds))
+
+        locs = [ s.item_location for s in sounds
+                 if s.item_location ]
+        for loc in locs:
+            print 'Item Sub-Location: %s' % loc
+        data.append('\n'.join(locs))
+            
+        forms = [ s.form.short_form for s in sounds
+                  if s.form ]
+        for form in forms:
+            print 'Item Form: %s' % form
+        data.append('\n'.join(forms))
+
+        chars = [ s.sound_field for s in sounds
+                  if s.sound_field ]
+        for char in chars:
+            print 'Sound Characteristics: %s' % char
+        data.append('\n'.join(chars))
+            
+        stocks = [ s.stock for s in sounds
+                   if s.stock ]
+        for stock in stocks:
+            print 'Tape - Brand/Stock: %s' % stock
+        data.append('\n'.join(stocks))
         
+        # FIXME: cleanup "Moving Image/Sound:" in front of desc?
+        housings = [ s.housing.description for s in sounds
+                     if s.housing ]
+        for housing in housings:
+            print 'Tape - Housing: %s' % housing
+        data.append('\n'.join(housings))
+
+        # FIXME: cleanup '"' at end of reel_size?
+        sizes = [ s.reel_size for s in sounds
+                  if s.reel_size ]
+        for size in sizes:
+            print 'Tape - Reel Size: %s' % size
+        data.append('\n'.join(sizes))
+        
+        return data
+
+    # all fields stored for a content
+    all_fields = descriptive_fields + source_tech_fields
+
 
 class NameRole(models.Model):
     content = models.ForeignKey(Content)
