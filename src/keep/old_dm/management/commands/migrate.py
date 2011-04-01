@@ -32,7 +32,18 @@ class Command(BaseCommand):
                 row_data = item.descriptive_metadata()
                 row_data += item.source_tech_metadata()
                 print '\n'
-                csvfile.writerow(row_data)
+                csvfile.writerow(_csv_sanitize(field) for field in row_data)
 
 
         print '\n\n%d audio items (%d total items)' % (Content.audio_objects.count(), Content.objects.count())
+
+
+# Sanitize field values for use in CSV. The standard csv module in Python
+# 2.x accepts only ascii sctrings or utf-8 encodings of unicode strings, so
+# encode any unicode strings before passing them into csv.
+def _csv_sanitize(value):
+    if isinstance(value, unicode):
+        return value.encode('utf-8')
+    else:
+        return value
+    
