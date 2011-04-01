@@ -19,14 +19,14 @@ class ResourceType(models.Model):
     def __unicode__(self):
         return self.type
 
-class DescriptionData(models.Model):
-    id = models.IntegerField(primary_key=True)
+#class DescriptionData(models.Model):
+#    id = models.IntegerField(primary_key=True)
     #main_entry = models.CharField()
     #title_statement = models.CharField()
 
-    class Meta:
-        db_table = u'description_datas'
-        managed = False
+#    class Meta:
+#        db_table = u'description_datas'
+#        managed = False
 
 class StaffName(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -182,16 +182,18 @@ class Content(models.Model):   # individual item
         return '%s' % self.id
 
     # list of fields that will be returned by descriptive_metadata method 
-    descriptive_fields = ['ID', 'Other ID', 'Title', 'Note', 'Type of Resource', 'Record Origin',
-                          'Genre', 'Language', 'Location', 'Subjects - Geographic']
+    descriptive_fields = ['Collection', 'ID', 'Other ID', 'Title', 'Note', 'Type of Resource', 'Record Origin',
+                          'Genre', 'Name', 'Language', 'Location', 'Subjects - Geographic',
+                          'Subject - Name (personal)', 'Subject - Name (corporate)', 'Subject - Name (conference)',
+                          'Subject Topic', 'Subject Title', 'Record Changed', 'Record Created']
 
     def descriptive_metadata(self):
         # print out descriptive fields and return a list of values
         print '--- Descriptive Metadata ---'
-        # TODO: collection
+        print 'Collection: %s' % self.collection_number
         print 'Identifier: %s' % self.id
         print 'Other ID: %s' % self.other_id
-        data = [self.id, self.other_id]
+        data = [self.collection_number, self.id, self.other_id]
         # source_sound could be multiple; which one do we use?
         for source_sound in self.source_sounds.all():
             print 'Item Date Created: %s' % source_sound.source_date
@@ -214,7 +216,8 @@ class Content(models.Model):   # individual item
         for namerole in self.namerole_set.all():
             print 'Item Name (Creator): %s' % unicode(namerole.name)
             print "Item Name Role: %s" % namerole.role
-        # TODO: how to put names + roles into CSV ?
+        data.append('\n'.join('%s (%s)' % (unicode(namerole.name), namerole.role)  
+                        for namerole in self.namerole_set.all()))
 
         for lang in self.languages.all():
             print 'Item Language: %s' % unicode(lang)
@@ -228,18 +231,26 @@ class Content(models.Model):   # individual item
         geographic_subjects = self.subjects.filter(fieldnames=Subject.geographic)
         for subject in geographic_subjects:
             print 'Item Subject Geographic: %s' % unicode(subject)
-        data.append('\n'.join(unicode(subj) for subj in geographic_subjects))
-        for subject in self.subjects.filter(fieldnames=Subject.name_personal):
+        person_name_subjects = self.subjects.filter(fieldnames=Subject.name_personal)
+        for subject in person_name_subjects:
             print 'Item Subject Name (personal): %s' % unicode(subject)
-        for subject in self.subjects.filter(fieldnames=Subject.name_corporate):
+        corp_name_subjects = self.subjects.filter(fieldnames=Subject.name_corporate)
+        for subject in corp_name_subjects:
             print 'Item Subject Name (corporate): %s' % unicode(subject)
-        for subject in self.subjects.filter(fieldnames=Subject.name_conference):
+        conf_name_subjects = self.subjects.filter(fieldnames=Subject.name_conference)
+        for subject in conf_name_subjects:
             print 'Item Subject Name (conference): %s' % unicode(subject)
-        for subject in self.subjects.filter(fieldnames=Subject.topic):
+        topic_subjects = self.subjects.filter(fieldnames=Subject.topic)
+        for subject in topic_subjects:
             print 'Item Subject Topic: %s' % unicode(subject)
-        for subject in self.subjects.filter(fieldnames=Subject.title):
+        title_subjects = self.subjects.filter(fieldnames=Subject.title)
+        for subject in title_subjects:
             print 'Item Subject Title: %s' % unicode(subject)
+        for subject_group in [geographic_subjects, person_name_subjects, corp_name_subjects, conf_name_subjects,
+                              topic_subjects, title_subjects]:
+            data.append('\n'.join(unicode(subj) for subj in subject_group))
 
+        data.extend([self.modified_at, self.created_at])
         print 'Item recordChangeDate: %s' % self.modified_at
         print 'Item recordCreationDate: %s' % self.created_at
 
