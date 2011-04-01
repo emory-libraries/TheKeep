@@ -312,19 +312,17 @@ class Content(models.Model):   # individual item
             print 'Tape - Brand/Stock: %s' % stock
         data.append('\n'.join(stocks))
         
-        # FIXME: cleanup "Moving Image/Sound:" in front of desc?
         housings = [ s.housing.description for s in sounds
                      if s.housing ]
         for housing in housings:
             print 'Tape - Housing: %s' % housing
         data.append('\n'.join(housings))
 
-        # FIXME: cleanup '"' at end of reel_size?
-        sizes = [ s.reel_size for s in sounds
-                  if s.reel_size ]
+        sizes = [ s.numeric_reel_size for s in sounds
+                  if s.numeric_reel_size ]
         for size in sizes:
-            print 'Tape - Reel Size: %s' % size
-        data.append('\n'.join(sizes))
+            print 'Tape - Reel Size: %d (unit: inches)' % size
+        data.append('\n'.join('%d (unit: inches)' % size for size in sizes))
         
         return data
 
@@ -709,6 +707,14 @@ class SourceSound(models.Model):
     def housing(self):
         if self.housing_id:
             return Housing.objects.get(pk=self.housing_id)
+
+    @property
+    def numeric_reel_size(self):
+        reel_size = self.reel_size
+        if reel_size:
+            if reel_size.endswith('"'): # all the production items do
+                reel_size = reel_size[:-1]
+            return int(reel_size)
 
     class Meta:
         db_table = u'src_sounds'
