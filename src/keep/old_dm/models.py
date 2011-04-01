@@ -274,6 +274,9 @@ class Content(models.Model):   # individual item
                      if s.related_item ]
         for rel in relfiles:
             print 'Note - Related Files: %s' % rel
+        if len(relfiles) > 1:
+            print 'ERROR: item %d has %d Note - Related Files fields (not repeatable)' % \
+                (self.id, len(relfiles))
         data.append('\n'.join(relfiles))
 
         cons = [ s.conservation_history for s in sounds
@@ -286,12 +289,18 @@ class Content(models.Model):   # individual item
                    if s.speed ]
         for speed in speeds:
             print 'Speed: %s (unit: %s)' % speed
+        if len(speeds) > 1:
+            print 'ERROR: item %d has %d Speed fields (not repeatable)' % \
+                (self.id, len(speeds))
         data.append('\n'.join('%s %s' % speed for speed in speeds))
 
         locs = [ s.item_location for s in sounds
                  if s.item_location ]
         for loc in locs:
             print 'Item Sub-Location: %s' % loc
+        if len(locs) > 1:
+            print 'ERROR: item %d has %d Item Sub-Location fields (not repeatable)' % \
+                (self.id, len(locs))
         data.append('\n'.join(locs))
             
         forms = [ s.form.short_form for s in sounds
@@ -304,6 +313,9 @@ class Content(models.Model):   # individual item
                   if s.sound_field ]
         for char in chars:
             print 'Sound Characteristics: %s' % char
+        if len(chars) > 1:
+            print 'ERROR: item %d has %d Sound Characteristics fields (not repeatable)' % \
+                (self.id, len(chars))
         data.append('\n'.join(chars))
             
         stocks = [ s.stock for s in sounds
@@ -316,12 +328,18 @@ class Content(models.Model):   # individual item
                      if s.housing ]
         for housing in housings:
             print 'Tape - Housing: %s' % housing
+        if len(housings) > 1:
+            print 'ERROR: item %d has %d Tape - Housing fields (not repeatable)' % \
+                (self.id, len(housings))
         data.append('\n'.join(housings))
 
         sizes = [ s.numeric_reel_size for s in sounds
                   if s.numeric_reel_size ]
         for size in sizes:
             print 'Tape - Reel Size: %d (unit: inches)' % size
+        if len(sizes) > 1:
+            print 'ERROR: item %d has %d Tape - Reel Size fields (not repeatable)' % \
+                (self.id, len(sizes))
         data.append('\n'.join('%d (unit: inches)' % size for size in sizes))
         
         return data
