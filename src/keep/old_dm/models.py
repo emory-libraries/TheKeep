@@ -119,12 +119,14 @@ class Location(models.Model):
             repos = CollectionObject.top_level()
             for repo in repos:
                 # translate DM location labels to Keep repository object labels
-                if (self.name.startswith('Emory Archives') and repo.label == 'Emory University Archives') or \
+                if (self.name == repo.label) or \
+                   (self.name.startswith('Emory Archives') and repo.label == 'Emory University Archives') or \
                    (self.name.startswith('MARBL') and repo.label == 'Manuscript, Archives, and Rare Book Library'):
                     REPOSITORY_LOCATION[self.name] = repo.uri
                     break
 
-        return REPOSITORY_LOCATION[self.name]
+        if self.name in REPOSITORY_LOCATION:
+            return REPOSITORY_LOCATION[self.name]
 
 class Subject(models.Model):
     subject = models.CharField(max_length=255)
