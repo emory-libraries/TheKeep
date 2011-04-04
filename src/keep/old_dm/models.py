@@ -9,6 +9,13 @@
 
 from django.db import models
 
+from keep.collection.models import CollectionObject
+
+# referenced collections that are not available in Fedora
+MISSING_COLLECTIONS = {}
+# items with no collection or series specified
+ITEMS_WITHOUT_COLLECTION = []
+
 class ResourceType(models.Model):
     id = models.IntegerField(primary_key=True)
     type = models.CharField(max_length=100, db_column='resource_type')
@@ -18,15 +25,6 @@ class ResourceType(models.Model):
 
     def __unicode__(self):
         return self.type
-
-#class DescriptionData(models.Model):
-#    id = models.IntegerField(primary_key=True)
-    #main_entry = models.CharField()
-    #title_statement = models.CharField()
-
-#    class Meta:
-#        db_table = u'description_datas'
-#        managed = False
 
 class StaffName(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -95,6 +93,8 @@ class Language(models.Model):
     def __unicode__(self):
         return '%s [%s]' % (self.language, self.code)
 
+# map old DM locations to Keep top-level collection/owning repository objects
+REPOSITORY_LOCATION = {}
 
 class Location(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -110,6 +110,21 @@ class Location(models.Model):
     class Meta:
         db_table = u'locations'
         managed = False
+
+    @property
+    def corresponding_repository(self):
+        global REPOSITORY_LOCATION
+        # if this location has not yet been mapped to a repository object, look it up
+        if self.name not in REPOSITORY_LOCATION:
+            repos = CollectionObject.top_level()
+            for repo in repos:
+                # translate DM location labels to Keep repository object labels
+                if (self.name.startswith('Emory Archives') and repo.label == 'Emory University Archives') or \
+                   (self.name.startswith('MARBL') and repo.label == 'Manuscript, Archives, and Rare Book Library'):
+                    REPOSITORY_LOCATION[self.name] = repo.uri
+                    break
+
+        return REPOSITORY_LOCATION[self.name]
 
 class Subject(models.Model):
     subject = models.CharField(max_length=255)
@@ -132,11 +147,11 @@ class Subject(models.Model):
     def __unicode__(self):
         return '%s [authority = %s, field %s]' % (self.subject, self.authority.authority, self.fieldnames)
 
-class AudioItemManager(models.Manager):
+class AudioContentManager(models.Manager):
     # custom manager to find audio items only, using resource type
     def get_query_set(self):
         # filter on resource type: starting with sound recording, will also match musical & nonmusical variant types
-        return super(AudioItemManager, self).get_query_set().filter(resource_type__type__startswith='sound recording')
+        return super(AudioContentManager, self).get_query_set().filter(resource_type__type__startswith='sound recording')
 
 class Content(models.Model):   # individual item
     id = models.IntegerField(primary_key=True)
@@ -170,9 +185,41 @@ class Content(models.Model):   # individual item
     languages = models.ManyToManyField(Language)
     subjects = models.ManyToManyField(Subject)
 
+    # eua_series reverse relation is available, defined on EuarchivesSeries class
+    @property
+    def series_number(self):
+        # there should only ever be one series; not defining as one-to-one because not all contents will have a series
+        if self.eua_series.count():
+            return self.eua_series.all()[0].series
+
+    @property
+    def collection(self):
+        'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
+        if self.collection_number:
+            return 'MARBL %d' % self.collection_number
+        elif self.series_number:
+            return 'EUA %d' % self.series_number
+
+    @property
+    def collection_object(self):
+        'Fedora Collection object corresponding to the collection or series number and location for this item'
+        num = None
+        if self.collection_number:
+            num = self.collection_number
+        elif self.series_number:
+            num = self.series_number
+
+        if num and self.location:
+            coll = list(CollectionObject.find_by_collection_number(num, self.location.corresponding_repository))
+            # if we have one and only one match, we have found the correct object
+            if len(coll) == 1:
+                return coll[0]
+
+        return None
+
     # default manager & custom audio-only manager
     objects = models.Manager()
-    audio_objects = AudioItemManager()
+    audio_objects = AudioContentManager()
 
     class Meta:
         db_table = u'contents'
@@ -188,12 +235,26 @@ class Content(models.Model):   # individual item
                           'Subject Topic', 'Subject Title', 'Record Changed', 'Record Created']
 
     def descriptive_metadata(self):
+        global MISSING_COLLECTIONS
+
         # print out descriptive fields and return a list of values
         print '--- Descriptive Metadata ---'
-        print 'Collection: %s' % self.collection_number
+        print 'Collection: %s' % self.collection
+
+        # warn if no collection number could be found (either EUA or MARBL)
+        if self.collection is None:
+            ITEMS_WITHOUT_COLLECTION.append(self.id)
+
+        # if there is a collection number, warn if the corresponding collection object could not be found
+        elif self.collection_object is None:
+            if self.collection not in MISSING_COLLECTIONS:
+                MISSING_COLLECTIONS[self.collection] = 1
+            else:
+                MISSING_COLLECTIONS[self.collection] += 1
+
         print 'Identifier: %s' % self.id
         print 'Other ID: %s' % self.other_id
-        data = [self.collection_number, self.id, self.other_id]
+        data = [self.collection, self.id, self.other_id]
         # source_sound could be multiple; which one do we use?
         for source_sound in self.source_sounds.all():
             print 'Item Date Created: %s' % source_sound.source_date
@@ -502,8 +563,8 @@ class DigitalProvenances(models.Model):
         db_table = u'digital_provenances'
         managed = False
 
-class EuarchivesContentsSeries(models.Model):
-    content_id = models.IntegerField(unique=True)
+class EuarchivesSeries(models.Model):
+    content = models.ForeignKey(Content, related_name='eua_series', primary_key=True)
     series = models.IntegerField()
     class Meta:
         db_table = u'euarchives_contents_series'
