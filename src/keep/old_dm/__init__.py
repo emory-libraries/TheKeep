@@ -16,7 +16,8 @@ def _disable_old_dm_db(sender, **kwargs):
     _stored_databases = getattr(settings, "DATABASES", None).copy()
     _stored_database_routers = getattr(settings, "DATABASE_ROUTERS", None)
 
-    del settings.DATABASES['old_dm']
+    if 'old_dm' in settings.DATABASES:
+        del settings.DATABASES['old_dm']
     del settings.DATABASE_ROUTERS
 
 
