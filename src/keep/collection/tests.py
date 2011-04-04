@@ -188,24 +188,28 @@ class CollectionObjectTest(TestCase):
         with self.ingest_test_collections():
             # find test item with no parent relation
             found = list(CollectionObject.find_by_collection_number(1000))
-            self.assertEqual(1, len(found), 'find by collection number 1000 should return one item')
+            self.assertEqual(1, len(found), 'find by collection number 1000 should return one item, got %d' % \
+                                            len(found))
             self.assertEqual(self.rushdie.pid, found[0].pid,
                              'find by collection number 1000 should return Rushdie fixture collection')
 
             # non-existent number
             found = list(CollectionObject.find_by_collection_number(1030303))
-            self.assertEqual(0, len(found), 'find by collection number 1030303 should return zero items')
+            self.assertEqual(0, len(found), 'find by collection number 1030303 should return zero items, got %d' % \
+                                            len(found))
 
             # find test item with correct parent relation
             found = list(CollectionObject.find_by_collection_number(123, FedoraFixtures.top_level_collections[2].uri))
             self.assertEqual(1, len(found),
-                             'find by collection number 123 & parent collection should return one item')
+                             'find by collection number 123 & parent collection should return one item, got %d' % \
+                             len(found))
             self.assertEqual(self.esterbrook.pid, found[0].pid,
                      'find by collection number 123 and parent collecton should return Esterbrook fixture collection')
 
             # search for test item with incorrect parent relation
             found = list(CollectionObject.find_by_collection_number(1000, FedoraFixtures.top_level_collections[2].uri))
-            self.assertEqual(0, len(found), 'find by collection number with incorrect parent relation should return zero items')
+            self.assertEqual(0, len(found),
+                 'find by collection number with incorrect parent relation should return zero items, got %d' % len(found))
 
 
 
