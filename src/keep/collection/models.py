@@ -260,6 +260,33 @@ class CollectionObject(DigitalObject):
                             if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
         # use dictsort in template for sorting where appropriate
 
+    @staticmethod
+    def find_by_collection_number(num, parent=None):
+        '''Find a CollectionObject in Fedora by collection number, optionally limited by parent collection (owning
+        Repository or top-level collection.
+
+        :param num: collection number to search for
+        :param parent: optional; top-level collection or Archive/Repository collection must belong to
+        :return: generator of any items, as returned by :meth:`eulcore.fedora.server.Repository.find_objects`,
+             as type :class:`CollectionObject`
+        '''
+        repo = Repository()
+        args = {
+            # restrict to items with collection cmodel
+            'format': CollectionObject.COLLECTION_CONTENT_MODEL,
+            # restrict to currently-configured pidspace
+            'pid__contains': '%s:*' % settings.FEDORA_PIDSPACE,
+            # initialize results as type CollectionObject
+            'type': CollectionObject,
+        }
+        # if parent is specified, restrict by relation (parent should be a pid)
+        if parent is not None:
+            args['relation'] = parent
+
+        # restrict to collection objects in the current pidspace
+        coll = repo.find_objects(identifier__contains=str(num), **args)
+        return coll
+
 def get_cached_collection_dict(pid):
     '''Retrieve minimal collection object information in dictionary form.
     A cached copy will be used when available; when not previously cached,

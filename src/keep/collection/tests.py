@@ -184,6 +184,31 @@ class CollectionObjectTest(TestCase):
             self.assert_(self.esterbrook.pid in subcoll_pids,
                 "esterbrook should be included in subcollections for %s" % collection.pid)
 
+    def test_find_by_collection_number(self):
+        with self.ingest_test_collections():
+            # find test item with no parent relation
+            found = list(CollectionObject.find_by_collection_number(1000))
+            self.assertEqual(1, len(found), 'find by collection number 1000 should return one item')
+            self.assertEqual(self.rushdie.pid, found[0].pid,
+                             'find by collection number 1000 should return Rushdie fixture collection')
+
+            # non-existent number
+            found = list(CollectionObject.find_by_collection_number(1030303))
+            self.assertEqual(0, len(found), 'find by collection number 1030303 should return zero items')
+
+            # find test item with correct parent relation
+            found = list(CollectionObject.find_by_collection_number(123, FedoraFixtures.top_level_collections[2].uri))
+            self.assertEqual(1, len(found),
+                             'find by collection number 123 & parent collection should return one item')
+            self.assertEqual(self.esterbrook.pid, found[0].pid,
+                     'find by collection number 123 and parent collecton should return Esterbrook fixture collection')
+
+            # search for test item with incorrect parent relation
+            found = list(CollectionObject.find_by_collection_number(1000, FedoraFixtures.top_level_collections[2].uri))
+            self.assertEqual(0, len(found), 'find by collection number with incorrect parent relation should return zero items')
+
+
+
 
 # sample POST data for creating a collection
 COLLECTION_DATA = {
