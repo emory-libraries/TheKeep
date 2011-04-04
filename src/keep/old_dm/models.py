@@ -330,9 +330,6 @@ class Content(models.Model):   # individual item
         print '--- Source Technical Metadata ---'
         data = []
 
-        # XXX since source_sound is repeatable, check all fields'
-        # repeatability in tech metadata spec
-
         # we'll be using this a lot below
         sounds = list(self.source_sounds.all())
 
@@ -418,8 +415,51 @@ class Content(models.Model):   # individual item
         
         return data
 
+    digital_tech_fields = ['Note - Purpose of Digitization', 'Codec creator',
+                           'Transfer Engineer']
+
+    def digital_tech_metadata(self):
+        print '--- Digital Technical Metadata ---'
+        data = []
+
+        techs = list(self.sound_source_tech.all())
+
+        purposes = [ tech.methodology for tech in techs
+                     if tech.methodology ]
+        for purp in purposes:
+            print 'Note - Purpose of Digitization: %s' % purp
+        data.append('\n'.join(purposes))
+
+        creators = [ (tech.codec_creator.hardware,
+                      tech.codec_creator.software,
+                      tech.codec_creator.id)
+                     for tech in techs
+                     if tech.codec_creator ]
+        for creator in creators:
+            print 'Codec creator: %s/%s (id=%d)' % creator
+        if len(creators) > 1:
+            print 'ERROR: item %d has %d Codec creator fields (not repeatable)' % \
+                (self.id, len(creators))
+        data.append('\n'.join('%s/%s [%d]' % creator for creator in creators))
+
+        sounds = list(self.source_sounds.all())
+        engineers = [ (s.transfer_engineer.name,
+                       s.transfer_engineer.id)
+                      for s in sounds
+                      if s.transfer_engineer ]
+        for engineer in engineers:
+            print 'Transfer Engineer: %s (id=%d)' % engineer
+        if len(engineers) > 1:
+            print 'ERROR: item %d has %d Transfer Engineer fields (not repeatable)' % \
+                (self.id, len(engineers))
+        data.append('\n'.join('%s [%d]' % engineer for engineer in engineers))
+
+        return data
+
     # all fields stored for a content
-    all_fields = descriptive_fields + source_tech_fields
+    all_fields = descriptive_fields + \
+                 source_tech_fields + \
+                 digital_tech_fields
 
 
 class NameRole(models.Model):
@@ -442,7 +482,7 @@ class AccessRights(models.Model):
         db_table = u'access_rights'
         managed = False
 
-class CodecCreatorSounds(models.Model):
+class CodecCreatorSound(models.Model):
     id = models.IntegerField(primary_key=True)
     hardware = models.CharField(max_length=100)
     software = models.CharField(max_length=100)
@@ -450,6 +490,10 @@ class CodecCreatorSounds(models.Model):
     class Meta:
         db_table = u'codec_creator_sounds'
         managed = False
+
+    def __unicode__(self):
+        return unicode(self.id)
+
 
 class ColorSpaces(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -718,14 +762,16 @@ class TechMovingImages(models.Model):
         db_table = u'tech_moving_images'
         managed = False
 
-class TechSounds(models.Model):
+class TechSound(models.Model):
     id = models.IntegerField(primary_key=True)
-    content_id = models.IntegerField()
+    content = models.ForeignKey(Content, related_name='sound_source_tech')
     format_name = models.CharField(max_length=50)
     byte_order = models.CharField(max_length=50)
     compression_scheme = models.CharField(max_length=100)
     file_size = models.IntegerField()
-    codec_creator = models.IntegerField()
+    codec_creator = models.ForeignKey(CodecCreatorSound,
+                                      db_column='codec_creator',
+                                      related_name='source_tech')
     codec_quality = models.CharField(max_length=50)
     methodology = models.CharField(max_length=50)
     bits_per_sample = models.CharField(max_length=50)
@@ -740,6 +786,10 @@ class TechSounds(models.Model):
     class Meta:
         db_table = u'tech_sounds'
         managed = False
+
+    def __unicode__(self):
+        return unicode(self.id)
+
 
 class TmpExport(models.Model):
     image = models.IntegerField(db_column='Image') # Field name made lowercase.
@@ -775,7 +825,10 @@ class SourceSound(models.Model):
     conservation_history = models.TextField()
     source_date = models.CharField(max_length=50)
     publication_date = models.CharField(max_length=50)
-    transfer_engineer_staff_id = models.IntegerField()
+    transfer_engineer = models.ForeignKey(StaffName,
+                                          db_column='transfer_engineer_staff_id',
+                                          related_name='source_sounds',
+                                          null=True)
 
     # XXX clean up code for these 0-as-null fields:
 
