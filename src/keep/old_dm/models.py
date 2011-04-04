@@ -10,6 +10,7 @@
 from django.db import models
 
 from keep.collection.models import CollectionObject
+from keep.audio.models import Rights
 
 # referenced collections that are not available in Fedora
 MISSING_COLLECTIONS = {}
@@ -156,6 +157,7 @@ class AudioContentManager(models.Manager):
         return super(AudioContentManager, self).get_query_set().filter(resource_type__type__startswith='sound recording')
 
 class Content(models.Model):   # individual item
+    'A single Content item; main item-level record, and the basis for migration'
     id = models.IntegerField(primary_key=True)
     record_id_type = models.CharField(max_length=50)
     other_id = models.CharField(max_length=255)
@@ -456,13 +458,44 @@ class Content(models.Model):   # individual item
 
         return data
 
+    # list of fields that will be returned by rights_metadata method
+    rights_fields = ['Access Status', 'Copyright Holder Name', 'Copyright Date', 'IP Notes']
+
+    def rights_metadata(self):
+        # print out rights fields and return a list of values
+        print '--- Rights Metadata ---'
+        data = []
+        # content could have multiple access_rights; warn if any items actually have more than one
+        for rights in self.access_rights.all():
+            if rights.restriction:
+                print 'Access Status and Code: %s - %s' % (rights.restriction.access_code,
+                                                           rights.restriction.access_abbreviation)
+            print 'Copyright Holder Name: %s' % unicode(rights.name)
+            print 'Copyright Date: %s' % rights.copyright_date
+            print 'IP Notes: %s' % rights.restriction_other
+
+        if len(self.access_rights.all()) > 1:
+            print 'ERROR: item %d has %d Access Rights fields (not repeatable)' % (self.id,
+                                                                                   len(self.access_rights.all()))
+
+
+        data.append('\n'.join('%s - %s' % (rights.restriction.access_code, rights.restriction.access_abbreviation)
+                                        for rights in self.access_rights.all() if rights.restriction))
+        data.append('\n'.join(unicode(rights.name) for rights in self.access_rights.all()))
+        data.append('\n'.join('%s' % rights.copyright_date for rights in self.access_rights.all()))
+        data.append('\n'.join('%s' % rights.restriction_other for rights in self.access_rights.all()))
+
+        return data
+
     # all fields stored for a content
     all_fields = descriptive_fields + \
                  source_tech_fields + \
-                 digital_tech_fields
+                 digital_tech_fields + \
+                 rights_fields
 
 
 class NameRole(models.Model):
+    'A Name associated with a Content item with a specific role'
     content = models.ForeignKey(Content)
     name = models.ForeignKey(Name)
     role = models.ForeignKey(Role)
@@ -470,13 +503,45 @@ class NameRole(models.Model):
         db_table = u'contents_names'
         managed = False
 
+class Restriction(models.Model):
+    'Rights restriction - code & description; associated with AccessRights'
+    id = models.IntegerField(primary_key=True)
+    description = models.CharField(max_length=255)
+    class Meta:
+        db_table = u'restrictions'
+        managed = False
+
+    rights_mapping = {
+        # old_dm restriction id : keep.audio.models.Rights accessStatus code
+        1: 2,
+        5: 2,
+        2: 3,
+        6: 3,
+        7: 4,
+        3: 8,
+        10: 11,
+        11: 11,
+        2002: 11,
+        # no mappings/no records for old DM rights codes:  4, 8, 9, 2003, 2004
+    }
+
+    @property
+    def access_code(self):
+        # return the equivalent keep.audio.models.Rights access status code for the current restriction id
+        return self.rights_mapping[self.id]
+
+    @property
+    def access_abbreviation(self):
+        # return the migrated access abbreviation based on access code
+        return Rights.access_terms_dict[str(self.access_code)].abbreviation
 
 class AccessRights(models.Model):
+    'Access rights for a single item; joins Restriction, Content, and Name; adds note & copyright date'
     id = models.IntegerField(primary_key=True)
-    restriction_id = models.IntegerField()
+    restriction = models.ForeignKey(Restriction)
     restriction_other = models.CharField(max_length=255)
-    content_id = models.IntegerField()
-    name_id = models.IntegerField()
+    content = models.ForeignKey(Content, related_name='access_rights')
+    name = models.ForeignKey(Name)
     copyright_date = models.CharField(max_length=50)
     class Meta:
         db_table = u'access_rights'
@@ -635,12 +700,7 @@ class Housing(models.Model):
         return '%s' % self.id
 
 
-class Restrictions(models.Model):
-    id = models.IntegerField(primary_key=True)
-    description = models.CharField(max_length=255)
-    class Meta:
-        db_table = u'restrictions'
-        managed = False
+
 
 class ScannerCameras(models.Model):
     id = models.IntegerField(primary_key=True)

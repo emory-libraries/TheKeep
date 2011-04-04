@@ -292,7 +292,7 @@ class Rights(_BaseRights):
     access_terms_dict = dict((term[0], _access_term(*term))
                              for term in access_terms)
     '''dictionary mapping access_terms codes to access term objects. Each
-    access term object has three properties: code, access, and text, which
+    access term object has three properties: code, abbreviation, access, and text, which
     map to elements of access_terms.'''
     # e.g., access_terms_dict['11'].access == True
 

@@ -55,6 +55,7 @@ class Command(BaseCommand):
                 row_data = item.descriptive_metadata()
                 row_data += item.source_tech_metadata()
                 row_data += item.digital_tech_metadata()
+                row_data += item.rights_metadata()
                 print '\n'
                 csvfile.writerow([_csv_sanitize(field) for field in row_data])
 
