@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 items = items.filter(location__name__icontains=options['location'])
                 filter_labels.append("location '%s'" % options['location'])
             # limit to max number of items if specified
-            if 'max' in options:
+            if 'max' in options and options['max']:
                 items = items[:options['max']]
                 filter_labels.append('maximum %d' % options['max'])
 
