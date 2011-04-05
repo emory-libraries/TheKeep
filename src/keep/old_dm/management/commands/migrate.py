@@ -23,14 +23,11 @@ class Command(BaseCommand):
             help='''Stop after processing the specified number of items'''),
         make_option('--csvoutput', '-c',
             help='''Output CSV data to the specified filename'''),
+        make_option('--dry-run', '-n',
+            default=False,
+            action='store_true',
+            help='''Report on what would be done, but don't actually migrate anything'''),
         )
-
-#    option_list = BaseCommand.option_list + (
-#        make_option('--dry-run', '-n',
-#            dest='dryrun',
-#            action='store_true',
-#            help='''Report on what would be done, but don't actually migrate anything'''),
-#        )
 
     def handle(self, *args, **options):
         # verbosity should be set by django BaseCommand standard options
@@ -43,6 +40,17 @@ class Command(BaseCommand):
         else:
             level = logging.WARN
         self.config_output(level)
+
+        if options['dry_run']:
+            logging.info('Migration dry run. Metadata will be extracted ' +
+                         'but not ingested. To ingest metadata, run ' +
+                         'without the -n option.')
+        else:
+            logging.warning("Migration running in ingest mode, but it is " +
+                            "not yet complete. Consider using -n for dry " +
+                            "run mode instead.")
+            import time
+            time.sleep(5)
 
         with self.open_csv(options) as csvfile:
             if csvfile:
