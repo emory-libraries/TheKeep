@@ -94,7 +94,7 @@ class Command(BaseCommand):
         if ITEMS_WITHOUT_COLLECTION:
             warning =  '\nThe following %d item(s) do not have a collection specified:\n' % len\
                 (ITEMS_WITHOUT_COLLECTION)
-            warning += ', '.join(['%d' % d for d in ITEMS_WITHOUT_COLLECTION])
+            warning += ', '.join('%d' % d for d in sorted(ITEMS_WITHOUT_COLLECTION))
             logger.warn(warning)
 
     @contextmanager

@@ -6,6 +6,7 @@
 #
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
+from collections import defaultdict
 import logging
 
 from django.db import models
@@ -16,9 +17,9 @@ from keep.audio.models import Rights
 logger = logging.getLogger(__name__)
 
 # referenced collections that are not available in Fedora
-MISSING_COLLECTIONS = {}
+MISSING_COLLECTIONS = defaultdict(int)
 # items with no collection or series specified
-ITEMS_WITHOUT_COLLECTION = []
+ITEMS_WITHOUT_COLLECTION = set()
 
 class ResourceType(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -245,23 +246,18 @@ class Content(models.Model):   # individual item
                           'Subject Topic', 'Subject Title', 'Record Changed', 'Record Created']
 
     def descriptive_metadata(self):
-        global MISSING_COLLECTIONS
-
         # print out descriptive fields and return a list of values
         logger.debug('--- Descriptive Metadata ---')
         logger.debug('Collection: %s' % self.collection)
 
         # warn if no collection number could be found (either EUA or MARBL)
         if self.collection is None:
-            ITEMS_WITHOUT_COLLECTION.append(self.id)
+            ITEMS_WITHOUT_COLLECTION.add(self.id)
             logger.warn('Item %d does not have a collection or series number' % self.id)
 
         # if there is a collection number, warn if the corresponding collection object could not be found
         elif self.collection_object is None:
-            if self.collection not in MISSING_COLLECTIONS:
-                MISSING_COLLECTIONS[self.collection] = 1
-            else:
-                MISSING_COLLECTIONS[self.collection] += 1
+            MISSING_COLLECTIONS[self.collection] += 1
             logger.warn('Could not find Collection Object in Fedora for Item %d, collection %s' % (self.id,
                                                                                                    self.collection))
 
