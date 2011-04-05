@@ -829,9 +829,7 @@ class TechSound(models.Model):
     byte_order = models.CharField(max_length=50)
     compression_scheme = models.CharField(max_length=100)
     file_size = models.IntegerField()
-    codec_creator = models.ForeignKey(CodecCreatorSound,
-                                      db_column='codec_creator',
-                                      related_name='source_tech')
+    codec_creator_id = models.IntegerField(db_column='codec_creator')
     codec_quality = models.CharField(max_length=50)
     methodology = models.CharField(max_length=50)
     bits_per_sample = models.CharField(max_length=50)
@@ -849,6 +847,11 @@ class TechSound(models.Model):
 
     def __unicode__(self):
         return unicode(self.id)
+
+    @property
+    def codec_creator(self):
+        if self.codec_creator_id:
+            return CodecCreatorSound.objects.get(pk=self.codec_creator_id)
 
 
 class TmpExport(models.Model):
