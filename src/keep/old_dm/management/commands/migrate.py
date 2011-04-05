@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import csv
 from optparse import make_option
 
@@ -13,16 +14,12 @@ class Command(BaseCommand):
 
     option_list = BaseCommand.option_list + (
         make_option('--location', '-l',
-            dest='location',
-            action='store',
-            type='string',
             help='''Only include items with the specified Location Name (e.g., MARBL or Emory Archives)'''),
         make_option('--max', '-m',
-                    dest='max',
-                    action='store',
                     type='int',
                     help='''Stop after processing the specified number of items'''),
-
+        make_option('--csvoutput', '-c',
+            help='''Output CSV data to the specified filename'''),
         )
 
 #    option_list = BaseCommand.option_list + (
@@ -37,9 +34,9 @@ class Command(BaseCommand):
         #verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
         #v_normal = 1
 
-        with open('migrate.csv', 'wb') as f:           # TODO: make filename configurable
-            csvfile = csv.writer(f)
-            csvfile.writerow(Content.all_fields)
+        with self.open_csv(options) as csvfile:
+            if csvfile:
+                csvfile.writerow(Content.all_fields)
             # restrict to audio items
             items = Content.audio_objects.all()
             # filter items by location if one was specified
@@ -57,7 +54,8 @@ class Command(BaseCommand):
                 row_data += item.digital_tech_metadata()
                 row_data += item.rights_metadata()
                 print '\n'
-                csvfile.writerow([_csv_sanitize(field) for field in row_data])
+                if csvfile:
+                    csvfile.writerow([_csv_sanitize(field) for field in row_data])
 
 
         # TODO: print any filter info (location, max)
@@ -70,6 +68,15 @@ class Command(BaseCommand):
         if ITEMS_WITHOUT_COLLECTION:
             print '\nThe following %d item(s) do not have a collection specified:' % len(ITEMS_WITHOUT_COLLECTION)
             print ', '.join(['%d' % d for d in ITEMS_WITHOUT_COLLECTION])
+
+    @contextmanager
+    def open_csv(self, options):
+        if options['csvoutput']:
+            with open(options['csvoutput'], 'wb') as f:
+                csvfile = csv.writer(f)
+                yield csvfile
+        else:
+            yield None
 
 
 # Sanitize field values for use in CSV. The standard csv module in Python
