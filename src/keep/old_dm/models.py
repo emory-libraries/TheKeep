@@ -6,11 +6,14 @@
 #
 # Also note: You'll have to insert the output of 'django-admin.py sqlcustom [appname]'
 # into your database.
+import logging
 
 from django.db import models
 
 from keep.collection.models import CollectionObject
 from keep.audio.models import Rights
+
+logger = logging.getLogger(__name__)
 
 # referenced collections that are not available in Fedora
 MISSING_COLLECTIONS = {}
@@ -242,12 +245,13 @@ class Content(models.Model):   # individual item
         global MISSING_COLLECTIONS
 
         # print out descriptive fields and return a list of values
-        print '--- Descriptive Metadata ---'
-        print 'Collection: %s' % self.collection
+        logger.debug('--- Descriptive Metadata ---')
+        logger.debug('Collection: %s' % self.collection)
 
         # warn if no collection number could be found (either EUA or MARBL)
         if self.collection is None:
             ITEMS_WITHOUT_COLLECTION.append(self.id)
+            logger.warn('Item %d does not have a collection or series number' % self.id)
 
         # if there is a collection number, warn if the corresponding collection object could not be found
         elif self.collection_object is None:
@@ -255,69 +259,74 @@ class Content(models.Model):   # individual item
                 MISSING_COLLECTIONS[self.collection] = 1
             else:
                 MISSING_COLLECTIONS[self.collection] += 1
+            logger.warn('Could not find Collection Object in Fedora for Item %d, collection %s' % (self.id,
+                                                                                                   self.collection))
 
-        print 'Identifier: %s' % self.id
-        print 'Other ID: %s' % self.other_id
+        logger.debug('Identifier: %s' % self.id)
+        logger.debug('Other ID: %s' % self.other_id)
         data = [self.collection, self.id, self.other_id]
-        # source_sound could be multiple; which one do we use?
+        # source_sound could be multiple; warn if there is more than one
         for source_sound in self.source_sounds.all():
-            print 'Item Date Created: %s' % source_sound.source_date
-            print 'Item Date Issued: %s' % source_sound.publication_date
-        print 'Item Title: %s' % unicode(self.title)
-        print 'Item Note: %s' % self.note
-        print 'Item Type of Resource: %s' % self.resource_type.type
+            logger.debug('Item Date Created: %s' % source_sound.source_date)
+            logger.debug('Item Date Issued: %s' % source_sound.publication_date)
+        if self.source_sounds.count() > 1:
+            logger.error('Item %d has %d Source Sounds (not repeatable)' % \
+                (self.id, self.source_sounds.count()))
+        logger.debug('Item Title: %s' % unicode(self.title))
+        logger.debug('Item Note: %s' % self.note)
+        logger.debug('Item Type of Resource: %s' % self.resource_type.type)
         data.extend([unicode(self.title), self.note, self.resource_type.type])
 
         if self.data_entered_by:
-            print 'Item recordOrigin: %s' % self.data_entered_by.name
+            logger.debug('Item recordOrigin: %s' % self.data_entered_by.name)
             data.append(self.data_entered_by.name)
         else:
             data.append(None)
 
         for genre in self.genres.all():
-            print 'Item Genre: %s' % unicode(genre)
+            logger.debug('Item Genre: %s' % unicode(genre))
         data.append('\n'.join(unicode(genre) for genre in self.genres.all()))
 
         for namerole in self.namerole_set.all():
-            print 'Item Name (Creator): %s' % unicode(namerole.name)
-            print "Item Name Role: %s" % namerole.role
+            logger.debug('Item Name (Creator): %s' % unicode(namerole.name))
+            logger.debug("Item Name Role: %s" % namerole.role)
         data.append('\n'.join('%s (%s)' % (unicode(namerole.name), namerole.role)  
                         for namerole in self.namerole_set.all()))
 
         for lang in self.languages.all():
-            print 'Item Language: %s' % unicode(lang)
+            logger.debug('Item Language: %s' % unicode(lang))
         data.append('\n'.join(unicode(lang) for lang in self.languages.all()))
 
-        print 'Item Physical Location: %s' % self.location.name
+        logger.debug('Item Physical Location: %s' % self.location.name)
         data.append(self.location.name)
         # NOTE: documentation has locations:location as db field, which does not exist
 
         # subjects are filtered into type of subject by field name codes
         geographic_subjects = self.subjects.filter(fieldnames=Subject.geographic)
         for subject in geographic_subjects:
-            print 'Item Subject Geographic: %s' % unicode(subject)
+            logger.debug('Item Subject Geographic: %s' % unicode(subject))
         person_name_subjects = self.subjects.filter(fieldnames=Subject.name_personal)
         for subject in person_name_subjects:
-            print 'Item Subject Name (personal): %s' % unicode(subject)
+            logger.debug('Item Subject Name (personal): %s' % unicode(subject))
         corp_name_subjects = self.subjects.filter(fieldnames=Subject.name_corporate)
         for subject in corp_name_subjects:
-            print 'Item Subject Name (corporate): %s' % unicode(subject)
+            logger.debug('Item Subject Name (corporate): %s' % unicode(subject))
         conf_name_subjects = self.subjects.filter(fieldnames=Subject.name_conference)
         for subject in conf_name_subjects:
-            print 'Item Subject Name (conference): %s' % unicode(subject)
+            logger.debug('Item Subject Name (conference): %s' % unicode(subject))
         topic_subjects = self.subjects.filter(fieldnames=Subject.topic)
         for subject in topic_subjects:
-            print 'Item Subject Topic: %s' % unicode(subject)
+            logger.debug('Item Subject Topic: %s' % unicode(subject))
         title_subjects = self.subjects.filter(fieldnames=Subject.title)
         for subject in title_subjects:
-            print 'Item Subject Title: %s' % unicode(subject)
+            logger.debug('Item Subject Title: %s' % unicode(subject))
         for subject_group in [geographic_subjects, person_name_subjects, corp_name_subjects, conf_name_subjects,
                               topic_subjects, title_subjects]:
             data.append('\n'.join(unicode(subj) for subj in subject_group))
 
         data.extend([self.modified_at, self.created_at])
-        print 'Item recordChangeDate: %s' % self.modified_at
-        print 'Item recordCreationDate: %s' % self.created_at
+        logger.debug('Item recordChangeDate: %s' % self.modified_at)
+        logger.debug('Item recordCreationDate: %s' % self.created_at)
 
         return data
         
@@ -329,7 +338,7 @@ class Content(models.Model):   # individual item
                           'Tape - Housing', 'Tape - Reel Size']
 
     def source_tech_metadata(self):
-        print '--- Source Technical Metadata ---'
+        logger.debug('--- Source Technical Metadata ---')
         data = []
 
         # we'll be using this a lot below
@@ -340,79 +349,79 @@ class Content(models.Model):   # individual item
                 [ s.sound_field for s in sounds
                   if s.sound_field ]
         for note in notes:
-            print 'Note - General: %s' % note
+            logger.debug('Note - General: %s' % note)
         data.append('\n'.join(notes))
 
         relfiles = [ s.related_item for s in sounds
                      if s.related_item ]
         for rel in relfiles:
-            print 'Note - Related Files: %s' % rel
+            logger.debug('Note - Related Files: %s' % rel)
         if len(relfiles) > 1:
-            print 'ERROR: item %d has %d Note - Related Files fields (not repeatable)' % \
-                (self.id, len(relfiles))
+            logger.error('Item %d has %d Note - Related Files fields (not repeatable)' % \
+                (self.id, len(relfiles)))
         data.append('\n'.join(relfiles))
 
         cons = [ s.conservation_history for s in sounds
                  if s.conservation_history ]
         for con in cons:
-            print 'Note - Conservation History: %s' % con
+            logger.debug('Note - Conservation History: %s' % con)
         data.append('\n'.join(cons))
 
         speeds = [ (s.speed.speed, s.speed.unit) for s in sounds
                    if s.speed ]
         for speed in speeds:
-            print 'Speed: %s (unit: %s)' % speed
+            logger.debug('Speed: %s (unit: %s)' % speed)
         if len(speeds) > 1:
-            print 'ERROR: item %d has %d Speed fields (not repeatable)' % \
-                (self.id, len(speeds))
+            logger.debug('ERROR: item %d has %d Speed fields (not repeatable)' % \
+                (self.id, len(speeds)))
         data.append('\n'.join('%s %s' % speed for speed in speeds))
 
         locs = [ s.item_location for s in sounds
                  if s.item_location ]
         for loc in locs:
-            print 'Item Sub-Location: %s' % loc
+            logger.debug('Item Sub-Location: %s' % loc)
         if len(locs) > 1:
-            print 'ERROR: item %d has %d Item Sub-Location fields (not repeatable)' % \
-                (self.id, len(locs))
+            logger.error('Item %d has %d Item Sub-Location fields (not repeatable)' % \
+                (self.id, len(locs)))
         data.append('\n'.join(locs))
             
         forms = [ s.form.short_form for s in sounds
                   if s.form ]
         for form in forms:
-            print 'Item Form: %s' % form
+            logger.debug('Item Form: %s' % form)
         data.append('\n'.join(forms))
 
         chars = [ s.sound_field for s in sounds
                   if s.sound_field ]
         for char in chars:
-            print 'Sound Characteristics: %s' % char
+            logger.debug('Sound Characteristics: %s' % char)
         if len(chars) > 1:
-            print 'ERROR: item %d has %d Sound Characteristics fields (not repeatable)' % \
-                (self.id, len(chars))
+            logger.error('Item %d has %d Sound Characteristics fields (not repeatable)' % \
+                (self.id, len(chars)))
         data.append('\n'.join(chars))
             
         stocks = [ s.stock for s in sounds
                    if s.stock ]
         for stock in stocks:
-            print 'Tape - Brand/Stock: %s' % stock
+            logger.debug('Tape - Brand/Stock: %s' % stock)
         data.append('\n'.join(stocks))
         
         housings = [ s.housing.description for s in sounds
                      if s.housing ]
         for housing in housings:
-            print 'Tape - Housing: %s' % housing
+            logger.debug('Tape - Housing: %s' % housing)
         if len(housings) > 1:
-            print 'ERROR: item %d has %d Tape - Housing fields (not repeatable)' % \
-                (self.id, len(housings))
+            logger.error('Item %d has %d Tape - Housing fields (not repeatable)' % \
+                (self.id, len(housings)))
         data.append('\n'.join(housings))
 
         sizes = [ s.numeric_reel_size for s in sounds
                   if s.numeric_reel_size ]
         for size in sizes:
-            print 'Tape - Reel Size: %d (unit: inches)' % size
+            logger.debug('Tape - Reel Size: %d (unit: inches)' % size)
         if len(sizes) > 1:
-            print 'ERROR: item %d has %d Tape - Reel Size fields (not repeatable)' % \
-                (self.id, len(sizes))
+            logger.error('Item %d has %d Tape - Reel Size fields (not repeatable)' % \
+                (self.id, len(sizes)))
         data.append('\n'.join('%d (unit: inches)' % size for size in sizes))
         
         return data
@@ -421,7 +430,7 @@ class Content(models.Model):   # individual item
                            'Transfer Engineer']
 
     def digital_tech_metadata(self):
-        print '--- Digital Technical Metadata ---'
+        logger.debug('--- Digital Technical Metadata ---')
         data = []
 
         techs = list(self.sound_source_tech.all())
@@ -429,7 +438,7 @@ class Content(models.Model):   # individual item
         purposes = [ tech.methodology for tech in techs
                      if tech.methodology ]
         for purp in purposes:
-            print 'Note - Purpose of Digitization: %s' % purp
+            logger.debug('Note - Purpose of Digitization: %s' % purp)
         data.append('\n'.join(purposes))
 
         creators = [ (tech.codec_creator.hardware,
@@ -438,10 +447,10 @@ class Content(models.Model):   # individual item
                      for tech in techs
                      if tech.codec_creator ]
         for creator in creators:
-            print 'Codec creator: %s/%s (id=%d)' % creator
+            logger.debug('Codec creator: %s/%s (id=%d)' % creator)
         if len(creators) > 1:
-            print 'ERROR: item %d has %d Codec creator fields (not repeatable)' % \
-                (self.id, len(creators))
+            logger.error('Item %d has %d Codec creator fields (not repeatable)' % \
+                (self.id, len(creators)))
         data.append('\n'.join('%s/%s [%d]' % creator for creator in creators))
 
         sounds = list(self.source_sounds.all())
@@ -450,10 +459,10 @@ class Content(models.Model):   # individual item
                       for s in sounds
                       if s.transfer_engineer ]
         for engineer in engineers:
-            print 'Transfer Engineer: %s (id=%d)' % engineer
+            logger.debug('Transfer Engineer: %s (id=%d)' % engineer)
         if len(engineers) > 1:
-            print 'ERROR: item %d has %d Transfer Engineer fields (not repeatable)' % \
-                (self.id, len(engineers))
+            logger.error('Item %d has %d Transfer Engineer fields (not repeatable)' % \
+                (self.id, len(engineers)))
         data.append('\n'.join('%s [%d]' % engineer for engineer in engineers))
 
         return data
@@ -463,20 +472,20 @@ class Content(models.Model):   # individual item
 
     def rights_metadata(self):
         # print out rights fields and return a list of values
-        print '--- Rights Metadata ---'
+        logger.debug('--- Rights Metadata ---')
         data = []
         # content could have multiple access_rights; warn if any items actually have more than one
         for rights in self.access_rights.all():
             if rights.restriction:
-                print 'Access Status and Code: %s - %s' % (rights.restriction.access_code,
-                                                           rights.restriction.access_abbreviation)
-            print 'Copyright Holder Name: %s' % unicode(rights.name)
-            print 'Copyright Date: %s' % rights.copyright_date
-            print 'IP Notes: %s' % rights.restriction_other
+                logger.debug('Access Status and Code: %s - %s' % (rights.restriction.access_code,
+                                                           rights.restriction.access_abbreviation))
+            logger.debug('Copyright Holder Name: %s' % unicode(rights.name))
+            logger.debug('Copyright Date: %s' % rights.copyright_date)
+            logger.debug('IP Notes: %s' % rights.restriction_other)
 
-        if len(self.access_rights.all()) > 1:
-            print 'ERROR: item %d has %d Access Rights fields (not repeatable)' % (self.id,
-                                                                                   len(self.access_rights.all()))
+        if self.access_rights.count() > 1:
+            logger.error('Item %d has %d Access Rights fields (not repeatable)' % (self.id,
+                                                                                   self.access_rights.count()))
 
 
         data.append('\n'.join('%s - %s' % (rights.restriction.access_code, rights.restriction.access_abbreviation)
