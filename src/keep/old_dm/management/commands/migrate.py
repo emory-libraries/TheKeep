@@ -61,6 +61,10 @@ class Command(BaseCommand):
 
             for item in items:
                 logger.info('\nItem %d' % item.id)
+                if item.marked_for_deletion():
+                    logger.info('DELETE item %d -- Title: %s' % (item.id, item.title))
+                    continue
+
                 row_data = item.descriptive_metadata()
                 row_data += item.source_tech_metadata()
                 row_data += item.digital_tech_metadata()

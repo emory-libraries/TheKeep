@@ -235,6 +235,9 @@ class Content(models.Model):   # individual item
     def __unicode__(self):
         return '%s' % self.id
 
+    def marked_for_deletion(self):
+        return self.title and 'delete' in self.title.lower()
+
     # list of fields that will be returned by descriptive_metadata method 
     descriptive_fields = ['Collection', 'ID', 'Other ID', 'Title', 'Note', 'Type of Resource', 'Record Origin',
                           'Genre', 'Name', 'Language', 'Location', 'Subjects - Geographic',
