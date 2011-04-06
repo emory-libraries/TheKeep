@@ -33,6 +33,13 @@ class AudioMods(mods.MODS):
                                           mods.TypedNote)
     ':class:`~keep.mods.TypedNote` with `type="part number"`'
 
+    dm1_abstract_note = xmlmap.NodeField('mods:note[@type="dm1_abstract"]',
+            mods.TypedNote, required=False)
+    dm1_content_note = xmlmap.NodeField('mods:note[@type="dm1_content_notes"]',
+            mods.TypedNote, required=False)
+    dm1_toc_note = xmlmap.NodeField('mods:note[@type="dm1_toc"]',
+            mods.TypedNote, required=False)
+
 ##
 ## Source technical metadata
 ##

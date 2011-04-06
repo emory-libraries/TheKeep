@@ -73,10 +73,10 @@ class Command(BaseCommand):
                     logger.info('DELETE item %d -- Title: %s' % (item.id, item.title))
                     continue
 
-                row_data = item.descriptive_metadata()
-                row_data += item.source_tech_metadata()
-                row_data += item.digital_tech_metadata()
-                row_data += item.rights_metadata()
+                obj, row_data = item.as_digital_object_and_fields()
+                if not options['dry_run']:
+                    message = 'Migrated from legacy Digital Masters object %d' % (obj.id,)
+                    obj.save(logMessage=message)
                 if csvfile:
                     csvfile.writerow([_csv_sanitize(field) for field in row_data])
 

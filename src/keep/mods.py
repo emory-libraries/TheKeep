@@ -60,6 +60,13 @@ class OriginInfo(Common):
         False if any child date elements are not empty."""
         return all(date.is_empty() for date in set.union(set(self.created), set(self.issued)))
 
+class RecordInfo(Common):
+    ROOT_NAME = 'recordInfo'
+    record_id = xmlmap.StringField('mods:recordIdentifier')
+    record_origin = xmlmap.StringField('mods:recordOrigin')
+    creation_date = xmlmap.StringField('mods:recordCreationDate')
+    change_date = xmlmap.StringField('mods:recordChangeDate')
+
 class Note(Common):
     ":class:`~eulcore.xmlmap.XmlObject` for MODS note element"
     ROOT_NAME = 'note'
@@ -134,6 +141,31 @@ class Name(Common):
         # (e.g., for template display, setting as dc:creator, etc)
         return ' '.join([unicode(part) for part in self.name_parts])
 
+class Genre(Common):
+    ROOT_NAME = 'genre'
+    authority = xmlmap.StringField('@authority')
+    text = xmlmap.StringField('text()')
+
+class LanguageTerm(Common):
+    ROOT_NAME = 'languageTerm'
+    type = xmlmap.StringField('@type')
+    authority = xmlmap.StringField('@authority')
+    text = xmlmap.StringField('text()')
+
+class Language(Common):
+    ROOT_NAME = 'language'
+    terms = xmlmap.NodeListField('mods:languageTerm', LanguageTerm)
+
+class Subject(Common):
+    ROOT_NAME = 'subject'
+    authority = xmlmap.StringField('@authority')
+
+    # and one of the following:
+    geographic = xmlmap.StringField('mods:geographic')
+    name = xmlmap.NodeField('mods:name', Name)
+    topic = xmlmap.StringField('mods:topic')
+    title = xmlmap.StringField('mods:titleInfo/mods:title')
+
 class BaseMods(Common):
     ''':class:`~eulcore.xmlmap.XmlObject` with common field declarations for all
     top-level MODS elements; base class for :class:`MODS` and :class:`RelatedItem`.'''
@@ -142,12 +174,17 @@ class BaseMods(Common):
 
     title = xmlmap.StringField("mods:titleInfo/mods:title")
     resource_type  = xmlmap.SchemaField("mods:typeOfResource", "resourceTypeDefinition")
-    name = xmlmap.NodeField('mods:name', Name)  # single name for now
+    name = xmlmap.NodeField('mods:name', Name)  # DEPRECATED: use names instead
+    names = xmlmap.NodeListField('mods:name', Name)
     note = xmlmap.NodeField('mods:note', Note)
     origin_info = xmlmap.NodeField('mods:originInfo', OriginInfo)
-    record_id = xmlmap.StringField('mods:recordInfo/mods:recordIdentifier')
+    record_info = xmlmap.NodeField('mods:recordInfo', RecordInfo)
     identifiers = xmlmap.NodeListField('mods:identifier', Identifier)
     access_conditions = xmlmap.NodeListField('mods:accessCondition', AccessCondition)
+    genres = xmlmap.NodeListField('mods:genre', Genre)
+    languages = xmlmap.NodeListField('mods:language', Language)
+    location = xmlmap.StringField('mods:location/mods:physicalLocation')
+    subjects = xmlmap.NodeListField('mods:subject', Subject)
 
 class RelatedItem(BaseMods):
     ''':class:`~eulcore.xmlmap.XmlObject` for MODS relatedItem: contains all the

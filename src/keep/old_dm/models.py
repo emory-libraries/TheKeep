@@ -10,9 +10,11 @@ from collections import defaultdict
 import logging
 
 from django.db import models
+from eulcore.django.fedora import Repository
 
+from keep.audio.models import Rights, AudioObject
 from keep.collection.models import CollectionObject
-from keep.audio.models import Rights
+from keep import mods
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +176,7 @@ class Content(models.Model):   # individual item
     location = models.ForeignKey(Location)
     abstract = models.TextField()
     toc = models.TextField()
-    note = models.TextField(db_column='content_notes')
+    content_notes = models.TextField()
     completed_by = models.IntegerField()
     completed_date = models.DateTimeField()
     data_entered_by = models.ForeignKey(StaffName, db_column='data_entered_by',
@@ -239,16 +241,35 @@ class Content(models.Model):   # individual item
     def marked_for_deletion(self):
         return self.title and 'delete' in self.title.lower()
 
-    # list of fields that will be returned by descriptive_metadata method 
-    descriptive_fields = ['Collection', 'ID', 'Other ID', 'Title', 'Note', 'Type of Resource', 'Record Origin',
-                          'Genre', 'Name', 'Language', 'Location', 'Subjects - Geographic',
-                          'Subject - Name (personal)', 'Subject - Name (corporate)', 'Subject - Name (conference)',
-                          'Subject Topic', 'Subject Title', 'Record Changed', 'Record Created']
+    def as_digital_object_and_fields(self):
+        repo = Repository()
+        obj = repo.get_object(type=AudioObject)
 
-    def descriptive_metadata(self):
+        row_data = self.descriptive_metadata(obj)
+        row_data += self.source_tech_metadata()
+        row_data += self.digital_tech_metadata()
+        row_data += self.rights_metadata()
+
+        return obj, row_data
+        
+
+    # list of fields that will be returned by descriptive_metadata method 
+    descriptive_fields = ['Collection', 'ID', 'Other ID', 'Date Created',
+                          'Date Issued', 'Title', 'Note', 'Type of Resource',
+                          'Record Origin', 'Genre', 'Name', 'Language',
+                          'Location', 'Subjects - Geographic',
+                          'Subject - Name (personal)',
+                          'Subject - Name (corporate)',
+                          'Subject - Name (conference)', 'Subject Topic',
+                          'Subject Title', 'Record Changed', 'Record Created']
+
+    def descriptive_metadata(self, obj):
         # print out descriptive fields and return a list of values
         logger.debug('--- Descriptive Metadata ---')
         logger.debug('Collection: %s' % self.collection)
+
+        # we'll be using this a lot below
+        modsxml = obj.mods.content
 
         # warn if no collection number could be found (either EUA or MARBL)
         if self.collection is None:
@@ -261,42 +282,109 @@ class Content(models.Model):   # individual item
             logger.warn('Could not find Collection Object in Fedora for Item %d, collection %s' % (self.id,
                                                                                                    self.collection))
 
+        # otherwise we have a collection
+        else:
+            obj.collection_uri = self.collection_object.uri
+
         logger.debug('Identifier: %s' % self.id)
         logger.debug('Other ID: %s' % self.other_id)
+        modsxml.identifiers.append(mods.Identifier(type='dm1_id', text=self.id))
+        if self.other_id:
+            modsxml.identifiers.append(mods.Identifier(type='dm1_other', text=self.other_id))
         data = [self.collection, self.id, self.other_id]
+
         # source_sound could be multiple; warn if there is more than one
         for source_sound in self.source_sounds.all():
             logger.debug('Item Date Created: %s' % source_sound.source_date)
             logger.debug('Item Date Issued: %s' % source_sound.publication_date)
+            if source_sound.source_date:
+                modsxml.create_origin_info()
+                modsxml.origin_info.created.append(mods.DateCreated(
+                        date=source_sound.source_date,
+                        encoding='w3cdtf'))
+            if source_sound.publication_date:
+                modsxml.create_origin_info()
+                modsxml.origin_info.issued.append(mods.DateIssued(
+                        date=source_sound.publication_date,
+                        encoding='w3cdtf'))
         if self.source_sounds.count() > 1:
             logger.error('Item %d has %d Source Sounds (not repeatable)' % \
                 (self.id, self.source_sounds.count()))
+        data.extend(['\n'.join(ss.source_date
+                               for ss in self.source_sounds.all()
+                               if ss.source_date),
+                     '\n'.join(ss.publication_date
+                               for ss in self.source_sounds.all()
+                               if ss.publication_date)])
+
         logger.debug('Item Title: %s' % unicode(self.title))
-        logger.debug('Item Note: %s' % self.note)
+        modsxml.title = self.title
+        data.append(unicode(self.title))
+
+        all_notes = []
+        if self.abstract:
+            logger.debug('Item Note: %s [abstract]' % self.abstract)
+            modsxml.create_dm1_abstract_note()
+            modsxml.dm1_abstract_note.text = unicode(self.abstract)
+            all_notes.append('%s [abstract]' % self.abstract)
+        if self.content_notes:
+            logger.debug('Item Note: %s [content]' % self.content_notes)
+            modsxml.create_dm1_content_note()
+            modsxml.dm1_content_note.text = self.content_notes
+            all_notes.append('%s [content]' % self.content_notes)
+        if self.toc:
+            logger.debug('Item Note: %s [toc]' % self.toc)
+            modsxml.create_dm1_toc_note()
+            modsxml.dm1_toc_note.text = self.toc
+            all_notes.append('%s [toc]' % self.toc)
+        data.append('\n'.join(all_notes))
+
         logger.debug('Item Type of Resource: %s' % self.resource_type.type)
-        data.extend([unicode(self.title), self.note, self.resource_type.type])
+        modsxml.resource_type = self.resource_type.type
+        data.append(self.resource_type.type)
 
         if self.data_entered_by:
             logger.debug('Item recordOrigin: %s' % self.data_entered_by.name)
+            modsxml.create_record_info()
+            modsxml.record_info.record_origin = self.data_entered_by.name
             data.append(self.data_entered_by.name)
         else:
             data.append(None)
 
         for genre in self.genres.all():
             logger.debug('Item Genre: %s' % unicode(genre))
+            genrexml = mods.Genre(text=genre.genre,
+                                  authority=genre.authority)
+            modsxml.genres.append(genrexml)
         data.append('\n'.join(unicode(genre) for genre in self.genres.all()))
 
         for namerole in self.namerole_set.all():
             logger.debug('Item Name (Creator): %s' % unicode(namerole.name))
             logger.debug("Item Name Role: %s" % namerole.role)
+            namepartxml = mods.NamePart(text=namerole.name.name)
+            rolexml = mods.Role(type='text',
+                                authority='marcrelator',
+                                text=namerole.role.title)
+            namexml = mods.Name(type=namerole.name.name_type,
+                                authority=namerole.name.authority)
+            namexml.name_parts.append(namepartxml)
+            namexml.roles.append(rolexml)
+            modsxml.names.append(namexml)
         data.append('\n'.join('%s (%s)' % (unicode(namerole.name), namerole.role)  
                         for namerole in self.namerole_set.all()))
 
         for lang in self.languages.all():
             logger.debug('Item Language: %s' % unicode(lang))
+            langterm = mods.LanguageTerm(type='code',
+                                         authority='iso639-2b',
+                                         text=lang.code)
+            langxml = mods.Language()
+            langxml.terms.append(langterm)
+            modsxml.languages.append(langxml)
         data.append('\n'.join(unicode(lang) for lang in self.languages.all()))
 
         logger.debug('Item Physical Location: %s' % self.location.name)
+        modsxml.location = self.location.name
         data.append(self.location.name)
         # NOTE: documentation has locations:location as db field, which does not exist
 
@@ -304,29 +392,63 @@ class Content(models.Model):   # individual item
         geographic_subjects = self.subjects.filter(fieldnames=Subject.geographic)
         for subject in geographic_subjects:
             logger.debug('Item Subject Geographic: %s' % unicode(subject))
+            subjectxml = mods.Subject(authority=subject.authority.authority,
+                                      geographic=subject.subject)
+            modsxml.subjects.append(subjectxml)
         person_name_subjects = self.subjects.filter(fieldnames=Subject.name_personal)
         for subject in person_name_subjects:
             logger.debug('Item Subject Name (personal): %s' % unicode(subject))
+            namexml = mods.Name(type='personal')
+            namexml.name_parts.append(mods.NamePart(text=subject.subject))
+            subjectxml = mods.Subject(authority=subject.authority.authority,
+                                      name=namexml)
+            modsxml.subjects.append(subjectxml)
         corp_name_subjects = self.subjects.filter(fieldnames=Subject.name_corporate)
         for subject in corp_name_subjects:
             logger.debug('Item Subject Name (corporate): %s' % unicode(subject))
+            namexml = mods.Name(type='corporate')
+            namexml.name_parts.append(mods.NamePart(text=subject.subject))
+            subjectxml = mods.Subject(authority=subject.authority.authority,
+                                      name=namexml)
+            modsxml.subjects.append(subjectxml)
         conf_name_subjects = self.subjects.filter(fieldnames=Subject.name_conference)
         for subject in conf_name_subjects:
             logger.debug('Item Subject Name (conference): %s' % unicode(subject))
+            namexml = mods.Name(type='conference')
+            namexml.name_parts.append(mods.NamePart(text=subject.subject))
+            subjectxml = mods.Subject(authority=subject.authority.authority,
+                                      name=namexml)
+            modsxml.subjects.append(subjectxml)
         topic_subjects = self.subjects.filter(fieldnames=Subject.topic)
         for subject in topic_subjects:
             logger.debug('Item Subject Topic: %s' % unicode(subject))
+            subjectxml = mods.Subject(authority=subject.authority.authority,
+                                      topic=subject.subject)
+            modsxml.subjects.append(subjectxml)
         title_subjects = self.subjects.filter(fieldnames=Subject.title)
         for subject in title_subjects:
             logger.debug('Item Subject Title: %s' % unicode(subject))
+            subjectxml = mods.Subject(authority=subject.authority.authority,
+                                      title=subject.subject)
+            modsxml.subjects.append(subjectxml)
         for subject_group in [geographic_subjects, person_name_subjects, corp_name_subjects, conf_name_subjects,
                               topic_subjects, title_subjects]:
             data.append('\n'.join(unicode(subj) for subj in subject_group))
 
-        data.extend([self.modified_at, self.created_at])
         logger.debug('Item recordChangeDate: %s' % self.modified_at)
         logger.debug('Item recordCreationDate: %s' % self.created_at)
-
+        modsxml.create_record_info()
+        if self.modified_at:
+            modsxml.record_info.change_date = self.modified_at.isoformat()
+        if self.created_at:
+            modsxml.record_info.creation_date = self.created_at.isoformat()
+        data.extend([self.modified_at, self.created_at])
+        
+        if not modsxml.is_valid():
+            for err in modsxml.validation_errors():
+                logger.error('MODS validation error: ' + unicode(err))
+        modsxml_s = modsxml.serialize(pretty=True)[:-1] # remove final nl
+        logger.debug('MODS:\n' + modsxml_s)
         return data
         
     # fields returned by source_tech_metadata_method

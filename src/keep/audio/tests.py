@@ -1235,7 +1235,8 @@ class TestMods(TestCase):
         mymods.create_origin_info()
         mymods.origin_info.created.append(mods.DateCreated(date='2001-10-02'))
         mymods.origin_info.issued.append(mods.DateIssued(date='2001-12-01'))
-        mymods.record_id = 'id:1'
+        mymods.create_record_info()
+        mymods.record_info.record_id = 'id:1'
         mymods.identifiers.extend([mods.Identifier(type='uri', text='http://ur.l'),
                                  mods.Identifier(type='local', text='332')])
         mymods.access_conditions.extend([mods.AccessCondition(type='restriction', text='unavailable'),
