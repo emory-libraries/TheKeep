@@ -46,18 +46,19 @@ class AudioViewsTest(EulDjangoTestCase):
 
     client = Client()
 
-    # collection fixtures are not modified, so only load & purge once
-    rushdie = FedoraFixtures.rushdie_collection()
-    rushdie.save()
-    esterbrook = FedoraFixtures.esterbrook_collection()
-    esterbrook.save()
-    englishdocs = FedoraFixtures.englishdocs_collection()
-    englishdocs.save()
-
     def setUp(self):        
         self.pids = []
         # store setting that may be changed when testing podcast feed pagination
         self.max_per_podcast = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', None)
+
+        # collection fixtures are not modified, but there is no clean way
+        # to only load & purge once
+        self.rushdie = FedoraFixtures.rushdie_collection()
+        self.rushdie.save()
+        self.esterbrook = FedoraFixtures.esterbrook_collection()
+        self.esterbrook.save()
+        self.englishdocs = FedoraFixtures.englishdocs_collection()
+        self.englishdocs.save()
 
     def tearDown(self):
         # purge any objects created by individual tests
@@ -72,8 +73,7 @@ class AudioViewsTest(EulDjangoTestCase):
 
         # TODO: remove any test files created in staging dir
         # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
-
-    def __del__(self):
+        
         FedoraFixtures.repo.purge_object(self.rushdie.pid)
         FedoraFixtures.repo.purge_object(self.esterbrook.pid)
         FedoraFixtures.repo.purge_object(self.englishdocs.pid)
@@ -1044,7 +1044,8 @@ of 1''',
         obj6.collection_uri = self.esterbrook.uri
         obj6.save()
         # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid])
+        self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid,
+                          obj6.pid])
 
         response = self.client.get(feed_url)
         expected, code = 200, response.status_code
