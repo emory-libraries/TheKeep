@@ -138,8 +138,6 @@ class CollectionObjectTest(TestCase):
         self.engdocs = None
 
     def test_item_collections(self):
-        pids = self.ingest_test_collections()
-
         # populate the cache *before* ingesting test objects 
         CollectionObject.item_collections(refresh_cache=True)
         
@@ -490,6 +488,8 @@ class CollectionViewsTest(EulcoreTestCase):
         # - redirect url is absolute, strip off django testserver hostname for resolvable path
         redirect_url = redirect_url[len('http://testserver'):]
         view_func, args, kwargs = resolve(redirect_url)
+        # set the newly created object to be cleaned up after tests complete
+        self.pids.append(kwargs['pid'])
         self.assertEqual(views.edit, view_func,
             'redirect url %s should resolve to edit_collection view' % redirect_url)
         self.assert_('pid' in kwargs, 'object pid is set in resolved url keyword args')
