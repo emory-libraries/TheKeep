@@ -12,7 +12,7 @@ import logging
 from django.db import models
 from eulcore.django.fedora import Repository
 
-from keep.audio.models import Rights, AudioObject
+from keep.audio.models import Rights, AudioObject, SourceTech
 from keep.collection.models import CollectionObject
 from keep import mods
 
@@ -246,7 +246,7 @@ class Content(models.Model):   # individual item
         obj = repo.get_object(type=AudioObject)
 
         row_data = self.descriptive_metadata(obj)
-        row_data += self.source_tech_metadata()
+        row_data += self.source_tech_metadata(obj)
         row_data += self.digital_tech_metadata()
         row_data += self.rights_metadata()
 
@@ -458,11 +458,15 @@ class Content(models.Model):   # individual item
                           'Sound Characteristics', 'Tape - Brand/Stock',
                           'Tape - Housing', 'Tape - Reel Size']
 
-    def source_tech_metadata(self):
+    def source_tech_metadata(self, obj):
         logger.debug('--- Source Technical Metadata ---')
         data = []
 
-        # we'll be using this a lot below
+        # shortcut reference to source tech xml to be updated below
+        st_xml = obj.sourcetech.content
+
+        # Save a reference to source sound associated with this item,
+        # as it will be used throughout this method
         sounds = list(self.source_sounds.all())
 
         notes = [ s.source_note for s in sounds
@@ -471,12 +475,14 @@ class Content(models.Model):   # individual item
                   if s.sound_field ]
         for note in notes:
             logger.debug('Note - General: %s' % note)
+            st_xml.note_list.append(unicode(note))
         data.append('\n'.join(notes))
 
         relfiles = [ s.related_item for s in sounds
                      if s.related_item ]
         for rel in relfiles:
             logger.debug('Note - Related Files: %s' % rel)
+            st_xml.related_files_list.append(unicode(rel))
         if len(relfiles) > 1:
             logger.error('Item %d has %d Note - Related Files fields (not repeatable)' % \
                 (self.id, len(relfiles)))
@@ -486,6 +492,7 @@ class Content(models.Model):   # individual item
                  if s.conservation_history ]
         for con in cons:
             logger.debug('Note - Conservation History: %s' % con)
+            st_xml.conservation_history_list.append(unicode(con))
         data.append('\n'.join(cons))
 
         speeds = [ (s.speed.speed, s.speed.unit) for s in sounds
@@ -493,8 +500,16 @@ class Content(models.Model):   # individual item
         for speed in speeds:
             logger.debug('Speed: %s (unit: %s)' % speed)
         if len(speeds) > 1:
-            logger.debug('ERROR: item %d has %d Speed fields (not repeatable)' % \
+            logger.error('Item %d has %d Speed fields (not repeatable)' % \
                 (self.id, len(speeds)))
+        # if there is exactly one speed, set it in the source tech xml
+        elif len(speeds) == 1:
+            st_xml.create_speed()
+            st_xml.speed.value = speeds[0][0]
+            st_xml.speed.unit = speeds[0][1]
+            # unit appears to be in form rpm or inches/sec
+            # TODO: set speed aspect?  tape, phono disc,
+            # phono cylinder, other - do we have to look up in the list?
         data.append('\n'.join('%s %s' % speed for speed in speeds))
 
         locs = [ s.item_location for s in sounds
@@ -504,12 +519,19 @@ class Content(models.Model):   # individual item
         if len(locs) > 1:
             logger.error('Item %d has %d Item Sub-Location fields (not repeatable)' % \
                 (self.id, len(locs)))
+        # if there is exactly one sublocation, set it in the xml
+        elif len(locs) == 1:
+            st_xml.sublocation = locs[0]
         data.append('\n'.join(locs))
             
         forms = [ s.form.short_form for s in sounds
                   if s.form ]
         for form in forms:
             logger.debug('Item Form: %s' % form)
+            if form not in SourceTech.form_options:
+                logger.warn("Form '%s' is not in the list of options"  % \
+                            form)
+                st_xml.form_list.append(form)
         data.append('\n'.join(forms))
 
         chars = [ s.sound_field for s in sounds
@@ -519,12 +541,20 @@ class Content(models.Model):   # individual item
         if len(chars) > 1:
             logger.error('Item %d has %d Sound Characteristics fields (not repeatable)' % \
                 (self.id, len(chars)))
+        elif len(chars) == 1:
+            keepchars = chars[0].lower()
+            if keepchars != '' and keepchars != 'None':
+                if keepchars not in SourceTech.sound_characteristic_options:
+                    logger.warning("Sound characteristic '%s' is not in the options list" \
+                        % keepchars)
+                st_xml.sound_characteristics = keepchars
         data.append('\n'.join(chars))
             
         stocks = [ s.stock for s in sounds
                    if s.stock ]
         for stock in stocks:
             logger.debug('Tape - Brand/Stock: %s' % stock)
+            st_xml.stock_list.append(stock)
         data.append('\n'.join(stocks))
         
         housings = [ s.housing.description for s in sounds
@@ -534,6 +564,16 @@ class Content(models.Model):   # individual item
         if len(housings) > 1:
             logger.error('Item %d has %d Tape - Housing fields (not repeatable)' % \
                 (self.id, len(housings)))
+        # if there is exactly one housing, set it in the xml
+        elif len(housings) == 1:
+            # housing in old_dm DB looks like Moving Image/Sound: Container
+            # we only want the second part
+            # TODO: probably requires additional clean-up
+            prefix, sep, housing = housings[0].partition(': ')
+            if housing not in SourceTech.housing_options:
+                logger.warn("Source housing '%s' is not listed in housing options" \
+                                % housing)
+            st_xml.housing = housing
         data.append('\n'.join(housings))
 
         sizes = [ s.numeric_reel_size for s in sounds
@@ -543,8 +583,13 @@ class Content(models.Model):   # individual item
         if len(sizes) > 1:
             logger.error('Item %d has %d Tape - Reel Size fields (not repeatable)' % \
                 (self.id, len(sizes)))
+        elif len(sizes) > 1:
+            st_xml.create_reel_size()
+            st_xml.reel_size.value = sizes[0]
+            st_xml.reel_size.unit = 'in'   # FIXME: how are we storing units?
         data.append('\n'.join('%d (unit: inches)' % size for size in sizes))
         
+        logger.debug('SourceTech XML:\n' + st_xml.serialize(pretty=True))
         return data
 
     digital_tech_fields = ['Note - Purpose of Digitization', 'Codec creator',

@@ -138,6 +138,7 @@ class SourceTech(_BaseSourceTech):
     related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False,
         help_text='IDs of other digitized files for the same item, separated by semicolons. Required for multi-part items.')
     'related files (string of IDs delimited by semicolons'
+    related_files_list = xmlmap.StringListField('st:note[@type="relatedFiles"]')
         # NOTE: according to spec, related_files is required if multi-part--
         # - not tracking multi-part for Min Items (that I know of)
     conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]',
@@ -153,12 +154,14 @@ class SourceTech(_BaseSourceTech):
     form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options,
         required=False, help_text='The physical form or medium of the resource')
     'physical format - options controlled by :class:`SourceTech.form_options`'
+    form_list = xmlmap.StringListField('st:form[@type="sound"]')
     sound_characteristics = xmlmap.StringField('st:soundChar',
         choices=sound_characteristic_options, required=False)
     'sound characteristics - options controlled by :class:`SourceTech.sound_characteristic_options`'
     stock = xmlmap.StringField('st:stock', verbose_name='Tape Brand/Stock',
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
+    stock_list = xmlmap.StringListField('st:stock')
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
         required=True, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'

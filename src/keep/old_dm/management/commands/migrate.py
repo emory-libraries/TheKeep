@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import csv
 import logging
 from optparse import make_option
+import sys
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -112,7 +113,7 @@ class Command(BaseCommand):
         logger = logging.getLogger('keep.old_dm')
         logger.setLevel(level)
         # customize log output slightly
-        ch = logging.StreamHandler()
+        ch = logging.StreamHandler(sys.stdout)
         ch.setLevel(level)
         # use custom simple formatter
         ch.setFormatter(SimpleFormatter())
