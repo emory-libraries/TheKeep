@@ -78,8 +78,8 @@ class SourceTech(_BaseSourceTech):
         'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
         'dictabelt', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
-    housing_options = ('', 'Jewel Case', 'Plastic Container', 'Paper Sleeve',
-        'Cardboard Sleeve', 'Cardboard Box', 'Other', 'None')
+    housing_options = ('', 'jewel case', 'plastic container', 'paper sleeve',
+        'cardboard sleeve', 'cardboard box', 'other', 'none')
     'controlled vocabulary for :class:`SourceTech.housing`'
     reel_sizes = ('3', '4', '5', '7', '10', '12', '14') # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
