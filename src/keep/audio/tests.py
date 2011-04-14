@@ -676,7 +676,7 @@ of 1''',
                     'st-sublocation': 'box 2',
                     'st-form': 'audio cassette',
                     'st-sound_characteristics': 'mono',
-                    'st-housing': 'Cardboard Box',
+                    'st-housing': 'cardboard box',
                     'st-stock': '60 minute cassette',
                     'st-reel': '3',
                     'st-_speed': 'tape|15/16|inches/sec',
@@ -887,7 +887,7 @@ of 1''',
                     'mods-origin_info-created-TOTAL_FORMS': '0',
                     'mods-origin_info-created-MAX_NUM_FORMS': '',
                     'st-sublocation': 'box 3',
-                    'st-housing': 'Other',
+                    'st-housing': 'other',
                     'st-_speed': 'other|other|other',
                     # digital-tech data
                     'dt-digitization_purpose': 'avoid nuclear war',
@@ -1334,7 +1334,7 @@ class SourceTechTest(TestCase):
     <st:form type="sound">audio cassette</st:form>
     <st:soundChar>mono</st:soundChar>
     <st:stock>IMT C-60</st:stock>
-    <st:housing type="sound">Plastic container</st:housing>
+    <st:housing type="sound">plastic container</st:housing>
     <st:reelSize>
         <st:measure type="diameter" unit="inches" aspect="reel size">3</st:measure>
     </st:reelSize>
@@ -1362,7 +1362,7 @@ class SourceTechTest(TestCase):
         self.assertEqual('audio cassette', self.sourcetech.form)
         self.assertEqual('mono', self.sourcetech.sound_characteristics)
         self.assertEqual('IMT C-60', self.sourcetech.stock)
-        self.assertEqual('Plastic container', self.sourcetech.housing)
+        self.assertEqual('plastic container', self.sourcetech.housing)
         self.assertEqual('inches', self.sourcetech.reel_size.unit)
         self.assertEqual('reel size', self.sourcetech.reel_size.aspect)
         self.assertEqual('3', self.sourcetech.reel_size.value)
@@ -1383,7 +1383,7 @@ class SourceTechTest(TestCase):
         st.form = 'CD'
         st.sound_characteristics = 'stereo'
         st.stock = '60-min cassette'
-        st.housing = 'Jewel case'
+        st.housing = 'jewel case'
         st.create_reel_size()
         st.reel_size.unit = 'inches'
         st.reel_size.value = '5'
