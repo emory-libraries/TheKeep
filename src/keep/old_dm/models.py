@@ -12,7 +12,7 @@ import logging
 from django.db import models
 from eulcore.django.fedora import Repository
 
-from keep.audio.models import Rights, AudioObject, SourceTech
+from keep.audio.models import Rights, AudioObject, SourceTech, CodecCreator
 from keep.collection.models import CollectionObject
 from keep import mods
 
@@ -499,22 +499,20 @@ class Content(models.Model):   # individual item
             st_xml.conservation_history_list.append(unicode(con))
         data.append('\n'.join(cons))
 
-        speeds = [ (s.speed.speed, s.speed.unit) for s in sounds
-                   if s.speed ]
+        speeds = [ s.speed for s in sounds if s.speed ]
         for speed in speeds:
-            logger.debug('Speed: %s (unit: %s)' % speed)
+            logger.debug('Speed: %s (unit: %s)' % (speed.speed, speed.unit))
         if len(speeds) > 1:
             logger.error('Item %d has %d Speed fields (not repeatable)' % \
                 (self.id, len(speeds)))
         # if there is exactly one speed, set it in the source tech xml
         elif len(speeds) == 1:
             st_xml.create_speed()
-            st_xml.speed.value = speeds[0][0]
-            st_xml.speed.unit = speeds[0][1]
-            # unit appears to be in form rpm or inches/sec
-            # TODO: set speed aspect?  tape, phono disc,
-            # phono cylinder, other - do we have to look up in the list?
-        data.append('\n'.join('%s %s' % speed for speed in speeds))
+            st_xml.speed.value = speeds[0].speed
+            st_xml.speed.unit = speeds[0].unit
+            st_xml.speed.aspect = speeds[0].aspect
+        data.append('\n'.join('%s %s' % (speed.speed, speed.unit)
+                                            for speed in speeds))
 
         locs = [ s.item_location for s in sounds
                  if s.item_location ]
@@ -528,15 +526,12 @@ class Content(models.Model):   # individual item
             st_xml.sublocation = locs[0]
         data.append('\n'.join(locs))
             
-        forms = [ s.form.short_form for s in sounds
+        forms = [ s.form for s in sounds
                   if s.form ]
         for form in forms:
-            logger.debug('Item Form: %s' % form)
-            if form not in SourceTech.form_options:
-                logger.warn("Form '%s' is not in the list of options"  % \
-                            form)
-                st_xml.form_list.append(form)
-        data.append('\n'.join(forms))
+            logger.debug('Item Form: %s' % form.short_form)
+            st_xml.form_list.append(form.as_sourcetech_form())
+        data.append('\n'.join(f.short_form for f in forms))
 
         chars = [ s.sound_field for s in sounds
                   if s.sound_field ]
@@ -546,6 +541,8 @@ class Content(models.Model):   # individual item
             logger.error('Item %d has %d Sound Characteristics fields (not repeatable)' % \
                 (self.id, len(chars)))
         elif len(chars) == 1:
+            # sound characteristic is inconsistently capitalized
+            # convert to lower case for best match with keep format
             keepchars = chars[0].lower()
             if keepchars != '' and keepchars != 'None':
                 if keepchars not in SourceTech.sound_characteristic_options:
@@ -561,24 +558,17 @@ class Content(models.Model):   # individual item
             st_xml.stock_list.append(stock)
         data.append('\n'.join(stocks))
         
-        housings = [ s.housing.description for s in sounds
+        housings = [ s.housing for s in sounds
                      if s.housing ]
         for housing in housings:
-            logger.debug('Tape - Housing: %s' % housing)
+            logger.debug('Tape - Housing: %s' % housing.description)
         if len(housings) > 1:
             logger.error('Item %d has %d Tape - Housing fields (not repeatable)' % \
                 (self.id, len(housings)))
         # if there is exactly one housing, set it in the xml
         elif len(housings) == 1:
-            # housing in old_dm DB looks like Moving Image/Sound: Container
-            # we only want the second part
-            # TODO: probably requires additional clean-up
-            prefix, sep, housing = housings[0].partition(': ')
-            if housing not in SourceTech.housing_options:
-                logger.warn("Source housing '%s' is not listed in housing options" \
-                                % housing)
-            st_xml.housing = housing
-        data.append('\n'.join(housings))
+            st_xml.housing = housing.as_sourcetech_housing()
+        data.append('\n'.join(h.description for h in housings))
 
         sizes = [ s.numeric_reel_size for s in sounds
                   if s.numeric_reel_size ]
@@ -587,10 +577,12 @@ class Content(models.Model):   # individual item
         if len(sizes) > 1:
             logger.error('Item %d has %d Tape - Reel Size fields (not repeatable)' % \
                 (self.id, len(sizes)))
-        elif len(sizes) > 1:
+        # if there is one and only one non-zero/blank reel size, add to xml
+        if len(sizes) == 1 and sizes[0]:
             st_xml.create_reel_size()
             st_xml.reel_size.value = sizes[0]
-            st_xml.reel_size.unit = 'in'   # FIXME: how are we storing units?
+            # all values being migrated are in inches
+            st_xml.reel_size.unit = 'inches'
         data.append('\n'.join('%d (unit: inches)' % size for size in sizes))
         
         logger.debug('SourceTech XML:\n' + st_xml.serialize(pretty=True))
@@ -615,12 +607,12 @@ class Content(models.Model):   # individual item
             dt_xml.digitization_purpose_list.append(purp)
         data.append('\n'.join(purposes))
 
-        creators = [ (tech.codec_creator.hardware,
-                      tech.codec_creator.software,
-                      tech.codec_creator.id)
-                     for tech in techs
-                     if tech.codec_creator ]
-        for creator in creators:
+        # codec creator object for updating XML
+        creators = [ tech.codec_creator for tech in techs
+                        if tech.codec_creator ]
+        # tuple format for display/CSV output
+        creator_tuples = [(c.hardware, c.software, c.id) for c in creators]
+        for creator in creator_tuples:
             logger.debug('Codec creator: %s/%s (id=%d)' % creator)
         if len(creators) > 1:
             logger.error('Item %d has %d Codec creator fields (not repeatable)' % \
@@ -628,12 +620,13 @@ class Content(models.Model):   # individual item
         if len(creators) == 1:
             # if there is just one code creator, map to xml
             dt_xml.create_codec_creator()
-            # FIXME: check id/values against ours, map to our ids
-            dt_xml.codec_creator.hardware = creators[0][0]
-            dt_xml.codec_creator.software = creators[0][1]
-            dt_xml.codec_creator.id = creators[0][2]
-            # TODO: software version
-        data.append('\n'.join('%s/%s [%d]' % creator for creator in creators))
+            dt_xml.codec_creator.id = creators[0].id
+            # get hardware, software, & version by id match
+            hardware, software, version = creators[0].sourcetech_values()
+            dt_xml.codec_creator.hardware_list.extend(hardware)
+            dt_xml.codec_creator.software = software
+            dt_xml.codec_creator.software_version = version
+        data.append('\n'.join('%s/%s [%d]' % creator for creator in creator_tuples))
 
         sounds = list(self.source_sounds.all())
         engineers = [ (s.transfer_engineer.name,
@@ -758,6 +751,21 @@ class CodecCreatorSound(models.Model):
     def __unicode__(self):
         return unicode(self.id)
 
+    codec_creator_mapping = {
+        # old_dm codec_creator_sounds id : keep.audio.models.CodecCreator.configuration
+        1: '1', # mac g4
+        2: '2', # mac g5
+        3: '5', # unknown
+    }
+
+    def sourcetech_values(self):
+        # returns the value portion of keep.audio.models.CodecCreator.configurations
+        # which consists of:
+        # hardware, software, software version
+        return CodecCreator.configurations[self.codec_creator_mapping[self.id]]
+
+    
+
 
 class ColorSpaces(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -802,6 +810,35 @@ class Form(models.Model):
             form = form[len('Sound - '):]
         return form
 
+    # mappings between old_dm forms and equivalent keep.audio form options
+    form_map = {
+        'acetate vinyl shellac - 45 rpm': '45 RPM',
+        'audiocassette': 'audio cassette',
+        'acetate vinyl shellac - 78 rpm': '78',
+        'flexidisc': 'flexi disc',
+        'cardboard disc': 'cardboard disc',
+        'acetate vinyl shellac - 33.3 rpm': 'LP',
+        'paper roll': 'other',
+        'MP3': 'sound file (MP3)',
+        'other disc': 'other',
+        'colored plastic disc': 'other',
+        'open reel': 'open reel tape',
+    }
+
+    def as_sourcetech_form(self):
+        '''Convert old_dm Form into an expected value in the
+        keep.audio.models.SourceTech.form_options list'''
+        form = self.short_form
+        # some form options are exactly equivalent; if listed in form_map
+        # it needs to be converted
+        if form in self.form_map:
+            form = self.form_map[form]
+        if form not in SourceTech.form_options:
+            logger.warn("Source form '%s' is not listed in form options" \
+                                % form)
+        return form
+        
+
 class Speed(models.Model):
     id = models.IntegerField(primary_key=True)
     speed = models.CharField(max_length=255)
@@ -826,6 +863,40 @@ class Speed(models.Model):
             return 'Kilohertz'
         elif 'ips' in self.speed_alt:
             return 'inches/sec'
+
+    # mappings between old_dm speed to keep.audio speed options
+    # format will be speed (in 'value unit' format) : aspect
+    # method to generate speed aspects from sourcetech speed_options
+    def _generate_speed_aspects():
+        aspects = {}
+        for st_speed in SourceTech.speed_options:
+            # speed options is formulated for django select with grouping
+            if isinstance(st_speed[1], tuple):
+                # pair will be | delimited value, display form
+                for pair in st_speed[1]:
+                  aspect, value, unit = pair[0].split('|')
+                  if value == unit:   # other
+                      lookup_value = value
+                  else:
+                      lookup_value = '%s %s' % (value, unit)
+                  aspects[lookup_value] = aspect
+        # skipping Not Applicable (no equivalent in old_dm data for migration)
+        return aspects
+    # populate speed aspects
+    speed_aspects = _generate_speed_aspects()
+
+    @property
+    def aspect(self):
+        'SourceTech aspect value - calculated from speed & unit'
+        if self.unit == 'other':
+            lookup_speed = self.unit
+        else:
+            lookup_speed = '%s %s' % (self.speed, self.unit)
+        if lookup_speed in self.speed_aspects:
+            return self.speed_aspects[lookup_speed]
+        else:
+            logger.warn('Could not determine speed aspect for %s' % \
+                        lookup_speed)
 
 
 class SrcMovingImages(models.Model):
@@ -897,6 +968,41 @@ class Housing(models.Model):
 
     def __unicode__(self):
         return '%s' % self.id
+
+    # mappings between old_dm housing options (in lower-case form) to the
+    # equivalent keep.audio housing options
+    housing_map = {
+        'mixed': 'other',
+        'extended/amaray case': 'jewel case',
+        'slimline case': 'jewel case',
+        'archival box': 'cardboard box',
+        'non archival box': 'cardboard box',
+        'tyvek sleeve': 'paper sleeve',
+        'paper jewel case': 'paper sleeve',
+    }
+
+    def as_sourcetech_housing(self):
+        '''Convert old_dm Housing description into an expected value
+        in the keep.audio.models.SourceTech.housing_options list'''
+
+        # housing in old_dm DB looks like:
+        #    Moving Image/Sound: Container
+        #    Moving Image/Sound/Still Image: None
+        # We only care about the second part for this migration
+        # TODO: probably requires additional clean-up
+        prefix, sep, housing = self.description.partition(': ')
+        # keep.audio housing options are all lower case
+        housing = housing.lower()
+        # if it is listed in our housing map, get the equivalent field
+        if housing in self.housing_map:
+            housing = self.housing_map[housing]
+        # fields should either be in housing_map or match source tech
+        # housing fields after conversion to lower-case
+        if housing not in SourceTech.housing_options:
+            logger.warn("Source housing '%s' is not listed in housing options" \
+                                % housing)
+        return housing
+
 
 
 
@@ -1114,6 +1220,12 @@ class SourceSound(models.Model):
     def housing(self):
         if self.housing_id:
             return Housing.objects.get(pk=self.housing_id)
+
+    # foreign-key versions of the above fields, for use with querying
+    # Content items on related fields.  
+    rel_speed = models.ForeignKey(Speed, db_column='speed_id')
+    rel_form = models.ForeignKey(Form, db_column='form_id')
+    rel_housing = models.ForeignKey(Housing, db_column='housing_id')
 
     @property
     def numeric_reel_size(self):
