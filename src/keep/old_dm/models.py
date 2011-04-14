@@ -36,6 +36,9 @@ class ResourceType(models.Model):
 class StaffName(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=100)
+
+    MIGRATED_ID_TYPE = 'dm1'
+
     class Meta:
         db_table = u'staff_names'
         managed = False
@@ -195,6 +198,7 @@ class Content(models.Model):   # individual item
     languages = models.ManyToManyField(Language)
     subjects = models.ManyToManyField(Subject)
 
+
     # eua_series reverse relation is available, defined on EuarchivesSeries class
     @property
     def series_number(self):
@@ -247,7 +251,7 @@ class Content(models.Model):   # individual item
 
         row_data = self.descriptive_metadata(obj)
         row_data += self.source_tech_metadata(obj)
-        row_data += self.digital_tech_metadata()
+        row_data += self.digital_tech_metadata(obj)
         row_data += self.rights_metadata()
 
         return obj, row_data
@@ -595,9 +599,12 @@ class Content(models.Model):   # individual item
     digital_tech_fields = ['Note - Purpose of Digitization', 'Codec creator',
                            'Transfer Engineer']
 
-    def digital_tech_metadata(self):
+    def digital_tech_metadata(self, obj):
         logger.debug('--- Digital Technical Metadata ---')
         data = []
+
+        # shortcut reference to digital tech xml to be updated below
+        dt_xml = obj.digitaltech.content
 
         techs = list(self.sound_source_tech.all())
 
@@ -605,6 +612,7 @@ class Content(models.Model):   # individual item
                      if tech.methodology ]
         for purp in purposes:
             logger.debug('Note - Purpose of Digitization: %s' % purp)
+            dt_xml.digitization_purpose_list.append(purp)
         data.append('\n'.join(purposes))
 
         creators = [ (tech.codec_creator.hardware,
@@ -617,6 +625,14 @@ class Content(models.Model):   # individual item
         if len(creators) > 1:
             logger.error('Item %d has %d Codec creator fields (not repeatable)' % \
                 (self.id, len(creators)))
+        if len(creators) == 1:
+            # if there is just one code creator, map to xml
+            dt_xml.create_codec_creator()
+            # FIXME: check id/values against ours, map to our ids
+            dt_xml.codec_creator.hardware = creators[0][0]
+            dt_xml.codec_creator.software = creators[0][1]
+            dt_xml.codec_creator.id = creators[0][2]
+            # TODO: software version
         data.append('\n'.join('%s/%s [%d]' % creator for creator in creators))
 
         sounds = list(self.source_sounds.all())
@@ -629,7 +645,15 @@ class Content(models.Model):   # individual item
         if len(engineers) > 1:
             logger.error('Item %d has %d Transfer Engineer fields (not repeatable)' % \
                 (self.id, len(engineers)))
+        if len(engineers) == 1:
+            dt_xml.create_transfer_engineer()
+            # FIXME: should we map to Keep-style ids where possible?
+            dt_xml.transfer_engineer.name = engineers[0][0]
+            dt_xml.transfer_engineer.id = engineers[0][1]
+            dt_xml.transfer_engineer.id_type = StaffName.MIGRATED_ID_TYPE
         data.append('\n'.join('%s [%d]' % engineer for engineer in engineers))
+
+        logger.debug('DigitalTech XML:\n' + dt_xml.serialize(pretty=True))
 
         return data
 
