@@ -130,3 +130,23 @@ class SpeedTest(TestCase):
             sp = models.Speed(speed=val, speed_alt=unit)
             self.assertEqual(aspect, sp.aspect,
                 'expected aspect of %s, got %s for speed %s' % (aspect, sp.aspect, speed))
+
+class StaffNameTest(TestCase):
+    fixtures =  ['ldap_user']
+
+    def test_transfer_engineer(self):
+        # user loaded to db from fixture
+        testname = 'John Doe'
+        staff = models.StaffName(name=testname)
+        name, id, idtype = staff.as_transfer_engineer()
+        self.assertEqual(testname, name)
+        self.assertEqual('jdoe', id)
+        self.assertEqual('ldap', idtype)
+
+        testname = 'Nobody Particular'
+        testid = 3
+        staff = models.StaffName(name=testname, id=testid)
+        name, id, idtype = staff.as_transfer_engineer()
+        self.assertEqual(testname, name)
+        self.assertEqual(testid, id)
+        self.assertEqual('dm1', idtype)

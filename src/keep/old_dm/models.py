@@ -10,9 +10,11 @@ from collections import defaultdict
 import logging
 
 from django.db import models
+from django.contrib.auth. models import User
 from eulcore.django.fedora import Repository
 
-from keep.audio.models import Rights, AudioObject, SourceTech, CodecCreator
+from keep.audio.models import Rights, AudioObject, SourceTech, CodecCreator, \
+     TransferEngineer
 from keep.collection.models import CollectionObject
 from keep import mods
 
@@ -45,6 +47,27 @@ class StaffName(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def as_transfer_engineer(self):
+        # get values in the form we need them for storing in SourceTech
+        # return name, id, id type
+        try:
+            # do a simple firstname/lastname lookup
+            # use the Keep/LDAP account if possible
+            first, sep, last = self.name.rpartition(' ')
+            # restrict to LDAP via ldap user profile
+            user = User.objects.filter(emoryldapuserprofile__isnull=False,
+                                       first_name=first, last_name=last).get()
+            return (user.get_full_name(), user.username,
+                         TransferEngineer.LDAP_ID_TYPE)
+        except User.DoesNotExist:
+            pass
+
+        # if a corresponding LDAP account was not found, fall back to DM id
+        return (self.name, self.id, self.MIGRATED_ID_TYPE)
+        
+        
+        
 
 
 class Authority(models.Model):
@@ -629,22 +652,21 @@ class Content(models.Model):   # individual item
         data.append('\n'.join('%s/%s [%d]' % creator for creator in creator_tuples))
 
         sounds = list(self.source_sounds.all())
-        engineers = [ (s.transfer_engineer.name,
-                       s.transfer_engineer.id)
-                      for s in sounds
+        engineers = [ s.transfer_engineer for s in sounds
                       if s.transfer_engineer ]
         for engineer in engineers:
-            logger.debug('Transfer Engineer: %s (id=%d)' % engineer)
+            logger.debug('Transfer Engineer: %s (id=%d)' % (engineer.name, engineer.id))
         if len(engineers) > 1:
             logger.error('Item %d has %d Transfer Engineer fields (not repeatable)' % \
                 (self.id, len(engineers)))
         if len(engineers) == 1:
             dt_xml.create_transfer_engineer()
-            # FIXME: should we map to Keep-style ids where possible?
-            dt_xml.transfer_engineer.name = engineers[0][0]
-            dt_xml.transfer_engineer.id = engineers[0][1]
-            dt_xml.transfer_engineer.id_type = StaffName.MIGRATED_ID_TYPE
-        data.append('\n'.join('%s [%d]' % engineer for engineer in engineers))
+            # get name, id, and id type for user (handles LDAP look-up for matches)
+            name, id, idtype = engineers[0].as_transfer_engineer()
+            dt_xml.transfer_engineer.name = name
+            dt_xml.transfer_engineer.id = id
+            dt_xml.transfer_engineer.id_type = idtype
+        data.append('\n'.join('%s [%d]' % (engineer.name, engineer.id) for engineer in engineers))
 
         logger.debug('DigitalTech XML:\n' + dt_xml.serialize(pretty=True))
 
