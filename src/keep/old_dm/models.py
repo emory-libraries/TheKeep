@@ -275,7 +275,7 @@ class Content(models.Model):   # individual item
         row_data = self.descriptive_metadata(obj)
         row_data += self.source_tech_metadata(obj)
         row_data += self.digital_tech_metadata(obj)
-        row_data += self.rights_metadata()
+        row_data += self.rights_metadata(obj)
 
         return obj, row_data
         
@@ -675,10 +675,14 @@ class Content(models.Model):   # individual item
     # list of fields that will be returned by rights_metadata method
     rights_fields = ['Access Status', 'Copyright Holder Name', 'Copyright Date', 'IP Notes']
 
-    def rights_metadata(self):
+    def rights_metadata(self, obj):
         # print out rights fields and return a list of values
         logger.debug('--- Rights Metadata ---')
         data = []
+        
+        # shortcut reference to rights xml to be updated below
+        rights_xml = obj.rights.content
+        
         # content could have multiple access_rights; warn if any items actually have more than one
         for rights in self.access_rights.all():
             if rights.restriction:
@@ -691,6 +695,20 @@ class Content(models.Model):   # individual item
         if self.access_rights.count() > 1:
             logger.error('Item %d has %d Access Rights fields (not repeatable)' % (self.id,
                                                                                    self.access_rights.count()))
+        # if there is just one access rights, migrate any values present
+        if self.access_rights.count() == 1:
+            rights = self.access_rights.all()[0]
+            if rights.restriction:
+                rights_xml.create_access_status()
+                rights_xml.access_status.code = rights.restriction.access_code
+                rights_xml.access_status.text = rights.restriction.access_text
+            if rights.name:
+                # name only, without authority information
+                rights_xml.copyright_holder_name = rights.name.name
+            if rights.copyright_date:
+                rights_xml.copyright_date = rights.copyright_date
+            if rights.restriction_other:
+                rights_xml.ip_note = rights.restriction_other            
 
 
         data.append('\n'.join('%s - %s' % (rights.restriction.access_code, rights.restriction.access_abbreviation)
@@ -698,6 +716,9 @@ class Content(models.Model):   # individual item
         data.append('\n'.join(unicode(rights.name) for rights in self.access_rights.all()))
         data.append('\n'.join('%s' % rights.copyright_date for rights in self.access_rights.all()))
         data.append('\n'.join('%s' % rights.restriction_other for rights in self.access_rights.all()))
+
+
+        logger.debug('Rights XML:\n' + rights_xml.serialize(pretty=True))
 
         return data
 
@@ -748,6 +769,12 @@ class Restriction(models.Model):
     def access_abbreviation(self):
         # return the migrated access abbreviation based on access code
         return Rights.access_terms_dict[str(self.access_code)].abbreviation
+
+    @property
+    def access_text(self):
+        # return the migrated access text based on access code
+        return Rights.access_terms_dict[str(self.access_code)].text
+        
 
 class AccessRights(models.Model):
     'Access rights for a single item; joins Restriction, Content, and Name; adds note & copyright date'
