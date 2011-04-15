@@ -8,6 +8,7 @@
 # into your database.
 from collections import defaultdict
 import logging
+import re
 
 from django.db import models
 from django.contrib.auth. models import User
@@ -706,7 +707,7 @@ class Content(models.Model):   # individual item
                 # name only, without authority information
                 rights_xml.copyright_holder_name = rights.name.name
             if rights.copyright_date:
-                rights_xml.copyright_date = rights.copyright_date
+                rights_xml.copyright_date = rights.w3cdtf_copyright_date()
             if rights.restriction_other:
                 rights_xml.ip_note = rights.restriction_other            
 
@@ -787,6 +788,16 @@ class AccessRights(models.Model):
     class Meta:
         db_table = u'access_rights'
         managed = False
+
+    def w3cdtf_copyright_date(self):
+        if self.copyright_date:
+            # old_dm uses 00 for unknown portions of dates, e.g.
+            # 1984-00-00, 2001-03-00, or 0000-00-00
+            # Remove 00 values to generate a W3C date, or None
+            date = re.sub(r'(0000|-00)', '', self.copyright_date)
+            if date == '':
+                return None
+            return date
 
 class CodecCreatorSound(models.Model):
     id = models.IntegerField(primary_key=True)

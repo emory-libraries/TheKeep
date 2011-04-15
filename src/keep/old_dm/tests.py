@@ -150,3 +150,13 @@ class StaffNameTest(TestCase):
         self.assertEqual(testname, name)
         self.assertEqual(testid, id)
         self.assertEqual('dm1', idtype)
+
+class AccessRights(TestCase):
+
+    def test_w3cdft_copyright_date(self):
+        access = models.AccessRights(copyright_date='0000-00-00')
+        self.assertEqual(None, access.w3cdtf_copyright_date())
+        access = models.AccessRights(copyright_date='1984-00-00')
+        self.assertEqual('1984', access.w3cdtf_copyright_date())
+        access = models.AccessRights(copyright_date='2001-01-00')
+        self.assertEqual('2001-01', access.w3cdtf_copyright_date())
