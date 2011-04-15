@@ -192,6 +192,8 @@ class TransferEngineer(_BaseDigitalTech):
     name = xmlmap.StringField('text()')
     'full display name for the transfer engineer'
 
+    LDAP_ID_TYPE = 'ldap'
+
 class CodecCreator(_BaseDigitalTech):
     ''':class:`~eulcore.xmlmap.XmlObject` for :class:`DigitalTech` codec creator'''
     ROOT_NAME = 'codecCreator'

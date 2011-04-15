@@ -9,7 +9,8 @@ from eulcore.django.forms import XmlObjectForm, SubformField, xmlobjectform_fact
 from eulcore.django.forms.fields import W3CDateField, DynamicChoiceField
 
 from keep import mods
-from keep.audio.models import AudioMods, SourceTech, DigitalTech, Rights, CodecCreator
+from keep.audio.models import AudioMods, SourceTech, DigitalTech, \
+     Rights, CodecCreator, TransferEngineer 
 from keep.collection.models import CollectionObject
 
 logger = logging.getLogger(__name__)
@@ -215,9 +216,9 @@ class DigitalTechForm(XmlObjectForm):
     :class:`~keep.audio.models.DigitalTech` metadata.
     """
     engineer = UserChoiceField(label='Transfer Engineer',
-        queryset=User.objects.filter(password='!').order_by('last_name'),
+        queryset=User.objects.filter(emoryldapuserprofile__isnull=False).order_by('last_name'),
         empty_label=EMPTY_LABEL_TEXT, required=False,  # FIXME: pull from the xmlobject field?
-        # limit to LDAP users (no password in django db) and sort by last name
+        # limit to LDAP users by presence of ldap profile and sort by last name
         help_text=mark_safe('''The person who performed the digitization or
         conversion that produced the file.<br/>
         Search by typing first letters of the last name.
@@ -260,7 +261,8 @@ class DigitalTechForm(XmlObjectForm):
             if user:
                 self.instance.create_transfer_engineer()
                 self.instance.transfer_engineer.id = user.username
-                self.instance.transfer_engineer.id_type = 'ldap'    # ldap only for now
+                # ldap only for now
+                self.instance.transfer_engineer.id_type = TransferEngineer.LDAP_ID_TYPE
                 self.instance.transfer_engineer.name = user.get_full_name()
             else:
                 del(self.instance.transfer_engineer)
