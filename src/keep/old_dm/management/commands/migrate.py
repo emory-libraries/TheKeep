@@ -76,8 +76,9 @@ class Command(BaseCommand):
 
                 obj, row_data = item.as_digital_object_and_fields()
                 if not options['dry_run']:
-                    message = 'Migrated from legacy Digital Masters object %d' % (obj.id,)
+                    message = 'Migrated from legacy Digital Masters item %d' % (item.id,)
                     obj.save(logMessage=message)
+                    logger.info('Ingested legacy Digital Masters item %d as %s' % (item.id, obj.pid))
                 if csvfile:
                     csvfile.writerow([_csv_sanitize(field) for field in row_data])
 

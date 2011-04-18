@@ -12,11 +12,11 @@ import re
 
 from django.db import models
 from django.contrib.auth. models import User
-from eulcore.django.fedora import Repository
 
 from keep.audio.models import Rights, AudioObject, SourceTech, CodecCreator, \
      TransferEngineer
 from keep.collection.models import CollectionObject
+from keep.common.fedora import Repository
 from keep import mods
 
 logger = logging.getLogger(__name__)
