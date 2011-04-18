@@ -183,7 +183,8 @@ class BaseMods(Common):
     access_conditions = xmlmap.NodeListField('mods:accessCondition', AccessCondition)
     genres = xmlmap.NodeListField('mods:genre', Genre)
     languages = xmlmap.NodeListField('mods:language', Language)
-    location = xmlmap.StringField('mods:location/mods:physicalLocation')
+    location = xmlmap.StringField('mods:location/mods:physicalLocation',
+                                  required=False)
     subjects = xmlmap.NodeListField('mods:subject', Subject)
 
 class RelatedItem(BaseMods):

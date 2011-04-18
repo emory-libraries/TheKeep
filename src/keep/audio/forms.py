@@ -12,6 +12,7 @@ from keep import mods
 from keep.audio.models import AudioMods, SourceTech, DigitalTech, \
      Rights, CodecCreator, TransferEngineer 
 from keep.collection.models import CollectionObject
+from keep.collection.forms import NameForm
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +73,19 @@ class ItemSearch(forms.Form):
     rights = forms.ChoiceField(rights_access_options, required=False,
                     help_text='Search for items with the specified Rights access condition')
 
+
+class ReadonlyTextInput(forms.TextInput):
+    'Read-only variation on :class:`django.forms.TextInput`'
+    readonly_attrs = {
+        'readonly': 'readonly',
+        'class': 'readonly long',
+        'tabindex': '-1',
+    }
+    def __init__(self, attrs=None):
+        if attrs is not None:
+            self.readonly_attrs.update(attrs)
+        super(ReadonlyTextInput, self).__init__(attrs=self.readonly_attrs)
+
     
 class SimpleNoteForm(XmlObjectForm):
     """Custom :class:`~eulcore.django.forms.XmlObjectForm` to simplify editing
@@ -117,20 +131,25 @@ class ModsEditForm(XmlObjectForm):
     # TODO: ARK will need to be set on form init from instance
     # read-only text input to display ARK (not editable)
     identifier = forms.CharField(label="Identifier", required=False,
-        widget=forms.TextInput(attrs={'readonly':'readonly', 'class': 'readonly', 'tabindex': '-1'}))
+        widget=ReadonlyTextInput)
     origin_info = SubformField(formclass=OriginInfoForm, label='Origin Info')
     general_note = SubformField(formclass=SimpleNoteForm, label='General Note')
     # FIXME: label as part number note? add directions/examples?
     part_note = SubformField(formclass=SimpleNoteForm, label='Part Note')
+    names = SubformField(formclass=NameForm)
     
     class Meta:
         model = AudioMods
         fields = (
-            'identifier', 'title', 'origin_info',
-            'general_note', 'part_note',
+            'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
+            'general_note', 'part_note', 'location', 'names','resource_type',           
             )
         widgets = {
             'title': forms.Textarea,
+            'identifier': ReadonlyTextInput,
+            'dm1_id': ReadonlyTextInput,
+            'dm1_other_id': ReadonlyTextInput,
+            'location': ReadonlyTextInput,
             }
 
 

@@ -1,0 +1,59 @@
+{% comment %}
+Edit form snippet for MODS name with repeating namePart and role.
+Expects an XmlObjectForm for a mods:name as template variable `name`
+{% endcomment %}
+
+{# top-level name attributes - type, authority, identifier #}
+{% with name.type as field %}{% include 'snippets/form_field.html' %}{% endwith %}
+{% with name.authority as field %}{% include 'snippets/form_field.html' %}{% endwith %}
+{% with name.id as field %}{% include 'snippets/form_field.html' %} {% endwith %}
+
+{# name parts (formset) - display each form in a row #}
+<div class="subform">
+  <label>Name Parts</label>
+  {{ name.formsets.name_parts.management_form }}
+  {% for namepart in name.formsets.name_parts.forms %}
+  <div id="name-part">
+    {% with namepart.type as field %}
+    <div class="column">{% include 'snippets/form_field.html' %}</div>
+    {% endwith %}
+    {% with namepart.text as field %}
+    <div class="column textinput-col">{% include 'snippets/form_field.html' %}</div>
+    {% endwith %}
+    {# only show delete option for initial data, not new rows #}
+    {% if forloop.counter <= name.formsets.name_parts.initial_form_count %}
+                             {% with namepart.DELETE as field %}
+                             <div class="column delete-col">{% include 'snippets/form_field.html' %}</div>
+                             {% endwith %}
+                             {% endif %}
+                             <br clear="all"/>
+  </div>
+  {% endfor %}
+</div>
+
+{# roles (formset) - display each form in a row #}
+<div class="subform">
+  <label>Roles</label>
+  {{ name.formsets.roles.management_form }}
+  {% for role in name.formsets.roles.forms %}
+  <div id="name-role">
+    {% with role.text as field %}
+    <div class="column textinput-col">
+      {% include 'snippets/form_field.html' %}</div>
+    {% endwith %}
+    {% with role.authority as field %}
+    <div class="column dropdown-col">
+      {% include 'snippets/form_field.html' %}
+    </div>
+    {% endwith %}
+    {{ role.type }} {# hidden field, used to set default value #}
+    {# only show delete option for initial data, not new rows #}
+    {% if forloop.counter <= name.formsets.roles.initial_form_count %}
+                             {% with role.DELETE as field %}
+                             <div class="column delete-col">{% include 'snippets/form_field.html' %}</div>
+                             {% endwith %}
+                             {% endif %}
+                             <br clear="all"/>
+  </div>
+  {% endfor %}
+</div>

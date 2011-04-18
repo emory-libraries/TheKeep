@@ -39,6 +39,10 @@ class AudioMods(mods.MODS):
             mods.TypedNote, required=False)
     dm1_toc_note = xmlmap.NodeField('mods:note[@type="dm1_toc"]',
             mods.TypedNote, required=False)
+    dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
+            required=False, verbose_name='Record ID/Filename')
+    dm1_other_id = xmlmap.StringField('mods:identifier[@type="dm1_other"]',
+            required=False, verbose_name='Other ID')
 
 ##
 ## Source technical metadata
@@ -414,10 +418,11 @@ class AudioObject(DigitalObject):
 
         :param logMessage: optional log message
         '''
-        if self.mods.isModified() or self.rels_ext.isModified or \
+        if not self.exists or self.mods.isModified() or self.rels_ext.isModified or \
             self.digitaltech.isModified():
             # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
-            # if any of them have changed, update DC
+            # If this is a new item (does not yet exist in Fedora)
+            # OR if any of the relevant datastreams have changed, update DC
             self._update_dc()
 
         # for now, keep object label in sync with MODS title

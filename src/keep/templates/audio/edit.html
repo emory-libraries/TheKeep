@@ -122,6 +122,55 @@
               <span class="required" title='required'>*</span>{% endif %}</th>
       <td>{{ form.mods.subforms.part_note.as_p }}</td>
     </tr>
+
+  <tr id="creator">
+      <th>Creator</th>
+      <td class="multi-field">  
+          {% with form.mods.formsets.names as nameforms %}
+	    {{ nameforms.management_form }}
+	    {% for name in nameforms.forms %}
+		{% include 'snippets/edit_mods_name.html' %}
+ 		{% if not forloop.last %}<hr/>{% endif %}
+            {% endfor %}
+          {% endwith %}
+      </td>
+  </tr>
+{# view-only content - output directly rather than trying to use form for display #}
+  <tr>
+    <th>Genre{{ obj.mods.content.genres|pluralize }}</th>
+     <td>
+	{% for genre in obj.mods.content.genres %}
+	  <p>{{ genre.text }} {% if genre.authority %}[{{genre.authority }}]{% endif %}</p>
+        {% endfor %}
+     </td> 
+   </tr>
+   <tr>
+     <th>Language{{ obj.mods.content.languages|pluralize }}</th>
+     <td>
+       {% for lang in obj.mods.content.languages %}
+         {% for term in lang.terms %}
+         <p>{{ term.text }} {% if term.authority %}[{{ term.authority }}]{% endif %}</p>
+         {% endfor %}
+       {% endfor %}
+     </td>
+   </tr>
+   <tr>
+     <th>Subject{{ obj.mods.content.subjects|pluralize }}</th>
+     <td>
+       {% for subject in obj.mods.content.subjects %}
+       <p>
+         {% if subject.geographic %}<b>Geographic:</b> {{ subject.geographic }}{% endif %}
+         {% if subject.name %}<b>Name:</b> {{ subject.name }}{% endif %}
+         {% if subject.topic %}<b>Topic:</b> {{ subject.topic }}{% endif %}
+         {% if subject.title %}<b>Title:</b> {{ subject.title }}{% endif %}
+         
+         {% if subject.authority %}
+           [{{ subject.authority }}]
+         {% endif %}
+       </p>
+       {% endfor %}
+     </td>
+   </tr>
 </table>
 </div>
 
