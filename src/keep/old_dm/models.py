@@ -234,7 +234,8 @@ class Content(models.Model):   # individual item
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
         if self.collection_number:
-            return 'MARBL %d' % self.collection_number
+            desc = DescriptionData.objects.get(pk=self.collection_number)
+            return 'MARBL %d' % desc.mss_number
         elif self.series_number:
             return 'EUA %d' % self.series_number
 
@@ -243,7 +244,8 @@ class Content(models.Model):   # individual item
         'Fedora Collection object corresponding to the collection or series number and location for this item'
         num = None
         if self.collection_number:
-            num = self.collection_number
+            desc = DescriptionData.objects.get(pk=self.collection_number)
+            num = desc.mss_number
         elif self.series_number:
             num = self.series_number
 
@@ -1299,3 +1301,22 @@ class SourceSound(models.Model):
         db_table = u'src_sounds'
         managed = False
 
+
+class DescriptionData(models.Model):
+    id = models.IntegerField(primary_key=True, db_column='ID')
+    main_entry = models.CharField(max_length=150, db_column='Main Entry')
+    title_statement = models.CharField(max_length=200, db_column='Title Statement')
+    mss_number = models.IntegerField(db_column='MSS Number')
+    description_y_n = models.CharField(max_length=5, db_column='Description Y/N')
+    record_type = models.CharField(max_length=100, db_column='Type')
+    msword_filename = models.CharField(max_length=100, db_column='MSWord File Name')
+    rlin_id_number = models.CharField(max_length=50, db_column='RLIN ID Number')
+    xml = models.CharField(max_length=50, db_column='XML')
+    notes = models.CharField(max_length=100, db_column='Notes')
+
+    class Meta:
+        db_table = u'Description Data'
+        managed = False
+
+    def __unicode__(self):
+        return unicode(self.id)
