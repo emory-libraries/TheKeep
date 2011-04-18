@@ -28,6 +28,9 @@ class Command(BaseCommand):
             default=False,
             action='store_true',
             help='''Report on what would be done, but don't actually migrate anything'''),
+        make_option('--dmid', '-i',
+            type='int',
+	    help='Only process a single item, specified by digital masters id'),
         )
 
     def handle(self, *args, **options):
@@ -63,6 +66,9 @@ class Command(BaseCommand):
             if 'location' in options and options['location'] is not None:
                 items = items.filter(location__name__icontains=options['location'])
                 filter_labels.append("location '%s'" % options['location'])
+            if 'dmid' in options and options['dmid']:
+                items = items.filter(id=options['dmid'])
+                filter_labels.append('item id %d' % options['dmid'])
             # limit to max number of items if specified
             if 'max' in options and options['max']:
                 items = items[:options['max']]
