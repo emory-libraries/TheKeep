@@ -34,6 +34,7 @@ class DigitalObject(models.DigitalObject):
     necessary."""
 
     default_owner = getattr(settings, 'FEDORA_OBJECT_OWNERID', None)
+    default_pidspace = getattr(settings, 'FEDORA_PIDSPACE', None)
 
     def __init__(self, *args, **kwargs):
         super(DigitalObject, self).__init__(*args, **kwargs)
@@ -80,6 +81,31 @@ class DigitalObject(models.DigitalObject):
 
         return self._default_target_data
 
+    PID_TOKEN = '{%PID%}'
+    ENCODED_PID_TOKEN = iri_to_uri(PID_TOKEN)
+    def get_default_pid(self):
+        if pidman is not None:
+            # pidman wants a target for the new pid
+            '''Get a pidman-ready target for a named view.'''
+
+            # first just reverse the view name.
+            pid = '%s:%s' % (self.default_pidspace, self.PID_TOKEN)
+            target = reverse(self.NEW_OBJECT_VIEW, kwargs={'pid': pid})
+            # reverse() encodes the PID_TOKEN, so unencode just that part
+            target = target.replace(self.ENCODED_PID_TOKEN, self.PID_TOKEN)
+            # reverse() returns a full path - absolutize so we get scheme & server also
+            target = absolutize_url(target)
+            # ask pidman for a new ark in the configured pidman domain
+            ark = pidman.create_ark(settings.PIDMAN_DOMAIN, target)
+            # grab the noid from the tail end of the ark
+            arkbase, slash, noid = ark.rpartition('/')
+            # and construct a pid in the configured pidspace
+            return '%s:%s' % (self.default_pidspace, noid)
+        else:
+            # if pidmanager is not available, fall back to default pid behavior
+            return super(DigitalObject, self).get_default_pid()
+            
+
 
 class Repository(server.Repository):
     """Extend the Django-ized Fedora Repository object to take a request object
@@ -96,44 +122,3 @@ class Repository(server.Repository):
                 username =request.user.username
                 password = decrypt(request.session['fedora_password'])            
         super(Repository, self).__init__(username=username, password=password)
-
-    def get_object(self, pid=None, type=None, *args, **kwargs):
-        # if no pid is specified, and if we're on speaking terms with
-        # pidman, then tell the eulcore Repository code that we want to use
-        # pidman for this object's pid.
-        if pid is None and pidman is not None:
-            pid = self.pid_getter(type)
-
-        super_get = super(Repository, self).get_object
-        return super_get(pid, type, *args, **kwargs)
-
-    def pid_getter(self, type):
-        '''Return a no-arg function which, when called, will use pidman to
-        generate an appropriate pid for a new object.'''
-
-        # pidman wants a target for the new pid
-        target = self.get_pid_target(type.NEW_OBJECT_VIEW)
-        # here's the function we'll be returning. it'll be called to
-        # generate the new pid the first time the new object is saved
-        def get_next_pid():
-            # ask pidman for a new ark in the configured pidman domain
-            ark = pidman.create_ark(settings.PIDMAN_DOMAIN, target)
-            # grab the noid from the tail end of the ark
-            arkbase, slash, noid = ark.rpartition('/')
-            # and construct a pid in the configured pidspace
-            return '%s:%s' % (settings.FEDORA_PIDSPACE, noid)
-        return get_next_pid
-
-    PID_TOKEN = '{%PID%}'
-    ENCODED_PID_TOKEN = iri_to_uri(PID_TOKEN)
-    def get_pid_target(self, view_name):
-        '''Get a pidman-ready target for a named view.'''
-
-        # first just reverse the view name.
-        pid = '%s:%s' % (settings.FEDORA_PIDSPACE, self.PID_TOKEN)
-        target = reverse(view_name, kwargs={'pid': pid})
-        # reverse() encodes the PID_TOKEN, so unencode just that part
-        target = target.replace(self.ENCODED_PID_TOKEN, self.PID_TOKEN)
-
-        # reverse() returns a full path - absolutize so we get scheme & server also
-        return absolutize_url(target)
