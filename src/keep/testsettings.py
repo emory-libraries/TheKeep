@@ -7,9 +7,9 @@ CELERY_ALWAYS_EAGER = True
 
 
 # remove PIDMAN settings - no need to generate PIDs for testing
-del PIDMAN_HOST
-del PIDMAN_USER
-del PIDMAN_PASSWORD
-del PIDMAN_DOMAIN
+PIDMAN_HOST = None
+PIDMAN_USER = None
+PIDMAN_PASSWORD = None
+PIDMAN_DOMAIN = None
 
 
