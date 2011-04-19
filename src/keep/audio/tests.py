@@ -657,6 +657,7 @@ of 1''',
                     'mods-note-label' : 'a general note',
                     'mods-general_note-text': 'remember to ...',
                     'mods-part_note-text': 'side A',
+                    'mods-resource_type': 'sound recording',
                     # 'management' form data is required for django to process formsets/subforms
                     'mods-origin_info-issued-INITIAL_FORMS': '0',
                     'mods-origin_info-issued-TOTAL_FORMS': '1',
@@ -879,6 +880,7 @@ of 1''',
         # POST data to update audio object in fedora
         audio_data = {'collection': self.rushdie.uri,
                     'mods-title': 'new title',
+                    'mods-resource_type': 'sound recording',
                     # 'management' form data is required for django to process formsets/subforms
                     'mods-origin_info-issued-INITIAL_FORMS': '0',
                     'mods-origin_info-issued-TOTAL_FORMS': '0',
@@ -1721,6 +1723,7 @@ class TestModsEditForm(TestCase):
         'mods-title': 'new title',
         'mods-general_note-text': '',
         'mods-part_note-text': '',
+        'mods-resource_type': 'sound recording',
         # 'management' form data is required for django to process formsets/subforms
         'mods-origin_info-issued-INITIAL_FORMS': '0',
         'mods-origin_info-issued-TOTAL_FORMS': '1',
@@ -1738,15 +1741,16 @@ class TestModsEditForm(TestCase):
         # should be removed before the instance is finally updated
         m = audiomodels.AudioMods()
         form = audioforms.ModsEditForm(instance=m, data=self.MIN_DATA, prefix='mods')
-        self.assertTrue(form.is_valid())        
+        self.assertTrue(form.is_valid())
         inst = form.update_instance()
-        self.assertEqual(1, len(inst.node.getchildren()))
+        self.assertEqual(2, len(inst.node.getchildren()),
+                         'minimal record should only have 2 fields (title, resource type)')
 
     def test_clean_on_update(self):
         # POST data to update audio object in fedora
         m = audiomodels.AudioMods()
         form = audioforms.ModsEditForm(data=self.MIN_DATA, instance=m, prefix='mods')
-        form.is_valid()
+        self.assertTrue(form.is_valid())
         inst = form.update_instance()
         self.assertEqual(None, inst.general_note)
         self.assertEqual(None, inst.part_note)

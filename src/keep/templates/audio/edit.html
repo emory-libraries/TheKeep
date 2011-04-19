@@ -124,8 +124,9 @@
     </tr>
 
   <tr id="creator">
-      <th>Creator</th>
+      <th>Creator{{ obj.mods.content.names|pluralize }}</th>
       <td class="multi-field">  
+{% comment  %}
           {% with form.mods.formsets.names as nameforms %}
 	    {{ nameforms.management_form }}
 	    {% for name in nameforms.forms %}
@@ -133,6 +134,21 @@
  		{% if not forloop.last %}<hr/>{% endif %}
             {% endfor %}
           {% endwith %}
+          <hr/>
+{% endcomment %}
+	<table>
+          <tr><th>Name</th><th>Role</th><th>Type</th><th>Authority</th></tr>
+        {% for name in obj.mods.content.names %}
+        <tr>
+          <td>{{ name }} </td>
+          <td> {% for role in name.roles %} {{ role.text }} {% endfor %}</td>
+          <td>{{ name.type }}</td>
+          <td>{{ name.authority }}</td>
+        </tr>
+        {% endfor %}
+        </table>
+
+
       </td>
   </tr>
 {# view-only content - output directly rather than trying to use form for display #}
@@ -143,6 +159,7 @@
 	  <p>{{ genre.text }} {% if genre.authority %}[{{genre.authority }}]{% endif %}</p>
         {% endfor %}
      </td> 
+
    </tr>
    <tr>
      <th>Language{{ obj.mods.content.languages|pluralize }}</th>
