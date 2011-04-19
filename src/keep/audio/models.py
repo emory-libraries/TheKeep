@@ -30,15 +30,15 @@ class AudioMods(mods.MODS):
           mods.TypedNote, required=False)
     ':class:`~keep.mods.TypedNote` with `type="general"`'
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
-                                          mods.TypedNote)
+                                 mods.TypedNote)
     ':class:`~keep.mods.TypedNote` with `type="part number"`'
 
     dm1_abstract_note = xmlmap.NodeField('mods:note[@type="dm1_abstract"]',
-            mods.TypedNote, required=False)
+            mods.TypedNote, required=False, verbose_name='DM Abstract')
     dm1_content_note = xmlmap.NodeField('mods:note[@type="dm1_content_notes"]',
-            mods.TypedNote, required=False)
+            mods.TypedNote, required=False, verbose_name='DM Content Notes')
     dm1_toc_note = xmlmap.NodeField('mods:note[@type="dm1_toc"]',
-            mods.TypedNote, required=False)
+            mods.TypedNote, required=False, verbose_name='DM Table of Contents')
     dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
             required=False, verbose_name='Record ID/Filename')
     dm1_other_id = xmlmap.StringField('mods:identifier[@type="dm1_other"]',

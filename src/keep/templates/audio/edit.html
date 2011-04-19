@@ -87,46 +87,38 @@
     <tr><td colspan="3">{{ form.mods.non_field_errors }}</td></tr>
   {% endif %}
   {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-  {% comment %} TODO/FIXME: something like this should work, but need a way to get subform labels
+
+  {# display all subforms (notes, origin info, etc) #}
    {% for name, subform in form.mods.subforms.items %}
     <tr>
-       <th>{{ subform.label }}{{ name }}</th>
-       <td>{{ subform.as_p }}</td>
+       <th>{% firstof subform.form_label name %}</th>
+       <td>
+         {% for field in subform %}
+	   {% include 'snippets/form_field.html' %}
+         {% endfor %}
+         {% for form in subform.forms %}
+           {% for field in form %}
+ 	     {% include 'snippets/form_field.html' %}
+           {% endfor %}
+         {% endfor %}
+         {# display formsets under subforms (i.e., origin info dates) #}
+         {% for name, formset in subform.formsets.items %}
+           <label>{% firstof formset.form_label name %}</label>
+           {{ formset.management_form }}
+           {% for form in formset.forms %}
+             {% for field in form %}{% include 'snippets/form_field.html' %}{% endfor %}
+           {% endfor %}
+         {% endfor %}
+         {# NOTE: could potentially have sub-subforms also... #}
+       </td>
     </tr>
   {% endfor %}
-  {% endcomment %}
-  <tr id="origin_info">
-      <th>Origin Info</th> 
-      <td>{# dates are list fields/formsets, but we only allow one for now #}
-          <label>Date Issued</label>
-          {{ form.mods.subforms.origin_info.formsets.issued.management_form }}
-          {% for form in form.mods.subforms.origin_info.formsets.issued.forms %}
-            {% with form.date as field %}{% include 'snippets/form_field.html' %}{% endwith %}
-          {% endfor %}
-          <label>Date Created</label>
-          {{ form.mods.subforms.origin_info.formsets.created.management_form }}
-          {% for form in form.mods.subforms.origin_info.formsets.created.forms %}
-            {% with form.date as field %}{% include 'snippets/form_field.html' %}{% endwith %}
-          {% endfor %}
-      </td>
-    </tr>
-    <tr>
-      <th>General Note
-           {% if form.mods.subforms.general_note.text.field.required %}
-              <span class="required" title='required'>*</span>{% endif %}
-      </th>
-      <td>{{ form.mods.subforms.general_note.as_p }}</td>
-    </tr>
-    <tr>
-      <th>Part Note {% if form.mods.subforms.part_note.text.field.required %}
-              <span class="required" title='required'>*</span>{% endif %}</th>
-      <td>{{ form.mods.subforms.part_note.as_p }}</td>
-    </tr>
+ {# NOTE: currently no formsets to handle #}
 
   <tr id="creator">
       <th>Creator{{ obj.mods.content.names|pluralize }}</th>
       <td class="multi-field">  
-{% comment  %}
+{% comment %}
           {% with form.mods.formsets.names as nameforms %}
 	    {{ nameforms.management_form }}
 	    {% for name in nameforms.forms %}

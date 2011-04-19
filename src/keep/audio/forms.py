@@ -115,42 +115,49 @@ class OriginInfoForm(XmlObjectForm):
     :class:`~keep.mods.OriginInfo`.  Currently only consists
     of simple date entry for date created and issued using :class:`SimpleDateForm`.
     """
+    form_label = 'Origin Info'
     #Create the subform fields from fields (xmlmap) in eulcore.
     created = SubformField(formclass=xmlobjectform_factory(mods.DateCreated,
-                            form=SimpleDateForm, max_num=1))
+                            form=SimpleDateForm, max_num=1, can_delete=False))
     issued = SubformField(formclass=xmlobjectform_factory(mods.DateIssued,
-                            form=SimpleDateForm, max_num=1))
+                            form=SimpleDateForm, max_num=1, can_delete=False),
+                          label='Date Issued')
     class Meta:
         model = mods.OriginInfo
+
 
 
 class ModsEditForm(XmlObjectForm):
     """:class:`~eulcore.django.forms.XmlObjectForm` for editing
     :class:`~keep.audio.models.AudioMods`.
     """
-    # TODO: ARK will need to be set on form init from instance
+    # ARK value is set in form instance data by AudioObjectEditForm init
     # read-only text input to display ARK (not editable)
     identifier = forms.CharField(label="Identifier", required=False,
         widget=ReadonlyTextInput)
-    origin_info = SubformField(formclass=OriginInfoForm, label='Origin Info')
-    general_note = SubformField(formclass=SimpleNoteForm, label='General Note')
-    # FIXME: label as part number note? add directions/examples?
-    part_note = SubformField(formclass=SimpleNoteForm, label='Part Note')
-    names = SubformField(formclass=NameForm)
+    origin_info = SubformField(formclass=OriginInfoForm)
+    general_note = SubformField(formclass=SimpleNoteForm)
+    part_note = SubformField(formclass=SimpleNoteForm)
+    dm1_abstract_note = SubformField(formclass=SimpleNoteForm)
+    dm1_content_note = SubformField(formclass=SimpleNoteForm)
+    dm1_toc_note = SubformField(formclass=SimpleNoteForm)
     
+    names = SubformField(formclass=NameForm)
+
     class Meta:
         model = AudioMods
         fields = (
             'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
             'general_note', 'part_note', 'location', 'resource_type', # 'names',
-            )
+            'dm1_abstract_note', 'dm1_content_note',
+        )
         widgets = {
             'title': forms.Textarea,
             'identifier': ReadonlyTextInput,
             'dm1_id': ReadonlyTextInput,
             'dm1_other_id': ReadonlyTextInput,
             'location': ReadonlyTextInput,
-            }
+        }
 
 
 class SourceTechForm(XmlObjectForm):

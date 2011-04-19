@@ -52,7 +52,7 @@ class OriginInfo(Common):
         help_text='Date the resource was first created (e.g., date of recording,' +
             ' photograph taken, or letter written)')
     issued = xmlmap.NodeListField('mods:dateIssued', DateIssued,
-        verbose_name='Date Created',
+        verbose_name='Date Issued',
         help_text='Date the resource was published, released, or issued')
 
     def is_empty(self):
@@ -71,10 +71,11 @@ class Note(Common):
     ":class:`~eulcore.xmlmap.XmlObject` for MODS note element"
     ROOT_NAME = 'note'
     label = xmlmap.StringField('@displayLabel')
-    type = xmlmap.StringField('@type',
-                choices=['general', 'inscription', 'source of information',
-                        'reference', 'hidden'])
+    type = xmlmap.StringField('@type')
+#                choices=['general', 'inscription', 'source of information',
+#                        'reference', 'hidden'])
         # with capacity to add to the list ?
+        # FIXME: keep-specific note type choices should not be defined here
     text = xmlmap.StringField('text()')      # actual text value of the note
 
 class TypedNote(Note):
