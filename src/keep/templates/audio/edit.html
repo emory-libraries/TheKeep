@@ -113,22 +113,16 @@
        </td>
     </tr>
   {% endfor %}
- {# NOTE: currently no formsets to handle #}
+ {# NOTE: currently we have no formsets, so not handling #}
 
+{# view-only content - output directly rather than trying to use form for display #} 
   <tr id="creator">
       <th>Creator{{ obj.mods.content.names|pluralize }}</th>
+{% comment %}names could be displayed in editable form using
+snippets/edit_mods_name.html, but it takes up a lot of page space,
+and they don't actually need to be editable for now.{% endcomment %}
       <td class="multi-field">  
-{% comment %}
-          {% with form.mods.formsets.names as nameforms %}
-	    {{ nameforms.management_form }}
-	    {% for name in nameforms.forms %}
-		{% include 'snippets/edit_mods_name.html' %}
- 		{% if not forloop.last %}<hr/>{% endif %}
-            {% endfor %}
-          {% endwith %}
-          <hr/>
-{% endcomment %}
-	<table>
+	<table class="name-role-auth">
           <tr><th>Name</th><th>Role</th><th>Type</th><th>Authority</th></tr>
         {% for name in obj.mods.content.names %}
         <tr>
@@ -139,11 +133,8 @@
         </tr>
         {% endfor %}
         </table>
-
-
       </td>
   </tr>
-{# view-only content - output directly rather than trying to use form for display #}
   <tr>
     <th>Genre{{ obj.mods.content.genres|pluralize }}</th>
      <td>

@@ -148,7 +148,7 @@ class ModsEditForm(XmlObjectForm):
         model = AudioMods
         fields = (
             'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
-            'general_note', 'part_note', 'location', 'resource_type', # 'names',
+            'general_note', 'part_note', 'location', 'resource_type', 
             'dm1_abstract_note', 'dm1_content_note',
         )
         widgets = {

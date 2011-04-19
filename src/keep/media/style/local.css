@@ -9,6 +9,9 @@ table#mods_edit table.subform th {
    width:125px;
    vertical-align: top;
 }
+table.name-role-auth th {
+    width: inherit;
+}
 
 #audio-edit .section-head {
     background-color:#efefef;

@@ -318,9 +318,9 @@ class Content(models.Model):   # individual item
 
         logger.debug('Identifier: %s' % self.id)
         logger.debug('Other ID: %s' % self.other_id)
-        modsxml.identifiers.append(mods.Identifier(type='dm1_id', text=self.id))
+        modsxml.dm1_id = self.id
         if self.other_id:
-            modsxml.identifiers.append(mods.Identifier(type='dm1_other', text=self.other_id))
+            modsxml.dm1_other_id = self.other_id
         data = [self.collection, self.id, self.other_id]
 
         # source_sound could be multiple; warn if there is more than one

@@ -562,6 +562,50 @@ of 1''',
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
+        # descriptive metadata migration fields
+        obj.mods.content.dm1_id = '20'
+        obj.mods.content.dm1_other_id = '00000040'
+        obj.mods.content.create_dm1_abstract_note()
+        obj.mods.content.dm1_abstract_note.text = '''Includes a short commentary intro.'''
+        obj.mods.content.create_dm1_content_note()
+        obj.mods.content.dm1_content_note.text = '''content notes here'''
+        obj.mods.content.create_dm1_toc_note()
+        obj.mods.content.dm1_toc_note.text = '''TOC notes here.'''        
+        obj.mods.content.resource_type = 'sound recording'
+        namepartxml = mods.NamePart(text='Dawson, William Levi')
+        rolexml = mods.Role(type='text', authority='marcrelator',
+                            text='Composer')
+        namexml = mods.Name(type='personal', authority='naf')
+        namexml.name_parts.append(namepartxml)
+        namexml.roles.append(rolexml)
+        obj.mods.content.names.append(namexml)
+        namepartxml = mods.NamePart(text='American Symphony Orchestra')
+        rolexml = mods.Role(type='text', authority='marcrelator',
+                            text='Performer')
+        namexml = mods.Name(type='corporate', authority='naf')
+        namexml.name_parts.append(namepartxml)
+        namexml.roles.append(rolexml)
+        obj.mods.content.names.append(namexml)
+        obj.mods.content.genres.extend([
+            mods.Genre(text='Sound recordings', authority='aat'),
+            mods.Genre(text='Radio programs', authority='aat'),
+        ])
+        lang = mods.Language()
+        lang.terms.append(mods.LanguageTerm(type='code',
+            authority='iso639-2b', text='eng'))
+        obj.mods.content.languages.append(lang)
+        namepartxml = mods.NamePart(text='Dawson, William Levi')
+        rolexml = mods.Role(type='text', authority='marcrelator',
+                            text='Composer')
+        namexml = mods.Name(type='personal', authority='naf')
+        namexml.name_parts.append(namepartxml)
+        namexml.roles.append(rolexml)
+        obj.mods.content.subjects.extend([
+            mods.Subject(authority='lcsh', geographic='Africa, West'),
+            mods.Subject(authority='lcsh', topic='Radio Programs, Musical'),
+            mods.Subject(authority='local', title='Frontiers of faith (Television series)'),
+            mods.Subject(authority='naf', name=namexml),
+        ])
         # pre-populate source tech metadata so we can check it in form instance
         obj.sourcetech.content.note = 'source note'
         obj.sourcetech.content.related_files = '1-3'
@@ -626,6 +670,63 @@ of 1''',
         self.assertEqual(item_mods.origin_info.issued[0].date,
             initial_data['origin_info-issued-0-date'],
             'object MODS date issued is pre-populated in form initial data')
+        self.assertEqual(item_mods.dm1_id, initial_data['dm1_id'],
+            'object MODS DM1 id is pre-populated in form initial data')
+        self.assertEqual(item_mods.dm1_other_id, initial_data['dm1_other_id'],
+            'object MODS DM1 other id is pre-populated in form initial data')
+        self.assertEqual(item_mods.resource_type, initial_data['resource_type'],
+            'object MODS resource type is pre-populated in form initial data')
+        self.assertEqual(item_mods.dm1_abstract_note.text, initial_data['dm1_abstract_note-text'],
+            'object MODS DM1 abstract note is pre-populated in form initial data')
+        self.assertEqual(item_mods.dm1_content_note.text, initial_data['dm1_content_note-text'],
+            'object MODS DM1 content note is pre-populated in form initial data')
+        self.assertEqual(item_mods.dm1_toc_note.text, initial_data['dm1_toc_note-text'],
+            'object MODS DM1 toc note is pre-populated in form initial data')
+        # some migrated fields are display-only, not part of the form
+        for name in item_mods.names:
+            self.assertContains(response, name.name_parts[0].text,
+               msg_prefix='creator name part %s should display on the edit form' % name.name_parts[0].text)
+            self.assertContains(response, name.roles[0].text,
+               msg_prefix='creator name role %s should display on the edit form' % name.roles[0].text)
+            self.assertContains(response, name.type,
+               msg_prefix='creator name type %s should display on the edit form' % name.type)
+            self.assertContains(response, name.authority,
+               msg_prefix='creator name authority %s should display on the edit form' % name.authority)
+        for genre in item_mods.genres:
+            expected_val = '%s [%s]' % (genre.text, genre.authority)
+            self.assertContains(response, expected_val,
+                msg_prefix='response should include genre text & authority %s' % expected_val)
+        for lang in item_mods.languages:
+            expected_val = '%s [%s]' % (lang.terms[0].text, lang.terms[0].authority)
+            self.assertContains(response, expected_val,
+                msg_prefix='response should include language value and authority %s' % expected_val)
+
+        # test subjects by type in order: geographic, topic, title, name
+        expected_val = '<b>Geographic:</b> %s' % item_mods.subjects[0].geographic
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include geographic subject %s' % expected_val)
+        expected_val = '[%s]' % item_mods.subjects[0].authority
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include geographic subject authority %s' % expected_val)
+        expected_val = '<b>Topic:</b> %s' % item_mods.subjects[1].topic
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include topic subject %s' % expected_val)
+        expected_val = '[%s]' % item_mods.subjects[1].authority
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include topic subject authority %s' % expected_val)
+        expected_val = '<b>Title:</b> %s' % item_mods.subjects[2].title
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include title subject %s' % expected_val)
+        expected_val = '[%s]' % item_mods.subjects[2].authority
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include title subject authority %s' % expected_val)
+        expected_val = '<b>Name:</b> %s' % unicode(item_mods.subjects[3].name)
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include name subject %s' % expected_val)
+        expected_val = '[%s]' % item_mods.subjects[3].authority
+        self.assertContains(response, expected_val,
+           msg_prefix='response should include name subject authority %s' % expected_val)
+        
         # source tech from object in initial data
         initial_data = response.context['form'].sourcetech.initial
         item_st = obj.sourcetech.content
