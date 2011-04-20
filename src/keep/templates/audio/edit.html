@@ -116,6 +116,7 @@
  {# NOTE: currently we have no formsets, so not handling #}
 
 {# view-only content - output directly rather than trying to use form for display #} 
+{% if obj.mods.content.names %}
   <tr id="creator">
       <th>Creator{{ obj.mods.content.names|pluralize }}</th>
 {% comment %}names could be displayed in editable form using
@@ -135,6 +136,8 @@ and they don't actually need to be editable for now.{% endcomment %}
         </table>
       </td>
   </tr>
+{% endif %}
+{% if obj.mods.content.genres %}
   <tr>
     <th>Genre{{ obj.mods.content.genres|pluralize }}</th>
      <td>
@@ -142,18 +145,21 @@ and they don't actually need to be editable for now.{% endcomment %}
 	  <p>{{ genre.text }} {% if genre.authority %}[{{genre.authority }}]{% endif %}</p>
         {% endfor %}
      </td> 
-
    </tr>
+{% endif %}
+{% if obj.mods.content.languages %}
    <tr>
      <th>Language{{ obj.mods.content.languages|pluralize }}</th>
      <td>
        {% for lang in obj.mods.content.languages %}
-         {% for term in lang.terms %}
+       {% for term in lang.terms %}
          <p>{{ term.text }} {% if term.authority %}[{{ term.authority }}]{% endif %}</p>
          {% endfor %}
        {% endfor %}
      </td>
    </tr>
+{% endif %}
+{% if obj.mods.content.subjects %}
    <tr>
      <th>Subject{{ obj.mods.content.subjects|pluralize }}</th>
      <td>
@@ -171,6 +177,7 @@ and they don't actually need to be editable for now.{% endcomment %}
        {% endfor %}
      </td>
    </tr>
+{% endif %}
 </table>
 </div>
 
