@@ -68,7 +68,6 @@ class Command(BaseCommand):
                 items = items.filter(location__name__icontains=options['location'])
                 filter_labels.append("location '%s'" % options['location'])
             if 'dmid' in options and options['dmid']:
-                print "DEBUG: dmid is ", options['dmid']
                 items = items.filter(id__in=options['dmid'])
                 filter_labels.append('item id(s) %s' % ', '.join(str(i) for i in options['dmid']))
             # limit to max number of items if specified
