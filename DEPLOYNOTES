@@ -391,11 +391,11 @@ Release 0.7 - Min Items, part I
 * After defining numbering schemes, admins may want to load collections from
   Finding Aids::
 
-    $ python manage.py load_ead keep:marbl 10 59 265 494 539 558 572 579 612 \
+    $ python manage.py load_ead marbl 10 59 265 494 539 558 572 579 612 \
         616 618 622 629 644 653 663 673 682 685 687 689 741 745 771 797 \
         800 807 832 840 845 853 855 856 869 890 892 923 926 927 932 937 \
         960 966 968 981 1000 1002 1025 1032 1054 1056 1061
-    $ python manage.py load_ead keep:university-archives 8 11 26 60 113 1002
+    $ python manage.py load_ead eua 8 11 26 60 113 1002
 
 
 Release 0.6

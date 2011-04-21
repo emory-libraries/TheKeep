@@ -1,4 +1,5 @@
 from optparse import make_option
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from eulcore.existdb.exceptions import DoesNotExist, ReturnedMultiple
 from keep.common.fedora import Repository
@@ -28,8 +29,7 @@ class Command(BaseCommand):
     def handle(self, numbering_pid, *ids, **options):
         verbosity = int(options['verbosity'])
 
-        repo = Repository()
-        numbering = repo.get_object(numbering_pid, type=CollectionObject)
+        numbering = self.get_numbering(numbering_pid)
         if not numbering.exists:
             raise CommandError('Numbering scheme %s not found' % (numbering_pid,))
         numbering_title = numbering.mods.content.title
@@ -60,3 +60,10 @@ class Command(BaseCommand):
         if verbosity > 1:
             print '%d records created' % (created,)
             print '%d records failed' % (errors,)
+
+    def get_numbering(self, pid):
+        if pid in settings.PID_ALIASES:
+            pid = settings.PID_ALIASES[pid]
+        repo = Repository()
+        return repo.get_object(pid, type=CollectionObject)
+

@@ -69,6 +69,12 @@ FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 # use this to explicitly configure a test pidspace; by default, uses pidspace-test
 #FEDORA_TEST_PIDSPACE = 'testme'
 
+# mnemonic names for well-known PIDs
+PID_ALIASES = {
+    'marbl': 'emory:93z53',
+    'eua': 'emory:93zd2',
+}
+
 # Exist DB Settings
 EXISTDB_SERVER_URL      = 'http://user:password@existdb.example.com/exist/xmlrpc'
 # collection should begin with / -  e.g., /edc
