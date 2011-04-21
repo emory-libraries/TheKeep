@@ -1736,6 +1736,8 @@ class TestAudioObject(TestCase):
         # set values in MODS, RELS-EXT, digitaltech
         title, res_type = 'new title in mods', 'text'
         self.obj.mods.content.title = title
+        self.obj.mods.content.dm1_id = '1001'
+        self.obj.mods.content.dm1_other_id = '000004'
         self.obj.mods.content.resource_type = res_type
         cdate, idate = '2010-01-03', '2010-05-05'
         self.obj.mods.content.create_origin_info()
@@ -1744,6 +1746,24 @@ class TestAudioObject(TestCase):
         general_note = 'The Inspector General generally inspects'
         self.obj.mods.content.create_general_note()
         self.obj.mods.content.general_note.text = general_note
+        # names
+        namepartxml = mods.NamePart(text='Dawson, William Levi')
+        rolexml = mods.Role(type='text', authority='marcrelator',
+                            text='Composer')
+        namexml = mods.Name(type='personal', authority='naf')
+        namexml.name_parts.append(namepartxml)
+        namexml.roles.append(rolexml)
+        self.obj.mods.content.names.append(namexml)
+        namepartxml = mods.NamePart(text='American Symphony Orchestra')
+        rolexml = mods.Role(type='text', authority='marcrelator',
+                            text='Performer')
+        namexml = mods.Name(type='corporate', authority='naf')
+        namexml.name_parts.append(namepartxml)
+        namexml.roles.append(rolexml)
+        self.obj.mods.content.names.append(namexml)
+        self.obj.mods.content.location = 'Somewhere over the rainbow'
+        related_files = '1000, 2011'
+        self.obj.sourcetech.content.related_files = related_files
         dig_purpose = 'patron request'
         self.obj.digitaltech.content.digitization_purpose = dig_purpose
         self.obj.rights.content.create_access_status()
@@ -1754,13 +1774,19 @@ class TestAudioObject(TestCase):
         self.obj._update_dc()
         
         self.assertEqual(title, self.obj.dc.content.title)
+        self.assert_(self.obj.mods.content.dm1_id in self.obj.dc.content.identifier_list)
+        self.assert_(self.obj.mods.content.dm1_other_id in self.obj.dc.content.identifier_list)
         self.assertEqual(res_type, self.obj.dc.content.type)
+        for name in self.obj.mods.content.names:
+            self.assert_(unicode(name) in self.obj.dc.content.creator_list)
         self.assert_(cdate in self.obj.dc.content.date_list)
         self.assert_(idate in self.obj.dc.content.date_list)
         self.assert_(self.obj.created.strftime('%Y-%m-%d') in self.obj.dc.content.date_list,
                  'object creation date for ingested object should be included in dc:date in YYYY-MM-DD format')
         self.assert_(general_note in self.obj.dc.content.description_list)
         self.assert_(dig_purpose in self.obj.dc.content.description_list)
+        self.assert_(related_files in self.obj.dc.content.description_list)
+        self.assertEqual(self.obj.mods.content.location, self.obj.dc.content.source)
         # currently using rights access condition code & text in dc:rights
         # should only be one in dc:rights - mods access condition not included
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
@@ -1777,16 +1803,27 @@ class TestAudioObject(TestCase):
         del(self.obj.mods.content.origin_info.created)
         del(self.obj.mods.content.origin_info.issued)
         del(self.obj.mods.content.general_note)
+        del(self.obj.mods.content.names)  # FIXME: does this work?
+        del(self.obj.mods.content.dm1_id)
+        del(self.obj.mods.content.dm1_other_id)
+        del(self.obj.mods.content.location)
         del(self.obj.digitaltech.content.digitization_purpose)
+        del(self.obj.sourcetech.content.related_files)
         del(self.obj.rights.content.access_status)
         self.obj._update_dc()
         self.assertEqual(1, len(self.obj.dc.content.date_list),
             'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
         self.assertEqual([], self.obj.dc.content.description_list,
-            'there should be no dc:description when general note in MODS and digitization ' +
-            'purpose in digital tech are not set')
+            'there should be no dc:description when general note in MODS, digitization ' +
+            'purpose in digital tech, and related files in source tech are not set')
         self.assertEqual([], self.obj.dc.content.rights_list,
             'there should be no dc:rights when no Rights access_status is set')
+        self.assertEqual([], self.obj.dc.content.creator_list,
+            'there should be no dc:creator when no creator names are set')
+        self.assertEqual([], self.obj.dc.content.identifier_list,
+             'there should be no dc:identifiers when dm1 id and other dm1 id are not set')
+        self.assertEqual(None, self.obj.dc.content.source,
+             'there should be no dc:source when location is not set')
 
         # un-ingested object - should not error, should get current date
         obj = self.repo.get_object(type=audiomodels.AudioObject)

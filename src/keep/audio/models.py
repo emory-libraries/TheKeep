@@ -462,11 +462,29 @@ class AudioObject(DigitalObject):
         synchronized and make fields that need to be searchable accessible to
         Fedora findObjects API method.
          '''
+        # identifiers
+        del(self.dc.content.identifier_list)        # clear out any existing names
+        # include DM id and other id if they are present
+        if self.mods.content.dm1_id:
+            self.dc.content.identifier_list.append(self.mods.content.dm1_id)
+        if self.mods.content.dm1_other_id:
+            self.dc.content.identifier_list.append(self.mods.content.dm1_other_id)
+        
+        # title
         if self.mods.content.title:
             self.label = self.mods.content.title
             self.dc.content.title = self.mods.content.title
         if self.mods.content.resource_type:
             self.dc.content.type = self.mods.content.resource_type
+
+        # creator names
+        del(self.dc.content.creator_list)        # clear out any existing names
+        for name in self.mods.content.names:
+            # for now, use unicode conversion as defined in mods.Name
+            self.dc.content.creator_list.append(unicode(name))
+
+        # location
+        self.dc.content.source = self.mods.content.location
 
         # clear out any dates previously in DC
         del(self.dc.content.date_list)        
@@ -495,9 +513,11 @@ class AudioObject(DigitalObject):
            self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
         # digitization_purpose
-        if self.digitaltech.content.digitization_purpose:
-            self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
+        self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
+        # related files
+        self.dc.content.description_list.extend(self.sourcetech.content.related_files_list)
         # Currently not indexing general note in digital tech
+
 
         # clear out any rights previously in DC and set contents from Rights accessStatus
         del(self.dc.content.rights_list)
