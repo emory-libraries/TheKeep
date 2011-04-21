@@ -63,8 +63,8 @@ class ItemSearch(forms.Form):
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',
                     required=False)
-    pid = forms.CharField(required=False, help_text='Search by fedora pid.',
-            initial='%s:' % settings.FEDORA_PIDSPACE)
+    pid = forms.CharField(required=False, help_text='Search by fedora pid, DM id or DM other id.',
+            initial='%s:' % settings.FEDORA_PIDSPACE, label="Pid/DM ID/Other ID")
     date = forms.CharField(required=False,
             help_text=mark_safe('''Search date created, issued, or uploaded.  All dates
             are in <b>YYYY</b>, <b>YYYY-MM</b> or <b>YYYY-MM-DD</b> format.

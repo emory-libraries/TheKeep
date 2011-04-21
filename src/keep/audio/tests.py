@@ -335,9 +335,13 @@ class AudioViewsTest(EulDjangoTestCase):
         obj.collection_uri = self.rushdie.uri
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date='1492-05'))
+        obj.mods.content.dm1_id = '20'
+        obj.mods.content.dm1_other_id = '00000040'
         obj.save()
         obj2 = repo.get_object(type=audiomodels.AudioObject)
         obj2.mods.content.title = 'test search object 2'
+        obj2.mods.content.dm1_id = '3001'
+        obj2.mods.content.dm1_other_id = '00000930'
         obj2.rights.content.create_access_status()
         obj2.rights.content.access_status.code = 8
         obj2.rights.content.access_status.text = 'public domain'
@@ -363,10 +367,26 @@ class AudioViewsTest(EulDjangoTestCase):
 1
 of 1''',
             msg_prefix='search results include total number of records found')
+        
+        # search by DM id
+        response = self.client.get(search_url, {'audio-pid': obj.mods.content.dm1_id})
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 should be listed in results when searching by dm1 id")
+        self.assertEqual(1, len(found),
+                         "only one test object should be found when searching by dm1 id")
+        # search by DM other id
+        response = self.client.get(search_url, {'audio-pid': obj.mods.content.dm1_other_id})
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 should be listed in results when searching by dm1 other id")
+        self.assertEqual(1, len(found),
+                         "only one test object should be found when searching by dm1 other id")
+                
 
         # search by title phrase
         response = self.client.get(search_url,
-            {'audio-title': 'test search', 'audio-pid': '%s:' % settings.FEDORA_PIDSPACE })
+            {'audio-title': 'test search'}) # , 'audio-pid': '%s:' % settings.FEDORA_PIDSPACE 
         found = [o.pid for o in response.context['results']]
         code = response.status_code
         expected = 200

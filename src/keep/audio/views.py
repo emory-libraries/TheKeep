@@ -351,10 +351,17 @@ def search(request):
             'format__contains': AudioObject.AUDIO_CONTENT_MODEL,
         }
         if form.cleaned_data['pid']:
-            search_opts['pid__contains'] = '%s' % form.cleaned_data['pid']
-            # add a wildcard if the search pid is the initial value
-            if form.cleaned_data['pid'] == form.fields['pid'].initial:
-                search_opts['pid__contains'] += '*'
+            # pid can now be pid OR another id
+            # if the search string includes : then search on pid 
+            if ':' in form.cleaned_data:
+                search_opts['pid__contains'] = '%s' % form.cleaned_data['pid']
+                # add a wildcard if the search pid is the initial value
+                if form.cleaned_data['pid'] == form.fields['pid'].initial:
+                    search_opts['pid__contains'] += '*'
+            # otherwise, search dc:identifier
+            else:
+                search_opts['identifier__contains'] = form.cleaned_data['pid']
+                
         if form.cleaned_data['title']:
             search_opts['title__contains'] = form.cleaned_data['title']
         if form.cleaned_data['description']:
