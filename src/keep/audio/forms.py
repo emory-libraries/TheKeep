@@ -230,25 +230,58 @@ class SourceTechForm(XmlObjectForm):
         # return object instance
         return self.instance
 
-class UserChoiceField(forms.ModelChoiceField):
-    '''Extend Django's :class:`~django.forms.ModelChoiceField` to set a custom
-    label for displaying user objects'''
-    def label_from_instance(self, obj):
-        return '%s (%s)' % (', '.join([obj.last_name, obj.first_name]),
-                            obj.username)
+def _transfer_engineer_id(**kwargs):
+    '''Generate a transfer engineer id for use on the form. Keyword
+    arguments are expected to include type and id.'''
+    # this method is an attempt to ensure consistency in field order
+    # TODO: could this method be part of the TransferEngineer object?
+    return'%(type)s|%(id)s' % kwargs
+    
 
 class DigitalTechForm(XmlObjectForm):
     """Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit
     :class:`~keep.audio.models.DigitalTech` metadata.
     """
-    engineer = UserChoiceField(label='Transfer Engineer',
-        queryset=User.objects.filter(emoryldapuserprofile__isnull=False).order_by('last_name'),
-        empty_label=EMPTY_LABEL_TEXT, required=False,  # FIXME: pull from the xmlobject field?
-        # limit to LDAP users by presence of ldap profile and sort by last name
+    engineer = DynamicChoiceField(label='Transfer Engineer',
+        # choices method will be set at form instance initialization
+        required=DigitalTech._fields['transfer_engineer'].required,
+        # use required setting from xmlobject field (TODO: need a better way to access this...)
         help_text=mark_safe('''The person who performed the digitization or
         conversion that produced the file.<br/>
         Search by typing first letters of the last name.
         (Users must log in to this site once to be listed.)'''))
+    
+    def _transfer_engineer_options(self):
+        '''Method to use to dynamically populate the engineer
+        DymanicChoiceField.  Generates a list of all LDAP users in the
+        django DB with a select value that includes the id and idtype
+        to be set in the DigitalTech.transfer_engineer field.  If the
+        current data instance includes a non-LDAP user (i.e., user
+        information migrated from the legacy system), add that user
+        and id to the list so it will display and update correctly
+        when the form is saved.
+
+        This method must be assigned to engineer field choices at
+        object init so we have access to the current object instance.
+        '''
+        # get a list of  LDAP users; limiting by presence of ldap profile, sorting by last name
+        options = [(_transfer_engineer_id(type=TransferEngineer.LDAP_ID_TYPE,
+                                          id=user.username),
+                    '%s (%s)' % (user.get_full_name(), user.username))
+                   for user in User.objects.filter(emoryldapuserprofile__isnull=False).order_by('last_name')]
+        options.insert(0, ('', EMPTY_LABEL_TEXT))
+        # if there is an instance with a non-ldap id, add that to the options
+        if self.instance:
+            if self.instance.transfer_engineer and \
+                   self.instance.transfer_engineer.id_type != TransferEngineer.LDAP_ID_TYPE:
+                current_id =  _transfer_engineer_id(type=self.instance.transfer_engineer.id_type,
+                                                    id=self.instance.transfer_engineer.id)
+                display_label = "%s (DM %s)" % (self.instance.transfer_engineer.name,
+                                                self.instance.transfer_engineer.id)
+                options.append((current_id, display_label))
+        return options
+    
+
     hardware = forms.ChoiceField(sorted(CodecCreator.options), label='Codec Creator',
                     help_text='Hardware, software, and software version used to create the digital file',
                     required=True)
@@ -262,12 +295,18 @@ class DigitalTechForm(XmlObjectForm):
 
     def __init__(self, **kwargs):
         super(DigitalTechForm, self).__init__(**kwargs)
+        # bind the dynamic field choices for transfer engineer
+        self.fields['engineer'].choices = self._transfer_engineer_options
+        
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
-        engineer = 'engineer'
+        
+        # set engineer value based on id and id type
+        engineer = 'engineer'			# aliases for data keys in initial data
         engineer_id = 'transfer_engineer-id'
-        if engineer_id in self.initial and self.initial[engineer_id]:
-            # find corresponding User object based on transfer engineer id (ldap only for now)
-            self.initial[engineer] = User.objects.get(username=self.initial[engineer_id]).id
+        engineer_type = 'transfer_engineer-id_type'
+        if engineer_id in self.initial and engineer_type in self.initial:
+            self.initial[engineer] = _transfer_engineer_id(id=self.initial[engineer_id],
+                                                       type=self.initial[engineer_type])
 
         hardware = 'hardware'
         codec_creator_id = 'codec_creator-id'
@@ -282,14 +321,23 @@ class DigitalTechForm(XmlObjectForm):
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
             # set transfer engineer id and name based on User object
-            user = self.cleaned_data['engineer']
+            usertype, sep, userid  = self.cleaned_data['engineer'].partition('|')
             # transfer engineer is optional - set in xml if present, otherwise remove
-            if user:
+            if usertype and userid:
                 self.instance.create_transfer_engineer()
-                self.instance.transfer_engineer.id = user.username
-                # ldap only for now
-                self.instance.transfer_engineer.id_type = TransferEngineer.LDAP_ID_TYPE
-                self.instance.transfer_engineer.name = user.get_full_name()
+                self.instance.transfer_engineer.id = userid
+                self.instance.transfer_engineer.id_type = usertype
+                
+                # if this an ldap user, look up by username to get full name
+                if usertype == TransferEngineer.LDAP_ID_TYPE:
+                    user = User.objects.filter(username=userid).get()
+                    self.instance.transfer_engineer.name = user.get_full_name()
+                    
+                elif usertype == TransferEngineer.DM_ID_TYPE:
+                    # The only way an old-DM id can be set is if that is what was
+                    # present in the record before editing.
+                    # In that case, use the display name from the initial data.
+                    self.instance.transfer_engineer.name = self.initial['transfer_engineer-name']
             else:
                 del(self.instance.transfer_engineer)
 

@@ -197,6 +197,7 @@ class TransferEngineer(_BaseDigitalTech):
     'full display name for the transfer engineer'
 
     LDAP_ID_TYPE = 'ldap'
+    DM_ID_TYPE = 'dm'
 
 class CodecCreator(_BaseDigitalTech):
     ''':class:`~eulcore.xmlmap.XmlObject` for :class:`DigitalTech` codec creator'''

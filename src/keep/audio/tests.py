@@ -627,6 +627,7 @@ of 1''',
         # engineer & codec creator are initialized based on id values
         obj.digitaltech.content.create_transfer_engineer()
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
+        obj.digitaltech.content.transfer_engineer.id_type = audiomodels.TransferEngineer.LDAP_ID_TYPE
         obj.digitaltech.content.create_codec_creator()
         obj.digitaltech.content.codec_creator.id = '1'
         # pre-populate rights metadata
@@ -743,7 +744,8 @@ of 1''',
         self.assertEqual(item_dt.codec_quality, initial_data['codec_quality'])
         self.assertEqual(item_dt.note, initial_data['note'])
         self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
-        self.assertEqual(ldap_user.id, initial_data['engineer'])
+        self.assertEqual('%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE, ldap_user.username),
+                         initial_data['engineer'])
         self.assertEqual(item_dt.codec_creator.id, initial_data['hardware'])
         # rights in initial data
         initial_data = response.context['form'].rights.initial
@@ -784,7 +786,8 @@ of 1''',
                     'st-_speed': 'tape|15/16|inches/sec',
                     # digital-tech data
                     'dt-digitization_purpose': 'patron request',
-                    'dt-engineer': ldap_user.id,
+                    'dt-engineer': '%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE,
+                                              ldap_user.username),
                     'dt-hardware': '3',
                     # rights metadata
                     'rights-access': '8',       # public domain
@@ -848,7 +851,7 @@ of 1''',
         # check that digital tech fields were updated correctly
         dt = updated_obj.digitaltech.content
         self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
-        self.assertEqual('ldap', dt.transfer_engineer.id_type)
+        self.assertEqual(audiomodels.TransferEngineer.LDAP_ID_TYPE, dt.transfer_engineer.id_type)
         self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
         self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
         # codec creator - used id 3, which has two hardware fields
@@ -933,8 +936,39 @@ of 1''',
         response = self.client.post(edit_url, data)
         # get the latest copy of the object
         updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        #print updated_obj.digitaltech.content.serialize(pretty=True)
         self.assertFalse(updated_obj.digitaltech.content.transfer_engineer)
+
+        # test editing record with migrated legacy DM user transfer engineer
+        # engineer & codec creator are initialized based on id values
+        obj.digitaltech.content.create_transfer_engineer()
+        obj.digitaltech.content.transfer_engineer.id = 2100
+        obj.digitaltech.content.transfer_engineer.id_type = audiomodels.TransferEngineer.DM_ID_TYPE
+        obj.digitaltech.content.transfer_engineer.name = 'Historic User'
+        obj.save()
+        # get the form - non-LDAP user should be listed & selected
+        response = self.client.get(edit_url)
+        transf_eng = obj.digitaltech.content.transfer_engineer
+        select_id = '%s|%s' % (transf_eng.id_type, transf_eng.id)
+        self.assertContains(response, select_id,
+            msg_prefix='records with a legacy DM transfer engineer should include the legacy id options')
+        self.assertContains(response, transf_eng.name,
+            msg_prefix='records with a legacy DM transfer engineer should include the legacy name in options')
+        self.assertContains(response, '<option value="%s|%s" selected="selected">%s' % \
+           (transf_eng.id_type, transf_eng.id, transf_eng.name),
+            msg_prefix='records with a legacy DM transfer engineer should display the legacy id as selected')
+        # post the legacy user id - data should look as before
+        data = audio_data.copy()
+        data['dt-engineer'] = select_id
+        response = self.client.post(edit_url, data)
+        # id type, id, and name should all be set to legacy user information
+        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+        self.assertEqual(updated_obj.digitaltech.content.transfer_engineer.id,
+                         obj.digitaltech.content.transfer_engineer.id)
+        self.assertEqual(updated_obj.digitaltech.content.transfer_engineer.id_type,
+                         obj.digitaltech.content.transfer_engineer.id_type)
+        self.assertEqual(updated_obj.digitaltech.content.transfer_engineer.name,
+                         obj.digitaltech.content.transfer_engineer.name)
+
 
         # force a schema-validation error (shouldn't happen normally)
         # NOTE: invalid mods test should happen after all other tests that modify this object
@@ -994,7 +1028,8 @@ of 1''',
                     'st-_speed': 'other|other|other',
                     # digital-tech data
                     'dt-digitization_purpose': 'avoid nuclear war',
-                    'dt-engineer': ldap_user.id,
+                    'dt-engineer': '%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE,
+                                              ldap_user.username),
                     'dt-hardware': '3',
                     # rights metadata
                     'rights-access': 8,   # public domain
