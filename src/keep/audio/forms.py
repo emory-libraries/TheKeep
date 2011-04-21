@@ -270,10 +270,16 @@ class DigitalTechForm(XmlObjectForm):
                     '%s (%s)' % (user.get_full_name(), user.username))
                    for user in User.objects.filter(emoryldapuserprofile__isnull=False).order_by('last_name')]
         options.insert(0, ('', EMPTY_LABEL_TEXT))
+        
+        # add local transfer engineer options to the list
+    	for id, label in TransferEngineer.local_engineers.iteritems():
+            options.append((_transfer_engineer_id(type=TransferEngineer.LOCAL_ID_TYPE,
+                                                  id=id), label))
+        
         # if there is an instance with a non-ldap id, add that to the options
         if self.instance:
             if self.instance.transfer_engineer and \
-                   self.instance.transfer_engineer.id_type != TransferEngineer.LDAP_ID_TYPE:
+                   self.instance.transfer_engineer.id_type == TransferEngineer.DM_ID_TYPE:
                 current_id =  _transfer_engineer_id(type=self.instance.transfer_engineer.id_type,
                                                     id=self.instance.transfer_engineer.id)
                 display_label = "%s (DM %s)" % (self.instance.transfer_engineer.name,
@@ -338,6 +344,9 @@ class DigitalTechForm(XmlObjectForm):
                     # present in the record before editing.
                     # In that case, use the display name from the initial data.
                     self.instance.transfer_engineer.name = self.initial['transfer_engineer-name']
+
+                elif usertype == TransferEngineer.LOCAL_ID_TYPE:
+                    self.instance.transfer_engineer.name = TransferEngineer.local_engineers[userid]
             else:
                 del(self.instance.transfer_engineer)
 

@@ -962,12 +962,31 @@ of 1''',
         response = self.client.post(edit_url, data)
         # id type, id, and name should all be set to legacy user information
         updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertEqual(updated_obj.digitaltech.content.transfer_engineer.id,
-                         obj.digitaltech.content.transfer_engineer.id)
-        self.assertEqual(updated_obj.digitaltech.content.transfer_engineer.id_type,
-                         obj.digitaltech.content.transfer_engineer.id_type)
-        self.assertEqual(updated_obj.digitaltech.content.transfer_engineer.name,
-                         obj.digitaltech.content.transfer_engineer.name)
+        self.assertEqual(obj.digitaltech.content.transfer_engineer.id,
+                         updated_obj.digitaltech.content.transfer_engineer.id)
+        self.assertEqual(obj.digitaltech.content.transfer_engineer.id_type,
+                         updated_obj.digitaltech.content.transfer_engineer.id_type)
+        self.assertEqual(obj.digitaltech.content.transfer_engineer.name,
+                         updated_obj.digitaltech.content.transfer_engineer.name)
+        # test local transfer engineer options
+        # - when displaying the form, local options should be available
+        response = self.client.get(edit_url)
+        for local_id, local_name in audiomodels.TransferEngineer.local_engineers.iteritems():
+            self.assertContains(response, '%s|%s' % (audiomodels.TransferEngineer.LOCAL_ID_TYPE,
+                                                     local_id),
+                msg_prefix='select id should be listed for local transfer engineer %s' % local_name)
+            self.assertContains(response, local_name,
+                msg_prefix='local transfer engineer name %s should be listed' % local_name)
+
+        # save a record with a local transfer engineer
+        data['dt-engineer'] = 'local|vendor1'
+        response = self.client.post(edit_url, data)
+        # id type, id, and name should all be set to local engineer info
+        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+        self.assertEqual(audiomodels.TransferEngineer.LOCAL_ID_TYPE,
+                         updated_obj.digitaltech.content.transfer_engineer.id_type)
+        self.assertEqual('vendor1', updated_obj.digitaltech.content.transfer_engineer.id)
+        self.assertEqual('Vendor', updated_obj.digitaltech.content.transfer_engineer.name)
 
 
         # force a schema-validation error (shouldn't happen normally)
