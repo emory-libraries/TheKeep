@@ -34,12 +34,20 @@
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p class='extra'>
-  <a href="{% url audio:download-audio obj.pid %}">original audio</a>
-  {% if obj.compressed_audio.exists %}
-     | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
-  {% else %}
-     | access copy
-  {% endif %}
+  {% with 'original audio' as original %}
+    {% if obj.audio.exists %}
+      <a href="{% url audio:download-audio obj.pid %}">{{ original }}</a>
+    {% else %}
+      {{ original }}
+    {% endif %}
+  {% endwith %}
+  {% with 'access copy' as access %}
+    {% if obj.compressed_audio.exists %}
+      | <a href="{% url audio:download-compressed-audio obj.pid %}">{[ access }}</a>
+    {% else %}
+      | {{ access }}
+    {% endif %}
+  {% endwith %}
   | <a href="{% url audio:raw-ds obj.pid 'MODS' %}">MODS</a>
   | <a href="{% url audio:raw-ds obj.pid 'DC' %}">DC</a>
   | <a href="{% url audio:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>

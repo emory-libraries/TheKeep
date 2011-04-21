@@ -657,6 +657,21 @@ of 1''',
         self.assertContains(response, self.esterbrook.pid)
         self.assertContains(response, self.englishdocs.pid)
 
+        # audio datastream links
+        self.assertContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
+                            msg_prefix='edit page should link to audio datastream when available')
+        self.assertContains(response, 'original audio',
+                            msg_prefix='edit page should link to original audio datastream when available')
+        self.assertNotContains(response, reverse('audio:download-compressed-audio', kwargs={'pid': obj.pid }),
+                            msg_prefix='edit page should not link to non-existent comprresed audio')
+        # purge audio datastream to simulate a metadata migration object with no master audio
+        purged = obj.api.purgeDatastream(obj.pid, audiomodels.AudioObject.audio.id)
+        response = self.client.get(edit_url)
+        self.assertNotContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
+                            msg_prefix='edit page should not link to non-existent audio datastream')
+        self.assertContains(response, 'original audio',
+                            msg_prefix='edit page should display original audio as unavailable')
+        
         initial_data = response.context['form'].mods.initial
         item_mods = obj.mods.content
         self.assertEqual(item_mods.title, initial_data['title'],
