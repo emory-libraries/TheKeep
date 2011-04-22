@@ -2,6 +2,7 @@ from collections import namedtuple
 from datetime import date
 import os
 import wave
+import logging
 import mutagen
 import math
 import tempfile
@@ -14,9 +15,13 @@ from eulcore import xmlmap
 from eulcore.django.taskresult.models import TaskResult
 from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
+from eulcore.fedora.util import RequestFailed
 
+from keep.collection.models import get_cached_collection_dict
 from keep.common.fedora import DigitalObject, Repository
 from keep import mods
+
+logger = logging.getLogger(__name__)
 
 ##
 ## MODS
@@ -483,8 +488,17 @@ class AudioObject(DigitalObject):
             # for now, use unicode conversion as defined in mods.Name
             self.dc.content.creator_list.append(unicode(name))
 
-        # location
-        self.dc.content.source = self.mods.content.location
+        # location/repository - top level collection via parent collection
+        if self.collection_uri is not None:
+            try:
+                collection = get_cached_collection_dict(str(self.collection_uri))
+                self.dc.content.source = collection['collection_id']
+            except RequestFailed:
+                # warn about a fedora error, but otherwise do nothing
+                logger.warning('Error loading collection %s; cannot update dc:source with location for searching' \
+                               % self.collection_uri)
+        else:
+            del(self.dc.content.source)
 
         # clear out any dates previously in DC
         del(self.dc.content.date_list)        
@@ -583,16 +597,29 @@ class AudioObject(DigitalObject):
         return self._collection_uri
 
     def _set_collection_uri(self, collection_uri):
-        if not isinstance(collection_uri, URIRef):
-            collection_uri = URIRef(collection_uri)
+        # TODO: handle None!!!  don't set to rdflib.term.URIRef('None')), clear out rels-ext
+        if collection_uri is None:
 
-        # update/replace any existing collection membership (only one allowed, for now)
-        self.rels_ext.content.set((
-            self.uriref,
-            relsext.isMemberOfCollection,
-            collection_uri))
-        # clear out any cached collection id
-        self._collection_uri = None
+            # remove the current collection membership 
+            self.rels_ext.content.remove((
+                self.uriref,
+                relsext.isMemberOfCollection,
+                self._collection_uri))
+            
+            # clear out any cached collection id
+            self._collection_uri = None
+
+        else:
+            if not isinstance(collection_uri, URIRef):
+                collection_uri = URIRef(collection_uri)
+
+            # update/replace any existing collection membership (only one allowed, for now)
+            self.rels_ext.content.set((
+                self.uriref,
+                relsext.isMemberOfCollection,
+                collection_uri))
+            # clear out any cached collection id
+            self._collection_uri = None
 
     collection_uri = property(_get_collection_uri, _set_collection_uri)
     ':class:`~rdflib.URIRef` for the collection this object belongs to'

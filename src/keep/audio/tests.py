@@ -467,6 +467,15 @@ of 1''',
         self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
             msg_prefix='search results page should include search term (collection by name)')
 
+        # location/archive
+        response = self.client.get(search_url, {'audio-location':  self.rushdie.collection_id})
+        found = [o.pid for o in response.context['results']]
+        self.assert_(obj.pid in found,
+                "test object 1 listed in results when searching by location/archive/top-level collection")
+        self.assert_(obj2.pid not in found,
+                "test object 2 not listed in results when searching by location/archive")
+        
+
         # multiple fields
         response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri,
             'audio-title': 'search', 'audio-date': '1492*'})
@@ -1710,9 +1719,14 @@ class TestAudioObject(TestCase):
             self.obj.dc.content.title = self.obj.label
             self.obj.audio.content = wav
             self.obj.save()
+            
+        # collection fixture
+        self.rushdie = FedoraFixtures.rushdie_collection()
+        self.rushdie.save()
 
     def tearDown(self):
         self.repo.purge_object(self.obj.pid, "removing unit test fixture")
+        self.repo.purge_object(self.rushdie.pid)
 
     def test_creation(self):
         # verify that the owner id is set.
@@ -1781,7 +1795,6 @@ class TestAudioObject(TestCase):
         namexml.name_parts.append(namepartxml)
         namexml.roles.append(rolexml)
         self.obj.mods.content.names.append(namexml)
-        self.obj.mods.content.location = 'Somewhere over the rainbow'
         related_files = '1000, 2011'
         self.obj.sourcetech.content.related_files = related_files
         dig_purpose = 'patron request'
@@ -1789,8 +1802,7 @@ class TestAudioObject(TestCase):
         self.obj.rights.content.create_access_status()
         self.obj.rights.content.access_status.code = '8'
         self.obj.rights.content.access_status.text = 'Material is in public domain'
-        collection = 'collection:123'
-        self.obj.collection_uri = collection
+        self.obj.collection_uri = self.rushdie.uri
         self.obj._update_dc()
         
         self.assertEqual(title, self.obj.dc.content.title)
@@ -1806,7 +1818,8 @@ class TestAudioObject(TestCase):
         self.assert_(general_note in self.obj.dc.content.description_list)
         self.assert_(dig_purpose in self.obj.dc.content.description_list)
         self.assert_(related_files in self.obj.dc.content.description_list)
-        self.assertEqual(self.obj.mods.content.location, self.obj.dc.content.source)
+        # owning repository id should be set in dc:source
+        self.assertEqual(self.rushdie.collection_id, self.obj.dc.content.source)
         # currently using rights access condition code & text in dc:rights
         # should only be one in dc:rights - mods access condition not included
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
@@ -1815,7 +1828,7 @@ class TestAudioObject(TestCase):
         self.assert_(self.obj.dc.content.rights.endswith(access.text))        
 
         # collection URI in dc:relation (for findObjects search)
-        self.assertEqual(collection, self.obj.dc.content.relation)
+        self.assertEqual(self.rushdie.uri, self.obj.dc.content.relation)
         # cmodel in dc:format (for findObject search)
         self.assertEqual(self.obj.AUDIO_CONTENT_MODEL, self.obj.dc.content.format)
 
@@ -1826,10 +1839,10 @@ class TestAudioObject(TestCase):
         del(self.obj.mods.content.names)  # FIXME: does this work?
         del(self.obj.mods.content.dm1_id)
         del(self.obj.mods.content.dm1_other_id)
-        del(self.obj.mods.content.location)
         del(self.obj.digitaltech.content.digitization_purpose)
         del(self.obj.sourcetech.content.related_files)
         del(self.obj.rights.content.access_status)
+        self.obj.collection_uri = None   # remove collection membership
         self.obj._update_dc()
         self.assertEqual(1, len(self.obj.dc.content.date_list),
             'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
@@ -1843,7 +1856,7 @@ class TestAudioObject(TestCase):
         self.assertEqual([], self.obj.dc.content.identifier_list,
              'there should be no dc:identifiers when dm1 id and other dm1 id are not set')
         self.assertEqual(None, self.obj.dc.content.source,
-             'there should be no dc:source when location is not set')
+             'there should be no dc:source when collection is not set')
 
         # un-ingested object - should not error, should get current date
         obj = self.repo.get_object(type=audiomodels.AudioObject)
@@ -1919,6 +1932,9 @@ class TestAudioObject(TestCase):
 
         obj = self.repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
         self.assertEqual(FAKE_COLLECTION, str(obj.collection_uri))
+
+        self.obj.collection_uri = None
+        self.assertEqual(None, self.obj.collection_uri)
 
     def test_conversion_result(self):
         self.assertEqual(None, self.obj.conversion_result)

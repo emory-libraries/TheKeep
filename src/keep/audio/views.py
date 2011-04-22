@@ -353,7 +353,7 @@ def search(request):
         if form.cleaned_data['pid']:
             # pid can now be pid OR another id
             # if the search string includes : then search on pid 
-            if ':' in form.cleaned_data:
+            if ':' in form.cleaned_data['pid']:
                 search_opts['pid__contains'] = '%s' % form.cleaned_data['pid']
                 # add a wildcard if the search pid is the initial value
                 if form.cleaned_data['pid'] == form.fields['pid'].initial:
@@ -372,6 +372,8 @@ def search(request):
             search_opts['date__contains'] = form.cleaned_data['date']
         if form.cleaned_data['rights']:
             search_opts['rights__contains'] = '%s:' % form.cleaned_data['rights']
+        if form.cleaned_data['location']:
+            search_opts['source__contains'] = form.cleaned_data['location']
 
         # collect non-empty, non-default search terms to display to user on results page
         search_info = {}
