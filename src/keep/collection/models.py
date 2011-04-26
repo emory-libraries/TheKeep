@@ -166,6 +166,24 @@ class CollectionObject(DigitalObject):
         self._collection_id = None
         self._collection_label = None
 
+    def old_dm_media_path(self):
+        'Path to media in old Digital Masters interface.'
+        old_dm = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
+        coll_number = str(self.mods.content.source_id)
+
+        repo = Repository()
+        parent_uri = self.collection_id
+        parent = repo.get_object(parent_uri, CollectionObject)
+        marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
+        if parent.pid == marbl_pid:
+            if coll_number == '0':
+                return '%sspec_coll/Danowski/' % (old_dm,)
+            else:
+                return '%sspec_col/MSS%s/' % (old_dm, coll_number)
+        else:
+            return '%suniv_arch/SER%s/' % (old_dm, coll_number)
+
+
     @staticmethod
     def top_level():
         """Find top-level collection objects.

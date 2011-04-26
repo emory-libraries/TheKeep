@@ -1244,9 +1244,25 @@ of 1''',
         obj6.rights.content.block_external_access = True
         obj6.collection_uri = self.esterbrook.uri
         obj6.save()
+        obj7 = repo.get_object(type=audiomodels.AudioObject)
+        obj7.mods.content.title = 'Moses lecture on calves and redoing work'
+        obj7.mods.content.dm1_id = '42753'
+        obj7.rights.content.create_access_status()
+        obj7.rights.content.access_status.code = 8 # public domain
+        obj7.collection_uri = self.esterbrook.uri
+        obj7.save()
+        obj8 = repo.get_object(type=audiomodels.AudioObject)
+        obj8.mods.content.title = 'Odysseus recites The Iliad'
+        obj8.mods.content.dm1_id = '124578'
+        obj8.mods.content.dm1_other_id = '000875421'
+        obj8.rights.content.create_access_status()
+        obj8.rights.content.access_status.code = 8 # public domain
+        obj8.collection_uri = self.esterbrook.uri
+        obj8.save()
+
         # add pids to list for clean-up in tearDown
         self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid,
-                          obj6.pid])
+                          obj6.pid, obj7.pid, obj8.pid])
 
         response = self.client.get(feed_url)
         expected, code = 200, response.status_code
@@ -1264,8 +1280,13 @@ of 1''',
             msg_prefix='pid for test object without rights information should NOT be included in feed')
         self.assertNotContains(response, obj6.pid,
             msg_prefix='pid for test object with negative override should NOT be included in feed')
+        self.assertContains(response, obj7.pid,
+            msg_prefix='pid for test object from old dm should be included in feed')
+        self.assertContains(response, obj8.pid,
+            msg_prefix='pid for test object with old dm filename should be included in feed')
         self.assertContains(response, obj.mods.content.title,
             msg_prefix='title for first test object should be included in feed')
+
         self.assertContains(response, obj2.mods.content.title,
             msg_prefix='title for second test object should be included in feed')
         self.assertContains(response, '%s - %s' % (self.rushdie.mods.content.source_id,
@@ -1278,6 +1299,10 @@ of 1''',
             msg_prefix='part note for first test object should be included in feed')
         self.assertContains(response, 'May 1976',
             msg_prefix='dateIssued should be included in feed')
+        self.assertContains(response, obj7.mods.content.dm1_id,
+            msg_prefix='dm1_id should be included in feed where defined')
+        self.assertContains(response, obj8.mods.content.dm1_other_id,
+            msg_prefix='dm1_other_id should be included in feed where defined')
 
         # test pagination
         settings.MAX_ITEMS_PER_PODCAST_FEED = 1

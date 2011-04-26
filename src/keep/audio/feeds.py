@@ -83,7 +83,7 @@ class PodcastFeed(Feed):
         for obj in current_chunk.object_list:
             try:
                 # limit to objects with access-copy audio files available
-                if not obj.compressed_audio.exists:
+                if not obj.get_access_url():
                     logger.debug('%s does not have compressed audio: excluding from podcast feed' \
                                  % obj.pid)
                     continue
@@ -142,8 +142,8 @@ class PodcastFeed(Feed):
         return categories
 
     def item_enclosure_url(self, item):
-        # link to audio file - MUST be an absolute url
-        return absolutize_url(reverse('audio:download-compressed-audio', args=[item.pid]))                    
+        # link to audio file - many clients require this to be an absolute url
+        return absolutize_url(item.get_access_url())
 
     def item_enclosure_length(self, item):
         return item.compressed_audio.info.size

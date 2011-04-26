@@ -126,3 +126,6 @@ INGEST_STAGING_TEMP_DIR = '/tmp/digitalmasters-ingest-staging'
 # time in seconds that files in the ingest staging directory should be kept
 INGEST_STAGING_KEEP_AGE = 60*60*24*3
 
+# kiosk-accessible path to files still living in old Digital Masters. must
+# end with /
+OLD_DM_MEDIA_ROOT = 'http://masters.library.emory.edu/harvest/preservation/'

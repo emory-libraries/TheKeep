@@ -9,6 +9,7 @@ import tempfile
 
 from rdflib import URIRef
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.db.models import permalink
 
 from eulcore import xmlmap
@@ -17,7 +18,7 @@ from eulcore.fedora.models import FileDatastream, XmlDatastream
 from eulcore.fedora.rdfns import relsext
 from eulcore.fedora.util import RequestFailed
 
-from keep.collection.models import get_cached_collection_dict
+from keep.collection.models import get_cached_collection_dict, CollectionObject
 from keep.common.fedora import DigitalObject, Repository
 from keep import mods
 
@@ -447,6 +448,27 @@ class AudioObject(DigitalObject):
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return ('audio:view', [str(self.pid)])
+
+    def get_access_url(self):
+        "Absolute url to hear this object's access version"
+        if self.compressed_audio.exists:
+            return reverse('audio:download-compressed-audio', args=[str(self.pid)])
+
+        # otherwise see if it's from old dm
+        if self.mods.content.dm1_id or self.mods.content.dm1_other_id:
+            if self._collection_object() and \
+                    self._collection_object().old_dm_media_path():
+                coll_root = self._collection_object().old_dm_media_path()
+                if self.mods.content.dm1_other_id:
+                    return '%saudio/%s.m4a' % (coll_root, self.mods.content.dm1_other_id)
+                if self.mods.content.dm1_id:
+                    return '%saudio/%s.m4a' % (coll_root, self.mods.content.dm1_id)
+
+    def _collection_object(self):
+        repo = Repository()
+        coll_uri = self.collection_uri
+        if coll_uri:
+            return repo.get_object(coll_uri, type=CollectionObject)
 
     @property
     def conversion_result(self):
