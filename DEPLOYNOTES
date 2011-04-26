@@ -229,6 +229,15 @@ you will need to override this in your ``localsettings.py``.  See the commented 
 Upgrade Notes
 -------------
 
+Release 1.1 - Metadata Migration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* The kiosk RSS feed now links to files in the old Digital Masters datastore
+  once their metadata records are in The Keep. This requires setting an
+  ``OLD_DM_MEDIA_ROOT`` in localsettings. It should point to the root URL for
+  preservation files. Our correct production setting is the one listed in
+  ``localsettings.py.sample``.
+
 Release 1.0 - Min Items, part IV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
