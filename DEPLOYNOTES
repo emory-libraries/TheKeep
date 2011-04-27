@@ -105,7 +105,17 @@ The Keep expects to connect to a Fedora-Commons repository version
   <param name="ENFORCE-MODE" value="enforce-policies"/>
 
 Fedora xacml repository policies should be installed from
-https://svn.library.emory.edu/svn/fedora/repository-policies/
+https://svn.library.emory.edu/svn/fedora/repository-policies/ (or from
+the most recently tagged version of the repository-policies, as
+identified in version-specific upgrade notes).  This checkout should
+include a policy file named
+**permit-keep-content-if-keep-admin-or-server.xml** in the directory
+of Keep-specific policies.  The default configuration should be
+suitable for a production environment, but if you are deploying the
+policies to another environment, you should update the policy to
+include the IP address of the server where the web application will
+run.
+
 
 Celery/RabbitMQ
 """""""""""""""
@@ -221,13 +231,33 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Notes for Developers
 ~~~~~~~~~~~~~~~~~~~~
 
-As of `Release 1.8 - Min Items, part IV`_ the project default Session configuration is set to mark
+As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
 cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
 you will need to override this in your ``localsettings.py``.  See the commented out example in
 ``localsettings.py.sample``.
 
+The version of the Fedora XACML policy checked into subversion is
+configured for the production environment.  When this policy is
+deployed to a development environment, you will want to edit the
+deployed version to include the IP addresses of any servers that will
+need to access Keep content for development or testing.
+
 Upgrade Notes
 -------------
+
+
+Release 1.0.2
+~~~~~~~~~~~~~
+
+The Fedora XACML policy has been corrected for the production
+environment.  Please update the Fedora policies to this tag:
+
+https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.6.1
+
+See `Fedora`_ configuration notes for additional information on
+possible additional steps for customizing this policy (for
+non-production environment).
+
 
 Release 1.0 - Min Items, part IV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
