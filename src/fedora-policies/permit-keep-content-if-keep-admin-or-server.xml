@@ -87,12 +87,12 @@ specific Keep admin users and from Keep application server.</Description>
       <!-- restrict to allowed servers by IP address
            (at mimimum, this list should include the django webapp server)
         -->
-      <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function::string-at-least-one-member-of">
-          <EnvironmentAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:environment:httpRequest:clientIpAddress" DataType="http://www.w3.org/2001/XMLSchema#string"/>
-          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
-            <!-- heisenberg (production django server)  -->
-            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.36</AttributeValue>
-          </Apply>
+      <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
+        <EnvironmentAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:environment:httpRequest:clientIpAddress" DataType="http://www.w3.org/2001/XMLSchema#string"/>
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+          <!-- heisenberg (production django server)  -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.36</AttributeValue>
+        </Apply>
       </Apply>
     </Condition> 
 
