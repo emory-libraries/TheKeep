@@ -220,14 +220,6 @@ See http://ask.github.com/celery/cookbook/daemonizing.html for instructions
 on configuring celery to run as a daemon.
 
 
-Test Setup
-~~~~~~~~~~
-
-Certain unit tests pass test user credentials to Fedora, in order to test and
-simulate accessing Fedora as the logged in user.  For tests to work properly,
-the unit test user should be defined (with appropriate permissions)
-as a fedora account.  See :mod:`keep.audio.tests` for account details.
-
 Notes for Developers
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -242,8 +234,25 @@ deployed to a development environment, you will want to edit the
 deployed version to include the IP addresses of any servers that will
 need to access Keep content for development or testing.
 
+Test Setup
+^^^^^^^^^^
+
+Certain unit tests pass test user credentials to Fedora, in order to test and
+simulate accessing Fedora as the logged in user.  For tests to work properly,
+the unit test user should be defined (with appropriate permissions)
+as a fedora account.  See :mod:`keep.audio.tests` for account details.
+
+
 Upgrade Notes
 -------------
+
+Release 1.0.3
+~~~~~~~~~~~~~
+
+* This release depends on a newer version of python-eulcore. Activate
+  the virtualenv and update::
+
+    $ pip install -r pip-dependencies
 
 
 Release 1.0.2

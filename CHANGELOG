@@ -3,6 +3,22 @@
 CHANGELOG
 =========
 
+Release 1.0.3
+-------------
+
+* Update to a newer version of eulcore for revised default pid logic;
+  include the object label as a pid name when generating a new ARK for
+  an object pid.
+* Added a log message when ingesting new audio objects so that an
+  audit trail mesage will be saved in Fedora.
+* Convenience short-cut search links on the home page to fixnd items
+  uploaded today, yesterday, and in the current month.
+
+Release 1.0.2
+-------------
+
+* Update to Fedora XACML policy for production environment.
+
 Release 1.0 - Min Items, part IV
 ---------------------------------
 Date: March 2011
