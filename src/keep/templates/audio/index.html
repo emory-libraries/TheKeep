@@ -8,7 +8,7 @@
 <p><a href="{% url tasks:recent %}">status of recent audio conversions</a></p>
 <p><a href="{% url audio:feed-list %}">iTunes podcast feeds</a></p>
 
-<p>View recently uploaded items:
+<p><b>Recent uploads</b>: view items that were uploaded
   <a href="{% url audio:search %}?audio-date={{ today|date:"Y-m-d" }}">today</a>
   | <a href="{% url audio:search %}?audio-date={{ yesterday|date:"Y-m-d" }}">yesterday</a>
   |  <a href="{% url audio:search %}?audio-date={{ today|date:"Y-m*" }}">this month</a>
