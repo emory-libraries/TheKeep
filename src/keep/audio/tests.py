@@ -1713,6 +1713,70 @@ class TestWavDuration(TestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
+class TestWavMP3DurationCheck(TestCase):
+    def setUp(self):
+        # create an audio object to test conversion with
+        self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
+                                         'test wav/mp3 duration checks',  checksum=wav_md5)
+        self.obj.save()
+        self.pids = [self.obj.pid]
+
+    def tearDown(self):
+        # purge any objects created by individual tests
+        for pid in self.pids:
+            FedoraFixtures.repo.purge_object(pid)
+
+    def test_compare_local_files(self):
+        # compare wav with equivalent mp3
+        self.assertTrue(audiomodels.check_wav_mp3_duration(wav_file_path=wav_filename,
+                                                           mp3_file_path=mp3_filename),
+                        'matching wav and mp3 should pass duration check')
+        # compare alternate wav with original mp3
+        self.assertFalse(audiomodels.check_wav_mp3_duration(wav_file_path=alternate_wav_filename,
+                                                           mp3_file_path=mp3_filename),
+                        'non-matching wav and mp3 should not pass duration check')
+
+        # pass non-mp3 file as mp3
+        self.assertRaises(Exception, audiomodels.check_wav_mp3_duration, None, wav_filename,
+                                                           alternate_wav_filename)
+        # pass non-existent file
+        self.assertRaises(Exception, audiomodels.check_wav_mp3_duration, None,
+                          '/tmp/my/very/bogus/file.wav', '/tmp/my/very/bogus/file.mp3')
+
+        
+    def test_compare_object_datastreams(self):
+        # initially has no mp3
+        self.assertFalse(audiomodels.check_wav_mp3_duration(self.obj.pid),
+            'wav/mp3 duration check should fail when object has no access datastream and filename is not specified')
+
+        # compare with local mp3
+        self.assertTrue(audiomodels.check_wav_mp3_duration(self.obj.pid, mp3_file_path=mp3_filename),
+            'wav/mp3 duration check pass for object and matching local mp3')
+
+        # add mp3 to object
+        with open(mp3_filename) as mp3_file:
+            self.obj.compressed_audio.content = mp3_file
+            self.obj.compressed_audio.checksum = mp3_md5
+            self.obj.save('adding compressed audio to test audio duration check')
+
+            self.assertTrue(audiomodels.check_wav_mp3_duration(self.obj.pid),
+            	'wav/mp3 duration check should pass for matching wav/mp3 datastreams on object')
+
+            # compare mp3 on object to local wav files
+            self.assertTrue(audiomodels.check_wav_mp3_duration(self.obj.pid, wav_file_path=wav_filename),
+                'duration should match for mp3 datastream on object and matching local wav file')
+            
+            self.assertFalse(audiomodels.check_wav_mp3_duration(self.obj.pid,
+                                                                wav_file_path=alternate_wav_filename),
+                'duration should not match for mp3 datastream on object and non-matching local wav file')
+
+                            
+
+        
+        
+        
+#def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
+
 
 class TestModsEditForm(TestCase):
     MIN_DATA = {
@@ -1795,32 +1859,35 @@ class SourceAudioConversions(TestCase):
         # inspect the object in fedora to confirm that the audio was added
         repo = Repository()
         obj = repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
-        self.assertTrue(obj.compressed_audio.exists)
+        self.assertTrue(obj.compressed_audio.exists,
+           'compressed audio datastream should exist in Fedora after mp3 conversion')
 
         #Verify the wav and mp3 durations match.
-        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid)
-        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+        comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid)
+        self.assertTrue(comparison_result,
+            "duration for WAV and generated MP3 datastreams should match.")
 
         # any other settings/info on the mp3 datastream that should be checked?
 
     def test_wav_to_mp3_localfile(self):
-        #test conversion when wav file on hard-disk is specified.
+        #test conversion when path to local wav file is specified.
         result = convert_wav_to_mp3(self.obj.pid, use_wav=wav_filename)
         self.assertEqual(result, "Successfully converted file")
 
         self.assertTrue(os.path.exists(wav_filename),
-            'specified wav file should not be removed if we did not request removal')
+            'local wav file should not be removed if we did not request removal')
 
         #Verify the wav and mp3 durations match.
-        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
-        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+        comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid, wav_file_path=wav_filename)
+        self.assertTrue(comparison_result,
+             "duration for MP3 should match WAV file it was generated from.")
 
         # copy wav file so we can test removing it
         wav_copy = os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav')
         copyfile(wav_filename, wav_copy)
         result = convert_wav_to_mp3(self.obj.pid, use_wav=wav_copy, remove_wav=True)
         self.assertFalse(os.path.exists(wav_copy),
-            'specified wav file should be removed when requested')
+            'local wav file should be removed when requested')
 
     def test_nonexistent(self):
         # test with invalid pid
@@ -1834,20 +1901,25 @@ class SourceAudioConversions(TestCase):
         self.assertRaises(Exception, convert_wav_to_mp3, self.obj.pid, alternate_wav_filename)
 
     def test_changing_wav_file(self):
-        self.obj.audio.content = open(alternate_wav_filename)  # FIXME: at what point does/should this get closed?
-        self.obj.audio.checksum=alternate_wav_md5
-        self.obj.save()
-        
-        result = convert_wav_to_mp3(self.obj.pid)
-        self.assertEqual(result, "Successfully converted file")
+        with open(alternate_wav_filename) as alt_audio:
+            self.obj.audio.content = alt_audio
+            self.obj.audio.checksum = alternate_wav_md5
+            self.obj.save()
 
-        #Verify it no longer matches the original wav file.
-        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=wav_filename)
-        self.assertFalse(comparison_result, "WAV and MP3 durations did not match.")
+            result = convert_wav_to_mp3(self.obj.pid)
+            self.assertEqual(result, "Successfully converted file")
 
-        #Verify the new wav and mp3 durations match.
-        comparison_result = audiomodels.wav_and_mp3_duration_comparator(self.obj.pid, wav_file_path=alternate_wav_filename)
-        self.assertTrue(comparison_result, "WAV and MP3 durations did not match.")
+            #Verify it no longer matches the original wav file.
+            comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid,
+                wav_file_path=wav_filename)
+            self.assertFalse(comparison_result,
+            	"MP3 generated from alternate WAV should not match duration of original WAV")
+
+            #Verify the new wav and mp3 durations match.
+            comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid,
+                wav_file_path=alternate_wav_filename)
+            self.assertTrue(comparison_result,
+                 "MP3 should match duration of the WAV file it was generated from.")
         
 
     # TODO: test failures, error handling, etc.
