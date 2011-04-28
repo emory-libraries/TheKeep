@@ -254,6 +254,21 @@ Release 1.0.3
 
     $ pip install -r pip-dependencies
 
+* Previously, the code did not add a name to PID records when
+  generating ARKs for new objects.  To update the PID records with
+  labels for objects that have already been created, the following
+  code can be used in the django console:
+
+  .. code-block:: python
+
+    from keep.common.fedora import Repository
+    from django.conf import settings
+    from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
+    repo = Repository()
+    pidman = DjangoPidmanRestClient()
+    objs = repo.find_objects(owner=settings.FEDORA_OBJECT_OWNERID)
+    for obj in objs:
+        pidman.update_ark(obj.noid, name=obj.label)
 
 Release 1.0.2
 ~~~~~~~~~~~~~
