@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 import json
 import logging
 import magic
@@ -39,9 +40,12 @@ allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
 def index(request):
-    search = audioforms.ItemSearch()
-    return render_to_response('audio/index.html', {'search' : search},
-            context_instance=RequestContext(request))
+    # pass dates in to the view to link to searches for recently uploaded files
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    return render_to_response('audio/index.html', {
+        'today': today, 'yesterday' : yesterday,
+        }, context_instance=RequestContext(request))
 
 @permission_required_with_ajax('is_staff')
 @csrf_exempt
