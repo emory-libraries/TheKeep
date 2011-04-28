@@ -105,7 +105,17 @@ The Keep expects to connect to a Fedora-Commons repository version
   <param name="ENFORCE-MODE" value="enforce-policies"/>
 
 Fedora xacml repository policies should be installed from
-https://svn.library.emory.edu/svn/fedora/repository-policies/
+https://svn.library.emory.edu/svn/fedora/repository-policies/ (or from
+the most recently tagged version of the repository-policies, as
+identified in version-specific upgrade notes).  This checkout should
+include a policy file named
+**permit-keep-content-if-keep-admin-or-server.xml** in the directory
+of Keep-specific policies.  The default configuration should be
+suitable for a production environment, but if you are deploying the
+policies to another environment, you should update the policy to
+include the IP address of the server where the web application will
+run.
+
 
 Celery/RabbitMQ
 """""""""""""""
@@ -210,21 +220,38 @@ See http://ask.github.com/celery/cookbook/daemonizing.html for instructions
 on configuring celery to run as a daemon.
 
 
+Notes for Developers
+~~~~~~~~~~~~~~~~~~~~
+
+The following instructions can be ignored when deploying to a staging
+or production environment, but may be helpful to a developer working
+on the project or running automated tests.
+
+Sesson configuration
+^^^^^^^^^^^^^^^^^^^^
+
+As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
+cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
+you will need to override this in your ``localsettings.py``.  See the commented out example in
+``localsettings.py.sample``.
+
+Fedora XACML policy
+^^^^^^^^^^^^^^^^^^^
+
+The version of the Fedora XACML policy checked into subversion is
+configured for the production environment.  When this policy is
+deployed to a development environment, you will want to edit the
+deployed version to include the IP addresses of any servers that will
+need to access Keep content for development or testing.
+
 Test Setup
-~~~~~~~~~~
+^^^^^^^^^^
 
 Certain unit tests pass test user credentials to Fedora, in order to test and
 simulate accessing Fedora as the logged in user.  For tests to work properly,
 the unit test user should be defined (with appropriate permissions)
 as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
-Notes for Developers
-~~~~~~~~~~~~~~~~~~~~
-
-As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
-cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
-you will need to override this in your ``localsettings.py``.  See the commented out example in
-``localsettings.py.sample``.
 
 Upgrade Notes
 -------------
@@ -234,9 +261,45 @@ Release 1.1 - Metadata Migration
 
 * The kiosk RSS feed now links to files in the old Digital Masters datastore
   once their metadata records are in The Keep. This requires setting an
-  ``OLD_DM_MEDIA_ROOT`` in localsettings. It should point to the root URL for
+  **OLD_DM_MEDIA_ROOT** in localsettings. It should point to the root URL for
   preservation files. Our correct production setting is the one listed in
   ``localsettings.py.sample``.
+
+Release 1.0.3
+~~~~~~~~~~~~~
+
+* This release depends on a newer version of python-eulcore. Activate
+  the virtualenv and update::
+
+    $ pip install -r pip-dependencies
+
+* Previously, the code did not add a name to PID records when
+  generating ARKs for new objects.  To update the PID records with
+  labels for objects that have already been created, the following
+  code can be used in the django console:
+
+  .. code-block:: python
+
+    from keep.common.fedora import Repository
+    from django.conf import settings
+    from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
+    repo = Repository()
+    pidman = DjangoPidmanRestClient()
+    objs = repo.find_objects(owner=settings.FEDORA_OBJECT_OWNERID)
+    for obj in objs:
+        pidman.update_ark(obj.noid, name=obj.label)
+
+Release 1.0.2
+~~~~~~~~~~~~~
+
+The Fedora XACML policy has been corrected for the production
+environment.  Please update the Fedora policies to this tag:
+
+https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.6.1
+
+See `Fedora`_ configuration notes for additional information on
+possible additional steps for customizing this policy (for
+non-production environment).
 
 Release 1.0 - Min Items, part IV
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

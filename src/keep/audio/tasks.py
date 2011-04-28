@@ -7,7 +7,7 @@ from celery.decorators import task
 
 from django.conf import settings
 
-from keep.audio.models import AudioObject, wav_and_mp3_duration_comparator
+from keep.audio.models import AudioObject, check_wav_mp3_duration
 from keep.common.fedora import Repository
 from keep.common.utils import md5sum
 
@@ -82,22 +82,22 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
             raise Exception("Checksum for local audio file %s does not match Fedora datastream checksum %s" % \
                 (calculated_checksum, obj.audio.checksum))            
         
-        #Call the conversion utility. 
-        #NOTE: With files greater than 2GB, the visual output from LAME will not be correct, but it will convert and return 0.
+        # Call the conversion utility.
+        # NOTE: With files greater than 2GB, the visual output from
+        # LAME will not be correct, but it will convert and return 0.
         process  = subprocess.Popen(['lame', '--preset', 'insane', wav_file_path, mp3_file_path],
                 stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
         # returns a tuple of stdout, stderr. The output of the LAME goes to stderr.
         stdout_output, stderr_output = process.communicate()
-
-        #Return code of the process.
+        # Return code of the process.
         return_code = process.returncode
     
-        #Ensure success from output, and if so, save the file and remove the temporary files.
-        if (return_code == 0):
-            #Verify the original file and this file are the same length to within 0.1 seconds.
-            if(not wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=wav_file_path, mp3_file_path=mp3_file_path)):
+        # Ensure success from output, and if so, save the file and remove the temporary files.
+        if return_code == 0:
+            # Verify the original file and generated mp3 are the same length (within tolerable limits)
+            if not check_wav_mp3_duration(wav_file_path=wav_file_path, mp3_file_path=mp3_file_path):
                 logger.error("Failed to convert audio file (duration of wav and mp3 did not match) for %s " % pid)
                 raise Exception("Error generating MP3 (duration of wav and mp3 did not match)")
 

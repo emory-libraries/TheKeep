@@ -95,8 +95,10 @@ class DigitalObject(models.DigitalObject):
             target = target.replace(self.ENCODED_PID_TOKEN, self.PID_TOKEN)
             # reverse() returns a full path - absolutize so we get scheme & server also
             target = absolutize_url(target)
+            # pid name is not required, but helpful for managing pids
+            pid_name = self.label
             # ask pidman for a new ark in the configured pidman domain
-            ark = pidman.create_ark(settings.PIDMAN_DOMAIN, target)
+            ark = pidman.create_ark(settings.PIDMAN_DOMAIN, target, name=pid_name)
             # grab the noid from the tail end of the ark
             arkbase, slash, noid = ark.rpartition('/')
             # and construct a pid in the configured pidspace
@@ -105,7 +107,6 @@ class DigitalObject(models.DigitalObject):
             # if pidmanager is not available, fall back to default pid behavior
             return super(DigitalObject, self).get_default_pid()
             
-
 
 class Repository(server.Repository):
     """Extend the Django-ized Fedora Repository object to take a request object

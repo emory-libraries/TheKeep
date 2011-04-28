@@ -661,12 +661,12 @@ class AudioObject(DigitalObject):
 
 
 def wav_duration(filename):
-    '''Calculate the duration of a WAV file using Python's built in :mod:`wave`
+    """Calculate the duration of a WAV file using Python's built in :mod:`wave`
     library.  Raises a StandardError if file cannot be read as a WAV.
 
     :param filename: full path to the WAV file
     :returns: duration in seconds as a float
-    '''
+    """
     try:
         wav_file = wave.open(filename, 'rb')
     except wave.Error as werr:
@@ -674,19 +674,30 @@ def wav_duration(filename):
         raise StandardError('Failed to open file %s as a WAV due to: %s' % (filename, werr))
     # any other file errors will be propagated as IOError
     
-    # duration in secdons = number of samples / sampling frequency
+    # duration in seconds = number of samples / sampling frequency
     duration = float(wav_file.getnframes())/float(wav_file.getframerate())
     return duration
 
-def wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=None,mp3_file_path=None):
-    '''Compare the wav and mp3 files against one another to ensure they
-    are roughly the same length.
+def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
+    '''Compare the durations of a wav file with an mp3 file (presumably an mp3
+    generated from the wav via :meth:`keep.audio.tasks.convert_wav_to_mp3` )
+    to check that they are roughly the same length.
 
-    :param obj_pid: The base fedora object pid to get the wav/mp3 file from.
-    :param wav_file_path: Path to the wav_file to use rather than get it from the object.
-    :param mp3_file_path: Path to the mp3_file to use rather than get it from the object.
-                          Must end in .mp3 for the duration library to work.
-    :returns: boolean true or false of the operation
+    :param obj_pid: The pid of a fedora object (expected to be an
+	AudioObject) to get the wav and/or mp3 files from if they are
+        not specified by path.
+
+    :param wav_file_path: Path to the wav_file to use for comparison;
+    	if not specified, it will be downloaded from the object in
+        Fedora.
+      
+    :param mp3_file_path: Path to the mp3_file to use for comparison;
+    	if not specified, it will be downloaded from the object in
+    	Fedora.  Note that this file must end in .mp3 for the duration
+        to be calculated.
+                          
+    :returns: True if the two files have the same duration, or close
+	enough duration (no more than 1 second difference)
     '''
     try:
         #Initialize temporary files to None.
@@ -702,7 +713,7 @@ def wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=None,mp3_file_pat
             os.makedirs(tempdir)
 
         #If no wav file is specified, use the object.
-        if(wav_file_path is None):
+        if wav_file_path is None:
             #Load the object.
             obj = repo.get_object(obj_pid, type=AudioObject)
             # download the compressed audio file from the object in fedora
@@ -719,14 +730,15 @@ def wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=None,mp3_file_pat
             except Exception as e:                
                  raise
             finally:
-                #NOTE: This automatically closes the open tmpfd via Python magic, calling os.close(tmpfd) at this point will error.
+                # NOTE: This automatically closes the open tmpfd via Python magic;
+                # calling os.close(tmpfd) at this point will error.
                 destination.close()
         #Else use the passed in wav file.
         else:
             tmp_wav_path = wav_file_path
 
         #If no mp3 file is specified, use the object.
-        if(mp3_file_path is None):
+        if mp3_file_path is None:
             #Load the object.
             obj = repo.get_object(obj_pid, type=AudioObject)
             #Verify the compressed datastream exists, if not, return false as cannot match.
@@ -735,31 +747,34 @@ def wav_and_mp3_duration_comparator(obj_pid=None,wav_file_path=None,mp3_file_pat
 
             # download the master audio file from the object in fedora
             # mkstemp returns file descriptor and full path to the temp file
-            tmp_fd_mp3, tmp_mp3_path = tempfile.mkstemp(dir=tempdir,suffix=".mp3")       
+            tmp_fd_mp3, tmp_mp3_path = tempfile.mkstemp(dir=tempdir,suffix=".mp3")
             try:
                 destination = os.fdopen(tmp_fd_mp3, 'wb+')
-            except Exception as e:
+            except Exception:
                 os.close(tmp_fd_mp3)
                 raise
             
             try:
                 destination.write(obj.compressed_audio.content.read())
-            except Exception as e:                
-                raise
+            # just pass any exceptions up the chain
             finally:
-                #NOTE: This automatically closes the open tmpfd via Python magic, calling os.close(tmpfd) at this point will error.
+                # NOTE: This automatically closes the open tmpfd via Python magic;
+                # calling os.close(tmpfd) at this point will error.
                 destination.close()
         #Else use the passed in wav file.
         else:
             tmp_mp3_path = mp3_file_path
 
         #Get information on the mp3 file using mutagen:
-        mp3_file_tags = mutagen.File(tmp_mp3_path)
-        mp3_file_length = mp3_file_tags.info.length
-        wav_file_length = wav_duration(tmp_wav_path)
+        mp3_tags = mutagen.File(tmp_mp3_path)
+        if mp3_tags is None:
+            raise Exception('Could not get MP3 tag information for MP3 file %s' % tmp_mp3_path)
+            
+        mp3_length = mp3_tags.info.length
+        wav_length = wav_duration(tmp_wav_path)
 
-        #Verify the original file and this file are the same length to within 1.0 seconds.
-        return (math.fabs(mp3_file_length - wav_file_length) < 1.0)
+        #Verify the wav file and the mp3 file are the same length to within 1.0 seconds.
+        return (math.fabs(mp3_length - wav_length) < 1.0)
     except Exception:
         raise
     #Cleanup for everything.

@@ -11,9 +11,7 @@ specific Keep admin users and from Keep application server.</Description>
       <AnySubject/>
     </Subjects>
     <Resources>
-
-<!-- restrict to objects that are part of The Keep -->
-
+      <!-- restrict to objects that are part of The Keep -->
       <Resource>
         <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
             <AttributeValue
@@ -43,21 +41,23 @@ specific Keep admin users and from Keep application server.</Description>
       </Actions>
     </Target>
 
-      <!-- usernames for admins -->
+      <!-- Usernames for admins.  Currently consists of developers
+           working on the project who may need access to the objects
+           directly (i.e., not through the django application).  -->
       <Condition FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
         <SubjectAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:subject:loginId" DataType="http://www.w3.org/2001/XMLSchema#string"/>
         <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">branker</AttributeValue> <!-- Ben -->
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">rsutton</AttributeValue> <!-- Rebecca -->
-          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">liblna</AttributeValue> <!-- Laura Akerman -->
-          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">scande3</AttributeValue> <!-- Steven Anderson -->
         </Apply>
       </Condition>
 
   </Rule>
 
   <Rule RuleId="permit-keep-servers" Effect="Permit">
-  <!-- permit access to keep objects from configured servers by IP address -->
+  <!-- permit access to keep objects to logged in users making request
+       from a server listed here by IP address -->
     <Target>
       <Subjects>
         <AnySubject/>
@@ -70,16 +70,31 @@ specific Keep admin users and from Keep application server.</Description>
       </Actions>
     </Target>
 
-    <Condition FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
-          <EnvironmentAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:environment:httpRequest:clientIpAddress" DataType="http://www.w3.org/2001/XMLSchema#string"/>
+    <Condition FunctionId="urn:oasis:names:tc:xacml:1.0:function:and">
+      <!-- require logged in user: loginId must not be empty -->
+      <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:not">
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
+         <SubjectAttributeDesignator 
+	   AttributeId="urn:fedora:names:fedora:2.1:subject:loginId" 
+  	  MustBePresent="true" 
+	  DataType="http://www.w3.org/2001/XMLSchema#string"/>
           <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
-            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.41</AttributeValue> <!-- rebecca -->
-            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.75</AttributeValue> <!-- waterhouse -->
-            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.210.175</AttributeValue> <!-- ben -->
-            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.38</AttributeValue> <!-- brutus -->
-            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.209.164</AttributeValue> <!-- steven -->
+            <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string"></AttributeValue>
+	  </Apply>
+        </Apply>
       </Apply>
-    </Condition>
+
+      <!-- restrict to allowed servers by IP address
+           (at mimimum, this list should include the django webapp server)
+        -->
+      <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
+        <EnvironmentAttributeDesignator AttributeId="urn:fedora:names:fedora:2.1:environment:httpRequest:clientIpAddress" DataType="http://www.w3.org/2001/XMLSchema#string"/>
+        <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+          <!-- heisenberg (production django server)  -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.36</AttributeValue>
+        </Apply>
+      </Apply>
+    </Condition> 
 
   </Rule>
 

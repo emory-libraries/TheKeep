@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 import json
 import logging
 import magic
@@ -39,9 +40,12 @@ allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
 @permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
 def index(request):
-    search = audioforms.ItemSearch()
-    return render_to_response('audio/index.html', {'search' : search},
-            context_instance=RequestContext(request))
+    # pass dates in to the view to link to searches for recently uploaded files
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    return render_to_response('audio/index.html', {
+        'today': today, 'yesterday' : yesterday,
+        }, context_instance=RequestContext(request))
 
 @permission_required_with_ajax('is_staff')
 @csrf_exempt
@@ -142,7 +146,9 @@ def upload(request):
                         obj = AudioObject.init_from_file(filename,
                                     initial_label=label, request=request,                                    
                                     checksum=md5)
-                        obj.save()
+                        # NOTE: by sending a log message, we force Fedora to store an
+                        # audit trail entry for object creation, which doesn't happen otherwise
+                        obj.save('ingesting audio')
                         file_info.update({'success': True, 'pid': obj.pid})
                         # Start asynchronous task to convert audio for access
                         result = convert_wav_to_mp3.delay(obj.pid, use_wav=filename,
@@ -462,7 +468,7 @@ def edit(request, pid):
             if form.is_valid():     # includes schema validation
                 # update foxml object with data from the form
                 form.update_instance()      # instance is reference to mods object
-                obj.save()
+                obj.save('update metadata')
                 messages.success(request, 'Successfully updated <a href="%s">%s</a>' % \
                         (reverse('audio:edit', args=[pid]), pid))
                 # save & continue functionality - same as collection edit

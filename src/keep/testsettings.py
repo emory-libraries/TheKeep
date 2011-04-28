@@ -6,10 +6,8 @@ from settings import *
 CELERY_ALWAYS_EAGER = True
 
 
-# remove PIDMAN settings - no need to generate PIDs for testing
-PIDMAN_HOST = None
-PIDMAN_USER = None
-PIDMAN_PASSWORD = None
-PIDMAN_DOMAIN = None
-
-
+# remove PIDMAN settings - no need to generate PIDs when testing
+PIDMAN_HOST = None 
+PIDMAN_USER = None 
+PIDMAN_PASSWORD = None 
+PIDMAN_DOMAIN = None 
