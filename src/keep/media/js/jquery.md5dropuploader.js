@@ -63,8 +63,12 @@ Adapted in part from https://github.com/texel/drag_drop_example/
           blob_slicing = true;
     }
     // if we have a File and it can slice, then we have blob slicing
-    if ((typeof window.File == 'function' || typeof window.File == 'object') &&
-        (typeof window.File.prototype.slice == 'function')) {
+    if ((typeof window.File == 'function' || typeof window.File == 'object') && 
+        (typeof window.File.prototype.slice == 'function' ||
+        // As of May 2011, the most recent versions of Google Chrome and Firefox 4
+        // provide namespaced versions of the slice method (new spec).  
+         typeof window.File.prototype.webkitSlice == 'function' ||
+         typeof window.File.prototype.mozSlice == 'function')) {
           blob_slicing = true;
     }
     // otherwise, the browser doesn't have what we need.
@@ -385,7 +389,23 @@ Adapted in part from https://github.com/texel/drag_drop_example/
    */
   function calculate_checksum(file, indicator, start, md5, next_step) {
     var size = 1024 * 1024; // 1MB chunks seem to work well, but might still want tweaking
-    var slice = file.slice(start, size);
+
+    // Due to changes in the HTML5 Blob/File spec for slice, Mozilla
+    // and Webkit now have name-spaced slice functions that implement
+    // the new version of the spec.  Use those first, if available.
+    if (typeof window.Blob.prototype.webkitSlice == 'function') { 
+        // Google Chrome -  http://trac.webkit.org/changeset/83873 
+        var slice = file.webkitSlice(start, start + size);
+    } else if (typeof window.Blob.prototype.mozSlice == 'function') {
+        // Mozilla Firefox -  https://developer.mozilla.org/en/DOM/Blob
+        var slice = file.mozSlice(start, start + size);
+    } else {
+        // Using the old-spec slice function for now:
+        //   http://www.w3.org/TR/2009/WD-FileAPI-20091117/#dfn-Blob
+        // Updated spec for Blob.slice (as implemented in mozSlice and webkitSlice):
+        //   http://www.w3.org/TR/2010/WD-FileAPI-20101026/#dfn-Blob
+        var slice = file.slice(start, size);
+    }
 
     // make a reader for handling the current slice.
     var reader = new FileReader();
