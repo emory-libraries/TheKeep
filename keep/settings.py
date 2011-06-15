@@ -8,7 +8,7 @@ BASE_DIR = path.dirname(path.abspath(__file__))
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = path.join(BASE_DIR, 'media')
+MEDIA_ROOT = path.join(BASE_DIR, '..', 'sitemedia')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -52,7 +52,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'keep.urls'
 
 TEMPLATE_DIRS = [
-    path.join(BASE_DIR, 'templates'),
+    path.join(BASE_DIR, '..', 'templates'),
 ]
 
 # also look for templates in virtualenv
