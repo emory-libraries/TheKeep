@@ -227,8 +227,8 @@ The following instructions can be ignored when deploying to a staging
 or production environment, but may be helpful to a developer working
 on the project or running automated tests.
 
-Sesson configuration
-^^^^^^^^^^^^^^^^^^^^
+Session configuration
+^^^^^^^^^^^^^^^^^^^^^
 
 As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
 cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
