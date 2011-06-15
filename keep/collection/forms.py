@@ -7,9 +7,15 @@ from keep import mods
 from keep.collection.models import CollectionMods, CollectionObject
 
 
-# NOTE: this only sets choices on load time (should be OK for search)
-repository_choices = [(o.uri, o.label) for o in CollectionObject.top_level()]
-repository_choices.insert(0, ('', ''))   # blank option at the beginning (default)
+try:
+    # NOTE: this only sets choices on load time (should be OK for search)
+    repository_choices = [(o.uri, o.label) for o in CollectionObject.top_level()]
+    repository_choices.insert(0, ('', ''))   # blank option at the beginning (default)
+except:
+    # if we can't get repository choices at all (e.g., due to misconfigured
+    # perms), at least make it empty instead of exploding immediately
+    repository_choices = []
+
 
 class CollectionSearch(forms.Form):
     '''Form for searching for :class:`~keep.collection.models.CollectionObject`
