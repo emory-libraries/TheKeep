@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator
 from django.utils.feedgenerator import Rss201rev2Feed
 
-from eulcore.fedora.util import RequestFailed
+from eulfedora.util import RequestFailed
 
 from keep.audio.models import AudioObject
 from keep.collection.models import get_cached_collection_dict

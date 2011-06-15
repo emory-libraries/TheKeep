@@ -14,11 +14,11 @@ from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
 
-from eulcore.django.fedora.server import Repository
-from eulcore.django.taskresult.models import TaskResult
-from eulcore.django.test import TestCase as EulDjangoTestCase
-from eulcore.fedora.util import RequestFailed
-from eulcore.xmlmap  import load_xmlobject_from_string
+from eulfedora.server import Repository
+from eullocal.django.taskresult.models import TaskResult
+from eulexistdb.testutil import TestCase as ExistTestCase
+from eulfedora.util import RequestFailed
+from eulxml.xmlmap  import load_xmlobject_from_string
 
 from keep import mods
 from keep.audio import forms as audioforms
@@ -41,7 +41,7 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
-class AudioViewsTest(EulDjangoTestCase):
+class AudioViewsTest(ExistTestCase):
     fixtures =  ['users']
 
     client = Client()
@@ -1890,7 +1890,7 @@ class TestAudioObject(TestCase):
              'current date should be set in dc:date for un-ingested object')
                
     def test_file_checksum(self):
-        #This is just a sanity check that eulcore is working as expected with checksums.
+        #This is just a sanity check that eulfedora is working as expected with checksums.
         filename = 'example.wav'
         label = 'this is a test WAV file'
         #specify an incorrect checksum

@@ -11,9 +11,9 @@ from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 
-from eulcore.django.http import HttpResponseSeeOtherRedirect
-from eulcore.django.fedora.views import raw_datastream
-from eulcore.fedora.util import RequestFailed
+from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
+from eulfedora.views import raw_datastream
+from eulfedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch
 from keep.collection.models import CollectionObject, get_cached_collection_dict
@@ -41,7 +41,7 @@ def edit(request, pid=None):
         # get collection object - existing if pid specified, or new if not
         obj = repo.get_object(type=CollectionObject, pid=pid)
         # NOTE: on new objects, for now, this will generate and throw away pids
-        # TODO: solve this in eulcore.fedora before we start using ARKs for pids
+        # TODO: solve this in eulfedora before we start using ARKs for pids
 
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods

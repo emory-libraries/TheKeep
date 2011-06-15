@@ -1,7 +1,7 @@
 from optparse import make_option
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from eulcore.existdb.exceptions import DoesNotExist, ReturnedMultiple
+from eulexistdb.exceptions import DoesNotExist, ReturnedMultiple
 from keep.common.fedora import Repository
 from keep.collection.models import CollectionObject, FindingAid
 

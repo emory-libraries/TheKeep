@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.utils.encoding import iri_to_uri
-from eulcore.fedora import models
-from eulcore.django.fedora import server
+from eulfedora import models, server
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from keep.accounts.views import decrypt
 from keep.common.utils import absolutize_url

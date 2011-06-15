@@ -68,12 +68,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
-    'eulcore.django.emory_ldap',
-    'eulcore.django.existdb',
-    'eulcore.django.fedora',
-    'eulcore.django.taskresult',
-    'eulcore.django.testsetup',
-    'eulcore.django.util',
+    'eulexistdb',
+    'eulfedora',
+    'eullocal.django.emory_ldap',
+    'eullocal.django.taskresult',
+    'eullocal.django.util',
     'keep.accounts',
     'keep.audio',
     'keep.collection',
@@ -85,7 +84,7 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'eulcore.django.emory_ldap.backends.EmoryLDAPBackend',
+    'eullocal.django.emory_ldap.backends.EmoryLDAPBackend',
 )
 
 FILE_UPLOAD_HANDLERS = (

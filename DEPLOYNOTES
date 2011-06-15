@@ -77,13 +77,13 @@ Known Issues
   You may need to comment out python-magic in the pip-dependencies file to allow
   the other packages to install correctly.
 
-* As of 03/2011, installing **python-eulcore** from SVN via pip does not install
-  the eulcore template themes correctly.  The easiest way to fix this is to
+* As of 03/2011, installing **eullocal** from git via pip does not install
+  the eullocal template themes correctly.  The easiest way to fix this is to
   manually create a symbolic link from the root of your virtualenv to the
-  python-eulcore theme directory::
+  eullocal theme directory::
 
     $ cd /home/thekeep/env
-    $ ln -s src/python-eulcore/themes/
+    $ ln -s src/eullocal/themes/
 
 
 Install/Configure System Dependencies

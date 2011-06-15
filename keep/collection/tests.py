@@ -7,8 +7,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client, TestCase
 
-from eulcore.django.test import TestCase as EulcoreTestCase
-from eulcore.fedora.rdfns import relsext
+from eulexistdb.testutil import TestCase as ExistTestCse
+from eulfedora.rdfns import relsext
 
 from keep.collection.fixtures import FedoraFixtures 
 from keep.collection import forms as cforms
@@ -327,7 +327,7 @@ class TestCollectionForm(TestCase):
             % (expected, got))
 
 
-class CollectionViewsTest(EulcoreTestCase):
+class CollectionViewsTest(ExistTestcCase):
     fixtures =  ['users']
     repo = Repository()
 
@@ -627,7 +627,7 @@ class CollectionViewsTest(EulcoreTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # NOTE: not testing strenuously here because this view is basically a
-        # wrapper around a generic eulcore view 
+        # wrapper around a generic eulfedora view 
 
         # MODS
         ds_url = reverse('collection:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'MODS'})
@@ -654,7 +654,7 @@ class CollectionViewsTest(EulcoreTestCase):
 
 
 
-class FindingAidTest(EulcoreTestCase):
+class FindingAidTest(ExistTestcCase):
     exist_fixtures = {'directory':  path.join(path.dirname(path.abspath(__file__)), 'fixtures')}
     marbl = 'Manuscript, Archives, and Rare Book Library'
 

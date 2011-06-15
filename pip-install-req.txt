@@ -1,5 +1,9 @@
 django==1.2.5
--e svn+https://svn.library.emory.edu/svn/python-eulcore/trunk
+-e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/eullocal
+eulxml
+eulfedora
+eulexistdb
+eulcommon
 -e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/tags/release-1.1.0
 python-magic
 pycrypto

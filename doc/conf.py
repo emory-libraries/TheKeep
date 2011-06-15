@@ -217,9 +217,13 @@ man_pages = [
 ]
 
 
-# configuration for intersphinx: refer to the Python standard library, eulcore, django
+# configuration for intersphinx: refer to the Python standard library, eul libs, django
 intersphinx_mapping = {
     'http://docs.python.org/': None,
-    'http://waterhouse.library.emory.edu:8080/hudson/job/python-eulcore/javadoc/': None,
+    'http://waterhouse.library.emory.edu:8080/hudson/job/eullocal/javadoc/': None,
     'http://docs.djangoproject.com/en/1.2/ref/': 'http://docs.djangoproject.com/en/dev/_objects/',
+    'http://eulcommon.readthedocs.org/en/latest/': None,
+    'http://eulexist.readthedocs.org/en/latest/': None,
+    'http://eulfedora.readthedocs.org/en/latest/': None,
+    'http://eulxml.readthedocs.org/en/latest/': None,
 }

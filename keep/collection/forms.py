@@ -1,7 +1,7 @@
 from django import forms
 from django.utils.safestring import mark_safe
 
-from eulcore.django.forms import XmlObjectForm, SubformField
+from eulxml.forms import XmlObjectForm, SubformField
 
 from keep import mods
 from keep.collection.models import CollectionMods, CollectionObject
@@ -36,7 +36,7 @@ class CollectionSearch(forms.Form):
                                 
 
 class AccessConditionForm(XmlObjectForm):
-    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
     :class:`~keep.mods.AccessCondition` :
 
         * suppress default label of 'text'
@@ -49,7 +49,7 @@ class AccessConditionForm(XmlObjectForm):
         exclude = ['type']
 
 class NamePartForm(XmlObjectForm):
-    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
     :class:`~keep.mods.NamePart`
 
         * suppress default label 'text'
@@ -61,7 +61,7 @@ class NamePartForm(XmlObjectForm):
         model = mods.NamePart
 
 class RoleForm(XmlObjectForm):
-    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS name
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS name
     :class:`~keep.mods.Role` information
 
         * suppress default label 'text'
@@ -75,7 +75,7 @@ class RoleForm(XmlObjectForm):
         model = mods.Role
 
 class NameForm(XmlObjectForm):
-    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit MODS
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
     :class:`~keep.mods.Name` information.
 
         * use custom :class:`~keep.mods.NamePart` and
@@ -94,16 +94,16 @@ class NameForm(XmlObjectForm):
 
 
 class CollectionForm(XmlObjectForm):
-    '''Custom :class:`~eulcore.django.forms.XmlObjectForm` to edit descriptive
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit descriptive
     metadata on a :class:`~keep.collection.models.CollectionObject`.
 
     Takes a :class:`~keep.collection.models.CollectionObject` as form instance.
-    This stands in contrast to a regular :class:`~eulcore.django.forms.XmlObjectForm`,
-    which would take an :class:`~eulcore.xmlmap.XmlObject`. This form edits a whole
+    This stands in contrast to a regular :class:`~eulxml.forms.XmlObjectForm`,
+    which would take an :class:`~euxml.xmlmap.XmlObject`. This form edits a whole
     :class:`~keep.collection.models.CollectionObject`, although most of the editing
-    is on the MODS datastream (which is an :class:`~eulcore.xmlmap.XmlObject`).
+    is on the MODS datastream (which is an :class:`~eulxml.xmlmap.XmlObject`).
     The most expedient way to make a :class:`~keep.collection.models.CollectionObject`
-    editable was to make a customized :class:`~eulcore.django.forms.XmlObjectForm`
+    editable was to make a customized :class:`~eulxml.forms.XmlObjectForm`
     that mostly deals with the  MODS datastream.
     '''
     # FIXME: update docstring to reflect multiple xml edit forms / datastreams

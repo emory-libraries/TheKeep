@@ -11,7 +11,7 @@ urlpatterns = patterns('',
     url(r'^audio/', include('keep.audio.urls', namespace='audio')),
     url(r'^collections/', include('keep.collection.urls', namespace='collection')),
     url(r'^accounts/', include('keep.accounts.urls', namespace='accounts')),
-    url(r'^tasks/', include('eulcore.django.taskresult.urls', namespace='tasks')),
+    url(r'^tasks/', include('eullocal.django.taskresult.urls', namespace='tasks')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

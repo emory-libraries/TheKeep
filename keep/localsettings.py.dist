@@ -65,7 +65,7 @@ AUTH_LDAP_CA_CERT_PATH = '' # absolute path of cert
 # Fedora Repository settings
 FEDORA_ROOT = 'http://localhost:8080/fedora/'
 FEDORA_USER = 'fedoraAdmin'
-FEDORA_PASS = 'fedoraAdmin'
+FEDORA_PASSWORD = 'fedoraAdmin'
 FEDORA_PIDSPACE = 'changeme'
 FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 # use this to explicitly configure a test pidspace; by default, uses pidspace-test

@@ -12,11 +12,11 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db.models import permalink
 
-from eulcore import xmlmap
-from eulcore.django.taskresult.models import TaskResult
-from eulcore.fedora.models import FileDatastream, XmlDatastream
-from eulcore.fedora.rdfns import relsext
-from eulcore.fedora.util import RequestFailed
+from eulxml import xmlmap
+from eullocal.django.taskresult.models import TaskResult
+from eulfedora.models import FileDatastream, XmlDatastream
+from eulfedora.rdfns import relsext
+from eulfedora.util import RequestFailed
 
 from keep.collection.models import get_cached_collection_dict, CollectionObject
 from keep.common.fedora import DigitalObject, Repository
@@ -60,7 +60,7 @@ class _BaseSourceTech(xmlmap.XmlObject):
     ROOT_NAMESPACES = {'st': ROOT_NS }
 
 class SourceTechMeasure(_BaseSourceTech):
-    ''':class:`~eulcore.xmlmap.XmlObject` for :class:`SourceTech` measurement
+    ''':class:`~eulxml.xmlmap.XmlObject` for :class:`SourceTech` measurement
     information'''
     ROOT_NAME = 'measure'
     unit = xmlmap.StringField('@unit')
@@ -78,7 +78,7 @@ class SourceTechMeasure(_BaseSourceTech):
         return not self.node.text
 
 class SourceTech(_BaseSourceTech):
-    ':class:`~eulcore.xmlmap.XmlObject` for Source Technical Metadata.'
+    ':class:`~eulxml.xmlmap.XmlObject` for Source Technical Metadata.'
     ROOT_NAME = 'sourcetech'
 
     # option lists for controlled vocabulary source tech fields
@@ -193,7 +193,7 @@ class _BaseDigitalTech(xmlmap.XmlObject):
     ROOT_NAMESPACES = {'dt': ROOT_NS }
 
 class TransferEngineer(_BaseDigitalTech):
-    ''':class:`~eulcore.xmlmap.XmlObject` for :class:`DigitalTech` transfer engineer'''
+    ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` transfer engineer'''
     ROOT_NAME = 'transferEngineer'
     id = xmlmap.StringField('@id')
     'unique id to identify the transfer engineer'
@@ -212,7 +212,7 @@ class TransferEngineer(_BaseDigitalTech):
     }
 
 class CodecCreator(_BaseDigitalTech):
-    ''':class:`~eulcore.xmlmap.XmlObject` for :class:`DigitalTech` codec creator'''
+    ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` codec creator'''
     ROOT_NAME = 'codecCreator'
     configurations = {
         # current format is     id :  hardware, software, software version
@@ -239,7 +239,7 @@ class CodecCreator(_BaseDigitalTech):
     'list of all software'
 
 class DigitalTech(_BaseDigitalTech):
-    ":class:`~eulcore.xmlmap.XmlObject` for Digital Technical Metadata."
+    ":class:`~eulxml.xmlmap.XmlObject` for Digital Technical Metadata."
     ROOT_NAME = 'digitaltech'
     date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdtf"]',
         help_text='Date digital capture was made', required=True)
@@ -278,7 +278,7 @@ class _BaseRights(xmlmap.XmlObject):
     ROOT_NAMESPACES = { 'rt': ROOT_NS }
 
 class AccessStatus(_BaseRights):
-    ':class:`~eulcore.xmlmap.XmlObject` for :class:`Rights` access status'
+    ':class:`~eulxml.xmlmap.XmlObject` for :class:`Rights` access status'
     ROOT_NAME = 'accessStatus'
     code = xmlmap.StringField('@code', required=True)
     'access code'
@@ -374,7 +374,7 @@ class Rights(_BaseRights):
 ##
 
 class AudioObject(DigitalObject):
-    '''Fedora Audio Object.  Extends :class:`~eulcore.fedora.models.DigitalObject`.'''
+    '''Fedora Audio Object.  Extends :class:`~eulfedora.models.DigitalObject`.'''
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'
     CONTENT_MODELS = [ AUDIO_CONTENT_MODEL ]
     NEW_OBJECT_VIEW = 'audio:view'
@@ -384,26 +384,26 @@ class AudioObject(DigitalObject):
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
         })
-    'MODS :class:`~eulcore.fedora.models.XmlDatastream` with content as :class:`AudioMods`'
+    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`AudioMods`'
 
     audio = FileDatastream("AUDIO", "Audio datastream", defaults={
             'mimetype': 'audio/x-wav',
             'versionable': True,
         })
-    'master audio :class:`~eulcore.fedora.models.FileDatastream`'
+    'master audio :class:`~eulfedora.models.FileDatastream`'
 
     compressed_audio = FileDatastream("CompressedAudio", "Compressed audio datastream", defaults={
             'mimetype': 'audio/mpeg',
             'versionable': True,
         })
-    'access copy of audio :class:`~eulcore.fedora.models.FileDatastream`'
+    'access copy of audio :class:`~eulfedora.models.FileDatastream`'
 
     digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
         defaults={
             'control_group': 'M',
             'versionable': True,
         })
-    '''digital technical metadata :class:`~eulcore.fedora.models.XmlDatastream`
+    '''digital technical metadata :class:`~eulfedora.models.XmlDatastream`
     with content as :class:`DigitalTech`'''
 
     sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", SourceTech,
@@ -411,7 +411,7 @@ class AudioObject(DigitalObject):
             'control_group': 'M',
             'versionable': True,
         })
-    '''source technical metadata :class:`~eulcore.fedora.models.XmlDatastream` with content as
+    '''source technical metadata :class:`~eulfedora.models.XmlDatastream` with content as
     :class:`SourceTech`'''
 
     rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
@@ -419,7 +419,7 @@ class AudioObject(DigitalObject):
             'control_group': 'M',
             'versionable': True,
         })
-    '''access control metadata :class:`~eulcore.fedora.models.XmlDatastream`
+    '''access control metadata :class:`~eulfedora.models.XmlDatastream`
     with content as :class:`Rights`'''
 
     _collection_uri = None
@@ -472,7 +472,7 @@ class AudioObject(DigitalObject):
 
     @property
     def conversion_result(self):
-        '''Return the :class:`~eulcore.django.taskresult.models.TaskResult`
+        '''Return the :class:`~eullocal.django.taskresult.models.TaskResult`
         for the most recently requested access copy conversion (if any).
         '''
         conversions = TaskResult.objects.filter(object_id=self.pid).order_by('-created')

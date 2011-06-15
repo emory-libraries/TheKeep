@@ -5,13 +5,13 @@ from rdflib import URIRef
 from django.conf import settings
 from django.core.cache import cache
 
-from eulcore import xmlmap
-from eulcore.django.existdb.manager import Manager
-from eulcore.django.existdb.models import XmlModel
-from eulcore.fedora.rdfns import model as modelns
-from eulcore.fedora.models import XmlDatastream
-from eulcore.fedora.rdfns import relsext
-from eulcore.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
+from eulexistdb.manager import Manager
+from eulexistdb.models import XmlModel
+from eulfedora.models import XmlDatastream
+from eulfedora.rdfns import relsext, model as modelns
+from eulfedora.rdfns import relsext
+from eulxml import xmlmap
+from eulxml.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from keep import mods
 from keep.common.fedora import DigitalObject, Repository
@@ -40,7 +40,7 @@ class CollectionMods(mods.MODS):
 
 
 class CollectionObject(DigitalObject):
-    '''Fedora Collection Object.  Extends :class:`~eulcore.fedora.models.DigitalObject`.
+    '''Fedora Collection Object.  Extends :class:`~eulfedora.models.DigitalObject`.
     '''
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
@@ -51,7 +51,7 @@ class CollectionObject(DigitalObject):
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
         })
-    'MODS :class:`~eulcore.fedora.models.XmlDatastream` with content as :class:`CollectionMods`'
+    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
 
     _collection_id = None
     _collection_label = None
@@ -285,7 +285,7 @@ class CollectionObject(DigitalObject):
 
         :param num: collection number to search for
         :param parent: optional; top-level collection or Archive/Repository collection must belong to
-        :return: generator of any items, as returned by :meth:`eulcore.fedora.server.Repository.find_objects`,
+        :return: generator of any items, as returned by :meth:`eulfedora.server.Repository.find_objects`,
              as type :class:`CollectionObject`
         '''
         repo = Repository()
@@ -352,21 +352,21 @@ def set_cached_collection_dict(collection):
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
     """
-    This is an :class:`~eulcore.django.existdb.models.XmlModel` version of
-    :class:`~eulcore.xmlmap.eadmap.EncodedArchivalDescription` (EAD) object, to
+    This is an :class:`~eulexistdb.models.XmlModel` version of
+    :class:`~eulxml.xmlmap.eadmap.EncodedArchivalDescription` (EAD) object, to
     simplify querying for EAD content in an eXist DB.
     """
     ROOT_NAMESPACES = {
         'e': EAD_NAMESPACE,
     }
-    # redeclaring namespace from eulcore to ensure prefix is correct for xpaths
+    # redeclaring namespace from eulxml to ensure prefix is correct for xpaths
     
     coverage = xmlmap.StringField('e:archdesc/e:did/e:unittitle/e:unitdate[@type="inclusive"]/@normal')
     # local repository *subarea* - e.g., MARBL, University Archives, Pitts
     repository = xmlmap.StringField('normalize-space(.//e:subarea)')
 
     objects = Manager('/e:ead')
-    """:class:`eulcore.django.existdb.manager.Manager` - similar to an object manager
+    """:class:`eulexistdb.manager.Manager` - similar to an object manager
     for django db objects, used for finding and retrieving
     :class:`~keep.collection.models.FindingAid` objects from eXist.
 
@@ -453,12 +453,12 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
     def find_by_unitid(id, archive_name):
         '''Retrieve a single Finding Aid by top-level unitid and repository name.
         This method assumes a single Finding Aid should be found, so uses the
-        :meth:`eulcore.existdb.query.QuerySet.get` method, which raises the following
+        :meth:`eulexistdb.query.QuerySet.get` method, which raises the following
         exceptions if anything other than a single match is found:
         
-          * :class:`eulcore.existdb.exceptions.DoesNotExist` when no matches
+          * :class:`eulexistdb.exceptions.DoesNotExist` when no matches
             are found
-          * :class:`eulcore.existdb.exceptions.ReturnedMultiple` if more than
+          * :class:`eulexistdb.exceptions.ReturnedMultiple` if more than
             one match is found
 
         :param id: integer unitid to search on

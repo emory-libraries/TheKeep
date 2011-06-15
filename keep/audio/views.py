@@ -20,12 +20,12 @@ from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
 
-from eulcore.django.auth.decorators import permission_required_with_ajax
-from eulcore.django.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
-from eulcore.django.taskresult.models import TaskResult
-from eulcore.django.fedora.views import raw_datastream
-from eulcore.fedora.util import RequestFailed, PermissionDenied
-from eulcore.fedora.models import DigitalObjectSaveFailure
+from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
+from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
+from eullocal.django.taskresult.models import TaskResult
+from eulfedora.views import raw_datastream
+from eulfedora.util import RequestFailed, PermissionDenied
+from eulfedora.models import DigitalObjectSaveFailure
 
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject, Rights
@@ -548,7 +548,7 @@ def download_audio(request, pid, type):
     extra_headers = {
         'Content-Disposition': "attachment; filename=%s.%s" % (obj.noid, file_ext)
     }
-    # use generic raw datastream view from eulcore
+    # use generic raw datastream view from eulfedora
     return raw_datastream(request, pid, dsid, type=AudioObject,
             repo=repo, headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling
