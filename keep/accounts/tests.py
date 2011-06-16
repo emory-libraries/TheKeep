@@ -1,12 +1,13 @@
 from django.core.urlresolvers import reverse
-from django.test import TestCase, Client
+from django.test import Client
 
 from keep.accounts.views import encrypt, decrypt, to_blocksize
 # import encryption algorithm from views in case we ever want to change it
 from keep.accounts.views import EncryptionAlgorithm
 from keep.audio.tests import ADMIN_CREDENTIALS
+from keep.testutil import KeepTestCase
 
-class AccountViewsTest(TestCase):
+class AccountViewsTest(KeepTestCase):
     fixtures =  ['users']
     
     def setUp(self):

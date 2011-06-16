@@ -1,4 +1,4 @@
-django==1.2.5
+django
 -e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/eullocal
 eulxml
 eulfedora

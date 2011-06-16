@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.test import TestCase
 
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
 from keep.old_dm import models
+from keep.testutil import KeetTestCase
 
-class LocationTest(TestCase):
+class LocationTest(KeepTestCase):
     marbl = models.Location(name='MARBL, Robert W. Woodruff Library, Emory University')
     eua_woodruff = models.Location(name='Emory Archives: Robert W. Woodruff Library')
     eua_healthsci = models.Location(name='Emory Archives: Woodruff Health Sciences Library')
@@ -35,7 +35,7 @@ class LocationTest(TestCase):
                          'Business library should return `None` for corresponding repository (none defined)')
 
 
-class HousingTest(TestCase):
+class HousingTest(KeepTestCase):
 
     expected_values = {
         'Moving Image/Sound/Still Image: None': 'none',
@@ -60,7 +60,7 @@ class HousingTest(TestCase):
                 "old_dm housing '%s' should be converted to '%s', but got '%s'" \
                 %(housing.description, keep_housing, result))
 
-class FormTest(TestCase):
+class FormTest(KeepTestCase):
     expected_values = {
         'Sound - acetate vinyl shellac - 45 rpm': '45 RPM',
         'Sound - glass disc': 'glass disc',
@@ -88,7 +88,7 @@ class FormTest(TestCase):
                 "old_dm form '%s' should be converted to '%s', but got '%s'" \
                 %(old_form, keep_form, result))
 
-class SpeedTest(TestCase):
+class SpeedTest(KeepTestCase):
     speed_alt_unit = {
         '7.5 ips, 19.05 cm/s': 'inches/sec',
         '30 ips, 76.2cm/s': 'inches/sec',
@@ -131,7 +131,7 @@ class SpeedTest(TestCase):
             self.assertEqual(aspect, sp.aspect,
                 'expected aspect of %s, got %s for speed %s' % (aspect, sp.aspect, speed))
 
-class StaffNameTest(TestCase):
+class StaffNameTest(KeepTestCase):
     fixtures =  ['ldap_user']
 
     def test_transfer_engineer(self):
@@ -151,7 +151,7 @@ class StaffNameTest(TestCase):
         self.assertEqual(testid, id)
         self.assertEqual('dm1', idtype)
 
-class AccessRights(TestCase):
+class AccessRights(KeepTestCase):
 
     def test_w3cdft_copyright_date(self):
         access = models.AccessRights(copyright_date='0000-00-00')

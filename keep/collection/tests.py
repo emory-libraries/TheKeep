@@ -5,9 +5,8 @@ from rdflib import URIRef
 
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
-from django.test import Client, TestCase
+from django.test import Client
 
-from eulexistdb.testutil import TestCase as ExistTestCse
 from eulfedora.rdfns import relsext
 
 from keep.collection.fixtures import FedoraFixtures 
@@ -16,12 +15,13 @@ from keep.collection import views
 from keep.collection.models import CollectionObject, CollectionMods, FindingAid
 from keep.common.fedora import Repository
 from keep import mods
+from keep.testutil import KeepTestCase
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
 # tests for Collection DigitalObject
-class CollectionObjectTest(TestCase):
+class CollectionObjectTest(KeepTestCase):
     repo = Repository()
 
     def test_top_level(self):
@@ -237,7 +237,7 @@ COLLECTION_DATA = {
     'name-roles-0-text': 'curator',
 }
 
-class TestCollectionForm(TestCase):
+class TestCollectionForm(KeepTestCase):
     # test form data with all required fields
     data = COLLECTION_DATA
 
