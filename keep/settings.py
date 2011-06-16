@@ -137,7 +137,7 @@ try:
     # it from http://github.com/danielfm/unittest-xml-reporting/ to output
     # test results in JUnit-compatible XML.
     import xmlrunner
-    TEST_RUNNER='xmlrunner.extra.djangotestrunner.run_tests'
+    TEST_RUNNER='xmlrunner.extra.djangotestrunner.XMLTestRunner'
     TEST_OUTPUT_DIR='test-results'
 except ImportError:
     pass
