@@ -50,6 +50,7 @@ specific Keep admin users and from Keep application server.</Description>
 
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">branker</AttributeValue> <!-- Ben -->
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">rsutton</AttributeValue> <!-- Rebecca -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">athom09</AttributeValue> <!-- Rebecca -->
         </Apply>
       </Condition>
 
