@@ -327,7 +327,7 @@ class TestCollectionForm(KeepTestCase):
             % (expected, got))
 
 
-class CollectionViewsTest(ExistTestcCase):
+class CollectionViewsTest(KeepTestCase):
     fixtures =  ['users']
     repo = Repository()
 
@@ -654,7 +654,7 @@ class CollectionViewsTest(ExistTestcCase):
 
 
 
-class FindingAidTest(ExistTestcCase):
+class FindingAidTest(KeepTestCase):
     exist_fixtures = {'directory':  path.join(path.dirname(path.abspath(__file__)), 'fixtures')}
     marbl = 'Manuscript, Archives, and Rare Book Library'
 

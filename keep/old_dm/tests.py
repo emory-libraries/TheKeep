@@ -3,7 +3,7 @@ from django.conf import settings
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
 from keep.old_dm import models
-from keep.testutil import KeetTestCase
+from keep.testutil import KeepTestCase
 
 class LocationTest(KeepTestCase):
     marbl = models.Location(name='MARBL, Robert W. Woodruff Library, Emory University')
