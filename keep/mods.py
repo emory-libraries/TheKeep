@@ -64,8 +64,8 @@ class RecordInfo(Common):
     ROOT_NAME = 'recordInfo'
     record_id = xmlmap.StringField('mods:recordIdentifier')
     record_origin = xmlmap.StringField('mods:recordOrigin')
-    creation_date = xmlmap.StringField('mods:recordCreationDate')
-    change_date = xmlmap.StringField('mods:recordChangeDate')
+    creation_date = xmlmap.StringField('mods:recordCreationDate[@encoding="w3cdtf"]')
+    change_date = xmlmap.StringField('mods:recordChangeDate[@encoding="w3cdtf"]')
 
 class Note(Common):
     ":class:`~eulxml.xmlmap.XmlObject` for MODS note element"

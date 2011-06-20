@@ -79,7 +79,12 @@ class Authority(models.Model):
         managed = False
 
     def __unicode__(self):
-        return self.authority
+        if self.authority == 'lcsh':
+            return 'lcshstring'
+        elif self.authority == 'naf':
+            return 'nafstring'
+        else:
+            return self.authority
 
 class Genre(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -376,7 +381,7 @@ class Content(models.Model):   # individual item
         if self.data_entered_by:
             logger.debug('Item recordOrigin: %s' % self.data_entered_by.name)
             modsxml.create_record_info()
-            modsxml.record_info.record_origin = self.data_entered_by.name
+            modsxml.record_info.record_origin = 'Originally created in DM1 database'
             data.append(self.data_entered_by.name)
         else:
             data.append(None)
@@ -1039,6 +1044,7 @@ class Housing(models.Model):
         'slimline case': 'jewel case',
         'archival box': 'cardboard box',
         'non archival box': 'cardboard box',
+        'core and archival paper boxes': 'cardboard box',
         'tyvek sleeve': 'paper sleeve',
         'paper jewel case': 'paper sleeve',
     }

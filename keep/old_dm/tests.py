@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from keep.collection.fixtures import FedoraFixtures
+from keep import mods
 from keep.collection.models import CollectionObject
 from keep.old_dm import models
 from keep.testutil import KeepTestCase
@@ -47,6 +48,7 @@ class HousingTest(KeepTestCase):
         'Moving Image/Sound: Plastic container': 'plastic container',
         'Moving Image/Sound: Archival box': 'cardboard box',
         'Moving Image/Sound: Non archival box': 'cardboard box',
+        'Moving Image/Sound: Core and archival paper boxes': 'cardboard box',
         'Moving Image/Sound: Tyvek sleeve': 'paper sleeve',
         'Moving Image/Sound: Paper sleeve': 'paper sleeve',
         'Moving Image/Sound: Paper jewel case': 'paper sleeve',
@@ -160,3 +162,26 @@ class AccessRights(KeepTestCase):
         self.assertEqual('1984', access.w3cdtf_copyright_date())
         access = models.AccessRights(copyright_date='2001-01-00')
         self.assertEqual('2001-01', access.w3cdtf_copyright_date())
+
+
+class Authority(KeepTestCase):
+
+    def test_unicode(self):
+        authority = models.Authority(authority='lcsh')
+        self.assertEqual('lcshstring', unicode(authority))
+
+        authority = models.Authority(authority='naf')
+        self.assertEqual('nafstring', unicode(authority))
+
+        authority = models.Authority(authority='somethingElse')
+        self.assertEqual('somethingElse', unicode(authority))
+
+#Should this be moved somewhere else?
+class Mods(KeepTestCase):
+
+    def test_dates(self):
+        recInfo = mods.RecordInfo(creation_date='1976-05-11')
+        self.assertTrue('encoding="w3cdtf"' in recInfo.serialize())
+
+        recInfo = mods.RecordInfo(change_date='2011-07-20')
+        self.assertTrue('encoding="w3cdtf"' in recInfo.serialize())
