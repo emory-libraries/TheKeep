@@ -75,6 +75,7 @@ FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 PID_ALIASES = {
     'marbl': 'emory:93z53',
     'eua': 'emory:93zd2',
+    'oxford': 'emory:b2mx2',
 }
 
 # Exist DB Settings
