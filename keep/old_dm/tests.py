@@ -12,6 +12,7 @@ class LocationTest(KeepTestCase):
     eua_healthsci = models.Location(name='Emory Archives: Woodruff Health Sciences Library')
     pitts = models.Location(name='Pitts Theology Library')
     business = models.Location(name='Goizueta Business Library')
+    oxford = models.Location(name="Hoke O'Kelley Memorial Library, Oxford College")
 
     def setUp(self):
         # convert fixture objects into short-hand versions so we an easily identify them
@@ -22,6 +23,8 @@ class LocationTest(KeepTestCase):
                 self.eua_obj = obj
             elif obj.label == 'Pitts Theology Library':
                 self.pitts_obj = obj
+            elif obj.label == "Hoke O'Kelley Memorial Library, Oxford College":
+                self.oxford_obj = obj
 
     def test_corresponding_repository(self):
         self.assertEqual(self.marbl_obj.uri, self.marbl.corresponding_repository,
@@ -32,6 +35,8 @@ class LocationTest(KeepTestCase):
                          'EUA Health/Sci location should correspond to EUA Repository Object')
         self.assertEqual(self.pitts_obj.uri, self.pitts.corresponding_repository,
                          'Pitts location should correspond to Pitts Repository Object')
+        self.assertEqual(self.oxford_obj.uri, self.oxford.corresponding_repository,
+                         'Oxford location should correspond to Oxford Repository Object')
         self.assertEqual(None, self.business.corresponding_repository,
                          'Business library should return `None` for corresponding repository (none defined)')
 
