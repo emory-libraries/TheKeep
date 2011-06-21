@@ -374,9 +374,9 @@ class Content(models.Model):   # individual item
             all_notes.append('%s [toc]' % self.toc)
         data.append('\n'.join(all_notes))
 
-        logger.debug('Item Type of Resource: %s' % self.resource_type.type)
-        modsxml.resource_type = self.resource_type.type
-        data.append(self.resource_type.type)
+        logger.debug('Item Type of Resource: %s' % 'sound recording')
+        modsxml.resource_type = 'sound recording'
+        data.append('sound recording')
 
         if self.data_entered_by:
             logger.debug('Item recordOrigin: %s' % self.data_entered_by.name)
