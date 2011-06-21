@@ -292,7 +292,7 @@ class Content(models.Model):   # individual item
     descriptive_fields = ['Collection', 'ID', 'Other ID', 'Date Created',
                           'Date Issued', 'Title', 'Note', 'Type of Resource',
                           'Record Origin', 'Genre', 'Name', 'Language',
-                          'Location', 'Subjects - Geographic',
+                          'Subjects - Geographic',
                           'Subject - Name (personal)',
                           'Subject - Name (corporate)',
                           'Subject - Name (conference)', 'Subject Topic',
@@ -418,9 +418,6 @@ class Content(models.Model):   # individual item
             modsxml.languages.append(langxml)
         data.append('\n'.join(unicode(lang) for lang in self.languages.all()))
 
-        logger.debug('Item Physical Location: %s' % self.location.name)
-        modsxml.location = self.location.name
-        data.append(self.location.name)
         # NOTE: documentation has locations:location as db field, which does not exist
 
         # subjects are filtered into type of subject by field name codes
