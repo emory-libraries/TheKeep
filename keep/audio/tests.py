@@ -12,11 +12,10 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
-from django.test import Client, TestCase
+from django.test import Client
 
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
-from eulexistdb.testutil import TestCase as ExistTestCase
 from eulfedora.util import RequestFailed
 from eulxml.xmlmap  import load_xmlobject_from_string
 
@@ -24,9 +23,10 @@ from keep import mods
 from keep.audio import forms as audioforms
 from keep.audio import models as audiomodels
 from keep.audio.management.commands import ingest_cleanup
+from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
-from keep.audio.tasks import convert_wav_to_mp3
+from keep.testutil import KeepTestCase
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -41,12 +41,13 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
-class AudioViewsTest(ExistTestCase):
+class AudioViewsTest(KeepTestCase):
     fixtures =  ['users']
 
     client = Client()
 
     def setUp(self):        
+        super(AudioViewsTest, self).setUp()
         self.pids = []
         # store setting that may be changed when testing podcast feed pagination
         self.max_per_podcast = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', None)
@@ -63,7 +64,7 @@ class AudioViewsTest(ExistTestCase):
     def tearDown(self):
         # purge any objects created by individual tests
         for pid in self.pids:
-            FedoraFixtures.repo.purge_object(pid)
+            self.repo.purge_object(pid)
         # restore podcast pagination setting
         if self.max_per_podcast is not None:
             settings.MAX_ITEMS_PER_PODCAST_FEED = self.max_per_podcast
@@ -74,9 +75,9 @@ class AudioViewsTest(ExistTestCase):
         # TODO: remove any test files created in staging dir
         # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
         
-        FedoraFixtures.repo.purge_object(self.rushdie.pid)
-        FedoraFixtures.repo.purge_object(self.esterbrook.pid)
-        FedoraFixtures.repo.purge_object(self.englishdocs.pid)
+        self.repo.purge_object(self.rushdie.pid)
+        self.repo.purge_object(self.esterbrook.pid)
+        self.repo.purge_object(self.englishdocs.pid)
 
         # refresh cached collections after objects are deleted
         CollectionObject.item_collections(refresh_cache=True)
@@ -1361,7 +1362,7 @@ of 1''',
 
 # tests for MODS XmlObject
 # FIXME: mods objects no longer part of keep.audio - where should these tests live?
-class TestMods(TestCase):
+class TestMods(KeepTestCase):
     FIXTURE = """<mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
   <mods:titleInfo>
     <mods:title>A simple record</mods:title>
@@ -1396,6 +1397,7 @@ class TestMods(TestCase):
         """
 
     def setUp(self):
+        super(TestMods, self).setUp()
         self.mods = load_xmlobject_from_string(self.FIXTURE, mods.MODS)
 
     def test_init_types(self):
@@ -1484,10 +1486,11 @@ class TestMods(TestCase):
         invalid_mods = load_xmlobject_from_string(self.invalid_xml, mods.MODS)
         self.assertFalse(invalid_mods.is_valid())
 
-class TestModsTypedNote(TestCase):
+class TestModsTypedNote(KeepTestCase):
     # node fields tested in main mods test case; testing custom is_empty logic here
 
     def setUp(self):
+        super(TestModsTypedNote, self).setUp()
         self.note = mods.TypedNote()
         self.note.type = 'general'
 
@@ -1505,10 +1508,11 @@ class TestModsTypedNote(TestCase):
         self.note.text = 'here is some general info'
         self.assertFalse(self.note.is_empty())
 
-class TestModsDate(TestCase):
+class TestModsDate(KeepTestCase):
     # node fields tested in main mods test case; testing custom is_empty logic here
 
     def setUp(self):
+        super(TestModsDate, self).setUp()
         self.date = mods.DateCreated() 
 
     def test_is_empty(self):
@@ -1525,10 +1529,11 @@ class TestModsDate(TestCase):
         self.date.date = '1066'
         self.assertFalse(self.date.is_empty())
 
-class TestModsOriginInfo(TestCase):
+class TestModsOriginInfo(KeepTestCase):
     # node fields tested in main mods test case; testing custom is_empty logic here
 
     def setUp(self):
+        super(TestModsOriginInfo, self).setUp()
         self.origin_info = mods.OriginInfo()
 
     def test_is_empty(self):
@@ -1549,7 +1554,7 @@ class TestModsOriginInfo(TestCase):
 
 
 
-class SourceTechTest(TestCase):
+class SourceTechTest(KeepTestCase):
     FIXTURE = '''<?xml version="1.0" encoding="UTF-8"?>
 <st:sourcetech version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:st="http://pid.emory.edu/ns/2010/sourcetech"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/sourcetech-1.xsd">
     <st:note type="general">Right channel has squeal throughout recording.</st:note>
@@ -1570,6 +1575,7 @@ class SourceTechTest(TestCase):
 </st:sourcetech>'''
 
     def setUp(self):
+        super(SourceTechTest, self).setUp()
         self.sourcetech = load_xmlobject_from_string(self.FIXTURE, audiomodels.SourceTech)
 
     def test_init_types(self):
@@ -1622,7 +1628,7 @@ class SourceTechTest(TestCase):
 
         # TODO: validate against schema when we have one
 
-class DigitalTechTest(TestCase):
+class DigitalTechTest(KeepTestCase):
     FIXTURE = '''<?xml version="1.0" encoding="UTF-8"?>
 <dt:digitaltech version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dt="http://pid.emory.edu/ns/2010/digitaltech"  xsi="http://pid.emory.edu/ns/2010/digitaltech/v1/digitaltech-1.xsd">
     <dt:dateCaptured encoding="w3cdtf">2010-11-29T05:13:01-05:00</dt:dateCaptured>
@@ -1642,6 +1648,7 @@ class DigitalTechTest(TestCase):
 </dt:digitaltech>'''
 
     def setUp(self):
+        super(DigitalTechTest, self).setUp()
         self.digitaltech = load_xmlobject_from_string(self.FIXTURE, audiomodels.DigitalTech)
 
     def test_init_types(self):
@@ -1685,7 +1692,7 @@ class DigitalTechTest(TestCase):
         # TODO: validate against schema when we have one
 
 
-class RightsXmlTest(TestCase):
+class RightsXmlTest(KeepTestCase):
     FIXTURE =  '''<?xml version="1.0" encoding="UTF-8"?>
 <rt:rights version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rt="http://pid.emory.edu/ns/2010/rights"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/rights-1.xsd">
     <rt:accessStatus code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessStatus>
@@ -1695,6 +1702,7 @@ class RightsXmlTest(TestCase):
 </rt:rights>'''
 
     def setUp(self):
+        super(RightsXmlTest, self).setUp()
         self.rights = load_xmlobject_from_string(self.FIXTURE, audiomodels.Rights)
 
     def test_init_types(self):
@@ -1732,11 +1740,12 @@ class RightsXmlTest(TestCase):
 
 
 # tests for Audio DigitalObject
-class TestAudioObject(TestCase):
+class TestAudioObject(KeepTestCase):
     fixtures =  ['users']
     repo = Repository()
 
     def setUp(self):
+        super(TestAudioObject, self).setUp()
         # create a test audio object to edit
         with open(wav_filename) as wav:
             self.obj = self.repo.get_object(type=audiomodels.AudioObject)
@@ -1972,7 +1981,7 @@ class TestAudioObject(TestCase):
         conv2.save()
         self.assertEqual(conv2, self.obj.conversion_result)
 
-class TestWavDuration(TestCase):
+class TestWavDuration(KeepTestCase):
 
     def test_success(self):
         duration = audiomodels.wav_duration(wav_filename)
@@ -1985,8 +1994,9 @@ class TestWavDuration(TestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
-class TestWavMP3DurationCheck(TestCase):
+class TestWavMP3DurationCheck(KeepTestCase):
     def setUp(self):
+        super(TestWavMP3DurationCheck, self).setUp()
         # create an audio object to test conversion with
         self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
                                          'test wav/mp3 duration checks',  checksum=wav_md5)
@@ -1996,7 +2006,7 @@ class TestWavMP3DurationCheck(TestCase):
     def tearDown(self):
         # purge any objects created by individual tests
         for pid in self.pids:
-            FedoraFixtures.repo.purge_object(pid)
+            self.repo.purge_object(pid)
 
     def test_compare_local_files(self):
         # compare wav with equivalent mp3
@@ -2050,7 +2060,7 @@ class TestWavMP3DurationCheck(TestCase):
 #def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
 
 
-class TestModsEditForm(TestCase):
+class TestModsEditForm(KeepTestCase):
     MIN_DATA = {
         'mods-title': 'new title',
         'mods-general_note-text': '',
@@ -2113,8 +2123,9 @@ class TestModsEditForm(TestCase):
         inst = form.update_instance()
         self.assertEqual(None, inst.origin_info)
 
-class SourceAudioConversions(TestCase):
+class SourceAudioConversions(KeepTestCase):
     def setUp(self):
+        super(SourceAudioConversions, self).setUp()
         # create an audio object to test conversion with
         self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
                                          'test only',  checksum=wav_md5)
@@ -2124,7 +2135,7 @@ class SourceAudioConversions(TestCase):
     def tearDown(self):
         # purge any objects created by individual tests
         for pid in self.pids:
-            FedoraFixtures.repo.purge_object(pid)
+            self.repo.purge_object(pid)
 
     def test_wav_to_mp3(self):
         result = convert_wav_to_mp3(self.obj.pid)
@@ -2215,8 +2226,9 @@ class TestIngestCleanupCommand(ingest_cleanup.Command):
         run_args.extend(args)
         return self.run_from_argv(run_args)
 
-class IngestCleanupTest(TestCase):
+class IngestCleanupTest(KeepTestCase):
     def setUp(self):
+        super(IngestCleanupTest, self).setUp()
         self.command = TestIngestCleanupCommand()
         self._real_temp_dir = settings.INGEST_STAGING_TEMP_DIR
         self._real_keep_age = settings.INGEST_STAGING_KEEP_AGE

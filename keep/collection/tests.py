@@ -22,8 +22,6 @@ ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
 # tests for Collection DigitalObject
 class CollectionObjectTest(KeepTestCase):
-    repo = Repository()
-
     def test_top_level(self):
         collections = CollectionObject.top_level()
         # NOTE: using >= because this test should not fail if there are other
@@ -197,7 +195,7 @@ class CollectionObjectTest(KeepTestCase):
                                             len(found))
 
             # find test item with correct parent relation
-            found = list(CollectionObject.find_by_collection_number(123, FedoraFixtures.top_level_collections[2].uri))
+            found = list(CollectionObject.find_by_collection_number(123, FedoraFixtures.top_level_collections()[2].uri))
             self.assertEqual(1, len(found),
                              'find by collection number 123 & parent collection should return one item, got %d' % \
                              len(found))
@@ -205,7 +203,7 @@ class CollectionObjectTest(KeepTestCase):
                      'find by collection number 123 and parent collecton should return Esterbrook fixture collection')
 
             # search for test item with incorrect parent relation
-            found = list(CollectionObject.find_by_collection_number(1000, FedoraFixtures.top_level_collections[2].uri))
+            found = list(CollectionObject.find_by_collection_number(1000, FedoraFixtures.top_level_collections()[2].uri))
             self.assertEqual(0, len(found),
                  'find by collection number with incorrect parent relation should return zero items, got %d' % len(found))
 
@@ -242,9 +240,10 @@ class TestCollectionForm(KeepTestCase):
     data = COLLECTION_DATA
 
     def setUp(self):
+        super(TestCollectionForm, self).setUp()
         self.form = cforms.CollectionForm(self.data)
         self.obj = FedoraFixtures.rushdie_collection()
-        self.top_level_collections = FedoraFixtures.top_level_collections
+        self.top_level_collections = FedoraFixtures.top_level_collections()
         # store initial collection id from fixture
         self.collection_uri = self.obj.collection_id
 
@@ -329,9 +328,9 @@ class TestCollectionForm(KeepTestCase):
 
 class CollectionViewsTest(KeepTestCase):
     fixtures =  ['users']
-    repo = Repository()
 
     def setUp(self):
+        super(CollectionViewsTest, self).setUp()
         self.client = Client()
         self.pids = []
 
@@ -554,7 +553,7 @@ class CollectionViewsTest(KeepTestCase):
             msg_prefix='search results page should include search term (creator)')
 
         # search by numbering scheme
-        collection = FedoraFixtures.top_level_collections[1]
+        collection = FedoraFixtures.top_level_collections()[1]
         response = self.client.get(search_url, {'collection-collection': collection.uri })
         found = [o['pid'] for o in response.context['results']]
         self.assert_(rushdie.pid in found,
@@ -597,7 +596,8 @@ class CollectionViewsTest(KeepTestCase):
         response = self.client.get(browse_url)
         self.assert_(response.context['collections'],
             'top-level collection object list is set in response context')
-        for obj in FedoraFixtures.top_level_collections:
+        tlc = FedoraFixtures.top_level_collections()
+        for obj in (tlc[1], tlc[2]):
             self.assertContains(response, obj.label,
                 msg_prefix="top-level collection %s is listed on collection browse page" % obj.label)
 

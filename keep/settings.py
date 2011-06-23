@@ -132,6 +132,7 @@ except NameError:
     pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
 del sys
 
+TEST_RUNNER='keep.testutil.KeepTextTestSuiteRunner'
 try:
     # use xmlrunner if it's installed; default runner otherwise. download
     # it from http://github.com/danielfm/unittest-xml-reporting/ to output
