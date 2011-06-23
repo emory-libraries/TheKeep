@@ -537,7 +537,6 @@ class Content(models.Model):   # individual item
                 (self.id, len(speeds)))
         # if there is exactly one speed, set it in the source tech xml
         elif len(speeds) == 1:
-            value = 'other' if  speeds[0].speed == 'O' else speeds[0].speed
             st_xml.create_speed()
             st_xml.speed.value = 'other' if  speeds[0].speed == 'O' else speeds[0].speed
             st_xml.speed.unit = speeds[0].unit
