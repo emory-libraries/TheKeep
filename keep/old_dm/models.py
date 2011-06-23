@@ -255,6 +255,8 @@ class Content(models.Model):   # individual item
             num = self.series_number
 
         if num and self.location:
+            if self.location.name == 'Emory University Archives' and num == 1002:
+                num = 0
             coll = list(CollectionObject.find_by_collection_number(num, self.location.corresponding_repository))
             # if we have one and only one match, we have found the correct object
             if len(coll) == 1:
