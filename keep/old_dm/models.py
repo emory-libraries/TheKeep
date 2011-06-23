@@ -485,6 +485,17 @@ class Content(models.Model):   # individual item
         logger.debug('MODS:\n' + modsxml_s)
         return data
         
+     #Special cases for speed / unit mapping
+    def _special_speed_map(self, speed, unit):
+        if speed == 'O':
+            speed = 'other'
+        elif speed =='33':
+            speed = '33 1/3'
+        elif speed == '7.5' and unit =='ips':
+            speed ='7 1/2'
+            unit = 'inches/sec'
+        return speed, unit
+
     # fields returned by source_tech_metadata_method
     source_tech_fields = ['Note - General', 'Note - Related Files',
                           'Note - Conservation History', 'Speed',
@@ -537,11 +548,13 @@ class Content(models.Model):   # individual item
                 (self.id, len(speeds)))
         # if there is exactly one speed, set it in the source tech xml
         elif len(speeds) == 1:
+            #adjust speed and/or unit values
+            speed[0].speed, speed[0].unit = self._special_speed_map(speed[0].speed, speed[0].unit)
             st_xml.create_speed()
-            st_xml.speed.value = 'other' if  speeds[0].speed == 'O' else speeds[0].speed
+            st_xml.speed.value =  speeds[0].speed
             st_xml.speed.unit = speeds[0].unit
             st_xml.speed.aspect = speeds[0].aspect
-        data.append('\n'.join('%s %s' % ('other' if  speed.speed == 'O' else speed.speed, speed.unit)
+        data.append('\n'.join('%s %s' % (self._special_speed_map(speed.speed, speed.unit))
                                             for speed in speeds))
 
         locs = [ s.item_location for s in sounds
