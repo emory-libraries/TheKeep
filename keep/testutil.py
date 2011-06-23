@@ -9,6 +9,7 @@ cache so that tests don't stomp on the cache used by other commands. After
 testing it swaps the regular cache back into place.
 """
 
+from contextlib import nested
 import os
 import unittest
 from shutil import rmtree
@@ -60,9 +61,9 @@ alternate_test_cache = CacheTestWrapper
 class KeepTextTestRunner(unittest.TextTestRunner):
     def run(self, test):
         def wrapped_test(result):
-            with fedora_testutil.alternate_test_fedora(), \
-                    existdb_testutil.alternate_test_existdb(), \
-                    alternate_test_cache():
+            with nested(fedora_testutil.alternate_test_fedora(), 
+                    existdb_testutil.alternate_test_existdb(), 
+                    alternate_test_cache()):
                 return test(result)
         return super(KeepTextTestRunner, self).run(wrapped_test)
 
@@ -89,9 +90,9 @@ try:
 
         def run(self, test):
             def wrapped_test(result):
-                with fedora_testutil.alternate_test_fedora(), \
-                        existdb_testutil.alternate_test_existdb(), \
-                        alternate_test_cache():
+                with nested(fedora_testutil.alternate_test_fedora(),
+                        existdb_testutil.alternate_test_existdb(),
+                        alternate_test_cache()):
                     return test(result)
             return super(KeepXmlTestRunner, self).run(wrapped_test)
 
