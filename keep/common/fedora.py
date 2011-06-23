@@ -32,8 +32,13 @@ class DigitalObject(models.DigitalObject):
     practice, at which point this class will probably no longer be
     necessary."""
 
-    default_owner = getattr(settings, 'FEDORA_OBJECT_OWNERID', None)
-    default_pidspace = getattr(settings, 'FEDORA_PIDSPACE', None)
+    @property
+    def default_owner(self):
+        return getattr(settings, 'FEDORA_OBJECT_OWNERID', None)
+
+    @property
+    def default_pidspace(self):
+        return getattr(settings, 'FEDORA_PIDSPACE', None)
 
     def __init__(self, *args, **kwargs):
         super(DigitalObject, self).__init__(*args, **kwargs)
