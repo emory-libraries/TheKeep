@@ -715,9 +715,10 @@ class Content(models.Model):   # individual item
         if self.access_rights.count() > 1:
             logger.error('Item %d has %d Access Rights fields (not repeatable)' % (self.id,
                                                                                    self.access_rights.count()))
-        # if there is just one access rights, migrate any values present
-        if self.access_rights.count() == 1:
-            rights = self.access_rights.all()[0]
+        # if there is just one or zero access rights, migrate any values present
+        if self.access_rights.count() <=  1:
+            #if 0 rights map value 11
+            rights = self.access_rights.all()[0] if self.access_rights.count() == 1 else self.access_rights.get(id='11')[0]
             if rights.restriction:
                 rights_xml.create_access_status()
                 rights_xml.access_status.code = rights.restriction.access_code
