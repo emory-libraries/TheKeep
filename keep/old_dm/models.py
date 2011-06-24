@@ -311,6 +311,8 @@ class Content(models.Model):   # individual item
         # warn if no collection number could be found (either EUA or MARBL)
         if self.collection is None:
             ITEMS_WITHOUT_COLLECTION.add(self.id)
+            if "DANOWSKI" in obj.label.upper():
+                obj.collection_uri = list(CollectionObject.find_by_collection_number(0))[0].uri
             logger.warn('Item %d does not have a collection or series number' % self.id)
 
         # if there is a collection number, warn if the corresponding collection object could not be found
