@@ -255,6 +255,8 @@ class Content(models.Model):   # individual item
             num = self.series_number
 
         if num and self.location:
+            #Collection 1002 was the 'catch-all' collection in old DM.
+            # Collection 0 should be the catch-all for the new version.
             if self.location.name == 'Emory University Archives' and num == 1002:
                 num = 0
             coll = list(CollectionObject.find_by_collection_number(num, self.location.corresponding_repository))
