@@ -105,7 +105,9 @@ class SourceTech(_BaseSourceTech):
         ('', ''),
         ('tape', (
             ('tape|15/16|inches/sec', '15/16 ips'),
+            ('tape|1.2|cm/sec', '1.2 cm/s'),
             ('tape|1 7/8|inches/sec', '1 7/8 ips'),
+            ('tape|2.4|cm/sec', '2.4 cm/s'),
             ('tape|3 3/4|inches/sec', '3 3/4 ips'),
             ('tape|7 1/2|inches/sec', '7 1/2 ips'),
             ('tape|15|inches/sec', '15 ips'),
