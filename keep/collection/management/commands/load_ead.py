@@ -38,6 +38,7 @@ class Command(BaseCommand):
         errors = 0
 
         for id in ids:
+            coll = None
             try:
                 fa = FindingAid.find_by_unitid(id, numbering_title)
                 coll = fa.generate_collection()
@@ -54,7 +55,8 @@ class Command(BaseCommand):
                 print 'Multiple EADs found for id %s in %s' % (id, numbering_title)
                 errors += 1
             except:
-                print 'Failed to save %s for collection %s: %s (from %s)' %  (coll, id, coll.mods.content.title, numbering_title)
+                if coll is not None:
+                    print 'Failed to save %s for collection %s: %s (from %s)' %  (coll, id, coll.mods.content.title, numbering_title)
                 raise
 
         if verbosity > 1:
