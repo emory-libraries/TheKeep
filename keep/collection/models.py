@@ -305,6 +305,24 @@ class CollectionObject(DigitalObject):
         coll = repo.find_objects(identifier__contains=str(num), **args)
         return coll
 
+    def index_data_descriptive(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data_descriptive`
+        method to include a few additional fields specific to Keep
+        Collection objects.'''
+        data = super(CollectionObject, self).index_data_descriptive()
+        data.update({
+            'collection_id': self.collection_id,
+            'collection_label': self.collection_label,
+        })
+        # if source id is set, include it
+        if self.mods.content.source_id:
+            data['source_id'] = str(self.mods.content.source_id)
+
+        return data
+        
+
+
 def get_cached_collection_dict(pid):
     '''Retrieve minimal collection object information in dictionary form.
     A cached copy will be used when available; when not previously cached,

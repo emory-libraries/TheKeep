@@ -281,6 +281,11 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="subject" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="type" type="text" indexed="true" stored="true" multiValued="true"/>
 
+   <!-- keep-specific fields -->
+   <field name="source_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="collection_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="collection_label" type="string" indexed="true" stored="true" multiValued="false"/>
+
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
    <field name="text" type="text" indexed="true" stored="false" multiValued="true"/>

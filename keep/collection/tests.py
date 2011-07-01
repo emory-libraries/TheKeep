@@ -207,8 +207,26 @@ class CollectionObjectTest(KeepTestCase):
             self.assertEqual(0, len(found),
                  'find by collection number with incorrect parent relation should return zero items, got %d' % len(found))
 
-
-
+    def test_index_data_descriptive(self):
+        # create test object and populate with data
+        obj = self.repo.get_object(type=CollectionObject)
+        obj._collection_id = 'parent:1'
+        obj._collection_label = 'parent collection'
+        obj.dc.content.title = 'test collection'
+        desc_data = obj.index_data_descriptive()
+        self.assertEqual(obj.collection_id, desc_data['collection_id'],
+                         'parent collection object id should be set in index data')
+        self.assertEqual(obj.collection_label, desc_data['collection_label'],
+                         'parent collection object label should be set in index data' )
+        self.assert_('source_id' not in desc_data,
+                     'source_id should not be included in index data when it is not set')  
+        self.assertEqual(obj.dc.content.title, desc_data['title'][0],
+                         'default index data fields should be present in data')
+        
+        obj.mods.content.source_id = 100
+        desc_data = obj.index_data_descriptive()
+        self.assertEqual(str(obj.mods.content.source_id), desc_data['source_id'],
+                         'source id should be included in index data when set')
 
 # sample POST data for creating a collection
 COLLECTION_DATA = {
