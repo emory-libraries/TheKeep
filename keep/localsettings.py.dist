@@ -100,6 +100,13 @@ CACHE_BACKEND = 'file:///tmp/euterpe_cache'
 # maximum number of items to include in a single iTunes podcast feed
 MAX_ITEMS_PER_PODCAST_FEED = 2000 
 
+
+# configure which IP addresses are allowed to access the index data service
+EUL_INDEXER_ALLOWED_IPS = 'ANY'
+# Solr index that will be used for searching
+SOLR_SERVER_URL = "http://localhost:8080/solr/"
+
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
