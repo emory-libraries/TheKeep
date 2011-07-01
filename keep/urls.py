@@ -13,6 +13,9 @@ urlpatterns = patterns('',
     url(r'^accounts/', include('keep.accounts.urls', namespace='accounts')),
     url(r'^tasks/', include('eullocal.django.taskresult.urls', namespace='tasks')),
 
+    # index data for solr                       
+    url(r'^indexdata/', include('eulfedora.indexdata.urls', namespace='indexdata')),
+
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
