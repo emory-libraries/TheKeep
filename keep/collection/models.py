@@ -311,13 +311,14 @@ class CollectionObject(DigitalObject):
         method to include a few additional fields specific to Keep
         Collection objects.'''
         data = super(CollectionObject, self).index_data_descriptive()
-        data.update({
-            'collection_id': self.collection_id,
-            'collection_label': self.collection_label,
-        })
+        if self.collection_id is not None:
+            data.update({
+                'collection_id': self.collection_id,
+                'collection_label': self.collection_label,
+            })
         # if source id is set, include it
         if self.mods.content.source_id:
-            data['source_id'] = str(self.mods.content.source_id)
+            data['source_id'] = self.mods.content.source_id
 
         return data
         

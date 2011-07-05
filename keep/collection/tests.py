@@ -1,6 +1,6 @@
 from contextlib import contextmanager
+from mock import patch
 from os import path
-
 from rdflib import URIRef
 
 from django.conf import settings
@@ -208,6 +208,8 @@ class CollectionObjectTest(KeepTestCase):
                  'find by collection number with incorrect parent relation should return zero items, got %d' % len(found))
 
     def test_index_data_descriptive(self):
+        # test descriptive metadata used for indexing objects in solr
+        
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
         obj._collection_id = 'parent:1'
@@ -522,78 +524,94 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (non-existing pid)'
                              % (expected, code, edit_url))
 
-    def test_search(self):
+    @patch('keep.collection.views.sunburnt')
+    def test_search(self, mocksunburnt):
         search_url = reverse('collection:search')
 
-        # ingest some test objects to search for
-        repo = Repository()
-        rushdie = FedoraFixtures.rushdie_collection()
-        rushdie.save()  # save to fedora for searching
-        esterbrook = FedoraFixtures.esterbrook_collection()
-        esterbrook.save()
-        engdocs = FedoraFixtures.englishdocs_collection()
-        engdocs.save()
-        self.pids.extend([rushdie.pid, esterbrook.pid, engdocs.pid])
+        # using a mock for sunburnt so we can inspect method calls,
+        # simulate search results, etc.
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
-        # search by MSS #
-        response = self.client.get(search_url, {'collection-mss': '1000'})
-        found = [o['pid'] for o in response.context['results']]
-        self.assert_(rushdie.pid in found,
-                "Rushdie test collection object found when searching by Rushdie MSS #")
-        self.assert_(esterbrook.pid not in found,
-                "Esterbrook collection object not found when searching by Rushdie MSS #")
-        self.assertPattern('Collection Number:.*1000', response.content,
-            msg_prefix='search results page should include search term (MSS #)')
+        default_search_args = {
+            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+            'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+            }
 
-        # search by title phrase
-        response = self.client.get(search_url, {'collection-title': 'collection'})
-        found = [o['pid'] for o in response.context['results']]
-        self.assert_(rushdie.pid in found,
-                "Rushdie collection found for title contains 'collection'")
-        self.assert_(engdocs.pid in found,
-                "English Documents collection found for title contains 'collection'")
-        self.assert_(esterbrook.pid not in found,
-                "Esterbrook not found when searching for title contains 'collection'")
-        self.assertPattern('title:.*collection', response.content,
-            msg_prefix='search results page should include search term (title)')
+        # search all collections (no user-entered search terms)
+        response = self.client.get(search_url)
+        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        # default search args that should be included on every collection search
+        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
+                         'collection search should be filtered by collection content model')
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'collection search should be filtered by configured pidspace')
+
+        # search by MSS # (AKA source id)
+        mss = 1000
+        response = self.client.get(search_url, {'collection-source_id': mss})
+        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        self.assertEqual(mss, kwargs['source_id'],
+                         'source id number should be included in solr query terms')
+        self.assert_('title' not in kwargs,
+                     'title should not be in solr query args when no title terms entered')
+        self.assert_('creator' not in kwargs,
+                     'creator should not be in solr query args when no creator terms entered')
+        self.assert_('collection_id' not in kwargs,
+                     'collection_id should not be in solr query args when no collection was selected')
+        self.assertEqual(mss, response.context['search_info']['Collection Number'],
+                         'source id should be included in search info for user display as collection number')
+
+        # search by title
+        search_title = 'collection'
+        response = self.client.get(search_url, {'collection-title': search_title})
+        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        self.assertEqual(search_title, kwargs['title'],
+                         'title search term should be included in solr query terms')
+        self.assert_('source_id' not in kwargs)
+        self.assertEqual(search_title, response.context['search_info']['title'],
+                         'title search term should be included in search info for display to user')        
 
         # search by creator
-        response = self.client.get(search_url, {'collection-creator': 'esterbrook'})
-        found = [o['pid'] for o in response.context['results']]
-        self.assert_(rushdie.pid not in found,
-                "Rushdie collection not found for creator 'esterbrook'")
-        self.assert_(esterbrook.pid in found,
-                "Esterbrook found when searching for creator 'esterbrook'")
-        self.assertPattern('creator:.*esterbrook', response.content,
-            msg_prefix='search results page should include search term (creator)')
+        creator = 'esterbrook'
+        response = self.client.get(search_url, {'collection-creator': creator})
+        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        self.assertEqual(creator, kwargs['creator'],
+                         'creator search term should be included in solr query terms')
+        self.assertEqual(creator, response.context['search_info']['creator'],
+                         'creator search term should be included in search info for display to user')        
 
         # search by numbering scheme
         collection = FedoraFixtures.top_level_collections()[1]
-        response = self.client.get(search_url, {'collection-collection': collection.uri })
-        found = [o['pid'] for o in response.context['results']]
-        self.assert_(rushdie.pid in found,
-                "Rushdie collection found for collection %s" % collection.uri)
-        self.assert_(esterbrook.pid not in found,
-                "Esterbrook not found when searching for collection %s" % collection.uri)
-        self.assert_(engdocs.pid in found,
-                "English Documents collection found for collection %s" % collection.uri)
-        self.assertPattern('Repository:.*%s' % collection.label, response.content,
-            msg_prefix='search results page should include search term (owning repository)')
+        response = self.client.get(search_url, {'collection-collection_id': collection.uri })
+        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        self.assertEqual(collection.uri, kwargs['collection_id'],
+                         'selecte dcollection_id should be included in solr query terms')
+        self.assertEqual(collection.pid, response.context['search_info']['Repository']['pid'],
+                         'creator search term should be included in search info for display to user')        
 
+        # shortcut to set the solr return value
+        # NOTE: call order here has to match the way methods are called in view
+        solrquery =  mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value
+        solr_exec = solrquery.paginate.return_value.execute
+        
         # no match
-        response = self.client.get(search_url, {'collection-title': 'not-a-collection' })
+        # - set mock solr to return an empty result list
+	solr_exec.return_value = []
+        response = self.client.get(search_url, {'collection-title': 'not-a-collection'})
         self.assertContains(response, 'no results',
                 msg_prefix='Message should be displayed to user when search finds no matches')
 
-        # no title - default text
-        rushdie.mods.content.title = ''
-        rushdie.save()
-        response = self.client.get(search_url, {'collection-mss': '1000'})
+        # when a result has  no title, default text should be displayed
+        # sunburnt solr queries return a list of dictionaries; return one with an empty title
+	solr_exec.return_value = [
+            {'pid': 'foo', 'creator': 'so and so', 'title': ''}
+        ]
+        response = self.client.get(search_url,)
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
+
 
     def test_browse(self):
         browse_url = reverse('collection:browse')

@@ -282,7 +282,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="type" type="text" indexed="true" stored="true" multiValued="true"/>
 
    <!-- keep-specific fields -->
-   <field name="source_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="source_id" type="integer" indexed="true" stored="true" multiValued="false"/>
    <field name="collection_id" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="collection_label" type="string" indexed="true" stored="true" multiValued="false"/>
 

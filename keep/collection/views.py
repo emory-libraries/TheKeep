@@ -3,6 +3,8 @@ View methods for creating, editing, searching, and browsing
 :class:`~keep.collection.models.CollectionObject` instances in Fedora.
 '''
 
+from sunburnt import sunburnt
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -119,22 +121,13 @@ def search(request):
     form = CollectionSearch(request.GET, prefix='collection')
     context = {'search': form}
     if form.is_valid():
-        search_opts = {
-            'type': CollectionObject,
-            # for now, restrict to objects in configured pidspace
-            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
-            # for now, restrict by cmodel in dc:format
-            'format': CollectionObject.COLLECTION_CONTENT_MODEL,
-        }
-
-        if form.cleaned_data['mss']:
-            search_opts['identifier__contains'] = str(form.cleaned_data['mss']) # convert int to string
-        if form.cleaned_data['title']:
-            search_opts['title__contains'] = form.cleaned_data['title']
-        if form.cleaned_data['creator']:
-            search_opts['creator__contains'] = form.cleaned_data['creator']
-        if form.cleaned_data['collection']:
-            search_opts['relation'] = form.cleaned_data['collection']
+        # include all non-blank fields from the form as search terms
+        search_opts = dict((key,val) for key,val in form.cleaned_data.iteritems() if val)
+        # restrict to currently configured pidspace and collection content model
+        search_opts.update({
+            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+            'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+            })
 
         # collect non-empty, non-default search terms to display to user on results page
         search_info = {}
@@ -143,31 +136,26 @@ def search(request):
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
             if val:     # if search value is not empty, selectively add it
-                if field == 'collection':       # for collections, get collection info
+                if field == 'collection_id':       # for collections, get collection info
                     search_info[key] = get_cached_collection_dict(val)
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         context['search_info'] = search_info
 
-        # If no user-specified search terms are entered, find all collections
-        try:
-            repo = Repository(request=request)
-            context['results'] = [get_cached_collection_dict(o.pid)
-                                    for o in repo.find_objects(**search_opts) ]
-        except RequestFailed:
-            response_code = 500
-            # FIXME: this is duplicate logic from generic search view
-            context['server_error'] = 'There was an error ' + \
-                'contacting the digital repository. This ' + \
-                'prevented us from completing your search. If ' + \
-                'this problem persists, please alert the ' + \
-                'repository administrator.'
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(**search_opts).sort_by('source_id')
+        # TODO: eventually, we'll need proper pagination here;
+        # for now, set a large max to return everything
+        context['results'] = solrquery.paginate(start=0, rows=1000).execute()
 
-    response = render_to_response('collection/search.html', context,
-                    context_instance=RequestContext(request))
-    if response_code is not None:
-        response.status_code = response_code
-    return response
+    # if the form was not valid, set the current instance of the form
+    # as the sidebar form instance to display the error
+    else:
+        context['collection_search'] = form
+
+    # render search results page; if there was an error, results will be displayed as empty
+    return render_to_response('collection/search.html', context,
+                              context_instance=RequestContext(request))
 
 @permission_required('is_staff')
 def browse(request):

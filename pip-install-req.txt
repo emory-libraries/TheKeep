@@ -12,3 +12,4 @@ pycrypto
 django-celery
 mutagen
 poster
+sunburnt

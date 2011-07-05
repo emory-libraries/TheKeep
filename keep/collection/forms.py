@@ -30,14 +30,14 @@ class CollectionSearch(forms.Form):
       values in <b>all</b> search fields are returned.</li>
     </ul>''')
     wildcard_tip = '''May contain wildcards <b>*</b> or <b>?</b>.'''
-    mss = forms.IntegerField(required=False, label='Collection Number',
+    source_id = forms.IntegerField(required=False, label='Collection Number',
             help_text=mark_safe('''Search by manuscript or series number (e.g.,
-                enter <b>100</b> for <b>MSS100</b> or <b>Series 100</b>). ''' + wildcard_tip))
+                enter <b>100</b> for <b>MSS100</b> or <b>Series 100</b>).'''))
     title = forms.CharField(required=False,
             help_text=mark_safe('Search by collection title word or phrase. ' + wildcard_tip))
     creator = forms.CharField(required=False,
             help_text=mark_safe('Search by collection creator. '  + wildcard_tip))
-    collection = forms.ChoiceField(label="Repository", required=False,
+    collection_id = forms.ChoiceField(label="Repository", required=False,
                     choices=repository_choices, initial='')
                                 
 
