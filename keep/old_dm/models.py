@@ -645,7 +645,10 @@ class Content(models.Model):   # individual item
         # shortcut reference to digital tech xml to be updated below
         dt_xml = obj.digitaltech.content
 
-        techs = list(self.sound_source_tech.all())
+        direct_techs = set(self.sound_source_tech.all())
+        source_sounds = self.source_sounds.all()
+        techs_via_ss = set(TechSound.objects.filter(src_sound_id__in=source_sounds))
+        techs = direct_techs.union(techs_via_ss)
 
         purposes = [ tech.methodology for tech in techs
                      if tech.methodology ]
