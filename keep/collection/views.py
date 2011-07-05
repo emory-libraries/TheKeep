@@ -162,27 +162,17 @@ def browse(request):
     '''Browse :class:`~keep.collection.models.CollectionObject` by
     hierarchy, grouped by top-level collection.
     '''
-    response_code = None
-    context = {}
-    try:
-        # retrieve all collections - they will be grouped in the template
-        collections = CollectionObject.item_collections()
-        collections.sort(key=lambda c: c['collection_label'])
-        context['collections'] = collections
-    except RequestFailed:
-        response_code = 500
-        # FIXME: this is duplicate logic from generic search view
-        context['server_error'] = 'There was an error ' + \
-            'contacting the digital repository. This ' + \
-            'prevented us from completing your search. If ' + \
-            'this problem persists, please alert the ' + \
-            'repository administrator.'
-
-    response = render_to_response('collection/browse.html', context,
+    search_opts = {
+        'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+        'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+    }
+    solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+    solrquery = solr.query(pid='%s:*' % settings.FEDORA_PIDSPACE,
+                           content_model=CollectionObject.COLLECTION_CONTENT_MODEL).sort_by('source_id')
+    results = solrquery.paginate(start=0, rows=1000).execute()
+    return render_to_response('collection/browse.html', {'collections': results},
                     context_instance=RequestContext(request))
-    if response_code is not None:
-        response.status_code = response_code
-    return response
+
 
 @permission_required('is_staff')
 def view_datastream(request, pid, dsid):

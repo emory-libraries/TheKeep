@@ -9,7 +9,7 @@
     {% for collection in collections_by_parent %}
         <li>{{ collection.grouper }}
             <ul>
-            {% for subcoll in collection.list|dictsort:'source_id' %}
+            {% for subcoll in collection.list %}
             <li>{{ subcoll.source_id|default:'' }}
                 <a href="{% url collection:edit subcoll.pid %}">
                     {{ subcoll.title|default:'(no title present)' }}</a>

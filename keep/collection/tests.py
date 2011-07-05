@@ -227,7 +227,7 @@ class CollectionObjectTest(KeepTestCase):
         
         obj.mods.content.source_id = 100
         desc_data = obj.index_data_descriptive()
-        self.assertEqual(str(obj.mods.content.source_id), desc_data['source_id'],
+        self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
                          'source id should be included in index data when set')
 
 # sample POST data for creating a collection
@@ -537,7 +537,7 @@ class CollectionViewsTest(KeepTestCase):
         default_search_args = {
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
             'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
-            }
+        }
 
         # search all collections (no user-entered search terms)
         response = self.client.get(search_url)
@@ -612,44 +612,63 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
-
-    def test_browse(self):
+    @patch('keep.collection.views.sunburnt')
+    def test_browse(self, mocksunburnt):
         browse_url = reverse('collection:browse')
-
-        # ingest test objects to browse
-        repo = Repository()
-        rushdie = FedoraFixtures.rushdie_collection()
-        rushdie.save()  # save to fedora for searching
-        esterbrook = FedoraFixtures.esterbrook_collection()
-        esterbrook.save()
-        engdocs = FedoraFixtures.englishdocs_collection()
-        engdocs.save()
-        self.pids.extend([rushdie.pid, esterbrook.pid, engdocs.pid])
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
+        # shortcut to set the solr return value
+        # NOTE: call order here has to match the way methods are called in view
+        solrquery =  mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value
+        solr_exec = solrquery.paginate.return_value.execute
+        
+        # no match
+        # - set mock solr to return an empty result list
+	solr_exec.return_value = [
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,  'collection_label': 'marbl-coll'},
+            {'pid': 'pid:2', 'title': 'bar', 'collection_label': 'marbl-coll'},
+            {'pid': 'pid:3', 'title': 'baz', 'collection_label': 'pitts-coll'},
+            {'pid': 'pid:4', 'title': '', 'collection_label': 'archives-coll'},
+        ]
+
+        default_search_args = {
+            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+            'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+        }
         response = self.client.get(browse_url)
-        self.assert_(response.context['collections'],
-            'top-level collection object list is set in response context')
-        tlc = FedoraFixtures.top_level_collections()
-        for obj in (tlc[1], tlc[2]):
-            self.assertContains(response, obj.label,
-                msg_prefix="top-level collection %s is listed on collection browse page" % obj.label)
+        self.assertEqual(solr_exec.return_value, response.context['collections'],
+            'solr result should be set as collections set in response context')
+        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'solr collection browse should be filtered by configured pidspace in solr query')
+        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
+                         'solr collection browse should be filtered by collection content model in solr query')
+        solr_sort = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by
+        # solr query should be sorted on source id
+        solr_sort.assert_called_with('source_id')
 
-        for obj in rushdie, esterbrook, engdocs:
-            self.assertContains(response, obj.mods.content.title,
-                msg_prefix="subcollection title for %s is listed on collection browse page" % obj.pid)
-            self.assertContains(response, str(obj.mods.content.source_id),
-                msg_prefix="subcollection MSS # for %s is listed on collection browse page" % obj.pid)
-            if obj.mods.content.name:
-                self.assertContains(response, unicode(obj.mods.content.name),
-                    msg_prefix="subcollection creator for %s is listed on collection browse page" % obj.pid)
+        # basic display checking
+        
+        # top-level collection object labels should display once for
+        # each group, no matter how many items in the group
+        self.assertContains(response, 'marbl-coll', 1,
+            msg_prefix='collection label should be displayed once for each group, no matter how many items')
+        self.assertContains(response, 'pitts-coll', 1,
+            msg_prefix='collection label should be displayed once for each group, no matter how many items')
+        self.assertContains(response, 'archives-coll', 1,
+            msg_prefix='collection label should be displayed once for each group, no matter how many items')
 
+        # item display
+        self.assertContains(response, solr_exec.return_value[0]['title'],
+            msg_prefix='result title should be included in the browse page')
+        self.assertContains(response, solr_exec.return_value[0]['pid'],
+            msg_prefix='result pid should be included in the browse page')
+        self.assertContains(response, solr_exec.return_value[0]['source_id'],
+            msg_prefix='result source id should be included in the browse page')
+        
         # no title - default text
-        rushdie.mods.content.title = ''
-        rushdie.save()
-        response = self.client.get(browse_url)
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
