@@ -86,6 +86,10 @@ class Command(BaseCommand):
                     message = 'Migrated from legacy Digital Masters item %d' % (item.id,)
                     obj.save(logMessage=message)
                     logger.info('Ingested legacy Digital Masters item %d as %s' % (item.id, obj.pid))
+
+                    title_prefix = '(migrated to The Keep: %s) ' % (obj.pid,)
+                    item.title = title_prefix + item.title
+                    item.save()
                 if csvfile:
                     csvfile.writerow([_csv_sanitize(field) for field in row_data])
 
