@@ -18,7 +18,7 @@ from eulfedora.views import raw_datastream
 from eulfedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch
-from keep.collection.models import CollectionObject, get_cached_collection_dict
+from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository
 
 @permission_required('is_staff')
@@ -137,7 +137,7 @@ def search(request):
                 key = field 
             if val:     # if search value is not empty, selectively add it
                 if field == 'collection_id':       # for collections, get collection info
-                    search_info[key] = get_cached_collection_dict(val)
+                    search_info[key] = CollectionObject.find_by_pid(val)
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         context['search_info'] = search_info

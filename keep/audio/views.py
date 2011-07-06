@@ -30,7 +30,7 @@ from eulfedora.models import DigitalObjectSaveFailure
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject, Rights
 from keep.audio.tasks import convert_wav_to_mp3
-from keep.collection.models import get_cached_collection_dict
+from keep.collection.models import CollectionObject 
 from keep.common.fedora import Repository
 from keep.common.utils import md5sum
 
@@ -389,7 +389,7 @@ def search(request):
                 key = field 
             if val:     # if search value is not empty, selectively add it
                 if field == 'collection':       # for collections, get collection info
-                    search_info[key] = get_cached_collection_dict(val)
+                    search_info[key] = CollectionObject.find_by_pid(val)                    
                 elif field == 'rights':         # for rights, numeric code + abbreviation
                     search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
                 elif val != form.fields[field].initial:     # ignore default values

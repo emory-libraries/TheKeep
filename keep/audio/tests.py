@@ -71,16 +71,13 @@ class AudioViewsTest(KeepTestCase):
         elif hasattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED'):
             # if not originally set but added by a test, remove the setting
             del settings.MAX_ITEMS_PER_PODCAST_FEED
-
+ 
         # TODO: remove any test files created in staging dir
         # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
         
         self.repo.purge_object(self.rushdie.pid)
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
-
-        # refresh cached collections after objects are deleted
-        CollectionObject.item_collections(refresh_cache=True)
 
     def test_index(self):
         # test audio app index page permissions

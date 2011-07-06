@@ -10,7 +10,7 @@ from django.utils.feedgenerator import Rss201rev2Feed
 from eulfedora.util import RequestFailed
 
 from keep.audio.models import AudioObject
-from keep.collection.models import get_cached_collection_dict
+from keep.collection.models import CollectionObject
 from keep.common.utils import absolutize_url
 
 logger = logging.getLogger(__name__)
@@ -130,14 +130,14 @@ class PodcastFeed(Feed):
     def item_author_name(self, item):
         # using collection # - collection title
         if item.collection_uri:
-            collection =  get_cached_collection_dict(str(item.collection_uri))
+            collection = CollectionObject.find_by_pid(str(item.collection_uri))
             return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
         if item.collection_uri:
-            collection =  get_cached_collection_dict(str(item.collection_uri))
+            collection = CollectionObject.find_by_pid(str(item.collection_uri))
             categories.append(collection['collection_label'])
         return categories
 

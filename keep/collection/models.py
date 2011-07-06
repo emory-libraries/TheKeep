@@ -4,7 +4,6 @@ from rdflib import URIRef
 from sunburnt import sunburnt
 
 from django.conf import settings
-from django.core.cache import cache
 
 from eulexistdb.manager import Manager
 from eulexistdb.models import XmlModel
@@ -18,10 +17,6 @@ from keep import mods
 from keep.common.fedora import DigitalObject, Repository
 
 logger = logging.getLogger(__name__)
-
-# items cached here should be cached for a "long time"; the cache will be refreshed
-# when collections are modified or created
-LONG_CACHE_DURATION = 60*60*12   # time in seconds
 
 class CollectionMods(mods.MODS):
     '''Collection-specific MODS, based on :class:`keep.mods.MODS`.'''
@@ -58,9 +53,6 @@ class CollectionObject(DigitalObject):
     _collection_label = None
     _top_level_collections = None
 
-    _collection_pids_cache_key = 'item-collection-pids'
-    _toplevel_collection_cache_key = 'top-level-collection-pids'
-    
     def _update_dc(self):
         # FIXME: some duplicated logic from AudioObject save
         if self.mods.content.title:
@@ -100,9 +92,6 @@ class CollectionObject(DigitalObject):
         '''Save the object.  If the content of the MODS or RELS-EXT datastreams
         have been changed, the DC will be updated and saved as well.
 
-        After a successful save, information for this collection object
-        will be updated in the local cache using :meth:`set_cached_collection_dict`.
-
         :param logMessage: optional log message
         '''
         if self.mods.isModified() or self.rels_ext.isModified:
@@ -110,16 +99,7 @@ class CollectionObject(DigitalObject):
             # if either has changed, update DC and object label to keep them in sync
             self._update_dc()
 
-        # before save/ingest, store whether or not this is a new object
-        new_collection = self._create
-
-        save_result = super(CollectionObject, self).save(logMessage)
-        # after a collection is successfully saved, update the cache
-        set_cached_collection_dict(self)
-        # if this is a brand-new collection, the list of items needs to be refreshed
-        if new_collection:
-            self.item_collections(refresh_cache=True)
-        return save_result
+        return super(CollectionObject, self).save(logMessage)
 
     @property
     def collection_id(self):
@@ -215,7 +195,25 @@ class CollectionObject(DigitalObject):
                                                        for collection in collections]
 
         return CollectionObject._top_level_collections
+
+    @staticmethod
+    def find_by_pid(pid):
+        'Find a collection by pid and return a dictionary with collection information.'
+        # NOTE: this method added as a replacement for
+        # get_cached_collection_dict that was used elsewhere
+        # throughout the site (audio app, etc.)  It should probably be
+        # consolidated with other find methods...
         
+        if pid.startswith('info:fedora/'): # allow passing in uri
+             pid = pid[len('info:fedora/'):]      
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               pid=pid)
+        result = solrquery.execute()
+        if len(result) == 1:
+            return result[0]
+        # otherwise - exception? not found / too many
+
 
     @staticmethod
     def item_collections():
@@ -296,53 +294,7 @@ class CollectionObject(DigitalObject):
             data['source_id'] = self.mods.content.source_id
 
         return data
-        
 
-
-def get_cached_collection_dict(pid):
-    '''Retrieve minimal collection object information in dictionary form.
-    A cached copy will be used when available; when not previously cached,
-    the cache will be populated before the dictionary is returned.
-
-    :param pid: collection object pid or uri
-    :rtype: dict
-    '''  
-    if pid.startswith('info:fedora/'): # allow passing in uri
-        pid = pid[len('info:fedora/'):]        
-    # use pid for cache key
-    coll_dict = cache.get(pid, None)
-    if coll_dict is None:
-        repo = Repository()
-        coll_dict = set_cached_collection_dict(repo.get_object(pid, type=CollectionObject))
-    return coll_dict
-
-def set_cached_collection_dict(collection):
-    '''Save minimal information about a :class:`CollectionObject` to a local
-    cache in dictionary format.  Stores the following fields:
-
-        * pid
-        * source_id (from :class:`CollectionMods.source_id`)
-        * title
-        * creator
-        * collection_id  - id for the collection/numbering scheme object this
-          collection belongs to
-        * collection_label - label for parent collection/numbering scheme object
-
-    :param collection: class:`CollectionObject` to be cached
-    '''
-    # DigitalObjects can't be cached, and django templates can sort and regroup
-    # dictionaries much better, so cache important collction info as dictionary 
-    coll_dict = {
-        'pid': collection.pid,
-        'source_id': collection.mods.content.source_id,
-        'title': unicode(collection.mods.content.title),
-        'creator': unicode(collection.mods.content.name or ''),
-        'collection_id': collection.collection_id,
-        'collection_label': collection.collection_label,
-    }
-    logger.debug('caching collection %s: %r' % (collection.pid, coll_dict))
-    cache.set(collection.pid, coll_dict, LONG_CACHE_DURATION)   # keep for a long time, since we will recache
-    return coll_dict
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
     """

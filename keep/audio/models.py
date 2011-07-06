@@ -18,7 +18,7 @@ from eulfedora.models import FileDatastream, XmlDatastream
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 
-from keep.collection.models import get_cached_collection_dict, CollectionObject
+from keep.collection.models import CollectionObject
 from keep.common.fedora import DigitalObject, Repository
 from keep import mods
 
@@ -515,7 +515,7 @@ class AudioObject(DigitalObject):
         # location/repository - top level collection via parent collection
         if self.collection_uri is not None:
             try:
-                collection = get_cached_collection_dict(str(self.collection_uri))
+                collection = CollectionObject.find_by_pid(str(self.collection_uri))
                 self.dc.content.source = collection['collection_id']
             except RequestFailed:
                 # warn about a fedora error, but otherwise do nothing
