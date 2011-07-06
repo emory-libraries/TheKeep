@@ -3,6 +3,12 @@
 CHANGELOG
 =========
 
+Release X(Rushdie Stuff)
+------------------------
+* Branched Keep code and added arrangement app
+* Added load_arrangement management command
+
+
 Release 1.0.3
 -------------
 
