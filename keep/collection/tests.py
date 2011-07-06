@@ -117,10 +117,6 @@ class CollectionObjectTest(KeepTestCase):
             'dc:creator set from MODS name')
         self.assertEqual('1947-2008', obj.dc.content.date,
             'dc:date has text version of date range from MODS')
-        self.assertEqual(collections[0].uri, obj.dc.content.relation,
-            'top-level collection URI set as dc:relation')
-        # collection cmodel set as format (TEMPORARY)
-        self.assertEqual(obj.COLLECTION_CONTENT_MODEL, obj.dc.content.format)
 
         # change values - test updated in DC correctly
         obj.mods.content.source_id = '123'

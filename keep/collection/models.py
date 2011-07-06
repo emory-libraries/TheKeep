@@ -79,14 +79,6 @@ class CollectionObject(DigitalObject):
                             self.mods.content.origin_info.created[1].date)
             # FIXME: should this be dc:coverage ?
 
-        # TEMPORARY: collection relation and cmodel must be in DC for find_objects
-        # - these two can be removed once we implement gsearch
-        if self.collection_id is not None:
-            # store collection membership as dc:relation
-            self.dc.content.relation = self.collection_id
-        # set collection content model URI as dc:format
-        self.dc.content.format = self.COLLECTION_CONTENT_MODEL
-
 
     def save(self, logMessage=None):
         '''Save the object.  If the content of the MODS or RELS-EXT datastreams
