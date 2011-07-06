@@ -1,7 +1,8 @@
 from contextlib import contextmanager
-from mock import patch
+from mock import Mock, patch
 from os import path
 from rdflib import URIRef
+from sunburnt import sunburnt
 
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
@@ -20,17 +21,46 @@ from keep.testutil import KeepTestCase
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
-# tests for Collection DigitalObject
 class CollectionObjectTest(KeepTestCase):
-    def test_top_level(self):
+    # tests for Collection DigitalObject
+
+    def setUp(self):
+        super(CollectionObjectTest, self).setUp() 
+        # get rid of any pre-cached top-level collections
+        CollectionObject._top_level_collections = None
+
+    def tearDown(self):
+        super(CollectionObjectTest, self).tearDown() 
+        # remove any top-level collections cached by the tests
+        CollectionObject._top_level_collections = None
+
+    @patch('keep.collection.models.sunburnt')
+    def test_top_level(self, mocksunburnt):
+        # NOTE: mock order/syntax depends on how it is used in the method
+        solrquery = mocksunburnt.SolrInterface.return_value.query
+        solr_exec = solrquery.return_value.exclude.return_value.sort_by.return_value.execute
+
+        solr_exec.return_value = [
+            {'pid': 'coll:1', 'label': 'marbl'},
+            {'pid': 'coll:2', 'label': 'eua'},
+            {'pid': 'coll:3', 'label': 'pitts'},
+        ]
         collections = CollectionObject.top_level()
-        # NOTE: using >= because this test should not fail if there are other
-        # top-level collections present in Fedora
-        self.assert_(len(collections) >= 3,     # use assertGreaterEqual in python 2.7
-                "there should be at least 3 top-level collection (3 items from fixture)")
+        found_pids = [obj.pid for obj in collections]
+        for pid in [coll['pid'] for coll in solr_exec.return_value]:
+            self.assert_(pid in found_pids,
+                         'pid %s from mock solr return should be in returned objects' % pid)
+        
+        self.assertEqual(len(solr_exec.return_value), len(collections),
+             "number of items returned should match solr result")
         self.assert_(isinstance(collections[0], CollectionObject),
                 "top-level collection is instance of CollectionObject")
-        # should this test pids from fixture?
+        args, kwargs = solrquery.call_args
+        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
+                         'solr query should filter on collection object content model')
+        args, kwargs = solrquery.return_value.exclude.call_args
+        self.assertEqual(True, kwargs['collection_id__any'],
+                     'solr query should exclude results with any collection id to find top-level collections')
 
     def test_creation(self):
         obj = self.repo.get_object(type=CollectionObject)
@@ -135,77 +165,101 @@ class CollectionObjectTest(KeepTestCase):
         self.esterbrook = None
         self.engdocs = None
 
+    # set up a mock solr object for use in solr-based find methods
+    mocksolr = Mock(sunburnt.SolrInterface)
+    mocksolr.return_value = mocksolr
+    # solr interface has a fluent interface where queries and filters
+    # return another solr query object; simulate that as simply as possible
+    mocksolr.query.return_value = mocksolr.query
+    mocksolr.query.query.return_value = mocksolr.query
+    mocksolr.query.paginate.return_value = mocksolr.query
+    mocksolr.query.exclude.return_value = mocksolr.query
+
+    @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
     def test_item_collections(self):
-        # populate the cache *before* ingesting test objects 
-        CollectionObject.item_collections(refresh_cache=True)
-        
-        with self.ingest_test_collections():
-            # all tests here confirm cache is updated correctly when a collection is created
-            collections = CollectionObject.item_collections()
+        solr_result = [
+            {'pid': 'coll:1', 'label': 'foo'},
+            {'pid': 'coll:2', 'label': 'bar'},
+            {'pid': 'coll:3', 'label': 'baz'},
+        ]
+        self.mocksolr.query.execute.return_value = solr_result
 
-            source_ids = [ coll['source_id']  for coll in collections ]
-            self.assert_(1000 in source_ids,
-                    "MSS# 1000 included in item collections")
-            self.assert_(123 in source_ids,
-                    "MSS# 123 included in item collections")
-            self.assert_(309 in source_ids,
-                    "MSS# 309 included in item collections")
+        collections = CollectionObject.item_collections()
+        # returns a list of dict ~= solr result
+        self.assertEqual(solr_result, collections,
+             "item_collections method should return solr results")
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
+                         'solr query should filter on collection object content model')
+        self.assertEqual(True, kwargs['collection_id__any'],
+                         'solr query should include objects with any parent collection id')
 
-            pids = [ coll['pid'] for coll in collections ]
-            top_levels = CollectionObject.top_level()
-            self.assert_(top_levels[0].pid not in pids,
-                    "top level collection %s should not be in item collections." % (top_levels[0].pid,))
-
-
+    @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
     def test_subcollections(self):
-        with self.ingest_test_collections():
-            # rushdie & engdocs are in the same collection
-            collection = self.repo.get_object(type=CollectionObject, pid=self.rushdie.collection_id)            
-            subcoll_pids = [coll['pid'] for coll in collection.subcollections()]
-            self.assert_(self.rushdie.pid in subcoll_pids,
-                "rushdie should be included in subcollection for %s" % collection.pid)
-            self.assert_(self.engdocs.pid in subcoll_pids,
-                "engdocs should be included in subcollection for %s" % collection.pid)
-            self.assert_(self.esterbrook.pid not in subcoll_pids,
-                "esterbrook should be excluded from subcollections for %s" % collection.pid)
+        solr_result = [
+            {'pid': 'coll:1', 'label': 'foo'},
+            {'pid': 'coll:2', 'label': 'bar'},
+            {'pid': 'coll:3', 'label': 'baz'},
+        ]
+        self.mocksolr.query.execute.return_value = solr_result
 
-            # esterbrook is in a different collection
-            collection = self.repo.get_object(type=CollectionObject, pid=self.esterbrook.collection_id)
-            subcolls = collection.subcollections()
-            subcoll_pids = [coll['pid'] for coll in subcolls]
-            self.assert_(self.rushdie.pid not in subcoll_pids,
-                "rushdie should be excluded from subcollections for %s" % collection.pid)
-            self.assert_(self.engdocs.pid not in subcoll_pids,
-                "engdocs should be excluded from subcollections for %s" % collection.pid)
-            self.assert_(self.esterbrook.pid in subcoll_pids,
-                "esterbrook should be included in subcollections for %s" % collection.pid)
+        marbl = CollectionObject(api=Mock())
+        marbl.pid = 'coll:marbl'
+        subcolls = marbl.subcollections()
+        # returns a list of dict ~= solr result
+        self.assertEqual(solr_result, subcolls,
+             "subcollections method should return solr results")
 
+        # inspect solr query args
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
+                         'solr query should filter on collection object content model')
+        self.assertEqual('%s:' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'solr query should filter on configured pidspace')
+        self.assertEqual(marbl.pid, kwargs['collection_id'],
+                         'solr query should filter on collection pid of current object')
+
+    @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
     def test_find_by_collection_number(self):
-        with self.ingest_test_collections():
-            # find test item with no parent relation
-            found = list(CollectionObject.find_by_collection_number(1000))
-            self.assertEqual(1, len(found), 'find by collection number 1000 should return one item, got %d' % \
-                                            len(found))
-            self.assertEqual(self.rushdie.pid, found[0].pid,
-                             'find by collection number 1000 should return Rushdie fixture collection')
+        # sample result to be returned
+        result = [
+            {'pid': 'coll:1', 'label': 'foo', 'source_id': 1000},
+        ]
+        self.mocksolr.query.execute.return_value = result
 
-            # non-existent number
-            found = list(CollectionObject.find_by_collection_number(1030303))
-            self.assertEqual(0, len(found), 'find by collection number 1030303 should return zero items, got %d' % \
-                                            len(found))
+        # search by number only
+        search_coll = 1000
+        found = list(CollectionObject.find_by_collection_number(search_coll))
+        self.assertEqual(result[0]['pid'], found[0].pid)
+        self.assert_(isinstance(found[0], CollectionObject),
+                     'results should be returned as instance of CollectionObject')
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(search_coll, kwargs['source_id'],
+                         'solr query should search for requested collection number in source_id')
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'solr query should filter on configured pidspace')
+        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
+                         'solr query should filter on collection content model')
+        # test pagination?
+        
+        # search by number and parent collection
+        search_coll = 1000
+        parent_collection = 'parent:1'
+        found = list(CollectionObject.find_by_collection_number(search_coll, parent_collection))
+        self.assertEqual(result[0]['pid'], found[0].pid)
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(search_coll, kwargs['source_id'],
+            'find by mss number with parent option should still search for requested collection number in source_id')
+        # subquery - optional filter when parent is specified
+        args, kwargs = self.mocksolr.query.query.call_args
+        self.assertEqual(parent_collection, kwargs['collection_id'],
+            'find by mss number with parent option should filter on collection_id')
 
-            # find test item with correct parent relation
-            found = list(CollectionObject.find_by_collection_number(123, FedoraFixtures.top_level_collections()[2].uri))
-            self.assertEqual(1, len(found),
-                             'find by collection number 123 & parent collection should return one item, got %d' % \
-                             len(found))
-            self.assertEqual(self.esterbrook.pid, found[0].pid,
-                     'find by collection number 123 and parent collecton should return Esterbrook fixture collection')
-
-            # search for test item with incorrect parent relation
-            found = list(CollectionObject.find_by_collection_number(1000, FedoraFixtures.top_level_collections()[2].uri))
-            self.assertEqual(0, len(found),
-                 'find by collection number with incorrect parent relation should return zero items, got %d' % len(found))
+        # empty result
+        self.mocksolr.query.execute.return_value = []
+        found = list(CollectionObject.find_by_collection_number(search_coll, parent_collection))
+        self.assertEqual([], found,
+            'when solr returns no results, find by collection number returns an empty list')
 
     def test_index_data_descriptive(self):
         # test descriptive metadata used for indexing objects in solr

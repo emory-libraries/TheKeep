@@ -1,6 +1,7 @@
 import logging
 import re
 from rdflib import URIRef
+from sunburnt import sunburnt
 
 from django.conf import settings
 from django.core.cache import cache
@@ -194,34 +195,30 @@ class CollectionObject(DigitalObject):
         # NOTE: top-level collections are now called Repository (for owning
         # repository or archive), and should be labeled as such anywhere user-facing
 
-        # NOTE: can't pickle digital objects, so caching list of pids instead
-        collection_pids = cache.get(CollectionObject._toplevel_collection_cache_key, None)
-        repo = Repository()
-        if collection_pids is None or \
-                CollectionObject._top_level_collections is None:
+        # TODO: search logic very similar to item_collections and
+        # subcollections methods; consider refactoring search logic
+        # into a common search method.
+
+        if CollectionObject._top_level_collections is None:
             # find all objects with cmodel collection-1.1 and no parents
-            query = '''SELECT ?coll
-            WHERE {
-                ?coll <%(has_model)s> <%(cmodel)s>
-                OPTIONAL { ?coll <%(member_of)s> ?parent }
-                FILTER ( ! bound(?parent) )
-            }
-            ''' % {
-                'has_model': modelns.hasModel,
-                'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
-                'member_of': relsext.isMemberOfCollection,
-            }
-            collection_pids = list(repo.risearch.find_statements(query, language='sparql',
-                                                             type='tuples', flush=True))
-            # these objects are not expected to change frequently - caching for a long time
-            cache.set(CollectionObject._toplevel_collection_cache_key, collection_pids, LONG_CACHE_DURATION)
-            CollectionObject._top_level_collections = [repo.get_object(result['coll'], type=CollectionObject)
-                                                       for result in collection_pids]
+
+            # search solr for collection objects with NO parent collection id
+            solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+            # NOTE: not filtering on pidspace, since top-level objects are loaded as fixtures
+            # and may not match the configured pidspace in a dev environment
+            solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+            collections = solrquery.exclude(collection_id__any=True).sort_by('title_exact').execute()
+
+            # initialize as instances of CollectionObject
+            repo = Repository()
+            CollectionObject._top_level_collections = [repo.get_object(collection['pid'], type=CollectionObject)
+                                                       for collection in collections]
 
         return CollectionObject._top_level_collections
+        
 
     @staticmethod
-    def item_collections(refresh_cache=False):
+    def item_collections():
         """Find all collection objects in the configured Fedora pidspace that
         can contain items. Today this includes all those collections that are
         not top-level. 
@@ -229,81 +226,59 @@ class CollectionObject(DigitalObject):
         :returns: list of dict
         :rtype: list
         """
-        pids = cache.get(CollectionObject._collection_pids_cache_key, None)
-        if pids is None or refresh_cache:
-            repo = Repository()
-            # find all objects with cmodel collection-1.1 and any parent
-            query = '''SELECT DISTINCT ?coll
-            WHERE {
-                ?coll <%(has_model)s> <%(cmodel)s> .
-                ?coll <%(member_of)s> ?parent
-            }
-            ''' % {
-                'has_model': modelns.hasModel,
-                'cmodel': CollectionObject.CONTENT_MODELS[0],
-                'member_of': relsext.isMemberOfCollection,
-            }
-            collection_pids = repo.risearch.find_statements(query, language='sparql',
-                                                            type='tuples', flush=True)
-            pids = [result['coll'] for result in collection_pids
-                                if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
-            
-            cache.set(CollectionObject._collection_pids_cache_key, pids, LONG_CACHE_DURATION)
-        return [get_cached_collection_dict(p) for p in pids]
+
+        # search solr for collection objects with NO parent collection id
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               collection_id__any=True)
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
         # use dictsort and regroup in templates for sorting where appropriate
+        return solrquery.paginate(start=0, rows=1000).execute()
 
     def subcollections(self):
         """Find all sub-collections that are members of the current collection
         in the configured Fedora pidspace.
 
         :rtype: list of dict
-        """        
-        repo = Repository()
-        # find all objects with cmodel collection-1.1 and this object for parent
-        query = '''SELECT ?coll
-        WHERE {
-            ?coll <%(has_model)s> <%(cmodel)s> .
-            ?coll <%(member_of)s> <%(parent)s>
-        }
-        ''' % {
-            'has_model': modelns.hasModel,
-            'cmodel': CollectionObject.CONTENT_MODELS[0],
-            'member_of': relsext.isMemberOfCollection,
-            'parent': self.uri,
-        }
-        collection_pids = repo.risearch.find_statements(query, language='sparql',
-                                                         type='tuples', flush=True)
-        return [get_cached_collection_dict(result['coll'])
-                        for result in collection_pids
-                            if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
+        """
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               pid='%s:' % settings.FEDORA_PIDSPACE,
+                               collection_id=self.pid)
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
         # use dictsort in template for sorting where appropriate
+        return solrquery.paginate(start=0, rows=1000).execute()
 
     @staticmethod
     def find_by_collection_number(num, parent=None):
-        '''Find a CollectionObject in Fedora by collection number, optionally limited by parent collection (owning
-        Repository or top-level collection.
+        '''Find a CollectionObject in Fedora by collection number (or
+        source id), optionally limited by parent collection (owning
+        Repository or top-level collection).
 
-        :param num: collection number to search for
-        :param parent: optional; top-level collection or Archive/Repository collection must belong to
-        :return: generator of any items, as returned by :meth:`eulfedora.server.Repository.find_objects`,
-             as type :class:`CollectionObject`
+        :param num: collection number to search for (aka source id)
+        :param parent: optional; top-level collection or
+            Archive/Repository collection must belong to
+        :return: generator of any matching items, as instances of
+            :class:`CollectionObject`
         '''
-        repo = Repository()
-        args = {
-            # restrict to items with collection cmodel
-            'format': CollectionObject.COLLECTION_CONTENT_MODEL,
-            # restrict to currently-configured pidspace
-            'pid__contains': '%s:*' % settings.FEDORA_PIDSPACE,
-            # initialize results as type CollectionObject
-            'type': CollectionObject,
-        }
-        # if parent is specified, restrict by relation (parent should be a pid)
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               pid='%s:*' % settings.FEDORA_PIDSPACE,
+                               source_id=int(num))
+        # if parent is specified, restrict by collection id (parent should be a pid)
         if parent is not None:
-            args['relation'] = parent
+            solrquery = solrquery.query(collection_id=parent)
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
+        # use dictsort in template for sorting where appropriate
+        collections = solrquery.paginate(start=0, rows=1000).execute()
 
-        # restrict to collection objects in the current pidspace
-        coll = repo.find_objects(identifier__contains=str(num), **args)
-        return coll
+        # return a generator of matching items, as instances of CollectionObject
+        repo = Repository()
+        for coll in collections:
+            yield repo.get_object(coll['pid'], type=CollectionObject)
 
     def index_data_descriptive(self):
         '''Extend the default
