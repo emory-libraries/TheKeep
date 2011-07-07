@@ -136,7 +136,7 @@ def search(request):
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
             if val:     # if search value is not empty, selectively add it
-                if field == 'collection_id':       # for collections, get collection info
+                if field == 'archive_id':       # for archive, get  info
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val

@@ -180,7 +180,7 @@ class CollectionObject(DigitalObject):
             # NOTE: not filtering on pidspace, since top-level objects are loaded as fixtures
             # and may not match the configured pidspace in a dev environment
             solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-            collections = solrquery.exclude(collection_id__any=True).sort_by('title_exact').execute()
+            collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').execute()
 
             # initialize as instances of CollectionObject
             repo = Repository()
@@ -221,7 +221,7 @@ class CollectionObject(DigitalObject):
         # search solr for collection objects with NO parent collection id
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
-                               collection_id__any=True)
+                               archive_id__any=True)
         # by default, only returns 10; get everything
         # - solr response is a list of dictionary with collection info
         # use dictsort and regroup in templates for sorting where appropriate
@@ -236,7 +236,7 @@ class CollectionObject(DigitalObject):
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                pid='%s:' % settings.FEDORA_PIDSPACE,
-                               collection_id=self.pid)
+                               archive_id=self.pid)
         # by default, only returns 10; get everything
         # - solr response is a list of dictionary with collection info
         # use dictsort in template for sorting where appropriate

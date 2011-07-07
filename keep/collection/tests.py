@@ -60,7 +60,7 @@ class CollectionObjectTest(KeepTestCase):
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr query should filter on collection object content model')
         args, kwargs = solrquery.return_value.exclude.call_args
-        self.assertEqual(True, kwargs['collection_id__any'],
+        self.assertEqual(True, kwargs['archive_id__any'],
                      'solr query should exclude results with any collection id to find top-level collections')
 
     def test_creation(self):
@@ -188,7 +188,7 @@ class CollectionObjectTest(KeepTestCase):
         args, kwargs = self.mocksolr.query.call_args
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr query should filter on collection object content model')
-        self.assertEqual(True, kwargs['collection_id__any'],
+        self.assertEqual(True, kwargs['archive_id__any'],
                          'solr query should include objects with any parent collection id')
 
     @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
@@ -213,7 +213,7 @@ class CollectionObjectTest(KeepTestCase):
                          'solr query should filter on collection object content model')
         self.assertEqual('%s:' % settings.FEDORA_PIDSPACE, kwargs['pid'],
                          'solr query should filter on configured pidspace')
-        self.assertEqual(marbl.pid, kwargs['collection_id'],
+        self.assertEqual(marbl.pid, kwargs['archive_id'],
                          'solr query should filter on collection pid of current object')
 
     @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
@@ -626,8 +626,8 @@ class CollectionViewsTest(KeepTestCase):
                      'title should not be in solr query args when no title terms entered')
         self.assert_('creator' not in kwargs,
                      'creator should not be in solr query args when no creator terms entered')
-        self.assert_('collection_id' not in kwargs,
-                     'collection_id should not be in solr query args when no collection was selected')
+        self.assert_('archive_id' not in kwargs,
+                     'archive_id should not be in solr query args when no collection was selected')
         self.assertEqual(mss, response.context['search_info']['Collection Number'],
                          'source id should be included in search info for user display as collection number')
 
@@ -652,11 +652,11 @@ class CollectionViewsTest(KeepTestCase):
 
         # search by numbering scheme
         collection = FedoraFixtures.top_level_collections()[1]
-        response = self.client.get(search_url, {'collection-collection_id': collection.uri })
+        response = self.client.get(search_url, {'collection-archive_id': collection.uri })
         args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
-        self.assertEqual(collection.uri, kwargs['collection_id'],
-                         'selecte dcollection_id should be included in solr query terms')
-        self.assertEqual(collection.pid, response.context['search_info']['Repository']['pid'],
+        self.assertEqual(collection.uri, kwargs['archive_id'],
+                         'selected collection_id should be included in solr query terms')
+        self.assertEqual(collection.pid, response.context['search_info']['Archive']['pid'],
                          'creator search term should be included in search info for display to user')        
 
         # shortcut to set the solr return value

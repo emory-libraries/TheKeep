@@ -37,7 +37,7 @@ class CollectionSearch(forms.Form):
             help_text=mark_safe('Search by collection title word or phrase. ' + wildcard_tip))
     creator = forms.CharField(required=False,
             help_text=mark_safe('Search by collection creator. '  + wildcard_tip))
-    collection_id = forms.ChoiceField(label="Repository", required=False,
+    archive_id = forms.ChoiceField(label="Archive", required=False,
                     choices=repository_choices, initial='')
                                 
 
