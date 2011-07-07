@@ -553,11 +553,12 @@ class Content(models.Model):   # individual item
         # if there is exactly one speed, set it in the source tech xml
         elif len(speeds) == 1:
             #adjust speed and/or unit values
-            speed[0].speed, speed[0].unit = self._special_speed_map(speed[0].speed, speed[0].unit)
+            speed = speeds[0]
+            value, unit = self._special_speed_map(speed.speed, speed.unit)
             st_xml.create_speed()
-            st_xml.speed.value =  speeds[0].speed
-            st_xml.speed.unit = speeds[0].unit
-            st_xml.speed.aspect = speeds[0].aspect
+            st_xml.speed.value = value
+            st_xml.speed.unit = unit
+            st_xml.speed.aspect = speed.aspect
         data.append('\n'.join('%s %s' % (self._special_speed_map(speed.speed, speed.unit))
                                             for speed in speeds))
 
