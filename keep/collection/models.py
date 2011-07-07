@@ -38,9 +38,16 @@ class CollectionMods(mods.MODS):
     ':class:`keep.mods.AccessCondition`'
 
 
+class SimpleCollection(DigitalObject):
+    '''This is a simple DC only collection
+    '''
+    COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.0'
+    CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
+
 
 class CollectionObject(DigitalObject):
     '''Fedora Collection Object.  Extends :class:`~eulfedora.models.DigitalObject`.
+    This really represents an archival collection
     '''
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
