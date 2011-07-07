@@ -168,7 +168,6 @@ class CollectionObject(DigitalObject):
 
     def old_dm_media_path(self):
         'Path to media in old Digital Masters interface.'
-        old_dm = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
         coll_number = str(self.mods.content.source_id)
 
         repo = Repository()
@@ -177,12 +176,11 @@ class CollectionObject(DigitalObject):
         marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
         if parent.pid == marbl_pid:
             if coll_number == '0':
-                return '%sspec_coll/Danowski/' % (old_dm,)
+                return 'spec_coll/Danowski/'
             else:
-                return '%sspec_col/MSS%s/' % (old_dm, coll_number)
+                return 'spec_col/MSS%s/' % (coll_number,)
         else:
-            return '%suniv_arch/SER%s/' % (old_dm, coll_number)
-
+            return 'univ_arch/SER%s/' % (coll_number,)
 
     @staticmethod
     def top_level():

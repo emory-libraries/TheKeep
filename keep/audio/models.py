@@ -457,14 +457,21 @@ class AudioObject(DigitalObject):
             return reverse('audio:download-compressed-audio', args=[str(self.pid)])
 
         # otherwise see if it's from old dm
-        if self.mods.content.dm1_id or self.mods.content.dm1_other_id:
-            if self._collection_object() and \
-                    self._collection_object().old_dm_media_path():
-                coll_root = self._collection_object().old_dm_media_path()
-                if self.mods.content.dm1_other_id:
-                    return '%saudio/%s.m4a' % (coll_root, self.mods.content.dm1_other_id)
-                if self.mods.content.dm1_id:
-                    return '%saudio/%s.m4a' % (coll_root, self.mods.content.dm1_id)
+        old_dm_path = self.old_dm_media_path()
+        if old_dm_path:
+            old_dm_root = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
+            return old_dm_root + old_dm_path
+
+    def old_dm_media_path(self):
+        old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id
+        if old_id:
+            coll_obj = self._collection_object()
+            if not coll_obj:
+                return
+            coll_path = coll_obj.old_dm_media_path()
+            if not coll_path:
+                return
+            return '%saudio/%s.m4a' % (coll_path, old_id)
 
     def _collection_object(self):
         repo = Repository()
