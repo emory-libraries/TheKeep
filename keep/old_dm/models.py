@@ -719,17 +719,29 @@ class Content(models.Model):   # individual item
             logger.debug('Copyright Date: %s' % rights.copyright_date)
             logger.debug('IP Notes: %s' % rights.restriction_other)
 
+        rights = None
+        rights_restriction = None
+
         if self.access_rights.count() > 1:
             logger.error('Item %d has %d Access Rights fields (not repeatable)' % (self.id,
                                                                                    self.access_rights.count()))
-        # if there is just one or zero access rights, migrate any values present
-        if self.access_rights.count() <=  1:
-            #if 0 rights map value 11
-            rights = self.access_rights.all()[0] if self.access_rights.count() == 1 else self.access_rights.get(id='11')[0]
-            if rights.restriction:
-                rights_xml.create_access_status()
-                rights_xml.access_status.code = rights.restriction.access_code
-                rights_xml.access_status.text = rights.restriction.access_text
+        elif self.access_rights.count() ==  1:
+            rights = self.access_rights.all()[0]
+            rights_restriction = rights.restriction
+
+        else: # self.access_rights.count() == 0
+            # use Restriction(id=11) == "Unknown" if none specified
+            rights_restriction = Restriction.objects.get(id=11)
+
+        if rights_restriction:
+            rights_xml.create_access_status()
+            rights_xml.access_status.code = rights_restriction.access_code
+            rights_xml.access_status.text = rights_restriction.access_text
+            data.append('%s - %s' % (rights_restriction.access_code, rights_restriction.access_abbreviation))
+        else:
+            data.append('')
+
+        if rights:
             if rights.name:
                 # name only, without authority information
                 rights_xml.copyright_holder_name = rights.name.name
@@ -737,14 +749,11 @@ class Content(models.Model):   # individual item
                 rights_xml.copyright_date = rights.w3cdtf_copyright_date()
             if rights.restriction_other:
                 rights_xml.ip_note = rights.restriction_other            
-
-
-        data.append('\n'.join('%s - %s' % (rights.restriction.access_code, rights.restriction.access_abbreviation)
-                                        for rights in self.access_rights.all() if rights.restriction))
-        data.append('\n'.join(unicode(rights.name) for rights in self.access_rights.all()))
-        data.append('\n'.join('%s' % rights.copyright_date for rights in self.access_rights.all()))
-        data.append('\n'.join('%s' % rights.restriction_other for rights in self.access_rights.all()))
-
+            data.append(unicode(rights.name))
+            data.append(rights.copyright_date)
+            data.append(rights.restriction_other)
+        else:
+            data.extend(['', '', ''])
 
         logger.debug('Rights XML:\n' + rights_xml.serialize(pretty=True))
 
