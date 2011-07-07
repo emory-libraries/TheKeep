@@ -10,6 +10,7 @@ from eulexistdb.models import XmlModel
 from eulfedora.models import XmlDatastream
 from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.rdfns import relsext
+from eulfedora.util import RequestFailed
 from eulxml import xmlmap
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
@@ -277,14 +278,26 @@ class CollectionObject(DigitalObject):
         Collection objects.'''
         data = super(CollectionObject, self).index_data_descriptive()
         if self.collection_id is not None:
-            data.update({
-                'collection_id': self.collection_id,
-                'collection_label': self.collection_label,
-            })
+            data.update(self._index_data_archive())
+                
         # if source id is set, include it
         if self.mods.content.source_id:
             data['source_id'] = self.mods.content.source_id
 
+        return data
+
+    def _index_data_archive(self):
+        data = {}
+        if self.collection_id is not None:
+            data['archive_id'] = self.collection_id
+            try:
+                # pull owning archive object directly from fedora
+                # (don't assume it is already indexed in solr)
+                archive = CollectionObject(self.api, self.collection_id)
+                data['archive_label'] = archive.label
+            except RequestFailed as rf:
+                logger.error('Error accessing archive object %s in Fedora: %s' % \
+                             (self.collection_id, rf))
         return data
 
 

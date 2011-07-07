@@ -260,17 +260,31 @@ class CollectionObjectTest(KeepTestCase):
 
     def test_index_data_descriptive(self):
         # test descriptive metadata used for indexing objects in solr
+
+        # use a mock object to simulate pulling archive object from Fedora
+        mockarchive = Mock(CollectionObject)
+        mockarchive.label = 'MARBL'
         
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
         obj._collection_id = 'parent:1'
-        obj._collection_label = 'parent collection'
         obj.dc.content.title = 'test collection'
+
+        # test index data for parent archive separately
+        # so we can mock the call to initialize the parent CollectionObject
+        with patch('keep.collection.models.CollectionObject',
+                   new=Mock(return_value=mockarchive)):
+            arch_data = obj._index_data_archive()
+            self.assertEqual(obj.collection_id, arch_data['archive_id'],
+                             'parent collection object (archive) id should be set in index data')
+            self.assertEqual(mockarchive.label, arch_data['archive_label'],
+                             'parent collection object (archive) label should be set in index data')
+            # error if data is not serializable as json
+            self.assert_(simplejson.dumps(arch_data))
+
+        # skip index archive data and test the rest
+        obj._index_data_archive = Mock(return_value={})
         desc_data = obj.index_data_descriptive()
-        self.assertEqual(obj.collection_id, desc_data['collection_id'],
-                         'parent collection object id should be set in index data')
-        self.assertEqual(obj.collection_label, desc_data['collection_label'],
-                         'parent collection object label should be set in index data' )
         self.assert_('source_id' not in desc_data,
                      'source_id should not be included in index data when it is not set')  
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
@@ -280,7 +294,6 @@ class CollectionObjectTest(KeepTestCase):
         desc_data = obj.index_data_descriptive()
         self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
                          'source id should be included in index data when set')
-
         # error if data is not serializable as json
         self.assert_(simplejson.dumps(desc_data))
 

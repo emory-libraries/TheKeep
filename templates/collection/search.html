@@ -20,7 +20,7 @@
         <td>{{ obj.source_id|default:'' }}</td>
         <td><a href="{% url collection:edit obj.pid %}">{{ obj.title|default:'(no title present)' }}</a></td>
         <td>{{ obj.creator|join:'; ' }}</td>
-        <td>{{ obj.collection_label }}</td>
+        <td>{{ obj.archive_label }}</td>
     </tr>
 {% empty %}
     <tr><td colspan="4">no results</td></tr>
