@@ -50,12 +50,6 @@ class Command(BaseCommand):
             logging.info('Migration dry run. Metadata will be extracted ' +
                          'but not ingested. To ingest metadata, run ' +
                          'without the -n option.')
-        else:
-            logging.warning("Migration running in ingest mode, but it is " +
-                            "not yet complete. Consider using -n for dry " +
-                            "run mode instead.")
-            import time
-            time.sleep(5)
 
         with self.open_csv(options) as csvfile:
             if csvfile:
