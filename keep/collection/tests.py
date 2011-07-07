@@ -7,6 +7,7 @@ from sunburnt import sunburnt
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client
+from django.utils import simplejson
 
 from eulfedora.rdfns import relsext
 
@@ -279,6 +280,10 @@ class CollectionObjectTest(KeepTestCase):
         desc_data = obj.index_data_descriptive()
         self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
                          'source id should be included in index data when set')
+
+        # error if data is not serializable as json
+        self.assert_(simplejson.dumps(desc_data))
+
 
 # sample POST data for creating a collection
 COLLECTION_DATA = {

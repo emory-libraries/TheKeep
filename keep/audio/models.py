@@ -571,6 +571,56 @@ class AudioObject(DigitalObject):
         # set collection content model URI as dc:format
         self.dc.content.format = self.AUDIO_CONTENT_MODEL
 
+
+    def index_data_descriptive(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data_descriptive`
+        method to include additional fields specific to Keep
+        Audio objects.'''
+
+        # NOTE: we don't want to rely on other objects being indexed in Solr,
+        # so index data should not use Solr to find any related object info
+        
+        data = super(AudioObject, self).index_data_descriptive()
+        if self.collection_uri is not None:
+            data['collection_id'] = self.collection_uri
+            try:
+                # pull parent & archive collection objects directly from fedora
+                parent = CollectionObject(self.api, self.collection_uri)
+                data['collection_label'] = parent.label
+                # the parent collection of the collection this item belongs to is its archive
+                data['archive_id'] = parent.collection_uri
+                archive = CollectionObject(self.api, parent.collection_uri)
+                data['archive_label'] = archive.label
+            except RequestFailed:
+                # TODO: what kind of error handling do we need here?
+                pass
+            
+        # old identifiers from previous digital masters
+        dm1_ids = []
+        if self.mods.content.dm1_id:
+            dm1_ids.append(self.mods.content.dm1_id)
+        if self.mods.content.dm1_other_id:
+            dm1_ids.append(self.mods.content.dm1_other_id)
+        if dm1_ids:
+            data['dm1_id'] = dm1_ids
+
+        # digitization purpose, if not empty
+        if self.digitaltech.content.digitization_purpose_list:
+            # convert nodelist to a normal list that can be serialized as json
+            data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
+
+        # part note 
+        if self.mods.content.part_note:
+            data['part'] = self.mods.content.part_note.text
+
+        # rights access status code
+        if self.rights.content.access_status:
+            data['access_code'] = self.rights.content.access_status.code
+
+        return data
+
+
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None, checksum=None):
         '''Static method to create a new :class:`AudioObject` instance from
@@ -645,6 +695,8 @@ class AudioObject(DigitalObject):
             # clear out any cached collection id
             self._collection_uri = None
 
+    # FIXME: CollectionObject has an equivalent property called
+    # collection_id; should these be consisent? common code?
     collection_uri = property(_get_collection_uri, _set_collection_uri)
     ':class:`~rdflib.URIRef` for the collection this object belongs to'
 

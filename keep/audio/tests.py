@@ -1,5 +1,6 @@
 import cStringIO
 from datetime import date
+from mock import Mock, patch
 import os
 from shutil import copyfile
 import stat
@@ -13,6 +14,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client
+from django.utils import simplejson
 
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
@@ -1894,6 +1896,88 @@ class TestAudioObject(KeepTestCase):
         obj._update_dc()
         self.assert_(date.today().strftime('%Y-%m-%d') in obj.dc.content.date_list,
              'current date should be set in dc:date for un-ingested object')
+
+    @patch('keep.audio.models.CollectionObject')
+    def test_index_data_descriptive(self, mockcollobj):
+        # test descriptive metadata used for indexing objects in solr
+
+        mockmss = Mock(CollectionObject)
+        mockmss.label = 'mss collection'
+        mockmss.collection_uri = 'archive:pid'
+        mockarchive = Mock(CollectionObject)
+        mockarchive.label = 'MARBL'
+
+        colls = [mockmss, mockarchive]
+        def get_coll(*args, **kwargs):
+            return colls.pop(0)
+        # collection object will be initialized twice - once for
+        # collection this item belongs to, once for repository the
+        # collection belongs to.
+        mockcollobj.side_effect = get_coll
+        
+        # create test object and populate with minimal data
+        obj = self.repo.get_object(type=audiomodels.AudioObject)
+        obj._collection_uri = 'parent:1'
+        #obj._collection_label = 'parent collection'
+        obj.dc.content.title = 'audio item'
+        desc_data = obj.index_data_descriptive()
+        self.assertEqual(obj.collection_uri, desc_data['collection_id'],
+                         'parent collection object id should be set in index data')
+        self.assertEqual(mockmss.label, desc_data['collection_label'],
+                          'parent collection object label should be set in index data' )
+        self.assertEqual(mockmss.collection_uri, desc_data['archive_id'],
+                          'archive id (collection of parent collection object) should be set in index data' )
+        self.assertEqual(mockarchive.label, desc_data['archive_label'],
+                          'archive label (collection of parent collection object) should be set in index data' )
+        # check CollectionObject use
+        self.assertEqual(2, mockcollobj.call_count,
+                         'CollectionObject should be initialized twice - parent collection, archive')
+        # get all args for collection object initializations
+        call_args = mockcollobj.call_args_list
+        args, kwargs = call_args[0]
+        self.assert_(obj.collection_uri in args,
+                     'object.collection_uri %s should be used to initialize a CollectionObject for collection info' \
+                     % obj.collection_uri)
+        args, kwargs = call_args[1]
+        self.assert_(mockmss.collection_uri in args,
+                     'collection parent uri %s should be used to initialize a CollectionObject for archive info' \
+                     % mockmss.collection_uri)
+        
+        self.assertEqual(obj.dc.content.title, desc_data['title'][0],
+                         'default index data fields should be present in data')
+        self.assert_('dm1_id' not in desc_data,
+                     'dm1_id should not be included in index data when list is empty')  
+        self.assert_('digitization_purpose' not in desc_data,
+                     'digitization_purpose should not be included in index data when it is empty')  
+        self.assert_('part' not in desc_data,
+                     'part should not be included in index data when it is empty')  
+
+        # additional fields that could be present
+        obj.mods.content.dm1_id = '0103'
+        obj.mods.content.dm1_other_id = '000004993'
+        obj.digitaltech.content.digitization_purpose_list.append('patron request')
+        obj.mods.content.create_part_note()
+        obj.mods.content.part_note.text = 'Side 1'
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = '1'
+        # reset mock collection objects to be returned
+        colls = [mockmss, mockarchive]
+
+        desc_data = obj.index_data_descriptive()
+        self.assert_(obj.mods.content.dm1_id in desc_data['dm1_id'],
+                         'dm1 id should be included in index data when set')
+        self.assert_(obj.mods.content.dm1_other_id in desc_data['dm1_id'],
+                         'dm1 id should be included in index data when set')
+        self.assert_(obj.digitaltech.content.digitization_purpose_list[0] in desc_data['digitization_purpose'],
+                         'digitization purpose should be included in index data when set')
+        self.assertEqual(obj.mods.content.part_note.text, desc_data['part'],
+                         'part note should be included in index data when set')
+        self.assertEqual(obj.rights.content.access_status.code, desc_data['access_code'],
+                         'access code should be included in index data when set')
+        
+        # error if data is not serializable as json
+        self.assert_(simplejson.dumps(desc_data))        
+
                
     def test_file_checksum(self):
         #This is just a sanity check that eulfedora is working as expected with checksums.
