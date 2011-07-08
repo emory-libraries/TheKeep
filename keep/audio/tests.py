@@ -1831,20 +1831,20 @@ class TestAudioObject(KeepTestCase):
         self.obj._update_dc()
         
         self.assertEqual(title, self.obj.dc.content.title)
-        self.assert_(self.obj.mods.content.dm1_id in self.obj.dc.content.identifier_list)
-        self.assert_(self.obj.mods.content.dm1_other_id in self.obj.dc.content.identifier_list)
+        # dm1 ids no longer need to be in dc:identifier (indexed & searched via solr)
+        self.assert_(self.obj.mods.content.dm1_id not in self.obj.dc.content.identifier_list)
+        self.assert_(self.obj.mods.content.dm1_other_id not in self.obj.dc.content.identifier_list)
         self.assertEqual(res_type, self.obj.dc.content.type)
         for name in self.obj.mods.content.names:
             self.assert_(unicode(name) in self.obj.dc.content.creator_list)
         self.assert_(cdate in self.obj.dc.content.date_list)
         self.assert_(idate in self.obj.dc.content.date_list)
+        # TODO: object creation date probably shouldn't need to be in dc:date
         self.assert_(self.obj.created.strftime('%Y-%m-%d') in self.obj.dc.content.date_list,
                  'object creation date for ingested object should be included in dc:date in YYYY-MM-DD format')
         self.assert_(general_note in self.obj.dc.content.description_list)
-        #self.assert_(dig_purpose in self.obj.dc.content.description_list)
+        # FIXME: should related files still be in dc:description?
         self.assert_(related_files in self.obj.dc.content.description_list)
-        # owning repository id should be set in dc:source
-        #self.assertEqual(self.rushdie.collection_id, self.obj.dc.content.source)
         # currently using rights access condition code & text in dc:rights
         # should only be one in dc:rights - mods access condition not included
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
@@ -1852,22 +1852,13 @@ class TestAudioObject(KeepTestCase):
         self.assert_(self.obj.dc.content.rights.startswith('%s: ' % access.code))
         self.assert_(self.obj.dc.content.rights.endswith(access.text))        
 
-        # collection URI in dc:relation (for findObjects search)
-        self.assertEqual(self.rushdie.uri, self.obj.dc.content.relation)
-        # cmodel in dc:format (for findObject search)
-        self.assertEqual(self.obj.AUDIO_CONTENT_MODEL, self.obj.dc.content.format)
-
         # clear out data and confirm DC gets cleared out appropriately
         del(self.obj.mods.content.origin_info.created)
         del(self.obj.mods.content.origin_info.issued)
         del(self.obj.mods.content.general_note)
         del(self.obj.mods.content.names)  # FIXME: does this work?
-        del(self.obj.mods.content.dm1_id)
-        del(self.obj.mods.content.dm1_other_id)
-        del(self.obj.digitaltech.content.digitization_purpose)
         del(self.obj.sourcetech.content.related_files)
         del(self.obj.rights.content.access_status)
-        self.obj.collection_uri = None   # remove collection membership
         self.obj._update_dc()
         self.assertEqual(1, len(self.obj.dc.content.date_list),
             'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
@@ -1879,9 +1870,7 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual([], self.obj.dc.content.creator_list,
             'there should be no dc:creator when no creator names are set')
         self.assertEqual([], self.obj.dc.content.identifier_list,
-             'there should be no dc:identifiers when dm1 id and other dm1 id are not set')
-        self.assertEqual(None, self.obj.dc.content.source,
-             'there should be no dc:source when collection is not set')
+             'there should be no dc:identifiers when no identifiers are set')
 
         # un-ingested object - should not error, should get current date
         obj = self.repo.get_object(type=audiomodels.AudioObject)

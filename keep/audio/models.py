@@ -493,11 +493,6 @@ class AudioObject(DigitalObject):
          '''
         # identifiers
         del(self.dc.content.identifier_list)        # clear out any existing names
-        # include DM id and other id if they are present
-        if self.mods.content.dm1_id:
-            self.dc.content.identifier_list.append(self.mods.content.dm1_id)
-        if self.mods.content.dm1_other_id:
-            self.dc.content.identifier_list.append(self.mods.content.dm1_other_id)
         
         # title
         if self.mods.content.title:
@@ -511,18 +506,6 @@ class AudioObject(DigitalObject):
         for name in self.mods.content.names:
             # for now, use unicode conversion as defined in mods.Name
             self.dc.content.creator_list.append(unicode(name))
-
-        # location/repository - top level collection via parent collection
-        if self.collection_uri is not None:
-            try:
-                collection = CollectionObject.find_by_pid(str(self.collection_uri))
-                #self.dc.content.source = collection['archive_id']
-            except RequestFailed:
-                # warn about a fedora error, but otherwise do nothing
-                logger.warning('Error loading collection %s; cannot update dc:source with location for searching' \
-                               % self.collection_uri)
-        else:
-            del(self.dc.content.source)
 
         # clear out any dates previously in DC
         del(self.dc.content.date_list)        
@@ -550,26 +533,14 @@ class AudioObject(DigitalObject):
         if self.mods.content.general_note and \
            self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
-        # digitization_purpose
-        #self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
         # related files
         self.dc.content.description_list.extend(self.sourcetech.content.related_files_list)
-        # Currently not indexing general note in digital tech
-
 
         # clear out any rights previously in DC and set contents from Rights accessStatus
         del(self.dc.content.rights_list)
         if self.rights.content.access_status:
             access = self.rights.content.access_status
             self.dc.content.rights_list.append('%s: %s' % (access.code, access.text))
-
-        # TEMPORARY: collection relation and cmodel must be in DC for find_objects
-        # - these can be removed once we implement gsearch
-        if self.collection_uri is not None:
-            # store collection membership as dc:relation
-            self.dc.content.relation = str(self.collection_uri)
-        # set collection content model URI as dc:format
-        self.dc.content.format = self.AUDIO_CONTENT_MODEL
 
 
     def index_data_descriptive(self):
