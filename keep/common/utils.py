@@ -69,14 +69,17 @@ class PaginatedSolrSearch(object):
             raise TypeError
         
         if isinstance(k, slice):
+            print "slice is ", k
             paginate_opts = {}
             # if start was specified, use it; otherwise retain current start
             if k.start is not None:
                 paginate_opts['start'] = int(k.start)
-            # if a slice bigger than available results is requested, cap it at actual max
-            # FIXME: probably not actually necessary for solr...
-            stop = min(k.stop, self.count())
-                
+            # if a slice is bigger than available results is requested, cap it at actual max
+            if k.stop is None:
+                stop = self.count()
+            else:
+                stop = min(k.stop, self.count())
+            paginate_opts['rows'] = stop - k.start
             return PaginatedSolrSearch(self.solrquery.paginate(**paginate_opts))
 
         # check that index is in range

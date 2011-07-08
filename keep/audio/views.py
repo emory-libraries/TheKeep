@@ -418,7 +418,7 @@ def search(request):
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
         pagedsolr = PaginatedSolrSearch(solrquery)
-        paginator = Paginator(pagedsolr, 10)
+        paginator = Paginator(pagedsolr, 30)
         
         try:
             page = int(request.GET.get('page', '1'))
