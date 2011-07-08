@@ -263,12 +263,19 @@ class Content(models.Model):   # individual item
             # Collection 0 should be the catch-all for the new version.
             if self.location.name == 'Emory University Archives' and num == 1002:
                 num = 0
+            return self._lookup_collection(num, self.location.corresponding_repository)
+
+    _collection_cache = {} # on the class and thus shared by all Content objs
+    def _lookup_collection(self, num, repo):
+        if (num, repo) not in self._collection_cache:
             coll = list(CollectionObject.find_by_collection_number(num, self.location.corresponding_repository))
             # if we have one and only one match, we have found the correct object
             if len(coll) == 1:
-                return coll[0]
+                self._collection_cache[(num, repo)] = coll[0]
+            else:
+                self._collection_cache[(num, repo)] = None
 
-        return None
+        return self._collection_cache[(num, repo)]
 
     # default manager & custom audio-only manager
     objects = models.Manager()
