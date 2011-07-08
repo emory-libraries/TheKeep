@@ -69,7 +69,6 @@ class PaginatedSolrSearch(object):
             raise TypeError
         
         if isinstance(k, slice):
-            print "slice is ", k
             paginate_opts = {}
             # if start was specified, use it; otherwise retain current start
             if k.start is not None:
