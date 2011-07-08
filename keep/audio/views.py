@@ -3,6 +3,7 @@ import json
 import logging
 import magic
 import os
+from sunburnt import sunburnt
 import tempfile
 import time
 import traceback
@@ -32,7 +33,7 @@ from keep.audio.models import AudioObject, Rights
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import CollectionObject 
 from keep.common.fedora import Repository
-from keep.common.utils import md5sum
+from keep.common.utils import md5sum, PaginatedSolrSearch
 
 logger = logging.getLogger(__name__)
 
@@ -340,7 +341,7 @@ def _dump_post_data(inf, outf, size=None):
         if size == 0:
             break
 
-    
+
 @permission_required('is_staff')
 def search(request):
     '''Search for  :class:`~keep.audio.models.AudioObject` by pid,
@@ -350,36 +351,43 @@ def search(request):
     ctx_dict = {'search': form}
     if form.is_valid():
         search_opts = {
-            'type': AudioObject,
-            # restrict to objects in configured pidspace
-            'pid__contains': '%s*' % settings.FEDORA_PIDSPACE,
-            # restrict by cmodel in dc:format
-            'format__contains': AudioObject.AUDIO_CONTENT_MODEL,
+            # restrict to objects in the configured pidspace
+            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+            # restrict to audio items by content model
+            'content_model': AudioObject.AUDIO_CONTENT_MODEL,
         }
-        if form.cleaned_data['pid']:
-            # pid can now be pid OR another id
-            # if the search string includes : then search on pid 
-            if ':' in form.cleaned_data['pid']:
-                search_opts['pid__contains'] = '%s' % form.cleaned_data['pid']
-                # add a wildcard if the search pid is the initial value
-                if form.cleaned_data['pid'] == form.fields['pid'].initial:
-                    search_opts['pid__contains'] += '*'
-            # otherwise, search dc:identifier
+
+        # translate non-blank fields from the form to search terms
+        for field, val in form.cleaned_data.iteritems():
+            if not val:
+                # skip blank fields
+                continue
+
+            # handle fields that need special logic
+            if field == 'pid':
+                # pid search field can now be object pid OR dm id
+                # if the search string is purely numeric, it must be a dm1 id
+                if val.isnumeric():
+                    search_opts['dm1_id'] = val
+                    # otherwise, search on fedora object pid
+                else:
+                    search_opts['pid'] = val
+                    # add a wildcard if the search pid is the initial value
+                    if val == form.fields['pid'].initial:
+                        search_opts['pid'] += '*'
+
+            # collection/archive objects are indexed as collection_id in solr
+            elif field in ['collection', 'archive']:
+                search_opts['%s_id' % field] = val
+
+            elif field == 'description':
+                # skip description here - special handling below,
+                # since it requires an OR search in two fields
+                continue
+
+            # all other fields: solr search field = form field 
             else:
-                search_opts['identifier__contains'] = form.cleaned_data['pid']
-                
-        if form.cleaned_data['title']:
-            search_opts['title__contains'] = form.cleaned_data['title']
-        if form.cleaned_data['description']:
-            search_opts['description__contains'] = form.cleaned_data['description']
-        if form.cleaned_data['collection']:
-            search_opts['relation__contains'] = form.cleaned_data['collection']
-        if form.cleaned_data['date']:
-            search_opts['date__contains'] = form.cleaned_data['date']
-        if form.cleaned_data['rights']:
-            search_opts['rights__contains'] = '%s:' % form.cleaned_data['rights']
-        if form.cleaned_data['location']:
-            search_opts['source__contains'] = form.cleaned_data['location']
+                search_opts[field] = val
 
         # collect non-empty, non-default search terms to display to user on results page
         search_info = {}
@@ -388,52 +396,49 @@ def search(request):
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
             if val:     # if search value is not empty, selectively add it
-                if field == 'collection':       # for collections, get collection info
+                # for collections and archive, get collection object info
+                if field in ['collection', 'archive']: # location = archive
                     search_info[key] = CollectionObject.find_by_pid(val)                    
-                elif field == 'rights':         # for rights, numeric code + abbreviation
+                elif field == 'access_code':         # for rights, numeric code + abbreviation
                     search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         ctx_dict['search_info'] = search_info
 
-        if search_opts:
-            # If they didn't specify any search options, don't bother
-            # searching.
-            #try:
-            repo = Repository(request=request)
-            found = list(repo.find_objects(**search_opts))
-            # default Fedora sorting appears to be by created date (oldest first)
-            # reverse the list in order to display most recent first
-            # - could explicitly sort on create date here, but that would be SLOW
-            found.reverse()
-            paginator = Paginator(found, 30)
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        # for now, sort by most recently created
+        solrquery = solr.query(**search_opts).sort_by('-created')
 
-            try:
-                page = int(request.GET.get('page', '1'))
-            except ValueError:
-                page = 1
-            try:
-                results = paginator.page(page)
-            except (EmptyPage, InvalidPage):
-                results = paginator.page(paginator.num_pages)
+        # description search field currently searches general note (in dc:description) OR
+        # the digitization purpose; handling separately to build a
+        if form.cleaned_data['description']:
+            desc = form.cleaned_data['description']
+            solrquery = solrquery.query(solr.Q(description=desc) | solr.Q(digitization_purpose=desc))
 
-            ctx_dict['results'] = results.object_list
-            ctx_dict['page'] = results
+        # wrap the solr query in a PaginatedSolrSearch object
+        # that knows how to translate between django paginator & sunburnt
+        pagedsolr = PaginatedSolrSearch(solrquery)
+        paginator = Paginator(pagedsolr, 10)
+        
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+        try:
+            results = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            results = paginator.page(paginator.num_pages)
+        
+        ctx_dict.update({
+            'results': results.object_list,
+            'page': results,
             # pass search term query opts to view for pagination links
-            ctx_dict['search_opts'] = request.GET.urlencode()
-            #except:
-            #    response_code = 500
-            #    ctx_dict['server_error'] = 'There was an error ' + \
-            #        'contacting the digital repository. This ' + \
-            #        'prevented us from completing your search. If ' + \
-            #        'this problem persists, please alert the ' + \
-            #        'repository administrator.'
+            'search_opts': request.GET.urlencode()
+        })
 
-    response = render_to_response('audio/search.html', ctx_dict,
-                    context_instance=RequestContext(request))
-    if response_code is not None:
-        response.status_code = response_code
-    return response
+
+    return render_to_response('audio/search.html', ctx_dict,
+        context_instance=RequestContext(request))
 
 @permission_required('is_staff')
 def view(request, pid):

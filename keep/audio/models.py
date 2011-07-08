@@ -516,7 +516,7 @@ class AudioObject(DigitalObject):
         if self.collection_uri is not None:
             try:
                 collection = CollectionObject.find_by_pid(str(self.collection_uri))
-                self.dc.content.source = collection['collection_id']
+                #self.dc.content.source = collection['archive_id']
             except RequestFailed:
                 # warn about a fedora error, but otherwise do nothing
                 logger.warning('Error loading collection %s; cannot update dc:source with location for searching' \
@@ -551,7 +551,7 @@ class AudioObject(DigitalObject):
            self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
         # digitization_purpose
-        self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
+        #self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
         # related files
         self.dc.content.description_list.extend(self.sourcetech.content.related_files_list)
         # Currently not indexing general note in digital tech
@@ -589,12 +589,12 @@ class AudioObject(DigitalObject):
                 parent = CollectionObject(self.api, self.collection_uri)
                 data['collection_label'] = parent.label
                 # the parent collection of the collection this item belongs to is its archive
-                data['archive_id'] = parent.collection_uri
-                archive = CollectionObject(self.api, parent.collection_uri)
+                # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
+                data['archive_id'] = parent.collection_id
+                archive = CollectionObject(self.api, parent.collection_id)
                 data['archive_label'] = archive.label
-            except RequestFailed:
-                # TODO: what kind of error handling do we need here?
-                pass
+            except RequestFailed as rf:
+                logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
             
         # old identifiers from previous digital masters
         dm1_ids = []
@@ -611,7 +611,7 @@ class AudioObject(DigitalObject):
             data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
 
         # part note 
-        if self.mods.content.part_note:
+        if self.mods.content.part_note and self.mods.content.part_note.text:
             data['part'] = self.mods.content.part_note.text
 
         # rights access status code

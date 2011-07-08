@@ -70,10 +70,9 @@ class ItemSearch(forms.Form):
             are in <b>YYYY</b>, <b>YYYY-MM</b> or <b>YYYY-MM-DD</b> format.
             May contain wildcards * or ?.<br/>
             <i>Example:</i> search <b>2011-02*</b> for all items uploaded in February 2011.'''))
-    rights = forms.ChoiceField(rights_access_options, required=False,
-                    help_text='Search for items with the specified Rights access condition')
-    # location/archive (top-level collection via item->collection membership)
-    location = forms.ChoiceField(label="Repository/Archive", required=False,
+    access_code = forms.ChoiceField(rights_access_options, label='Rights', required=False,
+                    help_text='Search for items with the specified rights access status')
+    archive = forms.ChoiceField(label="Archive", required=False,
                     choices=repository_choices, initial='',
                     help_text='Search for items that are owned by the specified Archive')
 
