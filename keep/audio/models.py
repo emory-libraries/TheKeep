@@ -543,16 +543,17 @@ class AudioObject(DigitalObject):
             self.dc.content.rights_list.append('%s: %s' % (access.code, access.text))
 
 
-    def index_data_descriptive(self):
+    def index_data(self):
         '''Extend the default
-        :meth:`eulfedora.models.DigitalObject.index_data_descriptive`
+        :meth:`eulfedora.models.DigitalObject.index_data`
         method to include additional fields specific to Keep
         Audio objects.'''
-
         # NOTE: we don't want to rely on other objects being indexed in Solr,
         # so index data should not use Solr to find any related object info
-        
-        data = super(AudioObject, self).index_data_descriptive()
+
+
+        # FIXME: is it worth splitting out descriptive index data here?
+        data = super(AudioObject, self).index_data()
         if self.collection_uri is not None:
             data['collection_id'] = self.collection_uri
             try:
@@ -589,6 +590,27 @@ class AudioObject(DigitalObject):
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
 
+        # boolean values that should always be available
+        data.update({
+            # access code override
+            'block_external_access': self.rights.content.block_external_access,
+            # flags to indicate which datastreams are available
+            'has_access_copy': self.compressed_audio.exists,
+            'has_original': self.audio.exists,
+        })
+
+        if self.compressed_audio.exists:
+            data.update({
+                'access_copy_size': self.compressed_audio.info.size,
+                'access_copy_mimetype': self.compressed_audio.mimetype,
+	    })
+        if self.digitaltech.content.duration:
+            data['duration'] = self.digitaltech.content.duration
+            
+        if self.mods.content.origin_info and \
+           self.mods.content.origin_info.issued:
+            data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
+            
         return data
 
 

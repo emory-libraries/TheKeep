@@ -1879,8 +1879,8 @@ class TestAudioObject(KeepTestCase):
              'current date should be set in dc:date for un-ingested object')
 
     @patch('keep.audio.models.CollectionObject')
-    def test_index_data_descriptive(self, mockcollobj):
-        # test descriptive metadata used for indexing objects in solr
+    def test_index_data(self, mockcollobj):
+        # test custom data used for indexing objects in solr
 
         mockmss = Mock(CollectionObject)
         mockmss.label = 'mss collection'
@@ -1898,10 +1898,10 @@ class TestAudioObject(KeepTestCase):
         
         # create test object and populate with minimal data
         obj = self.repo.get_object(type=audiomodels.AudioObject)
+        obj.pid = 'foo:1'
         obj._collection_uri = 'parent:1'
-        #obj._collection_label = 'parent collection'
         obj.dc.content.title = 'audio item'
-        desc_data = obj.index_data_descriptive()
+        desc_data = obj.index_data()
         self.assertEqual(obj.collection_uri, desc_data['collection_id'],
                          'parent collection object id should be set in index data')
         self.assertEqual(mockmss.label, desc_data['collection_label'],
@@ -1925,13 +1925,30 @@ class TestAudioObject(KeepTestCase):
                      % mockmss.collection_id)
         
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
-                         'default index data fields should be present in data')
+                         'default index data fields should be present in data (title)')
+        self.assertEqual(obj.pid, desc_data['pid'],
+                         'default index data fields should be present in data (pid)')
         self.assert_('dm1_id' not in desc_data,
                      'dm1_id should not be included in index data when list is empty')  
         self.assert_('digitization_purpose' not in desc_data,
                      'digitization_purpose should not be included in index data when it is empty')  
         self.assert_('part' not in desc_data,
-                     'part should not be included in index data when it is empty')  
+                     'part should not be included in index data when it is empty')
+        self.assertEqual(False, desc_data['block_external_access'],
+                     'block_external_access should be false when it is not set in rights md')
+        self.assertEqual(False, desc_data['has_original'],
+                     'has_original should be false when object has no ingested original datastream')
+        self.assertEqual(False, desc_data['has_access_copy'],
+                     'has_access_copy should be false when object has no ingested access datastream')
+        self.assert_('access_copy_size' not in desc_data,
+                     'access_copy_size should not be included in index data when access ds does not exist')
+        self.assert_('access_copy_mimetype' not in desc_data,
+                     'access_copy_mimetype should not be included in index data when access ds does not exist')
+        self.assert_('duration' not in desc_data,
+                     'duration should not be included in index data unless set in digitaltech')
+        self.assert_('date_issued' not in desc_data,
+                     'date_issued should not be included in index data when it is not set')
+
 
         # additional fields that could be present
         obj.mods.content.dm1_id = '0103'
@@ -1939,12 +1956,18 @@ class TestAudioObject(KeepTestCase):
         obj.digitaltech.content.digitization_purpose_list.append('patron request')
         obj.mods.content.create_part_note()
         obj.mods.content.part_note.text = 'Side 1'
+        obj.mods.content.create_origin_info()
+        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         obj.rights.content.create_access_status()
         obj.rights.content.access_status.code = '1'
+        obj.rights.content.block_external_access = True
+        obj.compressed_audio.info.size = 13546
+        obj.compressed_audio.mimetype = 'application/mpeg'
+        obj.digitaltech.content.duration = 36
         # reset mock collection objects to be returned
         colls = [mockmss, mockarchive]
 
-        desc_data = obj.index_data_descriptive()
+        desc_data = obj.index_data()
         self.assert_(obj.mods.content.dm1_id in desc_data['dm1_id'],
                          'dm1 id should be included in index data when set')
         self.assert_(obj.mods.content.dm1_other_id in desc_data['dm1_id'],
@@ -1955,9 +1978,36 @@ class TestAudioObject(KeepTestCase):
                          'part note should be included in index data when set')
         self.assertEqual(obj.rights.content.access_status.code, desc_data['access_code'],
                          'access code should be included in index data when set')
-        
         # error if data is not serializable as json
         self.assert_(simplejson.dumps(desc_data))        
+
+
+        colls = [mockmss, mockarchive]
+        # pretend access copy exists in fedora
+        with patch.object(obj.compressed_audio, 'exists', new=True):
+            desc_data = obj.index_data()
+            self.assertEqual(obj.rights.content.block_external_access, desc_data['block_external_access'],
+                         'block_external_access should match what is set in rights md')
+            self.assertEqual(True, desc_data['has_access_copy'],
+                         'has_access_copy should be true when object has an access datastream')
+            self.assertEqual(obj.compressed_audio.info.size, desc_data['access_copy_size'],
+                         'access_copy_size should match compressed audio datastream size')
+            self.assertEqual(obj.compressed_audio.mimetype, desc_data['access_copy_mimetype'],
+                         'access_copy_mimetype should match compressed audio datastream mimetype')
+            self.assertEqual(obj.digitaltech.content.duration, desc_data['duration'],
+                         'duration should match digitaltech duration value')
+            self.assert_(unicode(obj.mods.content.origin_info.issued[0]) in desc_data['date_issued'],
+                         'date_issued should not be set based on mods origin_info.issued')
+            self.assert_(simplejson.dumps(desc_data))        
+
+        colls = [mockmss, mockarchive]
+        # pretend original exists in fedora
+        with patch.object(obj.audio, 'exists', new=True):
+            desc_data = obj.index_data()
+            self.assertEqual(True, desc_data['has_original'],
+                         'has_original should be true when object has original audio datastream')
+
+        
 
                
     def test_file_checksum(self):
