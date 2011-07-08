@@ -242,7 +242,11 @@ class Content(models.Model):   # individual item
             desc = DescriptionData.objects.get(pk=self.collection_number)
             return 'MARBL %d' % desc.mss_number
         elif self.series_number:
-            return 'EUA %d' % self.series_number
+            if self.location and self.location.name == 'Emory University Archives' \
+                    and self.series_number == 1002:
+                return 'EUA 0'
+            else:
+                return 'EUA %d' % self.series_number
 
     @property
     def collection_object(self):
