@@ -51,14 +51,12 @@ class PaginatedSolrSearch(object):
         self.solrquery = solrquery
         
     def count(self):
-        print "** count "
         # get total count without retrieving any results
         # FIXME: cache the count?
         response = self.solrquery.paginate(rows=0).execute()
         return response.result.numFound
 
     def __len__(self):
-        print "** len"
         if self._result_cache is None:
             self._result_cache = self.solrquery.execute()
         return len(self._result_cache)
@@ -67,7 +65,6 @@ class PaginatedSolrSearch(object):
     def __getitem__(self, k):
         """Return a single result or slice of results from the query."""
         
-        print "** get item ", k
         if not isinstance(k, (slice, int, long)):
             raise TypeError
         
@@ -79,7 +76,6 @@ class PaginatedSolrSearch(object):
             # if a slice bigger than available results is requested, cap it at actual max
             # FIXME: probably not actually necessary for solr...
             stop = min(k.stop, self.count())
-            print "*paginate opts are "
                 
             return PaginatedSolrSearch(self.solrquery.paginate(**paginate_opts))
 
