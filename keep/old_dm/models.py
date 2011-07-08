@@ -502,17 +502,6 @@ class Content(models.Model):   # individual item
         logger.debug('MODS:\n' + modsxml_s)
         return data
         
-     #Special cases for speed / unit mapping
-    def _special_speed_map(self, speed, unit):
-        if speed == 'O':
-            speed = 'other'
-        elif speed =='33':
-            speed = '33 1/3'
-        elif speed == '7.5' and unit =='ips':
-            speed ='7 1/2'
-            unit = 'inches/sec'
-        return speed, unit
-
     # fields returned by source_tech_metadata_method
     source_tech_fields = ['Note - General', 'Note - Related Files',
                           'Note - Conservation History', 'Speed',
@@ -567,12 +556,11 @@ class Content(models.Model):   # individual item
         elif len(speeds) == 1:
             #adjust speed and/or unit values
             speed = speeds[0]
-            value, unit = self._special_speed_map(speed.speed, speed.unit)
             st_xml.create_speed()
-            st_xml.speed.value = value
-            st_xml.speed.unit = unit
+            st_xml.speed.value = speed.translated_speed
+            st_xml.speed.unit = speed.unit
             st_xml.speed.aspect = speed.aspect
-        data.append('\n'.join('%s %s' % (self._special_speed_map(speed.speed, speed.unit))
+        data.append('\n'.join('%s %s' % (speed.translated_speed, speed.unit)
                                             for speed in speeds))
 
         locs = [ s.item_location for s in sounds
@@ -961,6 +949,15 @@ class Speed(models.Model):
     def __unicode__(self):
         return '%s' % self.id
 
+    SPEED_TRANSLATIONS = {
+        'O': 'other',
+        '33': '33 1/3',
+        '7.5': '7 1/2',
+    }
+    @property
+    def translated_speed(self):
+        return self.SPEED_TRANSLATIONS.get(self.speed, self.speed)
+
     @property
     def unit(self):
         if self.speed_alt == 'Multiple':
@@ -1001,12 +998,12 @@ class Speed(models.Model):
         if self.unit == 'other':
             lookup_speed = self.unit
         else:
-            lookup_speed = '%s %s' % (self.speed, self.unit)
+            lookup_speed = '%s %s' % (self.translated_speed, self.unit)
         if lookup_speed in self.speed_aspects:
             return self.speed_aspects[lookup_speed]
         else:
-            logger.warn('Could not determine speed aspect for %s' % \
-                        lookup_speed)
+            logger.warning('Could not determine speed aspect for %s' % \
+                           lookup_speed)
 
 
 class SrcMovingImages(models.Model):
