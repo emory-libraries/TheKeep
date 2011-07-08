@@ -1,5 +1,5 @@
 import cStringIO
-from datetime import date
+from datetime import date, datetime
 from mock import Mock, MagicMock, patch
 import os
 from shutil import copyfile
@@ -25,6 +25,7 @@ from eulxml.xmlmap  import load_xmlobject_from_string
 from keep import mods
 from keep.audio import forms as audioforms
 from keep.audio import models as audiomodels
+from keep.audio.feeds import PodcastFeed
 from keep.audio.management.commands import ingest_cleanup
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.fixtures import FedoraFixtures
@@ -49,6 +50,17 @@ class AudioViewsTest(KeepTestCase):
     fixtures =  ['users']
 
     client = Client()
+    
+    # set up a mock solr object for use in solr-based find methods
+    mocksolr = Mock(sunburnt.SolrInterface)
+    mocksolr.return_value = mocksolr
+    # solr interface has a fluent interface where queries and filters
+    # return another solr query object; simulate that as simply as possible
+    mocksolr.query.return_value = mocksolr.query
+    mocksolr.query.query.return_value = mocksolr.query
+    mocksolr.query.paginate.return_value = mocksolr.query
+    mocksolr.query.exclude.return_value = mocksolr.query
+    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
 
     def setUp(self):        
         super(AudioViewsTest, self).setUp()
@@ -325,18 +337,6 @@ class AudioViewsTest(KeepTestCase):
                 'ingested object should have a conversion result to track mp3 generation')
 
             
-    # set up a mock solr object for use in solr-based find methods
-    mocksolr = Mock(sunburnt.SolrInterface)
-    mocksolr.return_value = mocksolr
-    # solr interface has a fluent interface where queries and filters
-    # return another solr query object; simulate that as simply as possible
-    mocksolr.query.return_value = mocksolr.query
-    mocksolr.query.query.return_value = mocksolr.query
-    mocksolr.query.paginate.return_value = mocksolr.query
-    mocksolr.query.exclude.return_value = mocksolr.query
-#    mocksolr.Q.return_value = MagicMock(sunburnt.SolrInterface.Q)
-
-    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
 
     
     @patch('keep.audio.views.sunburnt.SolrInterface', mocksolr)
@@ -1191,93 +1191,59 @@ class AudioViewsTest(KeepTestCase):
                 % (expected, got, ds_url))
 
 
-
-    def test_podcast_feed(self):
+    @patch('keep.audio.feeds.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.audio.feeds.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.feeds.CollectionObject')
+    def test_podcast_feed(self, mockcollobj):
         feed_url = reverse('audio:podcast-feed', args=[1])
 
-        # create some test objects to show up in the feed
-        repo = Repository()
-        obj = repo.get_object(type=audiomodels.AudioObject)
-        obj.mods.content.title = 'Dylan Thomas reads anthology'
-        obj.mods.content.create_part_note()
-        obj.mods.content.part_note.text = 'Side A'
-        obj.mods.content.create_origin_info()
-        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
-        obj.rights.content.create_access_status()
-        obj.rights.content.access_status.code = 8 # public domain
-        obj.collection_uri = self.rushdie.uri
-        obj.compressed_audio.content = open(mp3_filename)
-        obj.save()
-        obj2 = repo.get_object(type=audiomodels.AudioObject)
-        obj2.mods.content.title = 'Patti Smith Live in New York'
-        obj2.compressed_audio.content = open(mp3_filename)
-        obj2.rights.content.create_access_status()
-        obj2.rights.content.access_status.code = 8 # public domain
-        obj2.collection_uri = self.esterbrook.uri
-        obj2.save()
-        obj3 = repo.get_object(type=audiomodels.AudioObject)
-        obj3.mods.content.title = 'No Access copy'
-        obj3.rights.content.create_access_status()
-        obj3.rights.content.access_status.code = 8 # public domain
-        obj3.save()
-        obj4 = repo.get_object(type=audiomodels.AudioObject)
-        obj4.rights.content.create_access_status()
-        obj4.rights.content.access_status.code = 10 # undetermined
-        obj4.compressed_audio.content = open(mp3_filename)
-        obj4.save()
-        obj5 = repo.get_object(type=audiomodels.AudioObject)
-        obj5.compressed_audio.content = open(mp3_filename)
-        obj5.save()
-        obj6 = repo.get_object(type=audiomodels.AudioObject)
-        obj6.mods.content.title = 'Moses reads Ten Commandments'
-        obj6.compressed_audio.content = open(mp3_filename)
-        obj6.rights.content.create_access_status()
-        obj6.rights.content.access_status.code = 8 # public domain
-        obj6.rights.content.block_external_access = True
-        obj6.collection_uri = self.esterbrook.uri
-        obj6.save()
-        obj7 = repo.get_object(type=audiomodels.AudioObject)
-        obj7.mods.content.title = 'Moses lecture on calves and redoing work'
-        obj7.mods.content.dm1_id = '42753'
-        obj7.rights.content.create_access_status()
-        obj7.rights.content.access_status.code = 8 # public domain
-        obj7.collection_uri = self.esterbrook.uri
-        obj7.save()
-        obj8 = repo.get_object(type=audiomodels.AudioObject)
-        obj8.mods.content.title = 'Odysseus recites The Iliad'
-        obj8.mods.content.dm1_id = '124578'
-        obj8.mods.content.dm1_other_id = '000875421'
-        obj8.rights.content.create_access_status()
-        obj8.rights.content.access_status.code = 8 # public domain
-        obj8.collection_uri = self.esterbrook.uri
-        obj8.save()
+        # test data to return from solr search for objects to show up in the feed
+        # - researcher_access flag is stored in solr, so only accessible items will be returned
+        data = [
+            {'pid': '%s:1' % settings.FEDORA_PIDSPACE,
+             'title': 'Dylan Thomas reads anthology',
+             'part': 'Side A',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'date_issued': ['1976-05'] },
+            {'pid': '%s:2' % settings.FEDORA_PIDSPACE,
+             'title': 'Patti Smith Live in New York',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'collection_id': self.esterbrook.uri },
+            {'pid': '%s:3' % settings.FEDORA_PIDSPACE,
+             'title': 'Odysseus recites The Iliad',
+             'dm1_id': ['124578', '000875421'] }
+            ]
+        self.mocksolrpaginator.count.return_value = len(data)
+        def get_item(s, i):  # crude get-item replacement for mock only
+            return data[i]
+        self.mocksolrpaginator.__getitem__ = get_item
 
-        # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid,
-                          obj6.pid, obj7.pid, obj8.pid])
+        mockcollobj.find_by_pid.return_value = {'pid': 'coll:1', 'title': 'collection',
+            'source_id': 1, 'archive_id': 'marbl:1', 'archive_label': 'MARBL'}
 
         response = self.client.get(feed_url)
+
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                             % (expected, code, feed_url))        
-        self.assertContains(response, obj.pid,
-            msg_prefix='pid for first test object should be included in feed')
-        self.assertContains(response, obj2.pid,
-            msg_prefix='pid for second test object should be included in feed')
-        self.assertNotContains(response, obj3.pid,
-            msg_prefix='pid for test object with no access copy should NOT be included in feed')
-        self.assertNotContains(response, obj4.pid,
-            msg_prefix='pid for test object with restricted access rights should NOT be included in feed')
-        self.assertNotContains(response, obj4.pid,
-            msg_prefix='pid for test object without rights information should NOT be included in feed')
-        self.assertNotContains(response, obj6.pid,
-            msg_prefix='pid for test object with negative override should NOT be included in feed')
-        self.assertContains(response, obj7.pid,
-            msg_prefix='pid for test object from old dm should be included in feed')
-        self.assertContains(response, obj8.pid,
-            msg_prefix='pid for test object with old dm filename should be included in feed')
-        self.assertContains(response, obj.mods.content.title,
-            msg_prefix='title for first test object should be included in feed')
+                             % (expected, code, feed_url))
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(True, kwargs['researcher_access'],
+                         'kiosk feed solr search should filter on researcher_access=True')
+        self.assertEqual(True, kwargs['has_access_copy'],
+                         'kiosk feed solr search should filter on has_access_copy=True')
+        self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
+                         'kiosk feed solr search should filter on audio content model')
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'kiosk feed solr search should filter on configured pidspace')
+        
+        self.assertContains(response, data[0]['pid'],
+            msg_prefix='pid for first result object should be included in feed')
+        self.assertContains(response, data[1]['pid'],
+            msg_prefix='pid for second result object should be included in feed')
+        self.assertContains(response, data[2]['pid'],
+            msg_prefix='pid for third result object should be included in feed')
+
+        return
 
         self.assertContains(response, obj2.mods.content.title,
             msg_prefix='title for second test object should be included in feed')
@@ -1934,8 +1900,8 @@ class TestAudioObject(KeepTestCase):
                      'digitization_purpose should not be included in index data when it is empty')  
         self.assert_('part' not in desc_data,
                      'part should not be included in index data when it is empty')
-        self.assertEqual(False, desc_data['block_external_access'],
-                     'block_external_access should be false when it is not set in rights md')
+        self.assertEqual(False, desc_data['researcher_access'],
+                     'researcher_access should be false when it access is not set in rights md')
         self.assertEqual(False, desc_data['has_original'],
                      'has_original should be false when object has no ingested original datastream')
         self.assertEqual(False, desc_data['has_access_copy'],
@@ -1959,8 +1925,8 @@ class TestAudioObject(KeepTestCase):
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
         obj.rights.content.create_access_status()
-        obj.rights.content.access_status.code = '1'
-        obj.rights.content.block_external_access = True
+        obj.rights.content.access_status.code = '8'
+        obj.rights.content.block_external_access = False
         obj.compressed_audio.info.size = 13546
         obj.compressed_audio.mimetype = 'application/mpeg'
         obj.digitaltech.content.duration = 36
@@ -1978,6 +1944,9 @@ class TestAudioObject(KeepTestCase):
                          'part note should be included in index data when set')
         self.assertEqual(obj.rights.content.access_status.code, desc_data['access_code'],
                          'access code should be included in index data when set')
+        self.assertEqual(obj.researcher_access, desc_data['researcher_access'],
+                         'researcher_access should be set based on access code & override')
+        
         # error if data is not serializable as json
         self.assert_(simplejson.dumps(desc_data))        
 
@@ -1986,8 +1955,6 @@ class TestAudioObject(KeepTestCase):
         # pretend access copy exists in fedora
         with patch.object(obj.compressed_audio, 'exists', new=True):
             desc_data = obj.index_data()
-            self.assertEqual(obj.rights.content.block_external_access, desc_data['block_external_access'],
-                         'block_external_access should match what is set in rights md')
             self.assertEqual(True, desc_data['has_access_copy'],
                          'has_access_copy should be true when object has an access datastream')
             self.assertEqual(obj.compressed_audio.info.size, desc_data['access_copy_size'],
@@ -2425,3 +2392,89 @@ class IngestCleanupTest(KeepTestCase):
         self.assertTrue(os.access(file.name, os.F_OK),
             'file past keep age is not deleted in dry-run mode')
 
+
+
+class PodcastFeedTest(KeepTestCase):
+
+    # full item 
+    item = {
+        'pid': '%s:1' % settings.FEDORA_PIDSPACE,    'noid': '1',  # testing convenience
+        'title': 'Dylan Thomas reads anthology',
+        'part': 'Side A',
+        'collection_id': 'mss:123',
+        'access_copy_size': 53499,
+        'access_copy_mimetype':
+        'audio/mpeg',
+        'duration': 3, 
+        'date_issued': ['1976-05'],
+        'dm1_id': ['124578', '000875421'] 
+    }
+    # min item - missing fields should not generate errors
+    min_item = {
+        'pid': '%s:2' % settings.FEDORA_PIDSPACE,     'noid': '2',  # testing convenience
+        'title': 'Patti Smith Live in New York'
+    }
+    
+    def setUp(self):
+        self.feed = PodcastFeed()
+
+    def test_title(self):
+        self.assertEqual(self.item['title'], self.feed.item_title(self.item))
+        self.assertEqual(self.min_item['title'], self.feed.item_title(self.min_item))
+
+    def test_description(self):
+        self.assertEqual(self.item['part'], self.feed.item_description(self.item))
+        self.assertEqual(None, self.feed.item_description(self.min_item))
+
+    # guid  TODO (open question re pid vs ark uri)
+
+    def test_pubdate(self):
+        date = self.feed.item_pubdate(self.item)
+        self.assert_(isinstance(date, datetime))
+        self.assertEqual(1976, date.year)
+        self.assertEqual(5, date.month)
+
+        self.assertEqual(None, self.feed.item_pubdate(self.min_item))
+
+    @patch('keep.audio.feeds.CollectionObject')
+    def test_author_name(self, mockcollobj):
+        coll = {'title': 'archival collection', 'source_id': '1'}
+        mockcollobj.find_by_pid.return_value = coll
+
+        val = self.feed.item_author_name(self.item)
+        self.assert_(val.startswith(coll['source_id']))
+        self.assert_(val.endswith(coll['title']))
+
+        self.assertEqual(None, self.feed.item_author_name(self.min_item))
+
+    @patch('keep.audio.feeds.CollectionObject')
+    def test_categories(self, mockcollobj):
+        coll = {'archive_label': 'MARBL'}
+        mockcollobj.find_by_pid.return_value = coll
+        self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
+
+        self.assertEqual([], self.feed.item_categories(self.min_item))
+
+    def test_enclosure_length(self):
+        self.assertEqual(self.item['access_copy_size'], self.feed.item_enclosure_length(self.item))
+        self.assertEqual(None, self.feed.item_enclosure_length(self.min_item))
+        
+    def test_enclosure_mime_type(self):
+        self.assertEqual(self.item['access_copy_mimetype'], self.feed.item_enclosure_mime_type(self.item))
+        self.assertEqual(None, self.feed.item_enclosure_mime_type(self.min_item))
+
+    def test_extras(self):
+        info = self.feed.item_extra_kwargs(self.item)
+        self.assertEqual(self.item['duration'], info['duration'])
+        for dm1_id in self.item['dm1_id']:
+            self.assert_(dm1_id in info['keywords'])
+            
+        self.assert_(self.item['noid'] in info['keywords'])
+
+        min_info = self.feed.item_extra_kwargs(self.min_item)
+        self.assert_(self.min_item['noid'] in min_info['keywords'])
+        self.assert_('duration' not in min_info)
+        
+
+                     
+        

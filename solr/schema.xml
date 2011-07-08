@@ -293,7 +293,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="access_code" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="collection_id" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="collection_label" type="string" indexed="true" stored="true" multiValued="false"/>
-   <field name="block_external_access" type="boolean" indexed="true" stored="true" multiValued="false"/>
+   <field name="researcher_access" type="boolean" indexed="true" stored="true" multiValued="false"/>
    <field name="has_original" type="boolean" indexed="true" stored="true" multiValued="false"/>
    <field name="has_access_copy" type="boolean" indexed="true" stored="true" multiValued="false"/>
    <field name="access_copy_size" type="integer" indexed="true" stored="true" multiValued="false"/>

@@ -520,7 +520,7 @@ class AudioObject(DigitalObject):
 
         # Date Uploaded
         # if the object has already been ingested into fedora, add object creation
-        # to dc:date in YYYY-MM-DD format (for searching purposes)
+        # to dc:date in YYYY-MM-DD format (or searching purposes)
         if self.exists:
             self.dc.content.date_list.append(self.created.strftime('%Y-%m-%d'))
         else:
@@ -592,8 +592,8 @@ class AudioObject(DigitalObject):
 
         # boolean values that should always be available
         data.update({
-            # access code override
-            'block_external_access': self.rights.content.block_external_access,
+            # should this item be accessible to researchers?
+            'researcher_access': bool(self.researcher_access),  # if None, we want False
             # flags to indicate which datastreams are available
             'has_access_copy': self.compressed_audio.exists,
             'has_original': self.audio.exists,
