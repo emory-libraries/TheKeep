@@ -21,14 +21,14 @@ of {{ page.paginator.count }}.</p>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
         <td><a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a></td>
-        <td>{{ obj.label }} <br/>
+        <td>{{ obj.title }} 
+	    {% if obj.part %}({{ obj.part }}){% endif %}<br/>
             <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
-            
-     		  | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
+            | <a href="{% url audio:download-compressed-audio obj.pid %}">access copy</a>
   	        
         </td>
         <td>{{ obj.created }}</td>
-        <td>{{ obj.modified }}</td>
+        <td>{{ obj.last_modified }}</td>
       {% permission_denied %}
         <td>{{ obj.pid }}</td>
         <td colspan="3">You don't have permission to view this object.</td>
