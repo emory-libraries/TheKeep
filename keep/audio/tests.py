@@ -46,6 +46,9 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
+# mock archives used to generate archives choices for form field
+@patch('keep.collection.forms.CollectionObject.archives',
+       new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class AudioViewsTest(KeepTestCase):
     fixtures =  ['users']
 
@@ -2440,6 +2443,7 @@ class PodcastFeedTest(KeepTestCase):
     }
     
     def setUp(self):
+        super(PodcastFeedTest, self).setUp()
         self.feed = PodcastFeed()
 
     def test_title(self):

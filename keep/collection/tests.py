@@ -27,16 +27,16 @@ class CollectionObjectTest(KeepTestCase):
 
     def setUp(self):
         super(CollectionObjectTest, self).setUp() 
-        # get rid of any pre-cached top-level collections
-        CollectionObject._top_level_collections = None
+        # get rid of any pre-cached archives
+        CollectionObject._archives = None
 
     def tearDown(self):
         super(CollectionObjectTest, self).tearDown() 
-        # remove any top-level collections cached by the tests
-        CollectionObject._top_level_collections = None
+        # remove any archives cached by the tests
+        CollectionObject._archives = None
 
     @patch('keep.collection.models.sunburnt')
-    def test_top_level(self, mocksunburnt):
+    def test_archives(self, mocksunburnt):
         # NOTE: mock order/syntax depends on how it is used in the method
         solrquery = mocksunburnt.SolrInterface.return_value.query
         solr_exec = solrquery.return_value.exclude.return_value.sort_by.return_value.execute
@@ -46,7 +46,7 @@ class CollectionObjectTest(KeepTestCase):
             {'pid': 'coll:2', 'label': 'eua'},
             {'pid': 'coll:3', 'label': 'pitts'},
         ]
-        collections = CollectionObject.top_level()
+        collections = CollectionObject.archives()
         found_pids = [obj.pid for obj in collections]
         for pid in [coll['pid'] for coll in solr_exec.return_value]:
             self.assert_(pid in found_pids,
@@ -76,15 +76,20 @@ class CollectionObjectTest(KeepTestCase):
             "CollectionObject with no collection membership returns None for collection label")
 
         # set collection membership
-        collections = CollectionObject.top_level()
+        collections = FedoraFixtures.archives()
         obj.set_collection(collections[0].uri)
         self.assertEqual(collections[0].uri, obj.collection_id)
-        self.assertEqual(collections[0].label, obj.collection_label)
+        # use fixture archives instead of the real one for label look-up
+        with patch('keep.collection.models.CollectionObject.archives',
+                   new=Mock(return_value=FedoraFixtures.archives())):
+            self.assertEqual(collections[0].label, obj.collection_label)
 
         # update collection membership
         obj.set_collection(collections[1].uri)
         self.assertEqual(collections[1].uri, obj.collection_id)
-        self.assertEqual(collections[1].label, obj.collection_label)
+        with patch('keep.collection.models.CollectionObject.archives',
+                   new=Mock(return_value=FedoraFixtures.archives())):
+            self.assertEqual(collections[1].label, obj.collection_label)
 
     def test_update_dc(self):
         # DC should get updated from MODS & RELS-EXT on save
@@ -92,7 +97,7 @@ class CollectionObjectTest(KeepTestCase):
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
         # collection membership in RELS-EXT
-        collections = CollectionObject.top_level()
+        collections = FedoraFixtures.archives()
         obj.set_collection(collections[0].uri)
         obj.mods.content.source_id = '1000'
         obj.mods.content.title = 'Salman Rushdie Papers'
@@ -323,6 +328,9 @@ COLLECTION_DATA = {
     'name-roles-0-text': 'curator',
 }
 
+# mock archives used to generate archives choices for form field
+@patch('keep.collection.forms.CollectionObject.archives',
+       new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class TestCollectionForm(KeepTestCase):
     # test form data with all required fields
     data = COLLECTION_DATA
@@ -331,7 +339,7 @@ class TestCollectionForm(KeepTestCase):
         super(TestCollectionForm, self).setUp()
         self.form = cforms.CollectionForm(self.data)
         self.obj = FedoraFixtures.rushdie_collection()
-        self.top_level_collections = FedoraFixtures.top_level_collections()
+        self.archives = FedoraFixtures.archives()
         # store initial collection id from fixture
         self.collection_uri = self.obj.collection_id
 
@@ -390,11 +398,11 @@ class TestCollectionForm(KeepTestCase):
 
         # change collection and confirm set in RELS-EXT
         data = self.data.copy()
-        data['collection'] = self.top_level_collections[2].uri
+        data['collection'] = self.archives[2].uri
         form = cforms.CollectionForm(data, instance=self.obj)
         self.assertTrue(form.is_valid(), "test form object with test data is valid")
         form.update_instance()
-        self.assertEqual(self.top_level_collections[2].uri, self.obj.collection_id)
+        self.assertEqual(self.archives[2].uri, self.obj.collection_id)
 
     def test_initial_data(self):
         form = cforms.CollectionForm(instance=self.obj)
@@ -413,7 +421,9 @@ class TestCollectionForm(KeepTestCase):
             'date end is set correctly in form initial data from instance; expected %s, got %s' \
             % (expected, got))
 
-
+# mock archives used to generate archives choices for form field
+@patch('keep.collection.forms.CollectionObject.archives',
+       new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class CollectionViewsTest(KeepTestCase):
     fixtures =  ['users']
 
@@ -652,13 +662,15 @@ class CollectionViewsTest(KeepTestCase):
                          'creator search term should be included in search info for display to user')        
 
         # search by numbering scheme
-        collection = FedoraFixtures.top_level_collections()[1]
-        response = self.client.get(search_url, {'collection-archive_id': collection.uri })
-        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
-        self.assertEqual(collection.uri, kwargs['archive_id'],
-                         'selected collection_id should be included in solr query terms')
-        self.assertEqual(collection.pid, response.context['search_info']['Archive']['pid'],
-                         'creator search term should be included in search info for display to user')        
+        collection = FedoraFixtures.archives()[1]
+        with patch('keep.collection.models.CollectionObject.find_by_pid',
+                   new=Mock(return_value={'title': collection.label, 'pid': collection.pid})):
+            response = self.client.get(search_url, {'collection-archive_id': collection.uri })
+            args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+            self.assertEqual(collection.uri, kwargs['archive_id'],
+                'selected archive_id should be included in solr query terms')
+            self.assertEqual(collection.pid, response.context['search_info']['Archive']['pid'],
+                'archive label should be included in search info for display to user')        
 
         # shortcut to set the solr return value
         # NOTE: call order here has to match the way methods are called in view

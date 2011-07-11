@@ -52,7 +52,7 @@ class CollectionObject(DigitalObject):
 
     _collection_id = None
     _collection_label = None
-    _top_level_collections = None
+    _archives = None
 
     def _update_dc(self):
         # FIXME: some duplicated logic from AudioObject save
@@ -96,7 +96,7 @@ class CollectionObject(DigitalObject):
 
     @property
     def collection_id(self):
-        """Fedora URI for the top-level collection this object is a member of.
+        """Fedora URI for the archive collection this object is a member of.
         
         :type: string
         """
@@ -110,12 +110,12 @@ class CollectionObject(DigitalObject):
 
     @property
     def collection_label(self):
-        """Label of the top-level collection this object is a member of.
+        """Label of the archive this object is a member of.
         
         :type: string
         """
-        if self._collection_label is None:
-            for coll in CollectionObject.top_level():
+        if self._collection_label is None and self.collection_id is not None:
+            for coll in CollectionObject.archives():  # could use dict format?
                 if coll.uri == self.collection_id:
                     self._collection_label = coll.label
                     break
@@ -159,20 +159,21 @@ class CollectionObject(DigitalObject):
 
 
     @staticmethod
-    def top_level():
-        """Find top-level collection objects.
+    def archives(format=None):
+        """Find Archives objects, to which CollectionObjects belong.
         
         :returns: list of :class:`CollectionObject`
         :rtype: list
         """
-        # NOTE: top-level collections are now called Repository (for owning
-        # repository or archive), and should be labeled as such anywhere user-facing
+        # NOTE: formerly called top-level collections or Repository /
+        # Owning Repository; should now be called archive and labeled
+        # as such anywhere user-facing
 
         # TODO: search logic very similar to item_collections and
         # subcollections methods; consider refactoring search logic
         # into a common search method.
 
-        if CollectionObject._top_level_collections is None:
+        if CollectionObject._archives is None:
             # find all objects with cmodel collection-1.1 and no parents
 
             # search solr for collection objects with NO parent collection id
@@ -181,13 +182,17 @@ class CollectionObject(DigitalObject):
             # and may not match the configured pidspace in a dev environment
             solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
             collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').execute()
+            # store the solr response format
+            CollectionObject._archives = collections
 
-            # initialize as instances of CollectionObject
-            repo = Repository()
-            CollectionObject._top_level_collections = [repo.get_object(collection['pid'], type=CollectionObject)
-                                                       for collection in collections]
+        if format == dict:
+            return CollectionObject._archives
+        
+        # otherwise, initialize as instances of CollectionObject
+        repo = Repository()
+        return [repo.get_object(arch['pid'], type=CollectionObject)
+                                                       for arch in CollectionObject._archives]
 
-        return CollectionObject._top_level_collections
 
     @staticmethod
     def find_by_pid(pid):
@@ -210,9 +215,9 @@ class CollectionObject(DigitalObject):
 
     @staticmethod
     def item_collections():
-        """Find all collection objects in the configured Fedora pidspace that
-        can contain items. Today this includes all those collections that are
-        not top-level. 
+        """Find all collection objects in the configured Fedora
+        pidspace that can contain items. Today this includes all
+        collections that belong to arn archive.
         
         :returns: list of dict
         :rtype: list
@@ -246,11 +251,10 @@ class CollectionObject(DigitalObject):
     def find_by_collection_number(num, parent=None):
         '''Find a CollectionObject in Fedora by collection number (or
         source id), optionally limited by parent collection (owning
-        Repository or top-level collection).
+        archive).
 
         :param num: collection number to search for (aka source id)
-        :param parent: optional; top-level collection or
-            Archive/Repository collection must belong to
+        :param parent: optional; archive that the collection must belong to
         :return: generator of any matching items, as instances of
             :class:`CollectionObject`
         '''
@@ -330,7 +334,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         '''
         repo = Repository()
         coll = repo.get_object(type=CollectionObject)
-        # TODO: top-level collection membership?
+        # TODO: archive membership?
 
         # title - using 'short' form without unitdate, stripping any trailing whitespace & . or ,
         # TODO/FIXME: does NOT work for unittitles with nested tags, e.g. title - see pomerantz
@@ -402,7 +406,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
     @staticmethod
     def find_by_unitid(id, archive_name):
-        '''Retrieve a single Finding Aid by top-level unitid and repository name.
+        '''Retrieve a single Finding Aid by archive unitid and repository name.
         This method assumes a single Finding Aid should be found, so uses the
         :meth:`eulexistdb.query.QuerySet.get` method, which raises the following
         exceptions if anything other than a single match is found:

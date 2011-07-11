@@ -160,7 +160,7 @@ def search(request):
 @permission_required('is_staff')
 def browse(request):
     '''Browse :class:`~keep.collection.models.CollectionObject` by
-    hierarchy, grouped by top-level collection.
+    hierarchy, grouped by archive.
     '''
     search_opts = {
         'pid': '%s:*' % settings.FEDORA_PIDSPACE,
