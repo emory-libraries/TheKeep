@@ -11,6 +11,7 @@ class AccountViewsTest(KeepTestCase):
     fixtures =  ['users']
     
     def setUp(self):
+        super(AccountViewsTest, self).setUp()
         self.client = Client()
 
     def test_to_blocksize(self):

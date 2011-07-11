@@ -423,6 +423,7 @@ class CollectionViewsTest(KeepTestCase):
         self.pids = []
 
     def tearDown(self):
+        super(CollectionViewsTest, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
