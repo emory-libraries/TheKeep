@@ -244,13 +244,11 @@ class Content(models.Model):   # individual item
         if self.collection_number:
             desc = DescriptionData.objects.get(pk=self.collection_number)
             return 'MARBL %d' % desc.mss_number
-        elif self.series_number:
-            if self.location \
-                    and self.location.corresponding_repository == self.EUA_URI \
-                    and self.series_number == 1002:
+        elif self.location.corresponding_repository == self.EUA_URI:
+            if self.series_number == 1002 or not self.series_number:
                 return 'EUA 0'
-            else:
-                return 'EUA %d' % self.series_number
+        elif self.series_number:
+            return 'EUA %d' % (self.series_number,)
 
     @property
     def collection_object(self):
@@ -262,12 +260,11 @@ class Content(models.Model):   # individual item
         elif self.series_number:
             num = self.series_number
 
-        if num and self.location:
-            #Collection 1002 was the 'catch-all' collection in old DM.
-            # Collection 0 should be the catch-all for the new version.
-            if self.location.corresponding_repository == self.EUA_URI \
-                    and num == 1002:
+        if self.location.corresponding_repository == self.EUA_URI:
+            if num == 1002 or not num:
                 num = 0
+
+        if num is not None:
             return self._lookup_collection(num, self.location.corresponding_repository)
 
     _collection_cache = {} # on the class and thus shared by all Content objs
