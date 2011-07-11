@@ -79,6 +79,7 @@ class AudioViewsTest(KeepTestCase):
         self.englishdocs.save()
 
     def tearDown(self):
+        super(AudioViewsTest, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -1732,6 +1733,7 @@ class TestAudioObject(KeepTestCase):
         self.rushdie.save()
 
     def tearDown(self):
+        super(TestAudioObject, self).tearDown()
         self.repo.purge_object(self.obj.pid, "removing unit test fixture")
         self.repo.purge_object(self.rushdie.pid)
 
@@ -2102,6 +2104,7 @@ class TestWavMP3DurationCheck(KeepTestCase):
         self.pids = [self.obj.pid]
 
     def tearDown(self):
+        super(TestWavMP3DurationCheck, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -2231,6 +2234,7 @@ class SourceAudioConversions(KeepTestCase):
         self.pids = [self.obj.pid]
 
     def tearDown(self):
+        super(SourceAudioConversions, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -2334,6 +2338,7 @@ class IngestCleanupTest(KeepTestCase):
         settings.INGEST_STAGING_TEMP_DIR = self.tmpdir
 
     def tearDown(self):
+        super(IngestCleanupTest, self).tearDown()
         # remove any files created in temporary test staging dir
         for file in os.listdir(self.tmpdir):
             os.unlink(os.path.join(self.tmpdir, file))
