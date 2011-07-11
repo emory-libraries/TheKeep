@@ -518,16 +518,6 @@ class AudioObject(DigitalObject):
            self.mods.content.origin_info.issued[0].date:
             self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
 
-        # Date Uploaded
-        # if the object has already been ingested into fedora, add object creation
-        # to dc:date in YYYY-MM-DD format (or searching purposes)
-        if self.exists:
-            self.dc.content.date_list.append(self.created.strftime('%Y-%m-%d'))
-        else:
-            # not yet ingested - use the current date
-            # should be accurate enough, since this should be called just prior to ingest
-            self.dc.content.date_list.append(date.today().strftime('%Y-%m-%d'))
-
         # clear out any descriptions previously in DC and set from MODS/digitaltech
         del(self.dc.content.description_list)
         if self.mods.content.general_note and \

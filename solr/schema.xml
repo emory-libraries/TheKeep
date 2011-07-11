@@ -263,13 +263,17 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="last_modified" type="date" indexed="true" stored="true" /> 
    <field name="owner" type="string" indexed="true" stored="true" /> 
    <field name="state" type="string" indexed="true" stored="false"/> 
+   <!-- explicitly define string-variants of date fields for wildcard searching -->
+   <field name="created_s" type="string" indexed="true" stored="true"/> 
+   <field name="last_modified_s" type="string" indexed="true" stored="false" /> 
 
    <!-- Dublin Core fields -->
    <field name="title" type="text" indexed="true" stored="true"/>
    <field name="contributor" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="coverage" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="creator" type="text" indexed="true" stored="true" multiValued="true"/>
-   <field name="date" type="text" indexed="true" stored="true" multiValued="true"/>
+   <field name="date" type="string" indexed="true" stored="true" multiValued="true"/>
+   <!-- note: date must be string for wild-card search on object creation date -->
    <field name="description" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="format" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="identifier" type="text" indexed="true" stored="true" multiValued="true"/>
@@ -369,6 +373,9 @@ Solr Schema for projects using eulfedora and indexdata.
    <copyField source="pid" dest="text"/>
    <copyField source="label" dest="text"/>
    <copyField source="owner" dest="text"/>
+   <!-- copy datetime fields to string variants for wildcard searching -->
+   <copyField source="created" dest="created_s"/>
+   <copyField source="last_modified" dest="last_modified_s"/>
    <!--   all DC fields -->
    <copyField source="title" dest="text"/>
    <copyField source="contributor" dest="text"/>
@@ -391,6 +398,8 @@ Solr Schema for projects using eulfedora and indexdata.
    <copyField source="part" dest="text"/>
    <copyField source="collection_label" dest="text"/>
    <copyField source="archive_label" dest="text"/>
+   <!-- copy other dates into common date field -->
+   <copyField source="created" dest="date"/>
    <!-- audio note fields -->
    <copyField source="description" dest="notes"/>
    <copyField source="digitization_purpose" dest="notes"/>

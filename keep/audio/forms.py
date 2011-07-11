@@ -66,8 +66,9 @@ class ItemSearch(forms.Form):
     pid = forms.CharField(required=False, help_text='Search by fedora pid, DM id or DM other id.',
             initial='%s:' % settings.FEDORA_PIDSPACE, label="Pid/DM ID/Other ID")
     date = forms.CharField(required=False,
-            help_text=mark_safe('''Search date created, issued, or uploaded.  All dates
-            are in <b>YYYY</b>, <b>YYYY-MM</b> or <b>YYYY-MM-DD</b> format.
+            help_text=mark_safe('''Search date created, issued, or uploaded.  Most dates
+            are in <b>YYYY</b>, <b>YYYY-MM</b> or <b>YYYY-MM-DD</b> format.<br/>
+            Date uploaded is in <b>YYYY-MM-DDTHH:MM:SS.mmmmmmmZ</b> format.
             May contain wildcards * or ?.<br/>
             <i>Example:</i> search <b>2011-02*</b> for all items uploaded in February 2011.'''))
     access_code = forms.ChoiceField(rights_access_options, label='Rights', required=False,

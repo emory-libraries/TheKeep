@@ -1821,9 +1821,9 @@ class TestAudioObject(KeepTestCase):
             self.assert_(unicode(name) in self.obj.dc.content.creator_list)
         self.assert_(cdate in self.obj.dc.content.date_list)
         self.assert_(idate in self.obj.dc.content.date_list)
-        # TODO: object creation date probably shouldn't need to be in dc:date
-        self.assert_(self.obj.created.strftime('%Y-%m-%d') in self.obj.dc.content.date_list,
-                 'object creation date for ingested object should be included in dc:date in YYYY-MM-DD format')
+        # object creation date no longer needed in dc:date for searching
+        self.assert_(self.obj.created.strftime('%Y-%m-%d') not in self.obj.dc.content.date_list,
+                 'object creation date for ingested object should no longer be included in dc:date')
         self.assert_(general_note in self.obj.dc.content.description_list)
         # related files should no longer be in dc:description
         self.assert_(related_files not in self.obj.dc.content.description_list)
@@ -1842,8 +1842,8 @@ class TestAudioObject(KeepTestCase):
         del(self.obj.sourcetech.content.related_files)
         del(self.obj.rights.content.access_status)
         self.obj._update_dc()
-        self.assertEqual(1, len(self.obj.dc.content.date_list),
-            'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
+        self.assertEqual([], self.obj.dc.content.date_list,
+            'there should be no dc:date when dateCreated or dateIssued are not set in MODS')
         self.assertEqual([], self.obj.dc.content.description_list,
             'there should be no dc:description when general note in MODS, digitization ' +
             'purpose in digital tech, and related files in source tech are not set')
@@ -1854,11 +1854,9 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual([], self.obj.dc.content.identifier_list,
              'there should be no dc:identifiers when no identifiers are set')
 
-        # un-ingested object - should not error, should get current date
+        # un-ingested object - should not error
         obj = self.repo.get_object(type=audiomodels.AudioObject)
         obj._update_dc()
-        self.assert_(date.today().strftime('%Y-%m-%d') in obj.dc.content.date_list,
-             'current date should be set in dc:date for un-ingested object')
 
     @patch('keep.audio.models.CollectionObject')
     def test_index_data(self, mockcollobj):
