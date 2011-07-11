@@ -533,14 +533,12 @@ class AudioObject(DigitalObject):
         if self.mods.content.general_note and \
            self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
-        # related files
-        self.dc.content.description_list.extend(self.sourcetech.content.related_files_list)
 
         # clear out any rights previously in DC and set contents from Rights accessStatus
         del(self.dc.content.rights_list)
         if self.rights.content.access_status:
-            access = self.rights.content.access_status
-            self.dc.content.rights_list.append('%s: %s' % (access.code, access.text))
+            # access code no longer needs to be included, since we will not be searching
+            self.dc.content.rights_list.append(self.rights.content.access_status.text)
 
 
     def index_data(self):
@@ -581,6 +579,10 @@ class AudioObject(DigitalObject):
         if self.digitaltech.content.digitization_purpose_list:
             # convert nodelist to a normal list that can be serialized as json
             data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
+
+        # related files
+        if self.sourcetech.content.related_files_list:
+            data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
 
         # part note 
         if self.mods.content.part_note and self.mods.content.part_note.text:

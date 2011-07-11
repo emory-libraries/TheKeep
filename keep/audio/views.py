@@ -29,6 +29,7 @@ from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.models import DigitalObjectSaveFailure
 
 from keep.audio import forms as audioforms
+from keep.audio.feeds import feed_items
 from keep.audio.models import AudioObject, Rights
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import CollectionObject 
@@ -380,11 +381,6 @@ def search(request):
             elif field in ['collection', 'archive']:
                 search_opts['%s_id' % field] = val
 
-            elif field == 'description':
-                # skip description here - special handling below,
-                # since it requires an OR search in two fields
-                continue
-
             # all other fields: solr search field = form field 
             else:
                 search_opts[field] = val
@@ -408,12 +404,6 @@ def search(request):
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         # for now, sort by most recently created
         solrquery = solr.query(**search_opts).sort_by('-created')
-
-        # description search field currently searches general note (in dc:description) OR
-        # the digitization purpose; handling separately to build a
-        if form.cleaned_data['description']:
-            desc = form.cleaned_data['description']
-            solrquery = solrquery.query(solr.Q(description=desc) | solr.Q(digitization_purpose=desc))
 
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
@@ -560,8 +550,10 @@ def download_audio(request, pid, type):
 
 @permission_required('is_staff')
 def feed_list(request):
-    'List and link to all current iTunes podcast feeds based on number of objects/pages.'
-    paginated_objects = Paginator(list(AudioObject.all()), settings.MAX_ITEMS_PER_PODCAST_FEED)
+    '''List and link to all current iTunes podcast feeds based on the
+    number of objects currently available for inclusion in the feeds.'''
+    paginated_objects = Paginator(PaginatedSolrSearch(feed_items()),
+                                  settings.MAX_ITEMS_PER_PODCAST_FEED)
     return render_to_response('audio/feed_list.html', {
                 'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,
                 'pages': paginated_objects.page_range,

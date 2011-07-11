@@ -33,15 +33,35 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         # NOTE: could put more detailed info in the itunes:summary/description (up to 4000 characters)
 
         # duration is total seconds as integer, which iTunes should be able to handle
-        if item['duration'] is not None:
+        if 'duration' in item and item['duration'] is not None:
             handler.addQuickElement(u'itunes:duration', str(item['duration']))
 
         # itunes:author will be listed in iTunes artist column
-        if item['author_name'] is not None:
+        if 'author_name' in item and item['author_name'] is not None:
             handler.addQuickElement(u'itunes:author', item['author_name'])
         # itunes:keyword is not visible but can be searched
         if 'keywords' in item:
             handler.addQuickElement(u'itunes:keywords', ', '.join(item['keywords']))
+
+
+def feed_items():
+    '''Generate and return a solr query object for all items that
+    should be included in the feed.'''
+    solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+    search_opts = {
+        # restrict to objects in the configured pidspace
+        'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+        # restrict to audio items by content model
+        'content_model': AudioObject.AUDIO_CONTENT_MODEL,
+        # restrict to items that have mp3s available
+        'has_access_copy': True,
+        # restrict to items that are allowed to be accessed
+        'researcher_access': True,
+        }
+    
+    # sort by date created (newest items at the end of the feed)
+    solrquery = solr.query(**search_opts).sort_by('created')
+    return solrquery    
 
 
 class PodcastFeed(Feed):
@@ -79,24 +99,11 @@ class PodcastFeed(Feed):
         # rights & compressed audio available - this means that many feeds may have
         # fewer than the configured max items.
         items_per_feed = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', 2000)
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
-        search_opts = {
-            # restrict to objects in the configured pidspace
-            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-            # restrict to audio items by content model
-            'content_model': AudioObject.AUDIO_CONTENT_MODEL,
-            # restrict to items that have mp3s available
-            'has_access_copy': True,
-            # restrict to items that are allowed to be accessed
-            'researcher_access': True,
-        }
-
-        # sort by date created (newest items at the end of the feed)
-        solrquery = solr.query(**search_opts).sort_by('created')
-
+        
+        solrquery = feed_items()
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(solrquery)
+        pagedsolr = PaginatedSolrSearch(feed_items())
         
         paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)

@@ -65,8 +65,9 @@ class AudioViewsTest(KeepTestCase):
     def setUp(self):        
         super(AudioViewsTest, self).setUp()
         self.pids = []
-        # store setting that may be changed when testing podcast feed pagination
+        # store settings that may be changed when testing podcast feed pagination
         self.max_per_podcast = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', None)
+        self._template_context_processors = getattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS', None)
 
         # collection fixtures are not modified, but there is no clean way
         # to only load & purge once
@@ -87,6 +88,11 @@ class AudioViewsTest(KeepTestCase):
         elif hasattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED'):
             # if not originally set but added by a test, remove the setting
             del settings.MAX_ITEMS_PER_PODCAST_FEED
+
+        if self._template_context_processors is not None:
+            settings.TEMPLATE_CONTEXT_PROCESSORS = self._template_context_processors
+        else:
+            del settings.TEMPLATE_CONTEXT_PROCESSORS
  
         # TODO: remove any test files created in staging dir
         # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
@@ -412,18 +418,17 @@ class AudioViewsTest(KeepTestCase):
             msg_prefix='search results page should not include empty search terms (description)')
 
 
-        # search by description
+        # search by note
+        # (searches general note, digitization purpose, related files via solr copyfield)
+        note = 'patron request'
+        response = self.client.get(search_url, {'audio-notes': note})
+        args, kwargs = self.mocksolr.query.call_args
+        print kwargs
+        self.assertEqual(note, kwargs['notes'],
+                         'notes search should search solr note field')
         
-        # TODO: description requires to LuceneQueries ORed together;
-        # can't figure out how to simulate this with Mock
-        
-        # desc = 'general note'
-        # response = self.client.get(search_url, {'audio-description': desc})
-        # args, kwargs = self.mocksolr.query.call_args
-        # print kwargs
-        
-        # self.assertPattern('description:.*%s' % desc, response.content,
-        #     msg_prefix='search results page should include search term (description)')
+        self.assertPattern('notes:.*%s' % note, response.content,
+            msg_prefix='search results page should include search term (note)')
 
         # search by date
         searchdate = '1492*'
@@ -1276,29 +1281,40 @@ class AudioViewsTest(KeepTestCase):
         self.assertContains(response, obj2.pid,
             msg_prefix='pid for second test object should be included in second paginated feed')
 
-    def test_podcast_feed_list(self):
+    @patch('keep.audio.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.views.feed_items')
+    def test_podcast_feed_list(self, mockfeeditems):
+
+        # use default context processors to avoid complication with mock collection
+        # and collection search form
+        settings.TEMPLATE_CONTEXT_PROCESSORS = []
+
         feed_list_url = reverse('audio:feed-list')
+
+        # test data to return from solr search for objects to show up in the feed
+        # - researcher_access flag is stored in solr, so only accessible items will be returned
+        data = [
+            {'pid': '%s:1' % settings.FEDORA_PIDSPACE,
+             'title': 'Dylan Thomas reads anthology',
+             'part': 'Side A',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'date_issued': ['1976-05'] },
+            {'pid': '%s:2' % settings.FEDORA_PIDSPACE,
+             'title': 'Patti Smith Live in New York',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'collection_id': self.esterbrook.uri },
+            {'pid': '%s:3' % settings.FEDORA_PIDSPACE,
+             'title': 'Odysseus recites The Iliad',
+             'dm1_id': ['124578', '000875421'] }
+            ]
+        mockfeeditems.return_value = data
+        self.mocksolrpaginator.count.return_value = len(data)
+        def get_item(s, i):  # crude get-item replacement for mock only
+            return data[i]
+        self.mocksolrpaginator.__getitem__ = get_item
+        
         # must be logged in as staff to view
         self.client.login(**ADMIN_CREDENTIALS)
-
-        # create some test objects to show up in the feeds
-        repo = Repository()
-        obj = repo.get_object(type=audiomodels.AudioObject)
-        obj.mods.content.title = 'Dylan Thomas reads anthology'
-        obj.mods.content.create_part_note()
-        obj.mods.content.part_note.text = 'Side A'
-        obj.collection_uri = self.rushdie.uri
-        obj.compressed_audio.content = open(mp3_filename)
-        obj.mods.content.create_origin_info()
-        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
-        obj.save()
-        obj2 = repo.get_object(type=audiomodels.AudioObject)
-        obj2.mods.content.title = 'Patti Smith Live in New York'
-        obj2.compressed_audio.content = open(mp3_filename)
-        obj2.collection_uri = self.esterbrook.uri
-        obj2.save()
-        # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid])
 
         # set high enough we should only have one feed
         settings.MAX_ITEMS_PER_PODCAST_FEED = 2000
@@ -1809,14 +1825,14 @@ class TestAudioObject(KeepTestCase):
         self.assert_(self.obj.created.strftime('%Y-%m-%d') in self.obj.dc.content.date_list,
                  'object creation date for ingested object should be included in dc:date in YYYY-MM-DD format')
         self.assert_(general_note in self.obj.dc.content.description_list)
-        # FIXME: should related files still be in dc:description?
-        self.assert_(related_files in self.obj.dc.content.description_list)
-        # currently using rights access condition code & text in dc:rights
+        # related files should no longer be in dc:description
+        self.assert_(related_files not in self.obj.dc.content.description_list)
+        # currently using rights access condition text (no code) in dc:rights
         # should only be one in dc:rights - mods access condition not included
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
         access = self.obj.rights.content.access_status
-        self.assert_(self.obj.dc.content.rights.startswith('%s: ' % access.code))
-        self.assert_(self.obj.dc.content.rights.endswith(access.text))        
+        self.assert_(access.code not in self.obj.dc.content.rights)
+        self.assertEqual(access.text, self.obj.dc.content.rights)    
 
         # clear out data and confirm DC gets cleared out appropriately
         del(self.obj.mods.content.origin_info.created)
@@ -1914,7 +1930,8 @@ class TestAudioObject(KeepTestCase):
                      'duration should not be included in index data unless set in digitaltech')
         self.assert_('date_issued' not in desc_data,
                      'date_issued should not be included in index data when it is not set')
-
+        self.assert_('related_files' not in desc_data,
+                         'related_files should not be set when not present in sourcetech')
 
         # additional fields that could be present
         obj.mods.content.dm1_id = '0103'
@@ -1930,6 +1947,8 @@ class TestAudioObject(KeepTestCase):
         obj.compressed_audio.info.size = 13546
         obj.compressed_audio.mimetype = 'application/mpeg'
         obj.digitaltech.content.duration = 36
+        obj.sourcetech.content.related_files = '1000, 2011'
+
         # reset mock collection objects to be returned
         colls = [mockmss, mockarchive]
 
@@ -1946,6 +1965,8 @@ class TestAudioObject(KeepTestCase):
                          'access code should be included in index data when set')
         self.assertEqual(obj.researcher_access, desc_data['researcher_access'],
                          'researcher_access should be set based on access code & override')
+        self.assertEqual(obj.sourcetech.content.related_files, desc_data['related_files'][0],
+                         'related_files should be set when present in sourcetech')
         
         # error if data is not serializable as json
         self.assert_(simplejson.dumps(desc_data))        

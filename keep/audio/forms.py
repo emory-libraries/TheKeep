@@ -57,8 +57,8 @@ class ItemSearch(forms.Form):
     instances.'''
     title = forms.CharField(required=False,
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
-    description = forms.CharField(required=False,
-            help_text='Search for word or phrase in general note or digitization purpose.  May contain wildcards * or ?.')
+    notes = forms.CharField(required=False,
+            help_text='Search for word or phrase in general note, digitization purpose, or related files.  May contain wildcards * or ?.')
     collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',

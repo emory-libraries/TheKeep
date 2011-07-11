@@ -288,6 +288,7 @@ Solr Schema for projects using eulfedora and indexdata.
    <!--  * audio objects -->
    <field name="dm1_id" type="string" indexed="true" stored="false" multiValued="true"/>
    <field name="digitization_purpose" type="text" indexed="true" stored="true" multiValued="true"/>
+   <field name="related_files" type="text" indexed="true" stored="false" multiValued="true"/>
    <field name="part" type="text" indexed="true" stored="true" multiValued="false"/>
    <field name="date_issued" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="access_code" type="string" indexed="true" stored="true" multiValued="false"/>
@@ -307,6 +308,8 @@ Solr Schema for projects using eulfedora and indexdata.
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
    <field name="text" type="text" indexed="true" stored="false" multiValued="true"/>
+   <!-- note field to be used as a copyfield for searching multiple "note" fields -->
+   <field name="notes" type="text" indexed="true" stored="false" multiValued="true"/>
 
    <!-- non-tokenized versions of terms to for sorting and/or facets -->
    <field name="title_exact" type="string" indexed="true" stored="false"/>
@@ -382,7 +385,16 @@ Solr Schema for projects using eulfedora and indexdata.
    <copyField source="source" dest="text"/>
    <copyField source="subject" dest="text"/>
    <copyField source="type" dest="text"/>
-
+   <!-- keep-specific fields -->
+   <copyField source="dm1_id" dest="text"/>
+   <copyField source="digitization_purpose" dest="text"/>
+   <copyField source="part" dest="text"/>
+   <copyField source="collection_label" dest="text"/>
+   <copyField source="archive_label" dest="text"/>
+   <!-- audio note fields -->
+   <copyField source="description" dest="notes"/>
+   <copyField source="digitization_purpose" dest="notes"/>
+   <copyField source="related_files" dest="notes"/>
     
  <!-- Similarity is the scoring routine for each document vs. a query.
       A custom similarity may be specified here, but the default is fine
