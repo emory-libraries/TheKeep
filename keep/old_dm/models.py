@@ -235,6 +235,9 @@ class Content(models.Model):   # individual item
         if self.eua_series.count():
             return self.eua_series.all()[0].series
 
+    # well-known URI of Emory Archives archive
+    EUA_URI = 'info:fedora/emory:93zd2'
+
     @property
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
@@ -242,7 +245,8 @@ class Content(models.Model):   # individual item
             desc = DescriptionData.objects.get(pk=self.collection_number)
             return 'MARBL %d' % desc.mss_number
         elif self.series_number:
-            if self.location and self.location.name == 'Emory University Archives' \
+            if self.location \
+                    and self.location.corresponding_repository == self.EUA_URI \
                     and self.series_number == 1002:
                 return 'EUA 0'
             else:
@@ -261,7 +265,8 @@ class Content(models.Model):   # individual item
         if num and self.location:
             #Collection 1002 was the 'catch-all' collection in old DM.
             # Collection 0 should be the catch-all for the new version.
-            if self.location.name == 'Emory University Archives' and num == 1002:
+            if self.location.corresponding_repository == self.EUA_URI \
+                    and num == 1002:
                 num = 0
             return self._lookup_collection(num, self.location.corresponding_repository)
 
