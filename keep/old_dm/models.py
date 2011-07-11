@@ -155,17 +155,30 @@ class Location(models.Model):
         global REPOSITORY_LOCATION
         # if this location has not yet been mapped to a repository object, look it up
         if self.name not in REPOSITORY_LOCATION:
-            repos = CollectionObject.top_level()
-            for repo in repos:
-                # translate DM location labels to Keep repository object labels
-                if (self.name == repo.label) or \
-                   (self.name.startswith('Emory Archives') and repo.label == 'Emory University Archives') or \
-                   (self.name.startswith('MARBL') and repo.label == 'Manuscript, Archives, and Rare Book Library'):
-                    REPOSITORY_LOCATION[self.name] = repo.uri
-                    break
+            repo = self._repo_for_name(self.name)
+            if repo:
+                REPOSITORY_LOCATION[self.name] = repo.uri
 
         if self.name in REPOSITORY_LOCATION:
             return REPOSITORY_LOCATION[self.name]
+
+    def _repo_for_name(self, name):
+        repos = CollectionObject.top_level()
+        for repo in repos:
+            # translate DM location labels to Keep repository object labels
+            if self.name == repo.label:
+                return repo
+            if 'Oxford College' in self.name \
+                    and 'Oxford College' in repo.label:
+                return repo
+            if self.name.startswith('Emory Archives') \
+                    and 'Oxford College' not in self.name \
+                    and repo.label == 'Emory University Archives':
+                return repo
+            if self.name.startswith('MARBL') \
+                    and repo.label == 'Manuscript, Archives, and Rare Book Library':
+                return repo
+
 
 class Subject(models.Model):
     subject = models.CharField(max_length=255)
@@ -235,37 +248,58 @@ class Content(models.Model):   # individual item
         if self.eua_series.count():
             return self.eua_series.all()[0].series
 
-    # well-known URI of Emory Archives archive
+    # well-known archive URIs
+    MARBL_URI = 'info:fedora/emory:93z53'
     EUA_URI = 'info:fedora/emory:93zd2'
+    OXFORD_URI = 'info:fedora/emory:b2mx2'
+
+    REPO_SHORTNAMES = {
+        MARBL_URI: 'MARBL',
+        EUA_URI: 'EUA',
+        OXFORD_URI: 'OXFORD',
+    }
 
     @property
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
-        if self.collection_number:
-            desc = DescriptionData.objects.get(pk=self.collection_number)
-            return 'MARBL %d' % desc.mss_number
-        elif self.location.corresponding_repository == self.EUA_URI:
-            if self.series_number == 1002 or not self.series_number:
-                return 'EUA 0'
-        elif self.series_number:
-            return 'EUA %d' % (self.series_number,)
+        repo, num = self._translated_collection_pair()
+        if repo is not None and num is not None:
+            name = self.REPO_SHORTNAMES[repo]
+            return '%s %d' % (name, num)
 
     @property
     def collection_object(self):
         'Fedora Collection object corresponding to the collection or series number and location for this item'
-        num = None
+        repo, num = self._translated_collection_pair()
+        if repo is not None and num is not None:
+            return self._lookup_collection(num, repo)
+
+    def _translated_collection_pair(self):
+        repo_uri = self.location.corresponding_repository
+        if repo_uri == self.EUA_URI:
+            if self.series_number == 1002:
+                return repo_uri, 0
+            elif self.series_number:
+                return repo_uri, self.series_number
+            else:
+                return repo_uri, 0
+
+        if repo_uri == self.OXFORD_URI:
+            if self.series_number:
+                return repo_uri, self.series_number
+            else:
+                return repo_uri, 0
+
         if self.collection_number:
-            desc = DescriptionData.objects.get(pk=self.collection_number)
-            num = desc.mss_number
-        elif self.series_number:
-            num = self.series_number
+            return repo_uri, self.collection_number
 
-        if self.location.corresponding_repository == self.EUA_URI:
-            if num == 1002 or not num:
-                num = 0
+        if "DANOWSKI" in self.title.upper() \
+                or any("DANOWSKI" in ss.item_location.upper()
+                       for ss in self.source_sounds.all()
+                       if ss.item_location):
+            return self.MARBL_URI, 0
 
-        if num is not None:
-            return self._lookup_collection(num, self.location.corresponding_repository)
+        return None, None
 
     _collection_cache = {} # on the class and thus shared by all Content objs
     def _lookup_collection(self, num, repo):
@@ -318,19 +352,14 @@ class Content(models.Model):   # individual item
     def descriptive_metadata(self, obj):
         # print out descriptive fields and return a list of values
         logger.debug('--- Descriptive Metadata ---')
-        logger.debug('Collection: %s' % self.collection)
 
         # we'll be using this a lot below
         modsxml = obj.mods.content
 
         # warn if no collection number could be found (either EUA or MARBL)
         if self.collection is None:
-            # unless it's explicitly a danowski item
-            if "DANOWSKI" in self.title.upper():
-                obj.collection_uri = list(CollectionObject.find_by_collection_number(0))[0].uri
-            else:
-                ITEMS_WITHOUT_COLLECTION.add(self.id)
-                logger.warn('Item %d does not have a collection or series number' % self.id)
+            ITEMS_WITHOUT_COLLECTION.add(self.id)
+            logger.warn('Item %d does not have a collection or series number' % self.id)
 
         # if there is a collection number, warn if the corresponding collection object could not be found
         elif self.collection_object is None:
@@ -341,6 +370,9 @@ class Content(models.Model):   # individual item
         # otherwise we have a collection
         else:
             obj.collection_uri = self.collection_object.uri
+
+        if self.collection:
+            logger.debug('Collection: %s' % self.collection)
 
         logger.debug('Identifier: %s' % self.id)
         logger.debug('Other ID: %s' % self.other_id)
