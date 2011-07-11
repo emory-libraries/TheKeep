@@ -103,7 +103,7 @@ class PodcastFeed(Feed):
         solrquery = feed_items()
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(feed_items())
+        pagedsolr = PaginatedSolrSearch(feed_items()t
         
         paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
@@ -120,12 +120,10 @@ class PodcastFeed(Feed):
     def item_guid(self, item):
         # globally unique identifier that will never change
         return item['pid']
-        
-        # use full ARK if available
-        if item.ark:
-            return item.ark_access_uri
-        # use item pid only as fallback - should not happen in production
-        return item.pid 
+
+        # TODO: should be using item['ark_uri']
+        # - won't work reliably until existing objects are updated
+        # to store ARK uri in MODS record
 
     def item_pubdate(self, item):
         # if dateIssued is set, convert to python datetime

@@ -15,12 +15,12 @@ from eulxml import xmlmap
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from keep import mods
-from keep.common.fedora import DigitalObject, Repository
+from keep.common.fedora import DigitalObject, Repository, LocalMODS
 
 logger = logging.getLogger(__name__)
 
-class CollectionMods(mods.MODS):
-    '''Collection-specific MODS, based on :class:`keep.mods.MODS`.'''
+class CollectionMods(LocalMODS):
+    '''Collection-specific MODS, based on :class:`keep.common.fedora.LocalMODS`.'''
     source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
     'local source identifier as an integer'
     # possibly map identifier type uri as well ?
@@ -287,6 +287,9 @@ class CollectionObject(DigitalObject):
         # if source id is set, include it
         if self.mods.content.source_id:
             data['source_id'] = self.mods.content.source_id
+
+        if self.mods.content.ark_uri:
+            data['ark_uri'] =  self.mods.content.ark_uri
 
         return data
 

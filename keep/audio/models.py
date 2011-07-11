@@ -19,7 +19,7 @@ from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 
 from keep.collection.models import CollectionObject
-from keep.common.fedora import DigitalObject, Repository
+from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep import mods
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 ## MODS
 ##
 
-class AudioMods(mods.MODS):
+class AudioMods(LocalMODS):
     '''Customized MODS for :class:`AudioObject`, based on
-    :class:`~keep.mods.MODS`.'''
+    :class:`~keep.common.fedora.LocalMODS`.'''
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
           mods.TypedNote, required=False)
@@ -555,6 +555,10 @@ class AudioObject(DigitalObject):
                 data['archive_label'] = archive.label
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
+
+        # include resolvable ARK if available
+        if self.mods.content.ark_uri:
+            data['ark_uri'] =  self.mods.content.ark_uri
             
         # old identifiers from previous digital masters
         dm1_ids = []
