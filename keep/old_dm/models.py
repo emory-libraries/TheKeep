@@ -626,7 +626,7 @@ class Content(models.Model):   # individual item
         elif len(chars) == 1:
             # sound characteristic is inconsistently capitalized
             # convert to lower case for best match with keep format
-            keepchars = chars[0].lower()
+            keepchars = chars[0].lower().strip()
             if keepchars != '' and keepchars != 'None':
                 if keepchars not in SourceTech.sound_characteristic_options:
                     logger.warning("Sound characteristic '%s' is not in the options list" \
