@@ -47,6 +47,9 @@ class Command(BaseCommand):
                     logger.error("%s: couldn't predict path. skipping." % (obj.pid,))
                     continue
                 logger.info('%s paths: %s' % (obj.pid, repr(paths)))
+                if not paths.wav:
+                    logger.error("%s=%s missing WAV file" % (obj.pid, old_id))
+                    stats['no_wav'] += 1
 
                 if csvfile:
                     row_data = [ obj.pid, obj.mods.content.dm1_id,
@@ -56,6 +59,7 @@ class Command(BaseCommand):
 
 
         logger.debug('Total DM1 objects: %(dm1)d (of %(audio)d audio objects)' % stats)
+        logger.debug('Missing WAV file: %(no_wav)d' % stats)
 
     @contextmanager
     def open_csv(self, options):
