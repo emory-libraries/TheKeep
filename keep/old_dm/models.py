@@ -291,7 +291,8 @@ class Content(models.Model):   # individual item
                 return repo_uri, 0
 
         if self.collection_number:
-            return repo_uri, self.collection_number
+            desc = DescriptionData.objects.get(pk=self.collection_number)
+            return repo_uri, desc.mss_number
 
         if "DANOWSKI" in self.title.upper() \
                 or any("DANOWSKI" in ss.item_location.upper()
