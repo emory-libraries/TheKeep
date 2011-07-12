@@ -26,6 +26,7 @@ from keep.audio.management.commands import ingest_cleanup
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
+from keep.common import models as commonmodels
 from keep.testutil import KeepTestCase
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
@@ -1707,7 +1708,7 @@ class RightsXmlTest(KeepTestCase):
 
     def test_init_types(self):
         self.assert_(isinstance(self.rights, audiomodels.Rights))
-        self.assert_(isinstance(self.rights.access_status, audiomodels.AccessStatus))
+        self.assert_(isinstance(self.rights.access_status, commonmodels.AccessStatus))
 
     def test_fields(self):
         # check field values correctly accessible from fixture

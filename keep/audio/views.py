@@ -28,10 +28,11 @@ from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.models import DigitalObjectSaveFailure
 
 from keep.audio import forms as audioforms
-from keep.audio.models import AudioObject, Rights
+from keep.audio.models import AudioObject
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import get_cached_collection_dict
 from keep.common.fedora import Repository
+from keep.common.models import Rights
 from keep.common.utils import md5sum
 
 logger = logging.getLogger(__name__)

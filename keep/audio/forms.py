@@ -9,10 +9,11 @@ from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 from keep import mods
-from keep.audio.models import AudioMods, SourceTech, DigitalTech, \
-     Rights, CodecCreator, TransferEngineer 
+from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
+    CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
 from keep.collection.forms import NameForm, repository_choices
+from keep.common.models import Rights
 
 logger = logging.getLogger(__name__)
 
