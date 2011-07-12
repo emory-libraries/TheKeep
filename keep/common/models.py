@@ -1,5 +1,6 @@
 from collections import namedtuple
 from eulxml import xmlmap
+from eulxml.xmlmap.fields import DateField
 
 _access_term = namedtuple('_access_term', 'code abbreviation access text') # wraps terms below
 
