@@ -9,6 +9,8 @@ Release X(Rushdie Stuff)
 * Added load_arrangement management command
 * Added SimpleCollection in collection.models
 * Added ProcessingBatch in arrangement.models
+* Moved Rights and supporting models from audio app to common app
+* Added FileMasterTech class in common app
 
 
 Release 1.0.3

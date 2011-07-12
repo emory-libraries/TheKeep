@@ -109,3 +109,48 @@ class Rights(_BaseRights):
             return None
 
         return access_term.access
+
+class _DirPart(object):
+    # a _DirPart wraps around a single path component in a file path so that
+    # we can treat that component as an object in its own right.
+    def __init__(self, computer, base, name):
+        self.computer = computer
+        self.base = base
+        self.name = name
+
+    def __unicode__(self):
+        return self.name
+
+    def path(self):
+        return '/' + self.computer + self.base + self.name + '/'
+
+
+class FileMasterTech(xmlmap.XmlObject):
+
+    BROWSABLE_COMPUTERS = ('Performa 5400','Performa 5300c')
+
+    md5 = xmlmap.StringField('fs:md5')
+    computer = xmlmap.StringField('fs:computer')
+    path = xmlmap.StringField('fs:path')
+    rawpath = xmlmap.StringField('fs:rawpath')
+    attributes = xmlmap.StringField('fs:attributes')
+    created = DateField('fs:created')
+    modified = DateField('fs:modified')
+    type = xmlmap.StringField('fs:type')
+    creator = xmlmap.StringField('fs:creator')
+
+    def browsable(self):
+        return self.computer in self.BROWSABLE_COMPUTERS
+
+    def dir_parts(self):
+        raw_parts = self.path.split('/')
+
+        base = '/'
+        # path is absolute, so raw_parts[0] is empty. skip it. also skip
+        # raw_parts[-1] for special handling later
+        for part in raw_parts[1:-1]:
+            yield _DirPart(self.computer, base, part)
+            base = base + part + '/'
+
+    def name(self):
+       return self.path.split('/')[-1]
