@@ -4,7 +4,12 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.test import TestCase
 
+from eulfedora.models import XmlDatastream
+
+from keep.common.fedora import Repository, DigitalObject
+from keep.common.models import _DirPart, FileMasterTech
 from keep.common.utils import absolutize_url, md5sum
+
 
 class TestAbsolutizeUrl(TestCase):
     site = Site.objects.get_current()
@@ -31,3 +36,45 @@ class TestMd5Sum(TestCase):
         # test non-existent file
         # file errors are not caught by md5sum utility method but should be passed along
         self.assertRaises(IOError, md5sum, '/not/a/real/file.foo')
+
+
+class Test_DirPart(TestCase):
+
+    def  test_unicode(self):
+        dir_part = _DirPart('computer', 'base', 'fileName')
+        self.assertEqual('fileName', unicode(dir_part))
+
+
+
+    def  test_path(self):
+        dir_part = _DirPart('computer', 'base', 'fileName')
+        self.assertEqual('/computerbasefileName/', dir_part.path())
+
+
+class TestFileMasterTech(TestCase):
+
+    def setUp(self):
+        self.repo = Repository()
+        self.obj = self.repo.get_object(type=Obj4Test)
+        self.obj.file_master.content.computer = "MyTestComputer"
+        self.obj.file_master.content.path = "/path/to/some/file"
+
+
+    def test_dirparts(self):
+        parts = list(self.obj.file_master.content.dir_parts())
+        self.assertEqual(unicode(parts[0]), 'path')
+        self.assertEqual(unicode(parts[1]), 'to')
+        self.assertEqual(unicode(parts[2]), 'some')
+
+
+    def test_name(self):
+        self.assertEqual(self.obj.file_master.content.name(), 'file')
+
+
+
+
+class Obj4Test(DigitalObject):
+    file_master = XmlDatastream("FileMasterTech", "Test DS for FileMasterTech", FileMasterTech, defaults={
+            'control_group': 'M',
+            'versionable': True,
+        })

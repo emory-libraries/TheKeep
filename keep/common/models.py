@@ -55,7 +55,7 @@ class Rights(_BaseRights):
             'Object not available to researchers'),
         ('14', 'As Is',              True,
             'Object available to researchers in original form'),
-        ('15', 'Meta',              True,
+        ('15', 'Emulation Only',              True,
             'Object available for loading in emulation only'),
     )
     '''controlled vocabulary for access condition, ordered the way they should
@@ -127,6 +127,9 @@ class _DirPart(object):
 
 
 class FileMasterTech(xmlmap.XmlObject):
+    ROOT_NS = 'http://pid.emory.edu/ns/2011/filemastertech'
+    ROOT_NAMESPACES = {'fs': ROOT_NS }
+    ROOT_NAME = 'document'
 
     BROWSABLE_COMPUTERS = ('Performa 5400','Performa 5300c')
 
