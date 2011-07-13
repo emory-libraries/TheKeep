@@ -9,6 +9,7 @@ urlpatterns = patterns('',
     # NOTE: temporary - added because theme requires it
     url(r'^index$', 'keep.audio.views.index', name="site-index"),
     url(r'^audio/', include('keep.audio.urls', namespace='audio')),
+    url(r'^arrangement/', include('keep.arrangement.urls', namespace='arrangement')),
     url(r'^collections/', include('keep.collection.urls', namespace='collection')),
     url(r'^accounts/', include('keep.accounts.urls', namespace='accounts')),
     url(r'^tasks/', include('eullocal.django.taskresult.urls', namespace='tasks')),

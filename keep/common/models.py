@@ -139,8 +139,10 @@ class FileMasterTech(xmlmap.XmlObject):
     path = xmlmap.StringField('fs:path')
     rawpath = xmlmap.StringField('fs:rawpath')
     attributes = xmlmap.StringField('fs:attributes')
-    created = DateField('fs:created')
-    modified = DateField('fs:modified')
+    #created = DateField('fs:created')
+    #modified = DateField('fs:modified')
+    created = xmlmap.StringField('fs:created')
+    modified = xmlmap.StringField('fs:modified')
     type = xmlmap.StringField('fs:type')
     creator = xmlmap.StringField('fs:creator')
 
