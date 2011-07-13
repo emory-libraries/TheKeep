@@ -133,6 +133,7 @@ class FileMasterTech(xmlmap.XmlObject):
 
     BROWSABLE_COMPUTERS = ('Performa 5400','Performa 5300c')
 
+    local_id = xmlmap.StringField('fs:localId')
     md5 = xmlmap.StringField('fs:md5')
     computer = xmlmap.StringField('fs:computer')
     path = xmlmap.StringField('fs:path')
