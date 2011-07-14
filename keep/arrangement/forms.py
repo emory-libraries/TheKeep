@@ -5,6 +5,7 @@ from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 from keep.arrangement.models import ProcessingBatchMods
 from keep.common.models import FileMasterTech, Rights
+from keep.common.forms import ReadonlyTextInput
 
 ##
 # Arrangement
@@ -14,6 +15,7 @@ from keep.common.models import FileMasterTech, Rights
 rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
 rights_access_options.insert(0, ('', ''))
 
+
 class FileTechEditForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
     :class:`~keep.common.models.Rights` metadata.
@@ -22,13 +24,20 @@ class FileTechEditForm(XmlObjectForm):
     created = W3CDateField(required=False)
     modified = W3CDateField(required=False)
 
+    md5 = forms.CharField(label="MD5 Sum", required=False,
+        widget=ReadonlyTextInput)
+
+    local_id = forms.CharField(label="Generated Local ID", required=False,
+        widget=ReadonlyTextInput)
+
     class Meta:
         model = FileMasterTech
-        fields = [ 'md5', 'computer', 'path',
+        fields = [ 'local_id', 'md5', 'computer', 'path',
                    'rawpath', 'attributes', 'created',
                    'modified', 'type', 'creator' ]
         widgets = {
-            'md5': forms.TextInput(attrs={'class': 'long'}),
+            'local_id': ReadonlyTextInput,
+            'md5': ReadonlyTextInput,
             'computer': forms.TextInput(attrs={'class': 'long'}),
             'path': forms.TextInput(attrs={'class': 'long'}),
             'rawpath': forms.TextInput(attrs={'class': 'long'}),
@@ -51,10 +60,9 @@ class RightsForm(XmlObjectForm):
 
     class Meta:
         model = Rights
-        fields = [ 'access', 'copyright_holder_name', 'copyright_date',
+        fields = [ 'access', 'copyright_date',
                    'block_external_access', 'ip_note' ]
         widgets = {
-            'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
             'ip_note': forms.Textarea,
             'block_external_access': forms.CheckboxInput(attrs={'class': 'checkbox-warning'}),
         }
@@ -77,10 +85,27 @@ class ArrangementObjectEditForm(forms.Form):
 
     def __init__(self, data=None, instance=None, initial={}, **kwargs):       
 
-        mods_instance = None
-        st_instance = None
-        filetech_instance = None
-        rights_instance = None
+        if instance is None:
+            filetech_instance = None
+            rights_instance = None
+        else:
+            filetech_instance = instance.filetech.content
+            rights_instance = instance.rights.content
+            self.object_instance = instance
+            orig_initial = initial
+            initial = {}
+
+            # populate fields not auto-generated & handled by XmlObjectForm
+            #if self.object_instance.collection_uri:
+                #initial['collection'] = str(self.object_instance.collection_uri)
+
+            if self.object_instance.ark:
+                initial['identifier'] = self.object_instance.ark
+            else:
+                initial['identifier'] = self.object_instance.pid + ' (PID)'
+
+            # passed-in initial values override ones calculated here
+            initial.update(orig_initial)
 
         common_opts = {'data': data, 'initial': initial}
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='filetech', **common_opts)

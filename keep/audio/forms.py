@@ -14,6 +14,7 @@ from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
 from keep.collection.models import CollectionObject
 from keep.collection.forms import NameForm, repository_choices
 from keep.common.models import Rights
+from keep.common.forms import ReadonlyTextInput
 
 logger = logging.getLogger(__name__)
 
@@ -77,20 +78,6 @@ class ItemSearch(forms.Form):
     location = forms.ChoiceField(label="Repository/Archive", required=False,
                     choices=repository_choices, initial='',
                     help_text='Search for items that are owned by the specified Archive')
-
-
-
-class ReadonlyTextInput(forms.TextInput):
-    'Read-only variation on :class:`django.forms.TextInput`'
-    readonly_attrs = {
-        'readonly': 'readonly',
-        'class': 'readonly long',
-        'tabindex': '-1',
-    }
-    def __init__(self, attrs=None):
-        if attrs is not None:
-            self.readonly_attrs.update(attrs)
-        super(ReadonlyTextInput, self).__init__(attrs=self.readonly_attrs)
 
     
 class SimpleNoteForm(XmlObjectForm):
