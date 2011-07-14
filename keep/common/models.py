@@ -49,14 +49,8 @@ class Rights(_BaseRights):
             'Access status undetermined'),
         ('11', 'Unknown from Old DM',              True,
             'Material from previous Digital Masters database that cannot be mapped to other codes'),
-        ('12', 'Redacted',              False,
+        ('12', 'Redacted file only',              False,
             'Object must undergo select redaction then modified version of object available to researchers'),
-        ('13', 'Restricted',              False,
-            'Object not available to researchers'),
-        ('14', 'As Is',              True,
-            'Object available to researchers in original form'),
-        ('15', 'Emulation Only',              True,
-            'Object available for loading in emulation only'),
     )
     '''controlled vocabulary for access condition, ordered the way they should
     appear on the form widget'''
@@ -80,6 +74,10 @@ class Rights(_BaseRights):
         required=False,
         help_text='Date of copyright')
     'copyright date (string)'
+    access_restriction_expiration = xmlmap.StringField('rt:accessRestrictionExperation[@encoding="w3cdtf"]',
+        required=False,
+        help_text='Date of when restrictions on an item might expire')
+    'access restriction expiration date (string)'
 
     block_external_access = xmlmap.SimpleBooleanField('rt:externalAccess',
         'deny', None,

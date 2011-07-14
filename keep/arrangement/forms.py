@@ -57,10 +57,11 @@ class RightsForm(XmlObjectForm):
     access = forms.ChoiceField(rights_access_options, label='Access Status',
            help_text='File access status, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)
+    access_restriction_expiration = W3CDateField(required=False)
 
     class Meta:
         model = Rights
-        fields = [ 'access', 'copyright_date',
+        fields = [ 'access', 'copyright_date', 'access_restriction_expiration',
                    'block_external_access', 'ip_note' ]
         widgets = {
             'ip_note': forms.Textarea,
@@ -122,37 +123,37 @@ class ArrangementObjectEditForm(forms.Form):
 # ProcessingBatch
 ##
 
-class ProcessingBatchModsForm(XmlObjectForm):
+#class ProcessingBatchModsForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
     :class:`~keep.common.models.ProcessingBatch` metadata.
     """
 
-    class Meta:
-        model = ProcessingBatchMods
-        fields = [ 'restrictions_on_access' ]
-        widgets = {
-            'restrictions_on_access': forms.CheckboxInput(attrs={'class': 'checkbox-warning'}),
-        }
+    #class Meta:
+        #model = ProcessingBatchMods
+        #fields = [ 'restrictions_on_access' ]
+        #widgets = {
+            #'restrictions_on_access': forms.CheckboxInput(attrs={'class': 'checkbox-warning'}),
+        #}
 
-    def __init__(self, **kwargs):
-        super(ProcessingBatchModsForm, self).__init__(**kwargs)
-
-
-
-class ProcessingBatchEditForm(forms.Form):
-    error_css_class = 'error'
-    required_css_class = 'required'
-
-    def __init__(self, data=None, instance=None, initial={}, **kwargs):
-
-        mods_instance = None
+    #def __init__(self, **kwargs):
+        #super(ProcessingBatchModsForm, self).__init__(**kwargs)
 
 
-        common_opts = {'data': data, 'initial': initial}
-        self.mods = ProcessingBatchModsForm(instance=mods_instance, prefix='mods', **common_opts)
+
+#class ProcessingBatchEditForm(forms.Form):
+    #error_css_class = 'error'
+    #required_css_class = 'required'
+
+    #def __init__(self, data=None, instance=None, initial={}, **kwargs):
+
+        #mods_instance = None
 
 
-        self.mods.error_css_class = self.error_css_class
-        self.mods.required_css_class = self.error_css_class
+        #common_opts = {'data': data, 'initial': initial}
+        #self.mods = ProcessingBatchModsForm(instance=mods_instance, prefix='mods', **common_opts)
 
-        super(ProcessingBatchEditForm, self).__init__(data=data, initial=initial)
+
+        #self.mods.error_css_class = self.error_css_class
+        #self.mods.required_css_class = self.error_css_class
+
+        #super(ProcessingBatchEditForm, self).__init__(data=data, initial=initial)
