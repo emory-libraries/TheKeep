@@ -717,7 +717,7 @@ class Content(models.Model):   # individual item
 
         sounds = list(self.source_sounds.all())
         engineers = [ s.transfer_engineer for s in sounds
-                      if s.transfer_engineer ]
+                      if s.transfer_engineer_id ]
         for engineer in engineers:
             logger.debug('Transfer Engineer: %s (id=%d)' % (engineer.name, engineer.id))
         if len(engineers) > 1:
