@@ -103,7 +103,7 @@ class PodcastFeed(Feed):
         solrquery = feed_items()
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(feed_items()t
+        pagedsolr = PaginatedSolrSearch(feed_items())
         
         paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
