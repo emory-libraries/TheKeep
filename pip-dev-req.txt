@@ -4,3 +4,4 @@ sphinx
 coverage
 MySQL-python
 mock
+psycopg2
