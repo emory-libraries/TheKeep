@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('keep.arrangement.views',
     url(r'^$', 'index', name='index'),
-    url(r'^(?P<pid>[^/]+)/(?P<dsid>(FileTech|Rights))/$',
+    url(r'^batch/(?P<pid>[^/]+)/edit/$', 'batch', name='batch'),
+    url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>(FileTech|Rights))/$',
             'view_datastream', name='raw-ds'),
 )

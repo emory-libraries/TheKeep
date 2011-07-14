@@ -3,9 +3,12 @@ from django import forms
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
+from keep.arrangement.models import ProcessingBatchMods
 from keep.common.models import FileMasterTech, Rights
 
-
+##
+# Arrangement
+##
 # rights access status code options - used in edit & search forms
 # use code for value, display code + abbreviation so code can be used for short-cut selection
 rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
@@ -13,7 +16,7 @@ rights_access_options.insert(0, ('', ''))
 
 class FileTechEditForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
-    :class:`~keep.audio.models.Rights` metadata.
+    :class:`~keep.common.models.Rights` metadata.
     """
 
     created = W3CDateField(required=False)
@@ -39,7 +42,7 @@ class FileTechEditForm(XmlObjectForm):
 
 class RightsForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
-    :class:`~keep.audio.models.Rights` metadata.
+    :class:`~keep.common.models.Rights` metadata.
     """
 
     access = forms.ChoiceField(rights_access_options, label='Access Status',
@@ -90,7 +93,41 @@ class ArrangementObjectEditForm(forms.Form):
 
         super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial)
 
+##
+# ProcessingBatch
+##
+
+class ProcessingBatchModsForm(XmlObjectForm):
+    """:class:`~eulxml.forms.XmlObjectForm` to edit
+    :class:`~keep.common.models.ProcessingBatch` metadata.
+    """
+
+    class Meta:
+        model = ProcessingBatchMods
+        fields = [ 'restrictions_on_access' ]
+        widgets = {
+            'restrictions_on_access': forms.CheckboxInput(attrs={'class': 'checkbox-warning'}),
+        }
+
+    def __init__(self, **kwargs):
+        super(ProcessingBatchModsForm, self).__init__(**kwargs)
 
 
 
+class ProcessingBatchEditForm(forms.Form):
+    error_css_class = 'error'
+    required_css_class = 'required'
 
+    def __init__(self, data=None, instance=None, initial={}, **kwargs):
+
+        mods_instance = None
+
+
+        common_opts = {'data': data, 'initial': initial}
+        self.mods = ProcessingBatchModsForm(instance=mods_instance, prefix='mods', **common_opts)
+
+
+        self.mods.error_css_class = self.error_css_class
+        self.mods.required_css_class = self.error_css_class
+
+        super(ProcessingBatchEditForm, self).__init__(data=data, initial=initial)
