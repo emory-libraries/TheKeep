@@ -8,7 +8,7 @@ from django.template import RequestContext
 
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
-from keep.arrangement.models import ArrangementObject
+from keep.arrangement.models import ArrangementObject, ProcessingBatch
 
 def index(request):
     # pass dates in to the view to link to searches for recently uploaded files
@@ -29,7 +29,8 @@ def view_datastream(request, pid, dsid):
 def batch(request, pid=None):
     repo = Repository(request=request)
     obj = repo.get_object(pid=pid, type=ProcessingBatch)
+    form = arrangementforms.ProcessingBatchEditForm(instance=obj)
 
-    return render_to_response('arrangement/batch.html', {},
+    return render_to_response('arrangement/batch-edit.html', {'obj' : obj, 'form' : form},
         context_instance=RequestContext(request))
 

@@ -18,8 +18,7 @@ class Permissions(models.Model):
 
 class ProcessingBatchMods(mods.MODS):
     '''ProcessingBatch spcific, based on :class:`keep.mods.MODS`.'''
-    restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
-                                              mods.AccessCondition)
+    status = xmlmap.StringField('mods:accessCondition[@type="restrictions on access"]')
     'indicates if entire processing batch is visible or not'
 
 
