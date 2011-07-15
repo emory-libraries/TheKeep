@@ -158,7 +158,7 @@ class SourceTech(_BaseSourceTech):
     'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
     speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-        SourceTechMeasure, required=True)
+        SourceTechMeasure)
     ':class:`SourceTechMeasure`'
     sublocation = xmlmap.StringField('st:sublocation', required=False,
         help_text='Storage location within the collection (e.g., box and folder)')
@@ -175,7 +175,7 @@ class SourceTech(_BaseSourceTech):
     'Stock or brand of source media'
     stock_list = xmlmap.StringListField('st:stock')
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        required=True, help_text='Type of housing for the source item')
+        help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
@@ -266,7 +266,7 @@ class DigitalTech(_BaseDigitalTech):
         required=False, help_text='The person who performed the digitization or conversion that produced the file')
     ':class:`TransferEngineer` - person who digitized the item'
     codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
-        required=True, help_text='Hardware, software, and software version used to create the digital file')
+        help_text='Hardware, software, and software version used to create the digital file')
     ':class:`CodecCreator` - hardware & software used to digitize the item'
 
 
