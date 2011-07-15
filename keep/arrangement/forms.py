@@ -57,10 +57,11 @@ class RightsForm(XmlObjectForm):
     access = forms.ChoiceField(rights_access_options, label='Access Status',
            help_text='File access status, as determined by analysis of copyright, donor agreements, permissions, etc.')
     copyright_date = W3CDateField(required=False)
+    access_restriction_expiration = W3CDateField(required=False)
 
     class Meta:
         model = Rights
-        fields = [ 'access', 'copyright_date',
+        fields = [ 'access', 'copyright_date', 'access_restriction_expiration',
                    'block_external_access', 'ip_note' ]
         widgets = {
             'ip_note': forms.Textarea,
@@ -78,6 +79,21 @@ class RightsForm(XmlObjectForm):
         if access_status_code in self.initial:
             self.initial[access] = self.initial[access_status_code]
 
+class ModsForm(XmlObjectForm):
+    """:class:`~eulxml.forms.XmlObjectForm` to edit
+    :class:`~keep.common.models.Rights` metadata.
+    """
+
+    class Meta:
+        model = Rights
+        fields = [ 'title' ]
+        widgets = {
+            'title': forms.Textarea,
+        }
+
+    def __init__(self, **kwargs):
+        super(ModsForm, self).__init__(**kwargs)
+
 
 class ArrangementObjectEditForm(forms.Form):
     error_css_class = 'error'
@@ -88,9 +104,11 @@ class ArrangementObjectEditForm(forms.Form):
         if instance is None:
             filetech_instance = None
             rights_instance = None
+            #mods_instance = None
         else:
             filetech_instance = instance.filetech.content
             rights_instance = instance.rights.content
+            #mods_instance = instance.mods.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}

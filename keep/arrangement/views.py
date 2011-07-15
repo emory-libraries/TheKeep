@@ -12,9 +12,9 @@ from keep.arrangement.models import ArrangementObject, ProcessingBatch
 
 def index(request):
     # pass dates in to the view to link to searches for recently uploaded files
-    pid = "emory-steven:test"
+    pid = "keep-athom09:steven-test"
     repo = Repository(request=request)
-    obj = repo.get_object(pid, type=ArrangementObject, create=True)
+    obj = repo.get_object(pid, type=ArrangementObject)
     form = arrangementforms.ArrangementObjectEditForm(instance=obj)
 
     return render_to_response('arrangement/edit.html', {'obj' : obj, 'form': form },

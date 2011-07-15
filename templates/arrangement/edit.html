@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: Arrangment : Edit {{ obj.label }}{% endblock %}
-{% block content-title %}Edit Arrangment File{% endblock %}
+{% block page-subtitle %}: Arrangment : Edit {{ obj.label }} ({{ obj.filetech.content.local_id }}){% endblock %}
+{% block content-title %}Edit Arrangment File {% endblock %}
 
 {% block scripts %}
   {{ block.super }}
@@ -25,8 +25,8 @@
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p class='extra'>
-  | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'FileTech' %}">FileTech</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
 </p>
 
 
@@ -40,6 +40,14 @@
 <div id="audio-edit">
 <form method="post" name="edit_form">{% csrf_token %}
 
+<h3 id="FileTech-label" class="section-head toggle">File Tech Metadata</h3>
+<div id="FileTech">
+    {{ form.filetech.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.filetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
 
 <h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
 <div id="rights">
@@ -49,13 +57,7 @@
     </table>
 </div>
 
-<h3 id="FileTech-label" class="section-head toggle">File Tech Metadata</h3>
-<div id="FileTech">
-    {{ form.filetech.non_field_errors }}
-    <table class="edit-form">
-        {% for field in form.filetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-    </table>
-</div>
+
 
 <input class="form-submit" type="submit" name="_save" value="Save"/>
 <input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
