@@ -163,7 +163,7 @@ class Location(models.Model):
             return REPOSITORY_LOCATION[self.name]
 
     def _repo_for_name(self, name):
-        repos = CollectionObject.top_level()
+        repos = CollectionObject.archives()
         for repo in repos:
             # translate DM location labels to Keep repository object labels
             if self.name == repo.label:
