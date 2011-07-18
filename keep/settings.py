@@ -109,6 +109,15 @@ AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
 # the default owner of all fedora objects created by this app
 FEDORA_OBJECT_OWNERID = 'thekeep-project'
 
+# mnemonic names for well-known PIDs
+PID_ALIASES = {
+    'marbl': 'emory:93z53',
+    'eua': 'emory:93zd2',
+    'oxford': 'emory:b2mx2',
+    'pitts': 'emory:93z9n',
+}
+
+
 # Celery Config - standard stuff that will not change from project to project
 import djcelery
 djcelery.setup_loader()
