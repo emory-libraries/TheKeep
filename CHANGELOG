@@ -3,6 +3,68 @@
 CHANGELOG
 =========
 
+Release 1.1 - Metadata Migration
+--------------------------------
+
+Migrate all metadata for audio files from the existing Digital Masters
+database to the new system so that existing users can transition to
+use the new system entirely in place of the old one for audio
+metadata.
+
+* A system administrator can run a script that reads metadata from
+  audio records in the old database and generates clear logs of items
+  and metadata in the old system. Stakeholders can review this log to
+  identify changes needed in either the source data or the processing.
+* A system administrator can run the metadata log script to
+  transform and migrate legacy system data into reposited metadata in
+  the new system. (Logging “Dry run” functionality will still be
+  available with a command-line option.)
+* Metadata experts and archivists can view all migrated fields in the
+  audio edit interface so that they can verify it and copy it to new
+  fields.
+* Users will be able to view and find migrated Audio File metadata by
+  association with a Collection object, based on either the collection
+  number (if location is MARBL and if an MSS collection number is
+  assigned) or the location (unnumbered collections for MARBL, EU
+  Archives or Oxford) in the legacy system data.
+* A user can designate "trash" records in the old database that should
+  not be reposited in the new system, by including the word "delete"
+  (not case sensitive) in the title field. The migration script will
+  not create an object to migrate metadata to, and the transaction log
+  will record a special "delete" error condition. 
+* Users will see legacy system filename identifiers on the audio item
+  edit page for migrated records (where audio files stored in the
+  repository would normally be available for listening), so that they
+  will be able to locate the audio files that are not yet available in
+  the repository. (Note that future milestones will migrate this audio
+  into the repository.)
+* Archivists can use the web interface to search for migrated metadata
+  using newly migrated critical file metadata. 
+* Researchers at the MARBL A/V kiosk see migrated records once (and
+  only once) in the kiosk interface. 
+* A curator can select "Vendor" and "Unknown" (non-LDAP identities)
+  from the list of Transfer Engineer choices. 
+* A curator can record correct speed metadata for digitized
+  microcassettes.
+* Librarians and preservation specialists can see in the legacy
+  Digital Masters interface whether any particular record's metadata
+  has been migrated to The Keep and into what PID for easy
+  verification. 
+
+Additionally, this milestone includes updates to take advantage of
+EULindexer functionality and use Solr for searching:
+
+* Users who browse or search for collections receive their results in
+  under 1 second for a faster user experience and more efficient
+  workflow. 
+* Users who browse or search for audio items receive their results in
+  under 1 second for a faster user experience and more efficient
+  workflow.
+* When MARBL Kiosk requests audio items feeds, it receives results in
+  under 1 second, so that iTunes can harvest available items without
+  timing out.  
+
+
 Release 1.0.3
 -------------
 
