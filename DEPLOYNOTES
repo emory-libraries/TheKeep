@@ -285,15 +285,6 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 -------------
 
-Release 1.x (TBD) - eulindexer & Solr
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The Keep now uses Solr for searching and eulindexer for indexing
-items.  Follow the directions in `Solr/EULindexer`_ to configure Solr
-and add the Keep to EULindexer.  Run the reindex script as described
-to populate the Solr index for existing repository content.
-
-
 Release 1.1 - Metadata Migration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -302,6 +293,21 @@ Release 1.1 - Metadata Migration
   **OLD_DM_MEDIA_ROOT** in localsettings. It should point to the root URL for
   preservation files. Our correct production setting is the one listed in
   ``localsettings.py.sample``.
+
+* The Keep now uses Solr for searching and eulindexer for indexing
+  items.  Follow the directions in `Solr/EULindexer`_ to set up a new
+  Solr index and add the Keep to EULindexer.  Before indexing existing
+  content, run a one-time clean-up script to update existing objects
+  in Fedora::
+
+    $ python manage.py cleanup_metadata
+
+  After this script completes, run the EULindexer reindex script as
+  described in `Solr/EULindexer`_ to populate the Solr index for
+  existing repository content.  Make sure that the indexer script is
+  running before migrating new content, so that newly ingested items
+  will automatically be indexed.
+
 
 Release 1.0.3
 ~~~~~~~~~~~~~
