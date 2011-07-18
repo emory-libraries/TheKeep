@@ -1,9 +1,11 @@
 import cStringIO
-from datetime import date
+from datetime import date, datetime
+from mock import Mock, MagicMock, patch
 import os
 from shutil import copyfile
 import stat
 import sys
+from sunburnt import sunburnt
 import tempfile
 from time import sleep
 
@@ -13,6 +15,7 @@ from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client
+from django.utils import simplejson
 
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
@@ -22,10 +25,12 @@ from eulxml.xmlmap  import load_xmlobject_from_string
 from keep import mods
 from keep.audio import forms as audioforms
 from keep.audio import models as audiomodels
+from keep.audio.feeds import PodcastFeed
 from keep.audio.management.commands import ingest_cleanup
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
+from keep.common.utils import PaginatedSolrSearch
 from keep.testutil import KeepTestCase
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
@@ -41,16 +46,31 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
+# mock archives used to generate archives choices for form field
+@patch('keep.collection.forms.CollectionObject.archives',
+       new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class AudioViewsTest(KeepTestCase):
     fixtures =  ['users']
 
     client = Client()
+    
+    # set up a mock solr object for use in solr-based find methods
+    mocksolr = Mock(sunburnt.SolrInterface)
+    mocksolr.return_value = mocksolr
+    # solr interface has a fluent interface where queries and filters
+    # return another solr query object; simulate that as simply as possible
+    mocksolr.query.return_value = mocksolr.query
+    mocksolr.query.query.return_value = mocksolr.query
+    mocksolr.query.paginate.return_value = mocksolr.query
+    mocksolr.query.exclude.return_value = mocksolr.query
+    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
 
     def setUp(self):        
         super(AudioViewsTest, self).setUp()
         self.pids = []
-        # store setting that may be changed when testing podcast feed pagination
+        # store settings that may be changed when testing podcast feed pagination
         self.max_per_podcast = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', None)
+        self._template_context_processors = getattr(settings, 'TEMPLATE_CONTEXT_PROCESSORS', None)
 
         # collection fixtures are not modified, but there is no clean way
         # to only load & purge once
@@ -62,6 +82,7 @@ class AudioViewsTest(KeepTestCase):
         self.englishdocs.save()
 
     def tearDown(self):
+        super(AudioViewsTest, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -72,15 +93,17 @@ class AudioViewsTest(KeepTestCase):
             # if not originally set but added by a test, remove the setting
             del settings.MAX_ITEMS_PER_PODCAST_FEED
 
+        if self._template_context_processors is not None:
+            settings.TEMPLATE_CONTEXT_PROCESSORS = self._template_context_processors
+        else:
+            del settings.TEMPLATE_CONTEXT_PROCESSORS
+ 
         # TODO: remove any test files created in staging dir
         # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
         
         self.repo.purge_object(self.rushdie.pid)
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
-
-        # refresh cached collections after objects are deleted
-        CollectionObject.item_collections(refresh_cache=True)
 
     def test_index(self):
         # test audio app index page permissions
@@ -323,193 +346,159 @@ class AudioViewsTest(KeepTestCase):
             self.assert_(isinstance(new_obj.conversion_result, TaskResult),
                 'ingested object should have a conversion result to track mp3 generation')
 
-                    
-    def test_search(self):
+            
+
+    
+    @patch('keep.audio.views.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.audio.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.forms.CollectionObject')
+    def test_search(self, mockcollobj):
+        collections = [
+            {'pid': 'pid:1', 'source_id': 1, 'title': 'mss 1'}
+            ]
+        mockcollobj.item_collections.return_value = collections
+        
         search_url = reverse('audio:search')
 
-        # create some test objects to search for
-        repo = Repository()
-        obj = repo.get_object(type=audiomodels.AudioObject)
-        obj.mods.content.title = 'test search object 1'
-        obj.mods.content.create_general_note()
-        obj.mods.content.general_note.text = 'general note'
-        obj.collection_uri = self.rushdie.uri
-        obj.mods.content.create_origin_info()
-        obj.mods.content.origin_info.created.append(mods.DateCreated(date='1492-05'))
-        obj.mods.content.dm1_id = '20'
-        obj.mods.content.dm1_other_id = '00000040'
-        obj.save()
-        obj2 = repo.get_object(type=audiomodels.AudioObject)
-        obj2.mods.content.title = 'test search object 2'
-        obj2.mods.content.dm1_id = '3001'
-        obj2.mods.content.dm1_other_id = '00000930'
-        obj2.rights.content.create_access_status()
-        obj2.rights.content.access_status.code = 8
-        obj2.rights.content.access_status.text = 'public domain'
-        obj2.save()
-        # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid])
-        
+        # using a mock for sunburnt so we can inspect method calls,
+        # simulate search results, etc.
+
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
+        self.mocksolrpaginator.count.return_value = 0
+        self.mocksolrpaginator.__getitem__.return_value = None
+
+        # search all items (no user-entered search terms)
+        response = self.client.get(search_url)
+        args, kwargs = self.mocksolr.query.call_args
+        # default search args that should be included on every collection search
+        self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
+                         'item search should be filtered by audio item content model')
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'item search should be filtered by configured pidspace')
+        # by default, results should be sorted most recently created
+        self.mocksolr.query.sort_by.called_with('-created')
+        
         # search by exact pid
-        response = self.client.get(search_url, {'audio-pid': obj.pid})
+        searchpid = 'pid:1'
+        response = self.client.get(search_url, {'audio-pid': searchpid})
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, search_url))
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by pid")
-        self.assert_(obj2.pid not in found,
-                "test object 2 not listed in results when searching by pid for test object 1")
-        self.assertContains(response, '''Displaying record
-1
-of 1''',
-            msg_prefix='search results include total number of records found')
-        
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(searchpid, kwargs['pid'],
+                         'item search should be filtered by pid')
+
         # search by DM id
-        response = self.client.get(search_url, {'audio-pid': obj.mods.content.dm1_id})
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 should be listed in results when searching by dm1 id")
-        self.assertEqual(1, len(found),
-                         "only one test object should be found when searching by dm1 id")
+        dm1_id = 20
+        response = self.client.get(search_url, {'audio-pid': dm1_id})
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(str(dm1_id), kwargs['dm1_id'],
+                         'pid search for numeric dm1 id should search dm1_id field')
+        self.assertNotEqual(str(dm1_id), kwargs['pid'],
+                         'pid search for numeric dm1 id should NOT search pid field')
         # search by DM other id
-        response = self.client.get(search_url, {'audio-pid': obj.mods.content.dm1_other_id})
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 should be listed in results when searching by dm1 other id")
-        self.assertEqual(1, len(found),
-                         "only one test object should be found when searching by dm1 other id")
-                
+        other_id =  '00000930'
+        response = self.client.get(search_url, {'audio-pid': other_id})
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(other_id, kwargs['dm1_id'],
+                         'pid search for numeric other id should search dm1_id field')
+        self.assertNotEqual(other_id, kwargs['pid'],
+                         'pid search for numeric dm1 other id should NOT search pid field')
 
         # search by title phrase
-        response = self.client.get(search_url,
-            {'audio-title': 'test search'}) # , 'audio-pid': '%s:' % settings.FEDORA_PIDSPACE 
-        found = [o.pid for o in response.context['results']]
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, search_url))
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by title")
-        self.assert_(obj2.pid in found,
-                "test object 2 listed in results when searching by title")
-        self.assertPattern('Displaying records.*1 - 2.*of 2', response.content,
-            msg_prefix='search results include total number of records found')
-        self.assertPattern('title:.*test search', response.content,
+        title_search = 'manuscript collection'
+        response = self.client.get(search_url, {'audio-title': title_search})
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(title_search, kwargs['title'],
+                         'title search should filter on title field')
+        self.assertPattern('title:.*%s' % title_search, response.content,
             msg_prefix='search results page should include search term (title)')
         self.assertNotContains(response, 'pid: ',
             msg_prefix='search results page should not include default search terms (pid)')
         self.assertNotContains(response, 'description: ',
             msg_prefix='search results page should not include empty search terms (description)')
 
-        download_url = reverse('audio:download-audio', args=[obj.pid])
-        self.assertContains(response, download_url,
-                msg_prefix="search results link to audio download")
 
-        # search by description
-        response = self.client.get(search_url, {'audio-description': 'general note'})
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, search_url))
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by description")
-        self.assert_(obj2.pid not in found,
-                "test object 2 not listed in results when searching by description")
-        self.assertPattern('description:.*general note', response.content,
-            msg_prefix='search results page should include search term (description)')
+        # search by note
+        # (searches general note, digitization purpose, related files via solr copyfield)
+        note = 'patron request'
+        response = self.client.get(search_url, {'audio-notes': note})
+        args, kwargs = self.mocksolr.query.call_args
+        print kwargs
+        self.assertEqual(note, kwargs['notes'],
+                         'notes search should search solr note field')
+        
+        self.assertPattern('notes:.*%s' % note, response.content,
+            msg_prefix='search results page should include search term (note)')
 
         # search by date
-        response = self.client.get(search_url, {'audio-date': '1492*'})
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, search_url))
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by date")
-        self.assert_(obj2.pid not in found,
-                "test object 2 not listed in results when searching by date")
-        self.assertPattern('date:.*1492\*', response.content,
+        searchdate = '1492*'
+        response = self.client.get(search_url, {'audio-date': searchdate})
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(searchdate, kwargs['date'],
+                         'date search should filter on date field')
+        self.assertPattern('date:.*%s' % searchdate, response.content,
             msg_prefix='search results page should include search term (date)')
 
-        # search by rights
-        response = self.client.get(search_url, {'audio-rights': '8'})
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, search_url))
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid not in found,
-                "test object 1 not listed in results when searching by rights")
-        self.assert_(obj2.pid in found,
-                "test object 2 listed in results when searching by rights")
-        self.assertPattern('rights:.*8 - Public Domain', response.content,
-            msg_prefix='search results page should include search term (rights)')
+        # search by rights / access status
+        access_code = '8'
+        response = self.client.get(search_url, {'audio-access_code': access_code})
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(access_code, kwargs['access_code'],
+                         'rights/access status search should filter on access_code field')
+        self.assertPattern('Rights:.*%s - Public Domain' % access_code, response.content,
+            msg_prefix='search results page should include access status code and text)')
 
         # collection
-        response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri})
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, search_url))
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by collection")
-        self.assert_(obj2.pid not in found,
-                "test object 2 not listed in results when searching by collection")
-        self.assert_(self.rushdie.pid not in found,
-                "collection object not listed in results when searching by collection")
-        self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
-            msg_prefix='search results page should include search term (collection by name)')
+        collpid = '%s:1' % settings.FEDORA_PIDSPACE
+        coll_info = {'pid': collpid, 'source_id': '1', 'title': 'Papers of Somebody Important'}
+        colluri = 'info:fedora/%s' % collpid
+        # modify item_collections so test pid will be in the form choice list
+        mockcollobj.item_collections.return_value = [coll_info]
+        # mock collection find by pid in the view for collection label look-up
+        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=coll_info)):
+            response = self.client.get(search_url, {'audio-collection':  colluri})
+            args, kwargs = self.mocksolr.query.call_args
+            self.assertEqual(colluri, kwargs['collection_id'],
+                'collection search should filter on collection_id field')
+            self.assertPattern('Collection:.*%s' % coll_info['title'], response.content,
+                msg_prefix='search results page should include search term (collection by name)')
 
-        # location/archive
-        response = self.client.get(search_url, {'audio-location':  self.rushdie.collection_id})
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by location/archive/top-level collection")
-        self.assert_(obj2.pid not in found,
-                "test object 2 not listed in results when searching by location/archive")
-        
+        # archive
+        archpid = settings.PID_ALIASES['marbl']
+        arch_info = {'pid': archpid, 'title': 'MARBL'}
+        archuri = 'info:fedora/%s' % archpid
+        # mock collection find by pid in the view for archive label look-up
+        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=arch_info)):
+            response = self.client.get(search_url, {'audio-archive':  archuri})
+            args, kwargs = self.mocksolr.query.call_args
+            self.assertEqual(archuri, kwargs['archive_id'],
+                'archive search should filter on archive_id field')
+            self.assertPattern('Archive:.*%s' % arch_info['title'], response.content,
+                msg_prefix='search results page should include search term (archive by name)')
 
         # multiple fields
-        response = self.client.get(search_url, {'audio-collection':  self.rushdie.uri,
-            'audio-title': 'search', 'audio-date': '1492*'})
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, search_url))
-        found = [o.pid for o in response.context['results']]
-        self.assert_(obj.pid in found,
-                "test object 1 listed in results when searching by collection + title + date")
-        self.assert_(obj2.pid not in found,
-                "test object 2 not listed in results when searching by collection + title + date")
-        self.assertPattern('Collection:.*%s' % self.rushdie.label, response.content,
-            msg_prefix='search results page should include all search terms used (collection)')
-        self.assertPattern('date:.*1492\*', response.content,
-            msg_prefix='search results page should include all search terms used (date)')
-        self.assertPattern('title:.*test search', response.content,
-            msg_prefix='search results page should include all search terms used (title)')
-
-        # by default, list most recently created items first
-        obj3 = repo.get_object(type=audiomodels.AudioObject)
-        obj3.label = "most recent upload"
-        obj3.audio.content = open(os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.wav'))
-        obj3.save()
-        # add pid to list for clean-up in tearDown
-        self.pids.append(obj3.pid)
-        # default search
-        response = self.client.get(search_url)
-        found = [o.pid for o in response.context['results']]
-        self.assert_(len(found) >= 3,
-            'default search should find at least 3 items')
-        self.assertEqual(found[0], obj3.pid,
-            'most recently created object should be listed first in search results')
+        # mock collection find by pid in the view for collection label look-up
+        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=coll_info)):
+            searchtitle = 'Moldy papers'
+            searchdate = '1492*'
+            response = self.client.get(search_url, {'audio-collection':  colluri,
+                'audio-title': searchtitle, 'audio-date': searchdate})
+            args, kwargs = self.mocksolr.query.call_args
+            # all field should be in solr search
+            self.assertEqual(colluri, kwargs['collection_id'])
+            self.assertEqual(searchtitle, kwargs['title'])
+            self.assertEqual(searchdate, kwargs['date'])
+            # all fields should display to user
+            self.assertPattern('Collection:.*%s' % coll_info['title'], response.content,
+                msg_prefix='search results page should include all search terms used (collection)')
+            self.assertPattern('date:.*%s' % searchdate, response.content,
+                msg_prefix='search results page should include all search terms used (date)')
+            self.assertPattern('title:.*%s' % searchtitle, response.content,
+                msg_prefix='search results page should include all search terms used (title)')
 
     def test_download_audio(self):
         # create a test audio object
@@ -672,391 +661,398 @@ of 1''',
         
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
-
+        
         edit_url = reverse('audio:edit', args=[obj.pid])
 
-        response = self.client.get(edit_url)
-        expected, code = 200, response.status_code
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, edit_url))
-        self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
-                "MODS EditForm is set in response context")
-        self.assert_(isinstance(response.context['form'].object_instance, audiomodels.AudioObject),
-                "form instance is an AudioObject")
-        self.assertContains(response, self.rushdie.pid)
-        self.assertContains(response, self.esterbrook.pid)
-        self.assertContains(response, self.englishdocs.pid)
+        # mock collection item_collections so test collection will be based on fixture collections
+        collection_choices = list(
+            {'pid': coll.pid, 'source_id': coll.mods.content.source_id, 'title': coll.label}
+            for coll in [self.rushdie, self.esterbrook, self.englishdocs] )
+        with patch('keep.audio.forms.CollectionObject.item_collections',
+                   new=Mock(return_value=collection_choices)):
+            response = self.client.get(edit_url)
+            expected, code = 200, response.status_code
+            self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                                 % (expected, code, edit_url))
+            self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
+                    "MODS EditForm is set in response context")
+            self.assert_(isinstance(response.context['form'].object_instance, audiomodels.AudioObject),
+                    "form instance is an AudioObject")
+            self.assertContains(response, self.rushdie.pid)
+            self.assertContains(response, self.esterbrook.pid)
+            self.assertContains(response, self.englishdocs.pid)
 
-        # audio datastream links
-        self.assertContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
-                            msg_prefix='edit page should link to audio datastream when available')
-        self.assertContains(response, 'original audio',
-                            msg_prefix='edit page should link to original audio datastream when available')
-        self.assertNotContains(response, reverse('audio:download-compressed-audio', kwargs={'pid': obj.pid }),
-                            msg_prefix='edit page should not link to non-existent comprresed audio')
-        # purge audio datastream to simulate a metadata migration object with no master audio
-        purged = obj.api.purgeDatastream(obj.pid, audiomodels.AudioObject.audio.id)
-        response = self.client.get(edit_url)
-        self.assertNotContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
-                            msg_prefix='edit page should not link to non-existent audio datastream')
-        self.assertContains(response, 'original audio',
-                            msg_prefix='edit page should display original audio as unavailable')
-        
-        initial_data = response.context['form'].mods.initial
-        item_mods = obj.mods.content
-        self.assertEqual(item_mods.title, initial_data['title'],
-            'object MODS title is pre-populated in form initial data')
-        self.assertEqual(item_mods.general_note.text, initial_data['general_note-text'],
-            'object MODS general note is pre-populated in form initial data')
-        self.assertEqual(item_mods.part_note.text, initial_data['part_note-text'],
-            'object MODS part note is pre-populated in form initial data')
-        self.assertEqual(item_mods.origin_info.created[0].date, 
-            initial_data['origin_info-created-0-date'],
-            'object MODS date created is pre-populated in form initial data')
-        self.assertEqual(item_mods.origin_info.issued[0].date,
-            initial_data['origin_info-issued-0-date'],
-            'object MODS date issued is pre-populated in form initial data')
-        self.assertEqual(item_mods.dm1_id, initial_data['dm1_id'],
-            'object MODS DM1 id is pre-populated in form initial data')
-        self.assertEqual(item_mods.dm1_other_id, initial_data['dm1_other_id'],
-            'object MODS DM1 other id is pre-populated in form initial data')
-        self.assertEqual(item_mods.resource_type, initial_data['resource_type'],
-            'object MODS resource type is pre-populated in form initial data')
-        self.assertEqual(item_mods.dm1_abstract_note.text, initial_data['dm1_abstract_note-text'],
-            'object MODS DM1 abstract note is pre-populated in form initial data')
-        self.assertEqual(item_mods.dm1_content_note.text, initial_data['dm1_content_note-text'],
-            'object MODS DM1 content note is pre-populated in form initial data')
-        self.assertEqual(item_mods.dm1_toc_note.text, initial_data['dm1_toc_note-text'],
-            'object MODS DM1 toc note is pre-populated in form initial data')
-        # some migrated fields are display-only, not part of the form
-        for name in item_mods.names:
-            self.assertContains(response, name.name_parts[0].text,
-               msg_prefix='creator name part %s should display on the edit form' % name.name_parts[0].text)
-            self.assertContains(response, name.roles[0].text,
-               msg_prefix='creator name role %s should display on the edit form' % name.roles[0].text)
-            self.assertContains(response, name.type,
-               msg_prefix='creator name type %s should display on the edit form' % name.type)
-            self.assertContains(response, name.authority,
-               msg_prefix='creator name authority %s should display on the edit form' % name.authority)
-        for genre in item_mods.genres:
-            expected_val = '%s [%s]' % (genre.text, genre.authority)
+            # audio datastream links
+            self.assertContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
+                                msg_prefix='edit page should link to audio datastream when available')
+            self.assertContains(response, 'original audio',
+                                msg_prefix='edit page should link to original audio datastream when available')
+            self.assertNotContains(response, reverse('audio:download-compressed-audio', kwargs={'pid': obj.pid }),
+                                msg_prefix='edit page should not link to non-existent comprresed audio')
+            # purge audio datastream to simulate a metadata migration object with no master audio
+            purged = obj.api.purgeDatastream(obj.pid, audiomodels.AudioObject.audio.id)
+            response = self.client.get(edit_url)
+            self.assertNotContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
+                                msg_prefix='edit page should not link to non-existent audio datastream')
+            self.assertContains(response, 'original audio',
+                                msg_prefix='edit page should display original audio as unavailable')
+
+            initial_data = response.context['form'].mods.initial
+            item_mods = obj.mods.content
+            self.assertEqual(item_mods.title, initial_data['title'],
+                'object MODS title is pre-populated in form initial data')
+            self.assertEqual(item_mods.general_note.text, initial_data['general_note-text'],
+                'object MODS general note is pre-populated in form initial data')
+            self.assertEqual(item_mods.part_note.text, initial_data['part_note-text'],
+                'object MODS part note is pre-populated in form initial data')
+            self.assertEqual(item_mods.origin_info.created[0].date, 
+                initial_data['origin_info-created-0-date'],
+                'object MODS date created is pre-populated in form initial data')
+            self.assertEqual(item_mods.origin_info.issued[0].date,
+                initial_data['origin_info-issued-0-date'],
+                'object MODS date issued is pre-populated in form initial data')
+            self.assertEqual(item_mods.dm1_id, initial_data['dm1_id'],
+                'object MODS DM1 id is pre-populated in form initial data')
+            self.assertEqual(item_mods.dm1_other_id, initial_data['dm1_other_id'],
+                'object MODS DM1 other id is pre-populated in form initial data')
+            self.assertEqual(item_mods.resource_type, initial_data['resource_type'],
+                'object MODS resource type is pre-populated in form initial data')
+            self.assertEqual(item_mods.dm1_abstract_note.text, initial_data['dm1_abstract_note-text'],
+                'object MODS DM1 abstract note is pre-populated in form initial data')
+            self.assertEqual(item_mods.dm1_content_note.text, initial_data['dm1_content_note-text'],
+                'object MODS DM1 content note is pre-populated in form initial data')
+            self.assertEqual(item_mods.dm1_toc_note.text, initial_data['dm1_toc_note-text'],
+                'object MODS DM1 toc note is pre-populated in form initial data')
+            # some migrated fields are display-only, not part of the form
+            for name in item_mods.names:
+                self.assertContains(response, name.name_parts[0].text,
+                   msg_prefix='creator name part %s should display on the edit form' % name.name_parts[0].text)
+                self.assertContains(response, name.roles[0].text,
+                   msg_prefix='creator name role %s should display on the edit form' % name.roles[0].text)
+                self.assertContains(response, name.type,
+                   msg_prefix='creator name type %s should display on the edit form' % name.type)
+                self.assertContains(response, name.authority,
+                   msg_prefix='creator name authority %s should display on the edit form' % name.authority)
+            for genre in item_mods.genres:
+                expected_val = '%s [%s]' % (genre.text, genre.authority)
+                self.assertContains(response, expected_val,
+                    msg_prefix='response should include genre text & authority %s' % expected_val)
+            for lang in item_mods.languages:
+                expected_val = '%s [%s]' % (lang.terms[0].text, lang.terms[0].authority)
+                self.assertContains(response, expected_val,
+                    msg_prefix='response should include language value and authority %s' % expected_val)
+
+            # test subjects by type in order: geographic, topic, title, name
+            expected_val = '<b>Geographic:</b> %s' % item_mods.subjects[0].geographic
             self.assertContains(response, expected_val,
-                msg_prefix='response should include genre text & authority %s' % expected_val)
-        for lang in item_mods.languages:
-            expected_val = '%s [%s]' % (lang.terms[0].text, lang.terms[0].authority)
+               msg_prefix='response should include geographic subject %s' % expected_val)
+            expected_val = '[%s]' % item_mods.subjects[0].authority
             self.assertContains(response, expected_val,
-                msg_prefix='response should include language value and authority %s' % expected_val)
+               msg_prefix='response should include geographic subject authority %s' % expected_val)
+            expected_val = '<b>Topic:</b> %s' % item_mods.subjects[1].topic
+            self.assertContains(response, expected_val,
+               msg_prefix='response should include topic subject %s' % expected_val)
+            expected_val = '[%s]' % item_mods.subjects[1].authority
+            self.assertContains(response, expected_val,
+               msg_prefix='response should include topic subject authority %s' % expected_val)
+            expected_val = '<b>Title:</b> %s' % item_mods.subjects[2].title
+            self.assertContains(response, expected_val,
+               msg_prefix='response should include title subject %s' % expected_val)
+            expected_val = '[%s]' % item_mods.subjects[2].authority
+            self.assertContains(response, expected_val,
+               msg_prefix='response should include title subject authority %s' % expected_val)
+            expected_val = '<b>Name:</b> %s' % unicode(item_mods.subjects[3].name)
+            self.assertContains(response, expected_val,
+               msg_prefix='response should include name subject %s' % expected_val)
+            expected_val = '[%s]' % item_mods.subjects[3].authority
+            self.assertContains(response, expected_val,
+               msg_prefix='response should include name subject authority %s' % expected_val)
 
-        # test subjects by type in order: geographic, topic, title, name
-        expected_val = '<b>Geographic:</b> %s' % item_mods.subjects[0].geographic
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include geographic subject %s' % expected_val)
-        expected_val = '[%s]' % item_mods.subjects[0].authority
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include geographic subject authority %s' % expected_val)
-        expected_val = '<b>Topic:</b> %s' % item_mods.subjects[1].topic
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include topic subject %s' % expected_val)
-        expected_val = '[%s]' % item_mods.subjects[1].authority
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include topic subject authority %s' % expected_val)
-        expected_val = '<b>Title:</b> %s' % item_mods.subjects[2].title
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include title subject %s' % expected_val)
-        expected_val = '[%s]' % item_mods.subjects[2].authority
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include title subject authority %s' % expected_val)
-        expected_val = '<b>Name:</b> %s' % unicode(item_mods.subjects[3].name)
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include name subject %s' % expected_val)
-        expected_val = '[%s]' % item_mods.subjects[3].authority
-        self.assertContains(response, expected_val,
-           msg_prefix='response should include name subject authority %s' % expected_val)
-        
-        # source tech from object in initial data
-        initial_data = response.context['form'].sourcetech.initial
-        item_st = obj.sourcetech.content
-        self.assertEqual(item_st.note, initial_data['note'])
-        self.assertEqual(item_st.related_files, initial_data['related_files'])
-        self.assertEqual(item_st.sound_characteristics, initial_data['sound_characteristics'])
-        # semi-custom fields based on multiple values in initial data
-        self.assertEqual('|'.join([item_st.speed.aspect, item_st.speed.value,
-                                  item_st.speed.unit]), initial_data['_speed'])
-        self.assertEqual(item_st.reel_size.value, initial_data['reel'])
-        # digital tech from object initial data
-        initial_data = response.context['form'].digitaltech.initial
-        item_dt = obj.digitaltech.content
-        self.assertEqual(item_dt.codec_quality, initial_data['codec_quality'])
-        self.assertEqual(item_dt.note, initial_data['note'])
-        self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
-        self.assertEqual('%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE, ldap_user.username),
-                         initial_data['engineer'])
-        self.assertEqual(item_dt.codec_creator.id, initial_data['hardware'])
-        # rights in initial data
-        initial_data = response.context['form'].rights.initial
-        item_rights = obj.rights.content
-        self.assertEqual(item_rights.access_status.code, initial_data['access'])
-        self.assertEqual(item_rights.copyright_holder_name, initial_data['copyright_holder_name'])
-        self.assertEqual(item_rights.copyright_date, initial_data['copyright_date'])
+            # source tech from object in initial data
+            initial_data = response.context['form'].sourcetech.initial
+            item_st = obj.sourcetech.content
+            self.assertEqual(item_st.note, initial_data['note'])
+            self.assertEqual(item_st.related_files, initial_data['related_files'])
+            self.assertEqual(item_st.sound_characteristics, initial_data['sound_characteristics'])
+            # semi-custom fields based on multiple values in initial data
+            self.assertEqual('|'.join([item_st.speed.aspect, item_st.speed.value,
+                                      item_st.speed.unit]), initial_data['_speed'])
+            self.assertEqual(item_st.reel_size.value, initial_data['reel'])
+            # digital tech from object initial data
+            initial_data = response.context['form'].digitaltech.initial
+            item_dt = obj.digitaltech.content
+            self.assertEqual(item_dt.codec_quality, initial_data['codec_quality'])
+            self.assertEqual(item_dt.note, initial_data['note'])
+            self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
+            self.assertEqual('%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE, ldap_user.username),
+                             initial_data['engineer'])
+            self.assertEqual(item_dt.codec_creator.id, initial_data['hardware'])
+            # rights in initial data
+            initial_data = response.context['form'].rights.initial
+            item_rights = obj.rights.content
+            self.assertEqual(item_rights.access_status.code, initial_data['access'])
+            self.assertEqual(item_rights.copyright_holder_name, initial_data['copyright_holder_name'])
+            self.assertEqual(item_rights.copyright_date, initial_data['copyright_date'])
 
-        # POST data to update audio object in fedora
-        audio_data = {'collection': self.rushdie.uri,
-                    'mods-title': 'new title',
-                    'mods-note-label' : 'a general note',
-                    'mods-general_note-text': 'remember to ...',
-                    'mods-part_note-text': 'side A',
-                    'mods-resource_type': 'sound recording',
-                    # 'management' form data is required for django to process formsets/subforms
-                    'mods-origin_info-issued-INITIAL_FORMS': '0',
-                    'mods-origin_info-issued-TOTAL_FORMS': '1',
-                    'mods-origin_info-issued-MAX_NUM_FORMS': '',
-                    'mods-origin_info-issued-0-date_year': '2010',
-                    'mods-origin_info-issued-0-date_month': '01',
-                    'mods-origin_info-issued-0-date_day': '11',
-                    'mods-origin_info-created-INITIAL_FORMS': '0',
-                    'mods-origin_info-created-TOTAL_FORMS': '1',
-                    'mods-origin_info-created-MAX_NUM_FORMS': '',
-                    'mods-origin_info-created-0-date_year': '1980',
-                    'mods-origin_info-created-0-date_month': '03',
-                    # source-tech data now required for form submission
-                    'st-note': 'general note',
-                    'st-related_files': '1-3',
-                    'st-conservation_history': 'on loan',
-                    'st-sublocation': 'box 2',
-                    'st-form': 'audio cassette',
-                    'st-sound_characteristics': 'mono',
-                    'st-housing': 'cardboard box',
-                    'st-stock': '60 minute cassette',
-                    'st-reel': '3',
-                    'st-_speed': 'tape|15/16|inches/sec',
-                    # digital-tech data
-                    'dt-digitization_purpose': 'patron request',
-                    'dt-engineer': '%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE,
-                                              ldap_user.username),
-                    'dt-hardware': '3',
-                    # rights metadata
-                    'rights-access': '8',       # public domain
-                    'rights-copyright_holder_name': 'Mouse, Mickey',
-                    'rights-copyright_date_year': '1942',
-                    'rights-block_external_access': '1',
-                    'rights-ip_note': 'Written permission required',
-        }
-        response = self.client.post(edit_url, audio_data, follow=True)
-        messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assert_(messages[0].startswith("Successfully updated"),
-            "successful save message set in response context")
-        # currently redirects to audio index
-        (redirect_url, code) = response.redirect_chain[0]
-        self.assert_(reverse('audio:index') in redirect_url,
-            "successful save redirects to audio index page")
-        expected = 303      # redirect
-        self.assertEqual(code, expected,
-            'Expected %s but returned %s for %s (successfully saved)'  % \
-            (expected, code, edit_url))
+            # POST data to update audio object in fedora
+            audio_data = {'collection': self.rushdie.uri,
+                        'mods-title': 'new title',
+                        'mods-note-label' : 'a general note',
+                        'mods-general_note-text': 'remember to ...',
+                        'mods-part_note-text': 'side A',
+                        'mods-resource_type': 'sound recording',
+                        # 'management' form data is required for django to process formsets/subforms
+                        'mods-origin_info-issued-INITIAL_FORMS': '0',
+                        'mods-origin_info-issued-TOTAL_FORMS': '1',
+                        'mods-origin_info-issued-MAX_NUM_FORMS': '',
+                        'mods-origin_info-issued-0-date_year': '2010',
+                        'mods-origin_info-issued-0-date_month': '01',
+                        'mods-origin_info-issued-0-date_day': '11',
+                        'mods-origin_info-created-INITIAL_FORMS': '0',
+                        'mods-origin_info-created-TOTAL_FORMS': '1',
+                        'mods-origin_info-created-MAX_NUM_FORMS': '',
+                        'mods-origin_info-created-0-date_year': '1980',
+                        'mods-origin_info-created-0-date_month': '03',
+                        # source-tech data now required for form submission
+                        'st-note': 'general note',
+                        'st-related_files': '1-3',
+                        'st-conservation_history': 'on loan',
+                        'st-sublocation': 'box 2',
+                        'st-form': 'audio cassette',
+                        'st-sound_characteristics': 'mono',
+                        'st-housing': 'cardboard box',
+                        'st-stock': '60 minute cassette',
+                        'st-reel': '3',
+                        'st-_speed': 'tape|15/16|inches/sec',
+                        # digital-tech data
+                        'dt-digitization_purpose': 'patron request',
+                        'dt-engineer': '%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE,
+                                                  ldap_user.username),
+                        'dt-hardware': '3',
+                        # rights metadata
+                        'rights-access': '8',       # public domain
+                        'rights-copyright_holder_name': 'Mouse, Mickey',
+                        'rights-copyright_date_year': '1942',
+                        'rights-block_external_access': '1',
+                        'rights-ip_note': 'Written permission required',
+            }
 
-        # retrieve the modified object from Fedora to check for updates
-        repo = Repository()
-        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertEqual(audio_data['mods-title'], updated_obj.mods.content.title,
-            'mods title in fedora matches posted title')        
-        self.assertEqual(audio_data['mods-general_note-text'], updated_obj.mods.content.general_note.text,
-            'mods general note text in fedora matches posted note text')
-        self.assertEqual(audio_data['mods-part_note-text'], updated_obj.mods.content.part_note.text,
-            'mods part note text in fedora matches posted note text')
-        # date issued and created are multi-part fields
-        issued = '-'.join([audio_data['mods-origin_info-issued-0-date_year'],
-            audio_data['mods-origin_info-issued-0-date_month'],
-            audio_data['mods-origin_info-issued-0-date_day']])
-        self.assertEqual(issued, updated_obj.mods.content.origin_info.issued[0].date,
-            'mods issued date in fedora matches posted issued date')
-        created = '-'.join([audio_data['mods-origin_info-created-0-date_year'],
-            audio_data['mods-origin_info-created-0-date_month']])
-        self.assertEqual(created, updated_obj.mods.content.origin_info.created[0].date,
-            'mods date created in fedora matches posted date created')
-        self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
-            'collection id in fedora matches posted collection')
+            response = self.client.post(edit_url, audio_data, follow=True)
+            messages = [ str(msg) for msg in response.context['messages'] ]
+            self.assert_(messages[0].startswith("Successfully updated"),
+                "successful save message set in response context")
+            # currently redirects to audio index
+            (redirect_url, code) = response.redirect_chain[0]
+            self.assert_(reverse('audio:index') in redirect_url,
+                "successful save redirects to audio index page")
+            expected = 303      # redirect
+            self.assertEqual(code, expected,
+                'Expected %s but returned %s for %s (successfully saved)'  % \
+                (expected, code, edit_url))
 
-        # check that source tech fields were updated correctly
-        st = updated_obj.sourcetech.content
-        self.assertEqual(audio_data['st-note'], st.note)
-        self.assertEqual(audio_data['st-related_files'], st.related_files)
-        self.assertEqual(audio_data['st-conservation_history'], st.conservation_history)
-        self.assertEqual(audio_data['st-form'], st.form)
-        self.assertEqual(audio_data['st-sound_characteristics'], st.sound_characteristics)
-        self.assertEqual(audio_data['st-housing'], st.housing)
-        self.assertEqual(audio_data['st-stock'], st.stock)
-        # reel size has custom logic
-        self.assertEqual(audio_data['st-reel'], st.reel_size.value)
-        self.assertEqual('inches', st.reel_size.unit)
-        # speed has custom logic - 15/16 inches/sec gets split into two fields
-        self.assertEqual('tape', st.speed.aspect)
-        self.assertEqual('15/16', st.speed.value)
-        self.assertEqual('inches/sec', st.speed.unit)
+            # retrieve the modified object from Fedora to check for updates
+            repo = Repository()
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            self.assertEqual(audio_data['mods-title'], updated_obj.mods.content.title,
+                'mods title in fedora matches posted title')        
+            self.assertEqual(audio_data['mods-general_note-text'], updated_obj.mods.content.general_note.text,
+                'mods general note text in fedora matches posted note text')
+            self.assertEqual(audio_data['mods-part_note-text'], updated_obj.mods.content.part_note.text,
+                'mods part note text in fedora matches posted note text')
+            # date issued and created are multi-part fields
+            issued = '-'.join([audio_data['mods-origin_info-issued-0-date_year'],
+                audio_data['mods-origin_info-issued-0-date_month'],
+                audio_data['mods-origin_info-issued-0-date_day']])
+            self.assertEqual(issued, updated_obj.mods.content.origin_info.issued[0].date,
+                'mods issued date in fedora matches posted issued date')
+            created = '-'.join([audio_data['mods-origin_info-created-0-date_year'],
+                audio_data['mods-origin_info-created-0-date_month']])
+            self.assertEqual(created, updated_obj.mods.content.origin_info.created[0].date,
+                'mods date created in fedora matches posted date created')
+            self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
+                'collection id in fedora matches posted collection')
 
-        # check that digital tech fields were updated correctly
-        dt = updated_obj.digitaltech.content
-        self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
-        self.assertEqual(audiomodels.TransferEngineer.LDAP_ID_TYPE, dt.transfer_engineer.id_type)
-        self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
-        self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
-        # codec creator - used id 3, which has two hardware fields
-        hardware, software, version = audiomodels.CodecCreator.configurations[audio_data['dt-hardware']]
-        self.assertEqual(audio_data['dt-hardware'], dt.codec_creator.id)
-        self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
-        self.assertEqual(hardware[1], dt.codec_creator.hardware_list[1])
-        self.assertEqual(software, dt.codec_creator.software)
-        self.assertEqual(version, dt.codec_creator.software_version)
+            # check that source tech fields were updated correctly
+            st = updated_obj.sourcetech.content
+            self.assertEqual(audio_data['st-note'], st.note)
+            self.assertEqual(audio_data['st-related_files'], st.related_files)
+            self.assertEqual(audio_data['st-conservation_history'], st.conservation_history)
+            self.assertEqual(audio_data['st-form'], st.form)
+            self.assertEqual(audio_data['st-sound_characteristics'], st.sound_characteristics)
+            self.assertEqual(audio_data['st-housing'], st.housing)
+            self.assertEqual(audio_data['st-stock'], st.stock)
+            # reel size has custom logic
+            self.assertEqual(audio_data['st-reel'], st.reel_size.value)
+            self.assertEqual('inches', st.reel_size.unit)
+            # speed has custom logic - 15/16 inches/sec gets split into two fields
+            self.assertEqual('tape', st.speed.aspect)
+            self.assertEqual('15/16', st.speed.value)
+            self.assertEqual('inches/sec', st.speed.unit)
 
-        # change data and confirm codec creator is updated correctly
-        data = audio_data.copy()
-        data['dt-hardware'] = '4' # only one hardware, no software version
-        response = self.client.post(edit_url, data)
-        # get the latest copy of the object 
-        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        dt = updated_obj.digitaltech.content
-        # codec creator - id 4 only has one two hardware and no software version
-        hardware, software, version = audiomodels.CodecCreator.configurations[data['dt-hardware']]
-        self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
-        self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
-        self.assertEqual(1, len(dt.codec_creator.hardware_list)) # should only be one now
-        self.assertEqual(software, dt.codec_creator.software)
-        self.assertEqual(None, dt.codec_creator.software_version)
+            # check that digital tech fields were updated correctly
+            dt = updated_obj.digitaltech.content
+            self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
+            self.assertEqual(audiomodels.TransferEngineer.LDAP_ID_TYPE, dt.transfer_engineer.id_type)
+            self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
+            self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
+            # codec creator - used id 3, which has two hardware fields
+            hardware, software, version = audiomodels.CodecCreator.configurations[audio_data['dt-hardware']]
+            self.assertEqual(audio_data['dt-hardware'], dt.codec_creator.id)
+            self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
+            self.assertEqual(hardware[1], dt.codec_creator.hardware_list[1])
+            self.assertEqual(software, dt.codec_creator.software)
+            self.assertEqual(version, dt.codec_creator.software_version)
 
-        # check that rights fields were updated correctly
-        rights = updated_obj.rights.content
-        self.assertEqual(audio_data['rights-access'], rights.access_status.code)
-        self.assertTrue(rights.access_status.text.endswith('in public domain'))
-        self.assertEqual(audio_data['rights-copyright_holder_name'], rights.copyright_holder_name)
-        self.assertEqual(audio_data['rights-copyright_date_year'], rights.copyright_date)
-        self.assertTrue(rights.block_external_access)
-        self.assertEqual(audio_data['rights-ip_note'], rights.ip_note)
+            # change data and confirm codec creator is updated correctly
+            data = audio_data.copy()
+            data['dt-hardware'] = '4' # only one hardware, no software version
+            response = self.client.post(edit_url, data)
+            # get the latest copy of the object 
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            dt = updated_obj.digitaltech.content
+            # codec creator - id 4 only has one two hardware and no software version
+            hardware, software, version = audiomodels.CodecCreator.configurations[data['dt-hardware']]
+            self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
+            self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
+            self.assertEqual(1, len(dt.codec_creator.hardware_list)) # should only be one now
+            self.assertEqual(software, dt.codec_creator.software)
+            self.assertEqual(None, dt.codec_creator.software_version)
 
-        # test logic for save and continue editing
-        data = audio_data.copy()
-        data['_save_continue'] = True   # simulate submit via 'save and continue' button
-        response = self.client.post(edit_url, data)
-        messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assert_(messages[0].startswith("Successfully updated"),
-            'successful audio update message displayed to user on save and continue editing')
-        self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
-                "MODS EditForm is set in response context after save and continue editing")
+            # check that rights fields were updated correctly
+            rights = updated_obj.rights.content
+            self.assertEqual(audio_data['rights-access'], rights.access_status.code)
+            self.assertTrue(rights.access_status.text.endswith('in public domain'))
+            self.assertEqual(audio_data['rights-copyright_holder_name'], rights.copyright_holder_name)
+            self.assertEqual(audio_data['rights-copyright_date_year'], rights.copyright_date)
+            self.assertTrue(rights.block_external_access)
+            self.assertEqual(audio_data['rights-ip_note'], rights.ip_note)
 
-        # sending blank origin info dates should remove them from mods
-        data = audio_data.copy()
-        data.update({
-            'mods-origin_info-issued-0-date_year': '',
-            'mods-origin_info-issued-0-date_month': '',
-            'mods-origin_info-issued-0-date_day': '',
-            'mods-origin_info-created-INITIAL_FORMS': '0',
-            'mods-origin_info-created-TOTAL_FORMS': '1',
-            'mods-origin_info-created-MAX_NUM_FORMS': '',
-            'mods-origin_info-created-0-date_year': '',
-            'mods-origin_info-created-0-date_month': '',
-        })
-        response = self.client.post(edit_url, data)
-        # get the latest copy of the object
-        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertFalse(updated_obj.mods.content.origin_info)
-        # get a page to clear any session messages
-        response = self.client.get(edit_url)
-        
-        # validation errors - post incomplete/bogus data & check for validation errors
-        data = audio_data.copy()
-        data.update({
-            'mods-title': '',       # title is required
-            'mods-origin_info-issued-0-date_year': 'abcf',  # not a year 
-        })
-        response = self.client.post(edit_url, data)
-        messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assert_(messages[0].startswith("Your changes were not saved due to a validation error"),
-            "form validation error message set in response context")
-        self.assertContains(response, 'This field is required',
-            msg_prefix='required error message displayed (empty title)')
-        self.assertContains(response, 'Enter a date in one of these formats',
-            msg_prefix='date validation error message displayed')
+            # test logic for save and continue editing
+            data = audio_data.copy()
+            data['_save_continue'] = True   # simulate submit via 'save and continue' button
+            response = self.client.post(edit_url, data)
+            messages = [ str(msg) for msg in response.context['messages'] ]
+            self.assert_(messages[0].startswith("Successfully updated"),
+                'successful audio update message displayed to user on save and continue editing')
+            self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
+                    "MODS EditForm is set in response context after save and continue editing")
 
-        # sending blank engineer should remove from digital tech
-        data = audio_data.copy()
-        data['dt-engineer'] = ''
-        response = self.client.post(edit_url, data)
-        # get the latest copy of the object
-        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertFalse(updated_obj.digitaltech.content.transfer_engineer)
+            # sending blank origin info dates should remove them from mods
+            data = audio_data.copy()
+            data.update({
+                'mods-origin_info-issued-0-date_year': '',
+                'mods-origin_info-issued-0-date_month': '',
+                'mods-origin_info-issued-0-date_day': '',
+                'mods-origin_info-created-INITIAL_FORMS': '0',
+                'mods-origin_info-created-TOTAL_FORMS': '1',
+                'mods-origin_info-created-MAX_NUM_FORMS': '',
+                'mods-origin_info-created-0-date_year': '',
+                'mods-origin_info-created-0-date_month': '',
+            })
+            response = self.client.post(edit_url, data)
+            # get the latest copy of the object
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            self.assertFalse(updated_obj.mods.content.origin_info)
+            # get a page to clear any session messages
+            response = self.client.get(edit_url)
 
-        # test editing record with migrated legacy DM user transfer engineer
-        # engineer & codec creator are initialized based on id values
-        obj.digitaltech.content.create_transfer_engineer()
-        obj.digitaltech.content.transfer_engineer.id = 2100
-        obj.digitaltech.content.transfer_engineer.id_type = audiomodels.TransferEngineer.DM_ID_TYPE
-        obj.digitaltech.content.transfer_engineer.name = 'Historic User'
-        obj.save()
-        # get the form - non-LDAP user should be listed & selected
-        response = self.client.get(edit_url)
-        transf_eng = obj.digitaltech.content.transfer_engineer
-        select_id = '%s|%s' % (transf_eng.id_type, transf_eng.id)
-        self.assertContains(response, select_id,
-            msg_prefix='records with a legacy DM transfer engineer should include the legacy id options')
-        self.assertContains(response, transf_eng.name,
-            msg_prefix='records with a legacy DM transfer engineer should include the legacy name in options')
-        self.assertContains(response, '<option value="%s|%s" selected="selected">%s' % \
-           (transf_eng.id_type, transf_eng.id, transf_eng.name),
-            msg_prefix='records with a legacy DM transfer engineer should display the legacy id as selected')
-        # post the legacy user id - data should look as before
-        data = audio_data.copy()
-        data['dt-engineer'] = select_id
-        response = self.client.post(edit_url, data)
-        # id type, id, and name should all be set to legacy user information
-        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertEqual(obj.digitaltech.content.transfer_engineer.id,
-                         updated_obj.digitaltech.content.transfer_engineer.id)
-        self.assertEqual(obj.digitaltech.content.transfer_engineer.id_type,
-                         updated_obj.digitaltech.content.transfer_engineer.id_type)
-        self.assertEqual(obj.digitaltech.content.transfer_engineer.name,
-                         updated_obj.digitaltech.content.transfer_engineer.name)
-        # test local transfer engineer options
-        # - when displaying the form, local options should be available
-        response = self.client.get(edit_url)
-        for local_id, local_name in audiomodels.TransferEngineer.local_engineers.iteritems():
-            self.assertContains(response, '%s|%s' % (audiomodels.TransferEngineer.LOCAL_ID_TYPE,
-                                                     local_id),
-                msg_prefix='select id should be listed for local transfer engineer %s' % local_name)
-            self.assertContains(response, local_name,
-                msg_prefix='local transfer engineer name %s should be listed' % local_name)
+            # validation errors - post incomplete/bogus data & check for validation errors
+            data = audio_data.copy()
+            data.update({
+                'mods-title': '',       # title is required
+                'mods-origin_info-issued-0-date_year': 'abcf',  # not a year 
+            })
+            response = self.client.post(edit_url, data)
+            messages = [ str(msg) for msg in response.context['messages'] ]
+            self.assert_(messages[0].startswith("Your changes were not saved due to a validation error"),
+                "form validation error message set in response context")
+            self.assertContains(response, 'This field is required',
+                msg_prefix='required error message displayed (empty title)')
+            self.assertContains(response, 'Enter a date in one of these formats',
+                msg_prefix='date validation error message displayed')
 
-        # save a record with a local transfer engineer
-        data['dt-engineer'] = 'local|vendor1'
-        response = self.client.post(edit_url, data)
-        # id type, id, and name should all be set to local engineer info
-        updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-        self.assertEqual(audiomodels.TransferEngineer.LOCAL_ID_TYPE,
-                         updated_obj.digitaltech.content.transfer_engineer.id_type)
-        self.assertEqual('vendor1', updated_obj.digitaltech.content.transfer_engineer.id)
-        self.assertEqual('Vendor', updated_obj.digitaltech.content.transfer_engineer.name)
+            # sending blank engineer should remove from digital tech
+            data = audio_data.copy()
+            data['dt-engineer'] = ''
+            response = self.client.post(edit_url, data)
+            # get the latest copy of the object
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            self.assertFalse(updated_obj.digitaltech.content.transfer_engineer)
+
+            # test editing record with migrated legacy DM user transfer engineer
+            # engineer & codec creator are initialized based on id values
+            obj.digitaltech.content.create_transfer_engineer()
+            obj.digitaltech.content.transfer_engineer.id = 2100
+            obj.digitaltech.content.transfer_engineer.id_type = audiomodels.TransferEngineer.DM_ID_TYPE
+            obj.digitaltech.content.transfer_engineer.name = 'Historic User'
+            obj.save()
+            # get the form - non-LDAP user should be listed & selected
+            response = self.client.get(edit_url)
+            transf_eng = obj.digitaltech.content.transfer_engineer
+            select_id = '%s|%s' % (transf_eng.id_type, transf_eng.id)
+            self.assertContains(response, select_id,
+                msg_prefix='records with a legacy DM transfer engineer should include the legacy id options')
+            self.assertContains(response, transf_eng.name,
+                msg_prefix='records with a legacy DM transfer engineer should include the legacy name in options')
+            self.assertContains(response, '<option value="%s|%s" selected="selected">%s' % \
+               (transf_eng.id_type, transf_eng.id, transf_eng.name),
+                msg_prefix='records with a legacy DM transfer engineer should display the legacy id as selected')
+            # post the legacy user id - data should look as before
+            data = audio_data.copy()
+            data['dt-engineer'] = select_id
+            response = self.client.post(edit_url, data)
+            # id type, id, and name should all be set to legacy user information
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            self.assertEqual(obj.digitaltech.content.transfer_engineer.id,
+                             updated_obj.digitaltech.content.transfer_engineer.id)
+            self.assertEqual(obj.digitaltech.content.transfer_engineer.id_type,
+                             updated_obj.digitaltech.content.transfer_engineer.id_type)
+            self.assertEqual(obj.digitaltech.content.transfer_engineer.name,
+                             updated_obj.digitaltech.content.transfer_engineer.name)
+            # test local transfer engineer options
+            # - when displaying the form, local options should be available
+            response = self.client.get(edit_url)
+            for local_id, local_name in audiomodels.TransferEngineer.local_engineers.iteritems():
+                self.assertContains(response, '%s|%s' % (audiomodels.TransferEngineer.LOCAL_ID_TYPE,
+                                                         local_id),
+                    msg_prefix='select id should be listed for local transfer engineer %s' % local_name)
+                self.assertContains(response, local_name,
+                    msg_prefix='local transfer engineer name %s should be listed' % local_name)
+
+            # save a record with a local transfer engineer
+            data['dt-engineer'] = 'local|vendor1'
+            response = self.client.post(edit_url, data)
+            # id type, id, and name should all be set to local engineer info
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            self.assertEqual(audiomodels.TransferEngineer.LOCAL_ID_TYPE,
+                             updated_obj.digitaltech.content.transfer_engineer.id_type)
+            self.assertEqual('vendor1', updated_obj.digitaltech.content.transfer_engineer.id)
+            self.assertEqual('Vendor', updated_obj.digitaltech.content.transfer_engineer.name)
 
 
-        # force a schema-validation error (shouldn't happen normally)
-        # NOTE: invalid mods test should happen after all other tests that modify this object
-        obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
-        obj.save("schema-invalid MODS")
-        response = self.client.post(edit_url, audio_data)
-        self.assertContains(response, '<ul class="errorlist">')
-        
-        # edit non-existent record should 404
-        fakepid = 'bogus-pid:1'
-        edit_url = reverse('audio:edit', args=[fakepid])
-        response = self.client.get(edit_url)  # follow redirect to check error message
-        expected, got = 404, response.status_code
-        self.assertEqual(expected, got,
-            'Expected %s but returned %s for %s (edit non-existent object)' \
-                % (expected, got, edit_url))
+            # force a schema-validation error (shouldn't happen normally)
+            # NOTE: invalid mods test should happen after all other tests that modify this object
+            obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
+            obj.save("schema-invalid MODS")
+            response = self.client.post(edit_url, audio_data)
+            self.assertContains(response, '<ul class="errorlist">')
 
-        # attempt to edit non-audio object should 404
-        edit_url = reverse('audio:edit', args=[self.rushdie.pid])
-        response = self.client.get(edit_url)
-        expected, got = 404, response.status_code
-        self.assertEqual(expected, got,
-            'Expected %s but returned %s for %s (edit non-audio object)' \
-                % (expected, got, edit_url))
+            # edit non-existent record should 404
+            fakepid = 'bogus-pid:1'
+            edit_url = reverse('audio:edit', args=[fakepid])
+            response = self.client.get(edit_url)  # follow redirect to check error message
+            expected, got = 404, response.status_code
+            self.assertEqual(expected, got,
+                'Expected %s but returned %s for %s (edit non-existent object)' \
+                    % (expected, got, edit_url))
+
+            # attempt to edit non-audio object should 404
+            edit_url = reverse('audio:edit', args=[self.rushdie.pid])
+            response = self.client.get(edit_url)
+            expected, got = 404, response.status_code
+            self.assertEqual(expected, got,
+                'Expected %s but returned %s for %s (edit non-audio object)' \
+                    % (expected, got, edit_url))
 
         # how to test fedora permission denied scenario?
 
@@ -1099,16 +1095,20 @@ of 1''',
                     'rights-access': 8,   # public domain
         }
 
-        response = self.client.post(edit_url, audio_data, follow=True)
+        coll_info = {'pid': self.rushdie.pid, 'source_id': '1000', 'title': self.rushdie.label}
+        # mock collection item_collections so test collection will be in edit form choices
+        with patch('keep.audio.forms.CollectionObject.item_collections',
+                   new=Mock(return_value=[coll_info])):
+            response = self.client.post(edit_url, audio_data, follow=True)
+            
+            # currently redirects to audio index
+            (redirect_url, code) = response.redirect_chain[0]
+            self.assert_(reverse('audio:index') in redirect_url,
+                         "successful save redirects to audio index page")
 
-        # currently redirects to audio index
-        (redirect_url, code) = response.redirect_chain[0]
-        self.assert_(reverse('audio:index') in redirect_url,
-            "successful save redirects to audio index page")
-
-        messages = [ str(msg) for msg in response.context['messages'] ]
-        self.assert_(messages[0].startswith("Successfully updated"),
-            "successful save message set in response context")
+            messages = [ str(msg) for msg in response.context['messages'] ]
+            self.assert_(messages[0].startswith("Successfully updated"),
+                         "successful save message set in response context")
 
         # we'll assume (for now) that the fields were saved correctly: this
         # should be verified in test_edit
@@ -1200,93 +1200,59 @@ of 1''',
                 % (expected, got, ds_url))
 
 
-
-    def test_podcast_feed(self):
+    @patch('keep.audio.feeds.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.audio.feeds.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.feeds.CollectionObject')
+    def test_podcast_feed(self, mockcollobj):
         feed_url = reverse('audio:podcast-feed', args=[1])
 
-        # create some test objects to show up in the feed
-        repo = Repository()
-        obj = repo.get_object(type=audiomodels.AudioObject)
-        obj.mods.content.title = 'Dylan Thomas reads anthology'
-        obj.mods.content.create_part_note()
-        obj.mods.content.part_note.text = 'Side A'
-        obj.mods.content.create_origin_info()
-        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
-        obj.rights.content.create_access_status()
-        obj.rights.content.access_status.code = 8 # public domain
-        obj.collection_uri = self.rushdie.uri
-        obj.compressed_audio.content = open(mp3_filename)
-        obj.save()
-        obj2 = repo.get_object(type=audiomodels.AudioObject)
-        obj2.mods.content.title = 'Patti Smith Live in New York'
-        obj2.compressed_audio.content = open(mp3_filename)
-        obj2.rights.content.create_access_status()
-        obj2.rights.content.access_status.code = 8 # public domain
-        obj2.collection_uri = self.esterbrook.uri
-        obj2.save()
-        obj3 = repo.get_object(type=audiomodels.AudioObject)
-        obj3.mods.content.title = 'No Access copy'
-        obj3.rights.content.create_access_status()
-        obj3.rights.content.access_status.code = 8 # public domain
-        obj3.save()
-        obj4 = repo.get_object(type=audiomodels.AudioObject)
-        obj4.rights.content.create_access_status()
-        obj4.rights.content.access_status.code = 10 # undetermined
-        obj4.compressed_audio.content = open(mp3_filename)
-        obj4.save()
-        obj5 = repo.get_object(type=audiomodels.AudioObject)
-        obj5.compressed_audio.content = open(mp3_filename)
-        obj5.save()
-        obj6 = repo.get_object(type=audiomodels.AudioObject)
-        obj6.mods.content.title = 'Moses reads Ten Commandments'
-        obj6.compressed_audio.content = open(mp3_filename)
-        obj6.rights.content.create_access_status()
-        obj6.rights.content.access_status.code = 8 # public domain
-        obj6.rights.content.block_external_access = True
-        obj6.collection_uri = self.esterbrook.uri
-        obj6.save()
-        obj7 = repo.get_object(type=audiomodels.AudioObject)
-        obj7.mods.content.title = 'Moses lecture on calves and redoing work'
-        obj7.mods.content.dm1_id = '42753'
-        obj7.rights.content.create_access_status()
-        obj7.rights.content.access_status.code = 8 # public domain
-        obj7.collection_uri = self.esterbrook.uri
-        obj7.save()
-        obj8 = repo.get_object(type=audiomodels.AudioObject)
-        obj8.mods.content.title = 'Odysseus recites The Iliad'
-        obj8.mods.content.dm1_id = '124578'
-        obj8.mods.content.dm1_other_id = '000875421'
-        obj8.rights.content.create_access_status()
-        obj8.rights.content.access_status.code = 8 # public domain
-        obj8.collection_uri = self.esterbrook.uri
-        obj8.save()
+        # test data to return from solr search for objects to show up in the feed
+        # - researcher_access flag is stored in solr, so only accessible items will be returned
+        data = [
+            {'pid': '%s:1' % settings.FEDORA_PIDSPACE,
+             'title': 'Dylan Thomas reads anthology',
+             'part': 'Side A',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'date_issued': ['1976-05'] },
+            {'pid': '%s:2' % settings.FEDORA_PIDSPACE,
+             'title': 'Patti Smith Live in New York',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'collection_id': self.esterbrook.uri },
+            {'pid': '%s:3' % settings.FEDORA_PIDSPACE,
+             'title': 'Odysseus recites The Iliad',
+             'dm1_id': ['124578', '000875421'] }
+            ]
+        self.mocksolrpaginator.count.return_value = len(data)
+        def get_item(s, i):  # crude get-item replacement for mock only
+            return data[i]
+        self.mocksolrpaginator.__getitem__ = get_item
 
-        # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid, obj3.pid, obj4.pid, obj5.pid,
-                          obj6.pid, obj7.pid, obj8.pid])
+        mockcollobj.find_by_pid.return_value = {'pid': 'coll:1', 'title': 'collection',
+            'source_id': 1, 'archive_id': 'marbl:1', 'archive_label': 'MARBL'}
 
         response = self.client.get(feed_url)
+
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
-                             % (expected, code, feed_url))        
-        self.assertContains(response, obj.pid,
-            msg_prefix='pid for first test object should be included in feed')
-        self.assertContains(response, obj2.pid,
-            msg_prefix='pid for second test object should be included in feed')
-        self.assertNotContains(response, obj3.pid,
-            msg_prefix='pid for test object with no access copy should NOT be included in feed')
-        self.assertNotContains(response, obj4.pid,
-            msg_prefix='pid for test object with restricted access rights should NOT be included in feed')
-        self.assertNotContains(response, obj4.pid,
-            msg_prefix='pid for test object without rights information should NOT be included in feed')
-        self.assertNotContains(response, obj6.pid,
-            msg_prefix='pid for test object with negative override should NOT be included in feed')
-        self.assertContains(response, obj7.pid,
-            msg_prefix='pid for test object from old dm should be included in feed')
-        self.assertContains(response, obj8.pid,
-            msg_prefix='pid for test object with old dm filename should be included in feed')
-        self.assertContains(response, obj.mods.content.title,
-            msg_prefix='title for first test object should be included in feed')
+                             % (expected, code, feed_url))
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertEqual(True, kwargs['researcher_access'],
+                         'kiosk feed solr search should filter on researcher_access=True')
+        self.assertEqual(True, kwargs['has_access_copy'],
+                         'kiosk feed solr search should filter on has_access_copy=True')
+        self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
+                         'kiosk feed solr search should filter on audio content model')
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'kiosk feed solr search should filter on configured pidspace')
+        
+        self.assertContains(response, data[0]['pid'],
+            msg_prefix='pid for first result object should be included in feed')
+        self.assertContains(response, data[1]['pid'],
+            msg_prefix='pid for second result object should be included in feed')
+        self.assertContains(response, data[2]['pid'],
+            msg_prefix='pid for third result object should be included in feed')
+
+        return
 
         self.assertContains(response, obj2.mods.content.title,
             msg_prefix='title for second test object should be included in feed')
@@ -1319,29 +1285,40 @@ of 1''',
         self.assertContains(response, obj2.pid,
             msg_prefix='pid for second test object should be included in second paginated feed')
 
-    def test_podcast_feed_list(self):
+    @patch('keep.audio.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.views.feed_items')
+    def test_podcast_feed_list(self, mockfeeditems):
+
+        # use default context processors to avoid complication with mock collection
+        # and collection search form
+        settings.TEMPLATE_CONTEXT_PROCESSORS = []
+
         feed_list_url = reverse('audio:feed-list')
+
+        # test data to return from solr search for objects to show up in the feed
+        # - researcher_access flag is stored in solr, so only accessible items will be returned
+        data = [
+            {'pid': '%s:1' % settings.FEDORA_PIDSPACE,
+             'title': 'Dylan Thomas reads anthology',
+             'part': 'Side A',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'date_issued': ['1976-05'] },
+            {'pid': '%s:2' % settings.FEDORA_PIDSPACE,
+             'title': 'Patti Smith Live in New York',
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
+             'collection_id': self.esterbrook.uri },
+            {'pid': '%s:3' % settings.FEDORA_PIDSPACE,
+             'title': 'Odysseus recites The Iliad',
+             'dm1_id': ['124578', '000875421'] }
+            ]
+        mockfeeditems.return_value = data
+        self.mocksolrpaginator.count.return_value = len(data)
+        def get_item(s, i):  # crude get-item replacement for mock only
+            return data[i]
+        self.mocksolrpaginator.__getitem__ = get_item
+        
         # must be logged in as staff to view
         self.client.login(**ADMIN_CREDENTIALS)
-
-        # create some test objects to show up in the feeds
-        repo = Repository()
-        obj = repo.get_object(type=audiomodels.AudioObject)
-        obj.mods.content.title = 'Dylan Thomas reads anthology'
-        obj.mods.content.create_part_note()
-        obj.mods.content.part_note.text = 'Side A'
-        obj.collection_uri = self.rushdie.uri
-        obj.compressed_audio.content = open(mp3_filename)
-        obj.mods.content.create_origin_info()
-        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1976-05'))
-        obj.save()
-        obj2 = repo.get_object(type=audiomodels.AudioObject)
-        obj2.mods.content.title = 'Patti Smith Live in New York'
-        obj2.compressed_audio.content = open(mp3_filename)
-        obj2.collection_uri = self.esterbrook.uri
-        obj2.save()
-        # add pids to list for clean-up in tearDown
-        self.pids.extend([obj.pid, obj2.pid])
 
         # set high enough we should only have one feed
         settings.MAX_ITEMS_PER_PODCAST_FEED = 2000
@@ -1759,6 +1736,7 @@ class TestAudioObject(KeepTestCase):
         self.rushdie.save()
 
     def tearDown(self):
+        super(TestAudioObject, self).tearDown()
         self.repo.purge_object(self.obj.pid, "removing unit test fixture")
         self.repo.purge_object(self.rushdie.pid)
 
@@ -1840,46 +1818,37 @@ class TestAudioObject(KeepTestCase):
         self.obj._update_dc()
         
         self.assertEqual(title, self.obj.dc.content.title)
-        self.assert_(self.obj.mods.content.dm1_id in self.obj.dc.content.identifier_list)
-        self.assert_(self.obj.mods.content.dm1_other_id in self.obj.dc.content.identifier_list)
+        # dm1 ids no longer need to be in dc:identifier (indexed & searched via solr)
+        self.assert_(self.obj.mods.content.dm1_id not in self.obj.dc.content.identifier_list)
+        self.assert_(self.obj.mods.content.dm1_other_id not in self.obj.dc.content.identifier_list)
         self.assertEqual(res_type, self.obj.dc.content.type)
         for name in self.obj.mods.content.names:
             self.assert_(unicode(name) in self.obj.dc.content.creator_list)
         self.assert_(cdate in self.obj.dc.content.date_list)
         self.assert_(idate in self.obj.dc.content.date_list)
-        self.assert_(self.obj.created.strftime('%Y-%m-%d') in self.obj.dc.content.date_list,
-                 'object creation date for ingested object should be included in dc:date in YYYY-MM-DD format')
+        # object creation date no longer needed in dc:date for searching
+        self.assert_(self.obj.created.strftime('%Y-%m-%d') not in self.obj.dc.content.date_list,
+                 'object creation date for ingested object should no longer be included in dc:date')
         self.assert_(general_note in self.obj.dc.content.description_list)
-        self.assert_(dig_purpose in self.obj.dc.content.description_list)
-        self.assert_(related_files in self.obj.dc.content.description_list)
-        # owning repository id should be set in dc:source
-        self.assertEqual(self.rushdie.collection_id, self.obj.dc.content.source)
-        # currently using rights access condition code & text in dc:rights
+        # related files should no longer be in dc:description
+        self.assert_(related_files not in self.obj.dc.content.description_list)
+        # currently using rights access condition text (no code) in dc:rights
         # should only be one in dc:rights - mods access condition not included
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
         access = self.obj.rights.content.access_status
-        self.assert_(self.obj.dc.content.rights.startswith('%s: ' % access.code))
-        self.assert_(self.obj.dc.content.rights.endswith(access.text))        
-
-        # collection URI in dc:relation (for findObjects search)
-        self.assertEqual(self.rushdie.uri, self.obj.dc.content.relation)
-        # cmodel in dc:format (for findObject search)
-        self.assertEqual(self.obj.AUDIO_CONTENT_MODEL, self.obj.dc.content.format)
+        self.assert_(access.code not in self.obj.dc.content.rights)
+        self.assertEqual(access.text, self.obj.dc.content.rights)    
 
         # clear out data and confirm DC gets cleared out appropriately
         del(self.obj.mods.content.origin_info.created)
         del(self.obj.mods.content.origin_info.issued)
         del(self.obj.mods.content.general_note)
         del(self.obj.mods.content.names)  # FIXME: does this work?
-        del(self.obj.mods.content.dm1_id)
-        del(self.obj.mods.content.dm1_other_id)
-        del(self.obj.digitaltech.content.digitization_purpose)
         del(self.obj.sourcetech.content.related_files)
         del(self.obj.rights.content.access_status)
-        self.obj.collection_uri = None   # remove collection membership
         self.obj._update_dc()
-        self.assertEqual(1, len(self.obj.dc.content.date_list),
-            'there should only be one dc:date (object creation) when dateCreated or dateIssued are not set in MODS')
+        self.assertEqual([], self.obj.dc.content.date_list,
+            'there should be no dc:date when dateCreated or dateIssued are not set in MODS')
         self.assertEqual([], self.obj.dc.content.description_list,
             'there should be no dc:description when general note in MODS, digitization ' +
             'purpose in digital tech, and related files in source tech are not set')
@@ -1888,15 +1857,149 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual([], self.obj.dc.content.creator_list,
             'there should be no dc:creator when no creator names are set')
         self.assertEqual([], self.obj.dc.content.identifier_list,
-             'there should be no dc:identifiers when dm1 id and other dm1 id are not set')
-        self.assertEqual(None, self.obj.dc.content.source,
-             'there should be no dc:source when collection is not set')
+             'there should be no dc:identifiers when no identifiers are set')
 
-        # un-ingested object - should not error, should get current date
+        # un-ingested object - should not error
         obj = self.repo.get_object(type=audiomodels.AudioObject)
         obj._update_dc()
-        self.assert_(date.today().strftime('%Y-%m-%d') in obj.dc.content.date_list,
-             'current date should be set in dc:date for un-ingested object')
+
+    @patch('keep.audio.models.CollectionObject')
+    def test_index_data(self, mockcollobj):
+        # test custom data used for indexing objects in solr
+
+        mockmss = Mock(CollectionObject)
+        mockmss.label = 'mss collection'
+        mockmss.collection_id = 'archive:pid'
+        mockarchive = Mock(CollectionObject)
+        mockarchive.label = 'MARBL'
+
+        colls = [mockmss, mockarchive]
+        def get_coll(*args, **kwargs):
+            return  colls.pop(0)
+        # collection object will be initialized twice - once for
+        # collection this item belongs to, once for repository the
+        # collection belongs to.
+        mockcollobj.side_effect = get_coll
+        
+        # create test object and populate with minimal data
+        obj = self.repo.get_object(type=audiomodels.AudioObject)
+        obj.pid = 'foo:1'
+        obj._collection_uri = 'parent:1'
+        obj.dc.content.title = 'audio item'
+        desc_data = obj.index_data()
+        self.assertEqual(obj.collection_uri, desc_data['collection_id'],
+                         'parent collection object id should be set in index data')
+        self.assertEqual(mockmss.label, desc_data['collection_label'],
+                          'parent collection object label should be set in index data' )
+        self.assertEqual(mockmss.collection_id, desc_data['archive_id'],
+                          'archive id (collection of parent collection object) should be set in index data' )
+        self.assertEqual(mockarchive.label, desc_data['archive_label'],
+                          'archive label (collection of parent collection object) should be set in index data' )
+        # check CollectionObject use
+        self.assertEqual(2, mockcollobj.call_count,
+                         'CollectionObject should be initialized twice - parent collection, archive')
+        # get all args for collection object initializations
+        call_args = mockcollobj.call_args_list
+        args, kwargs = call_args[0]
+        self.assert_(obj.collection_uri in args,
+                     'object.collection_uri %s should be used to initialize a CollectionObject for collection info' \
+                     % obj.collection_uri)
+        args, kwargs = call_args[1]
+        self.assert_(mockmss.collection_id in args,
+                     'collection parent uri %s should be used to initialize a CollectionObject for archive info' \
+                     % mockmss.collection_id)
+        
+        self.assertEqual(obj.dc.content.title, desc_data['title'][0],
+                         'default index data fields should be present in data (title)')
+        self.assertEqual(obj.pid, desc_data['pid'],
+                         'default index data fields should be present in data (pid)')
+        self.assert_('dm1_id' not in desc_data,
+                     'dm1_id should not be included in index data when list is empty')  
+        self.assert_('digitization_purpose' not in desc_data,
+                     'digitization_purpose should not be included in index data when it is empty')  
+        self.assert_('part' not in desc_data,
+                     'part should not be included in index data when it is empty')
+        self.assertEqual(False, desc_data['researcher_access'],
+                     'researcher_access should be false when it access is not set in rights md')
+        self.assertEqual(False, desc_data['has_original'],
+                     'has_original should be false when object has no ingested original datastream')
+        self.assertEqual(False, desc_data['has_access_copy'],
+                     'has_access_copy should be false when object has no ingested access datastream')
+        self.assert_('access_copy_size' not in desc_data,
+                     'access_copy_size should not be included in index data when access ds does not exist')
+        self.assert_('access_copy_mimetype' not in desc_data,
+                     'access_copy_mimetype should not be included in index data when access ds does not exist')
+        self.assert_('duration' not in desc_data,
+                     'duration should not be included in index data unless set in digitaltech')
+        self.assert_('date_issued' not in desc_data,
+                     'date_issued should not be included in index data when it is not set')
+        self.assert_('related_files' not in desc_data,
+                         'related_files should not be set when not present in sourcetech')
+
+        # additional fields that could be present
+        obj.mods.content.dm1_id = '0103'
+        obj.mods.content.dm1_other_id = '000004993'
+        obj.digitaltech.content.digitization_purpose_list.append('patron request')
+        obj.mods.content.create_part_note()
+        obj.mods.content.part_note.text = 'Side 1'
+        obj.mods.content.create_origin_info()
+        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = '8'
+        obj.rights.content.block_external_access = False
+        obj.compressed_audio.info.size = 13546
+        obj.compressed_audio.mimetype = 'application/mpeg'
+        obj.digitaltech.content.duration = 36
+        obj.sourcetech.content.related_files = '1000, 2011'
+
+        # reset mock collection objects to be returned
+        colls = [mockmss, mockarchive]
+
+        desc_data = obj.index_data()
+        self.assert_(obj.mods.content.dm1_id in desc_data['dm1_id'],
+                         'dm1 id should be included in index data when set')
+        self.assert_(obj.mods.content.dm1_other_id in desc_data['dm1_id'],
+                         'dm1 id should be included in index data when set')
+        self.assert_(obj.digitaltech.content.digitization_purpose_list[0] in desc_data['digitization_purpose'],
+                         'digitization purpose should be included in index data when set')
+        self.assertEqual(obj.mods.content.part_note.text, desc_data['part'],
+                         'part note should be included in index data when set')
+        self.assertEqual(obj.rights.content.access_status.code, desc_data['access_code'],
+                         'access code should be included in index data when set')
+        self.assertEqual(obj.researcher_access, desc_data['researcher_access'],
+                         'researcher_access should be set based on access code & override')
+        self.assertEqual(obj.sourcetech.content.related_files, desc_data['related_files'][0],
+                         'related_files should be set when present in sourcetech')
+        
+        # error if data is not serializable as json
+        self.assert_(simplejson.dumps(desc_data))        
+
+
+        colls = [mockmss, mockarchive]
+        # pretend access copy exists in fedora
+        with patch.object(obj.compressed_audio, 'exists', new=True):
+            desc_data = obj.index_data()
+            self.assertEqual(True, desc_data['has_access_copy'],
+                         'has_access_copy should be true when object has an access datastream')
+            self.assertEqual(obj.compressed_audio.info.size, desc_data['access_copy_size'],
+                         'access_copy_size should match compressed audio datastream size')
+            self.assertEqual(obj.compressed_audio.mimetype, desc_data['access_copy_mimetype'],
+                         'access_copy_mimetype should match compressed audio datastream mimetype')
+            self.assertEqual(obj.digitaltech.content.duration, desc_data['duration'],
+                         'duration should match digitaltech duration value')
+            self.assert_(unicode(obj.mods.content.origin_info.issued[0]) in desc_data['date_issued'],
+                         'date_issued should not be set based on mods origin_info.issued')
+            self.assert_(simplejson.dumps(desc_data))        
+
+        colls = [mockmss, mockarchive]
+        # pretend original exists in fedora
+        with patch.object(obj.audio, 'exists', new=True):
+            desc_data = obj.index_data()
+            self.assertEqual(True, desc_data['has_original'],
+                         'has_original should be true when object has original audio datastream')
+
+        
+
                
     def test_file_checksum(self):
         #This is just a sanity check that eulfedora is working as expected with checksums.
@@ -2004,6 +2107,7 @@ class TestWavMP3DurationCheck(KeepTestCase):
         self.pids = [self.obj.pid]
 
     def tearDown(self):
+        super(TestWavMP3DurationCheck, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -2133,6 +2237,7 @@ class SourceAudioConversions(KeepTestCase):
         self.pids = [self.obj.pid]
 
     def tearDown(self):
+        super(SourceAudioConversions, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -2236,6 +2341,7 @@ class IngestCleanupTest(KeepTestCase):
         settings.INGEST_STAGING_TEMP_DIR = self.tmpdir
 
     def tearDown(self):
+        super(IngestCleanupTest, self).tearDown()
         # remove any files created in temporary test staging dir
         for file in os.listdir(self.tmpdir):
             os.unlink(os.path.join(self.tmpdir, file))
@@ -2313,3 +2419,90 @@ class IngestCleanupTest(KeepTestCase):
         self.assertTrue(os.access(file.name, os.F_OK),
             'file past keep age is not deleted in dry-run mode')
 
+
+
+class PodcastFeedTest(KeepTestCase):
+
+    # full item 
+    item = {
+        'pid': '%s:1' % settings.FEDORA_PIDSPACE,    'noid': '1',  # testing convenience
+        'title': 'Dylan Thomas reads anthology',
+        'part': 'Side A',
+        'collection_id': 'mss:123',
+        'access_copy_size': 53499,
+        'access_copy_mimetype':
+        'audio/mpeg',
+        'duration': 3, 
+        'date_issued': ['1976-05'],
+        'dm1_id': ['124578', '000875421'] 
+    }
+    # min item - missing fields should not generate errors
+    min_item = {
+        'pid': '%s:2' % settings.FEDORA_PIDSPACE,     'noid': '2',  # testing convenience
+        'title': 'Patti Smith Live in New York'
+    }
+    
+    def setUp(self):
+        super(PodcastFeedTest, self).setUp()
+        self.feed = PodcastFeed()
+
+    def test_title(self):
+        self.assertEqual(self.item['title'], self.feed.item_title(self.item))
+        self.assertEqual(self.min_item['title'], self.feed.item_title(self.min_item))
+
+    def test_description(self):
+        self.assertEqual(self.item['part'], self.feed.item_description(self.item))
+        self.assertEqual(None, self.feed.item_description(self.min_item))
+
+    # guid  TODO (open question re pid vs ark uri)
+
+    def test_pubdate(self):
+        date = self.feed.item_pubdate(self.item)
+        self.assert_(isinstance(date, datetime))
+        self.assertEqual(1976, date.year)
+        self.assertEqual(5, date.month)
+
+        self.assertEqual(None, self.feed.item_pubdate(self.min_item))
+
+    @patch('keep.audio.feeds.CollectionObject')
+    def test_author_name(self, mockcollobj):
+        coll = {'title': 'archival collection', 'source_id': '1'}
+        mockcollobj.find_by_pid.return_value = coll
+
+        val = self.feed.item_author_name(self.item)
+        self.assert_(val.startswith(coll['source_id']))
+        self.assert_(val.endswith(coll['title']))
+
+        self.assertEqual(None, self.feed.item_author_name(self.min_item))
+
+    @patch('keep.audio.feeds.CollectionObject')
+    def test_categories(self, mockcollobj):
+        coll = {'archive_label': 'MARBL'}
+        mockcollobj.find_by_pid.return_value = coll
+        self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
+
+        self.assertEqual([], self.feed.item_categories(self.min_item))
+
+    def test_enclosure_length(self):
+        self.assertEqual(self.item['access_copy_size'], self.feed.item_enclosure_length(self.item))
+        self.assertEqual(None, self.feed.item_enclosure_length(self.min_item))
+        
+    def test_enclosure_mime_type(self):
+        self.assertEqual(self.item['access_copy_mimetype'], self.feed.item_enclosure_mime_type(self.item))
+        self.assertEqual(None, self.feed.item_enclosure_mime_type(self.min_item))
+
+    def test_extras(self):
+        info = self.feed.item_extra_kwargs(self.item)
+        self.assertEqual(self.item['duration'], info['duration'])
+        for dm1_id in self.item['dm1_id']:
+            self.assert_(dm1_id in info['keywords'])
+            
+        self.assert_(self.item['noid'] in info['keywords'])
+
+        min_info = self.feed.item_extra_kwargs(self.min_item)
+        self.assert_(self.min_item['noid'] in min_info['keywords'])
+        self.assert_('duration' not in min_info)
+        
+
+                     
+        

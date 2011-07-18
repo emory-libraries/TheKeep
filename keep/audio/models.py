@@ -18,8 +18,8 @@ from eulfedora.models import FileDatastream, XmlDatastream
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 
-from keep.collection.models import get_cached_collection_dict, CollectionObject
-from keep.common.fedora import DigitalObject, Repository
+from keep.collection.models import CollectionObject
+from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep import mods
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 ## MODS
 ##
 
-class AudioMods(mods.MODS):
+class AudioMods(LocalMODS):
     '''Customized MODS for :class:`AudioObject`, based on
-    :class:`~keep.mods.MODS`.'''
+    :class:`~keep.common.fedora.LocalMODS`.'''
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
           mods.TypedNote, required=False)
@@ -500,11 +500,6 @@ class AudioObject(DigitalObject):
          '''
         # identifiers
         del(self.dc.content.identifier_list)        # clear out any existing names
-        # include DM id and other id if they are present
-        if self.mods.content.dm1_id:
-            self.dc.content.identifier_list.append(self.mods.content.dm1_id)
-        if self.mods.content.dm1_other_id:
-            self.dc.content.identifier_list.append(self.mods.content.dm1_other_id)
         
         # title
         if self.mods.content.title:
@@ -519,18 +514,6 @@ class AudioObject(DigitalObject):
             # for now, use unicode conversion as defined in mods.Name
             self.dc.content.creator_list.append(unicode(name))
 
-        # location/repository - top level collection via parent collection
-        if self.collection_uri is not None:
-            try:
-                collection = get_cached_collection_dict(str(self.collection_uri))
-                self.dc.content.source = collection['collection_id']
-            except RequestFailed:
-                # warn about a fedora error, but otherwise do nothing
-                logger.warning('Error loading collection %s; cannot update dc:source with location for searching' \
-                               % self.collection_uri)
-        else:
-            del(self.dc.content.source)
-
         # clear out any dates previously in DC
         del(self.dc.content.date_list)        
         if self.mods.content.origin_info and \
@@ -542,41 +525,97 @@ class AudioObject(DigitalObject):
            self.mods.content.origin_info.issued[0].date:
             self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
 
-        # Date Uploaded
-        # if the object has already been ingested into fedora, add object creation
-        # to dc:date in YYYY-MM-DD format (for searching purposes)
-        if self.exists:
-            self.dc.content.date_list.append(self.created.strftime('%Y-%m-%d'))
-        else:
-            # not yet ingested - use the current date
-            # should be accurate enough, since this should be called just prior to ingest
-            self.dc.content.date_list.append(date.today().strftime('%Y-%m-%d'))
-
         # clear out any descriptions previously in DC and set from MODS/digitaltech
         del(self.dc.content.description_list)
         if self.mods.content.general_note and \
            self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
-        # digitization_purpose
-        self.dc.content.description_list.extend(self.digitaltech.content.digitization_purpose_list)
-        # related files
-        self.dc.content.description_list.extend(self.sourcetech.content.related_files_list)
-        # Currently not indexing general note in digital tech
-
 
         # clear out any rights previously in DC and set contents from Rights accessStatus
         del(self.dc.content.rights_list)
         if self.rights.content.access_status:
-            access = self.rights.content.access_status
-            self.dc.content.rights_list.append('%s: %s' % (access.code, access.text))
+            # access code no longer needs to be included, since we will not be searching
+            self.dc.content.rights_list.append(self.rights.content.access_status.text)
 
-        # TEMPORARY: collection relation and cmodel must be in DC for find_objects
-        # - these can be removed once we implement gsearch
+
+    def index_data(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data`
+        method to include additional fields specific to Keep
+        Audio objects.'''
+        # NOTE: we don't want to rely on other objects being indexed in Solr,
+        # so index data should not use Solr to find any related object info
+
+
+        # FIXME: is it worth splitting out descriptive index data here?
+        data = super(AudioObject, self).index_data()
         if self.collection_uri is not None:
-            # store collection membership as dc:relation
-            self.dc.content.relation = str(self.collection_uri)
-        # set collection content model URI as dc:format
-        self.dc.content.format = self.AUDIO_CONTENT_MODEL
+            data['collection_id'] = self.collection_uri
+            try:
+                # pull parent & archive collection objects directly from fedora
+                parent = CollectionObject(self.api, self.collection_uri)
+                data['collection_label'] = parent.label
+                # the parent collection of the collection this item belongs to is its archive
+                # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
+                data['archive_id'] = parent.collection_id
+                archive = CollectionObject(self.api, parent.collection_id)
+                data['archive_label'] = archive.label
+            except RequestFailed as rf:
+                logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
+
+        # include resolvable ARK if available
+        if self.mods.content.ark_uri:
+            data['ark_uri'] =  self.mods.content.ark_uri
+            
+        # old identifiers from previous digital masters
+        dm1_ids = []
+        if self.mods.content.dm1_id:
+            dm1_ids.append(self.mods.content.dm1_id)
+        if self.mods.content.dm1_other_id:
+            dm1_ids.append(self.mods.content.dm1_other_id)
+        if dm1_ids:
+            data['dm1_id'] = dm1_ids
+
+        # digitization purpose, if not empty
+        if self.digitaltech.content.digitization_purpose_list:
+            # convert nodelist to a normal list that can be serialized as json
+            data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
+
+        # related files
+        if self.sourcetech.content.related_files_list:
+            data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
+
+        # part note 
+        if self.mods.content.part_note and self.mods.content.part_note.text:
+            data['part'] = self.mods.content.part_note.text
+
+        # rights access status code
+        if self.rights.content.access_status:
+            data['access_code'] = self.rights.content.access_status.code
+
+        # boolean values that should always be available
+        data.update({
+            # should this item be accessible to researchers?
+            'researcher_access': bool(self.researcher_access),  # if None, we want False
+            # flags to indicate which datastreams are available
+            'has_access_copy': self.compressed_audio.exists,
+            'has_original': self.audio.exists,
+        })
+
+        if self.compressed_audio.exists:
+            data.update({
+                'access_copy_size': self.compressed_audio.info.size,
+                'access_copy_mimetype': self.compressed_audio.mimetype,
+	    })
+        if self.digitaltech.content.duration:
+            data['duration'] = self.digitaltech.content.duration
+            
+        if self.mods.content.origin_info and \
+           self.mods.content.origin_info.issued:
+            data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
+            
+        return data
+
 
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None, checksum=None):
@@ -652,6 +691,8 @@ class AudioObject(DigitalObject):
             # clear out any cached collection id
             self._collection_uri = None
 
+    # FIXME: CollectionObject has an equivalent property called
+    # collection_id; should these be consisent? common code?
     collection_uri = property(_get_collection_uri, _set_collection_uri)
     ':class:`~rdflib.URIRef` for the collection this object belongs to'
 

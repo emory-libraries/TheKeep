@@ -8,14 +8,19 @@
 
 {% include 'snippets/search_info.html' %}
 
+{% if collection_search.errors %}
+<p>There were errors in your search.  Please revise your search terms and try again.</p>
+  {{ collection_search.errors }}
+{% endif %}
+
 <table>
     <tr><th>Col. No.</th><th>Title</th><th>Creator</th><th>Repository</th></tr>
 {% for obj in results %}
     <tr>
         <td>{{ obj.source_id|default:'' }}</td>
         <td><a href="{% url collection:edit obj.pid %}">{{ obj.title|default:'(no title present)' }}</a></td>
-        <td>{{ obj.creator }}</td>
-        <td>{{ obj.collection_label }}</td>
+        <td>{{ obj.creator|join:'; ' }}</td>
+        <td>{{ obj.archive_label }}</td>
     </tr>
 {% empty %}
     <tr><td colspan="4">no results</td></tr>

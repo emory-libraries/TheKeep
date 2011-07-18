@@ -1,5 +1,6 @@
 import datetime
 import logging
+from sunburnt import sunburnt
 
 from django.conf import settings
 from django.contrib.syndication.views import Feed
@@ -10,8 +11,8 @@ from django.utils.feedgenerator import Rss201rev2Feed
 from eulfedora.util import RequestFailed
 
 from keep.audio.models import AudioObject
-from keep.collection.models import get_cached_collection_dict
-from keep.common.utils import absolutize_url
+from keep.collection.models import CollectionObject
+from keep.common.utils import absolutize_url, PaginatedSolrSearch
 
 logger = logging.getLogger(__name__)
 
@@ -32,15 +33,35 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         # NOTE: could put more detailed info in the itunes:summary/description (up to 4000 characters)
 
         # duration is total seconds as integer, which iTunes should be able to handle
-        if item['duration'] is not None:
+        if 'duration' in item and item['duration'] is not None:
             handler.addQuickElement(u'itunes:duration', str(item['duration']))
 
         # itunes:author will be listed in iTunes artist column
-        if item['author_name'] is not None:
+        if 'author_name' in item and item['author_name'] is not None:
             handler.addQuickElement(u'itunes:author', item['author_name'])
         # itunes:keyword is not visible but can be searched
         if 'keywords' in item:
             handler.addQuickElement(u'itunes:keywords', ', '.join(item['keywords']))
+
+
+def feed_items():
+    '''Generate and return a solr query object for all items that
+    should be included in the feed.'''
+    solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+    search_opts = {
+        # restrict to objects in the configured pidspace
+        'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+        # restrict to audio items by content model
+        'content_model': AudioObject.AUDIO_CONTENT_MODEL,
+        # restrict to items that have mp3s available
+        'has_access_copy': True,
+        # restrict to items that are allowed to be accessed
+        'researcher_access': True,
+        }
+    
+    # sort by date created (newest items at the end of the feed)
+    solrquery = solr.query(**search_opts).sort_by('created')
+    return solrquery    
 
 
 class PodcastFeed(Feed):
@@ -78,46 +99,37 @@ class PodcastFeed(Feed):
         # rights & compressed audio available - this means that many feeds may have
         # fewer than the configured max items.
         items_per_feed = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', 2000)
-        paginated_objects = Paginator(list(AudioObject.all()), per_page=items_per_feed)
+        
+        solrquery = feed_items()
+        # wrap the solr query in a PaginatedSolrSearch object
+        # that knows how to translate between django paginator & sunburnt
+        pagedsolr = PaginatedSolrSearch(feed_items())
+        
+        paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
         for obj in current_chunk.object_list:
-            try:
-                # limit to objects with access-copy audio files available
-                if not obj.get_access_url():
-                    logger.debug('%s does not have compressed audio: excluding from podcast feed' \
-                                 % obj.pid)
-                    continue
-                if not obj.researcher_access:
-                    logger.debug('%s is not researcher-accessible: excluding from podcast feed' \
-                                 % obj.pid)
-                    continue
-
-                yield obj
-
-            except RequestFailed as rf:
-                # if there is any Fedora error accessing an object, skip it
-                logger.warn('Error accessing %s, excluding from feed' % obj.pid + rf)
+            yield obj
 
     def item_title(self, item):
-        return item.mods.content.title
+        return item['title']
 
     def item_description(self, item):
-        return item.mods.content.part_note
+        if 'part' in item:
+            return item['part']
 
     def item_guid(self, item):
         # globally unique identifier that will never change
-        # use full ARK if available
-        if item.ark:
-            return item.ark_access_uri
-        # use item pid only as fallback - should not happen in production
-        return item.pid 
+        return item['pid']
+
+        # TODO: should be using item['ark_uri']
+        # - won't work reliably until existing objects are updated
+        # to store ARK uri in MODS record
 
     def item_pubdate(self, item):
         # if dateIssued is set, convert to python datetime
-        if item.mods.content.origin_info and \
-           item.mods.content.origin_info.issued:
-            pub_date = item.mods.content.origin_info.issued[0]
-            date_parts = [int(p) for p in pub_date.date.split('-')]
+        if 'date_issued' in item:
+            pub_date = item['date_issued'][0]
+            date_parts = [int(p) for p in pub_date.split('-')]
             # if year only, use month 1
             if len(date_parts) < 2:
                 date_parts.append(1)
@@ -126,34 +138,44 @@ class PodcastFeed(Feed):
                 date_parts.append(1)
             return datetime.datetime(*date_parts)
 
-
     def item_author_name(self, item):
         # using collection # - collection title
-        if item.collection_uri:
-            collection =  get_cached_collection_dict(str(item.collection_uri))
+        if 'collection_id' in item:
+            collection = CollectionObject.find_by_pid(item['collection_id'])
             return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
-        if item.collection_uri:
-            collection =  get_cached_collection_dict(str(item.collection_uri))
-            categories.append(collection['collection_label'])
+        if 'collection_id' in item:
+            collection = CollectionObject.find_by_pid(item['collection_id'])
+            categories.append(collection['archive_label'])
         return categories
 
     def item_enclosure_url(self, item):
         # link to audio file - many clients require this to be an absolute url
-        return absolutize_url(item.get_access_url())
+        return absolutize_url(reverse('audio:download-compressed-audio', args=[item['pid']]))
+
+    def item_link(self, item):
+        return reverse('audio:view', args=[item['pid']])
 
     def item_enclosure_length(self, item):
-        return item.compressed_audio.info.size
+        if 'access_copy_size' in item:
+            return item['access_copy_size']
 
     def item_enclosure_mime_type(self, item):
-        return item.compressed_audio.mimetype
+        if 'access_copy_mimetype' in item:
+            return item['access_copy_mimetype']
 
     def item_extra_kwargs(self, item):
         # add any additional data that should be mapped to itunes fields
-        return {
-            'duration': item.digitaltech.content.duration,
-            'keywords': (item.noid,)    # TODO: add any other ids here after migration
+        pidspace, sep, noid = item['pid'].partition(':')
+        ids = [noid]
+        if 'dm1_id' in item:
+            ids.extend(item['dm1_id'])   # dm1 id or dm1 other id
+        info = {
+            'keywords': ids
         }
+        if 'duration' in item:
+            info['duration'] = item['duration']
+        return info

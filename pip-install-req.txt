@@ -2,7 +2,7 @@ django
 -e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/eullocal
 eulxml
 # need eulfedora commit b5745133833d826a436d, not released as of 20110615
--e git://github.com/emory-libraries/eulfedora.git#egg=eulfedora
+-e git://github.com/emory-libraries/eulfedora.git@indexdata#egg=eulfedora
 # need eulexistdb commit 3ed57d230974fa42145f, not released as of 20110615
 -e git://github.com/emory-libraries/eulexistdb.git#egg=eulexistdb
 eulcommon
@@ -12,3 +12,4 @@ pycrypto
 django-celery
 mutagen
 poster
+sunburnt

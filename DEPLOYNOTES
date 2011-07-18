@@ -125,6 +125,35 @@ encoding), which requires a task broker.  We recommend RabbitMQ.  For
 more information on configuring this, please see
 http://celeryq.org/docs/getting-started/broker-installation.html
 
+Solr/EULindexer
+"""""""""""""""
+
+The Keep uses Solr for searching Fedora content.  The Solr schema
+included with the source code at ``solr/schema.xml`` should be used as
+the Solr schema configuration.  Solr should be configured to
+autocommit index changes within a fairly brief time period (perhaps
+1-3 seconds); edit the Solr configuration file ``solrconfig.xml`` and
+set a value for ``maxTime`` in the ``autoCommit`` section.
+
+The url for accessing the configured Solr instance should be added to
+Keep ``localsettings.py`` as **SOLR_SERVER_URL**.
+
+Repository content created and updated by the Keep should be indexed
+using **EULindexer**.  To add the Keep to an installed and configured
+instance of EULindexer, add the Keep indexdata url to the
+eulindexer ``localsettings.py``, e.g.::
+
+    INDEXER_SITE_URLS = {
+        'keep': 'http://keep.library.emory.edu:/indexdata/',
+    }
+
+To populate the index initially, or to reindex all content, run the
+``reindex`` script that is available in EULindexer::
+
+    $ python manage.py reindex -s keep
+
+
+
 Misc
 """"
 
@@ -255,6 +284,15 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
 Upgrade Notes
 -------------
+
+Release 1.x (TBD) - eulindexer & Solr
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Keep now uses Solr for searching and eulindexer for indexing
+items.  Follow the directions in `Solr/EULindexer`_ to configure Solr
+and add the Keep to EULindexer.  Run the reindex script as described
+to populate the Solr index for existing repository content.
+
 
 Release 1.1 - Metadata Migration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
