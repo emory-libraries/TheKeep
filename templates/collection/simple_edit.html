@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: Arrangment : Edit {{ obj.label }}{% endblock %}
-{% block content-title %}Edit Arrangment Processing Batch{% endblock %}
+{% block page-subtitle %}: Simple Collection : Edit {{ obj.label }}{% endblock %}
+{% block content-title %}Edit Simple Collection{% endblock %}
 
 
 {% block content-body %}
@@ -13,10 +13,9 @@
     <ul>
         <li><span class="required" title='required'>*</span> indicates a field is required.</li>
     </ul>
-    NOTE: some overlap with collection edit form instructions
 </div>
 
-<div id="batch-edit">
+<div id="edit">
 <form method="post" name="edit_form">{% csrf_token %}
 
 

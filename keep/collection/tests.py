@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 from os import path
 
+import rdflib
 from rdflib import URIRef
 
 from django.conf import settings
@@ -12,7 +13,7 @@ from eulfedora.rdfns import relsext
 from keep.collection.fixtures import FedoraFixtures 
 from keep.collection import forms as cforms
 from keep.collection import views
-from keep.collection.models import CollectionObject, CollectionMods, FindingAid
+from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
 from keep.common.fedora import Repository
 from keep import mods
 from keep.testutil import KeepTestCase
@@ -746,3 +747,30 @@ class FindingAidTest(KeepTestCase):
         self.assert_('not permitted to copy or download any digital files'
             in coll.mods.content.use_and_reproduction.text)
 
+
+class SimpleCollectionTest( KeepTestCase):
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+
+    def test_creation(self):
+        obj = self.repo.get_object(type = SimpleCollection)
+        obj.mods.content.create_restrictions_on_access()
+        obj.mods.content.restrictions_on_access.text = 'processed'
+        saved = obj.save()
+        pid = obj.pid
+        self.pids.append(pid)
+
+        self.assertTrue(saved)
+        self.assertEqual(obj. COLLECTION_CONTENT_MODEL, 'info:fedora/emory-control:Collection-1.0')
+        self.assertEqual(obj.mods.content.restrictions_on_access.text, 'processed')
+        
+        self.assertTrue((rdflib.term.URIRef('info:fedora/%s' % obj.pid),  \
+                         rdflib.term.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), \
+                         rdflib.term.URIRef('http://pid.emory.edu/ns/2011/repo-management/#SimpleCollection'))  \
+        in obj.rels_ext.content)

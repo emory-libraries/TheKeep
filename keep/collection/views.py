@@ -15,8 +15,8 @@ from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream
 from eulfedora.util import RequestFailed
 
-from keep.collection.forms import CollectionForm, CollectionSearch
-from keep.collection.models import CollectionObject, get_cached_collection_dict
+from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
+from keep.collection.models import CollectionObject, get_cached_collection_dict, SimpleCollection
 from keep.common.fedora import Repository
 
 @permission_required('is_staff')
@@ -201,3 +201,12 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
+
+def simple_edit(request, pid=None):
+    repo = Repository(request=request)
+    obj = repo.get_object(pid=pid, type=SimpleCollection)
+    form = SimpleCollectionEditForm(instance=obj)
+
+    return render_to_response('collection/simple_edit.html', {'obj' : obj, 'form' : form},
+        context_instance=RequestContext(request))
+

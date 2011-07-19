@@ -1,6 +1,6 @@
 import logging
 import re
-from rdflib import URIRef
+from rdflib import RDF, URIRef
 
 from django.conf import settings
 from django.core.cache import cache
@@ -14,6 +14,7 @@ from eulxml import xmlmap
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from keep import mods
+from keep.common.rdfns import REPO
 from keep.common.fedora import DigitalObject, Repository
 
 logger = logging.getLogger(__name__)
@@ -41,8 +42,32 @@ class CollectionMods(mods.MODS):
 class SimpleCollection(DigitalObject):
     '''This is a simple DC only collection
     '''
+
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.0'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
+
+    NEW_OBJECT_VIEW = 'collection:simple_edit'
+
+    mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
+            'control_group': 'M',
+            'format': mods.MODS_NAMESPACE,
+            'versionable': True,
+        })
+    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
+
+    #override this function and add additional functionality
+    def __init__(self, *args, **kwargs):
+        super(SimpleCollection, self).__init__(*args, **kwargs)
+
+        #set RDF.type in rels_ext only if it is a new object
+        try:
+            created = self.created # only used to check the existence of created var
+        except TypeError:
+            self.rels_ext.content.add((self.uriref, RDF.type, REPO.SimpleCollection))
+
+
+
+
 
 
 class CollectionObject(DigitalObject):

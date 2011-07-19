@@ -3,7 +3,7 @@ from django import forms
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
-from keep.arrangement.models import ProcessingBatchMods
+
 from keep.common.models import FileMasterTech, Rights
 from keep.common.forms import ReadonlyTextInput
 
@@ -135,65 +135,3 @@ class ArrangementObjectEditForm(forms.Form):
             form.required_css_class = self.error_css_class
 
         super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial)
-
-##
-# ProcessingBatch
-##
-
-
-# ProcessingBatch options - used in edit & search forms
-processing_batch_options = (
-                  ('Processed', 'Processed'),
-                  ('Accessioned', 'Accessioned')
-    )
-
-
-
-class ProcessingBatchModsForm(XmlObjectForm):
-    """:class:`~eulxml.forms.XmlObjectForm` to edit
-    :class:`~keep.common.models.ProcessingBatch` metadata.
-    """
-    status = forms.ChoiceField(processing_batch_options, label='Status',
-           help_text='Indicates if collection members are visible')
-
-    class Meta:
-        model = ProcessingBatchMods
-        fields = [ 'status' ]
-
-
-
-
-class ProcessingBatchEditForm(forms.Form):
-    error_css_class = 'error'
-    required_css_class = 'required'
-
-    def __init__(self, data=None, instance=None, initial={}, **kwargs):
-
-        if instance is None:
-            mods_instance = None
-        else:
-            mods_instance = instance.mods.content
-            self.object_instance = instance
-            orig_initial = initial
-
-            # populate fields not auto-generated & handled by XmlObjectForm
-            #if self.object_instance.collection_uri:
-                #initial['collection'] = str(self.object_instance.collection_uri)
-
-            if self.object_instance.ark:
-                initial['identifier'] = self.object_instance.ark
-            else:
-                initial['identifier'] = self.object_instance.pid + ' (PID)'
-
-            # passed-in initial values override ones calculated here
-            initial.update(orig_initial)
-
-
-        common_opts = {'data': data, 'initial': initial}
-        self.mods = ProcessingBatchModsForm(instance=mods_instance, prefix='mods', **common_opts)
-
-
-        self.mods.error_css_class = self.error_css_class
-        self.mods.required_css_class = self.error_css_class
-
-        super(ProcessingBatchEditForm, self).__init__(data=data, initial=initial)
