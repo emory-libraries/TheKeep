@@ -1,0 +1,17 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Simple Collections : Browse{% endblock %}
+{% block content-title %}Browse Simple Collections{% endblock %}
+
+{% block content-body %}
+<ul>
+    {% for collection in objs %}
+        <li>
+            <a href="{% url collection:simple_edit collection.pid %}">{{ collection.label|default:'(no title present)' }}</a>
+        </li>
+    {% endfor %}
+
+
+</ul>
+
+{% endblock %}

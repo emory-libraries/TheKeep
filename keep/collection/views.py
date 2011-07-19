@@ -210,3 +210,23 @@ def simple_edit(request, pid=None):
     return render_to_response('collection/simple_edit.html', {'obj' : obj, 'form' : form},
         context_instance=RequestContext(request))
 
+#fnid objects with a certian type
+def _objects_by_type():
+    repo = Repository()
+
+    #TODO: put these URIs in  a sensable place
+    pids = repo.risearch.get_subjects('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', \
+                                      'http://pid.emory.edu/ns/2011/repo-management/#SimpleCollection')
+    pids_list = list(pids)
+
+    for pid in pids_list:
+        yield repo.get_object(pid=pid, type=SimpleCollection)
+
+
+
+def simple_browse(request):
+    objs = _objects_by_type()
+
+    return render_to_response('collection/simple_browse.html', {'objs' : objs},
+        context_instance=RequestContext(request))
+
