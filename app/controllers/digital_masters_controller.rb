@@ -75,9 +75,18 @@ class DigitalMastersController < ApplicationController
     @content.resource_type_id = params[:content][:resource_type_id]
     @content.other_id = params[:content][:other_id]
     @content.modified_at = Time::now
+
+    #return id field from collection number. Previous revision (93) used hidden form field.
+    unless (params[:description_data][:mss_number] == "")    
+      dd = DescriptionData.find_by_mss_number(params[:description_data][:mss_number])    
+      id = dd.id.to_s
+    else
+      id = ""
+    end     
     
-    unless (params[:content][:collection_number] == "No Collection")
-      @content.collection_number = params[:content][:collection_number]
+    #How can a number ever be No Collection? Else seems like it is never called.
+    unless (id == "No Collection")
+      @content.collection_number = id
     else
       @content.collection_number = nil
     end

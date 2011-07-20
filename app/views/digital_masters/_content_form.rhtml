@@ -24,17 +24,7 @@
 	<td class="collection"><label for="content_collection_number">Collection Number</label></td>
 	<td class="collection">
 	    <% @description_data = (@content.collection_number.nil?) ? nil : DescriptionData.find(@content.collection_number) %>
-		<%= text_field_with_auto_complete :description_data, :mss_number, :size => 5, :maxlength => 4 %>	
-			
-		<div id="content_collection_number_div">
-		  <%= hidden_field :content, :collection_number, :size => 5, :maxlength => 4 %>
-		</div>
-		
-
-		<%= observe_field(:description_data_mss_number, :on => 'changed', :with => "mss_number",
-			:update => :content_collection_number_div, :url => { :action => :updateCollectionNumberID} ) 
-		%>	
-
+		<%= text_field_with_auto_complete :description_data, :mss_number, :size => 5, :maxlength => 4 %>		
 		
 		<%= observe_field(:description_data_mss_number, :on => 'changed', :with => "mss_number",
 			:update => :main_entry, :url => { :action => :updateMainEntry} ) 
