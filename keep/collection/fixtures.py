@@ -1,4 +1,4 @@
-from keep.collection.models import CollectionObject
+from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
 from keep import mods
 
@@ -54,6 +54,19 @@ class FedoraFixtures:
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1509, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1805, point='end'))
+        return obj
+
+    @staticmethod
+    def simple_collection(label=None, status=None, pid=None):
+        repo = Repository()
+        obj = repo.get_object(type=SimpleCollection)
+        if label is not None:
+            obj.label = label
+        obj.mods.content.create_restrictions_on_access()
+        if status is not None:
+            obj.mods.content.restrictions_on_access.text = status
+        if pid is not None:
+            obj.pid = pid
         return obj
 
     

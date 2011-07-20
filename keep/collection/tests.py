@@ -1,8 +1,8 @@
 from contextlib import contextmanager
 from os import path
 
-import rdflib
 from rdflib import URIRef
+from rdflib.namespace import RDF
 
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
@@ -15,6 +15,7 @@ from keep.collection import forms as cforms
 from keep.collection import views
 from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
 from keep.common.fedora import Repository
+from keep.common.rdfns import REPO
 from keep import mods
 from keep.testutil import KeepTestCase
 
@@ -753,10 +754,20 @@ class SimpleCollectionTest( KeepTestCase):
         self.repo = Repository()
         self.pids = []
 
+        #Create fixtures and add to pid list
+        self.simple_collection_1  = FedoraFixtures.simple_collection(label='Test Simple Collection 1', status='Processed')
+        self.simple_collection_1.save()
+        self.pids.append(self. simple_collection_1.pid)
+
+        self.simple_collection_2  = FedoraFixtures.simple_collection(label='Test Simple Collection 2', status='Accessioned')
+        self. simple_collection_2.save()
+        self.pids.append(self.simple_collection_2.pid)
+
     def tearDown(self):
         for pid in self.pids:
             self.repo.purge_object(pid)
 
+            
 
     def test_creation(self):
         obj = self.repo.get_object(type = SimpleCollection)
@@ -770,7 +781,26 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertEqual(obj. COLLECTION_CONTENT_MODEL, 'info:fedora/emory-control:Collection-1.0')
         self.assertEqual(obj.mods.content.restrictions_on_access.text, 'processed')
         
-        self.assertTrue((rdflib.term.URIRef('info:fedora/%s' % obj.pid),  \
-                         rdflib.term.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), \
-                         rdflib.term.URIRef('http://pid.emory.edu/ns/2011/repo-management/#SimpleCollection'))  \
-        in obj.rels_ext.content)
+        self.assertTrue((obj.uriref, RDF.type, REPO.SimpleCollection) in obj.rels_ext.content,
+                        'The collection is of type SimpleCollection')
+
+
+    def test_edit(self):
+        edit_url = reverse('collection:simple_edit', kwargs={'pid' : self.simple_collection_2.pid})
+        response = self.client.get(edit_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s' % (expected, code))
+
+        self.assertContains(response, self.simple_collection_2.label)
+        self.assertContains(response, 'Accessioned', msg_prefix='Status of collection should be Accessioned')
+
+    def test_browse(self):
+        browse_url = reverse('collection:simple_browse')
+        response = self.client.get(browse_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s' % (expected, code))
+
+        self.assertContains(response, self.simple_collection_1.label)
+        self.assertContains(response, self.simple_collection_1.pid)
+        self.assertContains(response, self.simple_collection_2.label)
+        self.assertContains(response, self.simple_collection_2.pid)

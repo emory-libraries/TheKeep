@@ -15,9 +15,12 @@ from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream
 from eulfedora.util import RequestFailed
 
+from rdflib.namespace import RDF
+
 from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
 from keep.collection.models import CollectionObject, get_cached_collection_dict, SimpleCollection
 from keep.common.fedora import Repository
+from keep.common.rdfns import REPO
 
 @permission_required('is_staff')
 def view(request, pid):
@@ -214,9 +217,7 @@ def simple_edit(request, pid=None):
 def _objects_by_type():
     repo = Repository()
 
-    #TODO: put these URIs in  a sensable place
-    pids = repo.risearch.get_subjects('http://www.w3.org/1999/02/22-rdf-syntax-ns#type', \
-                                      'http://pid.emory.edu/ns/2011/repo-management/#SimpleCollection')
+    pids = repo.risearch.get_subjects(RDF.type, REPO.SimpleCollection)
     pids_list = list(pids)
 
     for pid in pids_list:
@@ -225,8 +226,25 @@ def _objects_by_type():
 
 
 def simple_browse(request):
-    objs = _objects_by_type()
 
-    return render_to_response('collection/simple_browse.html', {'objs' : objs},
+    response_code = None
+    try:
+        objs = _objects_by_type()
+        context = {'objs' : objs}
+    except RequestFailed:
+        response_code = 500
+        # FIXME: this is duplicate logic from generic search view
+        context['server_error'] = 'There was an error ' + \
+            'contacting the digital repository. This ' + \
+            'prevented us from completing your search. If ' + \
+            'this problem persists, please alert the ' + \
+            'repository administrator.'
+
+
+
+    response =  render_to_response('collection/simple_browse.html', context,
         context_instance=RequestContext(request))
+    if response_code is not None:
+        response.status_code = response_code
+    return response
 
