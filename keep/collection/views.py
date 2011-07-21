@@ -213,15 +213,20 @@ def simple_edit(request, pid=None):
     return render_to_response('collection/simple_edit.html', {'obj' : obj, 'form' : form},
         context_instance=RequestContext(request))
 
-#fnid objects with a certian type
-def _objects_by_type():
+#find objects with a particular type specified  in the rels-ext and return them as
+def _objects_by_type(type_uri, type=None):
+    """
+    Returns a list of objects with the specified type_uri as objects of the specified type
+    :param type_uri: The uri of the type being searched
+    :param type: The type of object that should be returned
+    """
     repo = Repository()
 
-    pids = repo.risearch.get_subjects(RDF.type, REPO.SimpleCollection)
+    pids = repo.risearch.get_subjects(RDF.type, type_uri)
     pids_list = list(pids)
 
     for pid in pids_list:
-        yield repo.get_object(pid=pid, type=SimpleCollection)
+        yield repo.get_object(pid=pid, type=type)
 
 
 
@@ -229,7 +234,7 @@ def simple_browse(request):
 
     response_code = None
     try:
-        objs = _objects_by_type()
+        objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
         context = {'objs' : objs}
     except RequestFailed:
         response_code = 500

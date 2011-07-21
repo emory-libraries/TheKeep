@@ -14,7 +14,8 @@ from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
 from keep.collection import views
 from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
-from keep.common.fedora import Repository
+from keep.collection.views import _objects_by_type
+from keep.common.fedora import DigitalObject, Repository
 from keep.common.rdfns import REPO
 from keep import mods
 from keep.testutil import KeepTestCase
@@ -785,6 +786,25 @@ class SimpleCollectionTest( KeepTestCase):
                         'The collection is of type SimpleCollection')
 
 
+    def test__objects_by_type(self):
+        #Test Simple collection
+        objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
+        obj_list = list(objs)
+        self.assertTrue(len(obj_list) == 2)
+        self.assertTrue(isinstance(obj_list[0], SimpleCollection), "object is of type SimpleCollection")
+
+        #Test Simple collection wtith no obj type
+        objs = _objects_by_type(REPO.SimpleCollection)
+        obj_list = list(objs)
+        self.assertTrue(len(obj_list) == 2)
+        self.assertTrue(isinstance(obj_list[0], DigitalObject), "object is of type DigitalObject")
+
+        #Test invalid type
+        objs = _objects_by_type(REPO.FakeType)
+        obj_list = list(objs)
+        self.assertTrue(len(obj_list) == 0)
+
+        
     def test_edit(self):
         edit_url = reverse('collection:simple_edit', kwargs={'pid' : self.simple_collection_2.pid})
         response = self.client.get(edit_url)
