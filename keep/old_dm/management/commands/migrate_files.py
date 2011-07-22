@@ -21,10 +21,17 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--csvoutput', '-c',
             help='''Output CSV data to the specified filename'''),
+        make_option('--max', '-m',
+            type='int',
+            help='''Stop after processing the specified number of items'''),
         )
 
     def handle(self, *args, **options):
         stats = defaultdict(int)
+        # limit to max number of items if specified
+        max_items = None
+        if 'max' in options and options['max']:
+            max_items = options['max']
         
         self.claimed_files = set()
 
@@ -59,9 +66,16 @@ class Command(BaseCommand):
                                  list(paths)
                     csvfile.writerow(row_data)
 
+                if max_items is not None and stats['audio'] > max_items:
+                    break
 
-        # look for any audio files not claimed by a fedora object
-        self.check_unclaimed_files()
+        # if we are processing a limited set of items, skip the unclaimed files check
+        if max_items is not None:
+            logger.info('Skipping unclaimed file check, because migration was limited to %d items' \
+                        % max_items)
+        else:
+            # look for any audio files not claimed by a fedora object
+            self.check_unclaimed_files()
 
         logger.debug('Total DM1 objects: %(dm1)d (of %(audio)d audio objects)' % stats)
         logger.debug('Missing WAV file: %(no_wav)d' % stats)
