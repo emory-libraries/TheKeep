@@ -23,6 +23,8 @@ class Command(BaseCommand):
             help='''Output CSV data to the specified filename'''),
         )
 
+    claimed_files = set()
+
     def handle(self, *args, **options):
         stats = defaultdict(int)
 
@@ -58,6 +60,9 @@ class Command(BaseCommand):
                     csvfile.writerow(row_data)
 
 
+        # look for any audio files not claimed by a fedora object
+        self.check_unclaimed_files()
+
         logger.debug('Total DM1 objects: %(dm1)d (of %(audio)d audio objects)' % stats)
         logger.debug('Missing WAV file: %(no_wav)d' % stats)
 
@@ -89,6 +94,31 @@ class Command(BaseCommand):
         abs_path = os.path.join(settings.MIGRATION_AUDIO_ROOT, rel_path)
         if os.path.exists(abs_path):
             logging.debug('found path: ' + abs_path)
+            # keep track of files that belong to an object
+            self.claimed_files.add(abs_path)
             return abs_path
         else:
             logging.debug('missing path: ' + abs_path)
+
+
+    def check_unclaimed_files(self):
+        '''Scan for any audio files under the configured
+        MIGRATION_AUDIO_ROOT directory that have not been claimed by
+        an AudioObject in Fedora.  This function will compare any file
+        in a directory named "audio" at any depth under the migration
+        root directory, and warn about any files that have not been
+        already identified as corresponding to an AudioObject.  
+        '''
+        # should only be run after the main script logic has looked
+        # for files and populated self.claimed_files
+        logger.info('Checking for unclaimed audio files')
+        # traverse the configured migration directory
+        for root, dirnames, filenames in os.walk(settings.MIGRATION_AUDIO_ROOT):
+            # if we are in an audio directory, check the files
+            base_path, current_dir = os.path.split(root)
+            if current_dir == 'audio':
+                for f in filenames:
+                    full_path = os.path.join(root, f)
+                    # warn about any files not in the claimed set
+                    if full_path not in self.claimed_files:
+                        logger.warn('%s is unclaimed' % full_path)
