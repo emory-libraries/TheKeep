@@ -2,6 +2,7 @@
 View methods for creating, editing, searching, and browsing
 :class:`~keep.collection.models.CollectionObject` instances in Fedora.
 '''
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -21,6 +22,9 @@ from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollec
 from keep.collection.models import CollectionObject, get_cached_collection_dict, SimpleCollection
 from keep.common.fedora import Repository
 from keep.common.rdfns import REPO
+
+
+logger = logging.getLogger(__name__)
 
 @permission_required('is_staff')
 def view(request, pid):
@@ -205,12 +209,57 @@ def view_datastream(request, pid, dsid):
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
 
-def simple_edit(request, pid=None):
-    repo = Repository(request=request)
-    obj = repo.get_object(pid=pid, type=SimpleCollection)
-    form = SimpleCollectionEditForm(instance=obj)
 
-    return render_to_response('collection/simple_edit.html', {'obj' : obj, 'form' : form},
+def simple_edit(request, pid=None):
+    ''' Edit an existing Fedora
+    :class:`~keep.collection.models.SimpleCollection`.  If a pid is
+    specified, attempts to retrieve an existing object.
+    '''
+    repo = Repository(request=request)
+
+    try:
+        obj = repo.get_object(pid=pid, type=SimpleCollection)
+
+        if request.method == 'POST':
+            #Update SimpleCollection and associated arrangement objects
+            status = request.POST['mods-restrictions_on_access']
+            form = SimpleCollectionEditForm(instance=obj)
+            (success_count, fail_count) = form.update_objects(status)
+
+            if success_count >= 1 and fail_count == 0: # if all objects were  updated correctly
+                messages.success(request, "Successfully Updated %s Item(s)" % (success_count))
+
+                #Now Update the SimpleCollection itself
+                obj.mods.content.restrictions_on_access.text = status # Change collection status
+                saved = obj.save()
+                if not saved:
+                    messages.error(request, "Failed To Updated Simple Collection Object")
+                    logger.error("Failed to update SimpleCollection %s:%s" % (obj.pid, obj.label))
+            else:
+                messages.error(request, "Successfully Updated %s Item(s) Failed To Update %s Item(s)" % (success_count, fail_count))
+
+
+
+
+        else:
+            #Just Display the form
+            form = SimpleCollectionEditForm(instance=obj)
+
+    except RequestFailed, e:
+        # if there was a 404 accessing objects, raise http404
+        # NOTE: this probably doesn't distinguish between object exists with
+        # no MODS and object does not exist at all
+        if e.code == 404:
+            raise Http404
+        # otherwise, re-raise and handle as a common fedora connection error
+        else:
+            raise
+
+    context = {'form': form}
+    if pid is not None:
+        context['obj'] = obj
+
+    return render_to_response('collection/simple_edit.html', context,
         context_instance=RequestContext(request))
 
 #find objects with a particular type specified  in the rels-ext and return them as

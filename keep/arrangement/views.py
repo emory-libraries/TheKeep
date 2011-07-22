@@ -10,7 +10,7 @@ from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
 from keep.arrangement.models import ArrangementObject
 
-def index(request):
+def index(request, pid):
     # pass dates in to the view to link to searches for recently uploaded files
     pid = "keep-athom09:steven-test"
     repo = Repository(request=request)

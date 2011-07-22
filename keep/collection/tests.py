@@ -10,7 +10,9 @@ from django.test import Client
 
 from eulfedora.rdfns import relsext
 
-from keep.collection.fixtures import FedoraFixtures 
+
+from keep.arrangement.models import ArrangementObject
+from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
 from keep.collection import views
 from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
@@ -824,3 +826,78 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertContains(response, self.simple_collection_1.pid)
         self.assertContains(response, self.simple_collection_2.label)
         self.assertContains(response, self.simple_collection_2.pid)
+
+
+class TestSimpleCollectionForm(KeepTestCase):
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+        #create ArrengementObject and associate to a collection
+        #TODO Shold this be in arrangement app tests??
+        self.arrangement_1 = self.repo.get_object(type= ArrangementObject)
+        self.arrangement_1.label = "Test Arrangement Object 1"
+        self.arrangement_1.state='I'
+        self.arrangement_1.save()
+        self.pids.append(self.arrangement_1.pid)
+
+        self.arrangement_2 = self.repo.get_object(type= ArrangementObject)
+        self.arrangement_2.label = "Test Arrangement Object 2"
+        self.arrangement_2.state='I'
+        self.arrangement_2.save()
+        self.pids.append(self.arrangement_2.pid)
+
+        #Create fixtures and add to pid list
+        self.simple_collection_1  = FedoraFixtures.simple_collection(label='Test Simple Collection 1', status='Processed')
+        self.simple_collection_1.save()
+        self.pids.append(self.simple_collection_1.pid)
+
+        self.simple_collection_2  = FedoraFixtures.simple_collection(label='Test Simple Collection 2', status='Accessioned')
+        #add arrangements to collection
+        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_1.uriref))
+        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_2.uriref))
+        self. simple_collection_2.save()
+        self.pids.append(self.simple_collection_2.pid)
+
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+    def test_initial_data(self):
+        form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
+
+        #check label is set correctly
+        self.assertEqual(form.object_instance.label, self.simple_collection_2.label)
+
+        #check that restrictions_on_access_are set correctly
+        self.assertEqual(form.object_instance.mods.content.restrictions_on_access.text,
+                         self.simple_collection_2.mods.content.restrictions_on_access.text)
+
+    def test_update_objects(self):
+        #Change all the associated object statuses to 'A'
+        form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
+
+        (success, fail) = form.update_objects('Processed')
+        self.assertEqual(success, 2)
+        self.assertEqual(fail, 0)
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'A')
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'A')
+
+        (success, fail) = form.update_objects('Accessioned')
+        self.assertEqual(success, 2)
+        self.assertEqual(fail, 0)
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
+
+
+        #when bad status is given, nothing should change
+        (success, fail) = form.update_objects('badstatus')
+        self.assertEqual(success, 0)
+        self.assertEqual(fail, 0)
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
+
+
+
+

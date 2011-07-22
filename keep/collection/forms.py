@@ -1,12 +1,20 @@
+import logging
+
 from django import forms
 import django.forms
 from django.forms import BaseForm
 from django.utils.safestring import mark_safe
 
+from eulfedora.rdfns import relsext as relsextns
+
 from eulxml.forms import XmlObjectForm, SubformField
 
 from keep import mods
+from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionMods, CollectionObject, SimpleCollection
+from keep.common.fedora import Repository
+
+logger = logging.getLogger(__name__)
 
 
 try:
@@ -258,3 +266,36 @@ class SimpleCollectionEditForm(forms.Form):
         self.mods.required_css_class = self.error_css_class
 
         super(SimpleCollectionEditForm, self).__init__(data=data, initial=initial)
+
+    #Update member ArrangementObjects to specified status
+    def update_objects(self, status):
+        success_count= 0
+        fail_count = 0
+
+        #translate form status codes to fedora state code
+        codes = {'Processed': 'A', 'Accessioned' : 'I'}
+
+        #target state for every object in the collection
+        if status not in codes:
+            return (0 ,0) # could not complete task due to bad status
+        else:
+            state =  codes[status]
+
+        repo = Repository()
+        pids = list(self.object_instance.rels_ext.content.objects(self.object_instance.uriref, relsextns.hasMember))
+
+        for pid in pids:
+            try:
+                obj = repo.get_object(pid=pid, type=ArrangementObject)
+                obj.state=state
+                saved = obj.save()
+                if saved:
+                    success_count = success_count + 1  #add to success count if something goes right
+                else:
+                    fail_count = fail_count + 1  #add to fail count if something goes wrong
+                    logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
+            except:
+                fail_count = fail_count + 1  #add to fail count if something goes wrong
+                logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
+
+        return (success_count, fail_count) 
