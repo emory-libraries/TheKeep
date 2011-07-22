@@ -424,6 +424,17 @@ class AudioObject(DigitalObject):
     '''access control metadata :class:`~eulfedora.models.XmlDatastream`
     with content as :class:`Rights`'''
 
+    jhove = FileDatastream("JHOVE", "JHOVE datastream", defaults={
+            'mimetype': 'audio/x-wav',
+            'control_group': 'M',
+            'versionable': True,
+            'format': 'http://hul.harvard.edu/ois/xml/xsd/jhove/jhove.xsd',
+        })
+    'JHOVE technical metadata for the master audio :class:`~eulfedora.models.FileDatastream`'
+    # JHOVE is xml, but treat it as a file for now since we're just storing it,
+    # not doing any processing, updating, etc.
+
+
     _collection_uri = None
 
     def save(self, logMessage=None):
