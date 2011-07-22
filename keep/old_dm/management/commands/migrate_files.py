@@ -23,10 +23,10 @@ class Command(BaseCommand):
             help='''Output CSV data to the specified filename'''),
         )
 
-    claimed_files = set()
-
     def handle(self, *args, **options):
         stats = defaultdict(int)
+        
+        self.claimed_files = set()
 
         with self.open_csv(options) as csvfile:
             if csvfile:
