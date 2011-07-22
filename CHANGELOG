@@ -65,6 +65,15 @@ EULindexer functionality and use Solr for searching:
   timing out.  
 
 
+Release 1.0.4
+-------------
+Date: May 2011
+
+* Update to Javascript MD5 checksum uploader code to work with the most
+  recent versions of Firefox 4 and Google Chrome due to changes in
+  HTML5 Blob.slice specification.
+
+
 Release 1.0.3
 -------------
 
