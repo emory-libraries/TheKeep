@@ -8,9 +8,9 @@ Release X(Rushdie Stuff)
 * Branched Keep code and added arrangement app
 * Added load_arrangement management command
 * Added SimpleCollection in collection.models
-* Added ProcessingBatch in arrangement.models
 * Moved Rights and supporting models from audio app to common app
 * Added FileMasterTech class in common app
+* Added function to update all ArrangementObjects based on SimpleCollection status
 
 
 Release 1.0.3
