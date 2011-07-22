@@ -100,9 +100,12 @@ class Command(BaseCommand):
         else:
             yield None
 
-    def audio_objects(self, pids):
+    def audio_objects(self, pids=list()):
         '''Find AudioObjects in the repository for files to be added.
-        
+        Takes an optional list of pids.  If specified, returns a
+        generator of :class:`~keep.audio.models.AudioObject` instances
+        for the specified pids.  Otherwise, returns all Fedora objects
+        with the AudioObject content model, as instances of AudioObject.
         '''
         repo = Repository()
         if pids:
