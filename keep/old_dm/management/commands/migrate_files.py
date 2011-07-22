@@ -39,6 +39,9 @@ class Command(BaseCommand):
         max_items = None
         if 'max' in options and options['max']:
             max_items = options['max']
+        # verbosity should be set by django BaseCommand standard options
+        self.verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
+        self.v_normal = 1
         
         self.claimed_files = set()
 
@@ -57,18 +60,22 @@ class Command(BaseCommand):
                 # only objects with a dm1 id will have files that need to be migrated
                 old_id = mods.dm1_other_id or mods.dm1_id
                 if not old_id:
-                    logger.debug('%s: no DM1 id. skipping.' % (obj.pid,))
+                    if self.verbosity > self.v_normal:
+                        self.stdout.write('%s: no DM1 id. skipping.\n' % (obj.pid,))
                     continue
 
                 stats['dm1'] += 1
-                logger.info('Found %s=%s %s' % (obj.pid, old_id, mods.title))
+                if self.verbosity > self.v_normal:
+                    self.stdout.write('Found %s (dm1 id %s) %s\n' % \
+                                      (obj.pid, old_id, mods.title))
                 paths = self.look_for_files(obj)
                 if not paths:
-                    logger.error("%s: couldn't predict path. skipping." % (obj.pid,))
+                    self.stdout.write("Error on %s: couldn't predict path. skipping.\n" % \
+                                      (obj.pid,))
                     continue
-                logger.info('%s paths: %s' % (obj.pid, repr(paths)))
+
                 if not paths.wav:
-                    logger.error("%s=%s missing WAV file" % (obj.pid, old_id))
+                    self.stdout.write("Error: %s=%s missing WAV file\n" % (obj.pid, old_id))
                     stats['no_wav'] += 1
 
                 if csvfile:
@@ -77,19 +84,23 @@ class Command(BaseCommand):
                                  list(paths)
                     csvfile.writerow(row_data)
 
+                # if a maximum was specified, check if we are at the limit
                 if max_items is not None and stats['audio'] > max_items:
                     break
 
         # if we are not migrating everything (limited either by max or specified pids),
         # skip the unclaimed files check
         if max_items is not None or pids:
-            logger.info('Skipping unclaimed file check, because migration was limited')
+            if self.verbosity > self.v_normal:
+                self.stdout.write('Skipping unclaimed file check because migration was limited\n')
         else:
             # look for any audio files not claimed by a fedora object
             self.check_unclaimed_files()
 
-        logger.debug('Total DM1 objects: %(dm1)d (of %(audio)d audio objects)' % stats)
-        logger.debug('Missing WAV file: %(no_wav)d' % stats)
+        if self.verbosity >= self.v_normal:
+            self.stdout.write('Total DM1 objects: %(dm1)d (of %(audio)d audio objects)\n' \
+                              % stats)
+            self.stdout.write('Missing WAV file: %(no_wav)d\n' % stats)
 
     @contextmanager
     def open_csv(self, options):
@@ -126,12 +137,14 @@ class Command(BaseCommand):
         rel_path = '%s.%s' % (basename, ext)
         abs_path = os.path.join(settings.MIGRATION_AUDIO_ROOT, rel_path)
         if os.path.exists(abs_path):
-            logging.debug('found path: ' + abs_path)
+            if self.verbosity > self.v_normal:
+                self.stdout.write('  found path: %s\n' % abs_path)
             # keep track of files that belong to an object
             self.claimed_files.add(abs_path)
             return abs_path
         else:
-            logging.debug('missing path: ' + abs_path)
+            if self.verbosity > self.v_normal:
+                self.stdout.write('  missing path: %s\n' % abs_path)
 
 
     def check_unclaimed_files(self):
@@ -144,7 +157,8 @@ class Command(BaseCommand):
         '''
         # should only be run after the main script logic has looked
         # for files and populated self.claimed_files
-        logger.info('Checking for unclaimed audio files')
+        if self.verbosity >= self.v_normal:
+            self.stdout.write('Checking for unclaimed audio files\n')
         # traverse the configured migration directory
         for root, dirnames, filenames in os.walk(settings.MIGRATION_AUDIO_ROOT):
             # if we are in an audio directory, check the files
@@ -154,7 +168,7 @@ class Command(BaseCommand):
                     full_path = os.path.join(root, f)
                     # warn about any files not in the claimed set
                     if full_path not in self.claimed_files:
-                        logger.warn('%s is unclaimed' % full_path)
+                        self.stdout.write('Warning: %s is unclaimed\n' % full_path)
 
     def dmids_to_pids(self, ids):
         '''Takes a list of ids with a mix of fedora object pids and
@@ -171,12 +185,12 @@ class Command(BaseCommand):
                 result = solr.query(dm1_id=id).field_limit('pid').execute()
                 if result:
                     if len(result) > 1:
-                        logger.warn('Found too many pids for dm1 id %s: %s' % \
+                        self.stdout.write('Found too many pids for dm1 id %s: %s\n' % \
                                     (id, ', '.join(r['pid'] for r in result)))
                     else:
                         pids.add(result[0]['pid'])
                 else:
-                    logger.warn('Could not find a pid for dm1 id %s' % id)
+                    self.stdout.write('Could not find a pid for dm1 id %s\n' % id)
             else:
                 pids.add(id)
         return pids
