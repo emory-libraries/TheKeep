@@ -1,10 +1,10 @@
 django
--e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/eullocal
+-e svn+https://svn.library.emory.edu/svn/python-eulcore/eullocal/branches/release-0.15.x#egg=eullocal
 eulxml
-# need eulfedora commit b5745133833d826a436d, not released as of 20110615
--e git://github.com/emory-libraries/eulfedora.git#egg=eulfedora
-# need eulexistdb commit 3ed57d230974fa42145f, not released as of 20110615
--e git://github.com/emory-libraries/eulexistdb.git#egg=eulexistdb
+# need eulfedora indexdata code not in 0.15.x, slated for 0.16.0
+-e git://github.com/emory-libraries/eulfedora.git@release-0.16.x#egg=eulfedora
+# need eulexistdb testing support not in 0.15.0, slated for 0.15.1
+-e git://github.com/emory-libraries/eulexistdb.git@release-0.15.x#egg=eulexistdb
 eulcommon
 -e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/tags/release-1.1.0
 python-magic
