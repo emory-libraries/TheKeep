@@ -4,6 +4,7 @@ import csv
 import logging
 from optparse import make_option
 import os
+from sunburnt import sunburnt
 import sys
 
 from django.conf import settings
@@ -18,6 +19,12 @@ AudioFile = namedtuple('AudioFile',
         ('wav', 'm4a', 'md5', 'jhove'))
 
 class Command(BaseCommand):
+    '''Migrate files for metadata-only items generated from the old
+    Digital Masters database (using migrate_metadata) into the new
+    Repository-based system.'''
+    help = __doc__
+
+    args = '<pid pid dm_id other_id pid ...>'
     option_list = BaseCommand.option_list + (
         make_option('--csvoutput', '-c',
             help='''Output CSV data to the specified filename'''),
@@ -26,7 +33,7 @@ class Command(BaseCommand):
             help='''Stop after processing the specified number of items'''),
         )
 
-    def handle(self, *args, **options):
+    def handle(self,  *pids, **options):
         stats = defaultdict(int)
         # limit to max number of items if specified
         max_items = None
@@ -35,15 +42,19 @@ class Command(BaseCommand):
         
         self.claimed_files = set()
 
+        # if there are any dm1 ids, convert them to fedora pids
+        pids = self.dmids_to_pids(pids)
+
         with self.open_csv(options) as csvfile:
             if csvfile:
                 FIELDS = ('pid', 'dm1_id', 'dm1_other_id',
                           'wav', 'm4a', 'md5', 'jhove')
                 csvfile.writerow(FIELDS)
 
-            for obj in self.audio_objects():
+            for obj in self.audio_objects(pids):
                 stats['audio'] += 1
                 mods = obj.mods.content
+                # only objects with a dm1 id will have files that need to be migrated
                 old_id = mods.dm1_other_id or mods.dm1_id
                 if not old_id:
                     logger.debug('%s: no DM1 id. skipping.' % (obj.pid,))
@@ -69,10 +80,10 @@ class Command(BaseCommand):
                 if max_items is not None and stats['audio'] > max_items:
                     break
 
-        # if we are processing a limited set of items, skip the unclaimed files check
-        if max_items is not None:
-            logger.info('Skipping unclaimed file check, because migration was limited to %d items' \
-                        % max_items)
+        # if we are not migrating everything (limited either by max or specified pids),
+        # skip the unclaimed files check
+        if max_items is not None or pids:
+            logger.info('Skipping unclaimed file check, because migration was limited')
         else:
             # look for any audio files not claimed by a fedora object
             self.check_unclaimed_files()
@@ -89,8 +100,13 @@ class Command(BaseCommand):
         else:
             yield None
 
-    def audio_objects(self):
+    def audio_objects(self, pids):
+        '''Find AudioObjects in the repository for files to be added.
+        
+        '''
         repo = Repository()
+        if pids:
+            return (repo.get_object(pid, type=AudioObject) for pid in pids)
         cmodel = AudioObject.AUDIO_CONTENT_MODEL
         return repo.get_objects_with_cmodel(cmodel, type=AudioObject)
 
@@ -136,3 +152,28 @@ class Command(BaseCommand):
                     # warn about any files not in the claimed set
                     if full_path not in self.claimed_files:
                         logger.warn('%s is unclaimed' % full_path)
+
+    def dmids_to_pids(self, ids):
+        '''Takes a list of ids with a mix of fedora object pids and
+        dm1 ids or dm1 other ids, and looks up any dm1 ids in Solr to
+        find the corresponding pid.  Returns a list of fedora object
+        pids.'''
+
+        pids = set()
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        for id in ids:
+            # purely numeric ids are expected to be dm1 id or other id
+            if id.isdigit():
+                # look up the dm1 id in solr and return just the object pid
+                result = solr.query(dm1_id=id).field_limit('pid').execute()
+                if result:
+                    if len(result) > 1:
+                        logger.warn('Found too many pids for dm1 id %s: %s' % \
+                                    (id, ', '.join(r['pid'] for r in result)))
+                    else:
+                        pids.add(result[0]['pid'])
+                else:
+                    logger.warn('Could not find a pid for dm1 id %s' % id)
+            else:
+                pids.add(id)
+        return pids
