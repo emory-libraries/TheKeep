@@ -31,6 +31,10 @@ class Command(BaseCommand):
         make_option('--max', '-m',
             type='int',
             help='''Stop after processing the specified number of items'''),
+        make_option('--dry-run', '-n',
+            default=False,
+            action='store_true',
+            help='Report on what would be done, but don\'t actually migrate anything'),
         )
 
     def handle(self,  *pids, **options):
@@ -42,6 +46,14 @@ class Command(BaseCommand):
         # verbosity should be set by django BaseCommand standard options
         self.verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
         self.v_normal = 1
+
+        if options['dry_run']:
+            if self.verbosity >= self.v_normal:
+                self.stdout.write('Migration dry run. Audio Objects and corresponding ' +
+                         'file paths will be examined, but no files will be ' +
+                         'migrated into Fedora. To migrate files, run ' +
+                         'without the -n/--dry-run option.\n\n')
+
         
         self.claimed_files = set()
 
@@ -77,6 +89,12 @@ class Command(BaseCommand):
                 if not paths.wav:
                     self.stdout.write("Error: %s=%s missing WAV file\n" % (obj.pid, old_id))
                     stats['no_wav'] += 1
+
+
+                # TODO: logic to add the files to fedora objects;
+                # only execute when not in dry-run mode
+                # if not options['dry_run']:
+                #    ... 
 
                 if csvfile:
                     row_data = [ obj.pid, obj.mods.content.dm1_id,
