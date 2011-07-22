@@ -16,7 +16,7 @@ except ImportError:
 
 if __name__ == "__main__":
     import sys
-    if sys.argv[1] == 'test':
+    if len(sys.argv) > 1 and sys.argv[1] == 'test':
         # load test settings when running tests
         import testsettings as settings
         
