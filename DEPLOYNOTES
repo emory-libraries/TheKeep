@@ -116,6 +116,10 @@ policies to another environment, you should update the policy to
 include the IP address of the server where the web application will
 run.
 
+The Keep relies on EULindexer for searching and indexing. See the
+`EULindexer Deploy Notes
+<https://github.com/emory-libraries/eulindexer/blob/master/DEPLOYNOTES.rst>`_
+for additional Fedora configuration requirements for that program.
 
 Celery/RabbitMQ
 """""""""""""""
@@ -294,6 +298,11 @@ Release 1.1 - Metadata Migration
   preservation files. Our correct production setting is the one listed in
   ``localsettings.py.sample``.
 
+* This release relies on new Fedora content model objects. Execute the
+  following command to load them::
+
+    $ python manage.py syncrepo
+
 * The Keep now uses Solr for searching and eulindexer for indexing
   items.  Follow the directions in `Solr/EULindexer`_ to set up a new
   Solr index and add the Keep to EULindexer.  Before indexing existing
@@ -302,12 +311,28 @@ Release 1.1 - Metadata Migration
 
     $ python manage.py cleanup_metadata
 
-  After this script completes, run the EULindexer reindex script as
-  described in `Solr/EULindexer`_ to populate the Solr index for
-  existing repository content.  Make sure that the indexer script is
-  running before migrating new content, so that newly ingested items
-  will automatically be indexed.
+  After this script completes, configure EULindexer and run its reindex
+  script as described in `Solr/EULindexer`_ to populate the Solr index for
+  existing repository content.  Make sure that the indexer script is running
+  before migrating new content, so that newly ingested items will
+  automatically be indexed.
 
+* After existing content has been reindexed and the website has been
+  verified to work correctly, prepare to migrate legacy metadata. First
+  dry-run the migration script::
+
+    $ python manage.py migrate_metadata -n -v2 -c migrate.csv > migrate.out
+
+  Developers and project stakeholders will review migration output
+  (``migrate.csv`` and ``migrate.out``). This review process will probably
+  result in a request for a ``load_ead`` command as performed in Release 0.7
+  below. Once the review and any additional configuration are complete, run
+  the final metadata migration::
+
+    $ python manage.py migrate_metadata -c migrate.csv > migrate.out
+
+  The application does not use the CSV or output files. After the migration
+  is complete, these files may be archived and/or deleted.
 
 Release 1.0.3
 ~~~~~~~~~~~~~
