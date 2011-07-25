@@ -1,5 +1,5 @@
 django
--e svn+https://svn.library.emory.edu/svn/python-eulcore/branches/eullocal
+-e svn+https://svn.library.emory.edu/svn/python-eulcore/eullocal/trunk
 eulxml
 # need eulfedora commit b5745133833d826a436d, not released as of 20110615
 -e git://github.com/emory-libraries/eulfedora.git#egg=eulfedora
