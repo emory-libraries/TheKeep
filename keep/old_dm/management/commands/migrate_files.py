@@ -104,11 +104,13 @@ class Command(BaseCommand):
                     if paths.md5:
                         with open(paths.md5) as md5file:
                             wav_md5 = md5file.read().strip()
-                    # otherwise, let update_datastream calculate the MD5
+                     # otherwise, let update_datastream calculate the MD5
                     else:
                         wav_md5 = None
                     # add the WAV file as contents of the primary audio datastream
-                    self.update_datastream(obj.audio, paths.wav, wav_md5)
+                    if self.update_datastream(obj.audio, paths.wav, wav_md5):
+                        files_updated += 1
+                        
                     # Continue even if the WAV fails; it may have
                     # to be handled manually, but having the other
                     # files migrated should still be valuable
@@ -120,8 +122,7 @@ class Command(BaseCommand):
                     if obj.digitaltech.isModified():
                         if self.verbosity > self.v_normal:
                             self.stdout.write('Adding WAV file duration to DigitalTech')
-                            if obj.digitaltech.save('duration calculated from WAV file during migration'):
-                                files_updated += 1
+                            obj.digitaltech.save('duration calculated from WAV file during migration')
 
 
                     # if m4a is present, add it as compressed audio datastream
