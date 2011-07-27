@@ -1,7 +1,7 @@
 django
 -e svn+https://svn.library.emory.edu/svn/python-eulcore/eullocal/trunk
 eulxml
-# need eulfedora commit b5745133833d826a436d, not released as of 20110615
+# need eulfedora commit 7691fff, not released as of 20110727 and not planned for in 0.16
 -e git://github.com/emory-libraries/eulfedora.git#egg=eulfedora
 # need eulexistdb commit 3ed57d230974fa42145f, not released as of 20110615
 -e git://github.com/emory-libraries/eulexistdb.git#egg=eulexistdb
