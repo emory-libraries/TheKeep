@@ -1,5 +1,6 @@
 import cStringIO
 from datetime import date, datetime
+import logging
 from mock import Mock, MagicMock, patch
 import os
 from shutil import copyfile
@@ -19,7 +20,7 @@ from django.utils import simplejson
 
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
-from eulfedora.util import RequestFailed
+from eulfedora.util import RequestFailed, ChecksumMismatch
 from eulxml.xmlmap  import load_xmlobject_from_string
 
 from keep import mods
@@ -32,6 +33,8 @@ from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
 from keep.common.utils import PaginatedSolrSearch
 from keep.testutil import KeepTestCase
+
+logger = logging.getLogger(__name__)
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -427,7 +430,6 @@ class AudioViewsTest(KeepTestCase):
         note = 'patron request'
         response = self.client.get(search_url, {'audio-notes': note})
         args, kwargs = self.mocksolr.query.call_args
-        print kwargs
         self.assertEqual(note, kwargs['notes'],
                          'notes search should search solr note field')
         
@@ -2006,20 +2008,20 @@ class TestAudioObject(KeepTestCase):
         filename = 'example.wav'
         label = 'this is a test WAV file'
         #specify an incorrect checksum
-        wav_md5 = 'aaa'
-        obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
+        bad_md5 = 'aaa'
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=bad_md5)
         expected_error=None
         try:
             obj.save()
             #Purge if it somehow did not error on the save.
             self.repo.purge_object(obj.pid, "removing unit test fixture")
-        except Exception as e:
+        except RequestFailed as e:
             expected_error = e
-            
-        self.assert_(str(expected_error).endswith('500 Internal Server Error'), 'Incorrect checksum should not be ingested.') 
+
+        self.assert_(isinstance(expected_error, ChecksumMismatch),
+            'attempting to save with invalid checksum should raise a ChecksumMismatch exception')
         
         # specify a correct checksum
-        wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
         obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
         return_result = obj.save()
         self.assertEqual(True, return_result)
@@ -2240,7 +2242,10 @@ class SourceAudioConversions(KeepTestCase):
         super(SourceAudioConversions, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
-            self.repo.purge_object(pid)
+            try:
+                self.repo.purge_object(pid)
+            except RequestFailed:
+                logger.warn('Failed to purge %s in tear down' % pid)
 
     def test_wav_to_mp3(self):
         result = convert_wav_to_mp3(self.obj.pid)
