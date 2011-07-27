@@ -1,4 +1,5 @@
 from os import path
+from mock import Mock, patch
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -6,7 +7,8 @@ from django.test import TestCase
 
 from eulfedora.models import XmlDatastream
 
-from keep.common.fedora import Repository, DigitalObject
+from keep import mods
+from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.common.models import _DirPart, FileMasterTech
 from keep.common.utils import absolutize_url, md5sum
 
@@ -78,3 +80,82 @@ class Obj4Test(DigitalObject):
             'control_group': 'M',
             'versionable': True,
         })
+
+
+
+# extend Keep DigitalObject with to test ARK init logic
+class DcDigitalObject(DigitalObject):
+    NEW_OBJECT_VIEW = 'audio:view'    # required for minting pid
+
+
+# extend Keep DigitalObject with a MODS datastream to test ARK init logic
+class ModsDigitalObject(DcDigitalObject):
+    mods = XmlDatastream('MODS', 'MODS Metadata', LocalMODS, defaults={
+            'control_group': 'M',
+            'format': mods.MODS_NAMESPACE,
+            'versionable': True,
+        })
+
+
+class DigitalObjectTest(TestCase):
+    naan = '123'
+    noid = 'bcd'
+    testark = 'http://p.id/ark:/%s/%s' % (naan, noid)
+
+    @patch('keep.common.fedora.pidman')
+    def test_get_default_pid(self, mockpidman):
+        mockpidman.create_ark.return_value = self.testark
+        
+        digobj = DcDigitalObject(Mock())
+        digobj.label = 'my test object'
+        pid = digobj.get_default_pid()
+        self.assertEqual('%s:%s' % (settings.FEDORA_PIDSPACE, self.noid), pid)
+        # test/inspect mockpidman.create_ark arguments?
+
+        # generated ARK should be stored in dc:identifier
+        self.assert_(self.testark in digobj.dc.content.identifier_list)
+
+        
+    @patch('keep.common.fedora.pidman')
+    def test_get_default_pid__mods(self, mockpidman):
+        # mods variant
+        mockpidman.create_ark.return_value = self.testark
+        
+        digobj = ModsDigitalObject(Mock())
+        pid = digobj.get_default_pid()
+
+        # generated ARK should be stored in MODS in two forms
+        self.assertEqual(2, len(digobj.mods.content.identifiers))
+        # map mods:identifier to a dictionary so we can inspect by type
+        id_by_type = dict((id.type, id.text) for id in digobj.mods.content.identifiers)
+        self.assertEqual('ark:/%s/%s' % (self.naan, self.noid),
+            digobj.mods.content.ark,
+            'short-form ARK should be stored in mods:identifier with type "ark"')
+        self.assertEqual(self.testark, digobj.mods.content.ark_uri,
+            'resolvable ARK should be stored in mods:identifier with type "uri"')
+
+        # generated ark should not be stored in dc:identifier
+        self.assert_(self.testark not in digobj.dc.content.identifier_list)
+
+
+    def test_ark_access_uri(self):
+        # dc
+        dcobj = DcDigitalObject(Mock())
+        # not set in dc
+        self.assertEqual(None, dcobj.ark_access_uri)
+        dcobj.dc.content.identifier_list.extend([
+            'http://some.other/uri/foo/',
+            self.testark
+            ])
+        self.assertEqual(self.testark, dcobj.ark_access_uri)
+
+        # mods
+        modsobj = ModsDigitalObject(Mock())
+        # not set in mods
+        self.assertEqual(None, modsobj.ark_access_uri)
+        modsobj.mods.content.identifiers.extend([
+            mods.Identifier(type='uri', text='http://yet.an/other/url'),
+            mods.Identifier(type='uri', text=self.testark)
+            ])
+        self.assertEqual(self.testark, modsobj.ark_access_uri)
+       

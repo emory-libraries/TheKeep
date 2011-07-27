@@ -71,13 +71,6 @@ FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 # use this to explicitly configure a test pidspace; by default, uses pidspace-test
 #FEDORA_TEST_PIDSPACE = 'testme'
 
-# mnemonic names for well-known PIDs
-PID_ALIASES = {
-    'marbl': 'emory:93z53',
-    'eua': 'emory:93zd2',
-    'oxford': 'emory:b2mx2',
-}
-
 # Exist DB Settings
 EXISTDB_SERVER_URL      = 'http://user:password@existdb.example.com/exist/xmlrpc'
 # collection should begin with / -  e.g., /edc
@@ -99,6 +92,13 @@ CACHE_BACKEND = 'file:///tmp/euterpe_cache'
 
 # maximum number of items to include in a single iTunes podcast feed
 MAX_ITEMS_PER_PODCAST_FEED = 2000 
+
+
+# configure which IP addresses are allowed to access the index data service
+EUL_INDEXER_ALLOWED_IPS = 'ANY'
+# Solr index that will be used for searching
+SOLR_SERVER_URL = "http://localhost:8080/solr/"
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -132,3 +132,6 @@ INGEST_STAGING_KEEP_AGE = 60*60*24*3
 # kiosk-accessible path to files still living in old Digital Masters. must
 # end with /
 OLD_DM_MEDIA_ROOT = 'http://masters.library.emory.edu/harvest/preservation/'
+
+# path to source audio files for old_dm migrate_files
+MIGRATION_AUDIO_ROOT = '/mnt/dm/preservation'

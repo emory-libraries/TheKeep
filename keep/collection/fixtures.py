@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
 from keep import mods
@@ -8,10 +10,16 @@ from keep import mods
 
 class FedoraFixtures:
     @staticmethod
-    def top_level_collections():
-        if not hasattr(FedoraFixtures, '_top_level_collections'):
-            FedoraFixtures._top_level_collections = CollectionObject.top_level()
-        return FedoraFixtures._top_level_collections
+    def archives(format=None):
+        if format == dict:
+            return [{'title': nick, 'pid': pid}
+                    for nick,pid in settings.PID_ALIASES.iteritems()]
+            
+        if not hasattr(FedoraFixtures, '_archives'):
+            repo = Repository()
+            FedoraFixtures._archives = [repo.get_object(pid, type=CollectionObject)
+                                        for pid in settings.PID_ALIASES.itervalues()]
+        return FedoraFixtures._archives
 
     @staticmethod
     def rushdie_collection():
@@ -20,7 +28,7 @@ class FedoraFixtures:
         obj.label = 'Salman Rushdie Collection'
         obj.mods.content.title = 'Salman Rushdie Collection'
         obj.mods.content.source_id = '1000'
-        obj.set_collection(FedoraFixtures.top_level_collections()[1].uri)
+        obj.set_collection(FedoraFixtures.archives()[1].uri)
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1947, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=2008, point='end'))
@@ -35,7 +43,7 @@ class FedoraFixtures:
         obj.label = 'Thomas Esterbrook letter books'
         obj.mods.content.title = 'Thomas Esterbrook letter books'
         obj.mods.content.source_id = '123'
-        obj.set_collection(FedoraFixtures.top_level_collections()[2].uri)
+        obj.set_collection(FedoraFixtures.archives()[2].uri)
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1855, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1861, point='end'))
@@ -50,7 +58,7 @@ class FedoraFixtures:
         obj.label = 'English documents collection'
         obj.mods.content.title = 'English documents collection'
         obj.mods.content.source_id = '309'
-        obj.set_collection(FedoraFixtures.top_level_collections()[1].uri)
+        obj.set_collection(FedoraFixtures.archives()[1].uri)
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1509, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1805, point='end'))

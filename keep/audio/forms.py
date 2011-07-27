@@ -12,7 +12,7 @@ from keep import mods
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
-from keep.collection.forms import NameForm, repository_choices
+from keep.collection.forms import NameForm, archive_choices
 from keep.common.models import Rights
 from keep.common.forms import ReadonlyTextInput
 
@@ -59,8 +59,8 @@ class ItemSearch(forms.Form):
     instances.'''
     title = forms.CharField(required=False,
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
-    description = forms.CharField(required=False,
-            help_text='Search for word or phrase in general note or digitization purpose.  May contain wildcards * or ?.')
+    notes = forms.CharField(required=False,
+            help_text='Search for word or phrase in general note, digitization purpose, or related files.  May contain wildcards * or ?.')
     collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',
@@ -68,15 +68,15 @@ class ItemSearch(forms.Form):
     pid = forms.CharField(required=False, help_text='Search by fedora pid, DM id or DM other id.',
             initial='%s:' % settings.FEDORA_PIDSPACE, label="Pid/DM ID/Other ID")
     date = forms.CharField(required=False,
-            help_text=mark_safe('''Search date created, issued, or uploaded.  All dates
-            are in <b>YYYY</b>, <b>YYYY-MM</b> or <b>YYYY-MM-DD</b> format.
+            help_text=mark_safe('''Search date created, issued, or uploaded.  Most dates
+            are in <b>YYYY</b>, <b>YYYY-MM</b> or <b>YYYY-MM-DD</b> format.<br/>
+            Date uploaded is in <b>YYYY-MM-DDTHH:MM:SS.mmmmmmmZ</b> format.
             May contain wildcards * or ?.<br/>
             <i>Example:</i> search <b>2011-02*</b> for all items uploaded in February 2011.'''))
-    rights = forms.ChoiceField(rights_access_options, required=False,
-                    help_text='Search for items with the specified Rights access condition')
-    # location/archive (top-level collection via item->collection membership)
-    location = forms.ChoiceField(label="Repository/Archive", required=False,
-                    choices=repository_choices, initial='',
+    access_code = forms.ChoiceField(rights_access_options, label='Rights', required=False,
+                    help_text='Search for items with the specified rights access status')
+    archive = DynamicChoiceField(label="Archive", required=False,
+                    choices=archive_choices, initial='',
                     help_text='Search for items that are owned by the specified Archive')
 
     

@@ -1,30 +1,27 @@
 import logging
 import re
 from rdflib import RDF, URIRef
+from sunburnt import sunburnt
 
 from django.conf import settings
-from django.core.cache import cache
 
 from eulexistdb.manager import Manager
 from eulexistdb.models import XmlModel
 from eulfedora.models import XmlDatastream
 from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.rdfns import relsext
+from eulfedora.util import RequestFailed
 from eulxml import xmlmap
 from eulxml.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
 
 from keep import mods
+from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep.common.rdfns import REPO
-from keep.common.fedora import DigitalObject, Repository
 
 logger = logging.getLogger(__name__)
 
-# items cached here should be cached for a "long time"; the cache will be refreshed
-# when collections are modified or created
-LONG_CACHE_DURATION = 60*60*12   # time in seconds
-
-class CollectionMods(mods.MODS):
-    '''Collection-specific MODS, based on :class:`keep.mods.MODS`.'''
+class CollectionMods(LocalMODS):
+    '''Collection-specific MODS, based on :class:`keep.common.fedora.LocalMODS`.'''
     source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
     'local source identifier as an integer'
     # possibly map identifier type uri as well ?
@@ -87,11 +84,8 @@ class CollectionObject(DigitalObject):
 
     _collection_id = None
     _collection_label = None
-    _top_level_collections = None
+    _archives = None
 
-    _collection_pids_cache_key = 'item-collection-pids'
-    _toplevel_collection_cache_key = 'top-level-collection-pids'
-    
     def _update_dc(self):
         # FIXME: some duplicated logic from AudioObject save
         if self.mods.content.title:
@@ -118,21 +112,10 @@ class CollectionObject(DigitalObject):
                             self.mods.content.origin_info.created[1].date)
             # FIXME: should this be dc:coverage ?
 
-        # TEMPORARY: collection relation and cmodel must be in DC for find_objects
-        # - these two can be removed once we implement gsearch
-        if self.collection_id is not None:
-            # store collection membership as dc:relation
-            self.dc.content.relation = self.collection_id
-        # set collection content model URI as dc:format
-        self.dc.content.format = self.COLLECTION_CONTENT_MODEL
-
 
     def save(self, logMessage=None):
         '''Save the object.  If the content of the MODS or RELS-EXT datastreams
         have been changed, the DC will be updated and saved as well.
-
-        After a successful save, information for this collection object
-        will be updated in the local cache using :meth:`set_cached_collection_dict`.
 
         :param logMessage: optional log message
         '''
@@ -141,20 +124,11 @@ class CollectionObject(DigitalObject):
             # if either has changed, update DC and object label to keep them in sync
             self._update_dc()
 
-        # before save/ingest, store whether or not this is a new object
-        new_collection = self._create
-
-        save_result = super(CollectionObject, self).save(logMessage)
-        # after a collection is successfully saved, update the cache
-        set_cached_collection_dict(self)
-        # if this is a brand-new collection, the list of items needs to be refreshed
-        if new_collection:
-            self.item_collections(refresh_cache=True)
-        return save_result
+        return super(CollectionObject, self).save(logMessage)
 
     @property
     def collection_id(self):
-        """Fedora URI for the top-level collection this object is a member of.
+        """Fedora URI for the archive collection this object is a member of.
         
         :type: string
         """
@@ -168,12 +142,12 @@ class CollectionObject(DigitalObject):
 
     @property
     def collection_label(self):
-        """Label of the top-level collection this object is a member of.
+        """Label of the archive this object is a member of.
         
         :type: string
         """
-        if self._collection_label is None:
-            for coll in CollectionObject.top_level():
+        if self._collection_label is None and self.collection_id is not None:
+            for coll in CollectionObject.archives():  # could use dict format?
                 if coll.uri == self.collection_id:
                     self._collection_label = coll.label
                     break
@@ -200,7 +174,6 @@ class CollectionObject(DigitalObject):
 
     def old_dm_media_path(self):
         'Path to media in old Digital Masters interface.'
-        old_dm = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
         coll_number = str(self.mods.content.source_id)
 
         repo = Repository()
@@ -209,178 +182,161 @@ class CollectionObject(DigitalObject):
         marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
         if parent.pid == marbl_pid:
             if coll_number == '0':
-                return '%sspec_coll/Danowski/' % (old_dm,)
+                return 'spec_coll/Danowski/'
             else:
-                return '%sspec_col/MSS%s/' % (old_dm, coll_number)
+                return 'spec_col/MSS%s/' % (coll_number,)
         else:
-            return '%suniv_arch/SER%s/' % (old_dm, coll_number)
-
+            return 'univ_arch/SER%s/' % (coll_number,)
 
     @staticmethod
-    def top_level():
-        """Find top-level collection objects.
+    def archives(format=None):
+        """Find Archives objects, to which CollectionObjects belong.
         
         :returns: list of :class:`CollectionObject`
         :rtype: list
         """
-        # NOTE: top-level collections are now called Repository (for owning
-        # repository or archive), and should be labeled as such anywhere user-facing
+        # NOTE: formerly called top-level collections or Repository /
+        # Owning Repository; should now be called archive and labeled
+        # as such anywhere user-facing
 
-        # NOTE: can't pickle digital objects, so caching list of pids instead
-        collection_pids = cache.get(CollectionObject._toplevel_collection_cache_key, None)
-        repo = Repository()
-        if collection_pids is None or \
-                CollectionObject._top_level_collections is None:
+        # TODO: search logic very similar to item_collections and
+        # subcollections methods; consider refactoring search logic
+        # into a common search method.
+
+        if CollectionObject._archives is None:
             # find all objects with cmodel collection-1.1 and no parents
-            query = '''SELECT ?coll
-            WHERE {
-                ?coll <%(has_model)s> <%(cmodel)s>
-                OPTIONAL { ?coll <%(member_of)s> ?parent }
-                FILTER ( ! bound(?parent) )
-            }
-            ''' % {
-                'has_model': modelns.hasModel,
-                'cmodel': CollectionObject.COLLECTION_CONTENT_MODEL,
-                'member_of': relsext.isMemberOfCollection,
-            }
-            collection_pids = list(repo.risearch.find_statements(query, language='sparql',
-                                                             type='tuples', flush=True))
-            # these objects are not expected to change frequently - caching for a long time
-            cache.set(CollectionObject._toplevel_collection_cache_key, collection_pids, LONG_CACHE_DURATION)
-            CollectionObject._top_level_collections = [repo.get_object(result['coll'], type=CollectionObject)
-                                                       for result in collection_pids]
 
-        return CollectionObject._top_level_collections
+            # search solr for collection objects with NO parent collection id
+            solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+            # NOTE: not filtering on pidspace, since top-level objects are loaded as fixtures
+            # and may not match the configured pidspace in a dev environment
+            solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+            collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').execute()
+            # store the solr response format
+            CollectionObject._archives = collections
+
+        if format == dict:
+            return CollectionObject._archives
+        
+        # otherwise, initialize as instances of CollectionObject
+        repo = Repository()
+        return [repo.get_object(arch['pid'], type=CollectionObject)
+                                                       for arch in CollectionObject._archives]
+
 
     @staticmethod
-    def item_collections(refresh_cache=False):
-        """Find all collection objects in the configured Fedora pidspace that
-        can contain items. Today this includes all those collections that are
-        not top-level. 
+    def find_by_pid(pid):
+        'Find a collection by pid and return a dictionary with collection information.'
+        # NOTE: this method added as a replacement for
+        # get_cached_collection_dict that was used elsewhere
+        # throughout the site (audio app, etc.)  It should probably be
+        # consolidated with other find methods...
+        
+        if pid.startswith('info:fedora/'): # allow passing in uri
+             pid = pid[len('info:fedora/'):]      
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               pid=pid)
+        result = solrquery.execute()
+        if len(result) == 1:
+            return result[0]
+        # otherwise - exception? not found / too many
+
+
+    @staticmethod
+    def item_collections():
+        """Find all collection objects in the configured Fedora
+        pidspace that can contain items. Today this includes all
+        collections that belong to arn archive.
         
         :returns: list of dict
         :rtype: list
         """
-        pids = cache.get(CollectionObject._collection_pids_cache_key, None)
-        if pids is None or refresh_cache:
-            repo = Repository()
-            # find all objects with cmodel collection-1.1 and any parent
-            query = '''SELECT DISTINCT ?coll
-            WHERE {
-                ?coll <%(has_model)s> <%(cmodel)s> .
-                ?coll <%(member_of)s> ?parent
-            }
-            ''' % {
-                'has_model': modelns.hasModel,
-                'cmodel': CollectionObject.CONTENT_MODELS[0],
-                'member_of': relsext.isMemberOfCollection,
-            }
-            collection_pids = repo.risearch.find_statements(query, language='sparql',
-                                                            type='tuples', flush=True)
-            pids = [result['coll'] for result in collection_pids
-                                if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
-            
-            cache.set(CollectionObject._collection_pids_cache_key, pids, LONG_CACHE_DURATION)
-        return [get_cached_collection_dict(p) for p in pids]
+
+        # search solr for collection objects with NO parent collection id
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               archive_id__any=True)
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
         # use dictsort and regroup in templates for sorting where appropriate
+        return solrquery.paginate(start=0, rows=1000).execute()
 
     def subcollections(self):
         """Find all sub-collections that are members of the current collection
         in the configured Fedora pidspace.
 
         :rtype: list of dict
-        """        
-        repo = Repository()
-        # find all objects with cmodel collection-1.1 and this object for parent
-        query = '''SELECT ?coll
-        WHERE {
-            ?coll <%(has_model)s> <%(cmodel)s> .
-            ?coll <%(member_of)s> <%(parent)s>
-        }
-        ''' % {
-            'has_model': modelns.hasModel,
-            'cmodel': CollectionObject.CONTENT_MODELS[0],
-            'member_of': relsext.isMemberOfCollection,
-            'parent': self.uri,
-        }
-        collection_pids = repo.risearch.find_statements(query, language='sparql',
-                                                         type='tuples', flush=True)
-        return [get_cached_collection_dict(result['coll'])
-                        for result in collection_pids
-                            if '%s:' % settings.FEDORA_PIDSPACE in str(result['coll'])]
+        """
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               pid='%s:' % settings.FEDORA_PIDSPACE,
+                               archive_id=self.pid)
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
         # use dictsort in template for sorting where appropriate
+        return solrquery.paginate(start=0, rows=1000).execute()
 
     @staticmethod
     def find_by_collection_number(num, parent=None):
-        '''Find a CollectionObject in Fedora by collection number, optionally limited by parent collection (owning
-        Repository or top-level collection.
+        '''Find a CollectionObject in Fedora by collection number (or
+        source id), optionally limited by parent collection (owning
+        archive).
 
-        :param num: collection number to search for
-        :param parent: optional; top-level collection or Archive/Repository collection must belong to
-        :return: generator of any items, as returned by :meth:`eulfedora.server.Repository.find_objects`,
-             as type :class:`CollectionObject`
+        :param num: collection number to search for (aka source id)
+        :param parent: optional; archive that the collection must belong to
+        :return: generator of any matching items, as instances of
+            :class:`CollectionObject`
         '''
-        repo = Repository()
-        args = {
-            # restrict to items with collection cmodel
-            'format': CollectionObject.COLLECTION_CONTENT_MODEL,
-            # restrict to currently-configured pidspace
-            'pid__contains': '%s:*' % settings.FEDORA_PIDSPACE,
-            # initialize results as type CollectionObject
-            'type': CollectionObject,
-        }
-        # if parent is specified, restrict by relation (parent should be a pid)
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               pid='%s:*' % settings.FEDORA_PIDSPACE,
+                               source_id=int(num))
+        # if parent is specified, restrict by collection id (parent should be a pid)
         if parent is not None:
-            args['relation'] = parent
+            solrquery = solrquery.query(collection_id=parent)
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
+        # use dictsort in template for sorting where appropriate
+        collections = solrquery.paginate(start=0, rows=1000).execute()
 
-        # restrict to collection objects in the current pidspace
-        coll = repo.find_objects(identifier__contains=str(num), **args)
-        return coll
-
-def get_cached_collection_dict(pid):
-    '''Retrieve minimal collection object information in dictionary form.
-    A cached copy will be used when available; when not previously cached,
-    the cache will be populated before the dictionary is returned.
-
-    :param pid: collection object pid or uri
-    :rtype: dict
-    '''  
-    if pid.startswith('info:fedora/'): # allow passing in uri
-        pid = pid[len('info:fedora/'):]        
-    # use pid for cache key
-    coll_dict = cache.get(pid, None)
-    if coll_dict is None:
+        # return a generator of matching items, as instances of CollectionObject
         repo = Repository()
-        coll_dict = set_cached_collection_dict(repo.get_object(pid, type=CollectionObject))
-    return coll_dict
+        for coll in collections:
+            yield repo.get_object(coll['pid'], type=CollectionObject)
 
-def set_cached_collection_dict(collection):
-    '''Save minimal information about a :class:`CollectionObject` to a local
-    cache in dictionary format.  Stores the following fields:
+    def index_data_descriptive(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data_descriptive`
+        method to include a few additional fields specific to Keep
+        Collection objects.'''
+        data = super(CollectionObject, self).index_data_descriptive()
+        if self.collection_id is not None:
+            data.update(self._index_data_archive())
+                
+        # if source id is set, include it
+        if self.mods.content.source_id:
+            data['source_id'] = self.mods.content.source_id
 
-        * pid
-        * source_id (from :class:`CollectionMods.source_id`)
-        * title
-        * creator
-        * collection_id  - id for the collection/numbering scheme object this
-          collection belongs to
-        * collection_label - label for parent collection/numbering scheme object
+        if self.mods.content.ark_uri:
+            data['ark_uri'] =  self.mods.content.ark_uri
 
-    :param collection: class:`CollectionObject` to be cached
-    '''
-    # DigitalObjects can't be cached, and django templates can sort and regroup
-    # dictionaries much better, so cache important collction info as dictionary 
-    coll_dict = {
-        'pid': collection.pid,
-        'source_id': collection.mods.content.source_id,
-        'title': unicode(collection.mods.content.title),
-        'creator': unicode(collection.mods.content.name or ''),
-        'collection_id': collection.collection_id,
-        'collection_label': collection.collection_label,
-    }
-    logger.debug('caching collection %s: %r' % (collection.pid, coll_dict))
-    cache.set(collection.pid, coll_dict, LONG_CACHE_DURATION)   # keep for a long time, since we will recache
-    return coll_dict
+        return data
+
+    def _index_data_archive(self):
+        data = {}
+        if self.collection_id is not None:
+            data['archive_id'] = self.collection_id
+            try:
+                # pull owning archive object directly from fedora
+                # (don't assume it is already indexed in solr)
+                archive = CollectionObject(self.api, self.collection_id)
+                data['archive_label'] = archive.label
+            except RequestFailed as rf:
+                logger.error('Error accessing archive object %s in Fedora: %s' % \
+                             (self.collection_id, rf))
+        return data
+
 
 class FindingAid(XmlModel, EncodedArchivalDescription):
     """
@@ -411,7 +367,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         '''
         repo = Repository()
         coll = repo.get_object(type=CollectionObject)
-        # TODO: top-level collection membership?
+        # TODO: archive membership?
 
         # title - using 'short' form without unitdate, stripping any trailing whitespace & . or ,
         # TODO/FIXME: does NOT work for unittitles with nested tags, e.g. title - see pomerantz
@@ -483,7 +439,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
     @staticmethod
     def find_by_unitid(id, archive_name):
-        '''Retrieve a single Finding Aid by top-level unitid and repository name.
+        '''Retrieve a single Finding Aid by archive unitid and repository name.
         This method assumes a single Finding Aid should be found, so uses the
         :meth:`eulexistdb.query.QuerySet.get` method, which raises the following
         exceptions if anything other than a single match is found:

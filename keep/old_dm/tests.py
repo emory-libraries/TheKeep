@@ -1,4 +1,5 @@
 from django.conf import settings
+from mock import Mock, patch
 
 from keep.collection.fixtures import FedoraFixtures
 from keep import mods
@@ -14,9 +15,13 @@ class LocationTest(KeepTestCase):
     business = models.Location(name='Goizueta Business Library')
     oxford = models.Location(name="Hoke O'Kelley Memorial Library, Oxford College")
 
+    # use fixture-generated archives list rather than solr-generated version
+    @patch('keep.collection.models.CollectionObject.archives',
+           new=Mock(return_value=FedoraFixtures.archives()))
     def setUp(self):
+        super(LocationTest, self).setUp() 
         # convert fixture objects into short-hand versions so we an easily identify them
-        for obj in CollectionObject.top_level():
+        for obj in CollectionObject.archives():
             if obj.label == 'Manuscript, Archives, and Rare Book Library':
                 self.marbl_obj = obj
             elif obj.label == 'Emory University Archives':
@@ -26,6 +31,8 @@ class LocationTest(KeepTestCase):
             elif obj.label == "Hoke O'Kelley Memorial Library, Oxford College":
                 self.oxford_obj = obj
 
+    @patch('keep.old_dm.models.CollectionObject.archives',
+           new=Mock(return_value=FedoraFixtures.archives()))
     def test_corresponding_repository(self):
         self.assertEqual(self.marbl_obj.uri, self.marbl.corresponding_repository,
                          'MARBL location should correspond to MARBL Repository object')

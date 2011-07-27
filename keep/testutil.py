@@ -26,6 +26,19 @@ class KeepTestCase(existdb_testutil.TestCase):
         super(KeepTestCase, self).setUp()
         self.repo = Repository()
 
+        self._solr_server_url = getattr(settings, 'SOLR_SERVER_URL', None)
+        if self._solr_server_url is None:
+            # sunburnt solr initialization expects *something* to be set
+            settings.SOLR_SERVER_URL = 'http://localhost:8080/solr/'
+
+    def tearDown(self):
+        if self._solr_server_url is not None:
+            settings.SOLR_SERVER_URL = self._solr_server_url
+        else:
+            del settings.SOLR_SERVER_URL
+
+
+
 
 class CacheTestWrapper(object):
     # TODO: could this go in eulcommon?

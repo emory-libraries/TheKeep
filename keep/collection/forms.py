@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from eulfedora.rdfns import relsext as relsextns
 
 from eulxml.forms import XmlObjectForm, SubformField
+from eulcommon.djangoextras.formfields import DynamicChoiceField
 
 from keep import mods
 from keep.arrangement.models import ArrangementObject
@@ -16,15 +17,12 @@ from keep.common.fedora import Repository
 
 logger = logging.getLogger(__name__)
 
+def archive_choices():
+    choices = [('info:fedora/%s' % a['pid'],
+                a['title']) for a in CollectionObject.archives(format=dict)]
+    choices.insert(0, ('', ''))   # blank option at the beginning (default)
+    return choices
 
-try:
-    # NOTE: this only sets choices on load time (should be OK for search)
-    repository_choices = [(o.uri, o.label) for o in CollectionObject.top_level()]
-    repository_choices.insert(0, ('', ''))   # blank option at the beginning (default)
-except:
-    # if we can't get repository choices at all (e.g., due to misconfigured
-    # perms), at least make it empty instead of exploding immediately
-    repository_choices = []
 
 
 class CollectionSearch(forms.Form):
@@ -40,15 +38,16 @@ class CollectionSearch(forms.Form):
       values in <b>all</b> search fields are returned.</li>
     </ul>''')
     wildcard_tip = '''May contain wildcards <b>*</b> or <b>?</b>.'''
-    mss = forms.IntegerField(required=False, label='Collection Number',
+    source_id = forms.IntegerField(required=False, label='Collection Number',
             help_text=mark_safe('''Search by manuscript or series number (e.g.,
-                enter <b>100</b> for <b>MSS100</b> or <b>Series 100</b>). ''' + wildcard_tip))
+                enter <b>100</b> for <b>MSS100</b> or <b>Series 100</b>).'''))
     title = forms.CharField(required=False,
             help_text=mark_safe('Search by collection title word or phrase. ' + wildcard_tip))
     creator = forms.CharField(required=False,
             help_text=mark_safe('Search by collection creator. '  + wildcard_tip))
-    collection = forms.ChoiceField(label="Repository", required=False,
-                    choices=repository_choices, initial='')
+    archive_id = DynamicChoiceField(label="Archive",  choices=archive_choices,
+                                    initial='', required=False)
+
                                 
 
 class AccessConditionForm(XmlObjectForm):
@@ -122,12 +121,10 @@ class CollectionForm(XmlObjectForm):
     editable was to make a customized :class:`~eulxml.forms.XmlObjectForm`
     that mostly deals with the  MODS datastream.
     '''
-    # FIXME: update docstring to reflect multiple xml edit forms / datastreams
 
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
-    # TODO: update to use DynamicChoiceField now in use for audio?
-    collection = forms.ChoiceField(label="Repository",
-                    choices=repository_choices,
+    collection = DynamicChoiceField(label="Archive",  choices=archive_choices,
+                    required=False,
                     help_text="Owning repository for this collection of materials.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",
@@ -205,7 +202,7 @@ class CollectionForm(XmlObjectForm):
                     ))
                 self.instance.origin_info.created[0].point = 'start'
 
-            # set relation to top-level collection when an instance was passed in
+            # set relation to archive object when an instance was passed in
             if hasattr(self, 'object_instance'):
                 self.object_instance.set_collection(self.cleaned_data['collection'])
 

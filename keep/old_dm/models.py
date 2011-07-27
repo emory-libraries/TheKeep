@@ -156,17 +156,30 @@ class Location(models.Model):
         global REPOSITORY_LOCATION
         # if this location has not yet been mapped to a repository object, look it up
         if self.name not in REPOSITORY_LOCATION:
-            repos = CollectionObject.top_level()
-            for repo in repos:
-                # translate DM location labels to Keep repository object labels
-                if (self.name == repo.label) or \
-                   (self.name.startswith('Emory Archives') and repo.label == 'Emory University Archives') or \
-                   (self.name.startswith('MARBL') and repo.label == 'Manuscript, Archives, and Rare Book Library'):
-                    REPOSITORY_LOCATION[self.name] = repo.uri
-                    break
+            repo = self._repo_for_name(self.name)
+            if repo:
+                REPOSITORY_LOCATION[self.name] = repo.uri
 
         if self.name in REPOSITORY_LOCATION:
             return REPOSITORY_LOCATION[self.name]
+
+    def _repo_for_name(self, name):
+        repos = CollectionObject.archives()
+        for repo in repos:
+            # translate DM location labels to Keep repository object labels
+            if self.name == repo.label:
+                return repo
+            if 'Oxford College' in self.name \
+                    and 'Oxford College' in repo.label:
+                return repo
+            if self.name.startswith('Emory Archives') \
+                    and 'Oxford College' not in self.name \
+                    and repo.label == 'Emory University Archives':
+                return repo
+            if self.name.startswith('MARBL') \
+                    and repo.label == 'Manuscript, Archives, and Rare Book Library':
+                return repo
+
 
 class Subject(models.Model):
     subject = models.CharField(max_length=255)
@@ -236,36 +249,71 @@ class Content(models.Model):   # individual item
         if self.eua_series.count():
             return self.eua_series.all()[0].series
 
+    # well-known archive URIs
+    MARBL_URI = 'info:fedora/emory:93z53'
+    EUA_URI = 'info:fedora/emory:93zd2'
+    OXFORD_URI = 'info:fedora/emory:b2mx2'
+
+    REPO_SHORTNAMES = {
+        MARBL_URI: 'MARBL',
+        EUA_URI: 'EUA',
+        OXFORD_URI: 'OXFORD',
+    }
+
     @property
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
-        if self.collection_number:
-            desc = DescriptionData.objects.get(pk=self.collection_number)
-            return 'MARBL %d' % desc.mss_number
-        elif self.series_number:
-            return 'EUA %d' % self.series_number
+        repo, num = self._translated_collection_pair()
+        if repo is not None and num is not None:
+            name = self.REPO_SHORTNAMES[repo]
+            return '%s %d' % (name, num)
 
     @property
     def collection_object(self):
         'Fedora Collection object corresponding to the collection or series number and location for this item'
-        num = None
+        repo, num = self._translated_collection_pair()
+        if repo is not None and num is not None:
+            return self._lookup_collection(num, repo)
+
+    def _translated_collection_pair(self):
+        repo_uri = self.location.corresponding_repository
+        if repo_uri == self.EUA_URI:
+            if self.series_number == 1002:
+                return repo_uri, 0
+            elif self.series_number:
+                return repo_uri, self.series_number
+            else:
+                return repo_uri, 0
+
+        if repo_uri == self.OXFORD_URI:
+            if self.series_number:
+                return repo_uri, self.series_number
+            else:
+                return repo_uri, 0
+
         if self.collection_number:
             desc = DescriptionData.objects.get(pk=self.collection_number)
-            num = desc.mss_number
-        elif self.series_number:
-            num = self.series_number
+            return repo_uri, desc.mss_number
 
-        if num and self.location:
-            #Collection 1002 was the 'catch-all' collection in old DM.
-            # Collection 0 should be the catch-all for the new version.
-            if self.location.name == 'Emory University Archives' and num == 1002:
-                num = 0
+        if "DANOWSKI" in self.title.upper() \
+                or any("DANOWSKI" in ss.item_location.upper()
+                       for ss in self.source_sounds.all()
+                       if ss.item_location):
+            return self.MARBL_URI, 0
+
+        return None, None
+
+    _collection_cache = {} # on the class and thus shared by all Content objs
+    def _lookup_collection(self, num, repo):
+        if (num, repo) not in self._collection_cache:
             coll = list(CollectionObject.find_by_collection_number(num, self.location.corresponding_repository))
             # if we have one and only one match, we have found the correct object
             if len(coll) == 1:
-                return coll[0]
+                self._collection_cache[(num, repo)] = coll[0]
+            else:
+                self._collection_cache[(num, repo)] = None
 
-        return None
+        return self._collection_cache[(num, repo)]
 
     # default manager & custom audio-only manager
     objects = models.Manager()
@@ -306,7 +354,6 @@ class Content(models.Model):   # individual item
     def descriptive_metadata(self, obj):
         # print out descriptive fields and return a list of values
         logger.debug('--- Descriptive Metadata ---')
-        logger.debug('Collection: %s' % self.collection)
 
         # we'll be using this a lot below
         modsxml = obj.mods.content
@@ -314,8 +361,6 @@ class Content(models.Model):   # individual item
         # warn if no collection number could be found (either EUA or MARBL)
         if self.collection is None:
             ITEMS_WITHOUT_COLLECTION.add(self.id)
-            if "DANOWSKI" in obj.label.upper():
-                obj.collection_uri = list(CollectionObject.find_by_collection_number(0))[0].uri
             logger.warn('Item %d does not have a collection or series number' % self.id)
 
         # if there is a collection number, warn if the corresponding collection object could not be found
@@ -327,6 +372,9 @@ class Content(models.Model):   # individual item
         # otherwise we have a collection
         else:
             obj.collection_uri = self.collection_object.uri
+
+        if self.collection:
+            logger.debug('Collection: %s' % self.collection)
 
         logger.debug('Identifier: %s' % self.id)
         logger.debug('Other ID: %s' % self.other_id)
@@ -490,17 +538,6 @@ class Content(models.Model):   # individual item
         logger.debug('MODS:\n' + modsxml_s)
         return data
         
-     #Special cases for speed / unit mapping
-    def _special_speed_map(self, speed, unit):
-        if speed == 'O':
-            speed = 'other'
-        elif speed =='33':
-            speed = '33 1/3'
-        elif speed == '7.5' and unit =='ips':
-            speed ='7 1/2'
-            unit = 'inches/sec'
-        return speed, unit
-
     # fields returned by source_tech_metadata_method
     source_tech_fields = ['Note - General', 'Note - Related Files',
                           'Note - Conservation History', 'Speed',
@@ -554,12 +591,12 @@ class Content(models.Model):   # individual item
         # if there is exactly one speed, set it in the source tech xml
         elif len(speeds) == 1:
             #adjust speed and/or unit values
-            speed[0].speed, speed[0].unit = self._special_speed_map(speed[0].speed, speed[0].unit)
+            speed = speeds[0]
             st_xml.create_speed()
-            st_xml.speed.value =  speeds[0].speed
-            st_xml.speed.unit = speeds[0].unit
-            st_xml.speed.aspect = speeds[0].aspect
-        data.append('\n'.join('%s %s' % (self._special_speed_map(speed.speed, speed.unit))
+            st_xml.speed.value = speed.translated_speed
+            st_xml.speed.unit = speed.unit
+            st_xml.speed.aspect = speed.aspect
+        data.append('\n'.join('%s %s' % (speed.translated_speed, speed.unit)
                                             for speed in speeds))
 
         locs = [ s.item_location for s in sounds
@@ -591,7 +628,7 @@ class Content(models.Model):   # individual item
         elif len(chars) == 1:
             # sound characteristic is inconsistently capitalized
             # convert to lower case for best match with keep format
-            keepchars = chars[0].lower()
+            keepchars = chars[0].lower().strip()
             if keepchars != '' and keepchars != 'None':
                 if keepchars not in SourceTech.sound_characteristic_options:
                     logger.warning("Sound characteristic '%s' is not in the options list" \
@@ -646,7 +683,10 @@ class Content(models.Model):   # individual item
         # shortcut reference to digital tech xml to be updated below
         dt_xml = obj.digitaltech.content
 
-        techs = list(self.sound_source_tech.all())
+        direct_techs = set(self.sound_source_tech.all())
+        source_sounds = self.source_sounds.all()
+        techs_via_ss = set(TechSound.objects.filter(src_sound_id__in=source_sounds))
+        techs = direct_techs.union(techs_via_ss)
 
         purposes = [ tech.methodology for tech in techs
                      if tech.methodology ]
@@ -678,7 +718,7 @@ class Content(models.Model):   # individual item
 
         sounds = list(self.source_sounds.all())
         engineers = [ s.transfer_engineer for s in sounds
-                      if s.transfer_engineer ]
+                      if s.transfer_engineer_id ]
         for engineer in engineers:
             logger.debug('Transfer Engineer: %s (id=%d)' % (engineer.name, engineer.id))
         if len(engineers) > 1:
@@ -717,17 +757,29 @@ class Content(models.Model):   # individual item
             logger.debug('Copyright Date: %s' % rights.copyright_date)
             logger.debug('IP Notes: %s' % rights.restriction_other)
 
+        rights = None
+        rights_restriction = None
+
         if self.access_rights.count() > 1:
             logger.error('Item %d has %d Access Rights fields (not repeatable)' % (self.id,
                                                                                    self.access_rights.count()))
-        # if there is just one or zero access rights, migrate any values present
-        if self.access_rights.count() <=  1:
-            #if 0 rights map value 11
-            rights = self.access_rights.all()[0] if self.access_rights.count() == 1 else self.access_rights.get(id='11')[0]
-            if rights.restriction:
-                rights_xml.create_access_status()
-                rights_xml.access_status.code = rights.restriction.access_code
-                rights_xml.access_status.text = rights.restriction.access_text
+        elif self.access_rights.count() ==  1:
+            rights = self.access_rights.all()[0]
+            rights_restriction = rights.restriction
+
+        else: # self.access_rights.count() == 0
+            # use Restriction(id=11) == "Unknown" if none specified
+            rights_restriction = Restriction.objects.get(id=11)
+
+        if rights_restriction:
+            rights_xml.create_access_status()
+            rights_xml.access_status.code = rights_restriction.access_code
+            rights_xml.access_status.text = rights_restriction.access_text
+            data.append('%s - %s' % (rights_restriction.access_code, rights_restriction.access_abbreviation))
+        else:
+            data.append('')
+
+        if rights:
             if rights.name:
                 # name only, without authority information
                 rights_xml.copyright_holder_name = rights.name.name
@@ -735,14 +787,11 @@ class Content(models.Model):   # individual item
                 rights_xml.copyright_date = rights.w3cdtf_copyright_date()
             if rights.restriction_other:
                 rights_xml.ip_note = rights.restriction_other            
-
-
-        data.append('\n'.join('%s - %s' % (rights.restriction.access_code, rights.restriction.access_abbreviation)
-                                        for rights in self.access_rights.all() if rights.restriction))
-        data.append('\n'.join(unicode(rights.name) for rights in self.access_rights.all()))
-        data.append('\n'.join('%s' % rights.copyright_date for rights in self.access_rights.all()))
-        data.append('\n'.join('%s' % rights.restriction_other for rights in self.access_rights.all()))
-
+            data.append(unicode(rights.name))
+            data.append(rights.copyright_date)
+            data.append(rights.restriction_other)
+        else:
+            data.extend(['', '', ''])
 
         logger.debug('Rights XML:\n' + rights_xml.serialize(pretty=True))
 
@@ -936,6 +985,15 @@ class Speed(models.Model):
     def __unicode__(self):
         return '%s' % self.id
 
+    SPEED_TRANSLATIONS = {
+        'O': 'other',
+        '33': '33 1/3',
+        '7.5': '7 1/2',
+    }
+    @property
+    def translated_speed(self):
+        return self.SPEED_TRANSLATIONS.get(self.speed, self.speed)
+
     @property
     def unit(self):
         if self.speed_alt == 'Multiple':
@@ -976,12 +1034,12 @@ class Speed(models.Model):
         if self.unit == 'other':
             lookup_speed = self.unit
         else:
-            lookup_speed = '%s %s' % (self.speed, self.unit)
+            lookup_speed = '%s %s' % (self.translated_speed, self.unit)
         if lookup_speed in self.speed_aspects:
             return self.speed_aspects[lookup_speed]
         else:
-            logger.warn('Could not determine speed aspect for %s' % \
-                        lookup_speed)
+            logger.warning('Could not determine speed aspect for %s' % \
+                           lookup_speed)
 
 
 class SrcMovingImages(models.Model):

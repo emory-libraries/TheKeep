@@ -50,12 +50,6 @@ class Command(BaseCommand):
             logging.info('Migration dry run. Metadata will be extracted ' +
                          'but not ingested. To ingest metadata, run ' +
                          'without the -n option.')
-        else:
-            logging.warning("Migration running in ingest mode, but it is " +
-                            "not yet complete. Consider using -n for dry " +
-                            "run mode instead.")
-            import time
-            time.sleep(5)
 
         with self.open_csv(options) as csvfile:
             if csvfile:
@@ -86,6 +80,10 @@ class Command(BaseCommand):
                     message = 'Migrated from legacy Digital Masters item %d' % (item.id,)
                     obj.save(logMessage=message)
                     logger.info('Ingested legacy Digital Masters item %d as %s' % (item.id, obj.pid))
+
+                    title_prefix = '(migrated to The Keep: %s) ' % (obj.pid,)
+                    item.title = title_prefix + item.title
+                    item.save()
                 if csvfile:
                     csvfile.writerow([_csv_sanitize(field) for field in row_data])
 
