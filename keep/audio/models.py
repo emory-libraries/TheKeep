@@ -326,7 +326,7 @@ class AudioObject(DigitalObject):
     with content as :class:`Rights`'''
 
     jhove = FileDatastream("JHOVE", "JHOVE datastream", defaults={
-            'mimetype': 'audio/x-wav',
+            'mimetype': 'application/xml',
             'control_group': 'M',
             'versionable': True,
             'format': 'http://hul.harvard.edu/ois/xml/xsd/jhove/jhove.xsd',

@@ -10,8 +10,11 @@ import sys
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from keep.audio.models import AudioObject
+from eulfedora.util import RequestFailed, ChecksumMismatch
+
+from keep.audio.models import AudioObject, wav_duration
 from keep.common.fedora import Repository
+from keep.common.utils import md5sum
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +33,7 @@ class Command(BaseCommand):
             help='''Output CSV data to the specified filename'''),
         make_option('--max', '-m',
             type='int',
-            help='''Stop after processing the specified number of items'''),
+            help='''Stop after updating the specified number of items'''),
         make_option('--dry-run', '-n',
             default=False,
             action='store_true',
@@ -91,10 +94,50 @@ class Command(BaseCommand):
                     stats['no_wav'] += 1
 
 
-                # TODO: logic to add the files to fedora objects;
-                # only execute when not in dry-run mode
-                # if not options['dry_run']:
-                #    ... 
+                # logic to actually add files to fedora objects
+                # - only execute when not in dry-run mode
+                if not options['dry_run']:
+                    # keep track of any files that are migrated into fedora
+                    files_updated = 0
+
+                    # if there is a stored MD5 checksum for the WAV file, use that
+                    if paths.md5:
+                        with open(paths.md5) as md5file:
+                            wav_md5 = md5file.read().strip()
+                     # otherwise, let update_datastream calculate the MD5
+                    else:
+                        wav_md5 = None
+                    # add the WAV file as contents of the primary audio datastream
+                    if self.update_datastream(obj.audio, paths.wav, wav_md5):
+                        files_updated += 1
+                        
+                    # Continue even if the WAV fails; it may have
+                    # to be handled manually, but having the other
+                    # files migrated should still be valuable
+                    
+                    # for newly ingested objects, audio file duration
+                    # is calculated and stored at ingest; go ahead and
+                    # do that for migration content, too
+                    obj.digitaltech.content.duration = '%d' % round(wav_duration(paths.wav))
+                    if obj.digitaltech.isModified():
+                        if self.verbosity > self.v_normal:
+                            self.stdout.write('Adding WAV file duration to DigitalTech')
+                            obj.digitaltech.save('duration calculated from WAV file during migration')
+
+
+                    # if m4a is present, add it as compressed audio datastream
+                    if paths.m4a:
+                        # TODO: set mimetype, since M4A is not the default (MP3)?
+                        if self.update_datastream(obj.compressed_audio, paths.m4a):
+                            files_updated += 1
+                    # if jhove is present, add it to the object
+                    if paths.jhove:
+                        if self.update_datastream(obj.jhove, paths.jhove):
+                            files_updated += 1
+
+                    if files_updated:
+                        stats['updated'] += 1
+                        stats['files'] += files_updated
 
                 if csvfile:
                     row_data = [ obj.pid, obj.mods.content.dm1_id,
@@ -103,20 +146,24 @@ class Command(BaseCommand):
                     csvfile.writerow(row_data)
 
                 # if a maximum was specified, check if we are at the limit
-                if max_items is not None and stats['audio'] > max_items:
+                # - it's a little bit arbitrary which count we use here; audio items?
+                #   dm1 items? going with updated items as it seems the most useful
+                if max_items is not None and stats['updated'] > max_items:
                     break
 
         # if we are not migrating everything (limited either by max or specified pids),
         # skip the unclaimed files check
         if max_items is not None or pids:
             if self.verbosity > self.v_normal:
-                self.stdout.write('Skipping unclaimed file check because migration was limited\n')
+                self.stdout.write('\nSkipping unclaimed file check because migration was limited\n')
         else:
             # look for any audio files not claimed by a fedora object
             self.check_unclaimed_files()
 
         if self.verbosity >= self.v_normal:
-            self.stdout.write('Total DM1 objects: %(dm1)d (of %(audio)d audio objects)\n' \
+            self.stdout.write('\nTotal DM1 objects: %(dm1)d (of %(audio)d audio objects)\n' \
+                              % stats)
+            self.stdout.write('%(updated)d object(s) updated, %(files)d files migrated\n' \
                               % stats)
             self.stdout.write('Missing WAV file: %(no_wav)d\n' % stats)
 
@@ -212,3 +259,63 @@ class Command(BaseCommand):
             else:
                 pids.add(id)
         return pids
+
+
+    def update_datastream(self, ds, filepath, checksum=None):
+        '''Update the contents of a single datastream in Fedora.  If
+        the datastream already exists and the checksum matches the one
+        passed in, no updates will be made.
+
+        :param ds: :class:`eulfedora.models.DatastreamObject` the
+            datastream to be updated
+        :param filepath: full path to the file whose contents should
+            be stored in the datastream
+        :param checksum: the MD5 checksum for the file contents; if
+            not specified, an MD5 checksum will be calculated for the
+            file passed in
+
+        :returns: True if the datastream was saved; False if no
+            changes were made (datastream was already present with the
+            same checksum, or the update failed)
+        '''
+        if checksum is None:
+            if self.verbosity > self.v_normal:
+                self.stdout.write('Calculating checksum for %s\n' % filepath)
+            checksum = md5sum(filepath)
+
+        # - if the content already exists with the correct checksum
+        # (e.g., from a previous file migration run), skip it
+        if ds.exists and ds.checksum == checksum:
+            if self.verbosity > self.v_normal:
+                self.stdout.write('%s already has %s datastream with the expected checksum; skipping\n' \
+                                  % (ds.obj.pid, ds.id))
+        # datastream does not yet exist or does not have the expected content
+        # migrate the file into the repository
+        else:
+            with open(filepath) as filecontent:
+                ds.content = filecontent
+                ds.checksum_type = 'MD5'
+                ds.checksum = checksum
+                try:
+                    # save just this datastream
+                    success = ds.save('Migrated from legacy Digital Masters file %s\n' % \
+                             filepath)
+                    if success:
+                        if self.verbosity > self.v_normal:
+                            self.stdout.write('Successfully updated %s/%s\n' \
+                                          % (ds.obj.pid, ds.id))
+                        return True
+                    else:
+                        if self.verbosity >= self.v_normal:
+                            self.stdout.write('Error updating %s/%s\n' \
+                                              % (ds.obj.pid, ds.id))
+                except RequestFailed as rf:
+                    self.stdout.write('Error saving %s/%s: %s\n' % \
+                                      (ds.obj.pid, ds.id, rf))
+
+        # successful update should already have returned
+        return False
+
+
+
+                    

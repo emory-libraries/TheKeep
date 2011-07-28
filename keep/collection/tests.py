@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import logging
 from mock import Mock, patch
 from os import path
 from rdflib import URIRef
@@ -11,6 +12,7 @@ from django.test import Client
 from django.utils import simplejson
 
 from eulfedora.rdfns import relsext
+from eulfedora.util import RequestFailed
 
 
 from keep.arrangement.models import ArrangementObject
@@ -23,6 +25,8 @@ from keep.common.fedora import DigitalObject, Repository
 from keep.common.rdfns import REPO
 from keep import mods
 from keep.testutil import KeepTestCase
+
+logger = logging.getLogger(__name__)
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
@@ -441,7 +445,10 @@ class CollectionViewsTest(KeepTestCase):
         super(CollectionViewsTest, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
-            self.repo.purge_object(pid)
+            try:
+                self.repo.purge_object(pid)
+            except RequestFailed:
+                logger.warn('Failed to purge %s in tear down' % pid)
 
     def test_create(self):
         # test creating a collection object

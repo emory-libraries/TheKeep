@@ -56,12 +56,14 @@ def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.
     
-    There are two distinct ways to upload file. The first case is kicked off when "fileManualUpload"
-    exists in the posted form. If it does, then this was not a HTML5 browser, and the file upload
+    There are two distinct ways to upload file. The first case is
+    kicked off when "fileManualUpload" exists in the posted form. If
+    it does, then this was not a HTML5 browser, and the file upload
     occurs as is usual for a single file upload.
 
-    In the other approach, the file was uploaded via a HTML5 ajax upload already. In this case, we
-    are reading in various hidden generated form fields that indicate what was uploaded from the 
+    In the other approach, the file was uploaded via a HTML5 ajax
+    upload already. In this case, we are reading in various hidden
+    generated form fields that indicate what was uploaded from the
     javascript code.
     '''
 
@@ -444,7 +446,7 @@ def view(request, pid):
 
 @permission_required('is_staff')
 def view_datastream(request, pid, dsid):
-    'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech)'
+    'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=AudioObject, repo=Repository(request=request))
 
