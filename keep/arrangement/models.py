@@ -13,6 +13,13 @@ class Permissions(models.Model):
             ("marbl_allowed", "Access to MARBL collections is allowed."),
         )
 
+class ArrangementMods(mods.MODS):
+    subseries = xmlmap.NodeField('mods:relatedItem', mods.RelatedItem,
+        required=True,
+        help_text='subseries')
+
+    ':class:`SubSeries`'
+
 class ArrangementObject(DigitalObject):
     ARRANGEMENT_CONTENT_MODEL = 'info:fedora/emory-control:Arrangement-1.0'
     CONTENT_MODELS = [ ARRANGEMENT_CONTENT_MODEL ]

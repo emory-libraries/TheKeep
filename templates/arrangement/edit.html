@@ -27,6 +27,7 @@
 <p class='extra'>
   | <a href="{% url arrangement:raw-ds obj.pid 'FileTech' %}">FileTech</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Descriptive</a>
 </p>
 
 
@@ -54,6 +55,14 @@
     {{ form.rights.non_field_errors }}
     <table class="edit-form">
         {% for field in form.rights %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+<h3 id="mods-label" class="section-head toggle">Descriptive Metadata</h3>
+<div id="mods">
+    {{ form.mods.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
 </div>
 

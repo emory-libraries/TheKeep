@@ -7,6 +7,8 @@ from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 from keep.common.models import FileMasterTech, Rights
 from keep.common.forms import ReadonlyTextInput
 
+from keep.arrangement.models import ArrangementMods
+
 ##
 # Arrangement
 ##
@@ -79,20 +81,27 @@ class RightsForm(XmlObjectForm):
         if access_status_code in self.initial:
             self.initial[access] = self.initial[access_status_code]
 
-class ModsForm(XmlObjectForm):
+class ArrangementModsForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
     :class:`~keep.common.models.Rights` metadata.
     """
 
+    #type = forms.ChoiceField(SourceTech.speed_options, label='Recording Speed',
+                    #required=True, help_text='Speed at which the sound was recorded')
+    title = forms.CharField(label="Series", required=False, widget=forms.TextInput(attrs={'class': 'long'}))
+    #identifier = forms.CharField(label="Identifier", required=False, widget=forms.TextInput(attrs={'class': 'long'}))
+
+
+
+
     class Meta:
-        model = Rights
+        model = ArrangementMods
         fields = [ 'title' ]
-        widgets = {
-            'title': forms.Textarea,
-        }
+        #fields = [ 'subseries' ]
+
 
     def __init__(self, **kwargs):
-        super(ModsForm, self).__init__(**kwargs)
+        super(ArrangementModsForm, self).__init__(**kwargs)
 
 
 class ArrangementObjectEditForm(forms.Form):
@@ -104,11 +113,11 @@ class ArrangementObjectEditForm(forms.Form):
         if instance is None:
             filetech_instance = None
             rights_instance = None
-            #mods_instance = None
+            mods_instance = None
         else:
             filetech_instance = instance.filetech.content
             rights_instance = instance.rights.content
-            #mods_instance = instance.mods.content
+            mods_instance = instance.mods.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
@@ -128,9 +137,11 @@ class ArrangementObjectEditForm(forms.Form):
         common_opts = {'data': data, 'initial': initial}
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='filetech', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
+        self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
 
         for form in ( self.filetech,
-                      self.rights ):
+                      self.rights,
+                      self.mods ):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
