@@ -465,13 +465,20 @@ class AudioObject(DigitalObject):
     def get_access_url(self):
         "Absolute url to hear this object's access version"
         if self.compressed_audio.exists:
-            return reverse('audio:download-compressed-audio', args=[str(self.pid)])
+            return reverse('audio:download-compressed-audio',
+                           args=[str(self.pid), self.access_file_extension()])
+        # as of file migration (1.2), legacy DM access path is no longer needed
 
-        # otherwise see if it's from old dm
-        old_dm_path = self.old_dm_media_path()
-        if old_dm_path:
-            old_dm_root = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
-            return old_dm_root + old_dm_path
+    def access_file_extension(self):
+        '''Return the expected file extension for whatever type of
+        compressed audio datastream the current object has (if it has
+        one), based on the datastream mimetype.  Currently, compressed
+        audio could be MP3 or M4A/MP4.'''
+        if self.compressed_audio.exists:
+            if self.compressed_audio.mimetype == 'audio/mpeg':
+                return 'mp3'
+            if self.compressed_audio.mimetype == 'audio/mp4':
+                return 'm4a'
 
     def old_dm_media_path(self):
         old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id

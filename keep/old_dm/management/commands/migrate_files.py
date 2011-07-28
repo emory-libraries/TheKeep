@@ -140,12 +140,15 @@ class Command(BaseCommand):
 
                     # if m4a is present, add it as compressed audio datastream
                     if paths.m4a:
-                        # TODO: set mimetype, since M4A is not the default (MP3)?
+                        # Set the correct mimetype, since migrated content is M4A,
+                        # while newly ingested content uses MP3s for access
+                        obj.compressed_audio.mimetype = 'audio/mp4'
                         m4a_updated = self.update_datastream(obj.compressed_audio, paths.m4a)
                         if m4a_updated:
                             files_updated += 1
-                            
                         file_info.append(self.file_ingest_status[m4a_updated])
+                    else:
+                        file_info.append('')	# blank to indicate no file
 
                     # if jhove is present, add it to the object
                     if paths.jhove:
@@ -153,6 +156,8 @@ class Command(BaseCommand):
                         if jhove_updated:
                             files_updated += 1
                         file_info.append(self.file_ingest_status[jhove_updated])
+                    else:
+                        file_info.append('')	# blank to indicate no file
 
                     if files_updated:
                         stats['updated'] += 1
@@ -315,7 +320,7 @@ class Command(BaseCommand):
         else:
             with open(filepath) as filecontent:
                 ds.content = filecontent
-                ds.checksum_type = 'MD5'
+                ds.checksum_type = 'MD5'  
                 ds.checksum = checksum
                 try:
                     # save just this datastream
