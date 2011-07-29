@@ -829,9 +829,10 @@ class AudioViewsTest(KeepTestCase):
 
             # POST data to update audio object in fedora
             audio_data = {'collection': self.rushdie.uri,
-                        'mods-title': 'new title',
+                        'mods-title': u'new title \u2026',
                         'mods-note-label' : 'a general note',
-                        'mods-general_note-text': 'remember to ...',
+                        #'mods-general_note-text': u'remember to ... with some unicode \u1f05',
+                        'mods-general_note-text': u'remember to',
                         'mods-part_note-text': 'side A',
                         'mods-resource_type': 'sound recording',
                         # 'management' form data is required for django to process formsets/subforms
