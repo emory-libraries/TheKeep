@@ -444,7 +444,7 @@ class AudioObject(DigitalObject):
 
         :param logMessage: optional log message
         '''
-        if not self.exists or self.mods.isModified() or self.rels_ext.isModified or \
+        if not self.exists or self.mods.isModified() or self.rels_ext.isModified() or \
             self.digitaltech.isModified():
             # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
             # If this is a new item (does not yet exist in Fedora)
