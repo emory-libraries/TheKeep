@@ -44,7 +44,7 @@ def _collection_options():
         logging.debug('Calculated collections: ' + ' '.join(c['pid'] for c in collections))
         # generate option list with URI as value and source id - title display
         # sort on source id
-        options = [('info:fedora/' + c['pid'], '%s - %s' % (c['source_id'], c['title']))
+        options = [('info:fedora/' + c.get('pid', ''), '%s - %s' % (c.get('source_id', ''), c.get('title', '')))
                 for c in sorted(collections, key=lambda k: k['source_id'])]
 
         # always include a blank option at the beginning of the list
