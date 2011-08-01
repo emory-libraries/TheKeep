@@ -283,7 +283,7 @@ class CollectionObject(DigitalObject):
             data.update(self._index_data_archive())
                 
         # if source id is set, include it
-        if self.mods.content.source_id:
+        if self.mods.content.source_id is not None:
             data['source_id'] = self.mods.content.source_id
 
         if self.mods.content.ark_uri:
