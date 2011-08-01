@@ -18,8 +18,6 @@ class ArrangementMods(mods.MODS):
         required=True,
         help_text='subseries')
 
-    ':class:`SubSeries`'
-
 class ArrangementObject(DigitalObject):
     ARRANGEMENT_CONTENT_MODEL = 'info:fedora/emory-control:Arrangement-1.0'
     CONTENT_MODELS = [ ARRANGEMENT_CONTENT_MODEL ]
@@ -38,42 +36,14 @@ class ArrangementObject(DigitalObject):
             'versionable': True,
         })
 
+    mods = XmlDatastream('MODS', 'MODS Metadata', ArrangementMods, defaults={
+            'control_group': 'M',
+            'format': mods.MODS_NAMESPACE,
+            'versionable': True,
+        })
+    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`ArrangementMods`'
+
     _collection_uri = None
-
-'''class Title(mods.Common):
-    ROOT_NAME = 'title'
-    XSD_SCHEMA = mods.MODS_SCHEMA
-    xmlschema = mods._mods_xmlschema
-
-    title = xmlmap.StringField('text()')
-    'text description of rights access code'
-
-class TitleInfo(mods.Common):
-    ROOT_NAME = 'titleInfo'
-    XSD_SCHEMA = mods.MODS_SCHEMA
-    xmlschema = mods._mods_xmlschema
-
-    title_info = xmlmap.NodeField('mods:title', Title,
-        required=False,
-        help_text='title')
-
-class RelatedItem(mods.Common):
-    ROOT_NAME = 'relatedItem'
-    XSD_SCHEMA = mods.MODS_SCHEMA
-    xmlschema = mods._mods_xmlschema
-
-    type = xmlmap.SchemaField('@type', 'series', required=False)
-    
-    title_info = xmlmap.NodeField('mods:titleInfo', TitleInfo,
-        required=False,
-        help_text='titleInfo')
-
-class ArrangementMods(mods.MODS):
-    subseries = xmlmap.NodeField('mods:relatedItem', RelatedItem,
-        required=True,
-        help_text='subseries')
-    ':class:`SubSeries`'
-'''
 
 
 
