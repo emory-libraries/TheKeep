@@ -175,7 +175,7 @@ class SourceTech(_BaseSourceTech):
     'Stock or brand of source media'
     stock_list = xmlmap.StringListField('st:stock')
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        help_text='Type of housing for the source item')
+        required=False, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
