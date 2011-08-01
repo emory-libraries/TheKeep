@@ -260,9 +260,9 @@ class CollectionObject(DigitalObject):
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                pid='%s:*' % settings.FEDORA_PIDSPACE,
                                source_id=int(num))
-        # if parent is specified, restrict by collection id (parent should be a pid)
+        # if parent is specified, restrict by archive id (parent should be a pid)
         if parent is not None:
-            solrquery = solrquery.query(collection_id=parent)
+            solrquery = solrquery.query(archive_id=parent)
         # by default, only returns 10; get everything
         # - solr response is a list of dictionary with collection info
         # use dictsort in template for sorting where appropriate
