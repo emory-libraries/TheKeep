@@ -121,10 +121,10 @@ def deploy():
 def revert():
     """Back out the current version, updating remote symlinks to point back
     to the stored previous one."""
-    _sudo('[ -h %(extract_path)/previous ]' % env) # only if previous link exists
-    _sudo('rm -f %(extract_path)/current' % env)
-    _sudo('ln -s $(readlink %(extract_path)/previous) %(extract_path)/current' % env)
-    _sudo('rm %(extract_path)/previous' % env)
+    _sudo('[ -h %(extract_path)s/previous ]' % env) # only if previous link exists
+    _sudo('rm -f %(extract_path)s/current' % env)
+    _sudo('ln -s $(readlink %(extract_path)s/previous) %(extract_path)s/current' % env)
+    _sudo('rm %(extract_path)s/previous' % env)
     
 def clean_local():
     """Remove local files created during deployment."""
