@@ -10,7 +10,7 @@
         <li>{{ collection.grouper }}
             <ul>
             {% for subcoll in collection.list %}
-            <li>{{ subcoll.source_id|default:'' }}
+            <li>{{ subcoll.source_id }}
                 <a href="{% url collection:edit subcoll.pid %}">
                     {{ subcoll.title|default:'(no title present)' }}</a>
                     {{ subcoll.name }}
