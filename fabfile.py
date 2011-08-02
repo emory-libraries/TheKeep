@@ -92,6 +92,7 @@ def _create_virtualenv():
     _sudo('virtualenv --no-site-packages %(extract_path)s/%(build_dir)s/env' % env)
     with prefix('source %(extract_path)s/%(build_dir)s/env/bin/activate' % env):
         _sudo('pip install -r %(extract_path)s/%(build_dir)s/pip-install-req.txt' % env)
+        _sudo('pip install mysql-python psycopg2==2.4.1') # system reqs, but not strictly sw reqs
 
 def _collect_remote_config():
     """Copy configuration files into the remote source tree."""
