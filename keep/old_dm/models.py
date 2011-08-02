@@ -11,6 +11,7 @@ import logging
 import re
 
 from django.db import models
+from django.conf import settings
 from django.contrib.auth. models import User
 
 from keep.audio.models import Rights, AudioObject, SourceTech, CodecCreator, \
