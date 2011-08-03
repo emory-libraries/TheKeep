@@ -11,6 +11,7 @@ import logging
 import re
 
 from django.db import models
+from django.conf import settings
 from django.contrib.auth. models import User
 
 from keep.audio.models import Rights, AudioObject, SourceTech, CodecCreator, \
@@ -248,18 +249,9 @@ class Content(models.Model):   # individual item
         if self.eua_series.count():
             return self.eua_series.all()[0].series
 
-    # well-known archive URIs
-    MARBL_URI = 'info:fedora/emory:93z53'
-    EUA_URI = 'info:fedora/emory:93zd2'
-    OXFORD_URI = 'info:fedora/emory:b2mx2'
+    REPO_SHORTNAMES = dict(('info:fedora/' + pid, name.upper())
+                           for name, pid in settings.PID_ALIASES.iteritems())
 
-    REPO_SHORTNAMES = {
-        MARBL_URI: 'MARBL',
-        EUA_URI: 'EUA',
-        OXFORD_URI: 'OXFORD',
-    }
-
-    @property
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
         repo, num = self._translated_collection_pair()
@@ -276,7 +268,7 @@ class Content(models.Model):   # individual item
 
     def _translated_collection_pair(self):
         repo_uri = self.location.corresponding_repository
-        if repo_uri == self.EUA_URI:
+        if repo_uri == 'info:fedora/' + settings.PID_ALIASES['eua']:
             if self.series_number == 1002:
                 return repo_uri, 0
             elif self.series_number:
@@ -284,7 +276,7 @@ class Content(models.Model):   # individual item
             else:
                 return repo_uri, 0
 
-        if repo_uri == self.OXFORD_URI:
+        if repo_uri == 'info:fedora/' + settings.PID_ALIASES['oxford']:
             if self.series_number:
                 return repo_uri, self.series_number
             else:
@@ -298,7 +290,7 @@ class Content(models.Model):   # individual item
                 or any("DANOWSKI" in ss.item_location.upper()
                        for ss in self.source_sounds.all()
                        if ss.item_location):
-            return self.MARBL_URI, 0
+            return 'info:fedora/' + settings.PID_ALIASES['marbl'], 0
 
         return None, None
 
