@@ -4,7 +4,7 @@
 {% block content-title %}Browse Collections{% endblock %}
 
 {% block content-body %}
-{% regroup collections by collection_label as collections_by_parent %}
+{% regroup collections by archive_label as collections_by_parent %}
 <ul>
     {% for collection in collections_by_parent %}
         <li>{{ collection.grouper }}
