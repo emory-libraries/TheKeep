@@ -29,7 +29,8 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         # map additional itunes-specific fields
 
         # subtitle is shown in the description column in itunes - shouldn't be too long
-        handler.addQuickElement(u'itunes:subtitle', item['description'])
+        if item.get('description', ''): # if it's present and isn't None or ''
+            handler.addQuickElement(u'itunes:subtitle', item['description'])
         # NOTE: could put more detailed info in the itunes:summary/description (up to 4000 characters)
 
         # duration is total seconds as integer, which iTunes should be able to handle
@@ -53,10 +54,20 @@ def feed_items():
         'pid': '%s:*' % settings.FEDORA_PIDSPACE,
         # restrict to audio items by content model
         'content_model': AudioObject.AUDIO_CONTENT_MODEL,
-        # restrict to items that have mp3s available
-        'has_access_copy': True,
         # restrict to items that are allowed to be accessed
         'researcher_access': True,
+
+        # NB: we'd like to restrict to has_access_copy=True, but for
+        # metadata migrations we temporarily want to include some items
+        # whose access copies are inferred to exist externally instead of
+        # explicitly ingested. as a result, we have to skip this restriction
+        # for now, which has the negative side effect of including
+        # keep-native (i.e., non-migrated) items whose access copies are not
+        # (yet?) available. those items shouldn't be in the feed (since
+        # they're not yet properly available) and so we should add this
+        # restriction back in as soon as we no longer have inferred external
+        # datastreams.
+#        'has_access_copy': True,
         }
     
     # sort by date created (newest items at the end of the feed)
@@ -83,7 +94,20 @@ class PodcastFeed(Feed):
     #  owner, itunes subtitle, author, summary; itunes owner, image, category
 
     def get_object(self, request, page):
+        self._update_collection_data()
         return page
+
+    def _update_collection_data(self):
+        # each time someone requests a feed, update the cached collection
+        # data. self is persistent across requests here. i'm pretty sure
+        # that mod_wsgi/django doesn't share it across threads, but even if
+        # it did, it would be ok for threads to stomp on eachother so long
+        # as this method caches only global, shared collection data.
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(pid='%s:*' % (settings.FEDORA_PIDSPACE,),
+                               content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        collections = dict((item['pid'], item) for item in solrquery.execute())
+        self._collection_data = collections
 
     def link(self, page):
         return reverse('audio:podcast-feed', args=[page])
@@ -118,7 +142,8 @@ class PodcastFeed(Feed):
             return item['part']
 
     def item_guid(self, item):
-        # globally unique identifier that will never change
+        if 'ark_uri' in item:
+            return item['ark_uri']
         return item['pid']
 
         # TODO: should be using item['ark_uri']
@@ -142,19 +167,51 @@ class PodcastFeed(Feed):
         # using collection # - collection title
         if 'collection_id' in item:
             collection = CollectionObject.find_by_pid(item['collection_id'])
-            return '%s - %s' %  (collection['source_id'], collection['title'])
+            if collection:
+                return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
         if 'collection_id' in item:
             collection = CollectionObject.find_by_pid(item['collection_id'])
-            categories.append(collection['archive_label'])
+            if collection:
+                categories.append(collection['archive_label'])
         return categories
 
     def item_enclosure_url(self, item):
         # link to audio file - many clients require this to be an absolute url
-        return absolutize_url(reverse('audio:download-compressed-audio', args=[item['pid']]))
+        if item.get('has_access_copy', False):
+            return absolutize_url(reverse('audio:download-compressed-audio', args=[item['pid']]))
+        
+        # remainder supports old dm file locations (for metadata migrations only)
+        collection_pid = item.get('collection_id', '')
+        if collection_pid.startswith('info:fedora/'): # it does. strip it.
+            collection_pid = collection_pid[len('info:fedora/'):]
+        collection = self._collection_data.get(collection_pid, None)
+        archive_pid = item.get('archive_id', '')
+        if archive_pid.startswith('info:fedora/'): # it does. strip it.
+            archive_pid = archive_pid[len('info:fedora/'):]
+
+        if 'dm1_id' in item and collection_pid and collection and archive_pid:
+            marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
+            if archive_pid == marbl_pid:
+                if collection['source_id'] == 0:
+                     collection_path = 'spec_col/Danowski/'
+                else:
+                    collection_path = 'spec_col/MSS%d/' % (collection['source_id'],)
+            else:
+                collection_path = 'univ_arch/SER%d/' % (collection['source_id'],)
+
+            # some items have two dm1_id's: the "old" one and the "new" one.
+            # the old ones are always longer than the new ones, and we
+            # always want to use them when present, so sort by descending
+            # length and use the first (longest=="old")
+            ids = sorted(item['dm1_id'], cmp=lambda a,b: cmp(len(b), len(a)))
+
+            old_dm_root = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
+            return '%s%saudio/%s.m4a' % (old_dm_root, collection_path,
+                                         ids[0])
 
     def item_link(self, item):
         return reverse('audio:view', args=[item['pid']])
@@ -166,6 +223,10 @@ class PodcastFeed(Feed):
     def item_enclosure_mime_type(self, item):
         if 'access_copy_mimetype' in item:
             return item['access_copy_mimetype']
+
+        # metadata migrations:
+        if 'dm1_id' in item:
+            return 'audio/mp4'
 
     def item_extra_kwargs(self, item):
         # add any additional data that should be mapped to itunes fields
