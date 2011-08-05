@@ -715,10 +715,10 @@ class CollectionViewsTest(KeepTestCase):
         # no match
         # - set mock solr to return an empty result list
 	solr_exec.return_value = [
-            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,  'collection_label': 'marbl-coll'},
-            {'pid': 'pid:2', 'title': 'bar', 'collection_label': 'marbl-coll'},
-            {'pid': 'pid:3', 'title': 'baz', 'collection_label': 'pitts-coll'},
-            {'pid': 'pid:4', 'title': '', 'collection_label': 'archives-coll'},
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,  'archive_label': 'marbl-coll'},
+            {'pid': 'pid:2', 'title': 'bar', 'archive_label': 'marbl-coll'},
+            {'pid': 'pid:3', 'title': 'baz', 'archive_label': 'pitts-coll'},
+            {'pid': 'pid:4', 'title': '', 'archive_label': 'archives-coll'},
         ]
 
         default_search_args = {
@@ -741,6 +741,7 @@ class CollectionViewsTest(KeepTestCase):
         
         # top-level collection object labels should display once for
         # each group, no matter how many items in the group
+        print 'XXX:', response
         self.assertContains(response, 'marbl-coll', 1,
             msg_prefix='collection label should be displayed once for each group, no matter how many items')
         self.assertContains(response, 'pitts-coll', 1,
