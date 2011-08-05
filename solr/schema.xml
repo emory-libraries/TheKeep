@@ -258,14 +258,14 @@ Solr Schema for projects using eulfedora and indexdata.
    <!-- standard fedora fields that should apply to all objects -->
    <field name="content_model" type="string" indexed="true" stored="true" multiValued="true"/>
      <!-- treat dates as string or date ? -->
-   <field name="label" type="string" indexed="true" stored="false"/> 
+   <field name="label" type="string" indexed="true" stored="true"/> 
    <field name="created" type="date" indexed="true" stored="true"/> 
    <field name="last_modified" type="date" indexed="true" stored="true" /> 
    <field name="owner" type="string" indexed="true" stored="true" /> 
-   <field name="state" type="string" indexed="true" stored="false"/> 
+   <field name="state" type="string" indexed="true" stored="true"/> 
    <!-- explicitly define string-variants of date fields for wildcard searching -->
    <field name="created_s" type="string" indexed="true" stored="true"/> 
-   <field name="last_modified_s" type="string" indexed="true" stored="false" /> 
+   <field name="last_modified_s" type="string" indexed="true" stored="true" /> 
 
    <!-- Dublin Core fields -->
    <field name="title" type="text" indexed="true" stored="true"/>
@@ -290,9 +290,9 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="source_id" type="integer" indexed="true" stored="true" multiValued="false"/>
 
    <!--  * audio objects -->
-   <field name="dm1_id" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="dm1_id" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="digitization_purpose" type="text" indexed="true" stored="true" multiValued="true"/>
-   <field name="related_files" type="text" indexed="true" stored="false" multiValued="true"/>
+   <field name="related_files" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="part" type="text" indexed="true" stored="true" multiValued="false"/>
    <field name="date_issued" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="access_code" type="string" indexed="true" stored="true" multiValued="false"/>
@@ -317,8 +317,8 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="notes" type="text" indexed="true" stored="false" multiValued="true"/>
 
    <!-- non-tokenized versions of terms to for sorting and/or facets -->
-   <field name="title_exact" type="string" indexed="true" stored="false"/>
-   <field name="subject_facet" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="title_exact" type="string" indexed="true" stored="true"/>
+   <field name="subject_facet" type="string" indexed="true" stored="true" multiValued="true"/>
 
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.

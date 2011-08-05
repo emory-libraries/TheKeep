@@ -29,7 +29,8 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         # map additional itunes-specific fields
 
         # subtitle is shown in the description column in itunes - shouldn't be too long
-        handler.addQuickElement(u'itunes:subtitle', item['description'])
+        if item.get('description', ''): # if it's present and isn't None or ''
+            handler.addQuickElement(u'itunes:subtitle', item['description'])
         # NOTE: could put more detailed info in the itunes:summary/description (up to 4000 characters)
 
         # duration is total seconds as integer, which iTunes should be able to handle
@@ -118,7 +119,8 @@ class PodcastFeed(Feed):
             return item['part']
 
     def item_guid(self, item):
-        # globally unique identifier that will never change
+        if 'ark_uri' in item:
+            return item['ark_uri']
         return item['pid']
 
         # TODO: should be using item['ark_uri']
@@ -142,14 +144,16 @@ class PodcastFeed(Feed):
         # using collection # - collection title
         if 'collection_id' in item:
             collection = CollectionObject.find_by_pid(item['collection_id'])
-            return '%s - %s' %  (collection['source_id'], collection['title'])
+            if collection:
+                return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
         if 'collection_id' in item:
             collection = CollectionObject.find_by_pid(item['collection_id'])
-            categories.append(collection['archive_label'])
+            if collection:
+                categories.append(collection['archive_label'])
         return categories
 
     def item_enclosure_url(self, item):

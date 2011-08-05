@@ -71,6 +71,10 @@ class Command(BaseCommand):
 
             for item in items:
                 logger.info('\nItem %d' % item.id)
+                if item.title.startswith('(migrated to The Keep: '):
+                    logger.info('Already migrated: ' + item.title)
+                    continue
+
                 if item.marked_for_deletion():
                     logger.info('DELETE item %d -- Title: %s' % (item.id, item.title))
                     continue
@@ -83,6 +87,9 @@ class Command(BaseCommand):
 
                     title_prefix = '(migrated to The Keep: %s) ' % (obj.pid,)
                     item.title = title_prefix + item.title
+                    if len(item.title) > 255:
+                        logger.warning('Long title truncated in legacy DM database. Full version retained in The Keep.')
+                        item.title = item.title[:255]
                     item.save()
                 if csvfile:
                     csvfile.writerow([_csv_sanitize(field) for field in row_data])
