@@ -33,7 +33,7 @@
 {% block content-body %}
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
-<p class='extra'>
+<p class='extra dslist'>
   {% with 'original audio' as original %}
     {% if obj.audio.exists %}
       <a href="{% url audio:download-audio obj.pid %}">{{ original }}</a>
