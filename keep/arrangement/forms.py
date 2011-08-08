@@ -1,5 +1,7 @@
 from django import forms
 
+import mods
+
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
@@ -81,27 +83,92 @@ class RightsForm(XmlObjectForm):
         if access_status_code in self.initial:
             self.initial[access] = self.initial[access_status_code]
 
+
+class NamePartForm(XmlObjectForm):
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
+    :class:`~keep.mods.NamePart`
+
+        * suppress default label 'text'
+        * use :class:`~django.forms.TextInput` with class *long*
+    '''
+    text = forms.CharField(label='Name Part',
+                            widget=forms.TextInput(attrs={'class': 'long'}))
+    class Meta:
+        model = mods.NamePart
+
+
 class ArrangementModsForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
     :class:`~keep.common.models.Rights` metadata.
     """
 
-    #type = forms.ChoiceField(SourceTech.speed_options, label='Recording Speed',
-                    #required=True, help_text='Speed at which the sound was recorded')
-    title = forms.CharField(label="Series", required=False, widget=forms.TextInput(attrs={'class': 'long'}))
-    #identifier = forms.CharField(label="Identifier", required=False, widget=forms.TextInput(attrs={'class': 'long'}))
 
-
-
+    id = forms.CharField(required=True, label='Identifier',
+                        widget=forms.TextInput(attrs={'class': 'long'}),
+                        help_text="Place subseries identifier here.")
+    title = forms.CharField(required=True, label='Subseries Name',
+                        widget=forms.TextInput(attrs={'class': 'long series_title_field'}))
+    #name_parts = SubformField(formclass=NamePartForm)
 
     class Meta:
-        model = ArrangementMods
-        fields = [ 'title' ]
+        model = mods.RelatedItem
+        exclude = ['resource_type', 'location']
+
+    #class Meta:
+        #model = ArrangementMods
+        #fields = [ 'title' ]
         #fields = [ 'subseries' ]
 
 
     def __init__(self, **kwargs):
         super(ArrangementModsForm, self).__init__(**kwargs)
+
+'''class ArrangementObjectEditForm(XmlObjectForm):
+    error_css_class = 'error'
+    required_css_class = 'required'
+    
+    name = SubformField(formclass=NameForm)
+
+    def __init__(self, data=None, instance=None, initial={}, **kwargs):       
+
+        if instance is None:
+            filetech_instance = None
+            rights_instance = None
+            mods_instance = None
+        else:
+            filetech_instance = instance.filetech.content
+            rights_instance = instance.rights.content
+            mods_instance = instance.mods.content
+            self.object_instance = instance
+            orig_initial = initial
+            initial = {}
+
+            # populate fields not auto-generated & handled by XmlObjectForm
+            #if self.object_instance.collection_uri:
+                #initial['collection'] = str(self.object_instance.collection_uri)
+
+            if self.object_instance.ark:
+                initial['identifier'] = self.object_instance.ark
+            else:
+                initial['identifier'] = self.object_instance.pid + ' (PID)'
+
+            # passed-in initial values override ones calculated here
+            initial.update(orig_initial)
+
+        common_opts = {'data': data, 'initial': initial}
+        self.filetech = FileTechEditForm(instance=filetech_instance, prefix='filetech', **common_opts)
+        self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
+        self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
+
+
+
+        for form in ( self.filetech,
+                      self.rights,
+                      self.mods ):
+            form.error_css_class = self.error_css_class
+            form.required_css_class = self.error_css_class
+
+        super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial)'''
 
 
 class ArrangementObjectEditForm(forms.Form):
@@ -138,6 +205,7 @@ class ArrangementObjectEditForm(forms.Form):
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='filetech', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
+
 
         for form in ( self.filetech,
                       self.rights,

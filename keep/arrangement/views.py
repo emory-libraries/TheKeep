@@ -1,10 +1,14 @@
 # Create your views here.
+import urllib2
+
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.utils import simplejson
+from django.views.decorators.csrf import csrf_exempt
 
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -24,4 +28,10 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=ArrangementObject, repo=Repository(request=request))
+
+@csrf_exempt
+def finding_aids_content(request):
+    'Access the finding aids EAD'
+    response = urllib2.urlopen('http://findingaids.library.emory.edu/documents/rushdie1000/EAD/')
+    return HttpResponse(response, content_type='text/xml')
 

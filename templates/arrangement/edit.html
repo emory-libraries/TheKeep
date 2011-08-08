@@ -5,6 +5,27 @@
 
 {% block scripts %}
   {{ block.super }}
+
+  <style>
+	.ui-autocomplete {
+		max-height: 200px;
+		overflow-y: auto;
+		/* prevent horizontal scrollbar */
+		overflow-x: hidden;
+		/* add padding to account for vertical scrollbar */
+		padding-right: 20px;
+	}
+	/* IE 6 doesn't support max-height
+	 * we use height instead, but this forces the menu to always be this tall
+	 */
+	* html .ui-autocomplete {
+		height: 200px;
+	}
+  </style>
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+
   <script type="text/javascript">
     $(document).ready(function() {
       // move to the first form element for user convenience
@@ -16,6 +37,137 @@
         header.toggleClass('collapsed');
         header.next().toggle();
       });
+
+      function cleanUpTitle(title) {
+          //Find the first comma.
+          var strip_location=title.indexOf(',');
+          
+          return title.substring(0, strip_location);
+      }
+
+      $(function() {
+          $.ajax({
+              url: "/arrangement/ajax",
+              dataType: "xml",
+              success: function( xmlResponse ) {
+                  var showOnce = 1
+                  //var data = $( "c01", xmlResponse ).map(function() {
+                  var data = [];
+                  $(xmlResponse).find("c01").each(function() {
+                      if($(this).attr("level") == 'series')
+                      {
+                          var series_id = $(this).attr("id");
+                          var series_unittitle_element = $(this).children('did').children('unittitle');
+                          var series_title = "";
+
+                          if(series_unittitle_element.attr("encodinganalog") == '245$a') {
+                              var series_title = cleanUpTitle(series_unittitle_element.text());
+                          }
+
+                          series_object = new Object();
+                          series_object.value = series_title;
+                          series_object.id = series_id;
+
+                          //array[array.length] faster in firefox for smaller arrays thant a push.
+                          data[data.length] = series_object;
+
+                          $(this).find("c02").each(function() {
+                              if($(this).attr("level") == 'subseries')
+                              {
+                                  
+                                  var subseries_id = $(this).attr("id");
+                                  var subseries_unittitle_element = $(this).children('did').children('unittitle');
+                                  if(subseries_unittitle_element.attr("type") == '245$a') {
+                                      subseries_object = new Object();
+                                      subseries_object.value = series_title + ': ' + cleanUpTitle(subseries_unittitle_element.text());
+                                      subseries_object.id = subseries_id;
+ 
+                                      data[data.length] = subseries_object;
+                                  }
+                              }
+                          })
+                      }
+		  });
+ 
+                  $( "input.series_title_field" ).autocomplete({
+                      source: data,
+                      minLength: 0,
+                      select: function( event, ui ) {
+                          //can act on selection here/
+                          alert(ui.item.id);
+                          //$( "input.series_uri_field" ).value = 'http://findingaids.library.emory.edu/documents/rushdie1000/' + ui.item.id;
+                      }
+                  });
+              }
+          });
+      });
+
+     /*var datatest = [];
+     $(function() {
+          $.ajax({
+              url: "/arrangement/ajax",
+              dataType: "xml",
+              success: function( xmlResponse ) {
+                  var data = $( "c02", xmlResponse ).map(function() {
+                      //var subseries_id = 
+                      if($(this).attr("level") == 'subseries')
+                      {
+                          obj = new Object();
+                          obj.value = $( "unittitle", this ).text();
+                          obj.id = $( "unittitle", this ).text();
+                          datatest[datatest.length] = obj;
+                          return {
+                          value: $( "unittitle", this ).text(),
+                          id: $( "unittitle", this ).text()
+                          };
+                          
+                      }
+		  }).get();
+                  //var data = $.makeArray( datatest )
+                  var data = datatest;
+                  alert(data);
+                  $( "input#id_mods-title" ).autocomplete({
+                      source: data,
+                      minLength: 0,
+                      select: function( event, ui ) {
+                          alert('selected');
+                      }
+                  });
+              }
+          });
+      });*/
+
+     /*var datatest = "{";
+     $(function() {
+          $.ajax({
+              url: "/arrangement/ajax",
+              dataType: "xml",
+              success: function( xmlResponse ) {
+                  var data = $( "c02", xmlResponse ).map(function() {
+                      //var subseries_id = 
+                      if($(this).attr("level") == 'subseries')
+                      {
+                          datatest = $( "unittitle", this ).text() + ": " + $( "unittitle", this ).text();
+                          return {
+                          value: $( "unittitle", this ).text(),
+                          id: $( "unittitle", this ).text()
+                          };
+                          
+                      }
+		  }).get();
+                  datatest = datatest + "}";
+                  var data = $.makeArray( datatest )
+                  alert(data);
+                  $( "input#id_mods-title" ).autocomplete({
+                      source: data,
+                      minLength: 0,
+                      select: function( event, ui ) {
+                          alert('selected');
+                      }
+                  });
+              }
+          });
+      });*/
 
     });
   </script>

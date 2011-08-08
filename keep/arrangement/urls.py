@@ -4,4 +4,5 @@ urlpatterns = patterns('keep.arrangement.views',
     url(r'^(?P<pid>[^/]+)/edit/$', 'index', name='index'),
     url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>(FileTech|Rights))/$',
             'view_datastream', name='raw-ds'),
+    url(r'^finding_aids_content', 'finding_aids_content', name='finding_aids_content'),
 )
