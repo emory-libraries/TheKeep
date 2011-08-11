@@ -24,9 +24,9 @@ class Command(BaseCommand):
             help='Appends to the SimpleCollection specified by pid, does not create a new SimpleCollection'),
     )
 
-    args = '<CSV file> <master collection pid > <new simple collection name>'
-    help = '''Read CSV file and create a Simple Collection and associated ArrangementObjects
-    with with associations to the SimpleCollection and the Master collection'''
+    args = '<CSV file> <master collection pid> <new simple collection name>'
+    help = '''Read CSV file and creates (or adds to) a Simple Collection and associated ArrangementObjects
+    with the SimpleCollection and the Master collection'''
 
     def create_arrangement(self):
         # set values on arrangement object
@@ -36,7 +36,6 @@ class Command(BaseCommand):
         obj.filetech.content.md5 = self.checksum
         obj.filetech.content.computer = self.computer
         obj.filetech.content.path = self.filename
-        #obj.filetech.content.rawpath
         obj.filetech.content.attributes = self.attrib
         obj.filetech.content.created = self.created
         obj.filetech.content.modified = self.modified
@@ -60,17 +59,18 @@ class Command(BaseCommand):
         #Create the repo
         self.repo = Repository()
 
-        #Check to make sure all args are present
+        #Check to make sure all args and options are present
         try:
             file =  args[0]
         except IndexError:
-            raise CommandError("No File specified")
+            raise CommandError("No CSV file specified")
 
         try:
             self.master_pid =  args[1]
         except IndexError:
-            raise CommandError("No Master Collection pid specified")
+            raise CommandError("No master collection pid specified")
 
+        #if -a or --append is used the new SimpleCollection name is ignored
         try:
             if not options["append"]:
                 self.simple_collection_name =  args[2]
@@ -78,7 +78,8 @@ class Command(BaseCommand):
                 self.simple_collection_pid = options["append"]
 
         except IndexError:
-            raise CommandError("An existing SimpleCollection must be specified with the -a option or a new SimpleCollection name must be specified as an argument")
+            raise CommandError("An existing SimpleCollection pid must be specified with the -a option or \
+            a new SimpleCollection name must be specified as an argument")
 
         #If Master collection does not exist then raise an exception
         self.master_obj = self.repo.get_object(type = CollectionObject, pid=self.master_pid)
@@ -89,7 +90,7 @@ class Command(BaseCommand):
             self.stdout.write("Using Master Collection: %s(%s)\n" % (self.master_obj.label, self.master_obj.pid))
 
         #Get or create SimpleColletion object
-        #TODO Not sure why I have to do a try block here when I don't in other places
+        #TODO Not sure why I have to do a try block to prevent a 404 here when I don't in other places
         try:
             if options["append"]:
                 simple_collection = self.repo.get_object(type=SimpleCollection, pid=self.simple_collection_pid)
@@ -130,7 +131,7 @@ class Command(BaseCommand):
 
             if not options['no-act']:
                 arrangement_object.save()
-                self.stdout.write("Saved ArrangementObject %s:%s\n" % (arrangement_object.pid, arrangement_object.label))
+                self.stdout.write("Saved ArrangementObject %s(%s)\n" % (arrangement_object.label, arrangement_object.pid))
                 if self.verbosity > self.v_normal:
                     self.stdout.write("===RELS-EXT===\n")
                     for entry in arrangement_object.rels_ext.content:
@@ -146,7 +147,7 @@ class Command(BaseCommand):
 
         if not options['no-act']:
             simple_collection.save()
-            self.stdout.write("Saved SimpleCollection %s: %s\n" % (simple_collection.pid, simple_collection.label))
+            self.stdout.write("Saved SimpleCollection %s(%s)\n" % (simple_collection.label, simple_collection.pid))
             if self.verbosity > self.v_normal:
                     self.stdout.write("===RELS-EXT===\n")
                     for entry in simple_collection.rels_ext.content:
