@@ -1165,8 +1165,9 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'Expected %s but returned %s for mimetype on %s (SourceTech datastream)' \
                 % (expected, got, ds_url))
-        self.assertContains(response, '<st:sourcetech')
-        self.assertContains(response, obj.sourcetech.content.note)
+        content = response.content # response.content is a generator here. only read it once
+        self.assertTrue('<st:sourcetech' in content)
+        self.assertTrue(obj.sourcetech.content.note in content)
         # Digital Tech
         ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'DigitalTech'})
         response = self.client.get(ds_url)
@@ -1178,8 +1179,9 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'Expected %s but returned %s for mimetype on %s (DigitalTech datastream)' \
                 % (expected, got, ds_url))
-        self.assertContains(response, '<dt:digitaltech')
-        self.assertContains(response, obj.digitaltech.content.date_captured)
+        content = response.content # response.content is a generator here. only read it once
+        self.assertTrue('<dt:digitaltech' in content)
+        self.assertTrue(obj.digitaltech.content.date_captured in content)
 
         # not testing bogus datastream id because url config currently does not
         # allow it
