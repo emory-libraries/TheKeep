@@ -1,0 +1,53 @@
+<div class="subform">
+  <label>Series Information Stored:</label>
+  <div id="name-part">
+
+  <table class="edit-form">
+  
+          {% with seriesform.title as field %}
+               {% include 'snippets/form_field_tr.html' %}
+           {% endwith %} 
+
+          {% with seriesform.uri as field %}
+               {% include 'snippets/form_field_tr.html' %}
+           {% endwith %} 
+
+          {% with seriesform.base_ark as field %}
+               {% include 'snippets/form_field_tr.html' %}
+           {% endwith %} 
+
+          {% with seriesform.full_id as field %}
+               {% include 'snippets/form_field_tr.html' %}
+           {% endwith %} 
+
+          {% with seriesform.short_id as field %}
+               {% include 'snippets/form_field_tr.html' %}
+           {% endwith %} 
+  </table>
+
+  <table class="edit-form">
+          {% with seriesform.subforms.series.title as field %}
+              {% include 'snippets/form_field_tr.html' %}
+          {% endwith %}
+
+          {% with seriesform.subforms.series.uri as field %}
+              {% include 'snippets/form_field_tr.html' %}
+          {% endwith %}
+
+          {% with seriesform.subforms.series.base_ark as field %}
+              {% include 'snippets/form_field_tr.html' %}
+          {% endwith %}
+
+          {% with seriesform.subforms.series.full_id as field %}
+              {% include 'snippets/form_field_tr.html' %}
+          {% endwith %}
+
+          {% with seriesform.subforms.series.short_id as field %}
+              {% include 'snippets/form_field_tr.html' %}
+          {% endwith %}
+
+  </table>
+
+  </div>
+
+</div>

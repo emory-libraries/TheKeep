@@ -1,8 +1,9 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('keep.arrangement.views',
-    url(r'^(?P<pid>[^/]+)/edit/$', 'index', name='index'),
-    url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>(FileTech|Rights))/$',
+    url(r'^$', 'index', name='index'),
+    url(r'^(?P<pid>[^/]+)/edit/$', 'edit', name='edit'),
+    url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>(FileTech|Rights|Mods))/$',
             'view_datastream', name='raw-ds'),
-    url(r'^finding_aids_content', 'finding_aids_content', name='finding_aids_content'),
+    url(r'^get_selected_series_data/(?P<id>[^/]+)', 'get_selected_series_data', name='get_selected_series_data'),
 )

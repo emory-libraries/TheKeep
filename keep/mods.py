@@ -122,7 +122,7 @@ class Role(Common):
     text = xmlmap.StringField('mods:roleTerm')
 
 class Name(Common):
-    ':class:`~eulxml.xmlmap.XmlObject` for MODS name'
+    ':class:`~eulxml.xmlmap.XmlObject` for MODSRelatedItem name'
     ROOT_NAME = 'name'
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
@@ -195,6 +195,7 @@ class RelatedItem(BaseMods):
     # FIXME: schema required here for schemafields; this should be refactored
     XSD_SCHEMA = MODS_SCHEMA
     xmlschema = _mods_xmlschema
+    #type = xmlmap.StringField('@type')
     type = xmlmap.SchemaField("@type", 'relatedItemTypeAttributeDefinition')
 
 class MODS(BaseMods):

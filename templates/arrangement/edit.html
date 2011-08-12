@@ -5,6 +5,10 @@
 
 {% block scripts %}
   {{ block.super }}
+  {# includes jquery  #}
+
+  <link href="{{ MEDIA_URL }}/style/jquery-ui.css" rel="stylesheet" type="text/css"/>
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery-ui.min.js"></script>
 
   <style>
 	.ui-autocomplete {
@@ -22,9 +26,6 @@
 		height: 200px;
 	}
   </style>
-  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 
   <script type="text/javascript">
     $(document).ready(function() {
@@ -38,138 +39,93 @@
         header.next().toggle();
       });
 
-      function cleanUpTitle(title) {
-          //Find the first comma.
-          var strip_location=title.indexOf(',');
-          
-          return title.substring(0, strip_location);
-      }
+      $( "input#series_title_field" ).autocomplete({
+            source: {{ series_data|safe }},
+            minLength: 1,
+            select: function( event, ui ) {
+                $.ajax({
+                    url: "/arrangement/get_selected_series_data/" + ui.item.id,
+                    dataType: "json",
+                    success: function( jsonResponse ) {
+                        clearSeriesFields();
+                        $( "input.series1_storedtitle" ).val(jsonResponse.series1title);
+                        $( "input.series1_storeduri" ).val(jsonResponse.series1uri);
+                        $( "input.series1_storedark" ).val(jsonResponse.series1ark);
+                        $( "input.series1_storedshortid" ).val(jsonResponse.series1shortid);
+                        $( "input.series1_storedfullid" ).val(jsonResponse.series1fullid);
 
-      $(function() {
-          $.ajax({
-              url: "/arrangement/ajax",
-              dataType: "xml",
-              success: function( xmlResponse ) {
-                  var showOnce = 1
-                  //var data = $( "c01", xmlResponse ).map(function() {
-                  var data = [];
-                  $(xmlResponse).find("c01").each(function() {
-                      if($(this).attr("level") == 'series')
-                      {
-                          var series_id = $(this).attr("id");
-                          var series_unittitle_element = $(this).children('did').children('unittitle');
-                          var series_title = "";
-
-                          if(series_unittitle_element.attr("encodinganalog") == '245$a') {
-                              var series_title = cleanUpTitle(series_unittitle_element.text());
-                          }
-
-                          series_object = new Object();
-                          series_object.value = series_title;
-                          series_object.id = series_id;
-
-                          //array[array.length] faster in firefox for smaller arrays thant a push.
-                          data[data.length] = series_object;
-
-                          $(this).find("c02").each(function() {
-                              if($(this).attr("level") == 'subseries')
-                              {
-                                  
-                                  var subseries_id = $(this).attr("id");
-                                  var subseries_unittitle_element = $(this).children('did').children('unittitle');
-                                  if(subseries_unittitle_element.attr("type") == '245$a') {
-                                      subseries_object = new Object();
-                                      subseries_object.value = series_title + ': ' + cleanUpTitle(subseries_unittitle_element.text());
-                                      subseries_object.id = subseries_id;
- 
-                                      data[data.length] = subseries_object;
-                                  }
-                              }
-                          })
-                      }
-		  });
- 
-                  $( "input.series_title_field" ).autocomplete({
-                      source: data,
-                      minLength: 0,
-                      select: function( event, ui ) {
-                          //can act on selection here/
-                          alert(ui.item.id);
-                          //$( "input.series_uri_field" ).value = 'http://findingaids.library.emory.edu/documents/rushdie1000/' + ui.item.id;
-                      }
+                        $( "input.series2_storedtitle" ).val(jsonResponse.series2title);
+                        $( "input.series2_storeduri" ).val(jsonResponse.series2uri);
+                        $( "input.series2_storedark" ).val(jsonResponse.series2ark);
+                        $( "input.series2_storedshortid" ).val(jsonResponse.series2shortid);
+                        $( "input.series2_storedfullid" ).val(jsonResponse.series2fullid);
+                     }
                   });
-              }
-          });
-      });
 
-     /*var datatest = [];
-     $(function() {
-          $.ajax({
-              url: "/arrangement/ajax",
-              dataType: "xml",
-              success: function( xmlResponse ) {
-                  var data = $( "c02", xmlResponse ).map(function() {
-                      //var subseries_id = 
-                      if($(this).attr("level") == 'subseries')
-                      {
-                          obj = new Object();
-                          obj.value = $( "unittitle", this ).text();
-                          obj.id = $( "unittitle", this ).text();
-                          datatest[datatest.length] = obj;
-                          return {
-                          value: $( "unittitle", this ).text(),
-                          id: $( "unittitle", this ).text()
-                          };
-                          
-                      }
-		  }).get();
-                  //var data = $.makeArray( datatest )
-                  var data = datatest;
-                  alert(data);
-                  $( "input#id_mods-title" ).autocomplete({
-                      source: data,
-                      minLength: 0,
-                      select: function( event, ui ) {
-                          alert('selected');
-                      }
-                  });
               }
-          });
-      });*/
-
-     /*var datatest = "{";
-     $(function() {
-          $.ajax({
-              url: "/arrangement/ajax",
-              dataType: "xml",
-              success: function( xmlResponse ) {
-                  var data = $( "c02", xmlResponse ).map(function() {
-                      //var subseries_id = 
-                      if($(this).attr("level") == 'subseries')
-                      {
-                          datatest = $( "unittitle", this ).text() + ": " + $( "unittitle", this ).text();
-                          return {
-                          value: $( "unittitle", this ).text(),
-                          id: $( "unittitle", this ).text()
-                          };
-                          
-                      }
-		  }).get();
-                  datatest = datatest + "}";
-                  var data = $.makeArray( datatest )
-                  alert(data);
-                  $( "input#id_mods-title" ).autocomplete({
-                      source: data,
-                      minLength: 0,
-                      select: function( event, ui ) {
-                          alert('selected');
-                      }
-                  });
-              }
-          });
-      });*/
-
+       });
     });
+
+    function formVerification() {
+        //var series_data = JSON.parse('{{ series_data|safe }}');
+        var series_data = '{{ series_data|safe }}';
+        series_value = $( "input#series_title_field" ).val();
+        if(series_value != '') {
+            //dumpProps(series_data);
+            /*alert(series_val);
+            var matchFound = false;
+            for(i=0;i<series_data.length;i++) {
+               
+                for (value in series_data[i].value) {
+                    if(value == series_value) {
+                        matchFound = true;
+                    }
+                }
+            }
+
+            if (matchFound == false) {*/
+            if(series_data.indexOf(series_value) == -1) {
+                var answer = confirm('About to submit with a series/subseries that does not map to FindingAids. Do you wish to proceed?');
+                if(answer) {
+                        clearSeriesFields();
+                } else {
+                    return false;
+                }
+             }
+         }
+         return true;
+    }
+
+function clearSeriesFields() {
+     $( "input.series1_storedtitle" ).val('');
+     $( "input.series1_storeduri" ).val('');
+     $( "input.series1_storedark" ).val('');
+     $( "input.series1_storedshortid" ).val('');
+     $( "input.series1_storedfullid" ).val('');
+
+     $( "input.series2_storedtitle" ).val('');
+     $( "input.series2_storeduri" ).val('');
+     $( "input.series2_storedark" ).val('');
+     $( "input.series2_storedshortid" ).val('');
+     $( "input.series2_storedfullid" ).val('');
+}
+
+function dumpProps(obj, parent) {
+   // Go through all the properties of the passed-in object
+   for (var i in obj) {
+      // if a parent (2nd parameter) was passed in, then use that to
+      // build the message. Message includes i (the object's property name)
+      // then the object's property value on a new line
+      if (parent) { var msg = parent + "." + i + "\n" + obj[i]; } else { var msg = i + "\n" + obj[i]; }
+      // Display the message. If the user clicks "OK", then continue. If they
+      // click "CANCEL" then quit this level of recursion
+      if (!confirm(msg)) { return; }
+      // If this property (i) is an object, then recursively process the object
+      if (typeof obj[i] == "object") {
+         if (parent) { dumpProps(obj[i], parent + "." + i); } else { dumpProps(obj[i], i); }
+      }
+   }
+}
   </script>
 {% endblock %}
 
@@ -179,7 +135,7 @@
 <p class='extra'>
   | <a href="{% url arrangement:raw-ds obj.pid 'FileTech' %}">FileTech</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
-  | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Descriptive</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'Mods' %}">Descriptive</a>
 </p>
 
 
@@ -214,14 +170,27 @@
 <div id="mods">
     {{ form.mods.non_field_errors }}
     <table class="edit-form">
-        {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+        <tr>
+           <th>Series Title: </th>
+           <td><input name="series_title_field" id="series_title_field" type="text" class="long" /></td>
+        </tr>
+
+  <tr id="series_info">
+      <th>&nbsp;</th>
+      <td class="multi-field">
+          {% with form.mods.subforms.series as seriesform %}
+            {% include 'snippets/edit_series.html' %}
+          {% endwith %}
+          </td>
+          </tr>
+    <tr>    
     </table>
 </div>
 
 
 
-<input class="form-submit" type="submit" name="_save" value="Save"/>
-<input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
+<input class="form-submit" type="submit" name="_save" value="Save" onClick='return formVerification();'/>
+<input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing" onClick='return formVerification();'/>
 </form>
 </div>
 {% endblock %}
