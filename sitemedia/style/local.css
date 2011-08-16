@@ -235,3 +235,21 @@ ul.messages li {
 }
 /* NOTE: could use this selector to highlight form sections with errors
 .edit-form .error {}    */
+
+/* Styles for the arrangement edit. */
+#arrangement-edit .section-head {
+    background-color:#efefef;
+    border-bottom:3px double black;
+    padding-left: 8px;
+    padding-bottom: 5px;
+}
+
+#arrangement-edit .toggle {
+    background-image: url('../genlib_media/style/images/menu-expanded.png');
+    background-position: 99% 50%;    /* nearly right edge */
+    background-repeat: no-repeat;
+    padding: 5px;
+}
+#arrangement-edit .collapsed {
+    background-image: url('../genlib_media/style/images/menu-collapsed.png');
+}

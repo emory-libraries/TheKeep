@@ -67,27 +67,22 @@
     });
 
     function formVerification() {
-        //var series_data = JSON.parse('{{ series_data|safe }}');
-        var series_data = '{{ series_data|safe }}';
+        var series_data = JSON.parse('{{ series_data|safe }}');
         series_value = $( "input#series_title_field" ).val();
         if(series_value != '') {
-            //dumpProps(series_data);
-            /*alert(series_val);
             var matchFound = false;
             for(i=0;i<series_data.length;i++) {
-               
-                for (value in series_data[i].value) {
-                    if(value == series_value) {
-                        matchFound = true;
-                    }
+                if(series_value == series_data[i].value) {
+                    matchFound = true;
                 }
             }
 
-            if (matchFound == false) {*/
-            if(series_data.indexOf(series_value) == -1) {
-                var answer = confirm('About to submit with a series/subseries that does not map to FindingAids. Do you wish to proceed?');
+            if (matchFound == false) {
+                var answer = confirm('About to submit with a series that does not map to a Finding Aid. Do you wish to proceed?');
                 if(answer) {
                         clearSeriesFields();
+                        //TODO: Support top level series Finding Aid match, at least?
+                        $( "input.series1_storedtitle" ).val(series_value);
                 } else {
                     return false;
                 }
@@ -110,22 +105,6 @@ function clearSeriesFields() {
      $( "input.series2_storedfullid" ).val('');
 }
 
-function dumpProps(obj, parent) {
-   // Go through all the properties of the passed-in object
-   for (var i in obj) {
-      // if a parent (2nd parameter) was passed in, then use that to
-      // build the message. Message includes i (the object's property name)
-      // then the object's property value on a new line
-      if (parent) { var msg = parent + "." + i + "\n" + obj[i]; } else { var msg = i + "\n" + obj[i]; }
-      // Display the message. If the user clicks "OK", then continue. If they
-      // click "CANCEL" then quit this level of recursion
-      if (!confirm(msg)) { return; }
-      // If this property (i) is an object, then recursively process the object
-      if (typeof obj[i] == "object") {
-         if (parent) { dumpProps(obj[i], parent + "." + i); } else { dumpProps(obj[i], i); }
-      }
-   }
-}
   </script>
 {% endblock %}
 
@@ -133,9 +112,9 @@ function dumpProps(obj, parent) {
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p class='extra'>
+  | <a href="{% url arrangement:raw-ds obj.pid 'Mods' %}">Descriptive</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'FileTech' %}">FileTech</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
-  | <a href="{% url arrangement:raw-ds obj.pid 'Mods' %}">Descriptive</a>
 </p>
 
 
@@ -146,25 +125,8 @@ function dumpProps(obj, parent) {
     </ul>
     {# NOTE: some overlap with collection edit form instructions #}
 </div>
-<div id="audio-edit">
+<div id="arrangement-edit">
 <form method="post" name="edit_form">{% csrf_token %}
-
-<h3 id="FileTech-label" class="section-head toggle">File Tech Metadata</h3>
-<div id="FileTech">
-    {{ form.filetech.non_field_errors }}
-    <table class="edit-form">
-        {% for field in form.filetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-    </table>
-</div>
-
-
-<h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
-<div id="rights">
-    {{ form.rights.non_field_errors }}
-    <table class="edit-form">
-        {% for field in form.rights %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-    </table>
-</div>
 
 <h3 id="mods-label" class="section-head toggle">Descriptive Metadata</h3>
 <div id="mods">
@@ -186,6 +148,27 @@ function dumpProps(obj, parent) {
     <tr>    
     </table>
 </div>
+
+
+
+<h3 id="FileTech-label" class="section-head toggle">File Tech Metadata</h3>
+<div id="FileTech">
+    {{ form.filetech.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.filetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+
+<h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
+<div id="rights">
+    {{ form.rights.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.rights %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+
 
 
 

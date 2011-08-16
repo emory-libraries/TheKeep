@@ -3,6 +3,7 @@ import urllib2
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render_to_response
@@ -10,6 +11,8 @@ from django.template import RequestContext
 from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
+
+from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -26,52 +29,60 @@ finding_aid_id = 'rushdie1000'
 def index(request):
     return HttpResponse('Implement me', content_type='text/html')
 
-#@permission_required('is_staff')
+@permission_required('is_staff')
 def edit(request, pid):
-    # pass dates in to the view to link to searches for recently uploaded files
-    #pid = "keep-athom09:steven-test"
-    #pid = "scande3:steven-test"
+    '''Edit view for an arrangement object. Currently, create is not
+       supported on this form.
+
+       @param pid: The pid of the object being edited.
+       '''
     repo = Repository(request=request)
-    obj = repo.get_object(pid, type=ArrangementObject)
-    print "HELLO THERE!"
-    if request.method == 'POST':
-        print "YEAH I POSTED!"
-        # if data has been submitted, initialize form with request data and object mods
-        form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
-        print form.errors
-        if form.is_valid():
-            print "FORM WAS VALID!"
-            form.update_instance() 
-            log_message = 'Updating Arrangement Object from Keep'
-            action = 'updated'
-            obj.save('Updating Arrangement Object from Keep')
-            messages.success(request, 'Successfully %s arrangement <a href="%s">%s</a>' % \
-                        (action, reverse('arrangement:edit', args=[obj.pid]), obj.pid))
+    try:
+        obj = repo.get_object(pid, type=ArrangementObject)
+        if request.method == 'POST':
+            # if data has been submitted, initialize form with request data and object mods
+            form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
+            if form.is_valid():
+                form.update_instance() 
+                log_message = 'Updating Arrangement Object from Keep'
+                action = 'updated'
+                # NOTE: by sending a log message, we force Fedora to store an
+                # audit trail entry for object creation, which doesn't happen otherwise
+                obj.save(log_message)
+                messages.success(request, 'Successfully %s arrangement <a href="%s">%s</a>' % \
+                            (action, reverse('arrangement:edit', args=[obj.pid]), obj.pid))
             
-            # form submitted via normal save button - redirect to main audio page
-            if '_save_continue' not in request.POST:
-                return HttpResponseSeeOtherRedirect(reverse('arrangement:index'))
+                # form submitted via normal save button - redirect to main audio page
+                if '_save_continue' not in request.POST:
+                    return HttpResponseSeeOtherRedirect(reverse('arrangement:index'))
 
-            # otherwise, form was submitted via "save and continue editing"
-            else:
-                # creating a new object- redirect to the edit-collection url for the new pid
-                if pid is None:
-                    return HttpResponseSeeOtherRedirect(reverse('arrangement:edit',
-                                                        args=[obj.pid]))
-
-                # if form was valid & object was saved but user has requested
-                # "save & continue editing" re-init the form so that formsets
-                # will display correctly
+                # otherwise, form was submitted via "save and continue editing"
                 else:
+                    # if form was valid & object was saved but user has requested
+                    # "save & continue editing" re-init the form so that formsets
+                    # will display correctly
                     form = arrangementforms.ArrangementObjectEditForm(instance=obj)
     
-    else:
-        form = arrangementforms.ArrangementObjectEditForm(instance=obj)
+        else:
+            form = arrangementforms.ArrangementObjectEditForm(instance=obj)
 
+    except RequestFailed, e:
+        # if there was a 404 accessing object MODS, raise http404
+        # NOTE: this probably doesn't distinguish between object exists with
+        # no MODS and object does not exist at all
+        if e.code == 404:
+            raise Http404
+        # otherwise, re-raise and handle as a common fedora connection error
+        else:
+            raise
+
+    # Query for the finding aid information.
     return_fields = ['eadid']
-    search_fields = {'eadid' : 'rushdie1000'}
-    queryset = Series.objects.also(*return_fields).filter(**search_fields)
+    only_fields = ['id','did__unittitle','subseries', 'eadid']
+    search_fields = {'eadid' : finding_aid_id }
+    queryset = Series.objects.also(*return_fields).only(*only_fields).filter(**search_fields)
 
+    # Builds an id and value dictionary for the jQuery autocomplete.
     series_data = []
     for series in queryset:
         if(series.subseries):
@@ -85,23 +96,31 @@ def edit(request, pid):
     return render_to_response('arrangement/edit.html', {'obj' : obj, 'form': form, 'series_data': series_data},
         context_instance=RequestContext(request))
 
-#@permission_required('is_staff')
+@permission_required('is_staff')
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=ArrangementObject, repo=Repository(request=request))
 
-#@permission_required('is_staff')
+@permission_required('is_staff')
 @csrf_exempt
 def get_selected_series_data(request, id):
-    'Access the finding aids EAD'
+    '''This is called from a JQuery ajax call. It filters on the passed series/subseries id
+       and returns a dictionary containing title, uri, ark, full id, and short id. A bit ugly
+       at the moment.
 
+       @param id: The series or subseries id that more data is wanted from.
+    '''
+
+    # Query for the finding aid information.
     return_fields = ['eadid']
+    only_fields = ['id','did__unittitle','subseries', 'eadid']
     search_fields = {'eadid' : finding_aid_id}
     series_match_fields = {'id' : id, 'subseries__id': id, 'subseries__subseries__id': id}
-    queryset = Series.objects.also(*return_fields).or_filter(**series_match_fields).filter(**search_fields)
+    queryset = Series.objects.also(*return_fields).only(*only_fields).or_filter(**series_match_fields).filter(**search_fields)
     series_obj = queryset.get()
 
+    # Builds a JSON response of further data. A bit ugly currently.
     series_data = {}
     for series in queryset:
         if(series.subseries):
@@ -127,24 +146,3 @@ def get_selected_series_data(request, id):
     series_data = simplejson.dumps(series_data)
 
     return HttpResponse(series_data, content_type='application/json')
-
-
-def shortform_id(id, eadid=None):
-    """Calculate a short-form id (without eadid prefix) for use in external urls.
-    Uses eadid if available; otherwise, relies on the id delimiter character.
-    :param id: id to be shortened
-    :param eadid: eadid prefix, if available
-    :returns: short-form id
-    """
-    # if eadid is available, use that (should be the most reliable way to shorten id)
-    if eadid:
-        id = id.replace('%s_' % eadid, '')
-        
-    # if eadid is not available, split on _ and return latter portion
-    elif ID_DELIMITER in id:
-        eadid, id = id.split(ID_DELIMITER)
-
-    # this shouldn't happen -  one of the above two options should work
-    else:
-        raise Exception("Cannot calculate short id for %s" % id)
-    return id
