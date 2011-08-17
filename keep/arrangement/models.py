@@ -45,7 +45,7 @@ class ArrangementMods(mods.MODS):
 class ArrangementObject(DigitalObject):
     ARRANGEMENT_CONTENT_MODEL = 'info:fedora/emory-control:Arrangement-1.0'
     CONTENT_MODELS = [ ARRANGEMENT_CONTENT_MODEL ]
-    NEW_OBJECT_VIEW = 'arrangement:index'
+    NEW_OBJECT_VIEW = 'arrangement:edit'
 
     rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
         defaults={
