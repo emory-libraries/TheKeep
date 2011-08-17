@@ -82,7 +82,6 @@ class Command(BaseCommand):
         obj.filetech.content.attributes = row['attrib']
         obj.filetech.content.created = row['created']
         obj.filetech.content.modified = row['modified']
-        obj.filetech.content.type = row['rec_type']
         obj.filetech.content.creator = row['creator']
 
 #        # set values in mods DS
