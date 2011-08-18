@@ -76,9 +76,10 @@ class Command(BaseCommand):
 
          #map series in MODS
         #RecordType used to lookup series info
-        rec_type= None
-        if row["rec_type"] in self.series:
-            rec_type = row["rec_type"]
+        rec_type= row["rec_type"]
+        rec_type = rec_type.strip()
+        if rec_type not in self.series:
+            rec_type = None
 
         if rec_type is not None:
             obj.mods.content.create_series()
@@ -178,37 +179,41 @@ class Command(BaseCommand):
         arrangement_saved =0
         errors = 0
         for row in reader:
-            csv_read += 1
-            arrangement_object = self._create_arrangement(row)
+            try:
+                csv_read += 1
+                arrangement_object = self._create_arrangement(row)
 
-            if not options['no-act']:
-                try:
-                    arrangement_object.save()
-                    arrangement_saved += 1
-                    self.arrangement_pids.append(arrangement_object.pid)
+                if not options['no-act']:
+                    try:
+                        arrangement_object.save()
+                        arrangement_saved += 1
+                        self.arrangement_pids.append(arrangement_object.pid)
+                        if self.verbosity > self.v_none:
+                            self.stdout.write("Saved ArrangementObject %s(%s)\n" % (arrangement_object.label, arrangement_object.pid))
+                    except Exception as e:
+                        if self.verbosity > self.v_none:
+                            self.stdout.write("Error saving ArrangementObject %s: %s\n" % (arrangement_object.label, e.message))
+                        errors += 1
+                else:
                     if self.verbosity > self.v_none:
-                        self.stdout.write("Saved ArrangementObject %s(%s)\n" % (arrangement_object.label, arrangement_object.pid))
-                except Exception as e:
-                    if self.verbosity > self.v_none:
-                        self.stdout.write("Error saving ArrangementObject %s: %s\n" % (arrangement_object.label, e.message))
-                    errors += 1
-            else:
-                if self.verbosity > self.v_none:
-                    self.stdout.write("TEST ArrangementObject %s\n" % (arrangement_object.label))
+                        self.stdout.write("TEST ArrangementObject %s\n" % (arrangement_object.label))
 
 
-            if self.verbosity > self.v_normal:
-                self.stdout.write("===RELS-EXT===\n")
-                for entry in arrangement_object.rels_ext.content:
-                    self.stdout.write("%s\n" % list(entry))
-                self.stdout.write("===MODS===\n")
-                self.stdout.write("%s\n" % arrangement_object.mods.content.serialize())
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("===RELS-EXT===\n")
+                    for entry in arrangement_object.rels_ext.content:
+                        self.stdout.write("%s\n" % list(entry))
+                    self.stdout.write("===MODS===\n")
+                    self.stdout.write("%s\n" % arrangement_object.mods.content.serialize())
 
-            #Add each ArrangementObject to the SimpleCollection
-            relation = (simple_collection.uriref, relsextns.hasMember, arrangement_object.uriref)
-            simple_collection.rels_ext.content.add(relation)
-            if self.verbosity > self.v_normal:
-                self.stdout.write("Adding hasMember %s relation on SimpleCollection\n" % (arrangement_object.pid))
+                #Add each ArrangementObject to the SimpleCollection
+                relation = (simple_collection.uriref, relsextns.hasMember, arrangement_object.uriref)
+                simple_collection.rels_ext.content.add(relation)
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("Adding hasMember %s relation on SimpleCollection\n" % (arrangement_object.pid))
+            except Exception as e:
+                self.stdout.write("Error in record id %s: %s\n" % (row["id"], e))
+                errors += 1
 
         if not options['no-act']:
             try:
