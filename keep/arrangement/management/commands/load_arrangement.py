@@ -1,3 +1,4 @@
+import base64
 import csv
 from optparse import make_option
 
@@ -62,17 +63,25 @@ class Command(BaseCommand):
 
 
     def _create_arrangement(self, row):
+        #Account for unicode characters
+        #Preserve unicode characters for raw path,
+        #but remove unicode character for other mappings
+        rawpath =  base64.encodestring(row["filename"])
+        path =  unicode(row["filename"], errors='ignore')
+        creator = unicode(row['creator'], errors='ignore')
+
         # set values in filetech DS
         obj = self.repo.get_object(type=ArrangementObject)
-        obj.label = row['filename']
+        obj.label = path
         obj.filetech.content.local_id = row['id']
         obj.filetech.content.md5 = row['checksum']
         obj.filetech.content.computer = row['computer']
-        obj.filetech.content.path = row['filename']
+        obj.filetech.content.path = path
+        obj.filetech.content.rawpath = rawpath
         obj.filetech.content.attributes = row['attrib']
         obj.filetech.content.created = row['created']
         obj.filetech.content.modified = row['modified']
-        obj.filetech.content.creator = row['creator']
+        obj.filetech.content.creator = creator
 
          #map series in MODS
         #RecordType used to lookup series info
@@ -98,6 +107,8 @@ class Command(BaseCommand):
         if self.verbosity > self.v_normal:
             self.stdout.write("Adding %s isMemberOf %s relation on ArrangementObject\n" % (obj.label, self.master_obj.pid))
 
+        #set state to inactive by default
+        obj.state = "I"
         return obj
 
 
