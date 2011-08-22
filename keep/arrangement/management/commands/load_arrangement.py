@@ -67,8 +67,11 @@ class Command(BaseCommand):
         #Preserve unicode characters for raw path,
         #but remove unicode character for other mappings
         rawpath =  base64.encodestring(row["filename"])
-        path =  unicode(row["filename"], errors='ignore')
-        creator = unicode(row['creator'], errors='ignore')
+
+        path = row["filename"]
+        path =  unicode(path, 'utf8')
+        creator = row["creator"]
+        creator = unicode(creator, 'utf8')
 
         # set values in filetech DS
         obj = self.repo.get_object(type=ArrangementObject)
