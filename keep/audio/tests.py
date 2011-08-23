@@ -1904,23 +1904,16 @@ class TestAudioObject(KeepTestCase):
                          'parent collection object id should be set in index data')
         self.assertEqual(mockmss.label, desc_data['collection_label'],
                           'parent collection object label should be set in index data' )
-        self.assertEqual(mockmss.collection_id, desc_data['archive_id'],
-                          'archive id (collection of parent collection object) should be set in index data' )
-        self.assertEqual(mockarchive.label, desc_data['archive_label'],
-                          'archive label (collection of parent collection object) should be set in index data' )
+        # NB: as of 2011-08-23, eulindexer doesn't support automatic
+        # reindexing of audio objects when their collection changes. as a
+        # result, archive_id and archive_label may be stale. disable
+        # indexing them until eulindexer supports those chained updates.
         # check CollectionObject use
-        self.assertEqual(2, mockcollobj.call_count,
-                         'CollectionObject should be initialized twice - parent collection, archive')
         # get all args for collection object initializations
-        call_args = mockcollobj.call_args_list
-        args, kwargs = call_args[0]
+        args, kwargs = mockcollobj.call_args
         self.assert_(obj.collection_uri in args,
                      'object.collection_uri %s should be used to initialize a CollectionObject for collection info' \
                      % obj.collection_uri)
-        args, kwargs = call_args[1]
-        self.assert_(mockmss.collection_id in args,
-                     'collection parent uri %s should be used to initialize a CollectionObject for archive info' \
-                     % mockmss.collection_id)
         
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                          'default index data fields should be present in data (title)')
