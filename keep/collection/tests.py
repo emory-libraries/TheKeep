@@ -254,8 +254,8 @@ class CollectionObjectTest(KeepTestCase):
             'find by mss number with parent option should still search for requested collection number in source_id')
         # subquery - optional filter when parent is specified
         args, kwargs = self.mocksolr.query.query.call_args
-        self.assertEqual(parent_collection, kwargs['collection_id'],
-            'find by mss number with parent option should filter on collection_id')
+        self.assertEqual(parent_collection, kwargs['archive_id'],
+            'find by mss number with parent option should filter on archive_id')
 
         # empty result
         self.mocksolr.query.execute.return_value = []
