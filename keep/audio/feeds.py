@@ -99,7 +99,7 @@ class PodcastFeed(Feed):
         # that mod_wsgi/django doesn't share it across threads, but even if
         # it did, it would be ok for threads to stomp on eachother so long
         # as this method caches only global, shared collection data.
-        self._collection_data = self._get_collection_data(self)
+        self._collection_data = self._get_collection_data()
         return page
 
     def _get_collection_data(self):
@@ -188,7 +188,7 @@ class PodcastFeed(Feed):
         if collection_pid.startswith('info:fedora/'): # it does. strip it.
             collection_pid = collection_pid[len('info:fedora/'):]
         collection = self._collection_data.get(collection_pid, None)
-        archive_pid = item.get('archive_id', '')
+        archive_pid = collection.get('archive_id', '') if collection else ''
         if archive_pid.startswith('info:fedora/'): # it does. strip it.
             archive_pid = archive_pid[len('info:fedora/'):]
 
