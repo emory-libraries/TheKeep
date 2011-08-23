@@ -566,11 +566,14 @@ class AudioObject(DigitalObject):
                 # pull parent & archive collection objects directly from fedora
                 parent = CollectionObject(self.api, self.collection_uri)
                 data['collection_label'] = parent.label
-                # the parent collection of the collection this item belongs to is its archive
-                # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
-                data['archive_id'] = parent.collection_id
-                archive = CollectionObject(self.api, parent.collection_id)
-                data['archive_label'] = archive.label
+                # NB: as of 2011-08-23, eulindexer doesn't support automatic
+                # reindexing of audio objects when their collection changes.
+                # as a result, archive_id and archive_label may be stale.
+                # disable indexing them until eulindexer supports those
+                # chained updates.
+                #data['archive_id'] = parent.collection_id
+                #archive = CollectionObject(self.api, parent.collection_id)
+                #data['archive_label'] = archive.label
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
 
