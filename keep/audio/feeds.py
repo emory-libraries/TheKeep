@@ -94,20 +94,19 @@ class PodcastFeed(Feed):
     #  owner, itunes subtitle, author, summary; itunes owner, image, category
 
     def get_object(self, request, page):
-        self._update_collection_data()
-        return page
-
-    def _update_collection_data(self):
         # each time someone requests a feed, update the cached collection
         # data. self is persistent across requests here. i'm pretty sure
         # that mod_wsgi/django doesn't share it across threads, but even if
         # it did, it would be ok for threads to stomp on eachother so long
         # as this method caches only global, shared collection data.
+        self._collection_data = self._get_collection_data(self)
+        return page
+
+    def _get_collection_data(self):
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         solrquery = solr.query(pid='%s:*' % (settings.FEDORA_PIDSPACE,),
                                content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-        collections = dict((item['pid'], item) for item in solrquery.execute())
-        self._collection_data = collections
+        return dict((item['pid'], item) for item in solrquery.execute())
 
     def link(self, page):
         return reverse('audio:podcast-feed', args=[page])

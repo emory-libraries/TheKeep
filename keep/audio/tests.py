@@ -1202,6 +1202,7 @@ class AudioViewsTest(KeepTestCase):
 
     @patch('keep.audio.feeds.sunburnt.SolrInterface', mocksolr)
     @patch('keep.audio.feeds.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.feeds.PodcastFeed._get_collection_data', new=Mock(return_value={}))
     @patch('keep.audio.feeds.CollectionObject')
     def test_podcast_feed(self, mockcollobj):
         feed_url = reverse('audio:podcast-feed', args=[1])
@@ -1238,8 +1239,6 @@ class AudioViewsTest(KeepTestCase):
         args, kwargs = self.mocksolr.query.call_args
         self.assertEqual(True, kwargs['researcher_access'],
                          'kiosk feed solr search should filter on researcher_access=True')
-        self.assertEqual(True, kwargs['has_access_copy'],
-                         'kiosk feed solr search should filter on has_access_copy=True')
         self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
                          'kiosk feed solr search should filter on audio content model')
         self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
