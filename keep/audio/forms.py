@@ -140,6 +140,7 @@ class ModsEditForm(XmlObjectForm):
     # read-only text input to display ARK (not editable)
     identifier = forms.CharField(label="Identifier", required=False,
         widget=ReadonlyTextInput)
+    resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
     origin_info = SubformField(formclass=OriginInfoForm)
     general_note = SubformField(formclass=SimpleNoteForm)
     part_note = SubformField(formclass=SimpleNoteForm)
