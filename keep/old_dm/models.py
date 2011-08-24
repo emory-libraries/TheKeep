@@ -549,9 +549,7 @@ class Content(models.Model):   # individual item
         sounds = list(self.source_sounds.all())
 
         notes = [ s.source_note for s in sounds
-                  if s.source_note ] + \
-                [ s.sound_field for s in sounds
-                  if s.sound_field ]
+                  if s.source_note ]
         for note in notes:
             logger.debug('Note - General: %s' % note)
             st_xml.note_list.append(unicode(note))
