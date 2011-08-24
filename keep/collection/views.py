@@ -122,7 +122,9 @@ def search(request):
     context = {'search': form}
     if form.is_valid():
         # include all non-blank fields from the form as search terms
-        search_opts = dict((key,val) for key,val in form.cleaned_data.iteritems() if val)
+        search_opts = dict((key,val)
+                           for key,val in form.cleaned_data.iteritems()
+                           if val is not None and val != '') # but need to search by 0
         # restrict to currently configured pidspace and collection content model
         search_opts.update({
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
@@ -135,7 +137,7 @@ def search(request):
             key = form.fields[field].label  # use form display label
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
-            if val:     # if search value is not empty, selectively add it
+            if val is not None and val != '':     # if search value is not empty, selectively add it
                 if field == 'archive_id':       # for archive, get  info
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif val != form.fields[field].initial:     # ignore default values
