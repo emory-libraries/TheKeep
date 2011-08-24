@@ -150,14 +150,13 @@ class ModsEditForm(XmlObjectForm):
         model = AudioMods
         fields = (
             'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
-            'general_note', 'part_note', 'location', 'resource_type', 
+            'general_note', 'part_note', 'resource_type', 
         )
         widgets = {
             'title': forms.Textarea,
             'identifier': ReadonlyTextInput,
             'dm1_id': ReadonlyTextInput,
             'dm1_other_id': ReadonlyTextInput,
-            'location': ReadonlyTextInput,
         }
 
 
