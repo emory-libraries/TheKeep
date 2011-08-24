@@ -406,20 +406,18 @@ class Content(models.Model):   # individual item
         all_notes = []
         if self.abstract:
             logger.debug('Item Note: %s [abstract]' % self.abstract)
-            modsxml.create_dm1_abstract_note()
-            modsxml.dm1_abstract_note.text = unicode(self.abstract)
-            all_notes.append('%s [abstract]' % self.abstract)
+            all_notes.append(self.abstract)
         if self.content_notes:
             logger.debug('Item Note: %s [content]' % self.content_notes)
-            modsxml.create_dm1_content_note()
-            modsxml.dm1_content_note.text = self.content_notes
-            all_notes.append('%s [content]' % self.content_notes)
+            all_notes.append(self.content_notes)
         if self.toc:
             logger.debug('Item Note: %s [toc]' % self.toc)
-            modsxml.create_dm1_toc_note()
-            modsxml.dm1_toc_note.text = self.toc
-            all_notes.append('%s [toc]' % self.toc)
-        data.append('\n'.join(all_notes))
+            all_notes.append(self.toc)
+        full_note_text = '\n\n'.join(all_notes)
+        if full_note_text:
+            modsxml.create_general_note()
+            modsxml.general_note.text = full_note_text
+        data.append(full_note_text)
 
         logger.debug('Item Type of Resource: %s' % 'sound recording')
         modsxml.resource_type = 'sound recording'

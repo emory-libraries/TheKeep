@@ -596,12 +596,6 @@ class AudioViewsTest(KeepTestCase):
         # descriptive metadata migration fields
         obj.mods.content.dm1_id = '20'
         obj.mods.content.dm1_other_id = '00000040'
-        obj.mods.content.create_dm1_abstract_note()
-        obj.mods.content.dm1_abstract_note.text = '''Includes a short commentary intro.'''
-        obj.mods.content.create_dm1_content_note()
-        obj.mods.content.dm1_content_note.text = '''content notes here'''
-        obj.mods.content.create_dm1_toc_note()
-        obj.mods.content.dm1_toc_note.text = '''TOC notes here.'''        
         obj.mods.content.resource_type = 'sound recording'
         namepartxml = mods.NamePart(text='Dawson, William Levi')
         rolexml = mods.Role(type='text', authority='marcrelator',
@@ -729,12 +723,6 @@ class AudioViewsTest(KeepTestCase):
                 'object MODS DM1 other id is pre-populated in form initial data')
             self.assertEqual(item_mods.resource_type, initial_data['resource_type'],
                 'object MODS resource type is pre-populated in form initial data')
-            self.assertEqual(item_mods.dm1_abstract_note.text, initial_data['dm1_abstract_note-text'],
-                'object MODS DM1 abstract note is pre-populated in form initial data')
-            self.assertEqual(item_mods.dm1_content_note.text, initial_data['dm1_content_note-text'],
-                'object MODS DM1 content note is pre-populated in form initial data')
-            self.assertEqual(item_mods.dm1_toc_note.text, initial_data['dm1_toc_note-text'],
-                'object MODS DM1 toc note is pre-populated in form initial data')
             # some migrated fields are display-only, not part of the form
             for name in item_mods.names:
                 self.assertContains(response, name.name_parts[0].text,

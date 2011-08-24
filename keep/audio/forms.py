@@ -143,9 +143,6 @@ class ModsEditForm(XmlObjectForm):
     origin_info = SubformField(formclass=OriginInfoForm)
     general_note = SubformField(formclass=SimpleNoteForm)
     part_note = SubformField(formclass=SimpleNoteForm)
-    dm1_abstract_note = SubformField(formclass=SimpleNoteForm)
-    dm1_content_note = SubformField(formclass=SimpleNoteForm)
-    dm1_toc_note = SubformField(formclass=SimpleNoteForm)
     
     names = SubformField(formclass=NameForm)
 
@@ -154,7 +151,6 @@ class ModsEditForm(XmlObjectForm):
         fields = (
             'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
             'general_note', 'part_note', 'location', 'resource_type', 
-            'dm1_abstract_note', 'dm1_content_note',
         )
         widgets = {
             'title': forms.Textarea,
