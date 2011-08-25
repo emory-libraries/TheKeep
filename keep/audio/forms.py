@@ -44,8 +44,11 @@ def _collection_options():
         logging.debug('Calculated collections: ' + ' '.join(c['pid'] for c in collections))
         # generate option list with URI as value and source id - title display
         # sort on source id
-        options = [('info:fedora/' + c.get('pid', ''), '%s - %s' % (c.get('source_id', ''), c.get('title', '')))
-                for c in sorted(collections, key=lambda k: k['source_id'])]
+        options = [('info:fedora/' + c.get('pid', ''),
+                    '%s %s %s' % (c.get('source_id', ''),
+                                  c.get('archive_short_name', ''),
+                                  c.get('title', '')))
+                   for c in sorted(collections, key=lambda k: k['source_id'])]
 
         # always include a blank option at the beginning of the list
         # - not specified for search, force user to select on the edit form

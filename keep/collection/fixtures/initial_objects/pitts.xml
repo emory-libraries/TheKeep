@@ -20,6 +20,7 @@
     <foxml:datastreamVersion ID="MODS.0" MIMETYPE="text/xml" FORMAT_URI="http://www.loc.gov/mods/v3" LABEL="MODS Metadata">
       <foxml:xmlContent>
         <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
+          <mods:identifier type="local_short_name">PITTS</mods:identifier>
           <mods:titleInfo>
             <mods:title>Pitts Theology Library</mods:title>
           </mods:titleInfo>

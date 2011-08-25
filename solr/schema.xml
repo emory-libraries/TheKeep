@@ -288,6 +288,9 @@ Solr Schema for projects using eulfedora and indexdata.
    <!-- keep-specific fields -->
    <!--  * collection objects -->
    <field name="source_id" type="integer" indexed="true" stored="true" multiValued="false"/>
+   <field name="archive_id" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="archive_label" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="archive_short_name" type="string" indexed="true" stored="true" multiValued="false"/>
 
    <!--  * audio objects -->
    <field name="dm1_id" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -307,8 +310,6 @@ Solr Schema for projects using eulfedora and indexdata.
 
    <!-- * both audio and collection objects -->
    <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
-   <field name="archive_id" type="string" indexed="true" stored="true" multiValued="false"/>
-   <field name="archive_label" type="string" indexed="true" stored="true" multiValued="false"/>
 
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->

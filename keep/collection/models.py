@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 class CollectionMods(LocalMODS):
     '''Collection-specific MODS, based on :class:`keep.common.fedora.LocalMODS`.'''
     source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
+    short_name = xmlmap.StringField("mods:identifier[@type='local_short_name']") # archive shortnames
     'local source identifier as an integer'
     # possibly map identifier type uri as well ?
     # TODO: (maybe) - single name here, multiple names on standard MODS
@@ -51,6 +52,7 @@ class CollectionObject(DigitalObject):
     'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
 
     _collection_id = None
+    _collection = None
     _collection_label = None
     _archives = None
 
@@ -109,16 +111,28 @@ class CollectionObject(DigitalObject):
         return self._collection_id
 
     @property
+    def collection(self):
+        """CollectionObject for the archive this collection is a member of.
+
+        :type: CollectionObject
+        """
+        if self._collection is None and self.collection_id is not None:
+            for coll in CollectionObject.archives():  # could use dict format?
+                if coll.uri == self.collection_id:
+                    self._collection = coll
+                    break
+        return self._collection
+
+    @property
     def collection_label(self):
         """Label of the archive this object is a member of.
         
         :type: string
         """
-        if self._collection_label is None and self.collection_id is not None:
-            for coll in CollectionObject.archives():  # could use dict format?
-                if coll.uri == self.collection_id:
-                    self._collection_label = coll.label
-                    break
+        if self._collection_label is None:
+            coll = self.collection
+            if coll:
+                self._collection_label = coll.label
         return self._collection_label
 
     def set_collection(self, collection_uri):
@@ -138,6 +152,7 @@ class CollectionObject(DigitalObject):
         ))
         # clear out any cached collection id/label
         self._collection_id = None
+        self._collection = None
         self._collection_label = None
 
     def old_dm_media_path(self):
@@ -179,7 +194,7 @@ class CollectionObject(DigitalObject):
             # NOTE: not filtering on pidspace, since top-level objects are loaded as fixtures
             # and may not match the configured pidspace in a dev environment
             solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-            collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').execute()
+            collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').paginate(rows=1000).execute()
             # store the solr response format
             CollectionObject._archives = collections
 
@@ -293,13 +308,12 @@ class CollectionObject(DigitalObject):
 
     def _index_data_archive(self):
         data = {}
-        if self.collection_id is not None:
-            data['archive_id'] = self.collection_id
+        archive = self.collection
+        if archive is not None:
+            data['archive_id'] = archive.pid
             try:
-                # pull owning archive object directly from fedora
-                # (don't assume it is already indexed in solr)
-                archive = CollectionObject(self.api, self.collection_id)
                 data['archive_label'] = archive.label
+                data['archive_short_name'] = archive.mods.content.short_name
             except RequestFailed as rf:
                 logger.error('Error accessing archive object %s in Fedora: %s' % \
                              (self.collection_id, rf))
