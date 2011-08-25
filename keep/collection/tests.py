@@ -268,11 +268,13 @@ class CollectionObjectTest(KeepTestCase):
 
         # use a mock object to simulate pulling archive object from Fedora
         mockarchive = Mock(CollectionObject)
-        mockarchive.label = 'MARBL'
+        mockarchive.pid = 'parent:1'
+        mockarchive.label = 'Manuscript, Archive, and Rare Book Library'
+        mockarchive.mods.content.short_name = 'MARBL'
         
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
-        obj._collection_id = 'parent:1'
+        obj._collection_id = mockarchive.pid
         obj.dc.content.title = 'test collection'
 
         # test index data for parent archive separately
@@ -284,6 +286,8 @@ class CollectionObjectTest(KeepTestCase):
                              'parent collection object (archive) id should be set in index data')
             self.assertEqual(mockarchive.label, arch_data['archive_label'],
                              'parent collection object (archive) label should be set in index data')
+            self.assertEqual(mockarchive.mods.content.short_name, arch_data['archive_short_name'],
+                             'parent collection object (archive) short name should be set in index data')
             # error if data is not serializable as json
             self.assert_(simplejson.dumps(arch_data))
 

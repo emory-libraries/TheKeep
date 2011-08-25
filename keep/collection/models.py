@@ -117,10 +117,8 @@ class CollectionObject(DigitalObject):
         :type: CollectionObject
         """
         if self._collection is None and self.collection_id is not None:
-            for coll in CollectionObject.archives():  # could use dict format?
-                if coll.uri == self.collection_id:
-                    self._collection = coll
-                    break
+            repo = Repository()
+            self._collection = repo.get_object(self.collection_id, type=CollectionObject)
         return self._collection
 
     @property
@@ -194,7 +192,7 @@ class CollectionObject(DigitalObject):
             # NOTE: not filtering on pidspace, since top-level objects are loaded as fixtures
             # and may not match the configured pidspace in a dev environment
             solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-            collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').paginate(rows=1000).execute()
+            collections = solrquery.exclude(archive_id__any=True).sort_by('title_exact').execute()
             # store the solr response format
             CollectionObject._archives = collections
 
