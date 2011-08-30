@@ -308,7 +308,7 @@ class CollectionObject(DigitalObject):
         data = {}
         archive = self.collection
         if archive is not None:
-            data['archive_id'] = archive.pid
+            data['archive_id'] = archive.uri
             try:
                 data['archive_label'] = archive.label
                 data['archive_short_name'] = archive.mods.content.short_name
