@@ -253,6 +253,7 @@ class Content(models.Model):   # individual item
     REPO_SHORTNAMES = dict(('info:fedora/' + pid, name.upper())
                            for name, pid in settings.PID_ALIASES.iteritems())
 
+    @property
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
         repo, num = self._translated_collection_pair()
