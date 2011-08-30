@@ -10,6 +10,7 @@ from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.eadmap import Series
 from keep.common.fedora import Repository
+from keep.common.models import FileMasterTech_Base
 
 
 class Command(BaseCommand):
@@ -76,15 +77,16 @@ class Command(BaseCommand):
         # set values in filetech DS
         obj = self.repo.get_object(type=ArrangementObject)
         obj.label = path
-        obj.filetech.content.local_id = row['id']
-        obj.filetech.content.md5 = row['checksum']
-        obj.filetech.content.computer = row['computer']
-        obj.filetech.content.path = path
-        obj.filetech.content.rawpath = rawpath
-        obj.filetech.content.attributes = row['attrib']
-        obj.filetech.content.created = row['created']
-        obj.filetech.content.modified = row['modified']
-        obj.filetech.content.creator = creator
+        obj.filetech.content.file.append(FileMasterTech_Base())
+        obj.filetech.content.file[0].local_id = row['id']
+        obj.filetech.content.file[0].md5 = row['checksum']
+        obj.filetech.content.file[0].computer = row['computer']
+        obj.filetech.content.file[0].path = path
+        obj.filetech.content.file[0].rawpath = rawpath
+        obj.filetech.content.file[0].attributes = row['attrib']
+        obj.filetech.content.file[0].created = row['created']
+        obj.filetech.content.file[0].modified = row['modified']
+        obj.filetech.content.file[0].creator = creator
 
          #map series in MODS
         #RecordType used to lookup series info

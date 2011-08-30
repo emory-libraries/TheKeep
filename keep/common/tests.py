@@ -9,7 +9,7 @@ from eulfedora.models import XmlDatastream
 
 from keep import mods
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
-from keep.common.models import _DirPart, FileMasterTech
+from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum
 
 
@@ -58,19 +58,20 @@ class TestFileMasterTech(TestCase):
     def setUp(self):
         self.repo = Repository()
         self.obj = self.repo.get_object(type=Obj4Test)
-        self.obj.file_master.content.computer = "MyTestComputer"
-        self.obj.file_master.content.path = "/path/to/some/file"
+        self.obj.file_master.content.file.append(FileMasterTech_Base())
+        self.obj.file_master.content.file[0].computer = "MyTestComputer"
+        self.obj.file_master.content.file[0].path = "/path/to/some/file"
 
 
     def test_dirparts(self):
-        parts = list(self.obj.file_master.content.dir_parts())
+        parts = list(self.obj.file_master.content.file[0].dir_parts())
         self.assertEqual(unicode(parts[0]), 'path')
         self.assertEqual(unicode(parts[1]), 'to')
         self.assertEqual(unicode(parts[2]), 'some')
 
 
     def test_name(self):
-        self.assertEqual(self.obj.file_master.content.name(), 'file')
+        self.assertEqual(self.obj.file_master.content.file[0].name(), 'file')
 
 
 

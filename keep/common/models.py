@@ -124,10 +124,10 @@ class _DirPart(object):
         return '/' + self.computer + self.base + self.name + '/'
 
 
-class FileMasterTech(xmlmap.XmlObject):
+class FileMasterTech_Base(xmlmap.XmlObject):
     ROOT_NS = 'http://pid.emory.edu/ns/2011/filemastertech'
     ROOT_NAMESPACES = {'fs': ROOT_NS }
-    ROOT_NAME = 'document'
+    ROOT_NAME = 'file'
 
     BROWSABLE_COMPUTERS = ('Performa 5400','Performa 5300c')
 
@@ -159,3 +159,10 @@ class FileMasterTech(xmlmap.XmlObject):
 
     def name(self):
        return self.path.split('/')[-1]
+
+class FileMasterTech(xmlmap.XmlObject):
+    ROOT_NS = 'http://pid.emory.edu/ns/2011/filemastertech'
+    ROOT_NAMESPACES = {'fs': ROOT_NS }
+    ROOT_NAME = 'document'
+    file = xmlmap.NodeListField("fs:file", FileMasterTech_Base,
+    required=False)
