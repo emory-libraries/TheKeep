@@ -1,3 +1,4 @@
+import logging
 from optparse import make_option
 
 from eulfedora.rdfns import relsext as relsextns
@@ -8,6 +9,8 @@ from django.core.management.base import BaseCommand, CommandError
 from keep.collection.models import CollectionObject, SimpleCollection
 #from keep.common.eadmap import Series
 from keep.common.fedora import Repository
+
+logger = logging.getLogger(__name__)
 
 #All Rushdie Content Modles
 CONTENT_MODELS =[
