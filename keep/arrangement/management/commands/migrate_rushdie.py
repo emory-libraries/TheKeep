@@ -1,14 +1,16 @@
 import logging
 from optparse import make_option
+from xml.etree import ElementTree
 
 from eulfedora.rdfns import relsext as relsextns
 
 from django.core.management.base import BaseCommand, CommandError
 
-#from keep.arrangement.models import ArrangementObject
+from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionObject, SimpleCollection
 #from keep.common.eadmap import Series
 from keep.common.fedora import Repository
+from keep.common.models import FileMasterTech_Base
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +45,11 @@ class Command(BaseCommand):
             default = False,
             help='Only run the step to collect objects into a SimpleCollection.  \
             If Simple Collection exists it will use  the existing one'),
-#        make_option('--datastreams', '-D',
-#            action='store_true',
-#            dest='datastreams-step',
-#            default = False,
-#            help='Only run the step to convert datastreams'),
+        make_option('--datastreams', '-D',
+            action='store_true',
+            dest='datastreams-step',
+            default = False,
+            help='Only run the step to convert datastreams'),
 #        make_option('--master-collection-step', '-M',
 #            action='store_true',
 #            dest='master-collection-step',
@@ -74,7 +76,7 @@ class Command(BaseCommand):
             pids = set(args)
             for pid in pids:
                 try:
-                    obj = self.repo.get_object(pid = pid)
+                    obj = self.repo.get_object(pid = pid, type=ArrangementObject)
                     if obj.exists:
                         all_objs.append(obj)
                     else:
@@ -101,7 +103,7 @@ class Command(BaseCommand):
                             self.stdout.write("Error accessing pid %s : %s\n" % (obj.pid, e))
             for pid in pids:
                 try:
-                    all_objs.append(self.repo.get_object(pid=pid))
+                    all_objs.append(self.repo.get_object(pid=pid, type=ArrangementObject))
                 except Exception as e:
                     if self.verbosity > self.v_none:
                         self.stdout.write("Error getting pid  %s : %s\n" % (pid, e))
@@ -116,9 +118,47 @@ class Command(BaseCommand):
         relation = (self.simple_collection.uriref, relsextns.hasMember, obj.uriref)
         self.simple_collection.rels_ext.content.add(relation)
 
-    #Converts the datastreams of the object to new-style
-#   def _convert_ds(self, obj):
-#        #logic to convert datastreams
+#   Converts the datastreams of the object to new-style
+    def _convert_ds(self, obj, noact):
+        #convert MARBL-MACTECH to FilemasterTech
+        mm = obj.getDatastreamObject("MARBL-MACTECH")
+        if mm:
+            if self.verbosity > self.v_none:
+                self.stdout.write("Converting MARBL-MACTECH to FilemasterTech")
+            etree=ElementTree.fromstring(mm.content)
+            ns='info:fedora/emory-control:Rushdie-MacFsData-1.0'
+
+            md5 = etree.find('.//{%s}md5' % ns)
+            files = etree.findall('.//{%s}file' % ns)
+
+            for i, file in enumerate(files):
+
+                computer = file.find('.//{%s}computer' % ns)
+                path = file.find('.//{%s}path' % ns)
+                rawpath = file.find('.//{%s}rawpath' % ns)
+                attrib = file.find('.//{%s}attributes' % ns)
+                created = file.find('.//{%s}created' % ns)
+                modified = file.find('.//{%s}modified' % ns)
+                type = file.find('.//{%s}type' % ns)
+                creator = file.find('.//{%s}creator' % ns)
+
+                #Make new file section
+                obj.filetech.content.file.append(FileMasterTech_Base())
+                obj.filetech.content.file[i].md5 = md5.text
+                obj.filetech.content.file[i].computer = computer.text
+                obj.filetech.content.file[i].path = path.text
+                obj.filetech.content.file[i].rawpath = rawpath.text
+                obj.filetech.content.file[i].attributes = attrib.text
+                obj.filetech.content.file[i].created = created.text
+                obj.filetech.content.file[i].modified = modified.text
+                obj.filetech.content.file[i].type = type.text
+                obj.filetech.content.file[i].creator = creator.text
+                if not noact:
+                    obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")
+                    if self.verbosity > self.v_normal:
+                        self.stdout.write("Removed MARBL-MACTECH")
+
+        return obj
 
     #Associates obj with master collection object using a isMemberOf relation on obj
 #    def _add_to_master_collection(self, obj):
@@ -147,6 +187,7 @@ class Command(BaseCommand):
         #if not options["simple-collection-step"] and not options["master-collection-step"]:
         if not options["simple-collection-step"]:
             options["simple-collection-step"] = True
+            options["datastreams-step"] = True
 #            options["master-collection-step"] = True
 
         #This step requires simeple collection Label
@@ -196,6 +237,12 @@ class Command(BaseCommand):
             if options["simple-collection-step"]:
                 self._add_to_simple_collection(obj)
 
+            if options["datastreams-step"]:
+                obj = self._convert_ds(obj, options["no-act"])
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("===FilemasterTech===\n")
+                    self.stdout.write("%s\n" % (obj.filetech.content.serialize()))
+
 
 #            if options["master-collection-step"]:
 #                obj = self._add_to_master_collection(obj)
@@ -206,7 +253,7 @@ class Command(BaseCommand):
 #            else:
 #                print "NOT SAVING OBJECT"
 
-        #Print RELS-EXT
+        #Print RELS-EXT forSimple Collection
         if self.verbosity > self.v_normal:
             self.stdout.write("===RELS-EXT===\n")
             for entry in self.simple_collection.rels_ext.content:
