@@ -3,6 +3,7 @@ from optparse import make_option
 from xml.etree import ElementTree
 
 from eulfedora.rdfns import relsext as relsextns
+from eulfedora.rdfns import model
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -20,10 +21,7 @@ CONTENT_MODELS =[
     'info:fedora/emory-control:Rushdie-CerpMailbox-1.0',
     'info:fedora/emory-control:Rushdie-Fax-1.0',
     'info:fedora/emory-control:Rushdie-MailboxEntry-1.0',
-    'info:fedora/emory-control:Rushdie-MarblMacFile-1.0',
-    'info:fedora/emory-control:RushdieMetadata-1.0',
-    'info:fedora/emory-control:RushdieResearcherAllowed-1.0',
-    'info:fedora/emory-control:RushdieResearcherRestricted-1.0'
+    'info:fedora/emory-control:Rushdie-MarblMacFile-1.0'
 ]
 
 
@@ -50,16 +48,11 @@ class Command(BaseCommand):
             dest='datastreams-step',
             default = False,
             help='Only run the step to convert datastreams'),
-#        make_option('--master-collection-step', '-M',
-#            action='store_true',
-#            dest='master-collection-step',
-#            default = False,
-#            help='Only run the step to associate object with master collection'),
-#        make_option('--master-collection-pid', '-m',
-#            action='store',
-#            dest='master-collection-pid',
-#            default = "",
-#            help='Pid of the Master Collection'),
+        make_option('--master-collection-pid', '-m',
+            action='store',
+            dest='master-collection-pid',
+            default = "",
+            help='Pid of the Master Collection'),
         make_option('--simple-collection', '-s',
             action='store',
             dest='simple-collection',
@@ -119,12 +112,12 @@ class Command(BaseCommand):
         self.simple_collection.rels_ext.content.add(relation)
 
 #   Converts the datastreams of the object to new-style
-    def _convert_ds(self, obj, noact):
+    def _convert_ds(self, obj, master, noact):
         #convert MARBL-MACTECH to FilemasterTech
         mm = obj.getDatastreamObject("MARBL-MACTECH")
         if mm:
             if self.verbosity > self.v_none:
-                self.stdout.write("Converting MARBL-MACTECH to FilemasterTech")
+                self.stdout.write("Converting MARBL-MACTECH to FilemasterTech\n")
             etree=ElementTree.fromstring(mm.content)
             ns='info:fedora/emory-control:Rushdie-MacFsData-1.0'
 
@@ -153,10 +146,40 @@ class Command(BaseCommand):
                 obj.filetech.content.file[i].modified = modified.text
                 obj.filetech.content.file[i].type = type.text
                 obj.filetech.content.file[i].creator = creator.text
-                if not noact:
-                    obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")
-                    if self.verbosity > self.v_normal:
-                        self.stdout.write("Removed MARBL-MACTECH")
+
+            if not noact:
+                obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("Removed MARBL-MACTECH\n")
+            else:
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("TEST Removed MARBL-MACTECH\n")
+
+        #convert MARBL-ANALYSIS to MODS
+        ma = obj.getDatastreamObject("MARBL-ANALYSIS")
+        if ma:
+            etree=ElementTree.fromstring(ma.content)
+            ns='info:fedora/emory-control:Rushdie-MarblAnalysis-1.0'
+            series=etree.find('.//{%s}series' % ns)
+            subseries=etree.find('.//{%s}subseries' % ns)
+            verdict=etree.find('.//{%s}verdict' % ns)
+            
+            #LOGIC FOR MAPPING
+
+            if not noact:
+                obj.api.purgeDatastream(obj.pid, "MARBL-ANALYSIS")
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("Removed MARBL-ANALYSIS\n")
+            else:
+                if self.verbosity > self.v_normal:
+                    self.stdout.write("TEST Removed MARBL-ANALYSIS\n")
+#        Add  Arrangement Relation
+        relation = (obj.uriref, model.hasModel, "info:fedora/emory-control:Arrangement-1.0")
+        obj.rels_ext.content.add(relation)
+
+        #Add  relation to master collection
+        relation = (obj.uriref, relsextns.isMemberOf, master.uriref)
+        obj.rels_ext.content.add(relation)
 
         return obj
 
@@ -184,11 +207,9 @@ class Command(BaseCommand):
         #Check options
 
         #if no steps are specified then run all steps
-        #if not options["simple-collection-step"] and not options["master-collection-step"]:
-        if not options["simple-collection-step"]:
+        if not options["simple-collection-step"] and not options["datastreams-step"]:
             options["simple-collection-step"] = True
             options["datastreams-step"] = True
-#            options["master-collection-step"] = True
 
         #This step requires simeple collection Label
         if options["simple-collection-step"]:
@@ -211,19 +232,17 @@ class Command(BaseCommand):
                     else:
                         raise e
 
-        #This step requires master collection pid
-#        if options["master-collection-step"]:
-#            if not options["master-collection-pid"]:
-#                raise CommandError("When running Master Collection step Master Collection PID is required")
-#            else:
-#                try:
-#                    self.master_collection = self.repo.get_object(pid = options["master-collection-pid"], type=CollectionObject)
-#                    if not self.master_collection.exists:
-#                        raise CommandError("Master Collection %s does not exist" % options["master-collection-pid"])
-#                except Exception as e:
-#                    if not isinstance(e, CommandError):
-#                        raise CommandError("Could not obtain requested Master Collection %s : %s" % (options["master-collection-pid"], e))
-#                    else: raise e
+        if options["datastreams-step"]:
+            if not options["master-collection-pid"]:
+                raise CommandError("When running Datastream step Master collection pid is required")
+            else:
+                try:
+                    self.master_collection = self.repo.get_object(pid = options["master-collection-pid"], type=CollectionObject)
+                    if not self.master_collection.exists:
+                        raise CommandError("Master Collection %s does not exist" % options["master-collection-pid"])
+                except Exception as e:
+                    raise CommandError("Could not obtain requested Master Collection %s : %s" % (options["master-collection-pid"], e))
+
 
 
         #All objects to be migrated
@@ -238,14 +257,14 @@ class Command(BaseCommand):
                 self._add_to_simple_collection(obj)
 
             if options["datastreams-step"]:
-                obj = self._convert_ds(obj, options["no-act"])
+                obj = self._convert_ds(obj, self.master_collection, options["no-act"])
                 if self.verbosity > self.v_normal:
                     self.stdout.write("===FilemasterTech===\n")
                     self.stdout.write("%s\n" % (obj.filetech.content.serialize()))
+                    self.stdout.write("=== RELS-EXT===\n")
+                    for entry in obj.rels_ext.content:
+                        self.stdout.write("%s\n" % list(entry))
 
-
-#            if options["master-collection-step"]:
-#                obj = self._add_to_master_collection(obj)
 
             #Save object
 #            if not options["no-act"]:
@@ -254,16 +273,17 @@ class Command(BaseCommand):
 #                print "NOT SAVING OBJECT"
 
         #Print RELS-EXT forSimple Collection
-        if self.verbosity > self.v_normal:
-            self.stdout.write("===RELS-EXT===\n")
-            for entry in self.simple_collection.rels_ext.content:
-                self.stdout.write("%s\n" % list(entry))
+        if options["simple-collection-step"]:
+            if self.verbosity > self.v_normal:
+                self.stdout.write("===RELS-EXT===\n")
+                for entry in self.simple_collection.rels_ext.content:
+                    self.stdout.write("%s\n" % list(entry))
 
-        #Save SimpleCollection
-        if not options["no-act"]:
-            self.simple_collection.save()
-            if self.verbosity > self.v_none:
-                self.stdout.write("Saved %s(%s)\n" % (self.simple_collection.label, self.simple_collection.pid) )
-        else:
-            if self.verbosity > self.v_none:
-                self.stdout.write("Test saving %s(%s)\n" % (self.simple_collection.label, self.simple_collection.pid) )
+            #Save SimpleCollection
+            if not options["no-act"]:
+                self.simple_collection.save()
+                if self.verbosity > self.v_none:
+                    self.stdout.write("Saved %s(%s)\n" % (self.simple_collection.label, self.simple_collection.pid) )
+            else:
+                if self.verbosity > self.v_none:
+                    self.stdout.write("Test saving %s(%s)\n" % (self.simple_collection.label, self.simple_collection.pid) )

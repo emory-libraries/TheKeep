@@ -4,11 +4,12 @@ from django.test import TestCase
 from django.contrib.auth.models import User
 
 from eulfedora.rdfns import relsext as relsextns
+from eulfedora.rdfns import model
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from  keep.arrangement.management.commands import migrate_rushdie
 from keep.arrangement.models import ArrangementObject
-from keep.collection.models import SimpleCollection
+from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 
 logger = logging.getLogger(__name__)
@@ -44,11 +45,17 @@ class TestMigrateRushdie(TestCase):
         self.repo = Repository()
         self.pids = []
 
-        #Create a a simple Collection
+        #Create a simple Collection
         self.sc = self.repo.get_object(type=SimpleCollection)
         self.sc.label = "SimpleCollection For Test"
         self.sc.save()
         self.pids.append(self.sc.pid)
+
+        #Create a Master Collection
+        self.mc = self.repo.get_object(type=CollectionObject)
+        self.mc.label = "MasterCollection For Test"
+        self.mc.save()
+        self.pids.append(self.mc.pid)
 
         #Create a a DigitalObject
         self.digObj = self.repo.get_object(type=ArrangementObject)
@@ -57,6 +64,10 @@ class TestMigrateRushdie(TestCase):
         self.pids.append(self.digObj.pid)
         self.digObj.api.addDatastream(self.digObj.pid, "MARBL-MACTECH",
                                            "MARBL-MACTECH",  mimeType="application/xml", content= self.MM_FIXTURE)
+        #Remove Arrangement model so it can be added later
+        relation = (self.digObj.uriref, model.hasModel, "info:fedora/emory-control:Arrangement-1.0")
+        self.digObj.rels_ext.content.remove(relation)
+        self.digObj.save()
 
 
         #Setup Command
@@ -86,7 +97,7 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(len(objs), 1, "No dup pids should be processed")
 
     def test__convert_ds(self):
-        obj = self.cmd._convert_ds(self.digObj, False)
+        obj = self.cmd._convert_ds(self.digObj, self.mc,  False)
         #Check all fields are moved over correctly
         self.assertEqual(obj.filetech.content.file[0].md5, "ffcf48e5df673fc7de985e1b859eeeec")
         self.assertEqual(obj.filetech.content.file[0].computer, "Performa 5400")
@@ -97,6 +108,7 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.filetech.content.file[0].modified, "1997-01-19T19:29:32")
         self.assertEqual(obj.filetech.content.file[0].type, "TEXT")
         self.assertEqual(obj.filetech.content.file[0].creator, "ttxt")
+        self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
         #have to reload obj from repository to get DS update
         obj = self.repo.get_object(pid=obj.pid, type=ArrangementObject)
         self.assertFalse("MARBL-MACTECH" in obj.ds_list, "MARBL-MACTECH should have been removed")
