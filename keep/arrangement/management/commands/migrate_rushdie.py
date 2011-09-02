@@ -193,11 +193,11 @@ class Command(BaseCommand):
             etree=ElementTree.fromstring(ma.content)
             ns='info:fedora/emory-control:Rushdie-MarblAnalysis-1.0'
             series=etree.find('.//{%s}series' % ns)
-            series = series.text if series.text else ""
+            series = series.text if series is not None else ""
             subseries=etree.find('.//{%s}subseries' % ns)
-            subseries = subseries.text if subseries.text else ""
+            subseries = subseries.text if subseries is not None else ""
             verdict=etree.find('.//{%s}verdict' % ns)
-            verdict = verdict.text if verdict.text else ""
+            verdict = verdict.text if verdict is not None else ""
 
             #Translate verdict to code to store in Rights
             status_code_map = {
@@ -389,10 +389,10 @@ class Command(BaseCommand):
             if not options["no-act"]:
                 obj.save()
                 if self.verbosity > self.v_none:
-                    self.std.write( "Saving %s" % obj.pid)
+                    self.stdout.write( "Saving %s" % obj.pid)
             else:
                 if self.verbosity > self.v_none:
-                    self.stdout.write( "TEST Saving Object")
+                    self.stdout.write( "TEST Saving Object\n")
 
         #Print RELS-EXT forSimple Collection
         if options["simple-collection-step"]:
