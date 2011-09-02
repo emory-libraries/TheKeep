@@ -41,6 +41,23 @@ class TestMigrateRushdie(TestCase):
   </macfs:file>
 </macfs:document>'''
 
+    MA_FIXTURE ='''<marbl:analysis xmlns:marbl="info:fedora/emory-control:Rushdie-MarblAnalysis-1.0">
+  <marbl:series>Writings by Rushdie</marbl:series>
+  <marbl:subseries>Fiction</marbl:subseries>
+  <marbl:verdict>As is</marbl:verdict>
+</marbl:analysis>'''
+
+    SERIES_FIXTURE = {'Writings by Rushdie':
+              { 'series_info':
+                   {'base_ark': 'http://testpid.library.emory.edu/ark:/25593/80mvk',
+                        'id': 'rushdie1000_series2',
+                        'short_id': 'series2',
+                        'uri': 'https://findingaids.library.emory.edu/documents/rushdie1000/series2'},
+              'subseries_info': {   'Fiction': {   'base_ark': 'http://testpid.library.emory.edu/ark:/25593/80mvk',
+                                            'id': 'rushdie1000_subseries2.1',
+                                            'short_id': 'subseries2.1',
+                                            'uri': 'https://findingaids.library.emory.edu/documents/rushdie1000/series2/subseries2.1'}}}}
+
     def setUp(self):
         self.repo = Repository()
         self.pids = []
@@ -64,6 +81,8 @@ class TestMigrateRushdie(TestCase):
         self.pids.append(self.digObj.pid)
         self.digObj.api.addDatastream(self.digObj.pid, "MARBL-MACTECH",
                                            "MARBL-MACTECH",  mimeType="application/xml", content= self.MM_FIXTURE)
+        self.digObj.api.addDatastream(self.digObj.pid, "MARBL-ANALYSIS",
+                                           "MARBL-ANALYSIS",  mimeType="application/xml", content= self.MA_FIXTURE)
         #Remove Arrangement model so it can be added later
         relation = (self.digObj.uriref, model.hasModel, "info:fedora/emory-control:Arrangement-1.0")
         self.digObj.rels_ext.content.remove(relation)
@@ -97,8 +116,10 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(len(objs), 1, "No dup pids should be processed")
 
     def test__convert_ds(self):
-        obj = self.cmd._convert_ds(self.digObj, self.mc,  False)
+        obj = self.cmd._convert_ds(self.digObj, self.mc, self.SERIES_FIXTURE, False)
         #Check all fields are moved over correctly
+
+        #filetech
         self.assertEqual(obj.filetech.content.file[0].md5, "ffcf48e5df673fc7de985e1b859eeeec")
         self.assertEqual(obj.filetech.content.file[0].computer, "Performa 5400")
         self.assertEqual(obj.filetech.content.file[0].path, "/Hard Disk/MIDNIGHT'S CHILDREN/MISC. MATERIAL/x - the roles")
@@ -108,8 +129,32 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.filetech.content.file[0].modified, "1997-01-19T19:29:32")
         self.assertEqual(obj.filetech.content.file[0].type, "TEXT")
         self.assertEqual(obj.filetech.content.file[0].creator, "ttxt")
+        #MODS
+        self.assertEqual(obj.mods.content.series.title, "Fiction")
+        self.assertEqual(obj.mods.content.series.uri, self.SERIES_FIXTURE["Writings by Rushdie"]["subseries_info"]["Fiction"]["uri"])
+        self.assertEqual(obj.mods.content.series.base_ark, self.SERIES_FIXTURE["Writings by Rushdie"]["subseries_info"]["Fiction"]["base_ark"])
+        self.assertEqual(obj.mods.content.series.full_id, self.SERIES_FIXTURE["Writings by Rushdie"]["subseries_info"]["Fiction"]["id"])
+        self.assertEqual(obj.mods.content.series.short_id, self.SERIES_FIXTURE["Writings by Rushdie"]["subseries_info"]["Fiction"]["short_id"])
+        self.assertEqual(obj.mods.content.series.series.title, "Writings by Rushdie")
+        self.assertEqual(obj.mods.content.series.series.uri, self.SERIES_FIXTURE["Writings by Rushdie"]["series_info"]["uri"])
+        self.assertEqual(obj.mods.content.series.series.base_ark, self.SERIES_FIXTURE["Writings by Rushdie"]["series_info"]["base_ark"])
+        self.assertEqual(obj.mods.content.series.series.full_id, self.SERIES_FIXTURE["Writings by Rushdie"]["series_info"]["id"])
+        self.assertEqual(obj.mods.content.series.series.short_id, self.SERIES_FIXTURE["Writings by Rushdie"]["series_info"]["short_id"])
+        #Rights
+        self.assertEqual(obj.rights.content.access_status.code, "2")
+        #RELS-EXT
         self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
+        #DataStreams
         #have to reload obj from repository to get DS update
         obj = self.repo.get_object(pid=obj.pid, type=ArrangementObject)
         self.assertFalse("MARBL-MACTECH" in obj.ds_list, "MARBL-MACTECH should have been removed")
+        self.assertFalse("MARBL-ANALYSIS" in obj.ds_list, "MARBL-ANALYSIS should have been removed")
 
+    def test_missing_series_info(self):
+        #Remove subseries info from lookup
+        series = self.SERIES_FIXTURE.copy()
+        del series["Writings by Rushdie"]["subseries_info"]
+        obj = self.cmd._convert_ds(self.digObj, self.mc, self.SERIES_FIXTURE, False)
+
+        self.assertEqual(obj.mods.content.series.title, "Fiction")
+        self.assertEqual(obj.mods.content.series.series.title, "Writings by Rushdie")

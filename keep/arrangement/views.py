@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
+from eulfedora.util import RequestFailed
 
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms

@@ -196,7 +196,10 @@ class ArrangementObjectEditForm(forms.Form):
             rights_instance = None
             mods_instance = None
         else:
-            filetech_instance = instance.filetech.content.file[0] # <-this is not right
+            if len(instance.filetech.content.file) > 0:
+                filetech_instance = instance.filetech.content.file[0] # <-this is not right
+            else:
+                filetech_instance = None
             rights_instance = instance.rights.content
             mods_instance = instance.mods.content
             self.object_instance = instance
