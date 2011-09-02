@@ -269,6 +269,7 @@ class CollectionObjectTest(KeepTestCase):
         # use a mock object to simulate pulling archive object from Fedora
         mockarchive = Mock(CollectionObject)
         mockarchive.pid = 'parent:1'
+        mockarchive.uri = 'info:fedora/parent:1'
         mockarchive.label = 'Manuscript, Archive, and Rare Book Library'
         mockarchive.mods.content.short_name = 'MARBL'
         
@@ -282,7 +283,7 @@ class CollectionObjectTest(KeepTestCase):
         with patch('keep.collection.models.CollectionObject',
                    new=Mock(return_value=mockarchive)):
             arch_data = obj._index_data_archive()
-            self.assertEqual(obj.collection_id, arch_data['archive_id'],
+            self.assertEqual('info:fedora/' + obj.collection_id, arch_data['archive_id'],
                              'parent collection object (archive) id should be set in index data')
             self.assertEqual(mockarchive.label, arch_data['archive_label'],
                              'parent collection object (archive) label should be set in index data')
