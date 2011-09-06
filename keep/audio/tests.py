@@ -455,6 +455,16 @@ class AudioViewsTest(KeepTestCase):
         self.assertPattern('Rights:.*%s - Public Domain' % access_code, response.content,
             msg_prefix='search results page should include access status code and text)')
 
+        # serch for NO Rights / Verdict
+        access_code = '0'
+        response = self.client.get(search_url, {'audio-access_code': access_code})
+        args, kwargs = self.mocksolr.query.call_args
+        self.assertTrue("access_code" not in kwargs,
+                         'access_code field shold NOT be in kwargs')
+
+        args, kwargs = self.mocksolr.query.exclude.call_args
+        self.assertEqual(kwargs["access_code__any"], True, "Any item with an access code should be excluded")
+
         # collection
         collpid = '%s:1' % settings.FEDORA_PIDSPACE
         coll_info = {'pid': collpid, 'source_id': '1', 'title': 'Papers of Somebody Important'}

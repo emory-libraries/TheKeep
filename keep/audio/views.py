@@ -399,14 +399,22 @@ def search(request):
                 if field in ['collection', 'archive']: # location = archive
                     search_info[key] = CollectionObject.find_by_pid(val)                    
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
-                    search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
+                    if val != "0":
+                        search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
+                    else:
+                        search_info[key] = '%s - %s' % ("", "No Verdict")
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         ctx_dict['search_info'] = search_info
 
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         # for now, sort by most recently created
-        solrquery = solr.query(**search_opts).sort_by('-created')
+        #Search for items with not verdict
+        if search_opts.get("access_code") == "0":
+            del search_opts['access_code'] # remove access_code from criteria
+            solrquery = solr.query(**search_opts).exclude(access_code__any=True).sort_by('-created')
+        else:
+            solrquery = solr.query(**search_opts).sort_by('-created')
 
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
