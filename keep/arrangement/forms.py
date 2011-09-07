@@ -6,7 +6,7 @@ from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 
-from keep.common.models import FileMasterTech, Rights
+from keep.common.models import FileMasterTech, Rights, FileMasterTech_Base
 from keep.common.forms import ReadonlyTextInput
 
 from keep.arrangement.models import ArrangementMods, Series1, Series2
@@ -20,7 +20,7 @@ rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in 
 rights_access_options.insert(0, ('', ''))
 
 
-class FileTechEditForm(XmlObjectForm):
+class FileTechPartForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
     :class:`~keep.common.models.Rights` metadata.
     """
@@ -53,23 +53,33 @@ class FileTechEditForm(XmlObjectForm):
         widget=ReadonlyTextInput)
 
     class Meta:
-        model = FileMasterTech
+        model = FileMasterTech_Base
         fields = [ 'local_id', 'md5', 'computer', 'path',
                    'rawpath', 'attributes', 'created',
                    'modified', 'type', 'creator' ]
-        widgets = {
-            'local_id': ReadonlyTextInput,
-            'md5': ReadonlyTextInput,
-            'computer': ReadonlyTextInput,
-            'path': ReadonlyTextInput,
-            'rawpath': ReadonlyTextInput,
-            'attributes': ReadonlyTextInput,
-            'type': ReadonlyTextInput,
-            'creator': ReadonlyTextInput,
-        }
+        #widgets = {
+            #'local_id': ReadonlyTextInput,
+            #'md5': ReadonlyTextInput,
+            #'computer': ReadonlyTextInput,
+            #'path': ReadonlyTextInput,
+            #'rawpath': ReadonlyTextInput,
+            #'attributes': ReadonlyTextInput,
+            #'type': ReadonlyTextInput,
+            #'creator': ReadonlyTextInput,
+        #}
 
     def __init__(self, **kwargs):
-        super(FileTechEditForm, self).__init__(**kwargs)
+        super(FileTechPartForm, self).__init__(**kwargs)
+
+class FileTechEditForm(XmlObjectForm):
+    """:class:`~eulxml.forms.XmlObjectForm` to edit
+    :class:`~keep.common.models.Rights` metadata.
+    """
+    file = SubformField(formclass=FileTechPartForm)
+
+    class Meta:
+        model = FileMasterTech
+        fields = [ 'file']
 
 class RightsForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
@@ -124,19 +134,19 @@ class Series2PartForm(XmlObjectForm):
         * use :class:`~django.forms.TextInput` with class *long*
     '''
     title = forms.CharField(label='Series Title', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series2_storedtitle'}))
+                            widget=forms.TextInput(attrs={'class': 'long series2_storedtitle'}))
 
     uri = forms.CharField(label='URI', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series2_storeduri'}))
+                            widget=forms.TextInput(attrs={'class': 'long series2_storeduri'}))
 
     base_ark = forms.CharField(label='Base Ark', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series2_storedark'}))
+                            widget=forms.TextInput(attrs={'class': 'long series2_storedark'}))
 
     full_id = forms.CharField(label='Full ID', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series2_storedfullid'}))
+                            widget=forms.TextInput(attrs={'class': 'long series2_storedfullid'}))
 
     short_id = forms.CharField(label='Short ID', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series2_storedshortid'}))
+                            widget=forms.TextInput(attrs={'class': 'long series2_storedshortid'}))
 
     class Meta:
         fields = ['title', 'uri', 'base_ark', 'full_id', 'short_id']
@@ -150,20 +160,20 @@ class SeriesPartForm(XmlObjectForm):
         * use :class:`~django.forms.TextInput` with class *long*
     '''
     title = forms.CharField(label='Series Title', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series1_storedtitle'}))
+                            widget=forms.TextInput(attrs={'class': 'long series1_storedtitle'}))
 
 
     uri = forms.CharField(label='URI', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series1_storeduri'}))
+                            widget=forms.TextInput(attrs={'class': 'long series1_storeduri'}))
 
     base_ark = forms.CharField(label='Base Ark', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series1_storedark'}))
+                            widget=forms.TextInput(attrs={'class': 'long series1_storedark'}))
 
     full_id = forms.CharField(label='Full ID', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series1_storedfullid'}))
+                            widget=forms.TextInput(attrs={'class': 'long series1_storedfullid'}))
 
     short_id = forms.CharField(label='Short ID', required=False,
-                            widget=ReadonlyTextInput(attrs={'class': 'long series1_storedshortid'}))
+                            widget=forms.TextInput(attrs={'class': 'long series1_storedshortid'}))
 
     series = SubformField(formclass=Series2PartForm)
 
@@ -196,10 +206,7 @@ class ArrangementObjectEditForm(forms.Form):
             rights_instance = None
             mods_instance = None
         else:
-            if len(instance.filetech.content.file) > 0:
-                filetech_instance = instance.filetech.content.file[0] # <-this is not right
-            else:
-                filetech_instance = None
+            filetech_instance = instance.filetech.content
             rights_instance = instance.rights.content
             mods_instance = instance.mods.content
             self.object_instance = instance
@@ -219,7 +226,7 @@ class ArrangementObjectEditForm(forms.Form):
             initial.update(orig_initial)
 
         common_opts = {'data': data, 'initial': initial}
-        self.filetech = FileTechEditForm(instance=filetech_instance, prefix='filetech', **common_opts)
+        self.filetech = FileTechEditForm(instance=filetech_instance, prefix='fs', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
 

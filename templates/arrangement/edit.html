@@ -68,8 +68,14 @@
 
     function formVerification() {
         var series_data = JSON.parse('{{ series_data|safe }}');
-        series_value = $( "input#series_title_field" ).val();
-        if(series_value != '') {
+        if($( "input.series2_storedtitle" ).val() != '') {
+            series_value = $( "input.series2_storedtitle" ).val() + ": " + $( "input.series1_storedtitle" ).val();
+        }
+        else {
+            series_value = $( "input.series1_storedtitle" ).val()
+        }
+        
+        if(series_value != ": ") {
             var matchFound = false;
             for(i=0;i<series_data.length;i++) {
                 if(series_value == series_data[i].value) {
@@ -80,9 +86,8 @@
             if (matchFound == false) {
                 var answer = confirm('About to submit with a series that does not map to a Finding Aid. Do you wish to proceed?');
                 if(answer) {
-                        clearSeriesFields();
-                        //TODO: Support top level series Finding Aid match, at least?
-                        $( "input.series1_storedtitle" ).val(series_value);
+                        //TODO: Check other values? Clear non-matching values?
+                        return true;
                 } else {
                     return false;
                 }
@@ -104,6 +109,7 @@ function clearSeriesFields() {
      $( "input.series2_storedshortid" ).val('');
      $( "input.series2_storedfullid" ).val('');
 }
+
 
   </script>
 {% endblock %}
@@ -155,7 +161,14 @@ function clearSeriesFields() {
 <div id="FileTech">
     {{ form.filetech.non_field_errors }}
     <table class="edit-form">
-        {% for field in form.filetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+        <tr><td>
+         {% with form.filetech.formsets.file as formfileset %}
+             {{ formfileset.management_form }}
+             {% for fileform in formfileset.forms %}
+                 {% include 'snippets/edit_filetech.html' %}
+             {% endfor %}
+         {% endwith %}
+        </td></tr>
     </table>
 </div>
 
