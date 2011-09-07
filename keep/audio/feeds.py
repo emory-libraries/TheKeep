@@ -29,7 +29,8 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
         # map additional itunes-specific fields
 
         # subtitle is shown in the description column in itunes - shouldn't be too long
-        handler.addQuickElement(u'itunes:subtitle', item['description'])
+        if item.get('description', ''): # if it's present and isn't None or ''
+            handler.addQuickElement(u'itunes:subtitle', item['description'])
         # NOTE: could put more detailed info in the itunes:summary/description (up to 4000 characters)
 
         # duration is total seconds as integer, which iTunes should be able to handle
@@ -53,7 +54,7 @@ def feed_items():
         'pid': '%s:*' % settings.FEDORA_PIDSPACE,
         # restrict to audio items by content model
         'content_model': AudioObject.AUDIO_CONTENT_MODEL,
-        # restrict to items that have mp3s available
+        # restrict to items that have an access copy available
         'has_access_copy': True,
         # restrict to items that are allowed to be accessed
         'researcher_access': True,
@@ -65,7 +66,7 @@ def feed_items():
 
 
 class PodcastFeed(Feed):
-    '''Podcast Feed for Audio objects with MP3 access copy available.
+    '''Podcast Feed for Audio objects with MP3/M4A access copy available.
 
     Due to limitations in the amount of data iTunes can handle in a single feed,
     this PodcastFeed is designed to paginated content into chunks using the configured
@@ -118,7 +119,8 @@ class PodcastFeed(Feed):
             return item['part']
 
     def item_guid(self, item):
-        # globally unique identifier that will never change
+        if 'ark_uri' in item:
+            return item['ark_uri']
         return item['pid']
 
         # TODO: should be using item['ark_uri']
@@ -142,19 +144,26 @@ class PodcastFeed(Feed):
         # using collection # - collection title
         if 'collection_id' in item:
             collection = CollectionObject.find_by_pid(item['collection_id'])
-            return '%s - %s' %  (collection['source_id'], collection['title'])
+            if collection:
+                return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
         if 'collection_id' in item:
             collection = CollectionObject.find_by_pid(item['collection_id'])
-            categories.append(collection['archive_label'])
+            if collection:
+                categories.append(collection['archive_label'])
         return categories
 
     def item_enclosure_url(self, item):
         # link to audio file - many clients require this to be an absolute url
-        return absolutize_url(reverse('audio:download-compressed-audio', args=[item['pid']]))
+        ext = 'mp3' 	# assume mp3; only migrated content should be m4a
+        if 'access_copy_mimetype' in item and  \
+               item['access_copy_mimetype'] == 'audio/mp4':
+            ext = 'm4a'
+        return absolutize_url(reverse('audio:download-compressed-audio',
+                                      args=[item['pid'], ext]))
 
     def item_link(self, item):
         return reverse('audio:view', args=[item['pid']])

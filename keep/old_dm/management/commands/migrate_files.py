@@ -40,6 +40,14 @@ class Command(BaseCommand):
             help='Report on what would be done, but don\'t actually migrate anything'),
         )
 
+    # text output to put in the CSV file for each file, based on the
+    # return value from update_datastream
+    file_ingest_status = {
+        True: 'OK',
+        False: 'FAIL',
+        None: 'present'
+    }
+
     def handle(self,  *pids, **options):
         stats = defaultdict(int)
         # limit to max number of items if specified
@@ -66,7 +74,8 @@ class Command(BaseCommand):
         with self.open_csv(options) as csvfile:
             if csvfile:
                 FIELDS = ('pid', 'dm1_id', 'dm1_other_id',
-                          'wav', 'm4a', 'md5', 'jhove')
+                          'wav', 'm4a', 'md5', 'jhove',
+                          'wav MD5', 'wav ingested', 'm4a ingested', 'jhove ingested')
                 csvfile.writerow(FIELDS)
 
             for obj in self.audio_objects(pids):
@@ -99,6 +108,7 @@ class Command(BaseCommand):
                 if not options['dry_run']:
                     # keep track of any files that are migrated into fedora
                     files_updated = 0
+                    file_info = []	# info to report in CSV file
 
                     # if there is a stored MD5 checksum for the WAV file, use that
                     if paths.md5:
@@ -107,9 +117,12 @@ class Command(BaseCommand):
                      # otherwise, let update_datastream calculate the MD5
                     else:
                         wav_md5 = None
+                    file_info.append(wav_md5)
                     # add the WAV file as contents of the primary audio datastream
-                    if self.update_datastream(obj.audio, paths.wav, wav_md5):
+                    wav_updated = self.update_datastream(obj.audio, paths.wav, wav_md5)
+                    if wav_updated:	# True = successfully ingested/updated
                         files_updated += 1
+                    file_info.append(self.file_ingest_status[wav_updated])
                         
                     # Continue even if the WAV fails; it may have
                     # to be handled manually, but having the other
@@ -127,13 +140,24 @@ class Command(BaseCommand):
 
                     # if m4a is present, add it as compressed audio datastream
                     if paths.m4a:
-                        # TODO: set mimetype, since M4A is not the default (MP3)?
-                        if self.update_datastream(obj.compressed_audio, paths.m4a):
+                        # Set the correct mimetype, since migrated content is M4A,
+                        # while newly ingested content uses MP3s for access
+                        obj.compressed_audio.mimetype = 'audio/mp4'
+                        m4a_updated = self.update_datastream(obj.compressed_audio, paths.m4a)
+                        if m4a_updated:
                             files_updated += 1
+                        file_info.append(self.file_ingest_status[m4a_updated])
+                    else:
+                        file_info.append('')	# blank to indicate no file
+
                     # if jhove is present, add it to the object
                     if paths.jhove:
-                        if self.update_datastream(obj.jhove, paths.jhove):
+                        jhove_updated = self.update_datastream(obj.jhove, paths.jhove)
+                        if jhove_updated:
                             files_updated += 1
+                        file_info.append(self.file_ingest_status[jhove_updated])
+                    else:
+                        file_info.append('')	# blank to indicate no file
 
                     if files_updated:
                         stats['updated'] += 1
@@ -142,7 +166,7 @@ class Command(BaseCommand):
                 if csvfile:
                     row_data = [ obj.pid, obj.mods.content.dm1_id,
                                  obj.mods.content.dm1_other_id ] + \
-                                 list(paths)
+                                 list(paths) + file_info
                     csvfile.writerow(row_data)
 
                 # if a maximum was specified, check if we are at the limit
@@ -274,9 +298,9 @@ class Command(BaseCommand):
             not specified, an MD5 checksum will be calculated for the
             file passed in
 
-        :returns: True if the datastream was saved; False if no
-            changes were made (datastream was already present with the
-            same checksum, or the update failed)
+        :returns: True if the datastream was saved; None if no action
+            was needed (datastream was already present with the
+            expected checksum), or False if the update failed
         '''
         if checksum is None:
             if self.verbosity > self.v_normal:
@@ -289,12 +313,14 @@ class Command(BaseCommand):
             if self.verbosity > self.v_normal:
                 self.stdout.write('%s already has %s datastream with the expected checksum; skipping\n' \
                                   % (ds.obj.pid, ds.id))
+            return None
+        
         # datastream does not yet exist or does not have the expected content
         # migrate the file into the repository
         else:
             with open(filepath) as filecontent:
                 ds.content = filecontent
-                ds.checksum_type = 'MD5'
+                ds.checksum_type = 'MD5'  
                 ds.checksum = checksum
                 try:
                     # save just this datastream
@@ -313,7 +339,9 @@ class Command(BaseCommand):
                     self.stdout.write('Error saving %s/%s: %s\n' % \
                                       (ds.obj.pid, ds.id, rf))
 
-        # successful update should already have returned
+        # FIXME: do we need to handle file read permission errors? 
+
+        # successful update should already have returned - indicates some kind of error
         return False
 
 

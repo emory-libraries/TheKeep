@@ -176,7 +176,7 @@ class SourceTech(_BaseSourceTech):
     'Stock or brand of source media'
     stock_list = xmlmap.StringListField('st:stock')
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        help_text='Type of housing for the source item')
+        required=False, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
@@ -345,7 +345,7 @@ class AudioObject(DigitalObject):
 
         :param logMessage: optional log message
         '''
-        if not self.exists or self.mods.isModified() or self.rels_ext.isModified or \
+        if not self.exists or self.mods.isModified() or self.rels_ext.isModified() or \
             self.digitaltech.isModified():
             # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
             # If this is a new item (does not yet exist in Fedora)
@@ -366,13 +366,20 @@ class AudioObject(DigitalObject):
     def get_access_url(self):
         "Absolute url to hear this object's access version"
         if self.compressed_audio.exists:
-            return reverse('audio:download-compressed-audio', args=[str(self.pid)])
+            return reverse('audio:download-compressed-audio',
+                           args=[str(self.pid), self.access_file_extension()])
+        # as of file migration (1.2), legacy DM access path is no longer needed
 
-        # otherwise see if it's from old dm
-        old_dm_path = self.old_dm_media_path()
-        if old_dm_path:
-            old_dm_root = getattr(settings, 'OLD_DM_MEDIA_ROOT', '')
-            return old_dm_root + old_dm_path
+    def access_file_extension(self):
+        '''Return the expected file extension for whatever type of
+        compressed audio datastream the current object has (if it has
+        one), based on the datastream mimetype.  Currently, compressed
+        audio could be MP3 or M4A/MP4.'''
+        if self.compressed_audio.exists:
+            if self.compressed_audio.mimetype == 'audio/mpeg':
+                return 'mp3'
+            if self.compressed_audio.mimetype == 'audio/mp4':
+                return 'm4a'
 
     def old_dm_media_path(self):
         old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id

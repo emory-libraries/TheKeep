@@ -1,14 +1,14 @@
 # Django settings for keep project.
 
-from os import path
+import os
 
 # Get the directory of this file for relative dir paths.
 # Django sets too many absolute paths.
-BASE_DIR = path.dirname(path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = path.join(BASE_DIR, '..', 'sitemedia')
+MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'sitemedia')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
@@ -52,8 +52,14 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'keep.urls'
 
 TEMPLATE_DIRS = [
-    path.join(BASE_DIR, '..', 'templates'),
+    os.path.join(BASE_DIR, '..', 'templates'),
 ]
+if 'VIRTUAL_ENV' in os.environ:
+    TEMPLATE_DIRS.extend([
+        os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib'),
+        os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib'),
+    ])
+
 
 # also look for templates in virtualenv
 import os

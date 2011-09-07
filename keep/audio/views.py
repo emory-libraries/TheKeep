@@ -525,14 +525,16 @@ def edit(request, pid):
 
 # download audio must be accessed by iTunes kiosk - should be IP restricted at apache level
 # cannot be restricted to staff only here
-def download_audio(request, pid, type):
+def download_audio(request, pid, type, extension=None):
     '''Serve out an audio datastream for the fedora object specified by pid.
     Can be used to download original (WAV) audio file or the access copy (MP3).
     
     :param pid: pid of the :class:`~keep.audio.models.AudioObject` instance
         from which the audio datastream should be returned
     :param type: which audio datastream to return - should be one of 'original'
-        or 'wav'
+        or 'access'
+    :param extension: optional filename extension for access copy to
+        distinguish between different types of access copies (currently MP3 or M4A)
 
     The :class:`django.http.HttpResponse` returned will have a Content-Disposition
     set to prompt the user to download the file with a filename based on the
@@ -547,7 +549,13 @@ def download_audio(request, pid, type):
         file_ext = 'wav'
     elif type == 'access':
         dsid = AudioObject.compressed_audio.id
-        file_ext = 'mp3'
+        # make sure the requested file extension matches the datastream
+        if (obj.compressed_audio.mimetype == 'audio/mp4' and \
+           extension != 'm4a') or \
+           (obj.compressed_audio.mimetype == 'audio/mpeg' and \
+           extension != 'mp3'):
+            raise Http404
+        file_ext = extension
     else:
         # any other type is not supported
         raise Http404

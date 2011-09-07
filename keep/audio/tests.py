@@ -555,13 +555,14 @@ class AudioViewsTest(KeepTestCase):
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
-        download_url = reverse('audio:download-compressed-audio', args=[obj.pid])
+        download_url = reverse('audio:download-compressed-audio', args=[obj.pid, 'mp3'])
 
         response = self.client.get(download_url)
         code = response.status_code
         expected = 404
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin for non-existent audio file'
-                             % (expected, code, download_url))
+        self.assertEqual(code, expected,
+                         'Expected %s but returned %s for %s as admin for non-existent audio file'
+                         % (expected, code, download_url))
 
         #Set a compressed audio stream.
         result = convert_wav_to_mp3(obj.pid)
@@ -582,6 +583,35 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
+        
+        # attempt to download mp3 as m4a - should 404
+        m4a_download_url = reverse('audio:download-compressed-audio', args=[obj.pid, 'm4a'])
+        response = self.client.get(m4a_download_url)
+        code = response.status_code
+        expected = 404
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s (MP3 datastream as M4A)'
+                             % (expected, code, m4a_download_url))
+
+        # pretend mp3 datastream is actually m4a
+        obj.compressed_audio.mimetype = 'audio/mp4'
+        obj.compressed_audio.save('set mimetype to mp4')
+        response = self.client.get(m4a_download_url)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A'
+                             % (expected, code, m4a_download_url))
+        expected = 'attachment; filename=%s.m4a' % obj.noid
+        self.assertEqual(response['Content-Disposition'], expected,
+                        "Expected '%s' but returned '%s' for %s content disposition" % \
+                        (expected, response['Content-Type'], download_url))
+
+        # attempt to download m4a as mp3 - should 404
+        response = self.client.get(download_url)
+        code = response.status_code
+        expected = 404
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A datastream as MP3)'
+                             % (expected, code, download_url))
+        
 
     def test_edit(self):
         # create a test audio object to edit
@@ -700,7 +730,8 @@ class AudioViewsTest(KeepTestCase):
                                 msg_prefix='edit page should link to audio datastream when available')
             self.assertContains(response, 'original audio',
                                 msg_prefix='edit page should link to original audio datastream when available')
-            self.assertNotContains(response, reverse('audio:download-compressed-audio', kwargs={'pid': obj.pid }),
+            self.assertNotContains(response, reverse('audio:download-compressed-audio',
+                                kwargs={'pid': obj.pid, 'extension': 'mp3' }),
                                 msg_prefix='edit page should not link to non-existent comprresed audio')
             # purge audio datastream to simulate a metadata migration object with no master audio
             purged = obj.api.purgeDatastream(obj.pid, audiomodels.AudioObject.audio.id)
@@ -809,9 +840,10 @@ class AudioViewsTest(KeepTestCase):
 
             # POST data to update audio object in fedora
             audio_data = {'collection': self.rushdie.uri,
-                        'mods-title': 'new title',
+                        'mods-title': u'new title \u2026',
                         'mods-note-label' : 'a general note',
-                        'mods-general_note-text': 'remember to ...',
+                        #'mods-general_note-text': u'remember to ... with some unicode \u1f05',
+                        'mods-general_note-text': u'remember to',
                         'mods-part_note-text': 'side A',
                         'mods-resource_type': 'sound recording',
                         # 'management' form data is required for django to process formsets/subforms
@@ -1752,8 +1784,12 @@ class TestAudioObject(KeepTestCase):
 
     def tearDown(self):
         super(TestAudioObject, self).tearDown()
-        self.repo.purge_object(self.obj.pid, "removing unit test fixture")
-        self.repo.purge_object(self.rushdie.pid)
+
+        for pid in [self.obj.pid, self.rushdie.pid]:
+            try:
+                self.repo.purge_object(pid, "removing unit test fixture")
+            except RequestFailed:
+                logger.warn('Failed to purge test fixture %s' % pid)
 
     def test_creation(self):
         # verify that the owner id is set.
@@ -2098,6 +2134,16 @@ class TestAudioObject(KeepTestCase):
             url=self.obj.get_absolute_url(), task_id='bar')
         conv2.save()
         self.assertEqual(conv2, self.obj.conversion_result)
+
+    def test_access_file_extension(self):
+        # object created in fixture has no access copy
+        self.assertEqual(None, self.obj.access_file_extension())
+        self.obj.compressed_audio.mimetype = 'audio/mpeg'
+        self.obj.compressed_audio.exists = True		# not really (cheat)
+        self.assertEqual('mp3', self.obj.access_file_extension())
+        self.obj.compressed_audio.mimetype = 'audio/mp4'
+        self.assertEqual('m4a', self.obj.access_file_extension())
+        
 
 class TestWavDuration(KeepTestCase):
 
