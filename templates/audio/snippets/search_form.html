@@ -1,6 +1,6 @@
 <div id="audio-search" class="search">
     <h2>Search Audio Items</h2>
-    <form method="get" action="{% url audio:search %}">
+    <form method="get" action="{% url common:search %}">
       {% with item_search as form %}
         {% for field in item_search %}
           {% include "snippets/form_field_with_tooltip.html" %}

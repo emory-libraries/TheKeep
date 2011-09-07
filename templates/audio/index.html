@@ -9,9 +9,9 @@
 <p><a href="{% url audio:feed-list %}">iTunes podcast feeds</a></p>
 
 <p><b>Recent uploads</b>: view items that were uploaded
-  <a href="{% url audio:search %}?audio-date={{ today|date:"Y-m-d*" }}">today</a>,
-   <a href="{% url audio:search %}?audio-date={{ yesterday|date:"Y-m-d*" }}">yesterday</a>,
-  or  <a href="{% url audio:search %}?audio-date={{ today|date:"Y-m*" }}">any day this month</a>.
+  <a href="{% url common:search %}?audio-date={{ today|date:"Y-m-d*" }}">today</a>,
+   <a href="{% url common:search %}?audio-date={{ yesterday|date:"Y-m-d*" }}">yesterday</a>,
+  or  <a href="{% url common:search %}?audio-date={{ today|date:"Y-m*" }}">any day this month</a>.
 
 <hr/>
 

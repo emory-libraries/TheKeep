@@ -353,16 +353,16 @@ class AudioViewsTest(KeepTestCase):
             
 
     
-    @patch('keep.audio.views.sunburnt.SolrInterface', mocksolr)
-    @patch('keep.audio.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
-    @patch('keep.audio.forms.CollectionObject')
+    @patch('keep.common.views.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.common.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.common.forms.CollectionObject')
     def test_search(self, mockcollobj):
         collections = [
             {'pid': 'pid:1', 'source_id': 1, 'title': 'mss 1'}
             ]
         mockcollobj.item_collections.return_value = collections
-        
-        search_url = reverse('audio:search')
+
+        search_url = reverse('common:search')
 
         # using a mock for sunburnt so we can inspect method calls,
         # simulate search results, etc.
@@ -383,7 +383,7 @@ class AudioViewsTest(KeepTestCase):
                          'item search should be filtered by configured pidspace')
         # by default, results should be sorted most recently created
         self.mocksolr.query.sort_by.called_with('-created')
-        
+
         # search by exact pid
         searchpid = 'pid:1'
         response = self.client.get(search_url, {'audio-pid': searchpid})
@@ -433,7 +433,7 @@ class AudioViewsTest(KeepTestCase):
         args, kwargs = self.mocksolr.query.call_args
         self.assertEqual(note, kwargs['notes'],
                          'notes search should search solr note field')
-        
+
         self.assertPattern('notes:.*%s' % note, response.content,
             msg_prefix='search results page should include search term (note)')
 

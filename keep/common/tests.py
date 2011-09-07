@@ -11,6 +11,7 @@ from keep import mods
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum
+from keep.testutil import KeepTestCase
 
 
 class TestAbsolutizeUrl(TestCase):
@@ -159,4 +160,6 @@ class DigitalObjectTest(TestCase):
             mods.Identifier(type='uri', text=self.testark)
             ])
         self.assertEqual(self.testark, modsobj.ark_access_uri)
+
+class SearchTest(KeepTestCase):
        
