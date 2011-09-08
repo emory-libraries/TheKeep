@@ -74,7 +74,7 @@ def search(request):
         ctx_dict['search_info'] = search_info
 
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
-        #Restrict by content_models
+        #Restrict to given content models content_models
         cm_query = solr.Q(solr.Q(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
         | solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
 

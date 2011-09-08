@@ -26,6 +26,13 @@ class ReadonlyTextInput(forms.TextInput):
 rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
 rights_access_options.insert(0, ('', ''))
 
+#format_options used in search form
+format_options = (
+    ("", ""),
+    ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
+    ('info:fedora/emory-control:Arrangement-1.0', "Arrangement"),
+)
+
 EMPTY_LABEL_TEXT = ''
 
 def _collection_options():
@@ -53,6 +60,8 @@ class ItemSearch(forms.Form):
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',
                     required=False)
+    content_model = forms.ChoiceField(label="Format",  choices=format_options,
+                    help_text="Limit to items with given format.", required=False)
     pid = forms.CharField(required=False, help_text='Search by fedora pid, DM id or DM other id.',
             initial='%s:' % settings.FEDORA_PIDSPACE, label="Pid/DM ID/Other ID")
     date = forms.CharField(required=False,
