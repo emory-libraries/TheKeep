@@ -201,8 +201,8 @@ class ArrangementViewsTest(KeepTestCase):
         self.rushdie_obj = self.repo.get_object(type=ArrangementObject)
 
         #Add Link pointing to the top level rushdie collection
-        relation = (self.rushdie_obj.uriref, model.isMemberOfCollection, "info:fedora/keep-athom09:349")
-        self.rushdie_obj.rels_ext.content.add(relation)
+        #relation = (self.rushdie_obj.uriref, model.isMemberOfCollection, "info:fedora/keep-athom09:349")
+        #self.rushdie_obj.rels_ext.content.add(relation)
 
         self.rushdie_obj.label = "Test Rushdie Object"
         
