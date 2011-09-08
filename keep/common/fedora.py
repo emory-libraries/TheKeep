@@ -185,4 +185,6 @@ class Repository(server.Repository):
             'fedora_password' in request.session:            
                 username =request.user.username
                 password = decrypt(request.session['fedora_password'])
+                username = 'bluewolf'
+                password = 'DietCoke55'
         super(Repository, self).__init__(username=username, password=password)

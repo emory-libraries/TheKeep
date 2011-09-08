@@ -1,7 +1,11 @@
 import logging
 import sys
+from mock import Mock, MagicMock, patch
+from sunburnt import sunburnt
+
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.test import Client
 
 from eulfedora.rdfns import relsext as relsextns
 from eulfedora.rdfns import model
@@ -11,6 +15,12 @@ from  keep.arrangement.management.commands import migrate_rushdie
 from keep.arrangement.models import ArrangementObject
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
+from keep.arrangement import forms as arrangementforms
+from keep.testutil import KeepTestCase
+from keep.common.utils import PaginatedSolrSearch
+from keep.audio.tests import ADMIN_CREDENTIALS
+
+from keep.common.models import FileMasterTech_Base
 
 logger = logging.getLogger(__name__)
 
@@ -158,3 +168,105 @@ class TestMigrateRushdie(TestCase):
 
         self.assertEqual(obj.mods.content.series.title, "Fiction")
         self.assertEqual(obj.mods.content.series.series.title, "Writings by Rushdie")
+
+class ArrangementViewsTest(KeepTestCase):
+    fixtures =  ['users']
+
+    client = Client()
+    
+    # set up a mock solr object for use in solr-based find methods
+    mocksolr = Mock(sunburnt.SolrInterface)
+    mocksolr.return_value = mocksolr
+    # solr interface has a fluent interface where queries and filters
+    # return another solr query object; simulate that as simply as possible
+    mocksolr.query.return_value = mocksolr.query
+    mocksolr.query.query.return_value = mocksolr.query
+    mocksolr.query.paginate.return_value = mocksolr.query
+    mocksolr.query.exclude.return_value = mocksolr.query
+    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
+
+    def setUp(self):
+        super(ArrangementViewsTest, self).setUp()        
+        self.pids = []
+        # collection fixtures are not modified, but there is no clean way
+        # to only load & purge once
+        self.rushdie = FedoraFixtures.rushdie_collection()
+        self.rushdie.save()
+        self.esterbrook = FedoraFixtures.esterbrook_collection()
+        self.esterbrook.save()
+        self.englishdocs = FedoraFixtures.englishdocs_collection()
+        self.englishdocs.save()
+
+        self.rushdie_obj = self.repo.get_object(type=ArrangementObject)
+
+        #Add Link pointing to the top level rushdie collection
+        relation = (self.rushdie_obj.uriref, model.isMemberOf, "info:fedora/keep-athom09:349")
+        self.rushdie_obj.rels_ext.content.add(relation)
+
+        self.rushdie_obj.label = "Test Rushdie Object"
+        
+
+        #Create some test filetech content
+        filetech_1 = FileMasterTech_Base()
+        filetech_1.md5 = 'bogus_md5_sum'
+        filetech_1.local_id = '1'
+        filetech_1.computer = 'Performa 5400'
+        filetech_1.path = '/bogus/path/doesnotexist'
+        filetech_1.rawpath = 'XYZ'
+        filetech_1.attributes = 'abc'
+        filetech_1.created = ''
+        filetech_1.modified = ''
+        filetech_1.type = 'TEXT'
+        filetech_1.crator = 'ttxt'
+
+        filetech_2 = FileMasterTech_Base()
+        filetech_2.md5 = 'second_bogus_md5_sum'
+        filetech_2.local_id = '2'
+        filetech_2.computer = 'Performa 5300c'
+        filetech_2.path = '/bogus/path/doesnotexist'
+        filetech_2.rawpath = 'UVW'
+        filetech_2.attributes = 'def'
+        filetech_2.created = ''
+        filetech_2.modified = ''
+        filetech_2.type = 'PDF'
+        filetech_2.crator = 'pdf'
+      
+        self.rushdie_obj.filetech.content.file.append(filetech_1)
+        self.rushdie_obj.filetech.content.file.append(filetech_2)
+
+        #Add a series objects    
+        self.rushdie_obj.mods.series.title = 'subseries'
+        self.rushdie_obj.mods.series.series.title = 'series'
+
+        self.rushdie_obj.save()
+        self.pids.append(self.rushdie_obj.pid) 
+
+    def tearDown(self):
+        super(ArrangementViewsTest, self).tearDown()
+        # purge any objects created by individual tests
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+        if self._template_context_processors is not None:
+            settings.TEMPLATE_CONTEXT_PROCESSORS = self._template_context_processors
+        else:
+            del settings.TEMPLATE_CONTEXT_PROCESSORS
+        
+        self.repo.purge_object(self.rushdie.pid)
+        self.repo.purge_object(self.esterbrook.pid)
+        self.repo.purge_object(self.englishdocs.pid)
+
+    def test_edit_form(self):
+        # test edit form
+        edit_url = reverse('arrangement:edit', args=[self.rushdie_obj.pid])
+
+        # logged in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        # on GET, should display the form
+        response = self.client.get(edit_url)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, upload_url))
+        self.assertNotEqual(None, response.context['form'])
+        self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
