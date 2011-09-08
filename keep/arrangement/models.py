@@ -8,6 +8,9 @@ from keep import mods
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.models import Rights, FileMasterTech
 
+from keep.collection.models import CollectionObject
+from rdflib import URIRef
+
 class Permissions(models.Model):
     class Meta:
         permissions = (
@@ -82,7 +85,9 @@ class ArrangementObject(DigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(ArrangementObject, self).index_data()
 
+        print 'THIS SHOULD EXIST: %s' % (self.collection_uri)
         if self.collection_uri is not None:
+            
             data['collection_id'] = self.collection_uri
             try:
                 # pull parent & archive collection objects directly from fedora
