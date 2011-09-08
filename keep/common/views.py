@@ -1,3 +1,4 @@
+import logging
 from sunburnt import sunburnt
 
 from exceptions import ValueError
@@ -6,6 +7,7 @@ from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject
 from keep.common import forms as commonforms
@@ -23,8 +25,6 @@ def search(request):
         search_opts = {
             # restrict to objects in the configured pidspace
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-            # restrict to audio items by content model
-            'content_model': AudioObject.AUDIO_CONTENT_MODEL,
         }
 
         # translate non-blank fields from the form to search terms
@@ -74,13 +74,18 @@ def search(request):
         ctx_dict['search_info'] = search_info
 
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        #Restrict by content_models
+        cm_query = solr.Q(solr.Q(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
+        | solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
+
+
         # for now, sort by most recently created
         #Search for items with not verdict
         if search_opts.get("access_code") == "0":
             del search_opts['access_code'] # remove access_code from criteria
-            solrquery = solr.query(**search_opts).exclude(access_code__any=True).sort_by('-created')
+            solrquery = solr.query(**search_opts).filter(cm_query).exclude(access_code__any=True).sort_by('-created')
         else:
-            solrquery = solr.query(**search_opts).sort_by('-created')
+            solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
@@ -104,5 +109,5 @@ def search(request):
         })
 
 
-    return render_to_response('audio/search.html', ctx_dict,
+    return render_to_response('common/search.html', ctx_dict,
         context_instance=RequestContext(request))

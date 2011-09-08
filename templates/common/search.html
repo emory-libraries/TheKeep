@@ -20,22 +20,32 @@ of {{ page.paginator.count }}.</p>
     <tr>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
-        <td><a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a></td>
+        <td>
+            {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
+                <a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a>
+            {% else %} {% if  'info:fedora/emory-control:Arrangement-1.0' in obj.content_model %}
+                <a href="{% url arrangement:edit obj.pid %}">{{ obj.pid }}</a>
+            {% endif %}
+            {% endif %}
+        </td>
         <td>{% spaceless %}
-          {{ obj.title }} 
+          {% firstof obj.title obj.label %}
 	  {% if obj.part %}({{ obj.part }}){% endif %}<br/>
           <span class="extra">
-            {% if obj.has_original %}
-              <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
-            {% else %}
-              original audio
-            {% endif %}
+          {# # Show download links if it is an audio item  #}
+          {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model  %}
+              {% if obj.has_original %}
+                  <a href="{% url audio:download-audio obj.pid %}">original audio</a>
+              {% else %}
+                  original audio
+              {% endif %}
             |
-            {% if obj.has_access_copy %}
-              <a href="{% url audio:download-compressed-audio obj.pid "mp3" %}">access copy</a>
-            {% else %}
-              access copy
-            {% endif %}
+                {% if obj.has_access_copy %}
+                  <a href="{% url audio:download-compressed-audio obj.pid "mp3" %}">access copy</a>
+                {% else %}
+                  access copy
+                {% endif %}
+          {% endif %}
           </span>
         {% endspaceless %}</td>
         <td>{{ obj.created }}</td>
