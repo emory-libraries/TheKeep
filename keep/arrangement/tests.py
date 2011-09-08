@@ -236,8 +236,8 @@ class ArrangementViewsTest(KeepTestCase):
         self.rushdie_obj.filetech.content.file.append(filetech_2)
 
         #Add a series objects    
-        self.rushdie_obj.mods.series.title = 'subseries'
-        self.rushdie_obj.mods.series.series.title = 'series'
+        self.rushdie_obj.mods.content.series.title = 'subseries'
+        self.rushdie_obj.mods.content.series.series.title = 'series'
 
         self.rushdie_obj.save()
         self.pids.append(self.rushdie_obj.pid) 
