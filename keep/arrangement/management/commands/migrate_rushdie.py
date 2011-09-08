@@ -222,14 +222,24 @@ class Command(BaseCommand):
 #           #Map series and sub series
 
             #Specal Cases for identifying series info
+            if series == "Writings":
+                series = "Writings by Rushdie"
+
             if "Correspondence" in series:
                 series = "Correspondence"
 
             if subseries == "Family papers":
                 series = "Personal papers"
 
-            if "Journals" in series or "Journals" in subseries:
+            if subseries == "Other Writings":
+                series = "Writings by Rushdie"
+
+            if subseries == "Non Fiction":
+                subseries = "Nonfiction"
+
+            if "Journal" in series or "Journal" in subseries:
                 series = "Journals, appointment books, and notebooks"
+
 
 
             if series in series_lookup  and "subseries_info" in series_lookup[series] and subseries in series_lookup[series]["subseries_info"]:
