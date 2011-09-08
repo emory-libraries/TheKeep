@@ -24,7 +24,7 @@ CLASSIFIERS = [
 
 setup(
     name='keep',
-    version=keel.__version__,
+    version=keep.__version__,
     author='Emory University Libraries',
     author_email='libsysdev-l@listserv.cc.emory.edu',
     url='https://svn.library.emory.edu/digital_masters',
