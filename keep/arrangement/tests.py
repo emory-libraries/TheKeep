@@ -248,11 +248,6 @@ class ArrangementViewsTest(KeepTestCase):
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
-
-        if self._template_context_processors is not None:
-            settings.TEMPLATE_CONTEXT_PROCESSORS = self._template_context_processors
-        else:
-            del settings.TEMPLATE_CONTEXT_PROCESSORS
         
         self.repo.purge_object(self.rushdie.pid)
         self.repo.purge_object(self.esterbrook.pid)
@@ -269,6 +264,6 @@ class ArrangementViewsTest(KeepTestCase):
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, upload_url))
+                             % (expected, code, edit_url))
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
