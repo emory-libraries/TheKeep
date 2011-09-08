@@ -19,6 +19,7 @@ from keep.arrangement import forms as arrangementforms
 from keep.testutil import KeepTestCase
 from keep.common.utils import PaginatedSolrSearch
 from keep.audio.tests import ADMIN_CREDENTIALS
+from keep.collection.fixtures import FedoraFixtures
 
 from keep.common.models import FileMasterTech_Base
 
