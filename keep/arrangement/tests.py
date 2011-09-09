@@ -156,6 +156,9 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.rights.content.access_status.code, "2")
         #RELS-EXT
         self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
+        #Label and DS
+        self.assertEqual(obj.label, "x - the roles", "Label should be set to last part of path")
+        self.assertEqual(obj.dc.content.title, "x - the roles", "DC title should be set to last part of path")
         #DataStreams
         #have to reload obj from repository to get DS update
         obj = self.repo.get_object(pid=obj.pid, type=ArrangementObject)

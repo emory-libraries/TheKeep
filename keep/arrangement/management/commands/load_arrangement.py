@@ -76,7 +76,7 @@ class Command(BaseCommand):
 
         # set values in filetech DS
         obj = self.repo.get_object(type=ArrangementObject)
-        obj.label = path
+        obj.label = path.rpartition('/')[2]
         obj.filetech.content.file.append(FileMasterTech_Base())
         obj.filetech.content.file[0].local_id = row['id']
         obj.filetech.content.file[0].md5 = row['checksum']
@@ -87,6 +87,9 @@ class Command(BaseCommand):
         obj.filetech.content.file[0].created = row['created']
         obj.filetech.content.file[0].modified = row['modified']
         obj.filetech.content.file[0].creator = creator
+
+        #map DC title
+        obj.dc.content.title = path.rpartition('/')[2]
 
          #map series in MODS
         #RecordType used to lookup series info

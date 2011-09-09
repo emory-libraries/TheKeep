@@ -167,15 +167,18 @@ class Command(BaseCommand):
 
                 #Make new file section
                 obj.filetech.content.file.append(FileMasterTech_Base())
-                obj.filetech.content.file[i].md5 = md5.text
-                obj.filetech.content.file[i].computer = computer.text
-                obj.filetech.content.file[i].path = path.text
-                obj.filetech.content.file[i].rawpath = rawpath.text
-                obj.filetech.content.file[i].attributes = attrib.text
-                obj.filetech.content.file[i].created = created.text
-                obj.filetech.content.file[i].modified = modified.text
-                obj.filetech.content.file[i].type = type.text
-                obj.filetech.content.file[i].creator = creator.text
+                obj.filetech.content.file[i].md5 = md5.text if md5 is not None else ""
+                obj.filetech.content.file[i].computer = computer.text if computer is not None else ""
+                obj.filetech.content.file[i].path = path.text if path is not None else ""
+                obj.filetech.content.file[i].rawpath = rawpath.text if rawpath is not None else ""
+                obj.filetech.content.file[i].attributes = attrib.text if attrib is not None else ""
+                obj.filetech.content.file[i].created = created.text if created is not None else ""
+                obj.filetech.content.file[i].modified = modified.text if modified is not None else ""
+                obj.filetech.content.file[i].type = type.text if type is not None else ""
+                obj.filetech.content.file[i].creator = creator.text if creator is not None else ""
+
+                obj.dc.content.title = obj.filetech.content.file[0].path.rpartition("/")[2]
+                obj.label = obj.filetech.content.file[0].path.rpartition("/")[2]
 
             if not noact:
                 obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")
@@ -219,7 +222,7 @@ class Command(BaseCommand):
                 pass
 
 
-#           #Map series and sub series
+            #Map series and sub series
 
             #Specal Cases for identifying series info
             if series == "Writings":
