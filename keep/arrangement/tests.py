@@ -13,7 +13,7 @@ from eulfedora.rdfns import model
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from  keep.arrangement.management.commands import migrate_rushdie
-from keep.arrangement.models import ArrangementObject
+from keep.arrangement.models import ArrangementObject, Series1, Series2
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -222,7 +222,7 @@ class ArrangementViewsTest(KeepTestCase):
         filetech_1.created = ''
         filetech_1.modified = ''
         filetech_1.type = 'TEXT'
-        filetech_1.crator = 'ttxt'
+        filetech_1.creator = 'ttxt'
 
         filetech_2 = FileMasterTech_Base()
         filetech_2.md5 = 'second_bogus_md5_sum'
@@ -234,14 +234,17 @@ class ArrangementViewsTest(KeepTestCase):
         filetech_2.created = ''
         filetech_2.modified = ''
         filetech_2.type = 'PDF'
-        filetech_2.crator = 'pdf'
+        filetech_2.creator = 'pdf'
       
         self.rushdie_obj.filetech.content.file.append(filetech_1)
         self.rushdie_obj.filetech.content.file.append(filetech_2)
 
-        #Add a series objects    
-        #self.rushdie_obj.mods.content.series.title = 'subseries'
-        #self.rushdie_obj.mods.content.series.series.title = 'series'
+        #Add a series objects
+        self.rushdie_obj.mods.content.create_series()
+        self.rushdie_obj.mods.content.series.title = 'subseries_title_value'
+
+        self.rushdie_obj.mods.content.series.create_series()
+        self.rushdie_obj.mods.content.series.series.title = 'series_title_vale'
 
         self.rushdie_obj.save()
         self.pids.append(self.rushdie_obj.pid) 
@@ -270,3 +273,27 @@ class ArrangementViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
+
+        # Check for filetech fields
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].md5)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].local_id)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].computer)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].path)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].rawpath)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].attributes)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].type)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[0].creator)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].md5)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].local_id)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].computer)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].path)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].rawpath)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].attributes)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].type)
+        self.assertContains(response, self.rushdie_obj.filetech.content.file[1].creator)
+
+        # Check for series fields
+        self.assertContains(response, self.rushdie_obj.mods.content.series.title)
+        self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
+
+
