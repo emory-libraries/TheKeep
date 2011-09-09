@@ -53,6 +53,7 @@ def search(request):
             # all other fields: solr search field = form field
             else:
                 search_opts[field] = val
+#               logging.info("%s=%s" % (field, val))
 
         # collect non-empty, non-default search terms to display to user on results page
         search_info = {}
@@ -69,6 +70,8 @@ def search(request):
                         search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
                     else:
                         search_info[key] = '%s - %s' % ("", "No Verdict")
+                elif field == "content_model":
+                    search_info[key] = dict(form.format_options)[val]
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         ctx_dict['search_info'] = search_info
@@ -83,8 +86,10 @@ def search(request):
         #Search for items with not verdict
         if search_opts.get("access_code") == "0":
             del search_opts['access_code'] # remove access_code from criteria
+#           logging.info(search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).exclude(access_code__any=True).sort_by('-created')
         else:
+#           logging.info(search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
         # wrap the solr query in a PaginatedSolrSearch object

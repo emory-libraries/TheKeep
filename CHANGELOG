@@ -12,6 +12,9 @@ Release X(Rushdie Stuff)
 * Added FileMasterTech class in common app
 * Added function to update all ArrangementObjects based on SimpleCollection status
 * Added content modle fixtures AccessAllowed.xml and AccessRestricted.xml in arrangement/initial_objects
+* Added migrate_rushdie manage command
+* Changed ItemSearch to search for Arrangements and Audio
+* Changed Item Search to fiter by Format (contenet_model)
 
 
 =======

@@ -26,13 +26,6 @@ class ReadonlyTextInput(forms.TextInput):
 rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
 rights_access_options.insert(0, ('', ''))
 
-#format_options used in search form
-format_options = (
-    ("", ""),
-    ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
-    ('info:fedora/emory-control:Arrangement-1.0', "Arrangement"),
-)
-
 EMPTY_LABEL_TEXT = ''
 
 def _collection_options():
@@ -52,6 +45,14 @@ def _collection_options():
 class ItemSearch(forms.Form):
     '''Form for searching for :class:`~keep.audio.models.AudioObject`
     instances.'''
+
+    #format_options used in search form 
+    format_options = (
+       ("", ""),
+       ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
+       ('info:fedora/emory-control:Arrangement-1.0', "Arrangement"),
+   )
+
     title = forms.CharField(required=False,
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
     notes = forms.CharField(required=False,
