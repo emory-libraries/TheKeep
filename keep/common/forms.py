@@ -5,7 +5,7 @@ import django.forms
 from django.utils.safestring import mark_safe
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 from keep.collection.forms import archive_choices
-from keep.collection.models import CollectionObject
+from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.models import Rights
 
 class ReadonlyTextInput(forms.TextInput):
@@ -28,6 +28,16 @@ rights_access_options.insert(0, ('', ''))
 
 EMPTY_LABEL_TEXT = ''
 
+def _simple_collection_options():
+    sc_opts = SimpleCollection.simple_collections()
+
+    options = [('info:fedora/' + sc.get('pid', ''), '%s ' % ( sc.get('label', '')))
+    for sc in sorted(sc_opts, key=lambda k: k['label'])]
+
+    options.insert(0, ("", ""))
+
+    return options
+
 def _collection_options():
         collections = [c for c in CollectionObject.item_collections()
                         if settings.FEDORA_PIDSPACE in c['pid'] ]
@@ -49,9 +59,12 @@ class ItemSearch(forms.Form):
     #format_options used in search form 
     format_options = (
        ("", ""),
-       ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
        ('info:fedora/emory-control:Arrangement-1.0', "Arrangement"),
-   )
+       ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
+    )
+
+    simple_collection_options = _simple_collection_options()
+
 
     title = forms.CharField(required=False,
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
@@ -61,6 +74,8 @@ class ItemSearch(forms.Form):
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',
                     required=False)
+    simpleCollection = forms.ChoiceField(simple_collection_options, label='Simple Collection', required=False,
+                    help_text='Search for items with the specified SimpleCollection')
     content_model = forms.ChoiceField(label="Format",  choices=format_options,
                     help_text="Limit to items with given format.", required=False)
     pid = forms.CharField(required=False, help_text='Search by fedora pid, DM id or DM other id.',

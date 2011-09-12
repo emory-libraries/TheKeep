@@ -47,7 +47,7 @@ def search(request):
                         search_opts['pid'] += '*'
 
             # collection/archive objects are indexed as collection_id in solr
-            elif field in ['collection', 'archive']:
+            elif field in ['collection', 'archive', 'simpleCollection']:
                 search_opts['%s_id' % field] = val
 
             # all other fields: solr search field = form field
@@ -72,6 +72,8 @@ def search(request):
                         search_info[key] = '%s - %s' % ("", "No Verdict")
                 elif field == "content_model":
                     search_info[key] = dict(form.format_options)[val]
+                elif field == "simpleCollection":
+                    search_info[key] = dict(form.simple_collection_options)[val]
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         ctx_dict['search_info'] = search_info

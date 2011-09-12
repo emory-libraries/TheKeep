@@ -63,7 +63,42 @@ class SimpleCollection(DigitalObject):
             self.rels_ext.content.add((self.uriref, RDF.type, REPO.SimpleCollection))
 
 
+    def index_data(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data`
+        method to include additional fields specific to Keep
+        SimpleCollection objects.'''
+        # NOTE: we don't want to rely on other objects being indexed in Solr,
+        # so index data should not use Solr to find any related object info
 
+        # FIXME: is it worth splitting out descriptive index data here?
+        data = super(SimpleCollection, self).index_data()
+
+        if self.rels_ext is not None:
+            type = list(self.rels_ext.content.objects(self.uriref, RDF.type))[0]
+            data['type'] = type
+
+        return data
+
+
+    @staticmethod
+    def simple_collections():
+        """Find all simpleCollection objects in the configured Fedora
+        pidspace that can contain items.
+
+        :returns: list of dict
+        :rtype: list
+        """
+
+        # search solr for simpleCollection objects
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL, \
+                    type=REPO.SimpleCollection)
+
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
+        # use dictsort and regroup in templates for sorting where appropriate
+        return solrquery.paginate(start=0, rows=1000).execute()
 
 
 

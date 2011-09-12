@@ -1,15 +1,20 @@
+import logging
 from django.db import models
 
 from eulfedora.models import FileDatastream, XmlDatastream
+from eulfedora.util import RequestFailed
 from eulxml import xmlmap
 from eulfedora.rdfns import relsext
 
 from keep import mods
+from keep.collection.models import SimpleCollection
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.models import Rights, FileMasterTech
 
 from keep.collection.models import CollectionObject
 from rdflib import URIRef
+
+logger = logging.getLogger(__name__)
 
 class Permissions(models.Model):
     class Meta:
@@ -80,12 +85,12 @@ class ArrangementObject(DigitalObject):
         Arrangement objects.'''
         # NOTE: we don't want to rely on other objects being indexed in Solr,
         # so index data should not use Solr to find any related object info
-
+        
+        repo = Repository()
 
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(ArrangementObject, self).index_data()
 
-        print 'THIS SHOULD EXIST: %s' % (self.collection_uri)
         if self.collection_uri is not None:
             
             data['collection_id'] = self.collection_uri
@@ -104,6 +109,27 @@ class ArrangementObject(DigitalObject):
         # rights access status code
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
+
+        #get simple collections that have an association with this object
+        try:
+            simple_collections = repo.risearch.get_subjects(relsext.hasMember, self.uriref)
+            simple_collections =list(simple_collections)
+
+            sc_ids =[]
+            sc_labels =[]
+
+            for sc in simple_collections:
+                obj = repo.get_object(pid=sc, type=repo.infer_object_subtype)
+                if isinstance(obj, SimpleCollection):
+                    sc_ids.append("info:fedora/%s" % obj.pid)
+                    sc_labels.append(obj.label)
+        except RequestFailed as rf:
+            logger.error('Error accessing simpleCollection in Fedora: %s' % rf)
+
+        if sc_ids:
+            data["simpleCollection_id"] = sc_ids
+        if sc_labels:
+            data["simpleCollection_label"] = sc_labels
             
         return data
 
