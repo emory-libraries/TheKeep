@@ -19,12 +19,14 @@ from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
 from keep.testutil import KeepTestCase
 from keep.common.utils import PaginatedSolrSearch
-from keep.audio.tests import ADMIN_CREDENTIALS
 from keep.collection.fixtures import FedoraFixtures
 
 from keep.common.models import FileMasterTech_Base
 
 logger = logging.getLogger(__name__)
+
+# NOTE: this user must be defined as a fedora user for certain tests to work
+ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
 class PermissionsCheckTest(TestCase):
     fixtures =  ['users']
@@ -273,6 +275,7 @@ class ArrangementViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
+        self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
 
         # Check for filetech fields
         self.assertContains(response, self.rushdie_obj.filetech.content.file[0].md5)
@@ -295,5 +298,3 @@ class ArrangementViewsTest(KeepTestCase):
         # Check for series fields
         self.assertContains(response, self.rushdie_obj.mods.content.series.title)
         self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
-
-
