@@ -176,6 +176,7 @@ class Command(BaseCommand):
             else:
                 simple_collection = self.repo.get_object(type=SimpleCollection)
                 simple_collection.label = self.simple_collection_name
+                simple_collection.dc.content.title = self.simple_collection_name
         except:
             raise CommandError("Pid %s does not exist" % self.simple_collection_pid)
 
@@ -260,6 +261,8 @@ class Command(BaseCommand):
                 self.stdout.write("===RELS-EXT===\n")
                 for entry in simple_collection.rels_ext.content:
                     self.stdout.write("%s\n" % list(entry))
+                self.stdout.write("===DC===\n")
+                self.stdout.write("%s\n" % simple_collection.dc.content.serialize())
 
         #print Summary
         self.stdout.write("\n\nSUMMARY\n=======\n")

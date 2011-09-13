@@ -351,6 +351,7 @@ class Command(BaseCommand):
                     elif len(sc_list) == 0: #create new simple collection
                         self.simple_collection = self.repo.get_object(type=SimpleCollection)
                         self.simple_collection.label = options["simple-collection"]
+                        self.simple_collection.dc.content.title = options["simple-collection"]
                 except Exception as e:
                     if not isinstance(e, CommandError):
                         raise CommandError("Could not obtain requested SimpleCollection %s : %s" % (options["simple-collection"], e))
@@ -413,6 +414,8 @@ class Command(BaseCommand):
                 self.stdout.write("===RELS-EXT===\n")
                 for entry in self.simple_collection.rels_ext.content:
                     self.stdout.write("%s\n" % list(entry))
+                self.stdout.write("===DC===\n")
+                self.stdout.write("%s\n" % self.simple_collection.dc.content.serialize())
 
             #Save SimpleCollection
             if not options["no-act"]:

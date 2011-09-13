@@ -63,7 +63,6 @@ class ItemSearch(forms.Form):
        ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
     )
 
-    simple_collection_options = _simple_collection_options()
 
 
     title = forms.CharField(required=False,
@@ -74,7 +73,7 @@ class ItemSearch(forms.Form):
                     help_text='''Limit to items in the specified collection.
                     Start typing collection number to let your browser search within the list.''',
                     required=False)
-    simpleCollection = forms.ChoiceField(simple_collection_options, label='Simple Collection', required=False,
+    simpleCollection = DynamicChoiceField(choices=_simple_collection_options, label='Simple Collection', required=False,
                     help_text='Search for items with the specified SimpleCollection')
     content_model = forms.ChoiceField(label="Format",  choices=format_options,
                     help_text="Limit to items with given format.", required=False)

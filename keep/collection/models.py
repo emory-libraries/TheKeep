@@ -82,6 +82,23 @@ class SimpleCollection(DigitalObject):
 
 
     @staticmethod
+    def find_by_pid(pid):
+        'Find a collection by pid and return a dictionary with collection information.'
+        # NOTE: this method added as a replacement for
+        # get_cached_collection_dict that was used elsewhere
+        # throughout the site (audio app, etc.)  It should probably be
+        # consolidated with other find methods...
+
+        if pid.startswith('info:fedora/'): # allow passing in uri
+             pid = pid[len('info:fedora/'):]
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL,
+                               pid=pid)
+        result = solrquery.execute()
+        if len(result) == 1:
+            return result[0]
+
+    @staticmethod
     def simple_collections():
         """Find all simpleCollection objects in the configured Fedora
         pidspace that can contain items.

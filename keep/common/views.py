@@ -9,7 +9,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
-from keep.collection.models import CollectionObject
+from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common import forms as commonforms
 from keep.common.models import Rights
 from keep.common.utils import PaginatedSolrSearch
@@ -73,7 +73,7 @@ def search(request):
                 elif field == "content_model":
                     search_info[key] = dict(form.format_options)[val]
                 elif field == "simpleCollection":
-                    search_info[key] = dict(form.simple_collection_options)[val]
+                    search_info[key] = SimpleCollection.find_by_pid(val)
                 elif val != form.fields[field].initial:     # ignore default values
                     search_info[key] = val
         ctx_dict['search_info'] = search_info
@@ -88,10 +88,10 @@ def search(request):
         #Search for items with not verdict
         if search_opts.get("access_code") == "0":
             del search_opts['access_code'] # remove access_code from criteria
-#           logging.info(search_opts)
+#            logging.info("SEARCH OPTS: %s " % search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).exclude(access_code__any=True).sort_by('-created')
         else:
-#           logging.info(search_opts)
+#            logging.info("SEARCH OPTS: %s " % search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
         # wrap the solr query in a PaginatedSolrSearch object
