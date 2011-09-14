@@ -25,8 +25,15 @@ class FileTechPartForm(XmlObjectForm):
     :class:`~keep.common.models.Rights` metadata.
     """
 
-    created = W3CDateField(required=False)
-    modified = W3CDateField(required=False)
+    #created = W3CDateField(required=False)
+    #modified = W3CDateField(required=False)
+
+    created = forms.CharField(label="Created", required=False,
+        widget=ReadonlyTextInput)
+
+    modified = forms.CharField(label="Modified", required=False,
+        widget=ReadonlyTextInput)
+
 
     md5 = forms.CharField(label="MD5 Sum", required=False,
         widget=ReadonlyTextInput)
@@ -75,7 +82,7 @@ class FileTechEditForm(XmlObjectForm):
     """:class:`~eulxml.forms.XmlObjectForm` to edit
     :class:`~keep.common.models.Rights` metadata.
     """
-    file = SubformField(formclass=FileTechPartForm)
+    file = SubformField(formclass=FileTechPartForm, can_delete=False)
 
     class Meta:
         model = FileMasterTech
@@ -138,6 +145,8 @@ class Series2PartForm(XmlObjectForm):
 
     uri = forms.CharField(label='URI', required=False,
                             widget=forms.TextInput(attrs={'class': 'long series2_storeduri'}))
+    md5 = forms.CharField(label="MD5 Sum", required=False,
+        widget=ReadonlyTextInput)
 
     base_ark = forms.CharField(label='Base Ark', required=False,
                             widget=forms.TextInput(attrs={'class': 'long series2_storedark'}))
