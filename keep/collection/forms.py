@@ -213,8 +213,9 @@ class CollectionForm(XmlObjectForm):
 
 # Simple Collection status options - used in edit screen
 simple_collection_options = (
+                  ('Accessioned', 'Accessioned'),
                   ('Processed', 'Processed'),
-                  ('Accessioned', 'Accessioned')
+
     )
 
 class SimpleCollectionModsForm(XmlObjectForm):

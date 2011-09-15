@@ -352,6 +352,8 @@ class Command(BaseCommand):
                         self.simple_collection = self.repo.get_object(type=SimpleCollection)
                         self.simple_collection.label = options["simple-collection"]
                         self.simple_collection.dc.content.title = options["simple-collection"]
+                        self.simple_collection.mods.content.create_restrictions_on_access()
+                        self.simple_collection.mods.content.restrictions_on_access.text = "Accessioned"
                 except Exception as e:
                     if not isinstance(e, CommandError):
                         raise CommandError("Could not obtain requested SimpleCollection %s : %s" % (options["simple-collection"], e))
@@ -416,6 +418,8 @@ class Command(BaseCommand):
                     self.stdout.write("%s\n" % list(entry))
                 self.stdout.write("===DC===\n")
                 self.stdout.write("%s\n" % self.simple_collection.dc.content.serialize())
+                self.stdout.write("===MODS===\n")
+                self.stdout.write("%s\n" % self.simple_collection.mods.content.serialize())
 
             #Save SimpleCollection
             if not options["no-act"]:

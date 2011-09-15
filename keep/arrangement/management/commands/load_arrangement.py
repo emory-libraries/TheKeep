@@ -177,6 +177,8 @@ class Command(BaseCommand):
                 simple_collection = self.repo.get_object(type=SimpleCollection)
                 simple_collection.label = self.simple_collection_name
                 simple_collection.dc.content.title = self.simple_collection_name
+                simple_collection.mods.content.create_restrictions_on_access()
+                simple_collection.mods.content.restrictions_on_access.text = "Accessioned"
         except:
             raise CommandError("Pid %s does not exist" % self.simple_collection_pid)
 
@@ -263,6 +265,9 @@ class Command(BaseCommand):
                     self.stdout.write("%s\n" % list(entry))
                 self.stdout.write("===DC===\n")
                 self.stdout.write("%s\n" % simple_collection.dc.content.serialize())
+                self.stdout.write("===MODS===\n")
+                self.stdout.write("%s\n" % simple_collection.mods.content.serialize())
+            
 
         #print Summary
         self.stdout.write("\n\nSUMMARY\n=======\n")

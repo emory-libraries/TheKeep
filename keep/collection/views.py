@@ -208,6 +208,8 @@ def simple_edit(request, pid=None):
                 messages.success(request, "Successfully Updated %s Item(s)" % (success_count))
 
                 #Now Update the SimpleCollection itself
+                if obj.mods.content.restrictions_on_access.text is None:
+                    obj.mods.content.create_restrictions_on_access()
                 obj.mods.content.restrictions_on_access.text = status # Change collection status
                 saved = obj.save()
                 if not saved:
