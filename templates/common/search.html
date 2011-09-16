@@ -29,7 +29,7 @@ of {{ page.paginator.count }}.</p>
             {% endif %}
         </td>
         <td>{% spaceless %}
-          {% firstof obj.title obj.label %}
+          {% if obj.arrangement_id %} {{ obj.arrangement_id }} : {% endif  %}{% firstof obj.title obj.label %}
 	  {% if obj.part %}({{ obj.part }}){% endif %}<br/>
           <span class="extra">
           {# # Show download links if it is an audio item  #}

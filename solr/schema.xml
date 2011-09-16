@@ -307,6 +307,10 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="access_copy_mimetype" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="duration" type="integer" indexed="true" stored="true" multiValued="false"/>
 
+   <!-- ArrangementObject -->
+   <field name="arrangement_id" type="string" indexed="false" stored="true" multiValued="false"/>
+
+
    <!-- * both audio and collection objects -->
    <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
    <field name="archive_id" type="string" indexed="true" stored="true" multiValued="false"/>

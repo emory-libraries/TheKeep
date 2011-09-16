@@ -106,6 +106,14 @@ class ArrangementObject(DigitalObject):
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
             
+
+        #Arrangement unique id
+        try:
+            if self.filetech.content.file:
+                data["arrangement_id"] = self.filetech.content.file[0].local_id
+        except Exception as e:
+            logging.error("Could not get Arrangement_Id for %s: %s" % self.pid, e)
+
         # rights access status code
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
@@ -130,7 +138,7 @@ class ArrangementObject(DigitalObject):
             data["simpleCollection_id"] = sc_ids
         if sc_labels:
             data["simpleCollection_label"] = sc_labels
-            
+
         return data
 
 
