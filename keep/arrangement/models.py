@@ -91,12 +91,14 @@ class ArrangementObject(DigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(ArrangementObject, self).index_data()
 
-        if self.collection_uri is not None:
-            
-            data['collection_id'] = self.collection_uri
+        #Collection Info
+        collection = list(self.rels_ext.content.objects(self.uriref, relsext.isMemberOf))
+        if collection:
+            data['collection_id'] = collection[0]
+
             try:
                 # pull parent & archive collection objects directly from fedora
-                parent = CollectionObject(self.api, self.collection_uri)
+                parent = CollectionObject(self.api, collection[0])
                 data['collection_label'] = parent.label
                 # the parent collection of the collection this item belongs to is its archive
                 # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
