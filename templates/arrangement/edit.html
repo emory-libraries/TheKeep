@@ -118,8 +118,10 @@ function clearSeriesFields() {
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p class='extra'>
-  | <a href="{% url arrangement:raw-ds obj.pid 'Mods' %}">Descriptive</a>
-  | <a href="{% url arrangement:raw-ds obj.pid 'FileTech' %}">FileTech</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'MODS' %}">MODS</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'DC' %}">DC</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'FileMasterTech' %}">FileTech</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
 </p>
 
