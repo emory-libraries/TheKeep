@@ -29,7 +29,8 @@ finding_aids_url = 'https://findingaids.library.emory.edu/documents/'
 finding_aid_id = 'rushdie1000'
 
 def index(request):
-    return HttpResponse('Implement me', content_type='text/html')
+    #Return to "HOME Index page since there is not really an Arrangement Index
+    return render_to_response('audio/index.html', {}, context_instance=RequestContext(request))
 
 @permission_required('is_staff')
 def edit(request, pid):
