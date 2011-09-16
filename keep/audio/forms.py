@@ -12,7 +12,7 @@ from keep import mods
 from keep.audio.models import AudioMods, SourceTech, DigitalTech, \
      Rights, CodecCreator, TransferEngineer 
 from keep.collection.models import CollectionObject
-from keep.collection.forms import NameForm, archive_choices
+from keep.collection.forms import NameForm
 
 logger = logging.getLogger(__name__)
 
@@ -76,10 +76,6 @@ class ItemSearch(forms.Form):
             <i>Example:</i> search <b>2011-02*</b> for all items uploaded in February 2011.'''))
     access_code = forms.ChoiceField(rights_access_options, label='Rights', required=False,
                     help_text='Search for items with the specified rights access status')
-    archive = DynamicChoiceField(label="Archive", required=False,
-                    choices=archive_choices, initial='',
-                    help_text='Search for items that are owned by the specified Archive')
-
 
 
 class ReadonlyTextInput(forms.TextInput):

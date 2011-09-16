@@ -466,32 +466,6 @@ class AudioViewsTest(KeepTestCase):
             self.assertPattern('Collection:.*%s' % coll_info['title'], response.content,
                 msg_prefix='search results page should include search term (collection by name)')
 
-        # archive
-        archpid = settings.PID_ALIASES['marbl']
-        arch_info = {'pid': archpid, 'title': 'MARBL'}
-        archuri = 'info:fedora/%s' % archpid
-        # mock collection find by pid in the view for archive label look-up
-        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=arch_info)):
-            # view will query solr twice. set up bogus results from the
-            # first so that we can verify that the second runs correctly
-            collection_pids = ['example:bogus']
-            self.mocksolr.query.execute.return_value = [{'pid': pid} for pid in collection_pids]
-            response = self.client.get(search_url, {'audio-archive':  archuri})
-
-            arch_args, arch_kwargs = self.mocksolr.query.call_args_list[-2]
-            self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, arch_kwargs['content_model'],
-                'archive search should search first for collections')
-            self.assertEqual(archuri, arch_kwargs['archive_id'],
-                'archive search should search first on archive_id field')
-
-            audio_args, audio_kwargs = self.mocksolr.query.call_args_list[-1]
-            self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, audio_kwargs['content_model'],
-                'archive search should search second for collections')
-            self.assertEqual(['info:fedora/' + pid for pid in collection_pids], audio_kwargs['collection_id'],
-                'archive search should filter on collection_id field')
-            self.assertPattern('Archive:.*%s' % arch_info['title'], response.content,
-                msg_prefix='search results page should include search term (archive by name)')
-
         # multiple fields
         # mock collection find by pid in the view for collection label look-up
         with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=coll_info)):

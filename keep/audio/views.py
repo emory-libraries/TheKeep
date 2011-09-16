@@ -378,21 +378,6 @@ def search(request):
                     if val == form.fields['pid'].initial:
                         search_opts['pid'] += '*'
 
-            elif field == 'archive':
-                # HACK: first query the collections in the archive, then
-                # filter the audio in those collections. we need to do this
-                # because eulindexer doesn't currently (2011-08-23) support
-                # reindexing audio items (for their archive_id) when their
-                # collection changes archives.
-                if 'collection_id' not in search_opts:
-                    # NB: if the user specifies collection *and* archive,
-                    # collection overrides
-                    coll_query = solr.query(archive_id=val,
-                            content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-                    coll_pids = [ 'info:fedora/' + res['pid'] for res in coll_query.execute() ]
-                    logger.debug('collections in archive %s: (%d) %s' % (val, len(coll_pids), repr(coll_pids)))
-                    search_opts['collection_id'] = coll_pids
-
             elif field == 'collection':
                 search_opts['collection_id'] = val
 
@@ -407,8 +392,8 @@ def search(request):
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
             if val:     # if search value is not empty, selectively add it
-                # for collections and archive, get collection object info
-                if field in ['collection', 'archive']: # location = archive
+                # for collections, get collection object info
+                if field == 'collection':
                     search_info[key] = CollectionObject.find_by_pid(val)                    
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
                     search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
@@ -417,19 +402,12 @@ def search(request):
         ctx_dict['search_info'] = search_info
 
         logger.debug('solr search opts: ' + repr(search_opts))
-        # if we're searching in a list of collections (which essentially
-        # means a search by archive: see archive handling above) and that
-        # list is empty, then don't return any results. sunburnt will by
-        # default decline to filter by collection in such a circumstance.
-        if 'collection_id' in search_opts and len(search_opts['collection_id']) == 0:
-            paginator = Paginator([], 30)
-        else:
-            # for now, sort by most recently created
-            solrquery = solr.query(**search_opts).sort_by('-created')
-            # wrap the solr query in a PaginatedSolrSearch object
-            # that knows how to translate between django paginator & sunburnt
-            pagedsolr = PaginatedSolrSearch(solrquery)
-            paginator = Paginator(pagedsolr, 30)
+        # for now, sort by most recently created
+        solrquery = solr.query(**search_opts).sort_by('-created')
+        # wrap the solr query in a PaginatedSolrSearch object
+        # that knows how to translate between django paginator & sunburnt
+        pagedsolr = PaginatedSolrSearch(solrquery)
+        paginator = Paginator(pagedsolr, 30)
         
         try:
             page = int(request.GET.get('page', '1'))
