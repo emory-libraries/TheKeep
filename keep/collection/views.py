@@ -137,7 +137,20 @@ def search(request):
             key = form.fields[field].label  # use form display label
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
+
             if val is not None and val != '':     # if search value is not empty, selectively add it
+                if hasattr(val, 'lstrip'): # solr strings can't start with wildcards
+                    extra_solr_cleaned = val.lstrip('*?')
+                    if val != extra_solr_cleaned:
+                        if not extra_solr_cleaned:
+                            messages.info(request, 'Ignoring search term "%s": Text fields can\'t start with wildcards.' % (val,))
+                            del search_opts[field]
+                            continue
+                        messages.info(request, 'Searching for "%s" instead of "%s": Text fields can\'t start with wildcards.' %
+                                      (extra_solr_cleaned, val))
+                        val = extra_solr_cleaned
+                        search_opts[field] = val
+
                 if field == 'archive_id':       # for archive, get  info
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif val != form.fields[field].initial:     # ignore default values
