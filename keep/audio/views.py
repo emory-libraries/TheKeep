@@ -365,6 +365,18 @@ def search(request):
                 # skip blank fields
                 continue
 
+            extra_solr_cleaned = val.lstrip('*?')
+            if val != extra_solr_cleaned:
+                if not extra_solr_cleaned:
+                    messages.info(request, 'Ignoring search term "%s": Text fields can\'t start with wildcards.' % (val,))
+                    form.cleaned_data[field] = ''
+                    continue
+
+                messages.info(request, 'Searching for "%s" instead of "%s": Text fields can\'t start with wildcards.' %
+                              (extra_solr_cleaned, val))
+                val = extra_solr_cleaned
+                form.cleaned_data[field] = val
+
             # handle fields that need special logic
             if field == 'pid':
                 # pid search field can now be object pid OR dm id
