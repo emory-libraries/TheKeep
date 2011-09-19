@@ -16,6 +16,7 @@ Release X(Rushdie Stuff)
 * Added ability to ItemSearch to search for Arrangements and Audio
 * Added ability to Item Search to fiter by Format (contenet_model)
 * Added ability to Item Search to fiter by SimpleCollection
+* Updated and added xacml policies
 
 
 =======
