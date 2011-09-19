@@ -1,3 +1,4 @@
+from rdflib import URIRef
 import logging
 import sys
 from mock import Mock, MagicMock, patch
@@ -158,6 +159,7 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.rights.content.access_status.code, "2")
         #RELS-EXT
         self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
+        self.assertTrue((obj.uriref, model.hasModel, URIRef("emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
         #Label and DS
         self.assertEqual(obj.label, "x - the roles", "Label should be set to last part of path")
         self.assertEqual(obj.dc.content.title, "x - the roles", "DC title should be set to last part of path")
@@ -268,7 +270,7 @@ class ArrangementViewsTest(KeepTestCase):
         # logged in as staff
         self.client.login(**ADMIN_CREDENTIALS)
         # on GET, should display the form
-        response = self.client.get(edit_url)
+        response = self.client.get(edit_url, {'rights-access': '2'})
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'

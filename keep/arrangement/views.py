@@ -1,5 +1,6 @@
 # Create your views here.
 import urllib2
+from rdflib import URIRef
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -13,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
+from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream
 
@@ -49,6 +51,24 @@ def edit(request, pid):
                 form.update_instance() 
                 log_message = 'Updating Arrangement Object from Keep'
                 action = 'updated'
+
+                #Add /remove Allowed Restricted Content Models based on status
+                allowed = (obj.uriref, model.hasModel, URIRef("emory-control:ArrangementAccessAllowed-1.0"))
+                restricted = (obj.uriref, model.hasModel,URIRef("emory-control:ArrangementAccessRestricted-1.0"))
+
+                status = request.POST['rights-access']
+                if status == "2":
+                    if restricted in obj.rels_ext.content:
+                        obj.rels_ext.content.remove(restricted)
+                    if allowed not in obj.rels_ext.content:
+                        obj.rels_ext.content.add(allowed)
+
+                else:
+                    if allowed in obj.rels_ext.content:
+                        obj.rels_ext.content.remove(allowed)
+                    if restricted not in obj.rels_ext.content:
+                        obj.rels_ext.content.add(restricted)
+
                 # NOTE: by sending a log message, we force Fedora to store an
                 # audit trail entry for object creation, which doesn't happen otherwise
                 obj.save(log_message)
