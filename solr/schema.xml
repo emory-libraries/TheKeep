@@ -284,6 +284,8 @@ Solr Schema for projects using eulfedora and indexdata.
    <field name="source" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="subject" type="text" indexed="true" stored="true" multiValued="true"/>
    <field name="type" type="text" indexed="true" stored="true" multiValued="true"/>
+   <field name="isMemberOf" type="string" indexed="false" stored="true" multiValued="false"/>
+   <field name="dsids" type="string" indexed="false" stored="true" multiValued="true"/>
 
    <!-- keep-specific fields -->
    <!--  * collection objects -->
