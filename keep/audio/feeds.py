@@ -106,7 +106,9 @@ class PodcastFeed(Feed):
         solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         solrquery = solr.query(pid='%s:*' % (settings.FEDORA_PIDSPACE,),
                                content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-        return dict((item['pid'], item) for item in solrquery.execute())
+        collection_count = collection_count_query.paginate(rows=0).execute().result.numFound
+        collections = solrquery.paginate(rows=collection_count).execute()
+        return dict((item['pid'], item) for item in collections)
 
     def link(self, page):
         return reverse('audio:podcast-feed', args=[page])
