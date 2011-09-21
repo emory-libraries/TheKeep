@@ -126,11 +126,12 @@ class PodcastFeed(Feed):
         solrquery = feed_items()
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(feed_items())
-        
+        pagedsolr = PaginatedSolrSearch(solrquery)
+
         paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
         for obj in current_chunk.object_list:
+            logger.debug('items obj %s' % (obj['pid'],))
             yield obj
 
     def item_title(self, item):
@@ -165,16 +166,18 @@ class PodcastFeed(Feed):
     def item_author_name(self, item):
         # using collection # - collection title
         if 'collection_id' in item:
-            collection = CollectionObject.find_by_pid(item['collection_id'])
-            if collection:
+            collection_id = item['collection_id']
+            if collection_id in self._collection_data:
+                collection = self._collection_data[collection_id]
                 return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
         if 'collection_id' in item:
-            collection = CollectionObject.find_by_pid(item['collection_id'])
-            if collection:
+            collection_id = item['collection_id']
+            if collection_id in self._collection_data:
+                collection = self._collection_data[collection_id]
                 categories.append(collection['archive_label'])
         return categories
 
