@@ -1,6 +1,14 @@
 from collections import namedtuple
+from django.db import models
 from eulxml import xmlmap
 from eulxml.xmlmap.fields import DateField
+
+class Permissions(models.Model):
+    class Meta:
+        permissions = (
+            ("arrangement_allowed", "Access to Arrangement material is allowed."),
+            ("marbl_allowed", "Access to MARBL material is allowed."),
+        )
 
 _access_term = namedtuple('_access_term', 'code abbreviation access text') # wraps terms below
 

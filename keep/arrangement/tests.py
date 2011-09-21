@@ -6,6 +6,7 @@ from sunburnt import sunburnt
 
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.contrib.auth.models import Permission
 from django.test import Client
 from django.core.urlresolvers import reverse
 
@@ -33,13 +34,18 @@ class PermissionsCheckTest(TestCase):
     fixtures =  ['users']
 
     def test_permission_exists(self):
+        marbl_perm = Permission.objects.get(codename='marbl_allowed')
+        arrangement_perm = Permission.objects.get(codename='arrangement_allowed')
+
         #Test for permission on a sample fixture user
         marbl_user = User.objects.get(username__exact='marbl')
-        self.assertTrue(marbl_user.has_perm('arrangement.marbl_allowed'))
-
-        #Test for permission not existing on a sample fixture user.
-        non_marbl_user = User.objects.get(username__exact='nonmarbl')
-        self.assertFalse(non_marbl_user.has_perm('arrangement.marbl_allowed'))
+        marbl_user.user_permissions.clear()
+        marbl_user.save()
+        marbl_user.user_permissions.add(marbl_perm)
+        marbl_user.user_permissions.add(arrangement_perm)
+        marbl_user.save()
+        self.assertTrue(marbl_user.has_perm('common.marbl_allowed'))
+        self.assertTrue(marbl_user.has_perm('common.arrangement_allowed'))
 
 class TestMigrateRushdie(TestCase):
     MM_FIXTURE ='''<macfs:document xmlns:macfs="info:fedora/emory-control:Rushdie-MacFsData-1.0">

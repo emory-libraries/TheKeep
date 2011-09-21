@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import logging
 from mock import Mock, patch
 from os import path
+from django.contrib.auth.models import Permission, User
 from rdflib import URIRef
 from rdflib.namespace import RDF
 from sunburnt import sunburnt
@@ -910,6 +911,13 @@ class SimpleCollectionTest( KeepTestCase):
         self. simple_collection_2.save()
         self.pids.append(self.simple_collection_2.pid)
 
+        #Create user for tests
+        user = User(username="euterpe")
+        user.set_password("digitaldelight")
+        user.is_active=True
+        user.is_superuser=True
+        user.save()
+
     def tearDown(self):
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -952,6 +960,7 @@ class SimpleCollectionTest( KeepTestCase):
 
         
     def test_edit(self):
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         edit_url = reverse('collection:simple_edit', kwargs={'pid' : self.simple_collection_2.pid})
         response = self.client.get(edit_url)
         expected, code = 200, response.status_code
@@ -961,6 +970,7 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertContains(response, 'Accessioned', msg_prefix='Status of collection should be Accessioned')
 
     def test_browse(self):
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         browse_url = reverse('collection:simple_browse')
         response = self.client.get(browse_url)
         expected, code = 200, response.status_code

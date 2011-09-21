@@ -3,6 +3,7 @@ from sunburnt import sunburnt
 
 from exceptions import ValueError
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.shortcuts import render_to_response
@@ -14,9 +15,9 @@ from keep.common import forms as commonforms
 from keep.common.models import Rights
 from keep.common.utils import PaginatedSolrSearch
 
-@permission_required('is_staff')
+@staff_member_required
 def search(request):
-    '''Search for  :class:`~keep.audio.models.AudioObject` by pid,
+    '''Search for  :class:`~keep.audio.models.AudioObject`  or :class:`~keep.arrangement.models.ArrangementObject`by pid,
     title, description, collection, date, or rights.'''
     response_code = None
     form = commonforms.ItemSearch(request.GET, prefix='audio')

@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
-@permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
+@permission_required("common.marbl_allowed") # sets ?next=/audio/ but does not return back here
 def index(request):
     # pass dates in to the view to link to searches for recently uploaded files
     today = date.today()
@@ -50,7 +50,7 @@ def index(request):
         'today': today, 'yesterday' : yesterday,
         }, context_instance=RequestContext(request))
 
-@permission_required_with_ajax('is_staff')
+@permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
@@ -206,7 +206,7 @@ def upload(request):
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
 
-@permission_required_with_ajax('is_staff')
+@permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
 def ajax_file_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging 
@@ -345,7 +345,7 @@ def _dump_post_data(inf, outf, size=None):
         if size == 0:
             break
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view(request, pid):
     '''View a single :class:`~keep.audio.models.AudioObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
@@ -356,13 +356,13 @@ def view(request, pid):
     return HttpResponseSeeOtherRedirect(reverse('audio:edit',
                 kwargs={'pid': pid}))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=AudioObject, repo=Repository(request=request))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.audio.models.AudioObject`.'''
     repo = Repository(request=request)
@@ -471,7 +471,7 @@ def download_audio(request, pid, type, extension=None):
             repo=repo, headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def feed_list(request):
     '''List and link to all current iTunes podcast feeds based on the
     number of objects currently available for inclusion in the feeds.'''

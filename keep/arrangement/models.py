@@ -16,12 +16,6 @@ from rdflib import URIRef
 
 logger = logging.getLogger(__name__)
 
-class Permissions(models.Model):
-    class Meta:
-        permissions = (
-            ("marbl_allowed", "Access to MARBL collections is allowed."),
-        )
-
 class Series_Base(mods.RelatedItem):
 
     uri = xmlmap.StringField('mods:identifier[@type="uri"]',

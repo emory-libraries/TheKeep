@@ -5,6 +5,7 @@ View methods for creating, editing, searching, and browsing
 import logging
 
 from sunburnt import sunburnt
+from django.contrib.admin.views.decorators import staff_member_required
 
 from rdflib.namespace import RDF
 
@@ -28,7 +29,7 @@ from keep.common.rdfns import REPO
 
 logger = logging.getLogger(__name__)
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view(request, pid):
     '''View a single :class:`~keep.collection.models.CollectionObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
@@ -39,7 +40,7 @@ def view(request, pid):
     return HttpResponseSeeOtherRedirect(reverse('collection:edit',
                 kwargs={'pid': pid}))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
     :class:`~keep.collection.models.CollectionObject`.  If a pid is
@@ -119,7 +120,7 @@ def edit(request, pid=None):
     return render_to_response('collection/edit.html', context,
         context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@staff_member_required
 def search(request):
     '''Search for :class:`~keep.collection.models.CollectionObject`
     instances.
@@ -164,7 +165,7 @@ def search(request):
     return render_to_response('collection/search.html', context,
                               context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def browse(request):
     '''Browse :class:`~keep.collection.models.CollectionObject` by
     hierarchy, grouped by archive.
@@ -181,13 +182,14 @@ def browse(request):
                     context_instance=RequestContext(request))
 
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
 
 
+@permission_required("common.arrangement_allowed")
 def simple_edit(request, pid=None):
     ''' Edit an existing Fedora
     :class:`~keep.collection.models.SimpleCollection`.  If a pid is
@@ -259,6 +261,7 @@ def _objects_by_type(type_uri, type=None):
 
 
 
+@permission_required("common.arrangement_allowed")
 def simple_browse(request):
 
     response_code = None

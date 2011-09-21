@@ -30,11 +30,12 @@ from keep.common.eadmap import Series
 finding_aids_url = 'https://findingaids.library.emory.edu/documents/'
 finding_aid_id = 'rushdie1000'
 
+@permission_required("common.arrangement_allowed")
 def index(request):
     #Return to "HOME Index page since there is not really an Arrangement Index
     return render_to_response('audio/index.html', {}, context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@permission_required("common.arrangement_allowed")
 def edit(request, pid):
     '''Edit view for an arrangement object. Currently, create is not
        supported on this form.
@@ -119,13 +120,13 @@ def edit(request, pid):
     return render_to_response('arrangement/edit.html', {'obj' : obj, 'form': form, 'series_data': series_data},
         context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@permission_required("common.arrangement_allowed")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=ArrangementObject, repo=Repository(request=request))
 
-@permission_required('is_staff')
+@permission_required("common.arrangement_allowed")
 @csrf_exempt
 def get_selected_series_data(request, id):
     '''This is called from a JQuery ajax call. It filters on the passed series/subseries id
