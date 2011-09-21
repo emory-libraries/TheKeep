@@ -1179,8 +1179,7 @@ class AudioViewsTest(KeepTestCase):
     @patch('keep.audio.feeds.sunburnt.SolrInterface', mocksolr)
     @patch('keep.audio.feeds.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
     @patch('keep.audio.feeds.PodcastFeed._get_collection_data', new=Mock(return_value={}))
-    @patch('keep.audio.feeds.CollectionObject')
-    def test_podcast_feed(self, mockcollobj):
+    def test_podcast_feed(self):
         feed_url = reverse('audio:podcast-feed', args=[1])
 
         # test data to return from solr search for objects to show up in the feed
@@ -1203,9 +1202,6 @@ class AudioViewsTest(KeepTestCase):
         def get_item(s, i):  # crude get-item replacement for mock only
             return data[i]
         self.mocksolrpaginator.__getitem__ = get_item
-
-        mockcollobj.find_by_pid.return_value = {'pid': 'coll:1', 'title': 'collection',
-            'source_id': 1, 'archive_id': 'marbl:1', 'archive_label': 'MARBL'}
 
         response = self.client.get(feed_url)
 
@@ -2432,10 +2428,9 @@ class PodcastFeedTest(KeepTestCase):
 
         self.assertEqual(None, self.feed.item_pubdate(self.min_item))
 
-    @patch('keep.audio.feeds.CollectionObject')
-    def test_author_name(self, mockcollobj):
+    def test_author_name(self):
         coll = {'title': 'archival collection', 'source_id': '1'}
-        mockcollobj.find_by_pid.return_value = coll
+        self.feed._collection_data = { self.item['collection_id']: coll}
 
         val = self.feed.item_author_name(self.item)
         self.assert_(val.startswith(coll['source_id']))
@@ -2443,12 +2438,11 @@ class PodcastFeedTest(KeepTestCase):
 
         self.assertEqual(None, self.feed.item_author_name(self.min_item))
 
-    @patch('keep.audio.feeds.CollectionObject')
-    def test_categories(self, mockcollobj):
+    def test_categories(self):
         coll = {'archive_label': 'MARBL'}
-        mockcollobj.find_by_pid.return_value = coll
-        self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
+        self.feed._collection_data = { self.item['collection_id']: coll}
 
+        self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
         self.assertEqual([], self.feed.item_categories(self.min_item))
 
     def test_enclosure_length(self):

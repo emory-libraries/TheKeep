@@ -93,6 +93,10 @@ class PodcastFeed(Feed):
     # could also set the following feed-level attributes:
     #  owner, itunes subtitle, author, summary; itunes owner, image, category
 
+    def __init__(self, *args, **kwargs):
+        self._collection_data = {}
+        super(PodcastFeed, self).__init__(*args, **kwargs)
+
     def get_object(self, request, page):
         # each time someone requests a feed, update the cached collection
         # data. self is persistent across requests here. i'm pretty sure
