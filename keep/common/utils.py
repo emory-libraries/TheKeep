@@ -1,6 +1,9 @@
 import hashlib
+import logging
 
 from django.contrib.sites.models import Site
+
+logger = logging.getLogger(__name__)
 
 def absolutize_url(local_url):
     '''Convert a local url to an absolute url, with scheme and server name,
@@ -45,26 +48,29 @@ class PaginatedSolrSearch(object):
     # wrapper around sunburnt solrsearch so it can be passed to a django paginator
     # should be a temporary solution - looking into adding this to sunburnt 
 
-    
-    _result_cache = None
     def __init__(self, solrquery):
+        self._result_cache = None
+        self._count_cache = None
         self.solrquery = solrquery
         
     def count(self):
         # get total count without retrieving any results
-        # FIXME: cache the count?
-        response = self.solrquery.paginate(rows=0).execute()
-        return response.result.numFound
+        if self._count_cache is None:
+            logger.debug('no cached count')
+            response = self.solrquery.paginate(rows=0).execute()
+            self._count_cache = response.result.numFound
+        return self._count_cache
 
     def __len__(self):
         if self._result_cache is None:
+            logger.debug('no cached result (__len__)')
             self._result_cache = self.solrquery.execute()
         return len(self._result_cache)
                 
             
     def __getitem__(self, k):
         """Return a single result or slice of results from the query."""
-        
+        logger.debug('PaginatedSolrSearch[%s]' % (k,))
         if not isinstance(k, (slice, int, long)):
             raise TypeError
         
@@ -88,6 +94,7 @@ class PaginatedSolrSearch(object):
 
         # index should be relative to currently paginated set
         if self._result_cache is None:
+            logger.debug('no cached result (__getitem__)')
             self._result_cache = self.solrquery.execute()
             
         return self._result_cache[k]
