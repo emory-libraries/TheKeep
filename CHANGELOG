@@ -18,6 +18,7 @@ Release X(Rushdie Stuff)
 * Added ability to Item Search to fiter by SimpleCollection
 * Updated and added xacml policies
 * Updated permission checking for existing keep views and new Arrangement views
+* Added settings.json.dist example fab settings file
 
 
 =======
