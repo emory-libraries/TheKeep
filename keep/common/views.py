@@ -86,7 +86,10 @@ def search(request):
 
 
         # for now, sort by most recently created
+
         #Search for items with not verdict
+        #Remove access_code from criteria because 0 is not a valid value. Then exclude 
+        #records with no access_code AKA verdict
         if search_opts.get("access_code") == "0":
             del search_opts['access_code'] # remove access_code from criteria
 #            logging.info("SEARCH OPTS: %s " % search_opts)
@@ -94,6 +97,13 @@ def search(request):
         else:
 #            logging.info("SEARCH OPTS: %s " % search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
+
+        #Exclude results based on perms
+        if not request.user.has_perm('common.marbl_allowed'):
+            solrquery = solrquery.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
+        if not request.user.has_perm('common.arrangement_allowed'):
+            solrquery = solrquery.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+
 
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
