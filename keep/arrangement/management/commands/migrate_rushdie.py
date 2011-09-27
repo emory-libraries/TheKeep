@@ -180,6 +180,7 @@ class Command(BaseCommand):
 
                 obj.dc.content.title = obj.filetech.content.file[0].path.rpartition("/")[2]
                 obj.label = obj.filetech.content.file[0].path.rpartition("/")[2]
+                obj.owner = "thekeep-project"
 
             if not noact:
                 obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")

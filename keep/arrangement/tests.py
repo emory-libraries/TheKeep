@@ -168,6 +168,7 @@ class TestMigrateRushdie(TestCase):
         self.assertTrue((obj.uriref, model.hasModel, URIRef("emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
         #Label and DS
         self.assertEqual(obj.label, "x - the roles", "Label should be set to last part of path")
+        self.assertEqual(obj.owner, "thekeep-project", "owner should be set to 'thekeep-project'")
         self.assertEqual(obj.dc.content.title, "x - the roles", "DC title should be set to last part of path")
         #DataStreams
         #have to reload obj from repository to get DS update
