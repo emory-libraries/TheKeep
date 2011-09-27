@@ -19,6 +19,9 @@ The Keep
 
 {% block navbar-items %}
     <li><a href="{% url collection:browse %}">Collections</a></li>
+    {% if perms.common.arrangement_allowed %}
+         <li><a href="{% url collection:simple_browse %}">Simple Collections</a></li>
+    {% endif  %}
 {% endblock %}
 
 {% block content-header %}

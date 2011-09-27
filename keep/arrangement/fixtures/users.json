@@ -1,0 +1,37 @@
+[{
+    "pk": 5,
+    "model": "auth.user",
+    "fields": {
+      "username": "marbl",
+      "first_name": "marbl",
+      "last_name": "user",
+      "is_active": true,
+      "is_superuser": false,
+      "is_staff": true,
+      "last_login": "2010-05-28 16:55:27",
+      "groups": [],
+      "user_permissions": [34],
+      "password": "sha1$179d8$1c8d01858a58a21ea0f6e76acec021205b63db68",
+      "email": "euterpe-test@library.emory.edu",
+      "date_joined": "2010-05-28 16:55:27"
+    }
+  },
+  {
+    "pk": 6,
+    "model": "auth.user",
+    "fields": {
+      "username": "nonmarbl",
+      "first_name": "nonmarbl",
+      "last_name": "user",
+      "is_active": true,
+      "is_superuser": false,
+      "is_staff": true,
+      "last_login": "2010-05-28 16:55:29",
+      "groups": [],
+      "user_permissions": [],
+      "password": "sha1$179d8$1c8d01858a58a21ea0f6e76acec021205b63db68",
+      "email": "euterpe-test2@library.emory.edu",
+      "date_joined": "2010-05-28 16:55:29"
+    }
+  }
+]

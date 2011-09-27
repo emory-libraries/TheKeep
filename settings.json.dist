@@ -1,0 +1,5 @@
+{
+  "hosts": ["myself@stagingserver.library.emory.edu"],
+  "sudo_user": "userid-for-project", 
+  "extract_path": "/path/to/sites/keep"
+}

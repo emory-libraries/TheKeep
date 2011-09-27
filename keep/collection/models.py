@@ -1,6 +1,7 @@
 import logging
 import re
-from rdflib import URIRef
+from rdflib import RDF, URIRef
+from sunburnt import sunburnt
 from sunburnt import sunburnt
 
 from django.conf import settings
@@ -12,10 +13,11 @@ from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 from eulxml import xmlmap
-from eulxml.xmlmap.eadmap import EncodedArchivalDescription, EAD_NAMESPACE
+from eulxml.xmlmap.eadmap import EAD_NAMESPACE, EncodedArchivalDescription
 
 from keep import mods
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
+from keep.common.rdfns import REPO
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +37,92 @@ class CollectionMods(LocalMODS):
     ':class:`keep.mods.AccessCondition`'
 
 
+class SimpleCollection(DigitalObject):
+    '''This is a simple DC only collection
+    '''
+
+    COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.0'
+    CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
+
+    NEW_OBJECT_VIEW = 'collection:simple_edit'
+
+    mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
+            'control_group': 'M',
+            'format': mods.MODS_NAMESPACE,
+            'versionable': True,
+        })
+    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
+
+    #override this function and add additional functionality
+    def __init__(self, *args, **kwargs):
+        super(SimpleCollection, self).__init__(*args, **kwargs)
+
+        #set RDF.type in rels_ext only if it is a new object
+        try:
+            created = self.created # only used to check the existence of created var
+        except TypeError:
+            self.rels_ext.content.add((self.uriref, RDF.type, REPO.SimpleCollection))
+
+
+    def index_data(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data`
+        method to include additional fields specific to Keep
+        SimpleCollection objects.'''
+        # NOTE: we don't want to rely on other objects being indexed in Solr,
+        # so index data should not use Solr to find any related object info
+
+        # FIXME: is it worth splitting out descriptive index data here?
+        data = super(SimpleCollection, self).index_data()
+
+        if self.rels_ext is not None:
+            type = list(self.rels_ext.content.objects(self.uriref, RDF.type))[0]
+            data['type'] = type
+
+        return data
+
+
+    @staticmethod
+    def find_by_pid(pid):
+        'Find a collection by pid and return a dictionary with collection information.'
+        # NOTE: this method added as a replacement for
+        # get_cached_collection_dict that was used elsewhere
+        # throughout the site (audio app, etc.)  It should probably be
+        # consolidated with other find methods...
+
+        if pid.startswith('info:fedora/'): # allow passing in uri
+             pid = pid[len('info:fedora/'):]
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL,
+                               pid=pid)
+        result = solrquery.execute()
+        if len(result) == 1:
+            return result[0]
+
+    @staticmethod
+    def simple_collections():
+        """Find all simpleCollection objects in the configured Fedora
+        pidspace that can contain items.
+
+        :returns: list of dict
+        :rtype: list
+        """
+
+        # search solr for simpleCollection objects
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL, \
+                    type=REPO.SimpleCollection)
+
+        # by default, only returns 10; get everything
+        # - solr response is a list of dictionary with collection info
+        # use dictsort and regroup in templates for sorting where appropriate
+        return solrquery.paginate(start=0, rows=1000).execute()
+
+
 
 class CollectionObject(DigitalObject):
     '''Fedora Collection Object.  Extends :class:`~eulfedora.models.DigitalObject`.
+    This really represents an archival collection
     '''
     COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
     CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]

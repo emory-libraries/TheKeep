@@ -1,0 +1,34 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Simple Collection : Edit {{ obj.label }}{% endblock %}
+{% block content-title %}Edit Simple Collection{% endblock %}
+
+
+{% block content-body %}
+{{ block.super }}
+<h2>{{ obj.label }}</h2>
+
+<div class="instructions">
+    <h2>Instructions for using this form</h2>
+    <ul>
+        <li><span class="required" title='required'>*</span> indicates a field is required.</li>
+    </ul>
+</div>
+
+<div id="edit">
+<form method="post" name="edit_form">{% csrf_token %}
+
+
+
+<div id="status">
+    {{ form.mods.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+
+</div>
+
+<input class="form-submit" type="submit" name="_save" value="Save"/>
+</form>
+</div>
+{% endblock %}

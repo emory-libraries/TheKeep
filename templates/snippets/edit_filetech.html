@@ -1,0 +1,16 @@
+{% if fileform.initial %}
+<div class="subform">
+  <label>File Tech Metadata record:</label>
+  <div id="name-part">
+  <table class="edit-form">
+             {% for field in fileform %}
+                 {% if not field.label = 'Delete' %}
+                     {% include 'snippets/form_field_tr.html' %}
+                 {% endif %}
+             {% endfor %}
+          
+  </table>
+  </div>
+
+</div>
+{% endif %}

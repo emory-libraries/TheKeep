@@ -1,0 +1,194 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Arrangment : Edit {{ obj.label }} ({{ obj.filetech.content.local_id }}){% endblock %}
+{% block content-title %}Edit Arrangment File {% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  {# includes jquery  #}
+
+  <link href="{{ MEDIA_URL }}/style/jquery-ui.css" rel="stylesheet" type="text/css"/>
+  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery-ui.min.js"></script>
+
+  <style>
+	.ui-autocomplete {
+		max-height: 200px;
+		overflow-y: auto;
+		/* prevent horizontal scrollbar */
+		overflow-x: hidden;
+		/* add padding to account for vertical scrollbar */
+		padding-right: 20px;
+	}
+	/* IE 6 doesn't support max-height
+	 * we use height instead, but this forces the menu to always be this tall
+	 */
+	* html .ui-autocomplete {
+		height: 200px;
+	}
+  </style>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      // move to the first form element for user convenience
+      document.edit_form.elements[1].focus();
+
+      // make .toggle headers hide/show the following section
+      $(".toggle").click(function () {
+        var header = $(this);
+        header.toggleClass('collapsed');
+        header.next().toggle();
+      });
+
+      $( "input#series_title_field" ).autocomplete({
+            source: {{ series_data|safe }},
+            minLength: 1,
+            select: function( event, ui ) {
+                $.ajax({
+                    url: "/arrangement/get_selected_series_data/" + ui.item.id,
+                    dataType: "json",
+                    success: function( jsonResponse ) {
+                        clearSeriesFields();
+                        $( "input.series1_storedtitle" ).val(jsonResponse.series1title);
+                        $( "input.series1_storeduri" ).val(jsonResponse.series1uri);
+                        $( "input.series1_storedark" ).val(jsonResponse.series1ark);
+                        $( "input.series1_storedshortid" ).val(jsonResponse.series1shortid);
+                        $( "input.series1_storedfullid" ).val(jsonResponse.series1fullid);
+
+                        $( "input.series2_storedtitle" ).val(jsonResponse.series2title);
+                        $( "input.series2_storeduri" ).val(jsonResponse.series2uri);
+                        $( "input.series2_storedark" ).val(jsonResponse.series2ark);
+                        $( "input.series2_storedshortid" ).val(jsonResponse.series2shortid);
+                        $( "input.series2_storedfullid" ).val(jsonResponse.series2fullid);
+                     }
+                  });
+
+              }
+       });
+    });
+
+    function formVerification() {
+        var series_data = JSON.parse('{{ series_data|safe }}');
+        if($( "input.series2_storedtitle" ).val() != '') {
+            series_value = $( "input.series2_storedtitle" ).val() + ": " + $( "input.series1_storedtitle" ).val();
+        }
+        else {
+            series_value = $( "input.series1_storedtitle" ).val()
+        }
+        
+        if(series_value != ": ") {
+            var matchFound = false;
+            for(i=0;i<series_data.length;i++) {
+                if(series_value == series_data[i].value) {
+                    matchFound = true;
+                }
+            }
+
+            if (matchFound == false) {
+                var answer = confirm('About to submit with a series that does not map to a Finding Aid. Do you wish to proceed?');
+                if(answer) {
+                        //TODO: Check other values? Clear non-matching values?
+                        return true;
+                } else {
+                    return false;
+                }
+             }
+         }
+         return true;
+    }
+
+function clearSeriesFields() {
+     $( "input.series1_storedtitle" ).val('');
+     $( "input.series1_storeduri" ).val('');
+     $( "input.series1_storedark" ).val('');
+     $( "input.series1_storedshortid" ).val('');
+     $( "input.series1_storedfullid" ).val('');
+
+     $( "input.series2_storedtitle" ).val('');
+     $( "input.series2_storeduri" ).val('');
+     $( "input.series2_storedark" ).val('');
+     $( "input.series2_storedshortid" ).val('');
+     $( "input.series2_storedfullid" ).val('');
+}
+
+
+  </script>
+{% endblock %}
+
+{% block content-body %}
+{{ block.super }}
+<h2>{{ obj.label }}</h2>
+<p class='extra'>
+  | <a href="{% url arrangement:raw-ds obj.pid 'MODS' %}">MODS</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'DC' %}">DC</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'FileMasterTech' %}">FileTech</a>
+  | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
+</p>
+
+
+<div class="instructions">
+    <h2>Instructions for using this form</h2>
+    <ul>
+        <li><span class="required" title='required'>*</span> indicates a field is required.</li>
+    </ul>
+    {# NOTE: some overlap with collection edit form instructions #}
+</div>
+<div id="arrangement-edit">
+<form method="post" name="edit_form">{% csrf_token %}
+
+<h3 id="mods-label" class="section-head toggle">Descriptive Metadata</h3>
+<div id="mods">
+    {{ form.mods.non_field_errors }}
+    <table class="edit-form">
+        <tr>
+           <th>Series Title: </th>
+           <td><input name="series_title_field" id="series_title_field" type="text" class="long" /></td>
+        </tr>
+
+  <tr id="series_info">
+      <th>&nbsp;</th>
+      <td class="multi-field">
+          {% with form.mods.subforms.series as seriesform %}
+            {% include 'snippets/edit_series.html' %}
+          {% endwith %}
+          </td>
+          </tr>
+    <tr>    
+    </table>
+</div>
+
+
+
+<h3 id="FileTech-label" class="section-head toggle">File Tech Metadata</h3>
+<div id="FileTech">
+    {{ form.filetech.non_field_errors }}
+    <table class="edit-form">
+        <tr><td>
+         {% with form.filetech.formsets.file as formfileset %}
+             {{ formfileset.management_form }}
+             {% for fileform in formfileset.forms %}
+                 {% include 'snippets/edit_filetech.html' %}
+             {% endfor %}
+         {% endwith %}
+        </td></tr>
+    </table>
+</div>
+
+
+<h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
+<div id="rights">
+    {{ form.rights.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.rights %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+
+
+
+
+<input class="form-submit" type="submit" name="_save" value="Save" onClick='return formVerification();'/>
+<input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing" onClick='return formVerification();'/>
+</form>
+</div>
+{% endblock %}

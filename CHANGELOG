@@ -3,6 +3,23 @@
 CHANGELOG
 =========
 
+Release  1.2 - Verdict App
+--------------------------
+* Branched Keep code and added arrangement app
+* Added load_arrangement management command
+* Added SimpleCollection in collection.models
+* Moved Rights and supporting models from audio app to common app
+* Added FileMasterTech class in common app
+* Added function to update all ArrangementObjects based on SimpleCollection status
+* Added content modle fixtures AccessAllowed.xml and AccessRestricted.xml in arrangement/initial_objects
+* Added migrate_rushdie manage command
+* Added ability to ItemSearch to search for Arrangements and Audio
+* Added ability to Item Search to fiter by Format (contenet_model)
+* Added ability to Item Search to fiter by SimpleCollection
+* Updated and added xacml policies
+* Updated permission checking for existing keep views and new Arrangement views
+* Added settings.json.dist example fab settings file
+
 Release 1.1 - Metadata Migration
 --------------------------------
 

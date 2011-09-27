@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'eullocal.django.taskresult',
     'eullocal.django.util',
     'keep.accounts',
+    'keep.arrangement',
     'keep.audio',
     'keep.collection',
     'keep.common',

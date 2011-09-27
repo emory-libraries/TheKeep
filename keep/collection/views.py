@@ -2,8 +2,12 @@
 View methods for creating, editing, searching, and browsing
 :class:`~keep.collection.models.CollectionObject` instances in Fedora.
 '''
+import logging
 
 from sunburnt import sunburnt
+from django.contrib.admin.views.decorators import staff_member_required
+
+from rdflib.namespace import RDF
 
 from django.conf import settings
 from django.contrib import messages
@@ -17,11 +21,15 @@ from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream
 from eulfedora.util import RequestFailed
 
-from keep.collection.forms import CollectionForm, CollectionSearch
-from keep.collection.models import CollectionObject
+from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
+from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
+from keep.common.rdfns import REPO
 
-@permission_required('is_staff')
+
+logger = logging.getLogger(__name__)
+
+@permission_required("common.marbl_allowed")
 def view(request, pid):
     '''View a single :class:`~keep.collection.models.CollectionObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
@@ -32,7 +40,7 @@ def view(request, pid):
     return HttpResponseSeeOtherRedirect(reverse('collection:edit',
                 kwargs={'pid': pid}))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
     :class:`~keep.collection.models.CollectionObject`.  If a pid is
@@ -112,7 +120,7 @@ def edit(request, pid=None):
     return render_to_response('collection/edit.html', context,
         context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@staff_member_required
 def search(request):
     '''Search for :class:`~keep.collection.models.CollectionObject`
     instances.
@@ -157,7 +165,7 @@ def search(request):
     return render_to_response('collection/search.html', context,
                               context_instance=RequestContext(request))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def browse(request):
     '''Browse :class:`~keep.collection.models.CollectionObject` by
     hierarchy, grouped by archive.
@@ -174,8 +182,106 @@ def browse(request):
                     context_instance=RequestContext(request))
 
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
+
+
+@permission_required("common.arrangement_allowed")
+def simple_edit(request, pid=None):
+    ''' Edit an existing Fedora
+    :class:`~keep.collection.models.SimpleCollection`.  If a pid is
+    specified, attempts to retrieve an existing object.
+    '''
+    repo = Repository(request=request)
+
+    try:
+        obj = repo.get_object(pid=pid, type=SimpleCollection)
+
+        if request.method == 'POST':
+            #Update SimpleCollection and associated arrangement objects
+            status = request.POST['mods-restrictions_on_access']
+            form = SimpleCollectionEditForm(instance=obj)
+            (success_count, fail_count) = form.update_objects(status)
+
+            if success_count >= 1 and fail_count == 0: # if all objects were  updated correctly
+                messages.success(request, "Successfully Updated %s Item(s)" % (success_count))
+
+                #Now Update the SimpleCollection itself
+                if obj.mods.content.restrictions_on_access.text is None:
+                    obj.mods.content.create_restrictions_on_access()
+                obj.mods.content.restrictions_on_access.text = status # Change collection status
+                saved = obj.save()
+                if not saved:
+                    messages.error(request, "Failed To Updated Simple Collection Object")
+                    logger.error("Failed to update SimpleCollection %s:%s" % (obj.pid, obj.label))
+            else:
+                messages.error(request, "Successfully Updated %s Item(s) Failed To Update %s Item(s)" % (success_count, fail_count))
+
+
+
+
+        else:
+            #Just Display the form
+            form = SimpleCollectionEditForm(instance=obj)
+
+    except RequestFailed, e:
+        # if there was a 404 accessing objects, raise http404
+        # NOTE: this probably doesn't distinguish between object exists with
+        # no MODS and object does not exist at all
+        if e.code == 404:
+            raise Http404
+        # otherwise, re-raise and handle as a common fedora connection error
+        else:
+            raise
+
+    context = {'form': form}
+    if pid is not None:
+        context['obj'] = obj
+
+    return render_to_response('collection/simple_edit.html', context,
+        context_instance=RequestContext(request))
+
+#find objects with a particular type specified  in the rels-ext and return them as
+def _objects_by_type(type_uri, type=None):
+    """
+    Returns a list of objects with the specified type_uri as objects of the specified type
+    :param type_uri: The uri of the type being searched
+    :param type: The type of object that should be returned
+    """
+    repo = Repository()
+
+    pids = repo.risearch.get_subjects(RDF.type, type_uri)
+    pids_list = list(pids)
+
+    for pid in pids_list:
+        yield repo.get_object(pid=pid, type=type)
+
+
+
+@permission_required("common.arrangement_allowed")
+def simple_browse(request):
+
+    response_code = None
+    try:
+        objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
+        context = {'objs' : objs}
+    except RequestFailed:
+        response_code = 500
+        # FIXME: this is duplicate logic from generic search view
+        context['server_error'] = 'There was an error ' + \
+            'contacting the digital repository. This ' + \
+            'prevented us from completing your search. If ' + \
+            'this problem persists, please alert the ' + \
+            'repository administrator.'
+
+
+
+    response =  render_to_response('collection/simple_browse.html', context,
+        context_instance=RequestContext(request))
+    if response_code is not None:
+        response.status_code = response_code
+    return response
+

@@ -184,5 +184,5 @@ class Repository(server.Repository):
         if request is not None and request.user.is_authenticated() and \
             'fedora_password' in request.session:            
                 username =request.user.username
-                password = decrypt(request.session['fedora_password'])            
+                password = decrypt(request.session['fedora_password'])
         super(Repository, self).__init__(username=username, password=password)

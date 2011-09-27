@@ -1,10 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Policy [
+<!ENTITY action "urn:fedora:names:fedora:2.1:action:">
+<!ENTITY control "info:fedora/emory-control:">
+<!ENTITY function "urn:oasis:names:tc:xacml:1.0:function:">
+<!ENTITY model "info:fedora/fedora-system:def/model#">
+<!ENTITY request "urn:fedora:names:fedora:2.1:environment:httpRequest:">
+<!ENTITY subject "urn:fedora:names:fedora:2.1:subject:">
+<!ENTITY xacml "urn:oasis:names:tc:xacml:1.0:">
+<!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+<!ENTITY object "urn:fedora:names:fedora:2.1:resource:object:">
+]>
 <Policy xmlns="urn:oasis:names:tc:xacml:1.0:policy"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         PolicyId="permit-keep-content-if-keep-admin-or-server.xml"
         RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable">
   <Description>Allow objects that are part of the "The Keep"
-(identified by a project owner id) to be accessed and modified by
+(identified by a project owner id and content model) to be accessed and modified by
 specific Keep admin users and from Keep application server.</Description>
   <Target>
     <Subjects>
@@ -13,12 +24,36 @@ specific Keep admin users and from Keep application server.</Description>
     <Resources>
       <!-- restrict to objects that are part of The Keep -->
       <Resource>
-        <ResourceMatch MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+        <ResourceMatch MatchId="&function;string-equal">
             <AttributeValue
-		DataType="http://www.w3.org/2001/XMLSchema#string">thekeep-project</AttributeValue>
+		DataType="&xsd;string">&control;EuterpeAudio-1.0</AttributeValue>
             <ResourceAttributeDesignator
-		AttributeId="urn:fedora:names:fedora:2.1:resource:object:owner"
-                DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+		AttributeId="&model;hasModel"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+        <ResourceMatch MatchId="&function;string-equal">
+            <AttributeValue
+		DataType="&xsd;string">thekeep-project</AttributeValue>
+            <ResourceAttributeDesignator
+		AttributeId="&object;owner"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+      </Resource>
+
+      <Resource>
+        <ResourceMatch MatchId="&function;string-equal">
+            <AttributeValue
+		DataType="&xsd;string">&control;Collection-1.1</AttributeValue>
+            <ResourceAttributeDesignator
+		AttributeId="&model;hasModel"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+        <ResourceMatch MatchId="&function;string-equal">
+            <AttributeValue
+		DataType="&xsd;string">thekeep-project</AttributeValue>
+            <ResourceAttributeDesignator
+		AttributeId="&object;owner"
+                DataType="&xsd;string" MustBePresent="false"/>
         </ResourceMatch>
       </Resource>
 
@@ -93,6 +128,10 @@ specific Keep admin users and from Keep application server.</Description>
         <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
           <!-- heisenberg (production django server)  -->
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.36</AttributeValue>
+          <!-- staging django server  -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.38</AttributeValue>
+          <!-- Alex desktop  -->
+          <!-- <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.88</AttributeValue> -->
         </Apply>
       </Apply>
     </Condition> 

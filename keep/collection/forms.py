@@ -1,12 +1,21 @@
+import logging
+
 from django import forms
+import django.forms
+from django.forms import BaseForm
 from django.utils.safestring import mark_safe
+
+from eulfedora.rdfns import relsext as relsextns
 
 from eulxml.forms import XmlObjectForm, SubformField
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 
 from keep import mods
-from keep.collection.models import CollectionMods, CollectionObject
+from keep.arrangement.models import ArrangementObject
+from keep.collection.models import CollectionMods, CollectionObject, SimpleCollection
+from keep.common.fedora import Repository
 
+logger = logging.getLogger(__name__)
 
 def archive_choices():
     choices = [('info:fedora/%s' % a['pid'],
@@ -199,3 +208,92 @@ class CollectionForm(XmlObjectForm):
 
         # must return mods portion because XmlObjectForm depends on it for validation
         return self.instance
+
+#Simple Collection
+
+# Simple Collection status options - used in edit screen
+simple_collection_options = (
+                  ('Accessioned', 'Accessioned'),
+                  ('Processed', 'Processed'),
+
+    )
+
+class SimpleCollectionModsForm(XmlObjectForm):
+    """:class:`~eulxml.forms.XmlObjectForm` to edit
+    :class:`~keep.common.models.SimpleCollection` metadata.
+    """
+    restrictions_on_access = forms.ChoiceField(simple_collection_options, label='Status',
+           help_text='Indicates if collection members are visible')
+
+    class Meta:
+        model = CollectionMods
+        fields = [ 'restrictions_on_access' ]
+
+
+class SimpleCollectionEditForm(forms.Form):
+    error_css_class = 'error'
+    required_css_class = 'required'
+
+    def __init__(self, data=None, instance=None, initial={}, **kwargs):
+
+        if instance is None:
+            mods_instance = None
+        else:
+            mods_instance = instance.mods.content
+            self.object_instance = instance
+            orig_initial = initial
+
+            # populate fields not auto-generated & handled by XmlObjectForm
+            #if self.object_instance.collection_uri:
+                #initial['collection'] = str(self.object_instance.collection_uri)
+
+            if self.object_instance.ark:
+                initial['identifier'] = self.object_instance.ark
+            else:
+                initial['identifier'] = self.object_instance.pid + ' (PID)'
+
+            # passed-in initial values override ones calculated here
+            initial.update(orig_initial)
+
+
+        common_opts = {'data': data, 'initial': initial}
+        self.mods = SimpleCollectionModsForm(instance=mods_instance, prefix='mods', **common_opts)
+
+
+        self.mods.error_css_class = self.error_css_class
+        self.mods.required_css_class = self.error_css_class
+
+        super(SimpleCollectionEditForm, self).__init__(data=data, initial=initial)
+
+    #Update member ArrangementObjects to specified status
+    def update_objects(self, status):
+        success_count= 0
+        fail_count = 0
+
+        #translate form status codes to fedora state code
+        codes = {'Processed': 'A', 'Accessioned' : 'I'}
+
+        #target state for every object in the collection
+        if status not in codes:
+            return (0 ,0) # could not complete task due to bad status
+        else:
+            state =  codes[status]
+
+        repo = Repository()
+        pids = list(self.object_instance.rels_ext.content.objects(self.object_instance.uriref, relsextns.hasMember))
+
+        for pid in pids:
+            try:
+                obj = repo.get_object(pid=pid, type=ArrangementObject)
+                obj.state=state
+                saved = obj.save()
+                if saved:
+                    success_count = success_count + 1  #add to success count if something goes right
+                else:
+                    fail_count = fail_count + 1  #add to fail count if something goes wrong
+                    logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
+            except:
+                fail_count = fail_count + 1  #add to fail count if something goes wrong
+                logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
+
+        return (success_count, fail_count) 

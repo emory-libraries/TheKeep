@@ -1,0 +1,76 @@
+{% extends "site_base.html" %}
+{% load fedora %}
+
+{% block page-subtitle %}: Audio : Search Results{% endblock %}
+{% block content-title %}Search Results{% endblock %}
+
+{% block content-body %}
+  {{ block.super }}
+
+{% include 'snippets/search_info.html' %}
+
+{% if results %}
+<p>Displaying record{{ page.object_list|pluralize }}
+{{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
+of {{ page.paginator.count }}.</p>
+
+<table>
+  <tr><th>PID</th><th>Title</th><th>Created</th><th>Last Modified</th></tr>
+  {% for obj in results %}
+    <tr>
+      {% fedora_access %}
+      {# only display data available from object profile to limit API calls per object #}
+        <td>
+            {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
+                <a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a>
+            {% else %} {% if  'info:fedora/emory-control:Arrangement-1.0' in obj.content_model %}
+                <a href="{% url arrangement:edit obj.pid %}">{{ obj.pid }}</a>
+            {% endif %}
+            {% endif %}
+        </td>
+        <td>{% spaceless %}
+          {% if obj.arrangement_id %} {{ obj.arrangement_id }} : {% endif  %}{% firstof obj.title obj.label %}
+	  {% if obj.part %}({{ obj.part }}){% endif %}<br/>
+          <span class="extra">
+          {# # Show download links if it is an audio item  #}
+          {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model  %}
+              {% if obj.has_original %}
+                  <a href="{% url audio:download-audio obj.pid %}">original audio</a>
+              {% else %}
+                  original audio
+              {% endif %}
+            |
+                {% if obj.has_access_copy %}
+                  <a href="{% url audio:download-compressed-audio obj.pid "mp3" %}">access copy</a>
+                {% else %}
+                  access copy
+                {% endif %}
+          {% endif %}
+          </span>
+        {% endspaceless %}</td>
+        <td>{{ obj.created }}</td>
+        <td>{{ obj.last_modified }}</td>
+      {% permission_denied %}
+        <td>{{ obj.pid }}</td>
+        <td colspan="3">You don't have permission to view this object.</td>
+      {% fedora_failed %}
+        <td>{{ obj.pid }}</td>
+        <td colspan="3">There was an error accessing fedora.</td>
+      {% end_fedora_access %}
+    </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No matching objects found.</p>
+<p>By default, search matches whole words only (including any punctuation).
+You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
+{% endif %}
+
+{% if page.paginator.num_pages > 1 %} {# if more than one page of results, display & link them #}
+  <p>Pages:
+    {% for p in page.paginator.page_range %}
+      {% if p == page.number %} {{ p }} {% else %}<a href="?{{search_opts}}&page={{p}}">{{p}}</a>{% endif %}
+    {% endfor %}
+  </p>
+{% endif %}
+{% endblock %}

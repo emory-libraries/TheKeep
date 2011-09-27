@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Policy [
+<!ENTITY action "urn:fedora:names:fedora:2.1:action:">
+<!ENTITY control "info:fedora/emory-control:">
+<!ENTITY function "urn:oasis:names:tc:xacml:1.0:function:">
+<!ENTITY model "info:fedora/fedora-system:def/model#">
+<!ENTITY request "urn:fedora:names:fedora:2.1:environment:httpRequest:">
+<!ENTITY subject "urn:fedora:names:fedora:2.1:subject:">
+<!ENTITY xacml "urn:oasis:names:tc:xacml:1.0:">
+<!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+<!ENTITY object "urn:fedora:names:fedora:2.1:resource:object:">
+]>
+<Policy xmlns="urn:oasis:names:tc:xacml:1.0:policy"
+        PolicyId="permit-arrangement-admins"
+        RuleCombiningAlgId="&xacml;rule-combining-algorithm:first-applicable">
+  <Description>
+    Allow access of Arrangement objects to authorized admin IDs
+    over encrypted transport
+  </Description>
+
+  <Target>
+    <Subjects>
+      <AnySubject/>
+    </Subjects>
+
+    <!-- match Arrangement model -->
+    <Resources>
+      <Resource>
+        <ResourceMatch MatchId="&function;string-equal">
+          <AttributeValue DataType="&xsd;string">&control;Arrangement-1.0</AttributeValue>
+          <ResourceAttributeDesignator AttributeId="&model;hasModel"
+              DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+        <ResourceMatch MatchId="&function;string-equal">
+          <AttributeValue DataType="&xsd;string">thekeep-project</AttributeValue>
+          <ResourceAttributeDesignator AttributeId="&object;owner"
+              DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+      </Resource>
+      <Resource>
+        <ResourceMatch MatchId="&function;string-equal">
+          <AttributeValue DataType="&xsd;string">&control;Collection-1.0</AttributeValue>
+          <ResourceAttributeDesignator AttributeId="&model;hasModel"
+              DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+        <ResourceMatch MatchId="&function;string-equal">
+          <AttributeValue DataType="&xsd;string">thekeep-project</AttributeValue>
+          <ResourceAttributeDesignator AttributeId="&object;owner"
+              DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+      </Resource>
+    </Resources>
+
+    <Actions>
+      <AnyAction/>
+    </Actions>
+  </Target>
+
+  <Rule RuleId="arrangement-admins" Effect="Permit">
+    <Condition FunctionId="&function;and">
+      
+      <!-- only api-a or limited api-m -->
+      <Apply FunctionId="&function;or">
+
+        <!-- api-a -->
+        <Apply FunctionId="&function;string-equal">
+          <AttributeValue DataType="&xsd;string">&action;api-a</AttributeValue>
+          <Apply FunctionId="&function;string-one-and-only">
+            <ActionAttributeDesignator AttributeId="&action;api"
+                DataType="&xsd;string"/>
+          </Apply>
+        </Apply>
+
+        <!-- limited api-m -->
+        <Apply FunctionId="&function;string-at-least-one-member-of">
+          <ActionAttributeDesignator AttributeId="&action;id" DataType="&xsd;string"
+              MustBePresent="false"/>
+          <Apply FunctionId="&function;string-bag">
+            <AttributeValue DataType="&xsd;string">&action;id-addDatastream</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-getDatastream</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-getDatastreams</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-modifyDatastreamByReference</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-modifyDatastreamByValue</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-getRelationships</AttributeValue>
+          </Apply>
+        </Apply>
+      </Apply>
+
+      <!-- must be encrypted -->
+      <Apply FunctionId="&function;string-equal">
+        <AttributeValue DataType="&xsd;string">&request;security-secure</AttributeValue>
+        <Apply FunctionId="&function;string-one-and-only">
+          <EnvironmentAttributeDesignator AttributeId="&request;security"
+              DataType="&xsd;string"/>
+        </Apply>
+      </Apply>
+
+      <!-- only project members -->
+      <Apply FunctionId="&function;string-at-least-one-member-of">
+        <SubjectAttributeDesignator AttributeId="&subject;loginId" DataType="&xsd;string"/>
+        <Apply FunctionId="&function;string-bag">
+          <!-- developers -->
+          <AttributeValue DataType="&xsd;string">branker</AttributeValue>
+          <AttributeValue DataType="&xsd;string">sturnbu</AttributeValue>
+          <AttributeValue DataType="&xsd;string">athom09</AttributeValue>
+          <!-- marbl -->
+          <AttributeValue DataType="&xsd;string">elfarr</AttributeValue>
+          <AttributeValue DataType="&xsd;string">llcarro</AttributeValue>
+          <AttributeValue DataType="&xsd;string">libspm</AttributeValue>
+        </Apply>
+      </Apply>
+    </Condition>
+  </Rule>
+</Policy>

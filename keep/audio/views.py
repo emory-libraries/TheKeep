@@ -29,18 +29,19 @@ from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.models import DigitalObjectSaveFailure
 
 from keep.audio import forms as audioforms
+from keep.audio.models import AudioObject
 from keep.audio.feeds import feed_items
-from keep.audio.models import AudioObject, Rights
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import CollectionObject 
 from keep.common.fedora import Repository
+from keep.common.models import Rights
 from keep.common.utils import md5sum, PaginatedSolrSearch
 
 logger = logging.getLogger(__name__)
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
-@permission_required('is_staff')  # sets ?next=/audio/ but does not return back here
+@permission_required("common.marbl_allowed") # sets ?next=/audio/ but does not return back here
 def index(request):
     # pass dates in to the view to link to searches for recently uploaded files
     today = date.today()
@@ -49,7 +50,7 @@ def index(request):
         'today': today, 'yesterday' : yesterday,
         }, context_instance=RequestContext(request))
 
-@permission_required_with_ajax('is_staff')
+@permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
@@ -205,7 +206,7 @@ def upload(request):
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
 
-@permission_required_with_ajax('is_staff')
+@permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
 def ajax_file_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging 
@@ -344,95 +345,7 @@ def _dump_post_data(inf, outf, size=None):
         if size == 0:
             break
 
-
-@permission_required('is_staff')
-def search(request):
-    '''Search for  :class:`~keep.audio.models.AudioObject` by pid,
-    title, description, collection, date, or rights.'''
-    response_code = None
-    form = audioforms.ItemSearch(request.GET, prefix='audio')
-    ctx_dict = {'search': form}
-    if form.is_valid():
-        search_opts = {
-            # restrict to objects in the configured pidspace
-            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-            # restrict to audio items by content model
-            'content_model': AudioObject.AUDIO_CONTENT_MODEL,
-        }
-
-        # translate non-blank fields from the form to search terms
-        for field, val in form.cleaned_data.iteritems():
-            if not val:
-                # skip blank fields
-                continue
-
-            # handle fields that need special logic
-            if field == 'pid':
-                # pid search field can now be object pid OR dm id
-                # if the search string is purely numeric, it must be a dm1 id
-                if val.isnumeric():
-                    search_opts['dm1_id'] = val
-                    # otherwise, search on fedora object pid
-                else:
-                    search_opts['pid'] = val
-                    # add a wildcard if the search pid is the initial value
-                    if val == form.fields['pid'].initial:
-                        search_opts['pid'] += '*'
-
-            # collection/archive objects are indexed as collection_id in solr
-            elif field in ['collection', 'archive']:
-                search_opts['%s_id' % field] = val
-
-            # all other fields: solr search field = form field 
-            else:
-                search_opts[field] = val
-
-        # collect non-empty, non-default search terms to display to user on results page
-        search_info = {}
-        for field, val in form.cleaned_data.iteritems():
-            key = form.fields[field].label  # use form display label when available
-            if key is None:     # if field label is not set, use field name as a fall-back
-                key = field 
-            if val:     # if search value is not empty, selectively add it
-                # for collections and archive, get collection object info
-                if field in ['collection', 'archive']: # location = archive
-                    search_info[key] = CollectionObject.find_by_pid(val)                    
-                elif field == 'access_code':         # for rights, numeric code + abbreviation
-                    search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
-                elif val != form.fields[field].initial:     # ignore default values
-                    search_info[key] = val
-        ctx_dict['search_info'] = search_info
-
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
-        # for now, sort by most recently created
-        solrquery = solr.query(**search_opts).sort_by('-created')
-
-        # wrap the solr query in a PaginatedSolrSearch object
-        # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(solrquery)
-        paginator = Paginator(pagedsolr, 30)
-        
-        try:
-            page = int(request.GET.get('page', '1'))
-        except ValueError:
-            page = 1
-        try:
-            results = paginator.page(page)
-        except (EmptyPage, InvalidPage):
-            results = paginator.page(paginator.num_pages)
-        
-        ctx_dict.update({
-            'results': results.object_list,
-            'page': results,
-            # pass search term query opts to view for pagination links
-            'search_opts': request.GET.urlencode()
-        })
-
-
-    return render_to_response('audio/search.html', ctx_dict,
-        context_instance=RequestContext(request))
-
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view(request, pid):
     '''View a single :class:`~keep.audio.models.AudioObject`.
     Not yet implemented; for now, redirects to :meth:`edit` view.
@@ -443,13 +356,13 @@ def view(request, pid):
     return HttpResponseSeeOtherRedirect(reverse('audio:edit',
                 kwargs={'pid': pid}))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=AudioObject, repo=Repository(request=request))
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.audio.models.AudioObject`.'''
     repo = Repository(request=request)
@@ -558,7 +471,7 @@ def download_audio(request, pid, type, extension=None):
             repo=repo, headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling
 
-@permission_required('is_staff')
+@permission_required("common.marbl_allowed")
 def feed_list(request):
     '''List and link to all current iTunes podcast feeds based on the
     number of objects currently available for inclusion in the feeds.'''

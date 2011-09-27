@@ -289,6 +289,16 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 -------------
 
+Release 1.2 - Verdict App
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*  Fedora polices need to be updated
+
+* The following manage commands need to be run::
+    $ python manage.py syncdb
+    $ python manage.py syncrepo
+
+* Correct django permissions should be assigned in the keep
+
 Release 1.1 - Metadata Migration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

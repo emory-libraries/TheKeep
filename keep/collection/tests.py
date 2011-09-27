@@ -2,7 +2,9 @@ from contextlib import contextmanager
 import logging
 from mock import Mock, patch
 from os import path
+from django.contrib.auth.models import Permission, User
 from rdflib import URIRef
+from rdflib.namespace import RDF
 from sunburnt import sunburnt
 
 from django.conf import settings
@@ -13,11 +15,15 @@ from django.utils import simplejson
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 
-from keep.collection.fixtures import FedoraFixtures 
+
+from keep.arrangement.models import ArrangementObject
+from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
 from keep.collection import views
-from keep.collection.models import CollectionObject, CollectionMods, FindingAid
-from keep.common.fedora import Repository
+from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
+from keep.collection.views import _objects_by_type
+from keep.common.fedora import DigitalObject, Repository
+from keep.common.rdfns import REPO
 from keep import mods
 from keep.testutil import KeepTestCase
 
@@ -741,7 +747,7 @@ class CollectionViewsTest(KeepTestCase):
         
         # top-level collection object labels should display once for
         # each group, no matter how many items in the group
-        print 'XXX:', response
+        #print 'XXX:', response
         self.assertContains(response, 'marbl-coll', 1,
             msg_prefix='collection label should be displayed once for each group, no matter how many items')
         self.assertContains(response, 'pitts-coll', 1,
@@ -889,4 +895,163 @@ class FindingAidTest(KeepTestCase):
         # - second/last paragraph
         self.assert_('not permitted to copy or download any digital files'
             in coll.mods.content.use_and_reproduction.text)
+
+
+class SimpleCollectionTest( KeepTestCase):
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+        #Create fixtures and add to pid list
+        self.simple_collection_1  = FedoraFixtures.simple_collection(label='Test Simple Collection 1', status='Processed')
+        self.simple_collection_1.save()
+        self.pids.append(self. simple_collection_1.pid)
+
+        self.simple_collection_2  = FedoraFixtures.simple_collection(label='Test Simple Collection 2', status='Accessioned')
+        self. simple_collection_2.save()
+        self.pids.append(self.simple_collection_2.pid)
+
+        #Create user for tests
+        user = User(username="euterpe")
+        user.set_password("digitaldelight")
+        user.is_active=True
+        user.is_superuser=True
+        user.save()
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+            
+
+    def test_creation(self):
+        obj = self.repo.get_object(type = SimpleCollection)
+        obj.mods.content.create_restrictions_on_access()
+        obj.mods.content.restrictions_on_access.text = 'processed'
+        saved = obj.save()
+        pid = obj.pid
+        self.pids.append(pid)
+
+        self.assertTrue(saved)
+        self.assertEqual(obj. COLLECTION_CONTENT_MODEL, 'info:fedora/emory-control:Collection-1.0')
+        self.assertEqual(obj.mods.content.restrictions_on_access.text, 'processed')
+        
+        self.assertTrue((obj.uriref, RDF.type, REPO.SimpleCollection) in obj.rels_ext.content,
+                        'The collection is of type SimpleCollection')
+
+
+    def test__objects_by_type(self):
+        #Test Simple collection
+        objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
+        obj_list = list(objs)
+        self.assertTrue(len(obj_list) == 2)
+        self.assertTrue(isinstance(obj_list[0], SimpleCollection), "object is of type SimpleCollection")
+
+        #Test Simple collection wtith no obj type
+        objs = _objects_by_type(REPO.SimpleCollection)
+        obj_list = list(objs)
+        self.assertTrue(len(obj_list) == 2)
+        self.assertTrue(isinstance(obj_list[0], DigitalObject), "object is of type DigitalObject")
+
+        #Test invalid type
+        objs = _objects_by_type(REPO.FakeType)
+        obj_list = list(objs)
+        self.assertTrue(len(obj_list) == 0)
+
+        
+    def test_edit(self):
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
+        edit_url = reverse('collection:simple_edit', kwargs={'pid' : self.simple_collection_2.pid})
+        response = self.client.get(edit_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s' % (expected, code))
+
+        self.assertContains(response, self.simple_collection_2.label)
+        self.assertContains(response, 'Accessioned', msg_prefix='Status of collection should be Accessioned')
+
+    def test_browse(self):
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
+        browse_url = reverse('collection:simple_browse')
+        response = self.client.get(browse_url)
+        expected, code = 200, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s' % (expected, code))
+
+        self.assertContains(response, self.simple_collection_1.label)
+        self.assertContains(response, self.simple_collection_1.pid)
+        self.assertContains(response, self.simple_collection_2.label)
+        self.assertContains(response, self.simple_collection_2.pid)
+
+
+class TestSimpleCollectionForm(KeepTestCase):
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+        #create ArrengementObject and associate to a collection
+        #TODO Shold this be in arrangement app tests??
+        self.arrangement_1 = self.repo.get_object(type= ArrangementObject)
+        self.arrangement_1.label = "Test Arrangement Object 1"
+        self.arrangement_1.state='I'
+        self.arrangement_1.save()
+        self.pids.append(self.arrangement_1.pid)
+
+        self.arrangement_2 = self.repo.get_object(type= ArrangementObject)
+        self.arrangement_2.label = "Test Arrangement Object 2"
+        self.arrangement_2.state='I'
+        self.arrangement_2.save()
+        self.pids.append(self.arrangement_2.pid)
+
+        #Create fixtures and add to pid list
+        self.simple_collection_1  = FedoraFixtures.simple_collection(label='Test Simple Collection 1', status='Processed')
+        self.simple_collection_1.save()
+        self.pids.append(self.simple_collection_1.pid)
+
+        self.simple_collection_2  = FedoraFixtures.simple_collection(label='Test Simple Collection 2', status='Accessioned')
+        #add arrangements to collection
+        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_1.uriref))
+        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_2.uriref))
+        self. simple_collection_2.save()
+        self.pids.append(self.simple_collection_2.pid)
+
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+    def test_initial_data(self):
+        form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
+
+        #check label is set correctly
+        self.assertEqual(form.object_instance.label, self.simple_collection_2.label)
+
+        #check that restrictions_on_access_are set correctly
+        self.assertEqual(form.object_instance.mods.content.restrictions_on_access.text,
+                         self.simple_collection_2.mods.content.restrictions_on_access.text)
+
+    def test_update_objects(self):
+        #Change all the associated object statuses to 'A'
+        form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
+
+        (success, fail) = form.update_objects('Processed')
+        self.assertEqual(success, 2)
+        self.assertEqual(fail, 0)
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'A')
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'A')
+
+        (success, fail) = form.update_objects('Accessioned')
+        self.assertEqual(success, 2)
+        self.assertEqual(fail, 0)
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
+
+
+        #when bad status is given, nothing should change
+        (success, fail) = form.update_objects('badstatus')
+        self.assertEqual(success, 0)
+        self.assertEqual(fail, 0)
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
+        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
+
+
+
 
