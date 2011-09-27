@@ -297,7 +297,10 @@ Release 1.2 - Verdict App
     $ python manage.py syncdb
     $ python manage.py syncrepo
 
-* Correct django permissions should be assigned in the keep
+* Correct django permissions should be assigned to the keep users
+
+* The solr scheama should be updated
+
 
 Release 1.1 - Metadata Migration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
