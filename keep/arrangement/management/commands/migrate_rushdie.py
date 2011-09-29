@@ -216,7 +216,7 @@ class Command(BaseCommand):
 
             }
             try:
-                code = status_code_map.get(verdict.upper(), "")
+                code = status_code_map.get(verdict.upper(), "") if verdict else ""
                 obj.rights.content.create_access_status()
                 obj.rights.content.access_status.code = code
             except KeyError:
@@ -314,12 +314,12 @@ class Command(BaseCommand):
         obj.rels_ext.content.add(relation)
 
         #Add Content Model based on Rights
-        allowed = (obj.uriref, model.hasModel, URIRef("emory-control:ArrangementAccessAllowed-1.0"))
-        restricted = (obj.uriref, model.hasModel,URIRef("emory-control:ArrangementAccessRestricted-1.0"))
+        allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
+        restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
         if obj.rights.content.access_status.code == "2":
             obj.rels_ext.content.add(allowed)
-        else:
+        elif obj.rights.content.access_status.code:
             obj.rels_ext.content.add(restricted)
 
         return obj

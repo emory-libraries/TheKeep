@@ -165,7 +165,7 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.rights.content.access_status.code, "2")
         #RELS-EXT
         self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
-        self.assertTrue((obj.uriref, model.hasModel, URIRef("emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
+        self.assertTrue((obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
         #Label and DS
         self.assertEqual(obj.label, "x - the roles", "Label should be set to last part of path")
         self.assertEqual(obj.owner, "thekeep-project", "owner should be set to 'thekeep-project'")

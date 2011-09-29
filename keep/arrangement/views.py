@@ -54,8 +54,8 @@ def edit(request, pid):
                 action = 'updated'
 
                 #Add /remove Allowed Restricted Content Models based on status
-                allowed = (obj.uriref, model.hasModel, URIRef("emory-control:ArrangementAccessAllowed-1.0"))
-                restricted = (obj.uriref, model.hasModel,URIRef("emory-control:ArrangementAccessRestricted-1.0"))
+                allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
+                restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
                 status = request.POST['rights-access']
                 if status == "2":
