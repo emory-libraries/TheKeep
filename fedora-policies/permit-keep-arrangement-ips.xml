@@ -1,30 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Policy [
-<!ENTITY action "urn:fedora:names:fedora:2.1:action:">
-<!ENTITY control "info:fedora/emory-control:">
 <!ENTITY function "urn:oasis:names:tc:xacml:1.0:function:">
-<!ENTITY model "info:fedora/fedora-system:def/model#">
-<!ENTITY request "urn:fedora:names:fedora:2.1:environment:httpRequest:">
-<!ENTITY subject "urn:fedora:names:fedora:2.1:subject:">
+<!ENTITY marbl "info:fedora/emory-control:Rushdie-MarblAnalysis-1.0#">
 <!ENTITY xacml "urn:oasis:names:tc:xacml:1.0:">
 <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+<!ENTITY control "info:fedora/emory-control:">
+<!ENTITY model "info:fedora/fedora-system:def/model#">
+<!ENTITY action "urn:fedora:names:fedora:2.1:action:">
+<!ENTITY request "urn:fedora:names:fedora:2.1:environment:httpRequest:">
+<!ENTITY subject "urn:fedora:names:fedora:2.1:subject:">
 <!ENTITY object "urn:fedora:names:fedora:2.1:resource:object:">
 ]>
-<Policy xmlns="urn:oasis:names:tc:xacml:1.0:policy"
-        PolicyId="permit-arrangement-ips"
-        RuleCombiningAlgId="&xacml;rule-combining-algorithm:first-applicable">
-  <Description>
-    Allow public access of Arrangement objects to authorized IPs
-    over encrypted transport
-  </Description>
 
+<Policy xmlns="urn:oasis:names:tc:xacml:1.0:policy"
+        PolicyId="permit-arrangement-ip"
+        RuleCombiningAlgId="&xacml;rule-combining-algorithm:first-applicable">
+  <Description>Allow public access to Arrangement objects</Description>
   <Target>
     <Subjects>
       <AnySubject/>
     </Subjects>
-
-    <!-- match Arrangement model -->
     <Resources>
+
       <Resource>
         <ResourceMatch MatchId="&function;string-equal">
           <AttributeValue DataType="&xsd;string">&control;Arrangement-1.0</AttributeValue>
@@ -65,16 +62,70 @@
               DataType="&xsd;string" MustBePresent="false"/>
         </ResourceMatch>
       </Resource>
-    </Resources>
 
+    </Resources>
     <Actions>
       <AnyAction/>
-    </Actions>
+    </Actions>    
   </Target>
 
-  <Rule RuleId="arrangement-ip-access" Effect="Permit">
-    <Condition FunctionId="&function;and">
+  <Rule RuleId="permit-researcher-station-access" Effect="Permit">
+    <Condition FunctionId="&xacml;function:and">
       
+     <!-- only from authorized researcher hosts -->
+      <Apply FunctionId="&xacml;function:or">
+         <Apply FunctionId="&function;string-at-least-one-member-of">
+           <EnvironmentAttributeDesignator AttributeId="&request;clientIpAddress" DataType="&xsd;string"/>
+           <Apply FunctionId="&function;string-bag">
+             <AttributeValue DataType="&xsd;string">127.0.0.1</AttributeValue>       <!-- localhost -->
+             <AttributeValue DataType="&xsd;string">170.140.210.175</AttributeValue> <!-- ben's dev box -->
+             <AttributeValue DataType="&xsd;string">170.140.208.88</AttributeValue>  <!-- alex's dev box-->
+             <AttributeValue DataType="&xsd;string">170.140.223.38</AttributeValue>  <!-- staging app server  -->
+	     <AttributeValue DataType="&xsd;string">170.140.223.36</AttributeValue>  <!-- production app server -->
+	     <AttributeValue DataType="&xsd;string">170.140.208.95</AttributeValue>  <!-- researcher workstation -->
+             <!-- See deny-apim-if-not-localhost example for these two entries. Needed mostly for Deny Overrides, may not be needed for permit. -->
+             <AttributeValue DataType="&xsd;string">::1</AttributeValue> 
+             <AttributeValue DataType="&xsd;string">0:0:0:0:0:0:0:1</AttributeValue>
+           </Apply>
+         </Apply>
+
+         <!-- See deny-apim-if-not-localhost example for this entry. Needed mostly for Deny Overrides, may not be needed for permit. -->
+         <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:regexp-string-match">
+           <AttributeValue DataType="&xsd;string">0:0:0:0:0:0:0:1%.+</AttributeValue>
+           <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+             <EnvironmentAttributeDesignator AttributeId="&request;clientIpAddress" DataType="&xsd;string"/>
+           </Apply>
+         </Apply>
+      </Apply>
+
+      <!-- must either be encrypted or be from localhost (to allow for current solr install to work as it uses localhost) -->
+      <Apply FunctionId="&xacml;function:or">
+          <Apply FunctionId="&function;string-equal">
+              <AttributeValue DataType="&xsd;string">&request;security-secure</AttributeValue>
+              <Apply FunctionId="&function;string-one-and-only">
+                  <EnvironmentAttributeDesignator AttributeId="&request;security"
+                     DataType="&xsd;string"/>
+              </Apply>
+          </Apply>
+          <!-- localhost entries that don't have to be over SSL. -->
+          <Apply FunctionId="&function;string-at-least-one-member-of">
+              <EnvironmentAttributeDesignator AttributeId="&request;clientIpAddress" DataType="&xsd;string"/>
+              <Apply FunctionId="&function;string-bag">
+                  <AttributeValue DataType="&xsd;string">127.0.0.1</AttributeValue>       <!-- localhost -->
+                  <!-- See deny-apim-if-not-localhost example for these two entries. Needed mostly for Deny Overrides, may not be needed for permit. -->
+                  <AttributeValue DataType="&xsd;string">::1</AttributeValue> 
+                  <AttributeValue DataType="&xsd;string">0:0:0:0:0:0:0:1</AttributeValue>
+              </Apply>
+          </Apply>
+          <!-- See deny-apim-if-not-localhost example for this entry. Needed mostly for Deny Overrides, may not be needed for permit. -->
+          <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:regexp-string-match">
+              <AttributeValue DataType="&xsd;string">0:0:0:0:0:0:0:1%.+</AttributeValue>
+              <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-one-and-only">
+                  <EnvironmentAttributeDesignator AttributeId="&request;clientIpAddress" DataType="&xsd;string"/>
+              </Apply>
+          </Apply>
+      </Apply>
+
       <!-- only api-a or limited api-m -->
       <Apply FunctionId="&function;or">
 
@@ -99,28 +150,8 @@
         </Apply>
       </Apply>
 
-      <!-- must be encrypted -->
-      <Apply FunctionId="&function;string-equal">
-        <AttributeValue DataType="&xsd;string">&request;security-secure</AttributeValue>
-        <Apply FunctionId="&function;string-one-and-only">
-          <EnvironmentAttributeDesignator AttributeId="&request;security"
-              DataType="&xsd;string"/>
-        </Apply>
-      </Apply>
-
-      <!-- only from authorized hosts -->
-      <Apply FunctionId="&function;string-at-least-one-member-of">
-        <EnvironmentAttributeDesignator AttributeId="&request;clientIpAddress" DataType="&xsd;string"/>
-        <Apply FunctionId="&function;string-bag">
-          <AttributeValue DataType="&xsd;string">127.0.0.1</AttributeValue>       <!-- localhost -->
-          <AttributeValue DataType="&xsd;string">170.140.223.38</AttributeValue>  <!-- staging app server -->
-          <AttributeValue DataType="&xsd;string">170.140.223.36</AttributeValue>  <!-- production app server -->
-         <!--  <AttributeValue DataType="&xsd;string">170.140.210.175</AttributeValue>  ben's dev box -->
-          <!-- <AttributeValue DataType="&xsd;string">170.140.209.164</AttributeValue>  steven's dev box-->
-          <!-- <AttributeValue DataType="&xsd;string">170.140.208.88</AttributeValue>   Alex's dev box -->
-        </Apply>
-      </Apply>
-
     </Condition>
   </Rule>
+
+
 </Policy>
