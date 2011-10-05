@@ -206,7 +206,7 @@ class Command(BaseCommand):
 
             #Translate verdict to code to store in Rights
             status_code_map = {
-                "META" : "2",
+                "META" : "13",
                 "VIRTUAL" : "2",
                 "EMULATION ONLY" : "2",
                 "EMULATION" : "2",
