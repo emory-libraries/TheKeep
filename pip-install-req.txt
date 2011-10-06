@@ -1,7 +1,7 @@
 django==1.3.0
 -e svn+https://svn.library.emory.edu/svn/python-eulcore/eullocal/trunk
 eulxml
-eulfedora>=0.16.0
+-e git://github.com/emory-libraries/eulfedora.git@develop#egg=eulfedora
 eulexistdb>=0.15.1
 eulcommon
 -e svn+https://svn.library.emory.edu/svn/persis/pidmanclient/tags/release-1.1.0
