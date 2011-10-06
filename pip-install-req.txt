@@ -1,4 +1,4 @@
-django
+django==1.3.0
 -e svn+https://svn.library.emory.edu/svn/python-eulcore/eullocal/trunk
 eulxml
 # need eulfedora commit 7691fff, not released as of 20110727 and not included in 0.16
