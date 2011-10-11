@@ -131,7 +131,7 @@ specific Keep admin users and from Keep application server.</Description>
           <!-- staging django server  -->
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.223.38</AttributeValue>
           <!-- Alex desktop  -->
-          <!-- <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.88</AttributeValue> -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">170.140.208.88</AttributeValue>
         </Apply>
       </Apply>
     </Condition> 
