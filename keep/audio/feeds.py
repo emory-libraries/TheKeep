@@ -112,7 +112,7 @@ class PodcastFeed(Feed):
                                content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
         collection_count = solrquery.paginate(rows=0).execute().result.numFound
         collections = solrquery.paginate(rows=collection_count).execute()
-        return dict((item['pid'], item) for item in collections)
+        return dict(('info:fedora/' + item['pid'], item) for item in collections)
 
     def link(self, page):
         return reverse('audio:podcast-feed', args=[page])
