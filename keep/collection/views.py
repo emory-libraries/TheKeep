@@ -183,7 +183,8 @@ def browse(request):
     }
     solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
     solrquery = solr.query(pid='%s:*' % settings.FEDORA_PIDSPACE,
-                           content_model=CollectionObject.COLLECTION_CONTENT_MODEL).sort_by('source_id')
+                           content_model=CollectionObject.COLLECTION_CONTENT_MODEL) \
+                    .sort('archive_id').sort_by('source_id')
     results = solrquery.paginate(start=0, rows=1000).execute()
     return render_to_response('collection/browse.html', {'collections': results},
                     context_instance=RequestContext(request))
