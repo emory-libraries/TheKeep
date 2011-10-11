@@ -706,8 +706,8 @@ class CollectionViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # shortcut to set the solr return value
-        # NOTE: call order here has to match the way methods are called in view
-        solrquery =  mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value
+        # FIXME: call order here currently has to match the way methods are # called in view. ew.
+        solrquery = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value.sort_by.return_value
         solr_exec = solrquery.paginate.return_value.execute
         
         # no match
@@ -731,8 +731,10 @@ class CollectionViewsTest(KeepTestCase):
                          'solr collection browse should be filtered by configured pidspace in solr query')
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr collection browse should be filtered by collection content model in solr query')
-        solr_sort = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by
         # solr query should be sorted on source id
+        solr_sort = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by
+        solr_sort.assert_called_with('archive_id')
+        solr_sort = solr_sort.return_value.sort_by
         solr_sort.assert_called_with('source_id')
 
         # basic display checking
