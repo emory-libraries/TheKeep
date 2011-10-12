@@ -3,7 +3,17 @@
 CHANGELOG
 =========
 
-Release 1.1 - Metadata Migration
+Release 1.1.1
+-------------
+
+Fix several bugs in 1.1.0:
+
+ * Sort collections by archive in collection browse.
+ * Remove archive objects from collection browse.
+ * Include appropriate collection data in audio feed entries.
+ * Use eullocal templates for task package.
+
+Release 1.1.0 - Metadata Migration
 --------------------------------
 
 Migrate all metadata for audio files from the existing Digital Masters
