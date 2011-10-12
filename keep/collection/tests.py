@@ -698,7 +698,7 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
-    @patch('keep.collection.views.sunburnt')
+    @patch('keep.collection.models.sunburnt')
     def test_browse(self, mocksunburnt):
         browse_url = reverse('collection:browse')
 
@@ -707,16 +707,16 @@ class CollectionViewsTest(KeepTestCase):
 
         # shortcut to set the solr return value
         # FIXME: call order here currently has to match the way methods are # called in view. ew.
-        solrquery = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value.sort_by.return_value
+        solrquery = mocksunburnt.SolrInterface.return_value.query.return_value
         solr_exec = solrquery.paginate.return_value.execute
         
         # no match
         # - set mock solr to return an empty result list
 	solr_exec.return_value = [
-            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,  'archive_label': 'marbl-coll'},
-            {'pid': 'pid:2', 'title': 'bar', 'archive_label': 'marbl-coll'},
-            {'pid': 'pid:3', 'title': 'baz', 'archive_label': 'pitts-coll'},
-            {'pid': 'pid:4', 'title': '', 'archive_label': 'archives-coll'},
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10, 'archive_id': 'pid:42', 'archive_label': 'marbl-coll'},
+            {'pid': 'pid:2', 'title': 'bar', 'source_id': 11, 'archive_id': 'pid:42', 'archive_label': 'marbl-coll'},
+            {'pid': 'pid:3', 'title': 'baz', 'source_id': 12, 'archive_id': 'pid:43', 'archive_label': 'pitts-coll'},
+            {'pid': 'pid:4', 'title': '', 'source_id': 13, 'archive_id': 'pid:43', 'archive_label': 'archives-coll'},
         ]
 
         default_search_args = {
@@ -727,15 +727,10 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(solr_exec.return_value, response.context['collections'],
             'solr result should be set as collections set in response context')
         args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
-        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
-                         'solr collection browse should be filtered by configured pidspace in solr query')
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr collection browse should be filtered by collection content model in solr query')
-        # solr query should be sorted on source id
-        solr_sort = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by
-        solr_sort.assert_called_with('archive_id')
-        solr_sort = solr_sort.return_value.sort_by
-        solr_sort.assert_called_with('source_id')
+        self.assertTrue(kwargs['archive_id__any'],
+                         'solr collection browse should be filtered by collections with archive_id in solr query')
 
         # basic display checking
         

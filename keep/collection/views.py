@@ -181,12 +181,11 @@ def browse(request):
         'pid': '%s:*' % settings.FEDORA_PIDSPACE,
         'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
     }
-    solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
-    solrquery = solr.query(pid='%s:*' % settings.FEDORA_PIDSPACE,
-                           content_model=CollectionObject.COLLECTION_CONTENT_MODEL) \
-                    .sort_by('archive_id').sort_by('source_id')
-    results = solrquery.paginate(start=0, rows=1000).execute()
-    return render_to_response('collection/browse.html', {'collections': results},
+    collections = CollectionObject.item_collections()
+    # sort by archive, then by source id (collection number)
+    display_colls = sorted(collections,
+                           key=lambda c: (c['archive_id'], c['source_id']))
+    return render_to_response('collection/browse.html', {'collections': display_colls},
                     context_instance=RequestContext(request))
 
 
