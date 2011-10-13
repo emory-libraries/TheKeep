@@ -103,10 +103,11 @@
           <AttributeValue DataType="&xsd;string">branker</AttributeValue>
           <AttributeValue DataType="&xsd;string">sturnbu</AttributeValue>
           <AttributeValue DataType="&xsd;string">athom09</AttributeValue>
-          <!-- marbl -->
+          <!-- arrangement -->
           <AttributeValue DataType="&xsd;string">elfarr</AttributeValue>
-          <AttributeValue DataType="&xsd;string">llcarro</AttributeValue>
           <AttributeValue DataType="&xsd;string">libspm</AttributeValue>
+          <AttributeValue DataType="&xsd;string">erussey</AttributeValue>
+          <AttributeValue DataType="&xsd;string">squigle</AttributeValue>
         </Apply>
       </Apply>
     </Condition>
