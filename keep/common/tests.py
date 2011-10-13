@@ -400,19 +400,6 @@ class SearchTest(KeepTestCase):
             self.assertPattern('Collection:.*%s' % coll_info['title'], response.content,
                 msg_prefix='search results page should include search term (collection by name)')
 
-        # archive
-        archpid = settings.PID_ALIASES['marbl']
-        arch_info = {'pid': archpid, 'title': 'MARBL'}
-        archuri = 'info:fedora/%s' % archpid
-        # mock collection find by pid in the view for archive label look-up
-        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=arch_info)):
-            response = self.client.get(search_url, {'audio-archive':  archuri})
-            args, kwargs = self.mocksolr.query.call_args
-            self.assertEqual(archuri, kwargs['archive_id'],
-                'archive search should filter on archive_id field')
-            self.assertPattern('Archive:.*%s' % arch_info['title'], response.content,
-                msg_prefix='search results page should include search term (archive by name)')
-
         # multiple fields
         # mock collection find by pid in the view for collection label look-up
         with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=coll_info)):

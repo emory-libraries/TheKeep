@@ -30,10 +30,10 @@ class CollectionSearch(forms.Form):
     instances.'''
     search_tips = mark_safe('''<ul>
     <li>Search is NOT case sensitive.</li>
-    <li>Search matches whole words only, including  punctuation.
-      You should use wildcards <b>*</b> and <b>?</b> to get around
-      this limitation.  For example, if a name is entered as
-      <b>Rushdie, Salman</b>, you may want to search for <b>rushdie*</b>.</li>
+    <li>Search matches phrases. Wildcards
+    <li>Search matches whole words anywhere in the field. Punctuation is
+      ignored. Use wildcards <b>*</b> and <b>?</b> for broader matching. Note
+      that these wildcards cannot be used at the beginning of a field.</li>
     <li>If search terms are entered in multiple inputs, only records matching
       values in <b>all</b> search fields are returned.</li>
     </ul>''')

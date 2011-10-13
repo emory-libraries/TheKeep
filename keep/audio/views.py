@@ -167,7 +167,7 @@ def upload(request):
                         # should be small and will get cleaned up by the cron script
 
                     except Exception as e:
-                        logging.error('Error ingesting %s: %s' % (filename, e))
+                        logger.error('Error ingesting %s: %s' % (filename, e))
                         logger.debug("Error details:\n" + traceback.format_exc())
                         file_info['success'] = False
                         

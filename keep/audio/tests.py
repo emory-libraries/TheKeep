@@ -464,12 +464,6 @@ class AudioViewsTest(KeepTestCase):
         # descriptive metadata migration fields
         obj.mods.content.dm1_id = '20'
         obj.mods.content.dm1_other_id = '00000040'
-        obj.mods.content.create_dm1_abstract_note()
-        obj.mods.content.dm1_abstract_note.text = '''Includes a short commentary intro.'''
-        obj.mods.content.create_dm1_content_note()
-        obj.mods.content.dm1_content_note.text = '''content notes here'''
-        obj.mods.content.create_dm1_toc_note()
-        obj.mods.content.dm1_toc_note.text = '''TOC notes here.'''        
         obj.mods.content.resource_type = 'sound recording'
         namepartxml = mods.NamePart(text='Dawson, William Levi')
         rolexml = mods.Role(type='text', authority='marcrelator',
@@ -598,12 +592,6 @@ class AudioViewsTest(KeepTestCase):
                 'object MODS DM1 other id is pre-populated in form initial data')
             self.assertEqual(item_mods.resource_type, initial_data['resource_type'],
                 'object MODS resource type is pre-populated in form initial data')
-            self.assertEqual(item_mods.dm1_abstract_note.text, initial_data['dm1_abstract_note-text'],
-                'object MODS DM1 abstract note is pre-populated in form initial data')
-            self.assertEqual(item_mods.dm1_content_note.text, initial_data['dm1_content_note-text'],
-                'object MODS DM1 content note is pre-populated in form initial data')
-            self.assertEqual(item_mods.dm1_toc_note.text, initial_data['dm1_toc_note-text'],
-                'object MODS DM1 toc note is pre-populated in form initial data')
             # some migrated fields are display-only, not part of the form
             for name in item_mods.names:
                 self.assertContains(response, name.name_parts[0].text,
@@ -1086,8 +1074,8 @@ class AudioViewsTest(KeepTestCase):
 
     @patch('keep.audio.feeds.sunburnt.SolrInterface', mocksolr)
     @patch('keep.audio.feeds.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
-    @patch('keep.audio.feeds.CollectionObject')
-    def test_podcast_feed(self, mockcollobj):
+    @patch('keep.audio.feeds.PodcastFeed._get_collection_data', new=Mock(return_value={}))
+    def test_podcast_feed(self):
         feed_url = reverse('audio:podcast-feed', args=[1])
 
         # test data to return from solr search for objects to show up in the feed
@@ -1111,9 +1099,6 @@ class AudioViewsTest(KeepTestCase):
             return data[i]
         self.mocksolrpaginator.__getitem__ = get_item
 
-        mockcollobj.find_by_pid.return_value = {'pid': 'coll:1', 'title': 'collection',
-            'source_id': 1, 'archive_id': 'marbl:1', 'archive_label': 'MARBL'}
-
         response = self.client.get(feed_url)
 
         expected, code = 200, response.status_code
@@ -1122,8 +1107,6 @@ class AudioViewsTest(KeepTestCase):
         args, kwargs = self.mocksolr.query.call_args
         self.assertEqual(True, kwargs['researcher_access'],
                          'kiosk feed solr search should filter on researcher_access=True')
-        self.assertEqual(True, kwargs['has_access_copy'],
-                         'kiosk feed solr search should filter on has_access_copy=True')
         self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
                          'kiosk feed solr search should filter on audio content model')
         self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
@@ -1779,23 +1762,16 @@ class TestAudioObject(KeepTestCase):
                          'parent collection object id should be set in index data')
         self.assertEqual(mockmss.label, desc_data['collection_label'],
                           'parent collection object label should be set in index data' )
-        self.assertEqual(mockmss.collection_id, desc_data['archive_id'],
-                          'archive id (collection of parent collection object) should be set in index data' )
-        self.assertEqual(mockarchive.label, desc_data['archive_label'],
-                          'archive label (collection of parent collection object) should be set in index data' )
+        # NB: as of 2011-08-23, eulindexer doesn't support automatic
+        # reindexing of audio objects when their collection changes. as a
+        # result, archive_id and archive_label may be stale. disable
+        # indexing them until eulindexer supports those chained updates.
         # check CollectionObject use
-        self.assertEqual(2, mockcollobj.call_count,
-                         'CollectionObject should be initialized twice - parent collection, archive')
         # get all args for collection object initializations
-        call_args = mockcollobj.call_args_list
-        args, kwargs = call_args[0]
+        args, kwargs = mockcollobj.call_args
         self.assert_(obj.collection_uri in args,
                      'object.collection_uri %s should be used to initialize a CollectionObject for collection info' \
                      % obj.collection_uri)
-        args, kwargs = call_args[1]
-        self.assert_(mockmss.collection_id in args,
-                     'collection parent uri %s should be used to initialize a CollectionObject for archive info' \
-                     % mockmss.collection_id)
         
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                          'default index data fields should be present in data (title)')
@@ -2365,10 +2341,9 @@ class PodcastFeedTest(KeepTestCase):
 
         self.assertEqual(None, self.feed.item_pubdate(self.min_item))
 
-    @patch('keep.audio.feeds.CollectionObject')
-    def test_author_name(self, mockcollobj):
+    def test_author_name(self):
         coll = {'title': 'archival collection', 'source_id': '1'}
-        mockcollobj.find_by_pid.return_value = coll
+        self.feed._collection_data = { self.item['collection_id']: coll}
 
         val = self.feed.item_author_name(self.item)
         self.assert_(val.startswith(coll['source_id']))
@@ -2376,12 +2351,11 @@ class PodcastFeedTest(KeepTestCase):
 
         self.assertEqual(None, self.feed.item_author_name(self.min_item))
 
-    @patch('keep.audio.feeds.CollectionObject')
-    def test_categories(self, mockcollobj):
+    def test_categories(self):
         coll = {'archive_label': 'MARBL'}
-        mockcollobj.find_by_pid.return_value = coll
-        self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
+        self.feed._collection_data = { self.item['collection_id']: coll}
 
+        self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
         self.assertEqual([], self.feed.item_categories(self.min_item))
 
     def test_enclosure_length(self):

@@ -23,6 +23,7 @@ def search(request):
     form = commonforms.ItemSearch(request.GET, prefix='audio')
     ctx_dict = {'search': form}
     if form.is_valid():
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         search_opts = {
             # restrict to objects in the configured pidspace
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
@@ -33,6 +34,18 @@ def search(request):
             if not val:
                 # skip blank fields
                 continue
+
+            extra_solr_cleaned = val.lstrip('*?')
+            if val != extra_solr_cleaned:
+                if not extra_solr_cleaned:
+                    messages.info(request, 'Ignoring search term "%s": Text fields can\'t start with wildcards.' % (val,))
+                    form.cleaned_data[field] = ''
+                    continue
+
+                messages.info(request, 'Searching for "%s" instead of "%s": Text fields can\'t start with wildcards.' %
+                              (extra_solr_cleaned, val))
+                val = extra_solr_cleaned
+                form.cleaned_data[field] = val
 
             # handle fields that need special logic
             if field == 'pid':
@@ -48,13 +61,12 @@ def search(request):
                         search_opts['pid'] += '*'
 
             # collection/archive objects are indexed as collection_id in solr
-            elif field in ['collection', 'archive', 'simpleCollection']:
+            elif field in ['collection', 'simpleCollection']:
                 search_opts['%s_id' % field] = val
 
             # all other fields: solr search field = form field
             else:
                 search_opts[field] = val
-#               logging.info("%s=%s" % (field, val))
 
         # collect non-empty, non-default search terms to display to user on results page
         search_info = {}
@@ -64,7 +76,7 @@ def search(request):
                 key = field
             if val:     # if search value is not empty, selectively add it
                 # for collections and archive, get collection object info
-                if field in ['collection', 'archive']: # location = archive
+                if field == 'collection': # location = archive
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
                     if val != "0":
@@ -79,11 +91,9 @@ def search(request):
                     search_info[key] = val
         ctx_dict['search_info'] = search_info
 
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
         #Restrict to given content models content_models
         cm_query = solr.Q(solr.Q(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
         | solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
-
 
         # for now, sort by most recently created
 
@@ -92,10 +102,8 @@ def search(request):
         #records with no access_code AKA verdict
         if search_opts.get("access_code") == "0":
             del search_opts['access_code'] # remove access_code from criteria
-#            logging.info("SEARCH OPTS: %s " % search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).exclude(access_code__any=True).sort_by('-created')
         else:
-#            logging.info("SEARCH OPTS: %s " % search_opts)
             solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
         #Exclude results based on perms

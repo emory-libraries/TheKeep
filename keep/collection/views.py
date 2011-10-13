@@ -130,7 +130,9 @@ def search(request):
     context = {'search': form}
     if form.is_valid():
         # include all non-blank fields from the form as search terms
-        search_opts = dict((key,val) for key,val in form.cleaned_data.iteritems() if val)
+        search_opts = dict((key,val)
+                           for key,val in form.cleaned_data.iteritems()
+                           if val is not None and val != '') # but need to search by 0
         # restrict to currently configured pidspace and collection content model
         search_opts.update({
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
@@ -143,7 +145,20 @@ def search(request):
             key = form.fields[field].label  # use form display label
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field 
-            if val:     # if search value is not empty, selectively add it
+
+            if val is not None and val != '':     # if search value is not empty, selectively add it
+                if hasattr(val, 'lstrip'): # solr strings can't start with wildcards
+                    extra_solr_cleaned = val.lstrip('*?')
+                    if val != extra_solr_cleaned:
+                        if not extra_solr_cleaned:
+                            messages.info(request, 'Ignoring search term "%s": Text fields can\'t start with wildcards.' % (val,))
+                            del search_opts[field]
+                            continue
+                        messages.info(request, 'Searching for "%s" instead of "%s": Text fields can\'t start with wildcards.' %
+                                      (extra_solr_cleaned, val))
+                        val = extra_solr_cleaned
+                        search_opts[field] = val
+
                 if field == 'archive_id':       # for archive, get  info
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif val != form.fields[field].initial:     # ignore default values
@@ -174,11 +189,11 @@ def browse(request):
         'pid': '%s:*' % settings.FEDORA_PIDSPACE,
         'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
     }
-    solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
-    solrquery = solr.query(pid='%s:*' % settings.FEDORA_PIDSPACE,
-                           content_model=CollectionObject.COLLECTION_CONTENT_MODEL).sort_by('source_id')
-    results = solrquery.paginate(start=0, rows=1000).execute()
-    return render_to_response('collection/browse.html', {'collections': results},
+    collections = CollectionObject.item_collections()
+    # sort by archive, then by source id (collection number)
+    display_colls = sorted(collections,
+                           key=lambda c: (c['archive_id'], c['source_id']))
+    return render_to_response('collection/browse.html', {'collections': display_colls},
                     context_instance=RequestContext(request))
 
 

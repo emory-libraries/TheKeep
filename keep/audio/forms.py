@@ -12,7 +12,7 @@ from keep import mods
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
-from keep.collection.forms import NameForm, archive_choices
+from keep.collection.forms import NameForm
 from keep.common.models import Rights
 from keep.common.forms import ReadonlyTextInput, _collection_options, rights_access_options, EMPTY_LABEL_TEXT
 
@@ -81,12 +81,10 @@ class ModsEditForm(XmlObjectForm):
     # read-only text input to display ARK (not editable)
     identifier = forms.CharField(label="Identifier", required=False,
         widget=ReadonlyTextInput)
+    resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
     origin_info = SubformField(formclass=OriginInfoForm)
     general_note = SubformField(formclass=SimpleNoteForm)
     part_note = SubformField(formclass=SimpleNoteForm)
-    dm1_abstract_note = SubformField(formclass=SimpleNoteForm)
-    dm1_content_note = SubformField(formclass=SimpleNoteForm)
-    dm1_toc_note = SubformField(formclass=SimpleNoteForm)
     
     names = SubformField(formclass=NameForm)
 
@@ -94,15 +92,13 @@ class ModsEditForm(XmlObjectForm):
         model = AudioMods
         fields = (
             'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
-            'general_note', 'part_note', 'location', 'resource_type', 
-            'dm1_abstract_note', 'dm1_content_note',
+            'general_note', 'part_note', 'resource_type', 
         )
         widgets = {
             'title': forms.Textarea,
             'identifier': ReadonlyTextInput,
             'dm1_id': ReadonlyTextInput,
             'dm1_other_id': ReadonlyTextInput,
-            'location': ReadonlyTextInput,
         }
 
 

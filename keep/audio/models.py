@@ -40,12 +40,6 @@ class AudioMods(LocalMODS):
                                  mods.TypedNote)
     ':class:`~keep.mods.TypedNote` with `type="part number"`'
 
-    dm1_abstract_note = xmlmap.NodeField('mods:note[@type="dm1_abstract"]',
-            mods.TypedNote, required=False, verbose_name='DM Abstract')
-    dm1_content_note = xmlmap.NodeField('mods:note[@type="dm1_content_notes"]',
-            mods.TypedNote, required=False, verbose_name='DM Content Notes')
-    dm1_toc_note = xmlmap.NodeField('mods:note[@type="dm1_toc"]',
-            mods.TypedNote, required=False, verbose_name='DM Table of Contents')
     dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
             required=False, verbose_name='Record ID/Filename')
     dm1_other_id = xmlmap.StringField('mods:identifier[@type="dm1_other"]',
@@ -107,8 +101,8 @@ class SourceTech(_BaseSourceTech):
         ('tape', (
             ('tape|15/16|inches/sec', '15/16 ips'),
             ('tape|1.2|cm/sec', '1.2 cm/s'),
-            ('tape|1 7/8|inches/sec', '1 7/8 ips'),
             ('tape|2.4|cm/sec', '2.4 cm/s'),
+            ('tape|1 7/8|inches/sec', '1 7/8 ips'),
             ('tape|3 3/4|inches/sec', '3 3/4 ips'),
             ('tape|7 1/2|inches/sec', '7 1/2 ips'),
             ('tape|15|inches/sec', '15 ips'),
@@ -474,11 +468,14 @@ class AudioObject(DigitalObject):
                 # pull parent & archive collection objects directly from fedora
                 parent = CollectionObject(self.api, self.collection_uri)
                 data['collection_label'] = parent.label
-                # the parent collection of the collection this item belongs to is its archive
-                # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
-                data['archive_id'] = parent.collection_id
-                archive = CollectionObject(self.api, parent.collection_id)
-                data['archive_label'] = archive.label
+                # NB: as of 2011-08-23, eulindexer doesn't support automatic
+                # reindexing of audio objects when their collection changes.
+                # as a result, archive_id and archive_label may be stale.
+                # disable indexing them until eulindexer supports those
+                # chained updates.
+                #data['archive_id'] = parent.collection_id
+                #archive = CollectionObject(self.api, parent.collection_id)
+                #data['archive_label'] = archive.label
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
 

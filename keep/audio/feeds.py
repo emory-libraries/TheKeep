@@ -83,8 +83,26 @@ class PodcastFeed(Feed):
     # could also set the following feed-level attributes:
     #  owner, itunes subtitle, author, summary; itunes owner, image, category
 
+    def __init__(self, *args, **kwargs):
+        self._collection_data = {}
+        super(PodcastFeed, self).__init__(*args, **kwargs)
+
     def get_object(self, request, page):
+         # each time someone requests a feed, update the cached collection
+         # data. self is persistent across requests here. i'm pretty sure
+         # that mod_wsgi/django doesn't share it across threads, but even if
+         # it did, it would be ok for threads to stomp on eachother so long
+         # as this method caches only global, shared collection data.
+        self._collection_data = self._get_collection_data()
         return page
+
+    def _get_collection_data(self):
+        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solrquery = solr.query(pid='%s:*' % (settings.FEDORA_PIDSPACE,),
+                               content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        collection_count = solrquery.paginate(rows=0).execute().result.numFound
+        collections = solrquery.paginate(rows=collection_count).execute()
+        return dict(('info:fedora/' + item['pid'], item) for item in collections)
 
     def link(self, page):
         return reverse('audio:podcast-feed', args=[page])
@@ -104,11 +122,12 @@ class PodcastFeed(Feed):
         solrquery = feed_items()
         # wrap the solr query in a PaginatedSolrSearch object
         # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(feed_items())
-        
+        pagedsolr = PaginatedSolrSearch(solrquery)
+
         paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
         for obj in current_chunk.object_list:
+            logger.debug('items obj %s' % (obj['pid'],))
             yield obj
 
     def item_title(self, item):
@@ -143,16 +162,18 @@ class PodcastFeed(Feed):
     def item_author_name(self, item):
         # using collection # - collection title
         if 'collection_id' in item:
-            collection = CollectionObject.find_by_pid(item['collection_id'])
-            if collection:
+            collection_id = item['collection_id']
+            if collection_id in self._collection_data:
+                collection = self._collection_data[collection_id]
                 return '%s - %s' %  (collection['source_id'], collection['title'])
 
     def item_categories(self, item):
         # using top-level numbering scheme (MARBL, University Archives) for category
         categories = []
         if 'collection_id' in item:
-            collection = CollectionObject.find_by_pid(item['collection_id'])
-            if collection:
+            collection_id = item['collection_id']
+            if collection_id in self._collection_data:
+                collection = self._collection_data[collection_id]
                 categories.append(collection['archive_label'])
         return categories
 

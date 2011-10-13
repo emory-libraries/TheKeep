@@ -278,11 +278,14 @@ class CollectionObjectTest(KeepTestCase):
 
         # use a mock object to simulate pulling archive object from Fedora
         mockarchive = Mock(CollectionObject)
-        mockarchive.label = 'MARBL'
+        mockarchive.pid = 'parent:1'
+        mockarchive.uri = 'info:fedora/parent:1'
+        mockarchive.label = 'Manuscript, Archive, and Rare Book Library'
+        mockarchive.mods.content.short_name = 'MARBL'
         
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
-        obj._collection_id = 'parent:1'
+        obj._collection_id = mockarchive.pid
         obj.dc.content.title = 'test collection'
 
         # test index data for parent archive separately
@@ -290,10 +293,12 @@ class CollectionObjectTest(KeepTestCase):
         with patch('keep.collection.models.CollectionObject',
                    new=Mock(return_value=mockarchive)):
             arch_data = obj._index_data_archive()
-            self.assertEqual(obj.collection_id, arch_data['archive_id'],
+            self.assertEqual('info:fedora/' + obj.collection_id, arch_data['archive_id'],
                              'parent collection object (archive) id should be set in index data')
             self.assertEqual(mockarchive.label, arch_data['archive_label'],
                              'parent collection object (archive) label should be set in index data')
+            self.assertEqual(mockarchive.mods.content.short_name, arch_data['archive_short_name'],
+                             'parent collection object (archive) short name should be set in index data')
             # error if data is not serializable as json
             self.assert_(simplejson.dumps(arch_data))
 
@@ -706,7 +711,7 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
-    @patch('keep.collection.views.sunburnt')
+    @patch('keep.collection.models.sunburnt')
     def test_browse(self, mocksunburnt):
         browse_url = reverse('collection:browse')
 
@@ -714,17 +719,17 @@ class CollectionViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # shortcut to set the solr return value
-        # NOTE: call order here has to match the way methods are called in view
-        solrquery =  mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value
+        # FIXME: call order here currently has to match the way methods are # called in view. ew.
+        solrquery = mocksunburnt.SolrInterface.return_value.query.return_value
         solr_exec = solrquery.paginate.return_value.execute
         
         # no match
         # - set mock solr to return an empty result list
 	solr_exec.return_value = [
-            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,  'archive_label': 'marbl-coll'},
-            {'pid': 'pid:2', 'title': 'bar', 'archive_label': 'marbl-coll'},
-            {'pid': 'pid:3', 'title': 'baz', 'archive_label': 'pitts-coll'},
-            {'pid': 'pid:4', 'title': '', 'archive_label': 'archives-coll'},
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10, 'archive_id': 'pid:42', 'archive_label': 'marbl-coll'},
+            {'pid': 'pid:2', 'title': 'bar', 'source_id': 11, 'archive_id': 'pid:42', 'archive_label': 'marbl-coll'},
+            {'pid': 'pid:3', 'title': 'baz', 'source_id': 12, 'archive_id': 'pid:43', 'archive_label': 'pitts-coll'},
+            {'pid': 'pid:4', 'title': '', 'source_id': 13, 'archive_id': 'pid:43', 'archive_label': 'archives-coll'},
         ]
 
         default_search_args = {
@@ -735,19 +740,15 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(solr_exec.return_value, response.context['collections'],
             'solr result should be set as collections set in response context')
         args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
-        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
-                         'solr collection browse should be filtered by configured pidspace in solr query')
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr collection browse should be filtered by collection content model in solr query')
-        solr_sort = mocksunburnt.SolrInterface.return_value.query.return_value.sort_by
-        # solr query should be sorted on source id
-        solr_sort.assert_called_with('source_id')
+        self.assertTrue(kwargs['archive_id__any'],
+                         'solr collection browse should be filtered by collections with archive_id in solr query')
 
         # basic display checking
         
         # top-level collection object labels should display once for
         # each group, no matter how many items in the group
-        #print 'XXX:', response
         self.assertContains(response, 'marbl-coll', 1,
             msg_prefix='collection label should be displayed once for each group, no matter how many items')
         self.assertContains(response, 'pitts-coll', 1,

@@ -253,6 +253,7 @@ class Content(models.Model):   # individual item
     REPO_SHORTNAMES = dict(('info:fedora/' + pid, name.upper())
                            for name, pid in settings.PID_ALIASES.iteritems())
 
+    @property
     def collection(self):
         'Manuscript or Series number in printable/displayable format, with MARBL/EUA designation'
         repo, num = self._translated_collection_pair()
@@ -406,20 +407,18 @@ class Content(models.Model):   # individual item
         all_notes = []
         if self.abstract:
             logger.debug('Item Note: %s [abstract]' % self.abstract)
-            modsxml.create_dm1_abstract_note()
-            modsxml.dm1_abstract_note.text = unicode(self.abstract)
-            all_notes.append('%s [abstract]' % self.abstract)
+            all_notes.append(self.abstract)
         if self.content_notes:
             logger.debug('Item Note: %s [content]' % self.content_notes)
-            modsxml.create_dm1_content_note()
-            modsxml.dm1_content_note.text = self.content_notes
-            all_notes.append('%s [content]' % self.content_notes)
+            all_notes.append(self.content_notes)
         if self.toc:
             logger.debug('Item Note: %s [toc]' % self.toc)
-            modsxml.create_dm1_toc_note()
-            modsxml.dm1_toc_note.text = self.toc
-            all_notes.append('%s [toc]' % self.toc)
-        data.append('\n'.join(all_notes))
+            all_notes.append(self.toc)
+        full_note_text = '\n\n'.join(all_notes)
+        if full_note_text:
+            modsxml.create_general_note()
+            modsxml.general_note.text = full_note_text
+        data.append(full_note_text)
 
         logger.debug('Item Type of Resource: %s' % 'sound recording')
         modsxml.resource_type = 'sound recording'
@@ -549,9 +548,7 @@ class Content(models.Model):   # individual item
         sounds = list(self.source_sounds.all())
 
         notes = [ s.source_note for s in sounds
-                  if s.source_note ] + \
-                [ s.sound_field for s in sounds
-                  if s.sound_field ]
+                  if s.source_note ]
         for note in notes:
             logger.debug('Note - General: %s' % note)
             st_xml.note_list.append(unicode(note))

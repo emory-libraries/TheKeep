@@ -17,7 +17,7 @@
     <tr><th>Col. No.</th><th>Title</th><th>Creator</th><th>Repository</th></tr>
 {% for obj in results %}
     <tr>
-        <td>{{ obj.source_id|default:'' }}</td>
+        <td>{{ obj.source_id|default_if_none:'' }}</td>
         <td><a href="{% url collection:edit obj.pid %}">{{ obj.title|default:'(no title present)' }}</a></td>
         <td>{{ obj.creator|join:'; ' }}</td>
         <td>{{ obj.archive_label }}</td>
