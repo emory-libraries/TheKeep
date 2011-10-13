@@ -291,15 +291,37 @@ Upgrade Notes
 
 Release 1.2 - Verdict App
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*  Fedora polices need to be updated
+* Devloper should run the fabric deploy script:
+    - On the local workstation, copy settings.json.dist to settings.json and configure
+    - run:
+           $ fab load_config:settings.json deploy
 
-* The following manage commands need to be run::
-    $ python manage.py syncdb
-    $ python manage.py syncrepo
+*  TheKeep XACML policies should be updated to the appropriate branch or tag.
+   This will be specified in the deploy email.
+    
 
-* Correct django permissions should be assigned to the keep users
+* The solr scheama should be updated:
+    - Copy <project base>/solr/schema.xml to the appropriate solr core
+    - Solr should be restarted
+    - EULIndexer should be restarted
 
-* The solr scheama should be updated
+* The following manage commands shouldbe run:
+    NOTE: when running these command you must be in the keep virtual environment
+    $ python ./manage.py syncdb
+    $ python ./manage.py syncrepo
+
+* Reindex the site:
+    - Make sure that eulindexer has an entry for "keep" in localsettings.py > INDEXER_SITE_URLS .
+      Staging: https://testkeep.library.emory.edu/indexdata/
+      Production: https://keep.library.emory.edu/indexdata/
+      NOTE: when running this command you must be in the eulindexer virtual environment
+    - Run the command:
+        $ python ./manage.py reindex -s keep  - this must match the entry in eulindexer localsetting.py
+    - After the above commad finishes make sure the indxer is runnng so new items can be indexed
+
+* Contact developer for these tasks:
+    - Assign appropriate permissions for each user in the database
+    - Load 50 sample P5300c objects to fedora
 
 
 Release 1.1 - Metadata Migration
