@@ -296,8 +296,10 @@ Release 1.2 - Verdict App
     - run:
            $ fab load_config:settings.json deploy
 
-*  TheKeep XACML policies should be updated to the appropriate branch or tag.
-   This will be specified in the deploy email.
+*  TheKeep XACML policies should be updated to the appropriate branch or tag:
+   Staging: https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.9
+
+   - reload policies on fedora
     
 
 * The solr scheama should be updated:
@@ -309,6 +311,8 @@ Release 1.2 - Verdict App
     NOTE: when running these command you must be in the keep virtual environment
     $ python ./manage.py syncdb
     $ python ./manage.py syncrepo
+
+* At this point systems should move the link to point to the current version.
 
 * Reindex the site:
     - Make sure that eulindexer has an entry for "keep" in localsettings.py > INDEXER_SITE_URLS .
