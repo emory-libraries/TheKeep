@@ -312,6 +312,8 @@ Release 1.2 - Verdict App
     $ python ./manage.py syncdb
     $ python ./manage.py syncrepo
 
+* The paths in the http config file should be verified since some have changed or may be different from enviroment to enviroment..
+
 * At this point systems should move the link to point to the current version.
 
 * Reindex the site:

@@ -89,7 +89,7 @@ def _extract_tarball():
 
 def _create_virtualenv():
     """Construct and configure a remote virtualenv."""
-    _sudo('virtualenv --no-site-packages %(extract_path)s/%(build_dir)s/env' % env)
+    _sudo('virtualenv -p python2.6 --no-site-packages  %(extract_path)s/%(build_dir)s/env' % env)
     with prefix('source %(extract_path)s/%(build_dir)s/env/bin/activate' % env):
         _sudo('pip install -r %(extract_path)s/%(build_dir)s/pip-install-req.txt' % env)
         _sudo('pip install mysql-python psycopg2==2.4.1') # system reqs, but not strictly sw reqs
