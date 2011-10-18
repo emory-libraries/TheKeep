@@ -328,6 +328,7 @@ Release 1.2 - Verdict App
 * Contact developer for these tasks:
     - Assign appropriate permissions for each user in the database
     - Load 50 sample P5300c objects to fedora
+      change the user and password to use fedoraAdmin for this command only.
 
 
 Release 1.1 - Metadata Migration
