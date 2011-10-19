@@ -19,6 +19,7 @@ Release  1.2 - Verdict App
 * Updated and added xacml policies
 * Updated permission checking for existing keep views and new Arrangement views
 * Added settings.json.dist example fab settings file
+* Changed project to use django logging insted of logging.conf style
 
 Release 1.1.1
 -------------

@@ -135,3 +135,58 @@ OLD_DM_MEDIA_ROOT = 'http://masters.library.emory.edu/harvest/preservation/'
 
 # path to source audio files for old_dm migrate_files
 MIGRATION_AUDIO_ROOT = '/mnt/dm/preservation'
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'basic': {
+            'format': '[%(asctime)s] %(levelname)s:%(name)s::%(message)s',
+            'datefmt': '%d/%b/%Y %H:%M:%S',
+         },
+    },
+    'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+        },
+        'console':{
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'basic'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename' : '/path/to/log',
+            'formatter': 'basic'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers':['null'],
+            'propagate': True,
+            'level':'INFO',
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'eulfedora': {
+            'handlers':['console', 'file'],
+            'propagate': True,
+            'level':'INFO',
+        },
+        'keep': {
+            'handlers':['console', 'file'],
+            'propagate': True,
+            'level':'INFO',
+            }
+        }
+    }

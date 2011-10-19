@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 import os
-import logging.config
 from django.core.management import execute_manager
 
-LOGGING_CONF = 'logging.conf'
-if os.path.exists(LOGGING_CONF):
-    logging.config.fileConfig(LOGGING_CONF)
 
 try:
     import settings # Assumed to be in the same directory.
