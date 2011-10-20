@@ -101,7 +101,7 @@
         <Apply FunctionId="&function;string-bag">
           <!-- developers -->
           <AttributeValue DataType="&xsd;string">keep</AttributeValue>
-            <AttributeValue DataType="&xsd;string">branker</AttributeValue>
+          <AttributeValue DataType="&xsd;string">branker</AttributeValue>
           <AttributeValue DataType="&xsd;string">sturnbu</AttributeValue>
           <AttributeValue DataType="&xsd;string">athom09</AttributeValue>
           <!-- arrangement -->
