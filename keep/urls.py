@@ -1,6 +1,12 @@
 from django.conf import settings
 from django.conf.urls.defaults import *
 from django.contrib import admin
+
+#Importing this object is a work-around because eulfedora
+# does not load all objects on startup. Once this has been
+#changed in eulfedora, this import can be removed.
+from keep.arrangement.models import ArrangementObject
+
 admin.autodiscover()
 
 urlpatterns = patterns('',

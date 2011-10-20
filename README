@@ -34,6 +34,8 @@ Accounts
 Custom login/logout functionality in support of passing user LDAP credentials
 to Fedora so that objects in the repository will be accessed and updated
 by the individual user rather than by a single site-wide account.
+To Access MARBL materal a user will need the common | MARBL Allowed permission.
+To Access Arrangement materal the user will need common | Arrangement Allowed permission.
 
 Common
 ~~~~~~

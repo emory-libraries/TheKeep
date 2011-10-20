@@ -291,6 +291,10 @@ Upgrade Notes
 
 Release 1.2 - Verdict App
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+* Configure the LOGGING section in the localsettings.py file on the remote server
+  based on the example in the localsettings.py.dist file.
+  Log rotation need to be set for this file as well.
+
 * Devloper should run the fabric deploy script:
     - On the local workstation, copy settings.json.dist to settings.json and configure
     - run:
@@ -312,6 +316,8 @@ Release 1.2 - Verdict App
     $ python ./manage.py syncdb
     $ python ./manage.py syncrepo
 
+* The paths in the http config file should be verified since some have changed or may be different from enviroment to enviroment..
+
 * At this point systems should move the link to point to the current version.
 
 * Reindex the site:
@@ -326,6 +332,7 @@ Release 1.2 - Verdict App
 * Contact developer for these tasks:
     - Assign appropriate permissions for each user in the database
     - Load 50 sample P5300c objects to fedora
+      change the user and password to use fedoraAdmin for this command only.
 
 
 Release 1.1 - Metadata Migration
