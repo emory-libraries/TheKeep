@@ -1,5 +1,6 @@
 import base64
 import csv
+from getpass import getpass
 from optparse import make_option
 
 from eulfedora.rdfns import relsext as relsextns
@@ -17,6 +18,9 @@ class Command(BaseCommand):
     '''Read CSV file and creates (or adds to) a Simple Collection and associated ArrangementObjects
     with the SimpleCollection and the Master collection'''
 
+    def get_password_option(option, opt, value, parser):
+        setattr(parser.values, option.dest, getpass())
+
     #Set up additional options
     option_list = BaseCommand.option_list + (
         make_option('--noact', '-n',
@@ -28,6 +32,14 @@ class Command(BaseCommand):
             action='store',
             dest='add',
             help='adds to the SimpleCollection specified by pid, does not create a new SimpleCollection'),
+        make_option('--username', '-u',
+            dest='username',
+            action='store',
+            help='''Username to connect to fedora'''),
+        make_option('--password',
+            dest='password',
+            action='callback', callback=get_password_option,
+            help='''Prompt for password required when username used'''),
     )
 
     args = '<CSV file> <master collection pid> <new simple collection name>'
@@ -135,7 +147,12 @@ class Command(BaseCommand):
         else:
             self.verbosity = self.v_normal
         #Create the repo
-        self.repo = Repository()
+        repo_args = {}
+        if  options.get('username') is not None:
+            repo_args['username'] = options.get('username')
+        if options.get('password') is not None:
+            repo_args['password'] = options.get('password')
+        self.repo = Repository(**repo_args)
 
         #Check to make sure all args and options are present
         try:

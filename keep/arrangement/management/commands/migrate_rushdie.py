@@ -1,3 +1,4 @@
+from getpass import getpass
 import logging
 from rdflib import URIRef
 from optparse import make_option
@@ -31,6 +32,9 @@ class Command(BaseCommand):
     The objects to a SimpleCollection, converting old datastreams to new datastreams
     and associating each object to the main collection'''
 
+    def get_password_option(option, opt, value, parser):
+        setattr(parser.values, option.dest, getpass())
+
     #Set up additional options
     option_list = BaseCommand.option_list + (
         make_option('--noact', '-n',
@@ -59,6 +63,14 @@ class Command(BaseCommand):
             dest='simple-collection',
             default = "",
             help='Label of the SimpleCollection'),
+        make_option('--username', '-u',
+            dest='username',
+            action='store',
+            help='''Username to connect to fedora'''),
+        make_option('--password',
+            dest='password',
+            action='callback', callback=get_password_option,
+            help='''Prompt for password required when username used'''),
     )
 
     help = __doc__
@@ -337,7 +349,12 @@ class Command(BaseCommand):
             self.verbosity = self.v_normal
 
         #Create the repo
-        self.repo = Repository()
+        repo_args = {}
+        if  options.get('username') is not None:
+            repo_args['username'] = options.get('username')
+        if options.get('password') is not None:
+            repo_args['password'] = options.get('password')
+        self.repo = Repository(**repo_args)
 
         #Check options
 
