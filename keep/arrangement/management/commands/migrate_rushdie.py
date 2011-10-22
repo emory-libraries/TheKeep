@@ -329,9 +329,9 @@ class Command(BaseCommand):
         allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
         restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
-        if obj.rights.content.access_status.code == "2":
+        if getattr(obj.rights.content.access_status, "code", None) == "2":
             obj.rels_ext.content.add(allowed)
-        elif obj.rights.content.access_status.code:
+        elif getattr(obj.rights.content.access_status, "code", None):
             obj.rels_ext.content.add(restricted)
 
         return obj
