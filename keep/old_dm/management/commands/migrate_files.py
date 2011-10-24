@@ -91,7 +91,8 @@ class Command(BaseCommand):
                 stats['dm1'] += 1
                 if self.verbosity > self.v_normal:
                     self.stdout.write('Found %s (dm1 id %s) %s\n' % \
-                                      (obj.pid, old_id, mods.title))
+                                      (obj.pid, old_id,
+                                      mods.title.encode('utf-8')))
                 paths = self.look_for_files(obj)
                 if not paths:
                     self.stdout.write("Error on %s: couldn't predict path. skipping.\n" % \
@@ -103,12 +104,12 @@ class Command(BaseCommand):
                     stats['no_wav'] += 1
 
 
+                file_info = []	# info to report in CSV file
+                files_updated = 0
                 # logic to actually add files to fedora objects
                 # - only execute when not in dry-run mode
                 if not options['dry_run']:
                     # keep track of any files that are migrated into fedora
-                    files_updated = 0
-                    file_info = []	# info to report in CSV file
 
                     # if there is a stored MD5 checksum for the WAV file, use that
                     if paths.md5:
@@ -159,9 +160,9 @@ class Command(BaseCommand):
                     else:
                         file_info.append('')	# blank to indicate no file
 
-                    if files_updated:
-                        stats['updated'] += 1
-                        stats['files'] += files_updated
+                if files_updated or options['dry_run']:
+                    stats['updated'] += 1
+                    stats['files'] += files_updated
 
                 if csvfile:
                     row_data = [ obj.pid, obj.mods.content.dm1_id,
@@ -223,17 +224,19 @@ class Command(BaseCommand):
                            for ext in ('wav', 'm4a', 'wav.md5', 'wav.jhove')))
 
     def dm_path(self, basename, ext):
-        rel_path = '%s.%s' % (basename, ext)
-        abs_path = os.path.join(settings.MIGRATION_AUDIO_ROOT, rel_path)
-        if os.path.exists(abs_path):
-            if self.verbosity > self.v_normal:
-                self.stdout.write('  found path: %s\n' % abs_path)
-            # keep track of files that belong to an object
-            self.claimed_files.add(abs_path)
-            return abs_path
-        else:
-            if self.verbosity > self.v_normal:
-                self.stdout.write('  missing path: %s\n' % abs_path)
+        for try_ext in (ext, ext.upper()):
+            rel_path = '%s.%s' % (basename, try_ext)
+            abs_path = os.path.join(settings.MIGRATION_AUDIO_ROOT, rel_path)
+            if os.path.exists(abs_path):
+                if self.verbosity > self.v_normal:
+                    self.stdout.write('  found path: %s\n' % abs_path)
+                # keep track of files that belong to an object
+                self.claimed_files.add(abs_path)
+                return abs_path
+
+        # otherwise, no match
+        if self.verbosity > self.v_normal:
+            self.stdout.write('  missing path: %s\n' % abs_path)
 
 
     def check_unclaimed_files(self):
