@@ -220,11 +220,11 @@ class Command(BaseCommand):
             return
         basename, ext = os.path.splitext(access_path)
 
-        return AudioFile(*(self.dm_path(basename, ext)
-                           for ext in ('wav', 'm4a', 'wav.md5', 'wav.jhove')))
+        return AudioFile(*[self.dm_path(basename, ext)
+                           for ext in ('wav', 'm4a', 'wav.md5', 'wav.jhove')])
 
     def dm_path(self, basename, ext):
-        for try_ext in (ext, ext.upper()):
+        for try_ext in self.ext_cap_variants(ext):
             rel_path = '%s.%s' % (basename, try_ext)
             abs_path = os.path.join(settings.MIGRATION_AUDIO_ROOT, rel_path)
             if os.path.exists(abs_path):
@@ -236,7 +236,20 @@ class Command(BaseCommand):
 
         # otherwise, no match
         if self.verbosity > self.v_normal:
-            self.stdout.write('  missing path: %s\n' % abs_path)
+            self.stdout.write('  missing path: %s\n' % (abs_path,))
+
+    def ext_cap_variants(self, ext):
+        # Extensions are sometimes capitalized and sometimes not. For
+        # multi-extension files, sometimes one will be capitalized and
+        # another not. Recursively generate all possible capitalization
+        # variants.
+        first, dot, rest = ext.partition('.')
+        if rest:
+            variants = self.ext_cap_variants(rest)
+            return ([ '%s.%s' % (first.lower(), v) for v in variants ] +
+                    [ '%s.%s' % (first.upper(), v) for v in variants ])
+        else:
+            return [ first.lower(), first.upper() ]
 
 
     def check_unclaimed_files(self):
