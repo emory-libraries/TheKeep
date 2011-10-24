@@ -256,7 +256,7 @@ class Command(BaseCommand):
             # if we are in an audio directory, check the files
             base_path, current_dir = os.path.split(root)
             if current_dir == 'audio':
-                for f in filenames:
+                for f in sorted(filenames):
                     full_path = os.path.join(root, f)
                     # warn about any files not in the claimed set
                     if full_path not in self.claimed_files:
