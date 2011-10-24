@@ -248,7 +248,7 @@ class CollectionObject(DigitalObject):
         marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
         if parent.pid == marbl_pid:
             if coll_number == '0':
-                return 'spec_coll/Danowski/'
+                return 'spec_col/Danowski/'
             else:
                 return 'spec_col/MSS%s/' % (coll_number,)
         else:
