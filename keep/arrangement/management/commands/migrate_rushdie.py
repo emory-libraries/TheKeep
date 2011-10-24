@@ -432,7 +432,7 @@ class Command(BaseCommand):
             if not options["no-act"]:
                 obj.save()
                 if self.verbosity > self.v_none:
-                    self.stdout.write( "Saving %s" % obj.pid)
+                    self.stdout.write( "Saving %s\n" % obj.pid)
             else:
                 if self.verbosity > self.v_none:
                     self.stdout.write( "TEST Saving Object\n")
