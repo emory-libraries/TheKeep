@@ -192,7 +192,6 @@ class Command(BaseCommand):
 
                 obj.dc.content.title = obj.filetech.content.file[0].path.rpartition("/")[2]
                 obj.label = obj.filetech.content.file[0].path.rpartition("/")[2]
-                obj.owner = "thekeep-project"
 
             if not noact:
                 obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")
@@ -429,6 +428,9 @@ class Command(BaseCommand):
 
 
             #Save object
+            obj.owner = "thekeep-project"
+            if self.verbosity > self.v_normal:
+                self.stdout.write("owner:%s\n" % obj.owner)
             if not options["no-act"]:
                 obj.save()
                 if self.verbosity > self.v_none:
