@@ -77,8 +77,11 @@ class SimpleCollection(DigitalObject):
         data = super(SimpleCollection, self).index_data()
 
         if self.rels_ext is not None:
-            type = list(self.rels_ext.content.objects(self.uriref, RDF.type))[0]
-            data['type'] = type
+            try:
+                type = list(self.rels_ext.content.objects(self.uriref, RDF.type))[0]
+                data['type'] = type
+            except IndexError:
+                pass
 
         return data
 
