@@ -192,7 +192,7 @@ def browse(request):
     collections = CollectionObject.item_collections()
     # sort by archive, then by source id (collection number)
     display_colls = sorted(collections,
-                           key=lambda c: (c['archive_id'], c['source_id']))
+                           key=lambda c: (c['archive_id'], c.get('source_id', None)))
     return render_to_response('collection/browse.html', {'collections': display_colls},
                     context_instance=RequestContext(request))
 

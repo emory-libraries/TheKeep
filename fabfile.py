@@ -1,7 +1,7 @@
 import json
 from xml.etree.ElementTree import XML
 
-from fabric.api import env, local, prefix, put, sudo
+from fabric.api import env, local, prefix, put, sudo, run
 
 import keep
 
@@ -105,6 +105,9 @@ def _update_links():
                mv %(extract_path)s/current %(extract_path)s/previous;
              fi''' % env)
     _sudo('ln -sf %(build_dir)s %(extract_path)s/current' % env)
+
+    # Remove old tar from tmp
+    run('rm -rf /tmp/%(tarball)s' % env)
 
 # bring it all together
 

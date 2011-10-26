@@ -192,7 +192,6 @@ class Command(BaseCommand):
 
                 obj.dc.content.title = obj.filetech.content.file[0].path.rpartition("/")[2]
                 obj.label = obj.filetech.content.file[0].path.rpartition("/")[2]
-                obj.owner = "thekeep-project"
 
             if not noact:
                 obj.api.purgeDatastream(obj.pid, "MARBL-MACTECH")
@@ -329,9 +328,9 @@ class Command(BaseCommand):
         allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
         restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
-        if obj.rights.content.access_status.code == "2":
+        if getattr(obj.rights.content.access_status, "code", None) == "2":
             obj.rels_ext.content.add(allowed)
-        elif obj.rights.content.access_status.code:
+        elif getattr(obj.rights.content.access_status, "code", None):
             obj.rels_ext.content.add(restricted)
 
         return obj
@@ -429,10 +428,13 @@ class Command(BaseCommand):
 
 
             #Save object
+            obj.owner = "thekeep-project"
+            if self.verbosity > self.v_normal:
+                self.stdout.write("owner:%s\n" % obj.owner)
             if not options["no-act"]:
                 obj.save()
                 if self.verbosity > self.v_none:
-                    self.stdout.write( "Saving %s" % obj.pid)
+                    self.stdout.write( "Saving %s\n" % obj.pid)
             else:
                 if self.verbosity > self.v_none:
                     self.stdout.write( "TEST Saving Object\n")
