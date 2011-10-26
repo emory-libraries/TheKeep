@@ -106,6 +106,9 @@ def _update_links():
              fi''' % env)
     _sudo('ln -sf %(build_dir)s %(extract_path)s/current' % env)
 
+    # Remove old tar from tmp
+    _sudo('rm -rf /tmp/%(tarball)s' % env)
+
 # bring it all together
 
 def deploy():
