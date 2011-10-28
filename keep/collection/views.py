@@ -282,6 +282,7 @@ def simple_browse(request):
     response_code = None
     try:
         objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
+        objs = sorted(objs, key=lambda s: s.label)
         context = {'objs' : objs}
     except RequestFailed:
         response_code = 500
