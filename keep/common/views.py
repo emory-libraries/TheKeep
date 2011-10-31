@@ -60,7 +60,7 @@ def search(request):
                     if val == form.fields['pid'].initial:
                         search_opts['pid'] += '*'
 
-            # collection/archive objects are indexed as collection_id in solr
+            # collection objects are indexed as collection_id in solr
             elif field in ['collection', 'simpleCollection']:
                 search_opts['%s_id' % field] = val
 
@@ -75,8 +75,8 @@ def search(request):
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field
             if val:     # if search value is not empty, selectively add it
-                # for collections and archive, get collection object info
-                if field == 'collection': # location = archive
+                # for collections get collection object info
+                if field == 'collection':
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
                     if val != "0":

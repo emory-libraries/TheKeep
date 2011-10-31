@@ -93,6 +93,3 @@ class ItemSearch(forms.Form):
     rights_access_options_search.insert(1, ('0', 'No Verdict'))
     access_code = forms.ChoiceField(rights_access_options_search, label='Rights', required=False,
                     help_text='Search for items with the specified rights access status')
-    archive = DynamicChoiceField(label="Archive", required=False,
-                    choices=archive_choices, initial='',
-                    help_text='Search for items that are owned by the specified Archive')
