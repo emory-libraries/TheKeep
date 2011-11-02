@@ -110,6 +110,7 @@
           <AttributeValue DataType="&xsd;string">libspm</AttributeValue>
           <AttributeValue DataType="&xsd;string">erussey</AttributeValue>
           <AttributeValue DataType="&xsd;string">squigle</AttributeValue>
+          <AttributeValue DataType="&xsd;string">kjarvi2</AttributeValue>
         </Apply>
       </Apply>
     </Condition>
