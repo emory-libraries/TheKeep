@@ -77,7 +77,7 @@ class PodcastFeed(Feed):
     '''
     
     # set information about this feed
-    title = 'The Keep - iTunes Feed'
+    title = 'Digitized Audio Recordings (EUL Keep)'
     description = 'Digitized audio resources from the collections'
     feed_type = iTunesPodcastsFeedGenerator
     # could also set the following feed-level attributes:
