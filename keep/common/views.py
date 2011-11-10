@@ -79,10 +79,7 @@ def search(request):
                 if field == 'collection':
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
-                    if val != "0":
-                        search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
-                    else:
-                        search_info[key] = '%s - %s' % ("", "No Verdict")
+                    search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
                 elif field == "content_model":
                     search_info[key] = dict(form.format_options)[val]
                 elif field == "simpleCollection":
@@ -100,11 +97,7 @@ def search(request):
         #Search for items with not verdict
         #Remove access_code from criteria because 0 is not a valid value. Then exclude 
         #records with no access_code AKA verdict
-        if search_opts.get("access_code") == "0":
-            del search_opts['access_code'] # remove access_code from criteria
-            solrquery = solr.query(**search_opts).filter(cm_query).exclude(access_code__any=True).sort_by('-created')
-        else:
-            solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
+        solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
         #Exclude results based on perms
         if not request.user.has_perm('common.marbl_allowed'):
