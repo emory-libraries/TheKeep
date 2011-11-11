@@ -62,7 +62,7 @@ class ItemSearch(forms.Form):
     #format_options used in search form 
     format_options = (
        ("", ""),
-       ('info:fedora/emory-control:Arrangement-1.0', "Arrangement"),
+       ('info:fedora/emory-control:Arrangement-1.0', "Born-Digital"),
        ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
     )
 
