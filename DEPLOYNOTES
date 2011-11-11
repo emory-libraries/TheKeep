@@ -302,6 +302,7 @@ Release 1.2 - Verdict App
 
 *  TheKeep XACML policies should be updated to the appropriate branch or tag:
    Staging: https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.9
+   Production: https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.9
 
    - reload policies on fedora
     
@@ -309,7 +310,6 @@ Release 1.2 - Verdict App
 * The solr scheama should be updated:
     - Copy <project base>/solr/schema.xml to the appropriate solr core
     - Solr should be restarted
-    - EULIndexer should be restarted
 
 * The following manage commands shouldbe run:
     NOTE: when running these command you must be in the keep virtual environment
@@ -324,6 +324,7 @@ Release 1.2 - Verdict App
     - Make sure that eulindexer has an entry for "keep" in localsettings.py > INDEXER_SITE_URLS .
       Staging: https://testkeep.library.emory.edu/indexdata/
       Production: https://keep.library.emory.edu/indexdata/
+      - EULIndexer should be restarted
       NOTE: when running this command you must be in the eulindexer virtual environment
     - Run the command:
         $ python ./manage.py reindex -s keep  - this must match the entry in eulindexer localsetting.py
@@ -331,7 +332,7 @@ Release 1.2 - Verdict App
 
 * Contact developer for these tasks:
     - Assign appropriate permissions for each user in the database
-    - Load 50 sample P5300c objects to fedora using the command:
+    - Load  P5300c objects to fedora using the command:
     $ python ./manage.py load_arrangement <CSV file> <master collection pid> <new simple collection name> -u <user> --password
       
 
