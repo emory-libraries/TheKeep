@@ -23,9 +23,10 @@ import keep
 def _base_env():
     """Configure basic env."""
     env.version = keep.__version__
-    env.svn_rev = None
+    #svn defaults for a final version release (not pre, dev)
+    env.svn_rev = 'HEAD'  
     env.svn_rev_tag = ''
-    env.svn_url = None
+    env.svn_url = '.'
 _base_env()
 
 def _svn_env():
@@ -68,7 +69,7 @@ def _fetch_source_from_svn():
     changes."""
     local('mkdir -p build')
     local('rm -rf build/%(build_dir)s' % env)
-    local('svn export -r %(svn_rev)s %(svn_url)s@%(svn_rev)s build/%(build_dir)s' % env)
+    local('svn export -r %(svn_rev)s %(svn_url)s build/%(build_dir)s' % env)
 
 def _package_source():
     """Create a tarball of the source tree."""
