@@ -43,7 +43,7 @@
   {% endwith %}
   {% with 'access copy' as access %}
     {% if obj.compressed_audio.exists %}
-      | <a href="{% url audio:download-compressed-audio obj.pid %}">{{ access }}</a>
+      | <a href="{{ obj.get_access_url }}">{{ access }}</a>
     {% else %}
       | {{ access }}
     {% endif %}

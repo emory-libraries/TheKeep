@@ -59,7 +59,7 @@ class Rights(_BaseRights):
             'Material from previous Digital Masters database that cannot be mapped to other codes'),
         ('12', 'Redacted file only',              False,
             'Object must undergo select redaction then modified version of object available to researchers'),
-        ('13', 'Meta data only',              False,
+        ('13', 'Metadata only',              False,
             'Only meta data is available'),
     )
     '''controlled vocabulary for access condition, ordered the way they should

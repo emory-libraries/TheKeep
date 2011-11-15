@@ -82,6 +82,7 @@
             <AttributeValue DataType="&xsd;string">&action;id-modifyDatastreamByReference</AttributeValue>
             <AttributeValue DataType="&xsd;string">&action;id-modifyDatastreamByValue</AttributeValue>
             <AttributeValue DataType="&xsd;string">&action;id-getRelationships</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-modifyObject</AttributeValue>
           </Apply>
         </Apply>
       </Apply>
@@ -109,6 +110,7 @@
           <AttributeValue DataType="&xsd;string">libspm</AttributeValue>
           <AttributeValue DataType="&xsd;string">erussey</AttributeValue>
           <AttributeValue DataType="&xsd;string">squigle</AttributeValue>
+          <AttributeValue DataType="&xsd;string">kjarvi2</AttributeValue>
         </Apply>
       </Apply>
     </Condition>

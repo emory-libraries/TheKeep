@@ -103,6 +103,10 @@ class Command(BaseCommand):
         #map DC title
         obj.dc.content.title = path.rpartition('/')[2]
 
+        #map default verdict of 10 "Undetermined" in rights DS
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = "10"
+
          #map series in MODS
         #RecordType used to lookup series info
         rec_type= row["rec_type"]

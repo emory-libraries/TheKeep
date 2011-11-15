@@ -62,7 +62,7 @@ class ItemSearch(forms.Form):
     #format_options used in search form 
     format_options = (
        ("", ""),
-       ('info:fedora/emory-control:Arrangement-1.0', "Arrangement"),
+       ('info:fedora/emory-control:Arrangement-1.0', "Born-Digital"),
        ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
     )
 
@@ -88,11 +88,5 @@ class ItemSearch(forms.Form):
             Date uploaded is in <b>YYYY-MM-DDTHH:MM:SS.mmmmmmmZ</b> format.
             May contain wildcards * or ?.<br/>
             <i>Example:</i> search <b>2011-02*</b> for all items uploaded in February 2011.'''))
-    #Add "No Verdict option to search only by copying original list of options and adding to it
-    rights_access_options_search = rights_access_options[:]
-    rights_access_options_search.insert(1, ('0', 'No Verdict'))
-    access_code = forms.ChoiceField(rights_access_options_search, label='Rights', required=False,
+    access_code = forms.ChoiceField(rights_access_options, label='Rights', required=False,
                     help_text='Search for items with the specified rights access status')
-    archive = DynamicChoiceField(label="Archive", required=False,
-                    choices=archive_choices, initial='',
-                    help_text='Search for items that are owned by the specified Archive')
