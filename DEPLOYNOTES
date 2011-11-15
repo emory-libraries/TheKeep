@@ -322,6 +322,15 @@ Release 1.2 - Verdict App
 
 * At this point systems should move the link to point to the current version.
 
+
+
+* Contact developer for these tasks:
+    - Assign appropriate permissions for each user in the database
+    - Load  P5300c objects to fedora using the command::
+
+        $ python ./manage.py load_arrangement <CSV file> <master collection pid> <new simple collection name> -u <user> --password
+      
+
 * Reindex the site:
     - Make sure that eulindexer has an entry for "keep" in localsettings.py > INDEXER_SITE_URLS .
         - Staging:: https://testkeep.library.emory.edu/indexdata/
@@ -333,13 +342,6 @@ Release 1.2 - Verdict App
         $ python ./manage.py reindex -s keep  
 
     - After the above commad finishes make sure the indxer is runnng so new items can be indexed
-
-* Contact developer for these tasks:
-    - Assign appropriate permissions for each user in the database
-    - Load  P5300c objects to fedora using the command::
-
-        $ python ./manage.py load_arrangement <CSV file> <master collection pid> <new simple collection name> -u <user> --password
-      
 
 
 Release 1.1 - Metadata Migration
