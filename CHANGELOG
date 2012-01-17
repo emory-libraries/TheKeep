@@ -3,6 +3,12 @@
 CHANGELOG
 =========
 
+Release  1.2.1 
+--------------
+ * Require eulfedora 0.18.1 to avoid missing checksums on XML and RDF
+   datastreams.
+
+
 Release  1.2 - Verdict App
 --------------------------
 * Branched Keep code and added arrangement app
