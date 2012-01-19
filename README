@@ -46,9 +46,11 @@ Grant access to new / existing users
 * Make sure the user is created in the database:
 
   - Check by logging in to the site and go to Admin > Users
-  - If the userid does not exist run the following on the command line while in the keep environment::
+  - If the userid does not exist do one of the following
+      a. Go to Admin > Emory ldap user profiles and enter the USERID then click "Add username"
+      b. run the following on the command line while in the keep environment::
 
-       python ./manage.py inituser USERNAME
+          python ./manage.py inituser USERNAME
 
   - The user should now be in the list.
 
