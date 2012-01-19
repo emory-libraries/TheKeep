@@ -35,7 +35,40 @@ Custom login/logout functionality in support of passing user LDAP credentials
 to Fedora so that objects in the repository will be accessed and updated
 by the individual user rather than by a single site-wide account.
 To Access MARBL materal a user will need the common | MARBL Allowed permission.
-To Access Arrangement materal the user will need common | Arrangement Allowed permission.
+To Access Arrangement materal the user will need common | Arrangement Allowed permission
+and and entry in the permit-keep-arrangement-admin.xml XACML policy.
+
+Grant access to new / existing users
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Change any Apache / firewall config that is necessary.
+
+* Make sure the user is created in the database:
+
+  - Check by logging in to the site and go to Admin > Users
+  - If the userid does not exist run the following on the command line while in the keep environment::
+
+       python ./manage.py inituser USERNAME
+
+  - The user should now be in the list.
+
+* For access to Audio only:
+
+  * Go to Admin > Users > USERID
+  - Make sure the **Active**" and the **Staff** flag is checked and the **Superuser** flag is NOT checked.
+  - In the Permissions box make sure that "common | permissions | Access to MARBL material" is selected.
+  - Save the user.
+
+* For access to BoDA:
+
+  - Go to Admin > Users > USERID
+  - Make sure the **Active** and the **Staff** flag is checked and the **Superuser** flag is NOT checked.
+  - In the Permissions box make sure that "common | permissions | Access to MARBL material" is selected.
+  - In the Permissions box make sure that "common | permissions | Access to Arrangement material" is selected.
+  - Save the user.
+  - In Fedora go to the policies directory and then to thekeep-policies directory.
+  - edit permit-keep-arrangement-admin.xml and add an entry for the USERID in the "Arrangement" section near the bottom of the file.
+  - Reload policies.
 
 Common
 ~~~~~~
