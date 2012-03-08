@@ -223,7 +223,7 @@ intersphinx_mapping = {
     'http://waterhouse.library.emory.edu:8080/hudson/job/eullocal/javadoc/': None,
     'http://docs.djangoproject.com/en/1.2/ref/': 'http://docs.djangoproject.com/en/dev/_objects/',
     'http://eulcommon.readthedocs.org/en/latest/': None,
-    'http://eulexist.readthedocs.org/en/latest/': None,
+    'http://eulexistdb.readthedocs.org/en/latest/': None,
     'http://eulfedora.readthedocs.org/en/latest/': None,
     'http://eulxml.readthedocs.org/en/latest/': None,
 }
