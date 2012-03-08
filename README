@@ -46,30 +46,41 @@ Grant access to new / existing users
 * Make sure the user is created in the database:
 
   - Check by logging in to the site and go to Admin > Users
-  - If the userid does not exist do one of the following
-      a. Go to Admin > Emory ldap user profiles and enter the USERID then click "Add username"
-      b. run the following on the command line while in the keep environment::
+  - If the userid does not exist, do one of the following:
 
-          python ./manage.py inituser USERNAME
+      a. Go to Admin > Emory ldap user profiles and enter the USERID
+         then click "Add username"
+      b. run the following on the command line while in the keep
+         environment::
+
+          $ python ./manage.py inituser USERNAME
 
   - The user should now be in the list.
 
 * For access to Audio only:
 
   * Go to Admin > Users > USERID
-  - Make sure the **Active**" and the **Staff** flag is checked and the **Superuser** flag is NOT checked.
-  - In the Permissions box make sure that "common | permissions | Access to MARBL material" is selected.
-  - Save the user.
+
+    - Make sure the **Active**" and the **Staff** flag is checked and
+      the **Superuser** flag is NOT checked.
+    - In the Permissions box make sure that *common | permissions |
+      Access to MARBL material* is selected.
+    - Save the user.
 
 * For access to BoDA:
 
   - Go to Admin > Users > USERID
-  - Make sure the **Active** and the **Staff** flag is checked and the **Superuser** flag is NOT checked.
-  - In the Permissions box make sure that "common | permissions | Access to MARBL material" is selected.
-  - In the Permissions box make sure that "common | permissions | Access to Arrangement material" is selected.
+  - Make sure the **Active** and the **Staff** flag is checked and the
+    **Superuser** flag is NOT checked.
+  - In the Permissions box make sure that "common | permissions |
+    Access to MARBL material" is selected.
+  - In the Permissions box make sure that "common | permissions |
+    Access to Arrangement material" is selected.
   - Save the user.
-  - In Fedora go to the policies directory and then to thekeep-policies directory.
-  - edit permit-keep-arrangement-admin.xml and add an entry for the USERID in the "Arrangement" section near the bottom of the file.
+  - In Fedora go to the policies directory and then to
+    thekeep-policies directory.
+  - edit permit-keep-arrangement-admin.xml and add an entry for the
+    USERID in the "Arrangement" section near the bottom of the file.
   - Reload policies.
 
 Common
