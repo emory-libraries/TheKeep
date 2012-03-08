@@ -375,17 +375,6 @@ class AudioObject(DigitalObject):
             if self.compressed_audio.mimetype == 'audio/mp4':
                 return 'm4a'
 
-    def old_dm_media_path(self):
-        old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id
-        if old_id:
-            coll_obj = self._collection_object()
-            if not coll_obj:
-                return
-            coll_path = coll_obj.old_dm_media_path()
-            if not coll_path:
-                return
-            return '%saudio/%s.m4a' % (coll_path, old_id)
-
     def _collection_object(self):
         repo = Repository()
         coll_uri = self.collection_uri

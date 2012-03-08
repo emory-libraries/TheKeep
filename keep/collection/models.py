@@ -241,22 +241,6 @@ class CollectionObject(DigitalObject):
         self._collection = None
         self._collection_label = None
 
-    def old_dm_media_path(self):
-        'Path to media in old Digital Masters interface.'
-        coll_number = str(self.mods.content.source_id)
-
-        repo = Repository()
-        parent_uri = self.collection_id
-        parent = repo.get_object(parent_uri, CollectionObject)
-        marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
-        if parent.pid == marbl_pid:
-            if coll_number == '0':
-                return 'spec_col/Danowski/'
-            else:
-                return 'spec_col/MSS%s/' % (coll_number,)
-        else:
-            return 'univ_arch/SER%s/' % (coll_number,)
-
     @staticmethod
     def archives(format=None):
         """Find Archives objects, to which CollectionObjects belong.

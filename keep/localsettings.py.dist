@@ -31,24 +31,6 @@ DATABASES = {
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
     },
-    # database connection information for old Digital Masters - used for migration only
-    'old_dm': {
-        'NAME': 'digital_masters',
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'USER': '',
-        'PASSWORD': ''
-        'HOST': '',
-        'PORT': '',
-    },
-    # accessions database connection information - used for migration only
-    'accessions': {
-        'NAME': 'manuscript_accessions',
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-    },
 }
 
 # EULCORE LDAP SETTINGS
@@ -128,13 +110,6 @@ SITE_ID = 1
 INGEST_STAGING_TEMP_DIR = '/tmp/digitalmasters-ingest-staging'
 # time in seconds that files in the ingest staging directory should be kept
 INGEST_STAGING_KEEP_AGE = 60*60*24*3
-
-# kiosk-accessible path to files still living in old Digital Masters. must
-# end with /
-OLD_DM_MEDIA_ROOT = 'http://masters.library.emory.edu/harvest/preservation/'
-
-# path to source audio files for old_dm migrate_files
-MIGRATION_AUDIO_ROOT = '/mnt/dm/preservation'
 
 
 LOGGING = {
