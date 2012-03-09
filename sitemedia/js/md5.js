@@ -18,6 +18,9 @@
  *   md5.process_bytes("12345");
  *   md5.finish();
  *   var result = md5.toString();
+ * 
+ * This implementation should be able to correctly generate MD5
+ * checksums for files up to 1 Petabyte (2^53 bits, 2^50 bytes). 
  */
 function MD5() {
   // magic numbers from the MD5 algorithm
@@ -99,9 +102,12 @@ MD5.prototype.asArray = function() {
     var block_bits = block_bytes * 8;
 
     /* split the total bit count. md5 wants a 64-bit number. the md5
-     * algorithm implementation here is based on 32-bit numbers, so we need
-     * to represent our total bits as two 32-bit numbers: the high half and
-     * the low half of the total bit count.
+     * algorithm implementation here uses a native javascript number
+     * to count total bytes, which means we can go up to 2^53 bits or
+     * 2^50 bytes.  To get the 64-bit number filesize that needs to be
+     * included in the padding, we need to represent our total bits as
+     * two 32-bit numbers: the high half and the low half of the total
+     * bit count.
      *
      * there are 8 bits in a byte, so the total number of bits is
      * total_bytes * 8. multiplying by 8 is equivalent to left-shifting by
@@ -109,8 +115,15 @@ MD5.prototype.asArray = function() {
      * left-shifted by 3, and the highest 3 bits of that count carry over
      * into the bottom 3 bits of the high half. *whew*.
      */
-    var total_bits_lo = total_bytes << 3;
-    var total_bits_hi = total_bytes >> 29; // 32 - 3 == 29
+
+    /** there are 8 bits in a byte, so the total number of bits is
+     * total_bytes * 8. 
+     */
+    var total_bits = total_bytes * 8;
+    /* divide by 2^32 to get the high 32 bits */
+    var total_bits_hi = total_bits / Math.pow(2, 32);
+    /* binary and to get the low 32 bits */
+    var total_bits_lo = total_bits & 0xFFFFFFFF;
 
     block[block_bits >> 5] |= 0x80 <<((block_bits) % 32);
     var size_offset = (((block_bits + 64) >>> 9) << 4) + 14;
@@ -208,21 +221,13 @@ MD5.prototype.asArray = function() {
 
   /* Increase the reported number of bytes processed.
    *
-   * FIXME: This uses, in effect, 32-bit integers to count the bytes. MD5
-   * padding uses a 64-bit integer of bits. This *should* work with files
-   * >2GB, but will probably fail for files >4GB. If that happens, we may
-   * need to figure out how to record and add numbers that size. js numbers,
-   * which are stored as double-precision floating points *should* be
-   * lossless up to 2**53, but there are two potential pitfalls with this:
-   * 1) the original MD5 code we're pulling from mentions some large integer
-   * adding bugs in IE, and 2) MD5 goes up to 2**64, which is > 2**53.
-   * Fortunately, all we need to do is add positive integers, which should
-   * be pretty simple to implement, even if we have to do it manually.
-   *
-   * Anyway, that's why adding bytes gets its own function here.
+   * NOTE: The offset and total file size in bytes) is stored in a
+   * Javascript native number, which is a double-precision floating
+   * point and should be lossless up to 2**53.  We do not use safe_add
+   * here because it is only good up to around 2^31.
    */
   MD5.prototype.bump_bytes = function(n) {
-    this.offset = safe_add(n, this.offset);
+      this.offset += n;
   }
 
   /* These next few functions are imported from the source MD5
