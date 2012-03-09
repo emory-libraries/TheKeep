@@ -12,4 +12,6 @@ django-celery
 mutagen
 poster
 sunburnt
-httplib2
+# 3/2012: pinning to 0.7.2 because 0.7.3 causes errors
+# (tries to infer Proxy info HTTP_PROXY, but proxy causes problems)
+httplib2==0.7.2
