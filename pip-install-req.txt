@@ -12,4 +12,4 @@ django-celery
 mutagen
 poster
 sunburnt
-httplib2
+httplib2==0.7.2
