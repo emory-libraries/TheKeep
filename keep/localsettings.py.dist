@@ -80,6 +80,8 @@ MAX_ITEMS_PER_PODCAST_FEED = 2000
 EUL_INDEXER_ALLOWED_IPS = 'ANY'
 # Solr index that will be used for searching
 SOLR_SERVER_URL = "http://localhost:8080/solr/"
+# optional CA cert path (if Solr is SSL and using a cert not auto-loaded by httplib2)
+#SOLR_CA_CERT_PATH = '/etc/ssl/certs/ca-certificates.crt'
 
 
 # Local time zone for this installation. Choices can be found here:

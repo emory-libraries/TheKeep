@@ -6,7 +6,7 @@ import os
 # Django sets too many absolute paths.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Absolute path to the directory that holds media.
+# Absol
 # Example: "/home/media/media.lawrence.com/"
 MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'sitemedia')
 
@@ -120,6 +120,7 @@ PID_ALIASES = {
     'pitts': 'emory:93z9n',
 }
 
+SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
 
 # Celery Config - standard stuff that will not change from project to project
 import djcelery

@@ -1,6 +1,6 @@
 import logging
-from os import path
 from mock import Mock, MagicMock, patch
+import os
 from sunburnt import sunburnt
 
 from django.conf import settings
@@ -15,7 +15,7 @@ from keep.audio import models as audiomodels
 from keep.collection.fixtures import FedoraFixtures
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
-from keep.common.utils import absolutize_url, md5sum
+from keep.common.utils import absolutize_url, md5sum, solr_interface
 from keep.common.utils import PaginatedSolrSearch
 from keep.testutil import KeepTestCase
 
@@ -40,7 +40,7 @@ class TestMd5Sum(TestCase):
 
     def test_md5sum(self):
         # use mp3 file from audio test fixtures
-        mp3_filename = path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
+        mp3_filename = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
         # md5 checksum
         md5 = 'b56b59c5004212b7be53fb5742823bd2'
         self.assertEqual(md5, md5sum(mp3_filename))
@@ -48,6 +48,71 @@ class TestMd5Sum(TestCase):
         # test non-existent file
         # file errors are not caught by md5sum utility method but should be passed along
         self.assertRaises(IOError, md5sum, '/not/a/real/file.foo')
+
+
+class TestSolrInterface(TestCase):
+
+    def setUp(self):
+        # save any solr settings and replace with test values
+        self._solr_url = getattr(settings, 'SOLR_SERVER_URL', None)
+        settings.SOLR_SERVER_URL = 'http://test.solr/'
+        self._solr_ca_cert_path = getattr(settings, 'SOLR_CA_CERT_PATH', None)
+        if self._solr_ca_cert_path:
+            delattr(settings, 'SOLR_CA_CERT_PATH')
+
+        self._http_proxy = os.getenv('HTTP_PROXY', None)
+        del os.environ['HTTP_PROXY']
+
+    def tearDown(self):
+        # restore any solr settings
+        if self._solr_url is None:
+            delattr(settings, 'SOLR_SERVER_URL')
+        else:
+            settings.SOLR_SERVER_URL = self._solr_url
+        
+        if self._solr_ca_cert_path is None:
+            delattr(settings, 'SOLR_CA_CERT_PATH')
+        else:
+            settings.SOLR_CA_CERT_PATH = self._solr_ca_cert_path
+
+        os.putenv('HTTP_PROXY', self._http_proxy)
+        
+
+    @patch('keep.common.utils.httplib2')
+    @patch('keep.common.utils.sunburnt')
+    def test_solr_interface(self, mocksunburnt, mockhttplib):
+        # basic init with no options
+        solr_interface()
+        mockhttplib.Http.assert_called_once()
+        # httplib2.Http should be initialized with defaults (no args)
+        mockhttplib.Http.assert_called_with() 
+        mocksunburnt.SolrInterface.assert_called_with(settings.SOLR_SERVER_URL,
+                                                      http_connection=mockhttplib.Http.return_value)
+
+
+    @patch('keep.common.utils.httplib2')
+    @patch('keep.common.utils.sunburnt')
+    def test_solr_interface(self, mocksunburnt, mockhttplib):
+        # init with a ca cert
+        settings.SOLR_CA_CERT_PATH = '/some/path/to/certs'
+        solr_interface()
+        # httplib should be initialized with ca_certs option
+        mockhttplib.Http.assert_called_with(ca_certs=settings.SOLR_CA_CERT_PATH)
+
+
+    @patch('keep.common.utils.httplib2')
+    @patch('keep.common.utils.sunburnt')
+    def test_solr_interface(self, mocksunburnt, mockhttplib):
+        # init with an http proxy set in env
+        os.environ['HTTP_PROXY'] = 'http://localhost:3128/'
+        solr_interface()
+        # proxy info should be configured & passed to httplib2
+        mockhttplib.ProxyInfo.assert_called_with(mockhttplib.socks.PROXY_TYPE_HTTP_NO_TUNNEL,
+                                              'localhost', 3128)
+        mockhttplib.Http.assert_called_with(proxy_info=mockhttplib.ProxyInfo.return_value)
+
+        
+        
 
 
 # extend Keep DigitalObject with to test ARK init logic
@@ -270,7 +335,7 @@ class SearchTest(KeepTestCase):
     mocksolr.Q.return_value = mocksolr.query
     mocksolrpaginator = MagicMock(PaginatedSolrSearch)
 
-    @patch('keep.common.views.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.common.views.solr_interface', mocksolr)
     @patch('keep.common.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
     @patch('keep.common.forms.CollectionObject')
     def test_search(self, mockcollobj):
