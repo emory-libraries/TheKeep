@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+A stripped-down sample solr config distilled from the example in the
+standard solr distribution. Admins are encouraged to tweak. For thorough
+documentation and more examples, see:
+  http://wiki.apache.org/solr/SolrConfigXml
+  http://svn.apache.org/repos/asf/lucene/dev/trunk/solr/example/solr/conf/solrconfig.xml
+-->
+<config>
+  <updateHandler class="solr.DirectUpdateHandler2">
+    <autoCommit>
+      <maxDocs>10</maxDocs>
+      <maxTime>1000</maxTime> <!-- ms -->
+    </autoCommit>
+  </updateHandler>
+
+  <requestHandler name="/search" class="solr.SearchHandler" default="true"/>
+  <requestHandler name="/update" class="solr.XmlUpdateRequestHandler"/>
+  <requestHandler name="/update/csv" class="solr.CSVRequestHandler" startup="lazy"/>
+  <requestHandler name="/admin/" class="org.apache.solr.handler.admin.AdminHandlers"/>
+  <requestHandler name="/admin/ping" class="PingRequestHandler"/>
+  <requestHandler name="/debug/dump" class="solr.DumpRequestHandler"/>
+
+  <searchComponent class="solr.HighlightComponent" name="highlight">
+    <highlighting>
+      <formatter name="html" class="org.apache.solr.highlight.HtmlFormatter" default="true">
+        <lst name="defaults">
+          <str name="hl.simple.pre"><![CDATA[<strong class="match">]]></str>
+          <str name="hl.simple.post"><![CDATA[</strong>]]></str>
+        </lst>
+      </formatter>
+    </highlighting>
+  </searchComponent>
+
+  <queryResponseWriter name="xml" class="org.apache.solr.response.XMLResponseWriter" default="true"/>
+  <queryResponseWriter name="json" class="org.apache.solr.response.JSONResponseWriter"/>
+  <queryResponseWriter name="python" class="org.apache.solr.response.PythonResponseWriter"/>
+  <queryResponseWriter name="ruby" class="org.apache.solr.response.RubyResponseWriter"/>
+  <queryResponseWriter name="php" class="org.apache.solr.response.PHPResponseWriter"/>
+  <queryResponseWriter name="phps" class="org.apache.solr.response.PHPSerializedResponseWriter"/>
+  <admin>
+    <defaultQuery>solr</defaultQuery>
+  </admin>
+</config>

@@ -1,0 +1,2 @@
+# token replacement to make similar words index together. see:
+#   http://wiki.apache.org/solr/AnalyzersTokenizersTokenFilters#solr.SynonymFilterFactory
