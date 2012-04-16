@@ -16,7 +16,6 @@ from keep.collection.fixtures import FedoraFixtures
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum, solr_interface
-from keep.common.utils import PaginatedSolrSearch
 from keep.testutil import KeepTestCase
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
@@ -333,10 +332,8 @@ class SearchTest(KeepTestCase):
     mocksolr.query.__or__.return_value = mocksolr.query
     mocksolr.query.filter.return_value = mocksolr.query
     mocksolr.Q.return_value = mocksolr.query
-    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
 
     @patch('keep.common.views.solr_interface', mocksolr)
-    @patch('keep.common.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
     @patch('keep.common.forms.CollectionObject')
     def test_search(self, mockcollobj):
         collections = [
@@ -351,9 +348,6 @@ class SearchTest(KeepTestCase):
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
-
-        self.mocksolrpaginator.count.return_value = 0
-        self.mocksolrpaginator.__getitem__.return_value = None
 
         # search all items (no user-entered search terms)
         response = self.client.get(search_url)
@@ -405,6 +399,9 @@ class SearchTest(KeepTestCase):
         self.assertNotContains(response, 'description: ',
             msg_prefix='search results page should not include empty search terms (description)')
 
+        # minimal pagination test
+        self.assert_('show_pages' in response.context,
+                     'list of pagination pages to display should be set in response context')
 
         # search by note
         # (searches general note, digitization purpose, related files via solr copyfield)

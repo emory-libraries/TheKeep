@@ -3,12 +3,12 @@ https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifa
 eulxml
 eulfedora>=0.18.1
 eulexistdb>=0.15.1
-eulcommon
+eulcommon>=0.16.2
 http://waterhouse.library.emory.edu:8080/hudson/job/pidman-rest-client-1.1.x/11/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
 python-magic
 pycrypto
 django-celery
 mutagen
 poster
-sunburnt
+sunburnt>=0.6
 httplib2

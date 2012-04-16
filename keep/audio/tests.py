@@ -26,13 +26,12 @@ from eulxml.xmlmap  import load_xmlobject_from_string
 from keep import mods
 from keep.audio import forms as audioforms
 from keep.audio import models as audiomodels
-from keep.audio.feeds import PodcastFeed
+from keep.audio.feeds import PodcastFeed, feed_items
 from keep.audio.management.commands import ingest_cleanup
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
 from keep.common import models as commonmodels
-from keep.common.utils import PaginatedSolrSearch
 from keep.testutil import KeepTestCase
 
 logger = logging.getLogger(__name__)
@@ -67,7 +66,6 @@ class AudioViewsTest(KeepTestCase):
     mocksolr.query.query.return_value = mocksolr.query
     mocksolr.query.paginate.return_value = mocksolr.query
     mocksolr.query.exclude.return_value = mocksolr.query
-    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
 
     def setUp(self):        
         super(AudioViewsTest, self).setUp()
@@ -1075,10 +1073,9 @@ class AudioViewsTest(KeepTestCase):
                 % (expected, got, ds_url))
 
 
-    @patch('keep.audio.feeds.solr_interface', mocksolr)
-    @patch('keep.audio.feeds.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
+    @patch('keep.audio.feeds.feed_items')
     @patch('keep.audio.feeds.PodcastFeed._get_collection_data', new=Mock(return_value={}))
-    def test_podcast_feed(self):
+    def test_podcast_feed(self, mockfeeditems):
         feed_url = reverse('audio:podcast-feed', args=[1])
 
         # test data to return from solr search for objects to show up in the feed
@@ -1097,65 +1094,40 @@ class AudioViewsTest(KeepTestCase):
              'title': 'Odysseus recites The Iliad',
              'dm1_id': ['124578', '000875421'] }
             ]
-        self.mocksolrpaginator.count.return_value = len(data)
-        def get_item(s, i):  # crude get-item replacement for mock only
-            return data[i]
-        self.mocksolrpaginator.__getitem__ = get_item
-
+        mockfeeditems.return_value = data
         response = self.client.get(feed_url)
 
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
                              % (expected, code, feed_url))
-        args, kwargs = self.mocksolr.query.call_args
-        self.assertEqual(True, kwargs['researcher_access'],
-                         'kiosk feed solr search should filter on researcher_access=True')
-        self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
-                         'kiosk feed solr search should filter on audio content model')
-        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
-                         'kiosk feed solr search should filter on configured pidspace')
-        
+
         self.assertContains(response, data[0]['pid'],
             msg_prefix='pid for first result object should be included in feed')
         self.assertContains(response, data[1]['pid'],
             msg_prefix='pid for second result object should be included in feed')
         self.assertContains(response, data[2]['pid'],
             msg_prefix='pid for third result object should be included in feed')
-
-        return
-
-        self.assertContains(response, obj2.mods.content.title,
+        self.assertContains(response, data[0]['title'],
             msg_prefix='title for second test object should be included in feed')
-        self.assertContains(response, '%s - %s' % (self.rushdie.mods.content.source_id,
-            self.rushdie.mods.content.title),
-            msg_prefix='collection title & number for first test object should be included in feed')
-        self.assertContains(response, '%s - %s' % (self.esterbrook.mods.content.source_id,
-            self.esterbrook.mods.content.title),
-            msg_prefix='collection title & number for second test object should be included in feed')         
-        self.assertContains(response, obj.mods.content.part_note.text,
+        self.assertContains(response, data[0]['part'],
             msg_prefix='part note for first test object should be included in feed')
-        self.assertContains(response, 'May 1976',
-            msg_prefix='dateIssued should be included in feed')
-        self.assertContains(response, obj7.mods.content.dm1_id,
+        self.assertContains(response, data[2]['dm1_id'][1],
             msg_prefix='dm1_id should be included in feed where defined')
-        self.assertContains(response, obj8.mods.content.dm1_other_id,
-            msg_prefix='dm1_other_id should be included in feed where defined')
 
         # test pagination
         settings.MAX_ITEMS_PER_PODCAST_FEED = 1
         response = self.client.get(feed_url)
-        self.assertContains(response, obj.pid,
+        self.assertContains(response, data[0]['pid'],
             msg_prefix='pid for first test object should be included in paginated feed')
-        self.assertNotContains(response, obj2.pid,
+        self.assertNotContains(response, data[1]['pid'],
             msg_prefix='pid for second test object should not be included in paginated feed')
         feed2_url = reverse('audio:podcast-feed', args=[2])
         response = self.client.get(feed2_url)
-        self.assertNotContains(response, obj.pid,
+        self.assertNotContains(response, data[0]['pid'],
             msg_prefix='pid for first test object should not be included in second paginated feed')
-        self.assertContains(response, obj2.pid,
+        self.assertContains(response, data[1]['pid'],
             msg_prefix='pid for second test object should be included in second paginated feed')
 
-    @patch('keep.audio.views.PaginatedSolrSearch', new=Mock(return_value=mocksolrpaginator))
     @patch('keep.audio.views.feed_items')
     def test_podcast_feed_list(self, mockfeeditems):
 
@@ -1182,10 +1154,6 @@ class AudioViewsTest(KeepTestCase):
              'dm1_id': ['124578', '000875421'] }
             ]
         mockfeeditems.return_value = data
-        self.mocksolrpaginator.count.return_value = len(data)
-        def get_item(s, i):  # crude get-item replacement for mock only
-            return data[i]
-        self.mocksolrpaginator.__getitem__ = get_item
         
         # must be logged in as staff to view
         self.client.login(**ADMIN_CREDENTIALS)
@@ -2382,5 +2350,18 @@ class PodcastFeedTest(KeepTestCase):
         self.assert_('duration' not in min_info)
         
 
-                     
+class FeedItemsTest(KeepTestCase):
+
+    @patch('keep.audio.feeds.solr_interface')
+    def test_feed_items(self, mocksolr):
+
+        feed_items()
+        
+        args, kwargs =  mocksolr.return_value.query.call_args
+        self.assertEqual(True, kwargs['researcher_access'],
+                         'kiosk feed solr search should filter on researcher_access=True')
+        self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
+                         'kiosk feed solr search should filter on audio content model')
+        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+                         'kiosk feed solr search should filter on configured pidspace')
         

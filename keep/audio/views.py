@@ -34,7 +34,7 @@ from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import CollectionObject 
 from keep.common.fedora import Repository
 from keep.common.models import Rights
-from keep.common.utils import md5sum, PaginatedSolrSearch
+from keep.common.utils import md5sum
 
 logger = logging.getLogger(__name__)
 
@@ -474,7 +474,7 @@ def download_audio(request, pid, type, extension=None):
 def feed_list(request):
     '''List and link to all current iTunes podcast feeds based on the
     number of objects currently available for inclusion in the feeds.'''
-    paginated_objects = Paginator(PaginatedSolrSearch(feed_items()),
+    paginated_objects = Paginator(feed_items(),
                                   settings.MAX_ITEMS_PER_PODCAST_FEED)
     return render_to_response('audio/feed_list.html', {
                 'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,

@@ -76,6 +76,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'eulexistdb',
     'eulfedora',
+    'eulcommon.searchutil',
     'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
     'eullocal.django.util',
@@ -151,7 +152,7 @@ try:
     # it from http://github.com/danielfm/unittest-xml-reporting/ to output
     # test results in JUnit-compatible XML.
     import xmlrunner
-    TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
+    #TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
     TEST_OUTPUT_DIR='test-results'
 except ImportError:
     pass

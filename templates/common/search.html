@@ -1,5 +1,6 @@
 {% extends "site_base.html" %}
 {% load fedora %}
+{% load search_utils %} 
 
 {% block page-subtitle %}: Audio : Search Results{% endblock %}
 {% block content-title %}Search Results{% endblock %}
@@ -68,11 +69,6 @@ of {{ page.paginator.count }}.</p>
 You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
 {% endif %}
 
-{% if page.paginator.num_pages > 1 %} {# if more than one page of results, display & link them #}
-  <p>Pages:
-    {% for p in page.paginator.page_range %}
-      {% if p == page.number %} {{ p }} {% else %}<a href="?{{search_opts}}&page={{p}}">{{p}}</a>{% endif %}
-    {% endfor %}
-  </p>
-{% endif %}
+{% pagination_links page show_pages search_opts %} 
+
 {% endblock %}

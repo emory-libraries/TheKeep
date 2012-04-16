@@ -1,6 +1,7 @@
 import logging
 
 from exceptions import ValueError
+from eulcommon.searchutil import pages_to_show
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
@@ -12,7 +13,7 @@ from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common import forms as commonforms
 from keep.common.models import Rights
-from keep.common.utils import solr_interface, PaginatedSolrSearch
+from keep.common.utils import solr_interface
 
 @staff_member_required
 def search(request):
@@ -104,11 +105,7 @@ def search(request):
         if not request.user.has_perm('common.arrangement_allowed'):
             solrquery = solrquery.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
 
-
-        # wrap the solr query in a PaginatedSolrSearch object
-        # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(solrquery)
-        paginator = Paginator(pagedsolr, 30)
+        paginator = Paginator(solrquery, 30)
 
         try:
             page = int(request.GET.get('page', '1'))
@@ -119,9 +116,13 @@ def search(request):
         except (EmptyPage, InvalidPage):
             results = paginator.page(paginator.num_pages)
 
+        # calculate pages to show
+        show_pages = pages_to_show(paginator, page)            
+
         ctx_dict.update({
             'results': results.object_list,
             'page': results,
+            'show_pages': show_pages,
             # pass search term query opts to view for pagination links
             'search_opts': request.GET.urlencode()
         })

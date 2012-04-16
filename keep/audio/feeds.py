@@ -11,7 +11,7 @@ from eulfedora.util import RequestFailed
 
 from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject
-from keep.common.utils import absolutize_url, solr_interface, PaginatedSolrSearch
+from keep.common.utils import absolutize_url, solr_interface
 
 logger = logging.getLogger(__name__)
 
@@ -119,11 +119,7 @@ class PodcastFeed(Feed):
         items_per_feed = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', 2000)
         
         solrquery = feed_items()
-        # wrap the solr query in a PaginatedSolrSearch object
-        # that knows how to translate between django paginator & sunburnt
-        pagedsolr = PaginatedSolrSearch(solrquery)
-
-        paginated_objects = Paginator(pagedsolr, per_page=items_per_feed)
+        paginated_objects = Paginator(solrquery, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
         for obj in current_chunk.object_list:
             logger.debug('items obj %s' % (obj['pid'],))
