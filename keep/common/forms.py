@@ -48,7 +48,7 @@ def _collection_options():
                     '%s %s %s' % (c.get('source_id', ''),
                                   c.get('archive_short_name', ''),
                                   c.get('title', '')))
-                   for c in sorted(collections, key=lambda k: k['source_id'])]
+                   for c in sorted(collections, key=lambda k: k.get('source_id', ''))]
 
         # always include a blank option at the beginning of the list
         # - not specified for search, force user to select on the edit form
