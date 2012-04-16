@@ -3,7 +3,6 @@ import json
 import logging
 import magic
 import os
-from sunburnt import sunburnt
 import tempfile
 import time
 import traceback

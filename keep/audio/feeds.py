@@ -1,6 +1,5 @@
 import datetime
 import logging
-from sunburnt import sunburnt
 
 from django.conf import settings
 from django.contrib.syndication.views import Feed
@@ -12,7 +11,7 @@ from eulfedora.util import RequestFailed
 
 from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject
-from keep.common.utils import absolutize_url, PaginatedSolrSearch
+from keep.common.utils import absolutize_url, solr_interface, PaginatedSolrSearch
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +47,7 @@ class iTunesPodcastsFeedGenerator(Rss201rev2Feed):
 def feed_items():
     '''Generate and return a solr query object for all items that
     should be included in the feed.'''
-    solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+    solr = solr_interface()
     search_opts = {
         # restrict to objects in the configured pidspace
         'pid': '%s:*' % settings.FEDORA_PIDSPACE,
@@ -97,7 +96,7 @@ class PodcastFeed(Feed):
         return page
 
     def _get_collection_data(self):
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(pid='%s:*' % (settings.FEDORA_PIDSPACE,),
                                content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
         collection_count = solrquery.paginate(rows=0).execute().result.numFound

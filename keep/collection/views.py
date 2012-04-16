@@ -4,7 +4,6 @@ View methods for creating, editing, searching, and browsing
 '''
 import logging
 
-from sunburnt import sunburnt
 from django.contrib.admin.views.decorators import staff_member_required
 
 from rdflib.namespace import RDF
@@ -25,6 +24,7 @@ from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollec
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
 from keep.common.rdfns import REPO
+from keep.common.utils import solr_interface
 
 
 logger = logging.getLogger(__name__)
@@ -165,7 +165,7 @@ def search(request):
                     search_info[key] = val
         context['search_info'] = search_info
 
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(**search_opts).sort_by('source_id')
         # TODO: eventually, we'll need proper pagination here;
         # for now, set a large max to return everything

@@ -1,5 +1,4 @@
 import logging
-from sunburnt import sunburnt
 
 from exceptions import ValueError
 from django.conf import settings
@@ -13,7 +12,7 @@ from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common import forms as commonforms
 from keep.common.models import Rights
-from keep.common.utils import PaginatedSolrSearch
+from keep.common.utils import solr_interface, PaginatedSolrSearch
 
 @staff_member_required
 def search(request):
@@ -23,7 +22,7 @@ def search(request):
     form = commonforms.ItemSearch(request.GET, prefix='audio')
     ctx_dict = {'search': form}
     if form.is_valid():
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         search_opts = {
             # restrict to objects in the configured pidspace
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,

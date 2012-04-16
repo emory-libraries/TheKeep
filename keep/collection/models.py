@@ -1,8 +1,6 @@
 import logging
 import re
 from rdflib import RDF, URIRef
-from sunburnt import sunburnt
-from sunburnt import sunburnt
 
 from django.conf import settings
 
@@ -18,6 +16,7 @@ from eulxml.xmlmap.eadmap import EAD_NAMESPACE, EncodedArchivalDescription
 from keep import mods
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep.common.rdfns import REPO
+from keep.common.utils import solr_interface
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +95,7 @@ class SimpleCollection(DigitalObject):
 
         if pid.startswith('info:fedora/'): # allow passing in uri
              pid = pid[len('info:fedora/'):]
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL,
                                pid=pid)
         result = solrquery.execute()
@@ -113,7 +112,7 @@ class SimpleCollection(DigitalObject):
         """
 
         # search solr for simpleCollection objects
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL, \
                     type=REPO.SimpleCollection)
 
@@ -260,7 +259,7 @@ class CollectionObject(DigitalObject):
             # find all objects with cmodel collection-1.1 and no parents
 
             # search solr for collection objects with NO parent collection id
-            solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+            solr = solr_interface()
             # NOTE: not filtering on pidspace, since top-level objects are loaded as fixtures
             # and may not match the configured pidspace in a dev environment
             solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
@@ -287,7 +286,7 @@ class CollectionObject(DigitalObject):
         
         if pid.startswith('info:fedora/'): # allow passing in uri
              pid = pid[len('info:fedora/'):]      
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                pid=pid)
         result = solrquery.execute()
@@ -307,7 +306,7 @@ class CollectionObject(DigitalObject):
         """
 
         # search solr for collection objects with NO parent collection id
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                archive_id__any=True)
         # by default, only returns 10; get everything
@@ -321,7 +320,7 @@ class CollectionObject(DigitalObject):
 
         :rtype: list of dict
         """
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                pid='%s:' % settings.FEDORA_PIDSPACE,
                                archive_id=self.pid)
@@ -341,7 +340,7 @@ class CollectionObject(DigitalObject):
         :return: generator of any matching items, as instances of
             :class:`CollectionObject`
         '''
-        solr = sunburnt.SolrInterface(settings.SOLR_SERVER_URL)
+        solr = solr_interface()
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                pid='%s:*' % settings.FEDORA_PIDSPACE,
                                source_id=int(num))

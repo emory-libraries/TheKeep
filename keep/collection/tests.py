@@ -45,10 +45,10 @@ class CollectionObjectTest(KeepTestCase):
         # remove any archives cached by the tests
         CollectionObject._archives = None
 
-    @patch('keep.collection.models.sunburnt')
-    def test_archives(self, mocksunburnt):
+    @patch('keep.collection.models.solr_interface')
+    def test_archives(self, mock_solr_interface):
         # NOTE: mock order/syntax depends on how it is used in the method
-        solrquery = mocksunburnt.SolrInterface.return_value.query
+        solrquery = mock_solr_interface.return_value.query
         solr_exec = solrquery.return_value.exclude.return_value.sort_by.return_value.execute
 
         solr_exec.return_value = [
@@ -187,7 +187,7 @@ class CollectionObjectTest(KeepTestCase):
     mocksolr.query.paginate.return_value = mocksolr.query
     mocksolr.query.exclude.return_value = mocksolr.query
 
-    @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.collection.models.solr_interface', mocksolr)
     def test_item_collections(self):
         solr_result = [
             {'pid': 'coll:1', 'label': 'foo'},
@@ -206,7 +206,7 @@ class CollectionObjectTest(KeepTestCase):
         self.assertEqual(True, kwargs['archive_id__any'],
                          'solr query should include objects with any parent collection id')
 
-    @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.collection.models.solr_interface', mocksolr)
     def test_subcollections(self):
         solr_result = [
             {'pid': 'coll:1', 'label': 'foo'},
@@ -231,7 +231,7 @@ class CollectionObjectTest(KeepTestCase):
         self.assertEqual(marbl.pid, kwargs['archive_id'],
                          'solr query should filter on collection pid of current object')
 
-    @patch('keep.collection.models.sunburnt.SolrInterface', mocksolr)
+    @patch('keep.collection.models.solr_interface', mocksolr)
     def test_find_by_collection_number(self):
         # sample result to be returned
         result = [
@@ -621,8 +621,8 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (non-existing pid)'
                              % (expected, code, edit_url))
 
-    @patch('keep.collection.views.sunburnt')
-    def test_search(self, mocksunburnt):
+    @patch('keep.collection.views.solr_interface')
+    def test_search(self, mock_solr_interface):
         search_url = reverse('collection:search')
 
         # using a mock for sunburnt so we can inspect method calls,
@@ -638,7 +638,7 @@ class CollectionViewsTest(KeepTestCase):
 
         # search all collections (no user-entered search terms)
         response = self.client.get(search_url)
-        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        args, kwargs = mock_solr_interface.return_value.query.call_args
         # default search args that should be included on every collection search
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'collection search should be filtered by collection content model')
@@ -648,7 +648,7 @@ class CollectionViewsTest(KeepTestCase):
         # search by MSS # (AKA source id)
         mss = 1000
         response = self.client.get(search_url, {'collection-source_id': mss})
-        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        args, kwargs = mock_solr_interface.return_value.query.call_args
         self.assertEqual(mss, kwargs['source_id'],
                          'source id number should be included in solr query terms')
         self.assert_('title' not in kwargs,
@@ -663,7 +663,7 @@ class CollectionViewsTest(KeepTestCase):
         # search by title
         search_title = 'collection'
         response = self.client.get(search_url, {'collection-title': search_title})
-        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        args, kwargs = mock_solr_interface.return_value.query.call_args
         self.assertEqual(search_title, kwargs['title'],
                          'title search term should be included in solr query terms')
         self.assert_('source_id' not in kwargs)
@@ -673,7 +673,7 @@ class CollectionViewsTest(KeepTestCase):
         # search by creator
         creator = 'esterbrook'
         response = self.client.get(search_url, {'collection-creator': creator})
-        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        args, kwargs = mock_solr_interface.return_value.query.call_args
         self.assertEqual(creator, kwargs['creator'],
                          'creator search term should be included in solr query terms')
         self.assertEqual(creator, response.context['search_info']['creator'],
@@ -684,7 +684,7 @@ class CollectionViewsTest(KeepTestCase):
         with patch('keep.collection.models.CollectionObject.find_by_pid',
                    new=Mock(return_value={'title': collection.label, 'pid': collection.pid})):
             response = self.client.get(search_url, {'collection-archive_id': collection.uri })
-            args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+            args, kwargs = mock_solr_interface.return_value.query.call_args
             self.assertEqual(collection.uri, kwargs['archive_id'],
                 'selected archive_id should be included in solr query terms')
             self.assertEqual(collection.pid, response.context['search_info']['Archive']['pid'],
@@ -692,7 +692,7 @@ class CollectionViewsTest(KeepTestCase):
 
         # shortcut to set the solr return value
         # NOTE: call order here has to match the way methods are called in view
-        solrquery =  mocksunburnt.SolrInterface.return_value.query.return_value.sort_by.return_value
+        solrquery =  mock_solr_interface.return_value.query.return_value.sort_by.return_value
         solr_exec = solrquery.paginate.return_value.execute
         
         # no match
@@ -711,8 +711,8 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
-    @patch('keep.collection.models.sunburnt')
-    def test_browse(self, mocksunburnt):
+    @patch('keep.collection.models.solr_interface')
+    def test_browse(self, mock_solr_interface):
         browse_url = reverse('collection:browse')
 
         # log in as staff
@@ -720,7 +720,7 @@ class CollectionViewsTest(KeepTestCase):
 
         # shortcut to set the solr return value
         # FIXME: call order here currently has to match the way methods are # called in view. ew.
-        solrquery = mocksunburnt.SolrInterface.return_value.query.return_value
+        solrquery = mock_solr_interface.return_value.query.return_value
         solr_exec = solrquery.paginate.return_value.execute
         
         # no match
@@ -739,7 +739,7 @@ class CollectionViewsTest(KeepTestCase):
         response = self.client.get(browse_url)
         self.assertEqual(solr_exec.return_value, response.context['collections'],
             'solr result should be set as collections set in response context')
-        args, kwargs = mocksunburnt.SolrInterface.return_value.query.call_args
+        args, kwargs = mock_solr_interface.return_value.query.call_args
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr collection browse should be filtered by collection content model in solr query')
         self.assertTrue(kwargs['archive_id__any'],

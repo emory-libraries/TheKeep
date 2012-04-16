@@ -2,7 +2,6 @@ from rdflib import URIRef
 import logging
 import sys
 from mock import Mock, MagicMock, patch
-from sunburnt import sunburnt
 
 from django.test import TestCase
 from django.contrib.auth.models import User
@@ -190,17 +189,6 @@ class ArrangementViewsTest(KeepTestCase):
 
     client = Client()
     
-    # set up a mock solr object for use in solr-based find methods
-    mocksolr = Mock(sunburnt.SolrInterface)
-    mocksolr.return_value = mocksolr
-    # solr interface has a fluent interface where queries and filters
-    # return another solr query object; simulate that as simply as possible
-    mocksolr.query.return_value = mocksolr.query
-    mocksolr.query.query.return_value = mocksolr.query
-    mocksolr.query.paginate.return_value = mocksolr.query
-    mocksolr.query.exclude.return_value = mocksolr.query
-    mocksolrpaginator = MagicMock(PaginatedSolrSearch)
-
     def setUp(self):
         super(ArrangementViewsTest, self).setUp()        
         self.pids = []
