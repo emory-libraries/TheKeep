@@ -284,7 +284,6 @@ class AudioViewsTest(KeepTestCase):
         with open(upload_filepath + '.md5', 'w') as md5file:
             md5file.write('bogus md5 checksum')
         response = self.client.post(upload_url, upload_opts)
-        print response
         self.assert_('ingest_results' in response.context,
                      'response context should include a list of ingest results')
         result = response.context['ingest_results'][0]
