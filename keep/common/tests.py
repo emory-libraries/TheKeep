@@ -70,7 +70,7 @@ class TestSolrInterface(TestCase):
         else:
             settings.SOLR_SERVER_URL = self._solr_url
         
-        if self._solr_ca_cert_path is None:
+        if self._solr_ca_cert_path is None and hasattr(settings, 'SOLR_CA_CERT_PATH'):
             delattr(settings, 'SOLR_CA_CERT_PATH')
         else:
             settings.SOLR_CA_CERT_PATH = self._solr_ca_cert_path
@@ -107,8 +107,8 @@ class TestSolrInterface(TestCase):
         os.environ['HTTP_PROXY'] = 'http://localhost:3128/'
         solr_interface()
         # proxy info should be configured & passed to httplib2
-        mockhttplib.ProxyInfo.assert_called_with(mockhttplib.socks.PROXY_TYPE_HTTP_NO_TUNNEL,
-                                              'localhost', 3128)
+        mockhttplib.ProxyInfo.assert_called_with(proxy_type=mockhttplib.socks.PROXY_TYPE_HTTP_NO_TUNNEL,
+                                              proxy_host='localhost', proxy_port=3128)
         mockhttplib.Http.assert_called_with(proxy_info=mockhttplib.ProxyInfo.return_value)
 
         
