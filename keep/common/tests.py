@@ -110,6 +110,13 @@ class TestSolrInterface(TestCase):
                                               proxy_host='localhost', proxy_port=3128)
         mockhttplib.Http.assert_called_with(proxy_info=mockhttplib.ProxyInfo.return_value)
 
+        # when solr url is http, no proxy should be set
+        mockhttplib.reset()
+        settings.SOLR_SERVER_URL = 'https://test.solr/'
+        solr_interface()
+        mockhttplib.ProxyInfo.assert_not_called()
+        mockhttplib.Http.assert_called_with() # no args
+
         
         
 
@@ -331,6 +338,7 @@ class SearchTest(KeepTestCase):
     mocksolr.query.exclude.return_value = mocksolr.query
     mocksolr.query.__or__.return_value = mocksolr.query
     mocksolr.query.filter.return_value = mocksolr.query
+    mocksolr.query.count.return_value = 0
     mocksolr.Q.return_value = mocksolr.query
 
     @patch('keep.common.views.solr_interface', mocksolr)

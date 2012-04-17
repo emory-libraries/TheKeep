@@ -58,9 +58,11 @@ def solr_interface():
 
     # use http proxy if set in ENV
     http_proxy = os.getenv('HTTP_PROXY', None)
-    if http_proxy:
+    solr_url = urlparse(settings.SOLR_SERVER_URL)
+    # NOTE: using Squid with httplib2 requires no-tunneling proxy option
+    # - non-tunnel proxy does not work with https
+    if http_proxy and solr_url.scheme == 'http':
         parsed_proxy = urlparse(http_proxy)
-        # NOTE: using Squid with httplib2 requires no-tunneling proxy option
         proxy_info = httplib2.ProxyInfo(proxy_type=httplib2.socks.PROXY_TYPE_HTTP_NO_TUNNEL,
                                         proxy_host=parsed_proxy.hostname,
                                         proxy_port=parsed_proxy.port)
