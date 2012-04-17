@@ -152,7 +152,7 @@ try:
     # it from http://github.com/danielfm/unittest-xml-reporting/ to output
     # test results in JUnit-compatible XML.
     import xmlrunner
-    #TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
+    TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
     TEST_OUTPUT_DIR='test-results'
 except ImportError:
     pass
