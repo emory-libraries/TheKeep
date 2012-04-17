@@ -335,6 +335,7 @@ class SearchTest(KeepTestCase):
     # return another solr query object; simulate that as simply as possible
     mocksolr.query.return_value = mocksolr.query
     mocksolr.query.query.return_value = mocksolr.query
+    mocksolr.query.sort_by.return_value = mocksolr.query
     mocksolr.query.paginate.return_value = mocksolr.query
     mocksolr.query.exclude.return_value = mocksolr.query
     mocksolr.query.__or__.return_value = mocksolr.query
