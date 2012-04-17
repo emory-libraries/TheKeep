@@ -16,19 +16,39 @@
 of {{ page.paginator.count }}.</p>
 
 <table>
-  <tr><th>PID</th><th>Title</th><th>Created</th><th>Last Modified</th></tr>
+  {% if display_labels %} {# custom labels for selected fields #}
+    {% for d in display_labels %}<th>{{ d }}</th>{% endfor %}
+  {% else %} {# default columns #}
+    <th>PID</th><th>Title</th><th>Created</th><th>Last Modified</th></tr>
+  {% endif %}
   {% for obj in results %}
     <tr>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
+      
+      {# generate appropriate object url if possible, for either display mode #}
+      {% if obj.pid %} 
+        {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
+          {% url audio:edit obj.pid as obj_url %}
+        {% else %}
+          {% url arrangement:edit obj.pid as obj_url %}
+        {% endif %}
+      {% endif %}
+      
+      {# when display fields are requested, object is a list of values to be displayed in order #}
+      {% if display_fields %}
+        {% for val in obj %}
         <td>
-            {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
-                <a href="{% url audio:edit obj.pid %}">{{ obj.pid }}</a>
-            {% else %} {% if  'info:fedora/emory-control:Arrangement-1.0' in obj.content_model %}
-                <a href="{% url arrangement:edit obj.pid %}">{{ obj.pid }}</a>
-            {% endif %}
-            {% endif %}
+          {% if forloop.counter == 1 and obj_url %}
+            <a href="{{ obj_url }}">{{ val }}</a> {# make first value a link if possible #}
+          {% else %}
+            {{ val }}
+          {% endif %}
         </td>
+      {% endfor %}
+        
+      {% else %} {# no display fields requested; use default search results display #}
+        <td><a href="{{ obj_url }}">{{ obj.pid }}</a></td>
         <td>{% spaceless %}
           {% if obj.arrangement_id and obj.arrangement_id != 'None' %} {{ obj.arrangement_id }} : {% endif  %}{% firstof obj.title obj.label %}
 	  {% if obj.part %}({{ obj.part }}){% endif %}<br/>
@@ -53,6 +73,8 @@ of {{ page.paginator.count }}.</p>
         {% endspaceless %}</td>
         <td>{{ obj.created }}</td>
         <td>{{ obj.last_modified }}</td>
+
+       {% endif %}
       {% permission_denied %}
         <td>{{ obj.pid }}</td>
         <td colspan="3">You don't have permission to view this object.</td>
@@ -64,11 +86,29 @@ of {{ page.paginator.count }}.</p>
   {% endfor %}
 </table>
 {% else %}
-<p>No matching objects found.</p>
-<p>By default, search matches whole words only (including any punctuation).
-You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
+  <p>No matching objects found.</p>
+  <p>By default, search matches whole words only (including any punctuation).
+  You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
 {% endif %}
 
 {% pagination_links page show_pages search_opts %} 
 
+{# re-display bound form so current search can be altered #}
+<h3><a id="search-toggle">Revise your search ></a></h3>
+<div id="advanced-search" {% if results %}style="display:none"{% endif %}>
+<form method="get" action="{% url common:search %}">
+  <table>
+  {{ searchform.as_table}}
+  </table>
+  <input class="form-submit" type="submit" value="Search" />
+</form>
+</div>
+
+<script type="text/javascript">
+ $(document).ready(function () { {# show/hide advanced-search block #}
+   $("#search-toggle").click(function(){
+    $("#advanced-search").toggle();
+  });
+});
+</script>
 {% endblock %}

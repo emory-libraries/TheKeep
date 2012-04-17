@@ -256,3 +256,10 @@ ul.messages li {
 #arrangement-edit .collapsed {
     background-image: url('../genlib_media/style/images/menu-collapsed.png');
 }
+
+#advanced-search input[type=text] {
+   width: 90%;
+}
+#advanced-search select {
+   width: 75%;
+}

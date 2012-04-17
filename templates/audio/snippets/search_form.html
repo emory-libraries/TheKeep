@@ -3,9 +3,12 @@
     <form method="get" action="{% url common:search %}">
       {% with item_search as form %}
         {% for field in item_search %}
-          {% include "snippets/form_field_with_tooltip.html" %}
+          {% if field.name not in item_search.display_output_fields %}{# skip advanced fields #}
+            {% include "snippets/form_field_with_tooltip.html" %}
+          {% endif %}
         {% endfor %}
       {% endwith %}
+      <a href="{% url common:search %}" style="float:right">more options</a>
       <input class="form-submit" type="submit" value="Search" />
     </form>
 </div>

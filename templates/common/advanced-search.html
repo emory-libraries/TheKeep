@@ -1,0 +1,16 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Advanced Search{% endblock %}
+{% block content-title %}Advanced Search{% endblock %}
+
+{% block content-body %}
+  {{ block.super }}
+<div id="advanced-search">
+<form method="get" action="{% url common:search %}">
+  <table>
+  {{ searchform.as_table}}
+  </table>
+  <input class="form-submit" type="submit" value="Search" />
+</form>
+</div>
+{% endblock %}

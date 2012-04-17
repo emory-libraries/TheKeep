@@ -14,6 +14,7 @@ from keep import mods
 from keep.audio import models as audiomodels
 from keep.collection.fixtures import FedoraFixtures
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
+from keep.common.forms import ItemSearch
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum, solr_interface
 from keep.testutil import KeepTestCase
@@ -357,8 +358,14 @@ class SearchTest(KeepTestCase):
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
-        # search all items (no user-entered search terms)
+        # no request params at all - display advanced search form
         response = self.client.get(search_url)
+        self.assertEqual('common/advanced-search.html',
+            response.templates[0].name,
+            'when no request parameters are given, advanced search page should be displayed')
+
+        # no user-entered search terms - find all items 
+        response = self.client.get(search_url, {'audio-title': ''})
         args, kwargs = self.mocksolr.query.call_args
         # default search args that should be included on every collection search
         self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
@@ -440,7 +447,7 @@ class SearchTest(KeepTestCase):
         self.assertPattern('Rights:.*%s - Public Domain' % access_code, response.content,
             msg_prefix='search results page should include access status code and text)')
 
-        # serch for format
+        # search for format
         content_model = audiomodels.AudioObject.AUDIO_CONTENT_MODEL
         response = self.client.get(search_url, {'audio-content_model' : content_model})
         args, kwargs = self.mocksolr.query.call_args
@@ -480,3 +487,86 @@ class SearchTest(KeepTestCase):
                 msg_prefix='search results page should include all search terms used (date)')
             self.assertPattern('title:.*%s' % searchtitle, response.content,
                 msg_prefix='search results page should include all search terms used (title)')
+
+    @patch('keep.common.views.solr_interface', mocksolr)
+    def test_search_csv(self):
+        # test advanced search with CSV output
+        search_url = reverse('common:search')
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        
+        response = self.client.get(search_url, {'audio-display_fields': ['pid', 'title', 'description'],
+                                                'audio-output': 'csv'})
+        self.assertEqual('text/csv', response['Content-Type'],
+                         'response should return text/csv content when csv output is requested')
+        self.assertContains(response, ','.join(['PID', 'Title', 'General Note']),
+                            msg_prefix='response should include human-readable column labels')
+        # NOTE: not sure how to adapt solr mock to test actual
+        # content, conversion to list, etc...
+    
+
+
+class ItemSearchTest(TestCase):
+
+    @patch('keep.common.forms.CollectionObject')
+    def test_search_options(self, mockcollection):
+        # use a fake collection list
+        mockcollection.item_collections.return_value = [
+            {'pid': '%s:1' % settings.FEDORA_PIDSPACE, 'title': 'collection 1'},
+            ]
+
+        form_data = {'collection': 'info:fedora/%s:1' % settings.FEDORA_PIDSPACE,
+                     'title': '*foo',
+                     'notes': '?',
+                     'pid': 'keep*',
+                     'display_fields': ['pid', 'title'],
+                     'output': 'html',
+                     }
+        f = ItemSearch(form_data)
+        search_opts = f.search_options()
+        self.assertEqual(form_data['collection'], search_opts['collection_id'],
+                         'collection value should return collection_id search option')
+        self.assertEqual(form_data['title'].lstrip('*'), search_opts['title'],
+                         'leading wildcard should be removed')
+        self.assertEqual(form_data['pid'], search_opts['pid'])
+        self.assert_('notes' not in search_opts,
+                     'wildcard-only search term should not be included in search options')
+        self.assert_('display_fields' not in search_opts,
+                     'display fields value should not be included in search options')
+        self.assert_('output' not in search_opts,
+                     'output value should not be included in search options')
+
+        # numeric pid should search dm1 id instead of pid
+        form_data['pid'] = '123'
+        f = ItemSearch(form_data)
+        search_opts = f.search_options()
+        self.assertEqual(form_data['pid'], search_opts['dm1_id'],
+                         'numeric pid value should search dm1_id field')
+        self.assertNotEqual(form_data['pid'], search_opts['pid'],
+                     'numeric pid value should not search pid field')
+        
+    @patch('keep.common.forms.CollectionObject')
+    def test_search_info(self, mockcollection):
+        mockcollection.item_collections.return_value = [
+            {'pid': '%s:1' % settings.FEDORA_PIDSPACE, 'title': 'collection 1'},
+        ]
+        mockcollection.find_by_pid.return_value = 'my collection'
+
+        f = ItemSearch()
+        form_data = {'collection': 'info:fedora/%s:1' % settings.FEDORA_PIDSPACE,
+                     'title': 'foo',
+                     'display_fields': ['pid', 'title'],
+                     'output': 'html',
+                     'pid': f.fields['pid'].initial
+                     }
+        f = ItemSearch(form_data)
+        search_info = f.search_info()
+        self.assertEqual(mockcollection.find_by_pid.return_value,
+                         search_info['Collection'])
+        self.assertEqual(form_data['title'], search_info['title'])
+        self.assert_('pid' not in search_info,
+                     'fields with initial/default value should not be included in search info')
+        self.assert_('output' not in search_info,
+                     'output formatting fields should not be included in search info')
+
+        
