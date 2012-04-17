@@ -1769,6 +1769,8 @@ class TestAudioObject(KeepTestCase):
                      'date_issued should not be included in index data when it is not set')
         self.assert_('related_files' not in desc_data,
                          'related_files should not be set when not present in sourcetech')
+        self.assert_('sublocation' not in desc_data,
+                         'sublocation should not be set when not present in sourcetech')
 
         # additional fields that could be present
         obj.mods.content.dm1_id = '0103'
@@ -1785,6 +1787,7 @@ class TestAudioObject(KeepTestCase):
         obj.compressed_audio.mimetype = 'application/mpeg'
         obj.digitaltech.content.duration = 36
         obj.sourcetech.content.related_files = '1000, 2011'
+        obj.sourcetech.content.sublocation = 'Box 3'
 
         # reset mock collection objects to be returned
         colls = [mockmss, mockarchive]
@@ -1804,6 +1807,9 @@ class TestAudioObject(KeepTestCase):
                          'researcher_access should be set based on access code & override')
         self.assertEqual(obj.sourcetech.content.related_files, desc_data['related_files'][0],
                          'related_files should be set when present in sourcetech')
+        self.assertEqual(obj.sourcetech.content.sublocation, desc_data['sublocation'],
+                         'sublocation should be set when present in sourcetech')
+
         
         # error if data is not serializable as json
         self.assert_(simplejson.dumps(desc_data))        

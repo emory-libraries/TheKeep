@@ -494,6 +494,10 @@ class AudioObject(DigitalObject):
         if self.mods.content.part_note and self.mods.content.part_note.text:
             data['part'] = self.mods.content.part_note.text
 
+        # sublocation
+        if self.sourcetech.content.sublocation:
+            data['sublocation'] = self.sourcetech.content.sublocation
+
         # rights access status code
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
