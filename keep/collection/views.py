@@ -13,7 +13,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
@@ -117,8 +117,7 @@ def edit(request, pid=None):
     if pid is not None:
         context['collection'] = obj
 
-    return render_to_response('collection/edit.html', context,
-        context_instance=RequestContext(request))
+    return render(request, 'collection/edit.html', context)
 
 @staff_member_required
 def search(request):
@@ -177,8 +176,7 @@ def search(request):
         context['collection_search'] = form
 
     # render search results page; if there was an error, results will be displayed as empty
-    return render_to_response('collection/search.html', context,
-                              context_instance=RequestContext(request))
+    return render(request, 'collection/search.html', context)
 
 @permission_required("common.marbl_allowed")
 def browse(request):
@@ -193,8 +191,7 @@ def browse(request):
     # sort by archive, then by source id (collection number)
     display_colls = sorted(collections,
                            key=lambda c: (c['archive_id'], c.get('source_id', None)))
-    return render_to_response('collection/browse.html', {'collections': display_colls},
-                    context_instance=RequestContext(request))
+    return render(request, 'collection/browse.html', {'collections': display_colls})
 
 
 @permission_required("common.marbl_allowed")
@@ -256,8 +253,7 @@ def simple_edit(request, pid=None):
     if pid is not None:
         context['obj'] = obj
 
-    return render_to_response('collection/simple_edit.html', context,
-        context_instance=RequestContext(request))
+    return render(request, 'collection/simple_edit.html', context)
 
 #find objects with a particular type specified  in the rels-ext and return them as
 def _objects_by_type(type_uri, type=None):
@@ -295,8 +291,7 @@ def simple_browse(request):
 
 
 
-    response =  render_to_response('collection/simple_browse.html', context,
-        context_instance=RequestContext(request))
+    response =  render(request, 'collection/simple_browse.html', context)
     if response_code is not None:
         response.status_code = response_code
     return response

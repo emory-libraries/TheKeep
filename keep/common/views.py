@@ -8,7 +8,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.http import HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
@@ -27,9 +27,8 @@ def search(request):
 
     # if NO search terms are specified, return an advanced search page
     if not request.GET:
-        return render_to_response('common/advanced-search.html',
-                                  {'searchform': commonforms.ItemSearch(prefix='audio')},
-                                  context_instance=RequestContext(request))
+        return render(request, 'common/advanced-search.html',
+                      {'searchform': commonforms.ItemSearch(prefix='audio')})
     
     form = commonforms.ItemSearch(request.GET, prefix='audio')
 
@@ -113,6 +112,4 @@ def search(request):
             'search_opts': request.GET.urlencode(),
         })
 
-
-    return render_to_response('common/search.html', ctx_dict,
-        context_instance=RequestContext(request))
+    return render(request, 'common/search.html', ctx_dict)

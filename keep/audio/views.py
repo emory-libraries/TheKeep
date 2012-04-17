@@ -14,7 +14,7 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
@@ -45,9 +45,8 @@ def index(request):
     # pass dates in to the view to link to searches for recently uploaded files
     today = date.today()
     yesterday = today - timedelta(days=1)
-    return render_to_response('audio/index.html', {
-        'today': today, 'yesterday' : yesterday,
-        }, context_instance=RequestContext(request))
+    return render(request, 'audio/index.html',
+                  {'today': today, 'yesterday' : yesterday})
 
 @permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
@@ -199,8 +198,7 @@ def upload(request):
     # convert list of allowed types for passing to javascript
     ctx_dict['js_allowed_types'] = mark_safe(json.dumps(allowed_audio_types))
 
-    return render_to_response('audio/upload.html', ctx_dict,
-                                  context_instance=RequestContext(request))
+    return render(request, 'audio/upload.html', ctx_dict)
     # NOTE: previously, this view set the response status code to the
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
@@ -397,8 +395,7 @@ def edit(request, pid):
             # GET - display the form for editing, pre-populated with content from the object
             form = audioforms.AudioObjectEditForm(instance=obj)
 
-        return render_to_response('audio/edit.html', {'obj' : obj, 'form': form },
-            context_instance=RequestContext(request))
+        return render(request, 'audio/edit.html', {'obj' : obj, 'form': form })
 
     except PermissionDenied:
         # Fedora may return a PermissionDenied error when accessing a datastream
@@ -476,7 +473,7 @@ def feed_list(request):
     number of objects currently available for inclusion in the feeds.'''
     paginated_objects = Paginator(feed_items(),
                                   settings.MAX_ITEMS_PER_PODCAST_FEED)
-    return render_to_response('audio/feed_list.html', {
-                'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,
-                'pages': paginated_objects.page_range,
-                }, context_instance=RequestContext(request))
+    return render(request, 'audio/feed_list.html', {
+        'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,
+        'pages': paginated_objects.page_range,
+        })

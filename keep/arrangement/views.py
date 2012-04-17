@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
@@ -33,7 +33,7 @@ finding_aid_id = 'rushdie1000'
 @permission_required("common.arrangement_allowed")
 def index(request):
     #Return to "HOME Index page since there is not really an Arrangement Index
-    return render_to_response('audio/index.html', {}, context_instance=RequestContext(request))
+    return render(request, 'audio/index.html')
 
 @permission_required("common.arrangement_allowed")
 def edit(request, pid):
@@ -117,8 +117,8 @@ def edit(request, pid):
 
     series_data = simplejson.dumps(series_data)
 
-    return render_to_response('arrangement/edit.html', {'obj' : obj, 'form': form, 'series_data': series_data},
-        context_instance=RequestContext(request))
+    return render(request, 'arrangement/edit.html',
+                  {'obj' : obj, 'form': form, 'series_data': series_data})
 
 @permission_required("common.arrangement_allowed")
 def view_datastream(request, pid, dsid):
