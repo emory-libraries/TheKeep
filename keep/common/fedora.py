@@ -4,10 +4,10 @@ from django.utils.encoding import iri_to_uri
 
 from eulfedora import models, server
 from eulxml import xmlmap
+from eulxml.xmlmap import mods
 from pidservices.clients import parse_ark
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
-from keep import mods
 from keep.accounts.views import decrypt
 from keep.common.utils import absolutize_url
 
@@ -26,7 +26,7 @@ except:
 
 
 # keep-specific mods with common fields for all Keep objects
-class LocalMODS(mods.MODS):
+class LocalMODS(xmlmap.mods.MODS):
     # short-cut to type-specific identifiers
     ark = xmlmap.StringField('mods:identifier[@type="ark"]')
     ark_uri = xmlmap.StringField('mods:identifier[@type="uri"][contains(., "ark:")]')

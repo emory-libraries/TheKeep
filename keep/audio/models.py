@@ -13,12 +13,12 @@ from django.core.urlresolvers import reverse
 from django.db.models import permalink
 
 from eulxml import xmlmap
+from eulxml.xmlmap import mods
 from eullocal.django.taskresult.models import TaskResult
 from eulfedora.models import FileDatastream, XmlDatastream
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 
-from keep import mods
 from keep.collection.models import CollectionObject
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep.common.models import _BaseRights, Rights

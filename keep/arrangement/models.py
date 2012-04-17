@@ -4,9 +4,9 @@ from django.db import models
 from eulfedora.models import FileDatastream, XmlDatastream
 from eulfedora.util import RequestFailed
 from eulxml import xmlmap
+from eulxml.xmlmap import mods
 from eulfedora.rdfns import relsext
 
-from keep import mods
 from keep.collection.models import SimpleCollection
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.models import Rights, FileMasterTech

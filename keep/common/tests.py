@@ -9,8 +9,8 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
 
 from eulfedora.models import XmlDatastream
+from eulxml.xmlmap import mods
 
-from keep import mods
 from keep.audio import models as audiomodels
 from keep.collection.fixtures import FedoraFixtures
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
