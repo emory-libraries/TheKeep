@@ -7,10 +7,10 @@ from django.utils.safestring import mark_safe
 
 from eulfedora.rdfns import relsext as relsextns
 
+from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 
-from keep import mods
 from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionMods, CollectionObject, SimpleCollection
 from keep.common.fedora import Repository

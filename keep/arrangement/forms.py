@@ -1,6 +1,6 @@
 from django import forms
 
-import mods
+from eulxml.xmlmap import mods
 
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
