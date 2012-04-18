@@ -5,10 +5,10 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 
+from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
-from keep import mods
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
