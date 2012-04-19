@@ -70,6 +70,7 @@ class OriginInfoForm(XmlObjectForm):
                           label='Date Issued')
     class Meta:
         model = mods.OriginInfo
+        fields = ['created', 'issued']
 
 
 
