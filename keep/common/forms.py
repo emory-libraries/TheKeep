@@ -98,13 +98,17 @@ class ItemSearch(forms.Form):
                                      ('created', 'Date Created'),  ('last_modified', 'Last Modified'),
                                      ('part', 'Part Note'), ('description', 'General Note'),
                                      ('related_files', 'Related Files'), ('sublocation', 'Sublocation'),
-                                     ('access_code', 'Rights Status')])
+                                     ('type', 'Resource Type'),
+                                     ('access_code', 'Rights Status code'), ('rights', 'Rights Status'),
+                                     ('digitization_purpose', 'Digitization Purpose'),
+                                     ('date_issued', 'Date Issued'),
+                                     ('collection_label', 'Collection'),
+                                     ('duration', 'Audio file duration')])
 
     _display_field_choices = [(k, v) for k,v in display_field_opts.iteritems()]
     display_fields = forms.MultipleChoiceField(_display_field_choices, required=False,
          help_text=mark_safe('''Customize which fields should be displayed in search results.
-         If none are selected, uses default search results format.
-         <br/><i>Note:</i> pid must be included to link to item page.'''))
+         If none are selected, uses default search results format.'''))
     output = forms.ChoiceField([('html', 'html'), ('csv', 'csv')], initial='html', required=False,
          help_text=mark_safe('''Output format.  If csv is selected, all matching rows will be
          selected and output as a downloadable CSV file.  CSV output is only valid when display
