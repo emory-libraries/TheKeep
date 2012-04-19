@@ -55,23 +55,32 @@ def search(request):
         # if user requested specific display fields, handle output display and formatting
         if form.cleaned_data['display_fields']:
             fields = form.cleaned_data['display_fields']
-            solrquery = solrquery.field_limit(fields)
+            # pid and content model are always needed to construct html search results
+            solr_fields = fields + ['pid', 'content_model']
+            solrquery = solrquery.field_limit(solr_fields)
 
             class FieldList(list):
-                def __init__(self, pid=None, values=[]):
+                # extended list  object with pid and content model attributes
+                def __init__(self, pid=None, content_model=None, values=[]):
                     super(FieldList, self).__init__(values)
                     if pid:
                         self.pid = pid
+                    if content_model:
+                        self.content_model = content_model
+                    else:
+                        self.content_model = []
 
-            def field_list(**kwargs): 
-                l = FieldList(pid=kwargs.get('pid', None))
+            def field_list(**kwargs):
+                # method to construct a custom solr result based on the requested field list
+                l = FieldList(pid=kwargs.get('pid', None),
+                              content_model=kwargs.get('content_model', None))
                 for f in fields:
                     val = kwargs.get(f, '')
                     if solr.schema.fields[f].multi_valued:
                         val = '; '.join(val)
                     l.append(val)
                 return l
-                    
+
             solrquery = solrquery.results_as(field_list)
 
             ctx_dict.update({
