@@ -22,8 +22,8 @@ from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
 from eulfedora.util import RequestFailed, ChecksumMismatch
 from eulxml.xmlmap  import load_xmlobject_from_string
+from eulxml.xmlmap import mods
 
-from keep import mods
 from keep.audio import forms as audioforms
 from keep.audio import models as audiomodels
 from keep.audio.feeds import PodcastFeed, feed_items

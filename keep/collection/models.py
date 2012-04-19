@@ -14,7 +14,6 @@ from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eulxml.xmlmap.eadmap import EAD_NAMESPACE, EncodedArchivalDescription
 
-#from keep import mods
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep.common.rdfns import REPO
 from keep.common.utils import solr_interface
