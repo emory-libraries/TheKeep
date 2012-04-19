@@ -1,0 +1,49 @@
+{% extends "site_base.html" %}
+{% load search_utils %} 
+
+{% block page-subtitle %}: Search Results{% endblock %}
+{% block content-title %}Search Results{% endblock %}
+
+{% block content-body %}
+  {{ block.super }}
+
+{# {% include 'snippets/search_info.html' %} #}
+
+{% if page %}
+<p>Displaying item{{ page.object_list|pluralize }}
+{{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
+of {{ page.paginator.count }}.</p>
+
+{#    facet_fields = facet_result.facet_counts.facet_fields #}
+FACETS = {{ page.object_list.facet_counts.facet_fields  }}
+
+
+{# TODO: need a human-readable type so we can determine which display template to use #}
+{# also use for faceting... #}
+
+
+{% for obj in page.object_list %}
+ {% if 'info:fedora/emory-control:Collection-1.1' == obj.content_model.0 %}
+   {% include "collection/snippets/list-collection.html" %}
+ {% else %}
+
+   {% if 'info:fedora/emory-control:EuterpeAudio-1.0' == obj.content_model.0 %}
+     {% include "audio/snippets/list-audio.html" %}
+   {% else %}
+    <p>{{ obj.pid }} {{ obj.title }} {{ obj.source_id }} {{ obj.creator }} {{ obj.content_model }}</p>
+  {% endif %}
+
+ {% endif %}
+{% endfor %}
+
+
+{% else %}
+  <p>No matching items found.</p>
+  <p>By default, search matches whole words only (including any punctuation).
+  You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
+{% endif %}
+
+{% pagination_links page show_pages search_opts %} 
+
+
+{% endblock %}

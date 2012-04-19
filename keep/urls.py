@@ -23,7 +23,9 @@ urlpatterns = patterns('',
     # index data for solr                       
     url(r'^indexdata/', include('eulfedora.indexdata.urls', namespace='indexdata')),
 
-    url(r'^', include('keep.common.urls', namespace='common')),
+    url(r'^common/', include('keep.common.urls', namespace='common')),
+
+    url(r'^search/', include('keep.search.urls', namespace='search')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

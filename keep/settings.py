@@ -39,6 +39,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context", # include app version
+
+    "keep.search.context_processors.search",  #  search form on every page
 )
 
 MIDDLEWARE_CLASSES = (
@@ -74,6 +76,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.humanize',
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
@@ -85,6 +88,7 @@ INSTALLED_APPS = (
     'keep.audio',
     'keep.collection',
     'keep.common',
+    'keep.search',
     'djcelery',
 )
 
