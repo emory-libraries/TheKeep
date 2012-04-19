@@ -25,7 +25,7 @@ of {{ page.paginator.count }}.</p>
     <tr>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
-      
+
       {# generate appropriate object url if possible, for either display mode #}
       {% if obj.pid %} 
         {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
@@ -85,13 +85,14 @@ of {{ page.paginator.count }}.</p>
     </tr>
   {% endfor %}
 </table>
+
+{% pagination_links page show_pages search_opts %} 
+
 {% else %}
   <p>No matching objects found.</p>
   <p>By default, search matches whole words only (including any punctuation).
   You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
 {% endif %}
-
-{% pagination_links page show_pages search_opts %} 
 
 {# re-display bound form so current search can be altered #}
 <h3><a id="search-toggle">Revise your search ></a></h3>
