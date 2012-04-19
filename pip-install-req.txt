@@ -17,3 +17,4 @@ poster
 -e git://github.com/tow/sunburnt.git@0faa3ed842d00661ec50b9cb96b41a6144ab3e6f#egg=sunburnt
 httplib2
 unicodecsv
+south
