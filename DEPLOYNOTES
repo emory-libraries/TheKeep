@@ -294,6 +294,19 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 -------------
 
+Release 1.3 - Search-based Report generation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Fabric deploy script has been updated to follow latest fabfile best
+  practices & local conventions.  Run ``fab -l`` and ``fab -d deploy``
+  for usage details.
+* The Keep has been updated to work with Solr 3.3.  Use the included
+  solr configuration configurations or the Solr tarball created by the
+  fabric deploy script to create a new Solr core and then use
+  eulindexer to index all Keep content.
+
+
+
 Release 1.2 - Verdict App
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Configure the LOGGING section in the localsettings.py file on the remote server
