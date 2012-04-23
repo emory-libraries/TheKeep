@@ -13,6 +13,7 @@ Release 1.3
   fields and an output mode (html or csv), in order to dynamically
   generate a report on a specific group of items.
 * Updated to Django 1.3.1, Solr 3.3, httplib2 0.7.4
+* 'old-dm' migration code has been removed.
 
 
 Release 1.2.2
