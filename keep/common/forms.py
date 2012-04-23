@@ -126,6 +126,19 @@ class ItemSearch(forms.Form):
     'list of fields that are used to format output display'
 
 
+    def clean(self):
+        # custom form validation
+        # csv output mode is only valid if display fields are selected
+        cleaned_data = super(ItemSearch, self).clean()
+        output_mode = cleaned_data.get('output')
+        display_fields = cleaned_data.get('display_fields')
+        
+        if output_mode == 'csv' and not display_fields:
+            raise forms.ValidationError('You must select display fields for ' +
+                                        'CSV output.')
+        
+        return cleaned_data
+
 
     def search_options(self, request=None):
         '''Method to generate a dictionary of search options that can

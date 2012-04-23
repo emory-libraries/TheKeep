@@ -263,3 +263,7 @@ ul.messages li {
 #advanced-search select {
    width: 75%;
 }
+
+.search-results {
+    overflow-x: auto;
+}

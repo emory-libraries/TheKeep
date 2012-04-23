@@ -1,5 +1,5 @@
+from datetime import date
 import logging
-
 from exceptions import ValueError
 from eulcommon.searchutil import pages_to_show
 from django.conf import settings
@@ -92,6 +92,8 @@ def search(request):
 
             if form.cleaned_data['output'] == 'csv':
                 response = HttpResponse(mimetype='text/csv')
+                response['Content-Disposition'] = 'attachment; filename=Keep-report_%s.csv' \
+                                           % date.today()
                 writer = unicodecsv.writer(response)
                 # write out list of field labels
                 writer.writerow(ctx_dict['display_labels'])

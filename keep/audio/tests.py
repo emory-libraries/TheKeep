@@ -1771,6 +1771,10 @@ class TestAudioObject(KeepTestCase):
                          'related_files should not be set when not present in sourcetech')
         self.assert_('sublocation' not in desc_data,
                          'sublocation should not be set when not present in sourcetech')
+        self.assert_('ip_note' not in desc_data,
+                         'ip_note should not be set when not present in rights metadata')
+        self.assert_('copyright_date' not in desc_data,
+                         'copyright_date should not be set when not present in rights metadata')
 
         # additional fields that could be present
         obj.mods.content.dm1_id = '0103'
@@ -1783,6 +1787,8 @@ class TestAudioObject(KeepTestCase):
         obj.rights.content.create_access_status()
         obj.rights.content.access_status.code = '8'
         obj.rights.content.block_external_access = False
+        obj.rights.content.copyright_date = '2001-05'
+        obj.rights.content.ip_note = 'donor agreement caveat'
         obj.compressed_audio.info.size = 13546
         obj.compressed_audio.mimetype = 'application/mpeg'
         obj.digitaltech.content.duration = 36
@@ -1805,6 +1811,10 @@ class TestAudioObject(KeepTestCase):
                          'access code should be included in index data when set')
         self.assertEqual(obj.researcher_access, desc_data['researcher_access'],
                          'researcher_access should be set based on access code & override')
+        self.assertEqual(obj.rights.content.copyright_date, desc_data['copyright_date'],
+                         'copyright date should be included in index data when set')
+        self.assertEqual(obj.rights.content.ip_note, desc_data['ip_note'],
+                         'ip_note should be included in index data when set')
         self.assertEqual(obj.sourcetech.content.related_files, desc_data['related_files'][0],
                          'related_files should be set when present in sourcetech')
         self.assertEqual(obj.sourcetech.content.sublocation, desc_data['sublocation'],
