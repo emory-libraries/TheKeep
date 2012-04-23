@@ -107,7 +107,9 @@ class ItemSearch(forms.Form):
                           'digitization_purpose': 'Digitization Purpose',
                           'date_issued': 'Date Isssued',
                           'collection_label': 'Collection',
-                          'duration': 'Audio file duration'}
+                          'duration': 'Audio file duration',
+                          'ip_note': 'IP Note',
+                          'copyright_date': 'Copyright Date'}
 
     # generate a list of tuples for ChoiceField, sorted by display label
     _display_field_choices = sorted(display_field_opts.iteritems(),
