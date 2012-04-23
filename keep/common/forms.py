@@ -94,7 +94,9 @@ class ItemSearch(forms.Form):
 
 
     # fields that can be selected to control search display output
-    display_field_opts = {'pid': 'PID', 'title': 'Title', # ? ('ark_uri', 'ARK'),
+    display_field_opts = {'pid': 'PID', 		# ? ('ark_uri', 'ARK'),
+                          'title': 'Title',
+                          'dm1_id': 'DM ID/Other Id',
                           'created': 'Date Created',
                           'last_modified': 'Last Modified',
                           'part': 'Part Note',
