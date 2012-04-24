@@ -3,6 +3,11 @@
 CHANGELOG
 =========
 
+Release 1.4
+-----------
+
+* Now using Django staticfiles app to manage static site content.
+
 Release 1.3
 -----------
 
