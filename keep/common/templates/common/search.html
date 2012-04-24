@@ -1,4 +1,5 @@
 {% extends "site_base.html" %}
+{% load humanize %}
 {% load fedora %}
 {% load search_utils %} 
 
@@ -13,7 +14,9 @@
 {% if results %}
 <p>Displaying record{{ page.object_list|pluralize }}
 {{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
-of {{ page.paginator.count }}.</p>
+of {{ page.paginator.count|intcomma }}.</p>
+
+<div class="search-results">
 
 <table>
   {% if display_labels %} {# custom labels for selected fields #}
@@ -25,7 +28,7 @@ of {{ page.paginator.count }}.</p>
     <tr>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
-      
+
       {# generate appropriate object url if possible, for either display mode #}
       {% if obj.pid %} 
         {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
@@ -40,7 +43,7 @@ of {{ page.paginator.count }}.</p>
         {% for val in obj %}
         <td>
           {% if forloop.counter == 1 and obj_url %}
-            <a href="{{ obj_url }}">{{ val }}</a> {# make first value a link if possible #}
+            <a href="{{ obj_url }}">{{ val|default:"(no value)" }}</a> {# make first value a link if possible #}
           {% else %}
             {{ val }}
           {% endif %}
@@ -85,13 +88,16 @@ of {{ page.paginator.count }}.</p>
     </tr>
   {% endfor %}
 </table>
+
+</div>
+
+{% pagination_links page show_pages search_opts %} 
+
 {% else %}
   <p>No matching objects found.</p>
   <p>By default, search matches whole words only (including any punctuation).
   You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
 {% endif %}
-
-{% pagination_links page show_pages search_opts %} 
 
 {# re-display bound form so current search can be altered #}
 <h3><a id="search-toggle">Revise your search ></a></h3>

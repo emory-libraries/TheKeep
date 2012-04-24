@@ -221,14 +221,14 @@ def configure_site():
         sudo('cp localsettings.py %(build_dir)s/%(project)s/localsettings.py' % env,
              user=env.remote_acct)
 
-    with cd('%(remote_path)s/%(build_dir)s' % env):
-        with prefix('source env/bin/activate'):
-            with bootstrap_unix_env():
-                sudo('python %(project)s/manage.py collectstatic --noinput' % env,
-                     user=env.remote_acct)
-                # make static files world-readable
-                sudo('chmod -R a+r `env DJANGO_SETTINGS_MODULE="%(project)s.settings" python -c "from django.conf import settings; print settings.STATIC_ROOT"`' % env,
-                     user=env.remote_acct)
+    # TODO: re-enable once app has been switched over to staticfiles
+    # with cd('%(remote_path)s/%(build_dir)s' % env):
+    #     with prefix('source env/bin/activate'):
+    #         sudo('python %(project)s/manage.py collectstatic --noinput' % env,
+    #              user=env.remote_acct)
+    #         # make static files world-readable
+    #         sudo('chmod -R a+r `env DJANGO_SETTINGS_MODULE="%(project)s.settings" python -c "from django.conf import settings; print settings.STATIC_ROOT"`' % env,
+    #              user=env.remote_acct)
 
 def update_links():
     'Update current/previous symlinks on the remote server.'

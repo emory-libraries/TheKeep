@@ -1,3 +1,4 @@
+from datetime import date
 import logging
 from mock import Mock, MagicMock, patch
 import os
@@ -500,11 +501,23 @@ class SearchTest(KeepTestCase):
                                                 'audio-output': 'csv'})
         self.assertEqual('text/csv', response['Content-Type'],
                          'response should return text/csv content when csv output is requested')
+
+        self.assert_('attachment; filename=' in response['Content-Disposition'],
+                     'response should specify a default filename in content-disposition header')
+        self.assert_(date.today().isoformat() in response['Content-Disposition'],
+                     'default filename in content-disposition header should include current date')
+
         self.assertContains(response, ','.join(['PID', 'Title', 'General Note']),
                             msg_prefix='response should include human-readable column labels')
+
         # NOTE: not sure how to adapt solr mock to test actual
         # content, conversion to list, etc...
-    
+
+
+        # test validation - csv only valid with display fields
+        response = self.client.get(search_url, {'audio-output': 'csv'})
+        self.assertContains(response, 'You must select display fields for CSV output',
+                            msg_prefix='validation error is displayed when CSV is selected without display fields')    
 
 
 class ItemSearchTest(TestCase):

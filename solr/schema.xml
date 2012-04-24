@@ -123,7 +123,9 @@ see:
     <field name="access_copy_size" type="integer" indexed="true" stored="true" multiValued="false"/>
     <field name="access_copy_mimetype" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="duration" type="integer" indexed="true" stored="true" multiValued="false"/>
-    <field name="sublocation" type="text" indexed="true" stored="true" multiValued="false"/>
+    <field name="sublocation" type="text" indexed="true" stored="true" multiValued="false"/>    
+    <field name="copyright_date" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="ip_note" type="text" indexed="true" stored="true" multiValued="true"/>
     
     <!-- ArrangementObject -->
     <field name="arrangement_id" type="string" indexed="false" stored="true" multiValued="false"/>
@@ -189,6 +191,8 @@ see:
   <copyField source="source" dest="text"/>
   <copyField source="subject" dest="text"/>
   <copyField source="type" dest="text"/>
+  <copyField source="sublocation" dest="text"/>
+  <copyField source="ip_note" dest="text"/>
    <!-- keep-specific fields -->
    <copyField source="dm1_id" dest="text"/>
    <copyField source="digitization_purpose" dest="text"/>
@@ -201,5 +205,5 @@ see:
    <copyField source="digitization_purpose" dest="notes"/>
    <copyField source="related_files" dest="notes"/>
    <copyField source="archive_label" dest="text"/>
-
+   <copyField source="ip_note" dest="notes"/>
 </schema>

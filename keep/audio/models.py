@@ -501,7 +501,13 @@ class AudioObject(DigitalObject):
         # rights access status code
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
-
+        # copyright date from rights metadata
+        if self.rights.content.copyright_date:
+            data['copyright_date'] = self.rights.content.copyright_date
+        # ip note from rights metadata
+        if self.rights.content.ip_note:
+            data['ip_note'] = self.rights.content.ip_note
+            
         # boolean values that should always be available
         data.update({
             # should this item be accessible to researchers?
