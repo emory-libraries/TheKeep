@@ -304,7 +304,24 @@ Release 1.3 - Search-based Report generation
   solr configuration configurations or the Solr tarball created by the
   fabric deploy script to create a new Solr core and then use
   eulindexer to index all Keep content.
+* Now that the ``old_dm`` migration has been completed, migration code
+  has been removed.  Database configurations for **old_dm** and
+  **accessions** databases should be removed from ``localsettings.py``.
+* We are now using :mod:`south` to manage database migrations for
+  emory_ldap (part of :mod:`eullocal`) and :mod:`djcelery`.  To update
+  an existing database, you will need a few extra steps.  First, run
+  ``syncdb`` to create the database tables for :mod:`south`. Then, to
+  update emory_ldap, you will need to fake the initial migration, run
+  migrations 0002 and 0003 normally, and then fake step 0004:: 
+ 
+    $ python manage.py migrate --fake emory_ldap 0001
+    $ python manage.py migrate emory_ldap 0003
+    $ python manage.py migrate --fake emory_ldap 0004
 
+   For :mod:`djcelery`, all djcelery_ and celery_ tables should be
+   dropped from the database and recreated via migrate::
+
+    $ python manage.py migrate djcelery
 
 
 Release 1.2 - Verdict App

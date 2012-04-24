@@ -14,7 +14,7 @@ from django.utils import simplejson
 
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
-
+from eulxml.xmlmap import mods
 
 from keep.arrangement.models import ArrangementObject
 from keep.collection.fixtures import FedoraFixtures
@@ -24,7 +24,6 @@ from keep.collection.models import CollectionObject, CollectionMods, FindingAid,
 from keep.collection.views import _objects_by_type
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.rdfns import REPO
-from keep import mods
 from keep.testutil import KeepTestCase
 
 logger = logging.getLogger(__name__)

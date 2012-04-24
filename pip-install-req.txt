@@ -1,8 +1,8 @@
 django==1.3.1
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.17.0-dev.tar.gz
 #eulxml
-# eulxml 0.17 for lazy-loading schema; not yet officially released
--e git://github.com/emory-libraries/eulxml.git@release/0.17.0#egg=eulxml
+# eulxml 0.17 for lazy-loading schema
+eulxml>=0.17.0
 eulfedora>=0.18.1
 eulexistdb>=0.15.1
 eulcommon>=0.16.2
@@ -17,3 +17,4 @@ poster
 -e git://github.com/tow/sunburnt.git@0faa3ed842d00661ec50b9cb96b41a6144ab3e6f#egg=sunburnt
 httplib2
 unicodecsv
+south

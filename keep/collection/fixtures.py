@@ -1,8 +1,9 @@
 from django.conf import settings
+from eulxml.xmlmap import mods
 
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
-from keep import mods
+
 
 # fixture objects for use with unit tests
 # objects are generated each time, so content is reliable

@@ -3,10 +3,10 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 import django.forms
-# NOTE: using SortedDict because OrderedDict is not available until Python2.7 
-from django.utils.datastructures import SortedDict
 from django.utils.safestring import mark_safe
 from eulcommon.djangoextras.formfields import DynamicChoiceField
+import operator
+
 from keep.collection.forms import archive_choices
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.models import Rights
@@ -94,18 +94,28 @@ class ItemSearch(forms.Form):
 
 
     # fields that can be selected to control search display output
-    display_field_opts = SortedDict([('pid', 'PID'), ('title', 'Title'), # ? ('ark_uri', 'ARK'),
-                                     ('created', 'Date Created'),  ('last_modified', 'Last Modified'),
-                                     ('part', 'Part Note'), ('description', 'General Note'),
-                                     ('related_files', 'Related Files'), ('sublocation', 'Sublocation'),
-                                     ('type', 'Resource Type'),
-                                     ('access_code', 'Rights Status code'), ('rights', 'Rights Status'),
-                                     ('digitization_purpose', 'Digitization Purpose'),
-                                     ('date_issued', 'Date Issued'),
-                                     ('collection_label', 'Collection'),
-                                     ('duration', 'Audio file duration')])
+    display_field_opts = {'pid': 'PID', 		# ? ('ark_uri', 'ARK'),
+                          'title': 'Title',
+                          'dm1_id': 'DM ID/Other Id',
+                          'created': 'Date Created',
+                          'last_modified': 'Last Modified',
+                          'part': 'Part Note',
+                          'description': 'General Note',
+                          'related_files': 'Related Files',
+                          'sublocation': 'Sublocation',
+                          'type': 'Resource Type',
+                          'access_code': 'Rights Status code',
+                          'rights': 'Rights Status',
+                          'digitization_purpose': 'Digitization Purpose',
+                          'date_issued': 'Date Isssued',
+                          'collection_label': 'Collection',
+                          'duration': 'Audio file duration',
+                          'ip_note': 'IP Note',
+                          'copyright_date': 'Copyright Date'}
 
-    _display_field_choices = [(k, v) for k,v in display_field_opts.iteritems()]
+    # generate a list of tuples for ChoiceField, sorted by display label
+    _display_field_choices = sorted(display_field_opts.iteritems(),
+                                  key=operator.itemgetter(1))
     display_fields = forms.MultipleChoiceField(_display_field_choices, required=False,
          help_text=mark_safe('''Customize which fields should be displayed in search results.
          If none are selected, uses default search results format.'''))
@@ -117,6 +127,19 @@ class ItemSearch(forms.Form):
     display_output_fields = ['display_fields', 'output']
     'list of fields that are used to format output display'
 
+
+    def clean(self):
+        # custom form validation
+        # csv output mode is only valid if display fields are selected
+        cleaned_data = super(ItemSearch, self).clean()
+        output_mode = cleaned_data.get('output')
+        display_fields = cleaned_data.get('display_fields')
+        
+        if output_mode == 'csv' and not display_fields:
+            raise forms.ValidationError('You must select display fields for ' +
+                                        'CSV output.')
+        
+        return cleaned_data
 
 
     def search_options(self, request=None):
