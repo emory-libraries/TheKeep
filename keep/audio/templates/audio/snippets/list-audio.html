@@ -1,0 +1,22 @@
+{% load humanize %}
+<div>
+ <a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
+  {% if obj.collection_id %}
+    (part of <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{{ obj.collection_label }}</a>)
+  {% endif %} 
+
+  <p> {{ obj.duration|intcomma }}s
+  {% if obj.has_original %}
+     <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
+  | 
+  {% endif %}
+  {% if obj.has_access_copy %}
+    <a href="{% url audio:download-compressed-audio obj.pid 'mp3' %}">access copy</a>
+    {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
+    {# TODO: include mimetype icon also? #}
+  |
+  {% endif %}
+  {{ obj.rights|join:', ' }}
+  <br/>
+  Uploaded {{ obj.created|naturalday }}; last modified {{ obj.last_modified|naturalday }}.</p>
+</div>

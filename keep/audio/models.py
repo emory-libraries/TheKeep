@@ -451,6 +451,7 @@ class AudioObject(DigitalObject):
 
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(AudioObject, self).index_data()
+        data['object_type'] = 'audio'
         if self.collection_uri is not None:
             data['collection_id'] = self.collection_uri
             try:

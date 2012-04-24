@@ -1,5 +1,11 @@
 {% extends "site_base.html" %}
 {% load search_utils %} 
+{% load humanize %} 
+
+{% block style %}
+    {{ block.super }}
+   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/search.css" />
+{% endblock %}
 
 {% block page-subtitle %}: Search Results{% endblock %}
 {% block content-title %}Search Results{% endblock %}
@@ -9,41 +15,62 @@
 
 {# {% include 'snippets/search_info.html' %} #}
 
-{% if page %}
-<p>Displaying item{{ page.object_list|pluralize }}
-{{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
-of {{ page.paginator.count }}.</p>
+{% if not form.is_valid %} {# invalid search #}
+  There was an error with your search.
+  {{ form.errors.keyword }}
 
-{#    facet_fields = facet_result.facet_counts.facet_fields #}
-FACETS = {{ page.object_list.facet_counts.facet_fields  }}
+{% else %}  {# valid search submission #}
 
+  {% if page.object_list %}
+  <p>Displaying item{{ page.object_list|pluralize }}
+     {{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
+    of {{ page.paginator.count|intcomma }}.</p>
 
-{# TODO: need a human-readable type so we can determine which display template to use #}
-{# also use for faceting... #}
+  <div id="search-key">
+    <div class="search-result audio">audio</div>
+    <div class="search-result collection">collection</div>
+    <div class="search-result">other</div>
+  </div>
 
+  {#    facet_fields = facet_result.facet_counts.facet_fields #}
+  {# TODO: FACETS = {{ page.object_list.facet_counts.facet_fields  }} #}
 
-{% for obj in page.object_list %}
- {% if 'info:fedora/emory-control:Collection-1.1' == obj.content_model.0 %}
-   {% include "collection/snippets/list-collection.html" %}
- {% else %}
+  {% for obj in page.object_list %}
+  <div class="search-result {{ obj.object_type }}">
+    {% if show_relevance and obj.score %}
+      <div class="relevance">
+        <div class="score" style="width:{% widthratio obj.score  1 100 %}px">&nbsp;</div>
+        {# display numerical score in debug mode (e.g. to test index configuration) #}
+        {% if debug %}{{ obj.score }}{% endif %}
+      </div>	
+    {% endif %}
 
-   {% if 'info:fedora/emory-control:EuterpeAudio-1.0' == obj.content_model.0 %}
-     {% include "audio/snippets/list-audio.html" %}
-   {% else %}
-    <p>{{ obj.pid }} {{ obj.title }} {{ obj.source_id }} {{ obj.creator }} {{ obj.content_model }}</p>
+    {# render the appropriate list template based on object type #}
+    {% if obj.object_type == 'collection' %}
+      {% include "collection/snippets/list-collection.html" %}
+    {% endif %}
+    {% if obj.object_type == 'audio' %}
+      {% include "audio/snippets/list-audio.html" %}
+    {% endif %}
+    {% if obj.object_type == 'born-digital' %}
+      {% include "arrangement/snippets/list-arrangement.html" %}
+    {% endif %}
+    {# fall-back display #}
+    {% if not obj.object_type or obj.object_type not in known_types %}
+      <p>{{ obj.pid }} {{ obj.title }} {{ obj.source_id }} {{ obj.creator }} {{ obj.content_model }}</p>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+
+  {% pagination_links page show_pages search_opts %} 
+
+  {% else %}
+    <p>No matching items found.</p>
+    <p>By default, search matches whole words only (including any punctuation).
+    You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
   {% endif %}
 
- {% endif %}
-{% endfor %}
-
-
-{% else %}
-  <p>No matching items found.</p>
-  <p>By default, search matches whole words only (including any punctuation).
-  You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
-{% endif %}
-
-{% pagination_links page show_pages search_opts %} 
-
+{% endif %} {# valid search #}
 
 {% endblock %}

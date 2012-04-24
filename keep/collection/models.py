@@ -74,6 +74,8 @@ class SimpleCollection(DigitalObject):
 
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(SimpleCollection, self).index_data()
+        data['object_type'] = 'collection'
+        # FIXME: do we need to differentiate collection vs. simple collection ? 
 
         if self.rels_ext is not None:
             try:
@@ -363,6 +365,7 @@ class CollectionObject(DigitalObject):
         method to include a few additional fields specific to Keep
         Collection objects.'''
         data = super(CollectionObject, self).index_data_descriptive()
+        data['object_type'] = 'collection'
         if self.collection_id is not None:
             data.update(self._index_data_archive())
                 
