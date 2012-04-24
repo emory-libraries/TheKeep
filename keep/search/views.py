@@ -11,6 +11,9 @@ from keep.search.forms import KeywordSearch
 
 @staff_member_required  # FIXME: not redirecting to correct login page
 def keyword_search(request):
+    '''Combined keyword search across all :mod:`keep` repository
+    items.
+    '''
     searchform = KeywordSearch(request.GET)
     solr = solr_interface()
 

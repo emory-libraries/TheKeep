@@ -29,5 +29,7 @@ class SolrSearchField(forms.CharField):
 
 
 class KeywordSearch(forms.Form):
+    '''Simple search form with a single unrequired
+    :class:`SolrSearchField`.'''
     keyword = SolrSearchField(required=False)
         
