@@ -24,7 +24,9 @@
   {% if page.object_list %}
   <p>Displaying item{{ page.object_list|pluralize }}
      {{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
-    of {{ page.paginator.count|intcomma }}.</p>
+    of {{ page.paginator.count|intcomma }}.
+    Results sorted by {% if show_relevance %}relevance{% else %}date uploaded{% endif %}.
+  </p>
 
   <div id="search-key">
     <div class="search-result audio">audio</div>

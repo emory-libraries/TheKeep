@@ -31,5 +31,13 @@ class SolrSearchField(forms.CharField):
 class KeywordSearch(forms.Form):
     '''Simple search form with a single unrequired
     :class:`SolrSearchField`.'''
-    keyword = SolrSearchField(required=False)
+    # usage information with search details
+    help_info = '''<p>Search across text and id fields in all content.</p>
+<p>Search matches keywords by default; use quotes <b>" "</b> for exact phrases.</p>
+<p>Wildcards <b>*</b> and <b>?</b> may be used anywhere except the beginning of a word.</p>
+<p>Use item type (<b>collection</b>, <b>audio</b>, <b>born-digital</b>) to narrow your search.</p>
+<p>Search with no terms to find all content, sorted by most recently uploaded.</p>
+    '''
+    keyword = SolrSearchField(required=False,
+                              help_text=help_info)
         

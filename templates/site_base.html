@@ -8,6 +8,12 @@
    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/local.css" />
 {% endblock %}
 
+{% block scripts %}
+    {{ block.super }}
+    <script type="text/javascript" src="{{ MEDIA_URL }}/js/jquery.tooltips.js"></script>
+    <script type="text/javascript" src="{{ MEDIA_URL }}/js/local.js"></script>
+{% endblock %}
+
 {% block site-name %}
 <img id="keep-logo" src="{{ MEDIA_URL }}/images/keep.png" />
 The Keep
@@ -41,8 +47,13 @@ The Keep
     <h2>Search</h2>
     <form method="get" action="{% url search:keyword %}">
     {{ keyword_search.keyword }}
+
       <input class="form-submit" type="submit" value="Search" />
+      <a class="tip" title="{{ keyword_search.keyword.help_text }}" >i</a>
+
     </form>
+
+    
   </div>
   {% endif %}
 

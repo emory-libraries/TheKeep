@@ -267,3 +267,24 @@ ul.messages li {
 .search-results {
     overflow-x: auto;
 }
+
+a.tip {
+  background-image: url('../images/icon-question.png');
+  width: 13px;
+  height: 13px;
+  display: inline-block;
+}
+
+#keyword-search .tip {
+    float: right;
+}
+
+.tooltip {
+    padding: 5px;
+    border:1px solid #cc9933;
+    background-color:#ffffcc;
+    text-align: left;
+}
+.tooltip p {
+    margin: 0px;
+}

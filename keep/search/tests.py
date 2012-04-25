@@ -94,6 +94,8 @@ class SearchViewsTest(KeepTestCase):
         # check context params ?
 
         # test response content
+        self.assertContains(response, 'sorted by date uploaded')
+        
         self.assertContains(response, reverse('audio:edit',
                                               kwargs={'pid': 'audio:1'}),
              msg_prefix='search results should link to audio edit form for audio item')
@@ -131,5 +133,5 @@ class SearchViewsTest(KeepTestCase):
             msg_prefix='search term should be displayed on results page')
         self.assertContains(response, 'expurgation',
             msg_prefix='search term should be displayed on results page')
-
+        self.assertContains(response, 'sorted by relevance')
 
