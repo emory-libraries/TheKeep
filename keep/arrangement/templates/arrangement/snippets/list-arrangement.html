@@ -1,0 +1,18 @@
+{% load humanize %}
+<div>
+  <a href="{% url arrangement:edit obj.pid %}"> 
+   {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}  
+ {% firstof obj.title obj.label '(no title)' %}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
+  {% if obj.collection_id or obj.simpleCollection_id %}
+    (part of 
+     {% if obj.collection_id %}
+       <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{{ obj.collection_label }}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
+     {% if obj.simpleCollection_label %}
+       {{ obj.simpleCollection_label|join:"; " }}{% endif %})
+  {% endif %} 
+
+  {{ obj.rights|join:', ' }}
+  <p>Uploaded {{ obj.created|naturalday }}; 
+     last modified {{ obj.last_modified|naturalday }}.</p>
+
+</div>

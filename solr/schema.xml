@@ -46,6 +46,9 @@ see:
 
     <!-- standard fedora fields that should apply to all objects -->
     <field name="content_model" type="string" indexed="true" stored="true" multiValued="true"/>
+    <!-- human-readable object type (e.g., audio, collection, etc.) -->
+    <field name="object_type" type="string" indexed="true" stored="true" multiValued="false"/>
+
     <!-- treat dates as string or date ? -->
     <field name="label" type="string" indexed="true" stored="true"/>
     <field name="created" type="date" indexed="true" stored="true"/>
@@ -74,9 +77,6 @@ see:
     <field name="source" type="text" indexed="true" stored="true" multiValued="true"/>
     <field name="subject" type="text" indexed="true" stored="true" multiValued="true"/>
     <field name="type" type="text" indexed="true" stored="true" multiValued="true"/>
-    <field name="isMemberOf" type="string" indexed="false" stored="true" multiValued="true"/>
-    <field name="isMemberOfCollection" type="string" indexed="false" stored="true" multiValued="false"/>
-    <field name="dsids" type="string" indexed="false" stored="true" multiValued="true"/>
 
     <!-- Fedora Relations -->
     <field name="isPartOf" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -198,6 +198,9 @@ see:
    <copyField source="digitization_purpose" dest="text"/>
    <copyField source="part" dest="text"/>
    <copyField source="collection_label" dest="text"/>
+   <copyField source="object_type" dest="text"/>
+   <copyField source="sublocation" dest="text"/>
+   <copyField source="ip_note" dest="text"/>
    <!-- copy other dates into common date field -->
    <copyField source="created" dest="date"/>
    <!-- audio note fields -->

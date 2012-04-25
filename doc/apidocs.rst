@@ -1,8 +1,13 @@
 :mod:`keep` Code Documentation for The Keep
 ===========================================
 
-Collections
------------
+.. automodule:: keep
+
+
+Collection
+----------
+.. automodule:: keep.collection
+
 Django module for creating, editing, and searching Collection objects, which
 are used to aggregate audio content.
 
@@ -34,6 +39,8 @@ Context Processors
 
 Audio
 -----
+.. automodule:: keep.audio
+
 Django module for uploading audio content (either single files or in batches)
 for ingest into the repository, with functionality for editing metadata, and
 searching audio objects.
@@ -77,6 +84,7 @@ Views
 
 Common code
 -----------
+.. automodule:: keep.common
 
 This is a module of common code and utility methods used by multiple apps.  It
 is placed in a common module for convenience (including simplifying
@@ -95,4 +103,26 @@ MODS
 Utilities
 ^^^^^^^^^
 .. automodule:: keep.common.utils
+    :members:
+
+
+Search
+------
+
+.. automodule:: keep.search 
+
+
+Forms
+^^^^^
+.. automodule:: keep.search.forms
+    :members:
+
+Views
+^^^^^^
+.. automodule:: keep.search.views
+    :members:
+
+Context Processors
+^^^^^^^^^^^^^^^^^^
+.. automodule:: keep.search.context_processors
     :members:

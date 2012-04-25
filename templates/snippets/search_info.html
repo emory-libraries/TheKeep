@@ -1,7 +1,13 @@
-{# display search terms for a search results page #}
-{# expects a dictionary search_info with field names and value or collection dictionary #}
-{% if search_info %}
-  <p>Results for
+{% comment %} Display search terms for a search results page.
+ Expects a dictionary search_info with field names and value or collection dictionary
+ and/or a list search_terms with a list of keyword terms or phrases.
+{% endcomment %}
+{% if search_info or search_terms %}
+  <p>Results for  
+    {% for term in search_terms %}
+      <b>{{ term }}</b>{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    {% if search_terms and search_info %}, {% endif %}
     {% for field, val in search_info.iteritems %}
       {{ field }}:
       {# link to regular collections, but not to top-level collections/owning repos #}

@@ -85,6 +85,9 @@ class ArrangementObject(DigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(ArrangementObject, self).index_data()
 
+        data['object_type'] = 'born-digital'  # ??
+
+        
         #Collection Info
         collection = list(self.rels_ext.content.objects(self.uriref, relsext.isMemberOf))
         if collection:
@@ -105,7 +108,7 @@ class ArrangementObject(DigitalObject):
 
         #Arrangement unique id
         try:
-            if self.filetech.content.file:
+            if self.filetech.content.file and self.filetech.content.file[0].local_id:
                 data["arrangement_id"] = self.filetech.content.file[0].local_id
         except Exception as e:
             logging.error("Could not get Arrangement_Id for %s: %s" % self.pid, e)

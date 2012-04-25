@@ -36,6 +36,16 @@ The Keep
 
 {% block sidebar-left %}
  {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
+  {% if keyword_search %}    
+  <div id="keyword-search" class="search">
+    <h2>Search</h2>
+    <form method="get" action="{% url search:keyword %}">
+    {{ keyword_search.keyword }}
+      <input class="form-submit" type="submit" value="Search" />
+    </form>
+  </div>
+  {% endif %}
+
   {% if item_search %}
     {% include 'audio/snippets/search_form.html' %}
   {% endif %}

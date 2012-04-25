@@ -1,0 +1,58 @@
+.search-result {
+    border-bottom: 1px solid #cccccc;
+    margin-bottom: 5px;
+    padding: 5x;
+    background-repeat: no-repeat;
+    background-image: url('../images/file.png');
+}
+
+.search-result > * {
+   margin-left: 20px;
+}
+
+.search-result p {
+    margin: 0px;
+}
+
+.search-result.audio {
+    background-image: url('../images/sound.png');
+}
+.search-result.collection {
+    background-image: url('../images/full-box.png');
+}
+
+#search-key {
+    margin: auto;
+    border: 2px solid #cccccc;
+    margin-bottom: 8px;
+    padding: 5px;
+    padding-bottom: 3px;
+    width: 50%;
+    line-height: 18px;
+}
+#search-key .search-result {
+    border-bottom: none;
+    display: inline-block;
+    text-indent: 20px;
+    margin-left: 8px;
+}
+
+.relevance {
+     float: right;
+     margin-top: 5px;
+     border: 1px solid #002878;
+     width: 2cm;
+     height: 8px;
+     background-color: #eeeeee;
+}
+#relevance-label {
+     float: right;
+     width: 2cm;
+}
+
+.score {
+     max-width: 2cm;
+     background-color: #6384c6;
+     height: 8px;
+}
+
