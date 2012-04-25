@@ -13,7 +13,7 @@
 {% block content-body %}
   {{ block.super }}
 
-{# {% include 'snippets/search_info.html' %} #}
+  {% include 'snippets/search_info.html' %}
 
 {% if not form.is_valid %} {# invalid search #}
   There was an error with your search.
@@ -32,8 +32,7 @@
     <div class="search-result">other</div>
   </div>
 
-  {#    facet_fields = facet_result.facet_counts.facet_fields #}
-  {# TODO: FACETS = {{ page.object_list.facet_counts.facet_fields  }} #}
+  {# FACETS TODO {{ page.object_list.facet_counts.facet_fields  }} #}
 
   {% for obj in page.object_list %}
   <div class="search-result {{ obj.object_type }}">

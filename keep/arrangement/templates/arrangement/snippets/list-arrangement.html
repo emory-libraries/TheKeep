@@ -1,6 +1,6 @@
 {% load humanize %}
 <div>
-  <a href="{# {% url arrangement:edit obj.pid %} #}">  {# FIXME #}
+  <a href="{% url arrangement:edit obj.pid %}"> 
    {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}  
  {% firstof obj.title obj.label '(no title)' %}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
   {% if obj.collection_id or obj.simpleCollection_id %}

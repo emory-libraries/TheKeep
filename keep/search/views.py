@@ -22,8 +22,7 @@ def keyword_search(request):
         terms = searchform.cleaned_data['keyword']
 
         # search on the keyword terms and sort by relevance
-        solrquery = solr.query(*terms).sort_by('-score').sort_by('-created') \
-                    	.field_limit(score=True) \
+        solrquery = solr.query(*terms) \
                     	.facet_by(['collection_label', 'archive_short_name',
                                    'content_model', 'object_type'])
 
@@ -52,7 +51,8 @@ def keyword_search(request):
         show_pages = pages_to_show(paginator, page)
         ctx.update({'page': results, 'show_pages': show_pages,
                     'known_types': known_object_types,
-                    'search_opts': request.GET.urlencode()})
+                    'search_opts': request.GET.urlencode(),
+                    'search_terms': terms})
 
             
     return render(request, 'search/results.html', ctx)
