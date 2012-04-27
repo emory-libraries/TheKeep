@@ -1,3 +1,3 @@
 $(document).ready(function () {
-    $("a.tip[title]").tooltip({'position': 'bottom right'});
+    $("a.tip[title]").tooltip({'position': 'bottom center'});
 });

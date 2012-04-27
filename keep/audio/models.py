@@ -448,7 +448,6 @@ class AudioObject(DigitalObject):
         # NOTE: we don't want to rely on other objects being indexed in Solr,
         # so index data should not use Solr to find any related object info
 
-
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(AudioObject, self).index_data()
         data['object_type'] = 'audio'

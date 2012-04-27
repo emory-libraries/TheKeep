@@ -12,7 +12,7 @@
   {% endif %} 
 
   {{ obj.rights|join:', ' }}
-  <p>Uploaded {{ obj.created|naturalday }}; 
+  <p>Uploaded {{ obj.created|naturalday }}{% if obj.uploaded_by %} by {{ obj.uploaded_by }}{% endif %};  
      last modified {{ obj.last_modified|naturalday }}.</p>
 
 </div>

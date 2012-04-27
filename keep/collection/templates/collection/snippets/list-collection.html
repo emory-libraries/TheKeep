@@ -15,6 +15,7 @@
   {% if obj.hasMember %}
     <p>{{ obj.hasMember|length }} item{{ obj.hasMember|pluralize }}</p>
   {% endif %}
-  <p>Created {{ obj.created|naturalday }}; 
+
+  <p>Created {{ obj.created|naturalday }}{% if obj.uploaded_by %} by {{ obj.uploaded_by }}{% endif %}; 
      last modified {{ obj.last_modified|naturalday }}.</p>
 </div>

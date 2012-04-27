@@ -121,6 +121,14 @@ div#sidebar-left div.search select {
     width: 95%;
 }
 
+div#sidebar-left .note {
+  background-color: #FFFB64;
+}
+div#sidebar-left .note h2 {
+  color: black;
+  border-bottom: 3px double black;
+}
+
 
 /* form buttons styled to look sort of like form-submit */
 input.form-button {
@@ -275,10 +283,28 @@ a.tip {
   display: inline-block;
 }
 
-#keyword-search .tip {
-    float: right;
+#keyword-search {
+  width: 70%;
+  border-bottom: 1px solid #D9D9D9;
+  margin-bottom: 8px;
 }
-
+#keyword-search > * {
+  display: inline-block;
+}
+#keyword-search form {
+  width: 80%;
+}
+#keyword-search input {
+  vertical-align: middle;
+}
+#keyword-search input[type=text] {
+  font-size: 1.5em;
+  width: 85%;
+}
+#keyword-search .tip {
+  margin-left: 5px;
+  color: transparent;
+}
 .tooltip {
     padding: 5px;
     border:1px solid #cc9933;
@@ -287,4 +313,7 @@ a.tip {
 }
 .tooltip p {
     margin: 0px;
+}
+ul.ui-autocomplete {
+    text-align: left;
 }

@@ -1,6 +1,8 @@
 import re
 from django import forms
-from eulcommon.searchutil import search_terms
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.auth.models import User
+from eulcommon.searchutil import search_terms, parse_search_terms
 
 
 class SolrSearchField(forms.CharField):
@@ -19,14 +21,14 @@ class SolrSearchField(forms.CharField):
         if not value:
             return []
         else:
-            return search_terms(value)
+            return parse_search_terms(value)
         
     def validate(self, value):
-        super(forms.CharField, self).validate(' '.join(value))
+        strval = ' '.join([v[1] if v is None else '%s:%s' % v for v in value])
+        super(forms.CharField, self).validate(strval)
         for v in value:
-            if v.startswith('*') or v.startswith('?'):
+            if v[1].startswith('*') or v[1].startswith('?'):
                 raise forms.ValidationError(self.invalid)
-
 
 class KeywordSearch(forms.Form):
     '''Simple search form with a single unrequired
@@ -40,4 +42,4 @@ class KeywordSearch(forms.Form):
     '''
     keyword = SolrSearchField(required=False,
                               help_text=help_info)
-        
+

@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.utils.encoding import iri_to_uri
 
@@ -169,7 +171,34 @@ class DigitalObject(models.DigitalObject):
         else:
             # if pidmanager is not available, fall back to default pid behavior
             return super(DigitalObject, self).get_default_pid()
-            
+
+
+    def index_data(self):
+        data = super(DigitalObject, self).index_data()
+        if self.ingest_user:
+            data['ingest_user'] = self.ingest_user
+            data['uploaded_by'] = user_full_name(self.ingest_user)
+        data['audit_trail_users'] = list(self.audit_trail_users)
+        data['users'] = [user_full_name(u) for u in self.audit_trail_users]
+        return data
+
+def user_full_name(username):
+    # get full name if possible from username
+    name = None
+    try:
+        u = User.objects.get(username=username)
+        try:
+            name = u.get_profile().get_full_name()
+        except ObjectDoesNotExist:            
+            name = u.get_full_name()
+    except ObjectDoesNotExist:
+        pass
+
+    if not name:
+        name = username
+        
+    return name
+    
 
 class Repository(server.Repository):
     """Extend the Django-ized Fedora Repository object to take a request object

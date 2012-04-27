@@ -364,6 +364,7 @@ class CollectionObject(DigitalObject):
         :meth:`eulfedora.models.DigitalObject.index_data_descriptive`
         method to include a few additional fields specific to Keep
         Collection objects.'''
+
         data = super(CollectionObject, self).index_data_descriptive()
         data['object_type'] = 'collection'
         if self.collection_id is not None:

@@ -29,17 +29,21 @@ class SolrSearchFieldTest(TestCase):
         not_req.validate([])
 
         # no validation error should be raised 
-        self.field.validate(['one', 'two'])
-        self.field.validate(['one', 'two', '"three four"'])
-        self.field.validate(['one', 'two', '"three *four"'])
+        self.field.validate([(None, 'one'), (None, 'two')])
+        self.field.validate([(None, 'one'), (None, 'two'),
+                             (None, '"three four"')])
+        self.field.validate([(None, 'one'), ('title', 'two'),
+                             (None, '"three *four"')])
 
         # validation errors should be raised
         self.assertRaises(forms.ValidationError,
-                          self.field.validate, ['*foo'])
+                          self.field.validate, [(None, '*foo')])
         self.assertRaises(forms.ValidationError,
-                          self.field.validate, ['foo', '*bar'])
+                          self.field.validate, [(None, 'foo'),
+                                                ('title', '*bar')])
         self.assertRaises(forms.ValidationError,
-                          self.field.validate, ['"foo bar"', '*baz'])
+                          self.field.validate, [('text', '"foo bar"'),
+                                                (None, '*baz')])
 
 
 @patch('keep.search.views.solr_interface', spec=sunburnt.SolrInterface)

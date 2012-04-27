@@ -100,6 +100,11 @@ see:
     <field name="hasEquivalent" type="string" indexed="true" stored="true" multiValued="true"/>
 
     <!-- keep-specific fields -->
+    <field name="ingest_user" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="audit_trail_users" type="string" indexed="true" stored="true" multiValued="true"/>
+    <field name="uploaded_by" type="text" indexed="true" stored="true" multiValued="false"/>
+    <field name="users" type="text" indexed="true" stored="true" multiValued="true"/>
+
     <!--  * collection objects -->
     <field name="source_id" type="integer" indexed="true" stored="true" multiValued="false"/>
     <field name="archive_id" type="string" indexed="true" stored="true" multiValued="false"/>
@@ -158,6 +163,9 @@ see:
     <dynamicField name="*_d" type="sdouble" indexed="true" stored="true"/>
     <dynamicField name="*_dt" type="date" indexed="true" stored="true"/>
 
+    <!-- dynamic facet field -->
+    <dynamicField name="*_facet" type="string" indexed="true" stored="true" multiValued="true"/>
+
   </fields>
 
   <uniqueKey>pid</uniqueKey>
@@ -201,6 +209,8 @@ see:
    <copyField source="object_type" dest="text"/>
    <copyField source="sublocation" dest="text"/>
    <copyField source="ip_note" dest="text"/>
+   <copyField source="audit_trail_users" dest="text"/>
+   <copyField source="users" dest="text"/>
    <!-- copy other dates into common date field -->
    <copyField source="created" dest="date"/>
    <!-- audio note fields -->
@@ -209,4 +219,9 @@ see:
    <copyField source="related_files" dest="notes"/>
    <copyField source="archive_label" dest="text"/>
    <copyField source="ip_note" dest="notes"/>
+
+   <!-- facets -->
+   <copyField source="uploaded_by" dest="ingester_facet"/>
+   <copyField source="users" dest="users_facet"/>
+
 </schema>

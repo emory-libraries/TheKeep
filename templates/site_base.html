@@ -6,12 +6,27 @@
     {{ block.super }}
     {% comment %}Place Local changes, modifications and overrisdes in your local.css file.{% endcomment %}
    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/local.css" />
+   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/smoothness/jquery-ui-1.8.19.custom.css" />
 {% endblock %}
 
 {% block scripts %}
     {{ block.super }}
+    <script type="text/javascript" src="{{ MEDIA_URL }}/js/jquery-ui-1.8.19.custom.min.js"></script>
     <script type="text/javascript" src="{{ MEDIA_URL }}/js/jquery.tooltips.js"></script>
     <script type="text/javascript" src="{{ MEDIA_URL }}/js/local.js"></script>
+    <script type ="text/javascript">
+      $(document).ready(function () {
+        $("#keyword-search input[name=keyword]").autocomplete({
+          source: "{% url search:suggest %}",
+          minLength: 5,
+          select: function(event, ui) {
+          	console.log('value = ', this.value);
+                console.log(ui.item.value);
+                console.log(ui.value);
+          }
+          });
+      });
+    </script>
 {% endblock %}
 
 {% block site-name %}
@@ -37,26 +52,38 @@ The Keep
         <a href="{% url accounts:logout %}">Logout</a></p>
    </div>
  {% endif %}
+
+ {# restrict search to logged-in users #}
+ {% if user.is_authenticated and keyword_search %}
+  <div id="keyword-search" class="search">
+    <h2>Search</h2>
+    <form method="get" action="{% url search:keyword %}">
+      {{ keyword_search.keyword }}
+      <input class="form-submit" type="submit" value="Go" />
+      </form>
+      <a class="tip" title="{{ keyword_search.keyword.help_text }}" >i</a>
+</div>
+  {% endif %}
+
  {{ block.super }}
 {% endblock %}
 
 {% block sidebar-left %}
  {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
-  {% if keyword_search %}    
-  <div id="keyword-search" class="search">
-    <h2>Search</h2>
-    <form method="get" action="{% url search:keyword %}">
-    {{ keyword_search.keyword }}
+   <div class="note">
+     <h2>Note</h2> 
 
-      <input class="form-submit" type="submit" value="Search" />
-      <a class="tip" title="{{ keyword_search.keyword.help_text }}" >i</a>
+     <p>The old item and collection search are being replaced by the
+     new, combined search to the right.</p>
+     <p>The old search will be available for a transition period but
+     will eventually be removed.  If you find any functionality in the
+     old search that is not available in the new one, please report
+     it.</p>
+   </div>
 
-    </form>
+   <a id="use-old-search">Access the old search.</a>
 
-    
-  </div>
-  {% endif %}
-
+   <div id="old-search" style="display:none">
   {% if item_search %}
     {% include 'audio/snippets/search_form.html' %}
   {% endif %}
@@ -68,6 +95,16 @@ The Keep
        onMouseOut="jQuery('#search-help').hide()">?</a>
     <div id="search-help" class="search-tips">{{ collection_search.search_tips }}</div>
    </div>
+   </div>
+   <script type="text/javascript">
+     $(document).ready(function () { {# show/hide advanced-search block #}
+       $("#use-old-search").click(function(){
+           $("#old-search").toggle();
+         });
+       });
+   </script>
+
+
  {% endif %}
 {% endblock %}
 
