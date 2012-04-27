@@ -1,10 +1,11 @@
 from django import forms
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+import json
 from mock import patch, Mock, call
 from sunburnt import sunburnt
 
-from keep.search.forms import SolrSearchField
+from keep.search.forms import SolrSearchField, KeywordSearch
 from keep.testutil import KeepTestCase
 from keep.audio.tests import ADMIN_CREDENTIALS
 
@@ -18,6 +19,13 @@ class SolrSearchFieldTest(TestCase):
                      'to python should return a list, even for an empty value')
         self.assert_(isinstance(self.field.to_python('one two three'), list),
                      'to python should return a list')
+
+        # validation error should be raised if parsing fails
+        with patch('keep.search.forms.parse_search_terms') as pst:
+            pst.side_effect = Exception
+            self.assertRaises(forms.ValidationError,
+                              self.field.to_python, 'one:two:three')
+
 
     def test_validate(self):
         # inherited validation - required field error
@@ -138,4 +146,136 @@ class SearchViewsTest(KeepTestCase):
         self.assertContains(response, 'expurgation',
             msg_prefix='search term should be displayed on results page')
         self.assertContains(response, 'sorted by relevance')
+
+    @patch('keep.search.views.Paginator')
+    def test_search_by_user(self, mockpaginator, mocksolr_interface):
+        search_url = reverse('search:keyword')
+        mocksolr = mocksolr_interface.return_value
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # content handling tested above; just testing queries here
+        content = [
+            {'pid': 'audio:1', 'object_type': 'audio', 'title': 'recording'},
+        ]
+        # construct a minimal mock page object to test the template, since
+        # django templates don't deal with callable Mock objects well 
+        class MockPage(object):
+            object_list = []
+        page = MockPage()
+        page.object_list = content
+        mockpaginator.return_value.page.return_value = page
+
+        # search by user
+        response = self.client.get(search_url, {'keyword': 'user:admin'})
+        # check solr query args
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_called_with(users='admin')
+        # - sort by score then date when fielded search terms
+        sort_args = mocksolr.query.sort_by.call_args_list[-2:]
+        self.assertEqual(call('-score'), sort_args[0])
+        self.assertEqual(call('-created'), sort_args[1])
+        # - include relevance score in return values
+        mocksolr.query.field_limit.assert_called_with(score=True)
+
+        self.assertContains(response, 'user: ',
+            msg_prefix='search term field should be displayed on results page')
+        self.assertContains(response, 'admin',
+            msg_prefix='search term value should be displayed on results page')
+        self.assertContains(response, 'sorted by relevance')
+
+        # search by creator/ingester
+        response = self.client.get(search_url, {'keyword': 'added_by:one'})
+        mocksolr.query.query.assert_called_with(added_by='one')
+        self.assertContains(response, 'added_by: ',
+            msg_prefix='search term field should be displayed on results page')
+        self.assertContains(response, 'one',
+            msg_prefix='search term value should be displayed on results page')
+
+        # multiple values for a single field
+        response = self.client.get(search_url, {'keyword': 'user:bob user:jane'})
+        mocksolr.query.query.assert_any_call(users='bob')
+        mocksolr.query.query.assert_any_call(users='jane')
+        self.assertContains(response, 'user: ', count=1,
+            msg_prefix='search term field should be displayed once on results page')
+        self.assertContains(response, 'bob',
+            msg_prefix='first search term value should be displayed on results page')
+        self.assertContains(response, 'jane',
+            msg_prefix='second search term value should be displayed on results page')
+
+        # incomplete field
+        response = self.client.get(search_url, {'keyword': 'user:'})
+        mocksolr.query.query.assert_called_with('user:')
+
+        # unknown field
+        response = self.client.get(search_url, {'keyword': 'foo:bar'})
+        mocksolr.query.query.assert_called_with('foo:bar')
+
+
+    def test_search_suggest(self, mocksolr_interface):
+        suggest_url = reverse('search:suggest')
+        mocksolr = mocksolr_interface.return_value
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'paginate']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # empty term - should suggest fields
+        response = self.client.get(suggest_url, {'term': ''})
+        self.assertEqual('application/json', response['Content-Type'],
+             'suggest view should return json content')
+        # inspect result
+        data = json.loads(response.content)
+        # should be based on keyword search form fields 
+        fields = [i['label'] for i in data]
+        self.assertEqual(fields, KeywordSearch.field_descriptions.keys())
+        # should have a category set
+        for item in data:
+            self.assertEqual('Search Fields', item['category'])
+
+        # term ending with space should also suggest fields
+        search_term = 'end title:one '
+        response = self.client.get(suggest_url, {'term': search_term})
+        data = json.loads(response.content)
+        self.assert_(data[0]['value'].startswith(search_term),
+                     'replacement value should start with existing search term')
+
+        # suggestions for user field
+        mocksolr.query.execute.return_value.facet_counts.facet_fields = {
+            'users_facet': [
+                ('Thing One', 5), ('Thing Two', 4)
+            ]
+        }
+        response = self.client.get(suggest_url, {'term': 'user:'})
+
+        mocksolr.query.facet_by.assert_called_with('users_facet', prefix='',
+                                             sort='count', limit=15)
+        mocksolr.query.paginate.assert_called_with(rows=0)
+        
+        data = json.loads(response.content)
+        # inspect results
+        self.assertEqual('Thing One (5)', data[0]['label'])
+        self.assertEqual('user:"Thing One" ', data[0]['value'])
+        self.assertEqual('Users', data[0]['category'])
+        self.assertEqual('Thing Two (4)', data[1]['label'])
+        self.assertEqual('user:"Thing Two" ', data[1]['value'])
+        self.assertEqual('Users', data[1]['category'])
+
+
+        response = self.client.get(suggest_url, {'term': 'cat user:T'})
+        mocksolr.query.facet_by.assert_called_with('users_facet', prefix='T',
+                                             sort='count', limit=15)
+        data = json.loads(response.content) 
+        # value should include preceding search string, if any
+        self.assertEqual('cat user:"Thing One" ', data[0]['value'])
+        self.assertEqual('cat user:"Thing Two" ', data[1]['value'])
+
 

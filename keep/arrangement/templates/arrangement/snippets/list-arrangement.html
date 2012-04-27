@@ -1,6 +1,7 @@
-{% load humanize %}
-<div>
-  <a href="{% url arrangement:edit obj.pid %}"> 
+{% extends 'search/snippets/list-item.html' %}
+
+{% block item_title %}
+<p><a href="{% url arrangement:edit obj.pid %}"> 
    {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}  
  {% firstof obj.title obj.label '(no title)' %}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
   {% if obj.collection_id or obj.simpleCollection_id %}
@@ -10,9 +11,9 @@
      {% if obj.simpleCollection_label %}
        {{ obj.simpleCollection_label|join:"; " }}{% endif %})
   {% endif %} 
+</p>
+{% endblock %}
 
-  {{ obj.rights|join:', ' }}
-  <p>Uploaded {{ obj.created|naturalday }}{% if obj.uploaded_by %} by {{ obj.uploaded_by }}{% endif %};  
-     last modified {{ obj.last_modified|naturalday }}.</p>
-
-</div>
+{% block item_info %} 
+  <p>{{ obj.rights|join:', ' }}</p>
+{% endblock %}

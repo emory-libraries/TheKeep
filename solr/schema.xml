@@ -102,7 +102,7 @@ see:
     <!-- keep-specific fields -->
     <field name="ingest_user" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="audit_trail_users" type="string" indexed="true" stored="true" multiValued="true"/>
-    <field name="uploaded_by" type="text" indexed="true" stored="true" multiValued="false"/>
+    <field name="added_by" type="text" indexed="true" stored="true" multiValued="false"/>
     <field name="users" type="text" indexed="true" stored="true" multiValued="true"/>
 
     <!--  * collection objects -->
@@ -221,7 +221,7 @@ see:
    <copyField source="ip_note" dest="notes"/>
 
    <!-- facets -->
-   <copyField source="uploaded_by" dest="ingester_facet"/>
+   <copyField source="added_by" dest="added_by_facet"/>
    <copyField source="users" dest="users_facet"/>
 
 </schema>

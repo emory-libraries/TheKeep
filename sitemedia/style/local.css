@@ -310,10 +310,28 @@ a.tip {
     border:1px solid #cc9933;
     background-color:#ffffcc;
     text-align: left;
+    width: 55%;
 }
-.tooltip p {
-    margin: 0px;
+.tooltip ul {
+    text-indent: 10px;
+}
+
+.tooltip li {
+    list-style-type: disc;
+    margin-left: 10px;
 }
 ul.ui-autocomplete {
     text-align: left;
+}
+.ui-autocomplete-category {
+  font-weight: bold;
+  padding: .2em .4em;
+  margin: .8em 0 .2em;
+  line-height: 1.5;
+}
+.ui-autocomplete li span {
+  font-size: 85%;
+  font-weight: italic;
+  float: right;
+  margin-left: 5px;
 }

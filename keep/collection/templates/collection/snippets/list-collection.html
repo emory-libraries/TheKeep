@@ -1,5 +1,6 @@
-{% load humanize %}
-<div>
+{% extends 'search/snippets/list-item.html' %}
+
+{% block item_title %}
   {% if 'MODS' in obj.dsids %} {# collection 1.1 #}
     {% url collection:edit obj.pid as edit_url %}
   {% else %} {# collection 1.0 AKA "Simple" collection #}
@@ -10,12 +11,12 @@
     {% if obj.source_id %}Collection No. {{ obj.source_id }}{% endif %} 
     {{ obj.archive_short_name }}
   </p>
+{% endblock %}
+
+{% block item_info %}
   {% if obj.creator %} <p>{{ obj.creator|join:'; ' }}</p>{% endif %}
   {# display number of items for "simple" collections #}
   {% if obj.hasMember %}
     <p>{{ obj.hasMember|length }} item{{ obj.hasMember|pluralize }}</p>
   {% endif %}
-
-  <p>Created {{ obj.created|naturalday }}{% if obj.uploaded_by %} by {{ obj.uploaded_by }}{% endif %}; 
-     last modified {{ obj.last_modified|naturalday }}.</p>
-</div>
+{% endblock %}

@@ -25,8 +25,9 @@ Steps to add a new content type to this search
 1. New objects should include a unique human-readable ``object_type``
    in their Solr index data, which can be used for filtering results
    and customizing the display.
-2. Create an appropriate list-view template snippet in the app where
-   the object is defined.
+2. Create a new list-view template snippet (it is recommend to extend
+   ``search/snippets/list-item.html``) in the app where the object
+   is defined.
 3. Add the new type to the list of ``known_object_types`` in
    :class:`~keep.search.views.keyword_search` and update the search
    template to render the new list-view template snippet.

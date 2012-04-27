@@ -1,10 +1,15 @@
+{% extends 'search/snippets/list-item.html' %}
 {% load humanize %}
-<div>
- <a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
+
+{% block item_title %}
+<p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
+  {% if obj.part %} ({{ obj.part }}){% endif %}
   {% if obj.collection_id %}
     (part of <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{{ obj.collection_label }}</a>)
-  {% endif %} 
+  {% endif %} </p>
+{% endblock %}
 
+{% block item_info %}  {# FIXME: use horizontal list for this ? #}
   <p> {{ obj.duration|intcomma }}s
   {% if obj.has_original %}
      <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
@@ -13,11 +18,8 @@
   {% if obj.has_access_copy %}
     <a href="{% url audio:download-compressed-audio obj.pid 'mp3' %}">access copy</a>
     {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
-    {# TODO: include mimetype icon also? #}
+    {# TODO: mimetype icon ? #}
   |
   {% endif %}
-  {{ obj.rights|join:', ' }}
-  <br/>
-  Uploaded {{ obj.created|naturalday }}{% if obj.uploaded_by %} by {{ obj.uploaded_by }}{% endif %}; 
-  last modified {{ obj.last_modified|naturalday }}.</p>
-</div>
+  {{ obj.rights|join:', ' }}</p>
+{% endblock %}

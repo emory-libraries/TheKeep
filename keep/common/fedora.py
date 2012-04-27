@@ -177,7 +177,7 @@ class DigitalObject(models.DigitalObject):
         data = super(DigitalObject, self).index_data()
         if self.ingest_user:
             data['ingest_user'] = self.ingest_user
-            data['uploaded_by'] = user_full_name(self.ingest_user)
+            data['added_by'] = user_full_name(self.ingest_user)
         data['audit_trail_users'] = list(self.audit_trail_users)
         data['users'] = [user_full_name(u) for u in self.audit_trail_users]
         return data

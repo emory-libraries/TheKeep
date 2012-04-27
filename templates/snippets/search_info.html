@@ -8,13 +8,21 @@
       <b>{{ term }}</b>{% if not forloop.last %}, {% endif %}
     {% endfor %}
     {% if search_terms and search_info %}, {% endif %}
+    {% if search_info.iterlists %} {# handle multivaluedict #}
+        {% for field, listval in search_info.iterlists %}
+          {{ field }}:  
+          {% for v in listval %}
+            <b>{{ v }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}{% if not forloop.last %}; {% endif %}
+        {% endfor %}
+    {% else %} {# regular dict #}
     {% for field, val in search_info.iteritems %}
-      {{ field }}:
+      {{ field }}: 
       {# link to regular collections, but not to top-level collections/owning repos #}
       <b>{% if val.pid and val.collection_id %} <a href="{% url collection:edit val.pid %}">{{ val.title }}</a>        
         {% else %}{# display title of a collection dict, string-only (NOT title-cased) otherwise #}
             {% if val.pid %}{{ val.title }}{% else %}{{ val }}{% endif %}
         {% endif %}</b>{% if not forloop.last %}, {% endif %}
     {% endfor %}
+    {% endif %}
   </p>
 {% endif %}

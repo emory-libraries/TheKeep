@@ -1,0 +1,14 @@
+{% load humanize %}
+{# generic list item display, for unrecognized items and for extending #}
+{% block list_item %}
+<div>
+   {% block item_title %} {# extend/override for item title line #}
+     <p>{{ obj.pid }} {{ obj.title }} {{ obj.creator }}</p>
+   {% endblock %}
+   {% block item_info  %}{% endblock %}{# add item detail content here #}
+   {% block upload_info %} {# recommended to leave this as is, but extend if needed #}
+     Uploaded {{ obj.created|naturalday }}{% if obj.added_by %} by {{ obj.added_by }}{% endif %}; 
+    last modified {{ obj.last_modified|naturalday }}.</p>
+   {% endblock %}
+</div>
+{% endblock %}

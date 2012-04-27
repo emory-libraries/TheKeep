@@ -16,14 +16,9 @@
     <script type="text/javascript" src="{{ MEDIA_URL }}/js/local.js"></script>
     <script type ="text/javascript">
       $(document).ready(function () {
-        $("#keyword-search input[name=keyword]").autocomplete({
+        $("#keyword-search input[name=keyword]").categorycomplete({
           source: "{% url search:suggest %}",
-          minLength: 5,
-          select: function(event, ui) {
-          	console.log('value = ', this.value);
-                console.log(ui.item.value);
-                console.log(ui.value);
-          }
+          minLength: 0,
           });
       });
     </script>
