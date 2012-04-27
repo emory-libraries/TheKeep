@@ -340,7 +340,6 @@ Release 1.3 - Search-based Report generation
     $ python manage.py migrate djcelery
 
 
->>>>>>> .merge-right.r1153
 Release 1.2 - Verdict App
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 * Configure the LOGGING section in the localsettings.py file on the remote server
