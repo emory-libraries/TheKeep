@@ -197,7 +197,7 @@ def setup_virtualenv(python=None):
     'Create a virtualenv and install required packages on the remote server.'
     python_opt = '--python=' + python if python else ''
     with cd('%(remote_path)s/%(build_dir)s' % env):
-        sudo('virtualenv --no-site-packages env' % env,
+        sudo('virtualenv --no-site-packages --prompt=%(build_dir)s env ' % env,
              user=env.remote_acct)
         # activate the environment and install required packages
         with prefix('source env/bin/activate'):
