@@ -317,6 +317,7 @@ class AudioViewsTest(KeepTestCase):
 
             repo = Repository()
             new_obj = repo.get_object(result['pid'], type=audiomodels.AudioObject)
+            audit_messages = [a.message for a in new_obj.audit_trail.records]
             # check object was created with audio cmodel
             self.assertTrue(new_obj.has_model(audiomodels.AudioObject.AUDIO_CONTENT_MODEL),
                 "audio object was created with the correct content model")
@@ -349,6 +350,26 @@ class AudioViewsTest(KeepTestCase):
             # task result should have been created to track mp3 conversion
             self.assert_(isinstance(new_obj.conversion_result, TaskResult),
                 'ingested object should have a conversion result to track mp3 generation')
+
+            self.assertIn('ingesting audio', audit_messages,
+                                'Should have default message when no comment is present')
+
+            #upload same file but add a comment
+        with open(wav_filename) as wav:
+            response = self.client.post(upload_url, {'audio': wav, 'comment': "This is comment for the audit trail"})
+            result = response.context['ingest_results'][0]
+            self.assertTrue(result['success'], 'success should be true for uploaded WAV')
+            self.assertNotEqual(None, result['pid'],
+                'result should include pid of new object on successful ingest')
+            # Add pid to be removed.
+            self.pids.append(result['pid'])
+
+            repo = Repository()
+            new_obj = repo.get_object(result['pid'], type=audiomodels.AudioObject)
+            audit_messages = [a.message for a in new_obj.audit_trail.records]
+
+            self.assertIn('This is comment for the audit trail', audit_messages,
+                                'Should have comment in audit trail')
 
     def test_download_audio(self):
         # create a test audio object
