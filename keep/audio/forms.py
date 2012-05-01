@@ -24,6 +24,9 @@ class UploadForm(forms.Form):
                 help_text='Preliminary title for the object. 255 characters max. (optional)',
                 required=False)
     audio = forms.FileField(label="File")
+    comment = forms.CharField(max_length=255,
+                              help_text='Comment for auditing purposes. 255 characters max. (optional)',
+                              required=False)
 
 
 def _cmp_collections(a, b):

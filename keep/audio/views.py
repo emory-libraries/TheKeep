@@ -75,6 +75,8 @@ def upload(request):
 
         # if form has been posted, process & ingest files
         if media_type  == 'multipart/form-data':
+            #use default value for comment if no comment is provided in form
+            comment = request.POST['comment'] if request.POST.has_key('comment') and request.POST['comment'] else 'ingesting audio'
 
             # place-holder for files to be ingested, either from single-file upload
             # or batch upload; should be added to the dictionary as filepath: initial label
@@ -151,7 +153,7 @@ def upload(request):
                                     checksum=md5)
                         # NOTE: by sending a log message, we force Fedora to store an
                         # audit trail entry for object creation, which doesn't happen otherwise
-                        obj.save('ingesting audio')
+                        obj.save(comment)
                         file_info.update({'success': True, 'pid': obj.pid})
                         # Start asynchronous task to convert audio for access
                         result = convert_wav_to_mp3.delay(obj.pid, use_wav=filename,
