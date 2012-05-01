@@ -6,7 +6,15 @@ CHANGELOG
 Release 1.4
 -----------
 
-* Now using Django staticfiles app to manage static site content.
+* A logged in user can perform a simple keyword search to quickly find
+  any records in the repository that contain the relevant keywords, so
+  that any type of item can be found in a single search.
+* A logged in user can search for records by the user who uploaded
+  them, in order to easily find records they created or items uploaded
+  by a specific user.
+* When ingesting a composite file or batch of files, an archivist or
+  curator can enter an optional log message for auditing purposes.
+* Updated to use Django staticfiles app to manage static site content.
 
 Release 1.3
 -----------
