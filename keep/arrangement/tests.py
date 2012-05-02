@@ -258,6 +258,45 @@ class ArrangementViewsTest(KeepTestCase):
         self.repo.purge_object(self.englishdocs.pid)
 
     def test_edit_form(self):
+        arrangement_data =  {
+            u'fs-file-MAX_NUM_FORMS': [u''],
+            u'fs-file-TOTAL_FORMS': [u'2'],
+            u'fs-file-INITIAL_FORMS': [u'1'],
+
+            u'mods-series-base_ark': [u'http://testpid.library.emory.edu/ark:/25593/80mvk'],
+            u'mods-series-series-title': [u''],
+            u'fs-file-0-attributes': [u'avbstclInmedz'],
+            u'mods-series-series-short_id': [u''],
+            u'rights-copyright_date_day': [u'DD'],
+            u'fs-file-0-rawpath': [u'L01hY2ludG9zaCBIRC9MRVRURVJTL1RST01TTw=='],
+            u'fs-file-0-md5': [u'796f7d0a4e8ac74632930f7b9b5c5e88'],
+            u'fs-file-0-type': [u''],
+            u'fs-file-0-computer': [u'PowerBook 5300c'],
+            u'mods-series-uri': [u'https://findingaids.library.emory.edu/documents/rushdie1000/series4'],
+            u'csrfmiddlewaretoken': [u'e04a7d70fa4d0c4e19906a3769f01ad9'],
+            u'fs-file-0-modified': [u'3/4/1993 16:11'],
+            u'rights-access_restriction_expiration_day': [u'DD'],
+            u'fs-file-0-creator': [u'MWPR'],
+            u'mods-series-short_id': [u'series4'],
+            u'series_title_field': [u''],
+            u'mods-series-series-uri': [u''],
+            u'mods-series-series-full_id': [u''],
+            u'_save_continue': [u'Save and continue editing'],
+            u'fs-file-0-created': [u'3/4/1993 16:00'],
+            u'fs-file-0-local_id': [u'242'],
+            u'rights-copyright_date_year': [u'YYYY'],
+            u'rights-access_restriction_expiration_year': [u'YYYY'],
+            u'mods-series-full_id': [u'rushdie1000_series4'],
+            u'mods-series-title': [u'Correspondence'],
+            u'rights-access_restriction_expiration_month': [u'MM'],
+            u'comments-comment': [u''],
+            u'rights-copyright_date_month': [u'MM'],
+            u'mods-series-series-base_ark': [u''],
+            u'rights-ip_note': [u''],
+            u'fs-file-0-path': [u'/Macintosh HD/LETTERS/TROMSO'],
+            u'rights-access': [u'10']
+        }
+
         # test edit form
         edit_url = reverse('arrangement:edit', args=[self.rushdie_obj.pid])
 
@@ -271,8 +310,7 @@ class ArrangementViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
-        self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
-
+        
         # Check for filetech fields
         self.assertContains(response, self.rushdie_obj.filetech.content.file[0].md5)
         self.assertContains(response, self.rushdie_obj.filetech.content.file[0].local_id)
@@ -294,3 +332,27 @@ class ArrangementViewsTest(KeepTestCase):
         # Check for series fields
         self.assertContains(response, self.rushdie_obj.mods.content.series.title)
         self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
+
+        #TODO additional tests should be added
+
+        response = self.client.post(edit_url, arrangement_data)
+        code = response.status_code
+        expected = 200
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                             % (expected, code, edit_url))
+        obj = self.repo.get_object(type=ArrangementObject, pid=self.rushdie_obj.pid)
+
+        #check audit trail
+        audit_trail =  [a.message for a in obj.audit_trail.records]
+        self.assertEqual('update metadata', audit_trail[-1])
+
+        data = arrangement_data.copy()
+        data['comments-comment'] = 'This is a comment'
+        data['rights-access'] = 1 # need to change someting to trigger a save
+        response = self.client.post(edit_url, data)
+
+        obj = self.repo.get_object(type=ArrangementObject, pid=self.rushdie_obj.pid)
+
+        #check audit trail
+        audit_trail =  [a.message for a in obj.audit_trail.records]
+        self.assertEqual(data['comments-comment'], audit_trail[-1])

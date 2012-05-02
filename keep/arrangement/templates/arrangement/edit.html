@@ -183,6 +183,12 @@ function clearSeriesFields() {
     </table>
 </div>
 
+<div id="comments">
+    {{ form.comments.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.comments %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
 
 
 

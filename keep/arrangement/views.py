@@ -1,4 +1,5 @@
 # Create your views here.
+import logging
 import urllib2
 from rdflib import URIRef
 
@@ -22,6 +23,8 @@ from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
 from keep.arrangement.models import ArrangementObject
 from keep.common.eadmap import Series
+
+logger = logging.getLogger(__name__)
 
 #FIXME: Both of these values are currently hardcoded. The aid_id should
 #come from the collection. The url is more difficult - the finding aid
@@ -50,7 +53,11 @@ def edit(request, pid):
             form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
             if form.is_valid():
                 form.update_instance() 
-                log_message = 'Updating Arrangement Object from Keep'
+                if request.POST.has_key('comments-comment') and request.POST['comments-comment']:
+                    comment = request.POST['comments-comment']
+                else:
+                    comment = "update metadata"
+
                 action = 'updated'
 
                 #Add /remove Allowed Restricted Content Models based on status
@@ -72,7 +79,7 @@ def edit(request, pid):
 
                 # NOTE: by sending a log message, we force Fedora to store an
                 # audit trail entry for object creation, which doesn't happen otherwise
-                obj.save(log_message)
+                obj.save(comment)
                 messages.success(request, 'Successfully %s arrangement <a href="%s">%s</a>' % \
                             (action, reverse('arrangement:edit', args=[obj.pid]), obj.pid))
             

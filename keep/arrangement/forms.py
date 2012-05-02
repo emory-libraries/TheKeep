@@ -7,7 +7,7 @@ from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 
 from keep.common.models import FileMasterTech, Rights, FileMasterTech_Base
-from keep.common.forms import ReadonlyTextInput
+from keep.common.forms import ReadonlyTextInput, CommentForm
 
 from keep.arrangement.models import ArrangementMods, Series1, Series2
 
@@ -214,6 +214,7 @@ class ArrangementObjectEditForm(forms.Form):
             filetech_instance = None
             rights_instance = None
             mods_instance = None
+            comment_instance = None
         else:
             filetech_instance = instance.filetech.content
             rights_instance = instance.rights.content
@@ -238,11 +239,13 @@ class ArrangementObjectEditForm(forms.Form):
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='fs', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
+        self.comments = CommentForm( prefix='comments',**common_opts)
 
 
         for form in ( self.filetech,
                       self.rights,
-                      self.mods ):
+                      self.mods,
+                      self.comments):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
