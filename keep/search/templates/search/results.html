@@ -10,6 +10,26 @@
 {% block page-subtitle %}: Search Results{% endblock %}
 {% block content-title %}Search Results{% endblock %}
 
+{% block sidebar-left %}
+  {{ block.super }}
+
+  {% if facets %}
+  <div>
+    <h2>Filter your results:</h2>
+    {% for field, results in facets.iteritems %}
+      <h3>{{ field }}</h3>
+      <ul>
+      {% for val, count in results %}
+        <li><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{{ val }}</a>
+            ({{ count }})</li>
+      {% endfor %}
+      </ul>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endblock %}
+
+
 {% block content-body %}
   {{ block.super }}
 
@@ -20,6 +40,7 @@
   {{ form.errors.keyword }}
 
 {% else %}  {# valid search submission #}
+
 
   {% if page.object_list %}
   <p>Displaying item{{ page.object_list|pluralize }}
@@ -33,8 +54,6 @@
     <div class="search-result collection">collection</div>
     <div class="search-result">other</div>
   </div>
-
-  {# FACETS TODO {{ page.object_list.facet_counts.facet_fields  }} #}
 
   {% for obj in page.object_list %}
   <div class="search-result {{ obj.object_type }}">
@@ -68,8 +87,8 @@
 
   {% else %}
     <p>No matching items found.</p>
-    <p>By default, search matches whole words only (including any punctuation).
-    You may want to try adding wildcards <b>*</b> and <b>?</b> to your search terms.</p>
+    <p>You may want to use broader search terms, or try adding
+      wildcards <b>*</b> and <b>?</b> to your search terms.</p>
   {% endif %}
 
 {% endif %} {# valid search #}

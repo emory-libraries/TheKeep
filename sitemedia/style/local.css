@@ -312,13 +312,10 @@ a.tip {
     text-align: left;
     width: 55%;
 }
-.tooltip ul {
-    text-indent: 10px;
-}
 
 .tooltip li {
     list-style-type: disc;
-    margin-left: 10px;
+    margin-left: 15px;
 }
 ul.ui-autocomplete {
     text-align: left;
@@ -334,4 +331,14 @@ ul.ui-autocomplete {
   font-weight: italic;
   float: right;
   margin-left: 5px;
+}
+
+a.remove {
+  background: url('../images/icon-close.png') no-repeat transparent;
+  background-position: right center;
+  padding-right: 16px;
+}
+a.remove:link, a.remove:active, a.remove:visited {
+  color: #4c4c4c;
+  text-decoration: underline;
 }

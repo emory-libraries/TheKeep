@@ -24,5 +24,14 @@
         {% endif %}</b>{% if not forloop.last %}, {% endif %}
     {% endfor %}
     {% endif %}
+
+
+    {# display any filters currently in effect #}
+    {% if active_filters %} 
+      {% for filter, urlopt in active_filters %}
+        <a class="remove" href="?{{ urlopt }}">{{ filter }}</a>
+      {% endfor %}
+    {% endif %}
+
   </p>
 {% endif %}

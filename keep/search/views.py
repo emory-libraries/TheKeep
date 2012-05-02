@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
@@ -14,6 +15,7 @@ from keep.search.forms import KeywordSearch
 
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
+
 @login_required
 def keyword_search(request):
     '''Combined keyword search across all :mod:`keep` repository
@@ -27,11 +29,8 @@ def keyword_search(request):
         search_terms = searchform.cleaned_data['keyword']
         # collect non-field search terms
         terms = [t[1] for t in search_terms if t[0] is None]
-        solrquery = solr.query(*terms) \
-                    	.facet_by(['collection_label', 'archive_short_name',
-                                   'content_model', 'object_type',
-                                   'ingest_user', 'audit_trail_users'])
-
+        q = solr.query(*terms)         
+        
         search_info = MultiValueDict()
         # add field-based search terms to query and search info for display
         for t in search_terms:
@@ -48,26 +47,74 @@ def keyword_search(request):
                     if ' ' in val:
                         val = "%s" % val
                     term = '%s:%s' % (field, val)
-                solrquery = solrquery.query(term)
+                q = q.query(term)
                 terms.append(term)
 
             else:
                 searchfield = searchform.allowed_fields[field]
-                solrquery = solrquery.query(**{searchfield: val})
+                q = q.query(**{searchfield: val})
                 search_info.update({field: val})
+
+        # filter/facet  (display name => solr field)
+        # NOTE: it would be nice to facet on 'archive_short_name',
+        # but currently only collections have it indexed
+        field_names = {
+            'collection': 'collection_label',
+            'added by': 'added_by_facet',
+            'modified by': 'users_facet',
+            'type': 'object_type',
+            'access status': 'access_code',
+        }
+        # url opts for pagination & basis for removing active filters
+        urlopts = request.GET.copy()
+
+        display_filters = []
+        active_filters = dict((field, []) for field in field_names.iterkeys())
+        # filter the solr search based on any facets in the request
+        for filter, facet_field in field_names.iteritems():
+            # For multi-valued fields (author, subject), we could have multiple
+            # filters on the same field; treat all facet fields as lists.
+            for val in request.GET.getlist(filter):
+                 # filter the current solr query
+                q = q.filter(**{facet_field: val})
+                 
+                # add to list of active filters
+                active_filters[filter].append(val)
+                
+                # also add to list for user display & removal
+                # - copy the urlopts and remove the current value 
+                unfacet_urlopts = urlopts.copy()
+                val_list = unfacet_urlopts.getlist(filter)
+                val_list.remove(val)
+                unfacet_urlopts.setlist(filter, val_list)
+                # tuple of filter display value, url to remove it
+                # - add filter type where value doesn't make it obvious
+                label = val
+                if filter in ['added by', 'modified by']:
+                    label = '%s %s' % (filter, val)
+                    
+                display_filters.append((label,
+                                        unfacet_urlopts.urlencode()))
+
+
+        # TODO: display rights access code with abbreviated name
+        
+
+        # Update solr query to return values & counts for configured facet fields
+        q = q.facet_by(field_names.values(), mincount=1, limit=15, sort='count')
+        # TODO: add support for missing=True for access_code
 
         # if there are any search terms, sort by relevance and display score
         if search_terms:
-            solrquery = solrquery.sort_by('-score').field_limit(score=True)
+            q = q.sort_by('-score').field_limit(score=True)
             ctx['show_relevance'] = True
         # if no terms, sort by most recently created
         # (secondary sort when using relevance)
-        solrquery = solrquery.sort_by('-created')
+        q = q.sort_by('-created')
         
-        # TODO: rights access status facet (string field)
         known_object_types = ['audio', 'collection', 'born-digital']
 
-        paginator = Paginator(solrquery, 30)
+        paginator = Paginator(q, 30)
         try:
             page = int(request.GET.get('page', '1'))
         except ValueError:
@@ -77,13 +124,31 @@ def keyword_search(request):
         except (EmptyPage, InvalidPage):
             results = paginator.page(paginator.num_pages)
 
+        # convert facets for display to user;
+        facets = {}
+        facet_fields = results.object_list.facet_counts.facet_fields
+        for display_name, field in field_names.iteritems():
+            if field in facet_fields and facet_fields[field]:
+                show_facets = []
+            # skip any display facet values that are already in effect
+            for val in facet_fields[field]:
+                if val[0] not in active_filters[display_name]:
+                    show_facets.append(val)
+                if show_facets:
+                    facets[display_name] = show_facets
+            
+
         # calculate page links to show
         show_pages = pages_to_show(paginator, page)
         ctx.update({'page': results, 'show_pages': show_pages,
                     'known_types': known_object_types,
                     'search_opts': request.GET.urlencode(),
                     'search_terms': terms,
-                    'search_info': search_info})
+                    'search_info': search_info,
+                    'url_params': urlopts.urlencode(),
+                    'facets': facets,
+                    'active_filters': display_filters,
+                    })
 
             
     return render(request, 'search/results.html', ctx)
