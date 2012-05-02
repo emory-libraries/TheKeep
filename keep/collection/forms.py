@@ -139,6 +139,9 @@ class CollectionForm(XmlObjectForm):
     name = SubformField(formclass=NameForm)
     restrictions_on_access = SubformField(formclass=AccessConditionForm)
     use_and_reproduction = SubformField(formclass=AccessConditionForm)
+    comment = forms.CharField(max_length=255, label="Comment",  required=False,
+                              help_text="Enter a description of changes made")
+
     class Meta:
         model = CollectionMods
         fields = (

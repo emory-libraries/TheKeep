@@ -49,16 +49,20 @@
     {{ form.non_field_errors }}
 {% endif %}
 <table class="edit-form">
-  {% for field in form %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-  <tr id="creator">
-      <th>Creator</th>
-      <td class="multi-field">
-          {% with form.subforms.name as name %}
-            {% include 'snippets/edit_mods_name.html' %}
-          {% endwith %} {# name subform as name #}
-          </td>
-          </tr>
-    <tr>       
+  {% for field in form  %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    {% if field.label != 'Comment' %}
+        <tr id="creator">
+          <th>Creator</th>
+          <td class="multi-field">
+              {% with form.subforms.name as name %}
+               {% include 'snippets/edit_mods_name.html' %}
+             {% endwith %} {# name subform as name #}
+              </td>
+             </tr>
+    {% endif %}
+
+    <tr>
+
         <th>Restrictions on Access
         {% if form.subforms.restrictions_on_access.field.required %}
                           <span class="required" title='required'>*</span>{% endif %}</th>
@@ -71,6 +75,16 @@
         <td>
             {{ form.subforms.use_and_reproduction.as_p }}</td>
     </tr>
+
+    <tr id="comment">
+          <th>Comment</th>
+
+          <td>
+              {{  form.comment }}
+              {{  form.comment.help_text }}
+          </td>
+    </tr>
+
     
 </table>   
 <input class="form-submit" type="submit" name="_save" value="Save"/>

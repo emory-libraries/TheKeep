@@ -569,6 +569,20 @@ class CollectionViewsTest(KeepTestCase):
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml,
             'user logged into site is also username in fedora audit:trail')
 
+        #test audit trail
+        obj = repo.get_object(pid=obj.pid, type=CollectionObject)
+        audit_trail = [a.message for a in obj.audit_trail.records]
+        self.assertEqual('updating metadata', audit_trail[-1])
+
+        #test with comment
+        data = COLLECTION_DATA.copy()
+        data['comment'] = 'This is a comment'
+        data['date_end'] = '2000' # change something to trigger save
+        response = self.client.post(edit_url, data, follow=True)
+        obj = repo.get_object(pid=obj.pid, type=CollectionObject)
+        audit_trail = [a.message for a in obj.audit_trail.records]
+        self.assertEqual(data['comment'], audit_trail[-1])
+
         # test logic for save and continue editing
         data = COLLECTION_DATA.copy()
         data['_save_continue'] = True   # simulate submit via 'save and continue' button
