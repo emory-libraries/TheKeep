@@ -377,7 +377,12 @@ def edit(request, pid):
             if form.is_valid():     # includes schema validation
                 # update foxml object with data from the form
                 form.update_instance()      # instance is reference to mods object
-                obj.save('update metadata')
+                if request.POST.has_key('comments-comment') and request.POST['comments-comment']:
+                    comment = request.POST['comments-comment']
+                else:
+                    comment = "update metadata"
+                    
+                obj.save(comment)
                 messages.success(request, 'Successfully updated <a href="%s">%s</a>' % \
                         (reverse('audio:edit', args=[pid]), pid))
                 # save & continue functionality - same as collection edit

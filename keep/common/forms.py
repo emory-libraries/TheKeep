@@ -240,3 +240,7 @@ class ItemSearch(forms.Form):
                     search_info[key] = val
 
         return search_info
+
+class CommentForm(forms.Form):
+    comment = forms.CharField(max_length=255, label="Comment",  required=False,
+                              help_text="Enter a description of changes made")
