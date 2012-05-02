@@ -86,10 +86,6 @@ Common code
 -----------
 .. automodule:: keep.common
 
-This is a module of common code and utility methods used by multiple apps.  It
-is placed in a common module for convenience (including simplifying
-running unit tests, since Django only knows how to test apps).
-
 Fedora
 ^^^^^^
 .. automodule:: keep.common.fedora
