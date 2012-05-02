@@ -1,5 +1,6 @@
 {% extends "site_base.html" %}
 {% load search_utils %} 
+{% load rights_extras %} 
 {% load humanize %} 
 
 {% block style %}
@@ -20,7 +21,7 @@
       <h3>{{ field }}</h3>
       <ul>
       {% for val, count in results %}
-        <li><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{{ val }}</a>
+        <li><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
             ({{ count }})</li>
       {% endfor %}
       </ul>
@@ -46,7 +47,7 @@
   <p>Displaying item{{ page.object_list|pluralize }}
      {{ page.start_index }}{% if page.start_index != page.end_index %} - {{ page.end_index }}{% endif %}
     of {{ page.paginator.count|intcomma }}.
-    Results sorted by {% if show_relevance %}relevance{% else %}date uploaded{% endif %}.
+    Results sorted by {% if show_relevance %}relevance{% else %}most recently created/uploaded{% endif %}.
   </p>
 
   <div id="search-key">

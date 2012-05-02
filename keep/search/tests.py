@@ -1,8 +1,9 @@
 from django import forms
 from django.core.urlresolvers import reverse
+from django.shortcuts import render
 from django.test import TestCase
 import json
-from mock import patch, Mock, call
+from mock import patch, Mock, MagicMock, call
 from sunburnt import sunburnt
 
 from keep.search.forms import SolrSearchField, KeywordSearch
@@ -72,29 +73,12 @@ class SearchViewsTest(KeepTestCase):
         #response = self.client.get(search_url, follow=False)
         #self.assertEqual(303, response.status_code)
         
-
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
         # invalid search term (leading wildcard)
         response = self.client.get(search_url, {'keyword': '*invalid'})
         self.assertContains(response, 'Search terms may not begin with wildcards')
-
-        # test search result content with one of each type
-        content = [
-            {'pid': 'audio:1', 'object_type': 'audio', 'title': 'recording'},
-            {'pid': 'coll:1', 'object_type': 'collection', 'title': 'mss 123',
-             'dsids': ['MODS'],},
-            {'pid': 'scoll:1', 'object_type': 'collection', 'title': 'process batch',},
-            {'pid': 'boda:1', 'object_type': 'born-digital', 'title': 'email'}
-        ]
-        # construct a minimal mock page object to test the template, since
-        # django templates don't deal with callable Mock objects well 
-        class MockPage(object):
-            object_list = []
-        page = MockPage()
-        page.object_list = content
-        mockpaginator.return_value.page.return_value = page
 
         # search all items
         response = self.client.get(search_url)
@@ -105,47 +89,20 @@ class SearchViewsTest(KeepTestCase):
         mocksolr.query.sort_by.assert_called_with('-created')
         # check context params ?
 
-        # test response content
-        self.assertContains(response, 'sorted by date uploaded')
-        
-        self.assertContains(response, reverse('audio:edit',
-                                              kwargs={'pid': 'audio:1'}),
-             msg_prefix='search results should link to audio edit form for audio item')
-        # TODO: test both simple and regular collections
-        self.assertContains(response, reverse('collection:edit',
-                                              kwargs={'pid': 'coll:1'}),
-             msg_prefix='search results should link to collection edit form for collection')
-        self.assertContains(response, reverse('collection:simple_edit',
-                                              kwargs={'pid': 'scoll:1'}),
-             msg_prefix='search results should link to simple collection edit form for simple collection')
-        self.assertContains(response, reverse('arrangement:edit',
-                                              kwargs={'pid': 'boda:1'}),
-             msg_prefix='search results should link to arrangement edit form for arrangement object')
-
-        # at minimum, item titles should display
-        for item in content:
-            self.assertContains(response, item['title'],
-                msg_prefix='search results should contain item title "%s"' % \
-                                item['title'])
-
+        # NOTE: template logic tested separately to avoid
+        # complications with callable Mock objects
 
         # search with search terms
         response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
         # check solr query args
         # - query should be called with tokenized search terms 
-        mocksolr.query.assert_called_with('fantabulous', 'expurgation') 
+        mocksolr.query.query.assert_called_with('fantabulous', 'expurgation') 
         # - sort by score then by date created when there are search terms
         sort_args = mocksolr.query.sort_by.call_args_list[-2:]
         self.assertEqual(call('-score'), sort_args[0])
         self.assertEqual(call('-created'), sort_args[1])
         # - include relevance score in return values
         mocksolr.query.field_limit.assert_called_with(score=True)
-
-        self.assertContains(response, 'fantabulous',
-            msg_prefix='search term should be displayed on results page')
-        self.assertContains(response, 'expurgation',
-            msg_prefix='search term should be displayed on results page')
-        self.assertContains(response, 'sorted by relevance')
 
     @patch('keep.search.views.Paginator')
     def test_search_by_user(self, mockpaginator, mocksolr_interface):
@@ -159,23 +116,11 @@ class SearchViewsTest(KeepTestCase):
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
-        # content handling tested above; just testing queries here
-        content = [
-            {'pid': 'audio:1', 'object_type': 'audio', 'title': 'recording'},
-        ]
-        # construct a minimal mock page object to test the template, since
-        # django templates don't deal with callable Mock objects well 
-        class MockPage(object):
-            object_list = []
-        page = MockPage()
-        page.object_list = content
-        mockpaginator.return_value.page.return_value = page
-
         # search by user
         response = self.client.get(search_url, {'keyword': 'user:admin'})
         # check solr query args
         # - query should be called with tokenized search terms
-        mocksolr.query.query.assert_called_with(users='admin')
+        mocksolr.query.query.assert_any_call(users='admin')
         # - sort by score then date when fielded search terms
         sort_args = mocksolr.query.sort_by.call_args_list[-2:]
         self.assertEqual(call('-score'), sort_args[0])
@@ -183,30 +128,14 @@ class SearchViewsTest(KeepTestCase):
         # - include relevance score in return values
         mocksolr.query.field_limit.assert_called_with(score=True)
 
-        self.assertContains(response, 'user: ',
-            msg_prefix='search term field should be displayed on results page')
-        self.assertContains(response, 'admin',
-            msg_prefix='search term value should be displayed on results page')
-        self.assertContains(response, 'sorted by relevance')
-
         # search by creator/ingester
         response = self.client.get(search_url, {'keyword': 'added_by:one'})
-        mocksolr.query.query.assert_called_with(added_by='one')
-        self.assertContains(response, 'added_by: ',
-            msg_prefix='search term field should be displayed on results page')
-        self.assertContains(response, 'one',
-            msg_prefix='search term value should be displayed on results page')
+        mocksolr.query.query.assert_any_call(added_by='one')
 
         # multiple values for a single field
         response = self.client.get(search_url, {'keyword': 'user:bob user:jane'})
         mocksolr.query.query.assert_any_call(users='bob')
         mocksolr.query.query.assert_any_call(users='jane')
-        self.assertContains(response, 'user: ', count=1,
-            msg_prefix='search term field should be displayed once on results page')
-        self.assertContains(response, 'bob',
-            msg_prefix='first search term value should be displayed on results page')
-        self.assertContains(response, 'jane',
-            msg_prefix='second search term value should be displayed on results page')
 
         # incomplete field
         response = self.client.get(search_url, {'keyword': 'user:'})
@@ -215,6 +144,59 @@ class SearchViewsTest(KeepTestCase):
         # unknown field
         response = self.client.get(search_url, {'keyword': 'foo:bar'})
         mocksolr.query.query.assert_called_with('foo:bar')
+
+    @patch('keep.search.views.Paginator')
+    def test_search_facets(self, mockpaginator, mocksolr_interface):
+        # test facet logic in the search
+        search_url = reverse('search:keyword')
+        mocksolr = mocksolr_interface.return_value
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+        # set mock facet results via paginator
+        mockpage = mockpaginator.return_value.page.return_value
+        mock_facets = {
+            'object_type': [('audio', 3), ('born-digital', 2)],
+            'access_code': [('11', 5)],
+            'collection_label': [('My Stuff', 12)],
+            'users_facet': [('login1', 22), ('login2', 11)],
+            'added_by_facet': [('login2', 12), ('login1', 11)]
+        }  
+        mockpage.object_list.facet_counts.facet_fields = mock_facets
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # search all
+        response = self.client.get(search_url)
+        # check solr facet args
+        mocksolr.query.facet_by.assert_called_with(KeywordSearch.facet_field_names.values(),
+                                                   mincount=1, limit=15, sort='count')
+        for solr_field in mock_facets.keys():
+            self.assert_(solr_field not in response.context['facets'])
+            
+        for display_name, field in KeywordSearch.facet_field_names.iteritems():
+            if field in mock_facets:
+                self.assert_(display_name in response.context['facets'])
+
+        # search filtered by facet
+        response = self.client.get(search_url, {'keyword': 'organs', 'type': 'audio'})
+        # query should be filtered by facet value
+        mocksolr.query.filter.assert_called_with(object_type='audio')
+        # value should not be in list of facets to display
+        self.assert_('audio' not in response.context['facets']['type'])
+        # value should be displayed with url options to remove filter
+        self.assertEqual(('audio', 'keyword=organs'),
+                         response.context['active_filters'][0])
+
+        # filters that are ambiguous get massaged labels
+        response = self.client.get(search_url, {'added by': 'usr1',
+                                                'modified by': 'usr2',
+                                                'access status': '10'})
+        active_filter_labels = [t for t,u in response.context['active_filters']]
+        self.assert_('added by usr1' in active_filter_labels)
+        self.assert_('modified by usr2' in active_filter_labels)
+        self.assert_('Undetermined' in active_filter_labels)         
 
 
     def test_search_suggest(self, mocksolr_interface):
@@ -279,3 +261,159 @@ class SearchViewsTest(KeepTestCase):
         self.assertEqual('cat user:"Thing Two" ', data[1]['value'])
 
 
+
+
+class SearchTemplatesTest(TestCase):
+
+    # define a minimal mock page object to test the template, since
+    # django templates don't deal with callable Mock objects well 
+    class MockPage(object):
+        def __init__(self, content=[]):
+            self.object_list = content
+
+    search_results = 'search/results.html'
+
+    # test search result content with one of each type
+    content = [
+        {'pid': 'audio:1', 'object_type': 'audio', 'title': 'recording'},
+        {'pid': 'coll:1', 'object_type': 'collection', 'title': 'mss 123',
+         'dsids': ['MODS'],},
+        {'pid': 'scoll:1', 'object_type': 'collection', 'title': 'process batch',},
+        {'pid': 'boda:1', 'object_type': 'born-digital', 'title': 'email'}
+    ]
+            
+    def setUp(self):
+        self.rqst = Mock()
+
+        # basic template context for rendering search results
+        form = KeywordSearch({'keyword': 'foo'})
+        self.context = {
+            'form': form,
+            'search_terms': [],
+            'search_info': {},
+            'show_pages': {},
+            'search_opts': {},
+            'facets': [],
+        }
+        
+    def test_results_item_display(self):
+        # test search result item display
+        template = 'search/results.html'
+        
+        # no results
+        response = render(self.rqst, self.search_results, self.context)
+        self.assertContains(response, 'No matching items found')
+
+        ctx = self.context.copy()
+        ctx['page'] = self.MockPage(self.content)
+        response = render(self.rqst, self.search_results, ctx)
+        
+        self.assertContains(response,
+                            'sorted by most recently created/uploaded')
+        self.assertNotContains(response, 'sorted by relevance')
+
+        self.assertContains(response, reverse('audio:edit',
+                                              kwargs={'pid': 'audio:1'}),
+             msg_prefix='search results should link to audio edit form for audio item')
+        self.assertContains(response, reverse('collection:edit',
+                                              kwargs={'pid': 'coll:1'}),
+             msg_prefix='search results should link to collection edit form for collection')
+        self.assertContains(response, reverse('collection:simple_edit',
+                                              kwargs={'pid': 'scoll:1'}),
+             msg_prefix='search results should link to simple collection edit form for simple collection')
+        self.assertContains(response, reverse('arrangement:edit',
+                                              kwargs={'pid': 'boda:1'}),
+             msg_prefix='search results should link to arrangement edit form for arrangement object')
+
+        # at minimum, item titles should display
+        for item in self.content:
+            self.assertContains(response, item['title'],
+                msg_prefix='search results should contain item title "%s"' % \
+                                item['title'])
+
+    def test_results_search_terms(self):
+        # test template logic for displaying info about current search
+        # (terms, field/value terms, sort)
+
+        # unfielded search terms
+        ctx = self.context.copy()
+        ctx['search_terms'] = ['fantabulous', 'expurgation']
+        response = render(self.rqst, self.search_results, ctx)
+
+        self.assertContains(response, 'fantabulous',
+            msg_prefix='search term should be displayed on results page')
+        self.assertContains(response, 'expurgation',
+            msg_prefix='search term should be displayed on results page')
+
+        # sort info
+        ctx['show_relevance'] = True
+        ctx['page'] = self.MockPage(self.content)
+        response = render(self.rqst, self.search_results, ctx)
+        self.assertContains(response, 'sorted by relevance')
+
+        # field-based search terms in keyword search string
+        ctx['search_info'] = {
+            'user': 'admin',
+            'added_by': 'one'
+        }
+        response = render(self.rqst, self.search_results, ctx) 
+        self.assertContains(response, 'user: ',
+            msg_prefix='search term field should be displayed on results page')
+        self.assertContains(response, 'admin',
+            msg_prefix='search term value should be displayed on results page')
+        self.assertContains(response, 'sorted by relevance')
+
+        self.assertContains(response, 'added_by: ',
+            msg_prefix='search term field should be displayed on results page')
+        self.assertContains(response, 'one',
+            msg_prefix='search term value should be displayed on results page')
+
+        # multiple values for a single field
+        ctx['search_info'] = {
+            'user': ['bob', 'jane'],
+        }
+        response = render(self.rqst, self.search_results, ctx) 
+        self.assertContains(response, 'user: ', count=1,
+            msg_prefix='search term field should be displayed once on results page')
+        self.assertContains(response, 'bob',
+            msg_prefix='first search term value should be displayed on results page')
+        self.assertContains(response, 'jane',
+            msg_prefix='second search term value should be displayed on results page')
+
+    def test_results_facets(self):
+        # test template logic for displaying facets
+
+        response = render(self.rqst, self.search_results, self.context)
+        self.assertNotContains(response, 'Filter your results')
+        
+        mock_facets = {
+            'type': [('audio', 3), ('born-digital', 2)],
+            'access status': [('11', 5)],
+            'collection': [('My Stuff', 15)],
+            'modified by': [('login1', 32), ('login2', 31)],
+            'added by': [('login2', 12), ('login1', 10)]
+        }  
+        ctx = self.context.copy()
+        ctx['facets'] = mock_facets
+        ctx['url_params'] = 'keyword=interesting stuff'
+        response = render(self.rqst, self.search_results, ctx)
+        self.assertContains(response, 'Filter your results')
+
+        for field in mock_facets.iterkeys():
+            self.assertContains(response, field,
+                msg_prefix='facet field name should be listed')
+
+            for term, count in mock_facets[field]:
+                # term should be listed as link text
+                if field == 'access status':
+                    self.assertContains(response, '>Unknown from Old DM<',
+                        msg_prefix='for access status, abbreviation should be listed')
+                else:
+                    self.assertContains(response, '>%s<' % term,
+                        msg_prefix='facet value should be listed')
+                    
+                self.assertContains(response, '(%s)' % count,
+                    msg_prefix='facet count should be listed')
+                self.assertContains(response, '?%s&amp;%s=%s' % (ctx['url_params'],
+                                                                 field, term),
+                    msg_prefix='page should include link to search + facet value')

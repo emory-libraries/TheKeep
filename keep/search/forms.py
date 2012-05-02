@@ -2,6 +2,8 @@ import re
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.models import User
+from django.utils.datastructures import SortedDict
+# NOTE: not using OrderedDict so as not to require Python 2.7
 from eulcommon.searchutil import search_terms, parse_search_terms
 
 
@@ -80,3 +82,17 @@ class KeywordSearch(forms.Form):
     autocomplete in keyword search.  Key is the search box field; value is
     the Solr facet field.
     '''
+
+    facet_field_names = SortedDict([
+        ('type', 'object_type'),
+        ('collection', 'collection_label'),
+        ('access status', 'access_code'),
+        ('added by', 'added_by_facet'),
+        ('modified by', 'users_facet'),
+    ])
+    ''':class:`~django.utils.datastructures.SortedDict` of facet
+    fields mapping human-readable display name to the Solr field that
+    should be used for generating facets and filtering, sorted in the
+    order they should be displayed.'''
+    # NOTE: it would be nice to facet on 'archive_short_name',
+    # but currently only collections have it indexed

@@ -2,8 +2,11 @@
  Expects a dictionary search_info with field names and value or collection dictionary
  and/or a list search_terms with a list of keyword terms or phrases.
 {% endcomment %}
-{% if search_info or search_terms %}
-  <p>Results for  
+{% if search_info or search_terms or active_filters %}
+  <p>
+    {% if search_info or search_terms %}
+    Results for  
+    {% endif %}
     {% for term in search_terms %}
       <b>{{ term }}</b>{% if not forloop.last %}, {% endif %}
     {% endfor %}
@@ -24,7 +27,6 @@
         {% endif %}</b>{% if not forloop.last %}, {% endif %}
     {% endfor %}
     {% endif %}
-
 
     {# display any filters currently in effect #}
     {% if active_filters %} 
