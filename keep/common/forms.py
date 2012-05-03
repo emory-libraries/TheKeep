@@ -7,7 +7,6 @@ from django.utils.safestring import mark_safe
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 import operator
 
-from keep.collection.forms import archive_choices
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.models import Rights
 
@@ -240,3 +239,7 @@ class ItemSearch(forms.Form):
                     search_info[key] = val
 
         return search_info
+
+class CommentForm(forms.Form):
+    comment = forms.CharField(max_length=255, label="Comment",  required=False,
+                              help_text="Enter a description of changes made")

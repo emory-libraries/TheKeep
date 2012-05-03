@@ -775,6 +775,21 @@ class AudioViewsTest(KeepTestCase):
             self.assertEqual(software, dt.codec_creator.software)
             self.assertEqual(version, dt.codec_creator.software_version)
 
+            #check audit trail has default edit message when no comment is provided
+            audit_trail = [a.message for a in obj.audit_trail.records]
+            self.assertEqual("update metadata", audit_trail[-1])
+
+            #add comment to metadata and check the response
+            data = audio_data.copy()
+            data['comments-comment'] = 'This is a very interesting comment'
+            data['dt-hardware'] = '4' # make a change so the obj will save
+            response = self.client.post(edit_url, data)
+
+            # get the latest copy of the object
+            updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
+            audit_trail = [a.message for a in updated_obj.audit_trail.records]
+            self.assertEqual("This is a very interesting comment", audit_trail[-1])
+
             # change data and confirm codec creator is updated correctly
             data = audio_data.copy()
             data['dt-hardware'] = '4' # only one hardware, no software version

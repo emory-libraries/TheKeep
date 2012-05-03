@@ -60,16 +60,16 @@ def edit(request, pid=None):
                 form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
                 if pid is None:
                     # new object
-                    log_message = 'Creating new collection'
                     action = 'created'
                 else:
                     # existing object
-                    log_message = 'Updating collection'
                     action = 'updated'
+
+                comment = form.cleaned_data['comment'] if form.cleaned_data.has_key('comment') and  form.cleaned_data['comment'] else 'updating metadata'
 
                 # NOTE: by sending a log message, we force Fedora to store an
                 # audit trail entry for object creation, which doesn't happen otherwise
-                obj.save(log_message)
+                obj.save(comment)
                 messages.success(request, 'Successfully %s collection <a href="%s">%s</a>' % \
                         (action, reverse('collection:edit', args=[obj.pid]), obj.pid))
 

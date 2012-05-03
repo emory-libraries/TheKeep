@@ -14,7 +14,7 @@ from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
 from keep.collection.models import CollectionObject
 from keep.collection.forms import NameForm
 from keep.common.models import Rights
-from keep.common.forms import ReadonlyTextInput, _collection_options, rights_access_options, EMPTY_LABEL_TEXT
+from keep.common.forms import ReadonlyTextInput, _collection_options, rights_access_options, EMPTY_LABEL_TEXT, CommentForm
 
 logger = logging.getLogger(__name__)
 
@@ -386,6 +386,7 @@ class AudioObjectEditForm(forms.Form):
             st_instance = None
             dt_instance = None
             rights_instance = None
+            comment_instance = None
         else:
             mods_instance = instance.mods.content
             st_instance = instance.sourcetech.content
@@ -412,9 +413,10 @@ class AudioObjectEditForm(forms.Form):
         self.sourcetech = SourceTechForm(instance=st_instance, prefix='st', **common_opts)
         self.digitaltech = DigitalTechForm(instance=dt_instance, prefix='dt', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
+        self.comments = CommentForm( prefix='comments',**common_opts)
 
         for form in ( self.mods, self.sourcetech, self.digitaltech,
-                      self.rights ):
+                      self.rights, self.comments ):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
@@ -427,6 +429,7 @@ class AudioObjectEditForm(forms.Form):
                       self.sourcetech,
                       self.digitaltech,
                       self.rights,
+                      self.comments,
                     ])
 
     def update_instance(self):
