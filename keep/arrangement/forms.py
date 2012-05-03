@@ -257,6 +257,7 @@ class ArrangementObjectEditForm(forms.Form):
                       self.mods,
                       self.rights,
                       self.filetech,
+                      self.comments,
                     ])
 
     def update_instance(self):

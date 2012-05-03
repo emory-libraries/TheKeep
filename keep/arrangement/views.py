@@ -53,8 +53,8 @@ def edit(request, pid):
             form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
             if form.is_valid():
                 form.update_instance() 
-                if request.POST.has_key('comments-comment') and request.POST['comments-comment']:
-                    comment = request.POST['comments-comment']
+                if form.comments.cleaned_data.has_key('comment') and form.comments.cleaned_data['comment']:
+                    comment = form.comments.cleaned_data['comment']
                 else:
                     comment = "update metadata"
 
