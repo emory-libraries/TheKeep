@@ -198,7 +198,6 @@ class SearchViewsTest(KeepTestCase):
         self.assert_('modified by usr2' in active_filter_labels)
         self.assert_('Undetermined' in active_filter_labels)         
 
-
     def test_search_suggest(self, mocksolr_interface):
         suggest_url = reverse('search:suggest')
         mocksolr = mocksolr_interface.return_value
@@ -261,6 +260,66 @@ class SearchViewsTest(KeepTestCase):
         self.assertEqual('cat user:"Thing Two" ', data[1]['value'])
 
 
+    @patch('keep.search.views.Paginator')
+    def test_search_by_created(self, mockpaginator, mocksolr_interface):
+        search_url = reverse('search:keyword')
+        mocksolr = mocksolr_interface.return_value
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # search by user
+        response = self.client.get(search_url, {'keyword': 'created:2012-05'})
+        # check solr query args
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_any_call(created_date='2012-05*')
+
+    def test_search_suggest_created(self, mocksolr_interface):
+        suggest_url = reverse('search:suggest')
+        mocksolr = mocksolr_interface.return_value
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'paginate']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # < 4 digits should query by year
+        mocksolr.query.execute.return_value.facet_counts.facet_fields = {
+            'created_year': [('2012', 50)]
+        }
+
+        response = self.client.get(suggest_url, {'term': 'created:2'})
+        mocksolr.query.facet_by.assert_called_with('created_year', prefix='2',
+                                             sort='index', limit=15)
+        data = json.loads(response.content)
+        self.assertEqual('created:2012', data[0]['value'])
+        self.assertEqual('Date Added', data[0]['category'])
+        
+        # between 4 and 7 digits should query by year-month
+        mocksolr.query.execute.return_value.facet_counts.facet_fields = {
+            'created_month': [('2012-01', 21)]
+        }
+        response = self.client.get(suggest_url, {'term': 'created:2012'})
+        mocksolr.query.facet_by.assert_called_with('created_month', prefix='2012',
+                                             sort='index', limit=15)
+        data = json.loads(response.content)
+        self.assertEqual('created:2012-01', data[0]['value'])
+        
+        # > 7 digits should query by year-month-day
+        mocksolr.query.execute.return_value.facet_counts.facet_fields = {
+            'created_date': [('2012-01-15', 9)]
+        }
+        response = self.client.get(suggest_url, {'term': 'created:2012-04'})
+        mocksolr.query.facet_by.assert_called_with('created_date', prefix='2012-04',
+                                             sort='index', limit=15)
+        data = json.loads(response.content)
+        self.assertEqual('created:2012-01-15 ', data[0]['value'])
 
 
 class SearchTemplatesTest(TestCase):

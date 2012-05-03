@@ -54,6 +54,8 @@ class KeywordSearch(forms.Form):
     <li>Search by <b>user:name</b> or <b>added_by:name</b> to find
         items created or modified by a specific person. Type <b>user:</b> and
         wait to see suggestions.</li>
+    <li>Search by <b>created:2012</b> or <b>created:2012-01</b> to find
+        items added to the repository on a specific date.</li>
     <li><b>Tip:</b> Use the down arrow in an empty search box to see a
         list of supported fields.</li>
     </ul>        
@@ -65,6 +67,7 @@ class KeywordSearch(forms.Form):
     allowed_fields = {
         'user': 'users',
         'added_by': 'added_by',
+        'created': 'created_date',
     }
     '''Dictionary of fields that can be used via the keyword search box.
     Key is the field name users should use in the search box; corresponding
@@ -72,16 +75,22 @@ class KeywordSearch(forms.Form):
     '''
     field_descriptions = {
         'user:': 'items by user (edit/create)',
-        'added_by:': 'items by user (create/upload only)'
+        'added_by:': 'items by user (create/upload only)',
+        'created:': 'date added (YYYY, YYYY-MM, or YYYY-MM-DD)',
     }
     '''Description of search fields for display to user, as they
     should be used in the keyword search.'''
 
-    facet_fields = dict([(k, '%s_facet' % v) for k,v in allowed_fields.iteritems()])
+    facet_fields = {
+        'user': 'users_facet',
+        'added_by': 'added_by_facet',
+        'created': 'created_date',
+    }
     '''Dictionary of fields that can be faceted, e.g. for
     autocomplete in keyword search.  Key is the search box field; value is
     the Solr facet field.
     '''
+    facet_fields['created'] = 'created_date'
 
     facet_field_names = SortedDict([
         ('type', 'object_type'),
@@ -89,6 +98,7 @@ class KeywordSearch(forms.Form):
         ('access status', 'access_code'),
         ('added by', 'added_by_facet'),
         ('modified by', 'users_facet'),
+        ('year', 'created_year'),
     ])
     ''':class:`~django.utils.datastructures.SortedDict` of facet
     fields mapping human-readable display name to the Solr field that

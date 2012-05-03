@@ -63,7 +63,7 @@ class AccountViewsTest(KeepTestCase):
             'user password stored in session is encrypted')
 
     def test_logout(self):
-        index_url = reverse('audio:index')
+        index_url = reverse('site-index')
         logout_url = reverse('accounts:logout')
 
         self.client.login(**ADMIN_CREDENTIALS)

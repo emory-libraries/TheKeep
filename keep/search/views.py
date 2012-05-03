@@ -13,6 +13,48 @@ from keep.search.forms import KeywordSearch
 
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
+# FIXME: should this be @permission_required("common.marbl_allowed") ?
+# sets ?next=/audio/ but does not return back here
+
+@login_required
+def site_index(request):
+    '''Simple site index page, with links to main functionality and
+    date/month facets linking to searches for recently added items.
+    '''
+    today = date.today()
+    month_ago = today - timedelta(days=30)
+    three_months = today - timedelta(days=31 * 3)
+
+    solr = solr_interface()
+
+    # search for all content added in the last month
+    # and return just the facets for date created
+    facetq = solr.query().filter(created_date__range=(month_ago, today))  \
+                .facet_by('created_date', sort='index',
+                          limit=10, mincount=1) \
+                .paginate(rows=0)
+    facets = facetq.execute().facet_counts.facet_fields
+
+    # reverse order and convert to datetime.date for use with naturalday
+    recent_items = []
+    recent_dates = facets['created_date']
+    recent_dates.reverse()
+    for day, count in recent_dates:
+        y,m,d = day.split('-')
+        recent_items.append((date(int(y),int(m),int(d)), count))
+
+    # search for content added in the last few months
+    # and return just the facets for year-month
+    facetq = solr.query().filter(created_date__range=(three_months, today))  \
+                .facet_by('created_month', sort='index',
+                          mincount=1) \
+                .paginate(rows=0)
+    recent_months = facetq.execute().facet_counts.facet_fields['created_month']
+    recent_months.reverse()
+
+    return render(request, 'search/site_index.html',
+                  {'recent_items': recent_items, 'recent_months': recent_months})
+
 
 @login_required
 def keyword_search(request):
@@ -30,6 +72,7 @@ def keyword_search(request):
         q = solr.query()
         
         # separate out normal and fielded search terms in keyword search string
+        # TODO: should this logic be shifted to form validation/cleaning?
         search_info = MultiValueDict()
         terms = []
         # add field-based search terms to query and search info for display
@@ -53,8 +96,13 @@ def keyword_search(request):
             # field/value pair
             else:
                 solr_field = searchform.allowed_fields[field]
+                search_val = val
+                # add wildcard to end of search dates
+                # (indexed by YYYY-MM-DD; allow match on YYYY or YYYY-MM)
+                if field == 'created':
+                    search_val += '*'
                 # add field/value search to the solr query
-                q = q.query(**{solr_field: val})
+                q = q.query(**{solr_field: search_val})
                 # add to search info for display to user
                 search_info.update({field: val})
 
@@ -188,7 +236,7 @@ def keyword_search_suggest(request):
     
     suggestions = []
 
-    # if term empty or ends in a space, suggest available search fields
+    # if term is empty or ends in a space, suggest available search fields
     if term == '' or term[-1] == ' ':
         suggestions = [
             {'label': field,
@@ -217,21 +265,40 @@ def keyword_search_suggest(request):
         # if field can be faceted, suggest terms
         if field in KeywordSearch.facet_fields.keys():
             facet_field = KeywordSearch.facet_fields[field]
+            # date created is a special caes
+            if field == 'created':
+                sort = 'index'
+                category = 'Date Added'
+                # if less than 4 characters, suggest year
+                if len(prefix) < 4:
+                    facet_field = 'created_year'
+                    result_fmt = '%s'
+                # between 4 and 7, suggest year-month
+                elif len(prefix) < 7:
+                    facet_field = 'created_month'
+                    result_fmt = '%s'
+                # suggest full dates
+                else:
+                    result_fmt = '%s '
+            else:
+                sort = 'count'
+                category = 'Users'
+                result_fmt = '"%s" '
 
             solr = solr_interface()
             facetq = solr.query().paginate(rows=0)
             # return the 15 most common terms in the requested facet field
             # with a specified prefix
             facetq = facetq.facet_by(facet_field, prefix=prefix,
-                                               sort='count',
-                                               limit=15)
+                                     sort=sort, limit=15)
             facets = facetq.execute().facet_counts.facet_fields
 
             # generate a dictionary to return via json with label (facet value
             # + count), and actual value to use
             suggestions = [{'label': '%s (%d)' % (facet, count),
-                            'value': '%s%s:"%s" ' % (value_prefix, field, facet),
-                            'category': 'Users'}
+                            'value': '%s%s:' % (value_prefix, field) + \
+	                                        result_fmt % facet,
+                            'category': category}
                            for facet, count in facets[facet_field]
                            ]
     

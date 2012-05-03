@@ -19,7 +19,6 @@ from django.template import RequestContext
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
-
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eullocal.django.taskresult.models import TaskResult
@@ -39,14 +38,6 @@ from keep.common.utils import md5sum
 logger = logging.getLogger(__name__)
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
-
-@permission_required("common.marbl_allowed") # sets ?next=/audio/ but does not return back here
-def index(request):
-    # pass dates in to the view to link to searches for recently uploaded files
-    today = date.today()
-    yesterday = today - timedelta(days=1)
-    return render(request, 'audio/index.html',
-                  {'today': today, 'yesterday' : yesterday})
 
 @permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
@@ -382,7 +373,7 @@ def edit(request, pid):
                         (reverse('audio:edit', args=[pid]), pid))
                 # save & continue functionality - same as collection edit
                 if '_save_continue' not in request.POST:
-                    return HttpResponseSeeOtherRedirect(reverse('audio:index'))
+                    return HttpResponseSeeOtherRedirect(reverse('site-index'))
                 # otherwise - fall through to display edit form again
 
             # form was posted but not valid

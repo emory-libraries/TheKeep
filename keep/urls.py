@@ -10,10 +10,10 @@ from keep.arrangement.models import ArrangementObject
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
+#    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
     (r'^admin/',  include(admin.site.urls)),
-    # NOTE: temporary - added because theme requires it
-    url(r'^index$', 'keep.audio.views.index', name="site-index"),
+    url(r'^$', 'keep.search.views.site_index', name="site-index"),
+
     url(r'^audio/', include('keep.audio.urls', namespace='audio')),
     url(r'^arrangement/', include('keep.arrangement.urls', namespace='arrangement')),
     url(r'^collections/', include('keep.collection.urls', namespace='collection')),

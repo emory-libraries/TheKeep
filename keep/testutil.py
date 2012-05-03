@@ -26,6 +26,8 @@ class KeepTestCase(existdb_testutil.TestCase):
         super(KeepTestCase, self).setUp()
         self.repo = Repository()
 
+        # NOTE: we should use django.test.utils override_settings for this
+        # (not available until django 1.4)
         self._solr_server_url = getattr(settings, 'SOLR_SERVER_URL', None)
         if self._solr_server_url is None:
             # sunburnt solr initialization expects *something* to be set
