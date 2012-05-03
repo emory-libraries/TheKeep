@@ -18,6 +18,7 @@ from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.common.forms import ItemSearch
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum, solr_interface
+from keep.common.templatetags import rights_extras
 from keep.testutil import KeepTestCase
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
@@ -584,3 +585,20 @@ class ItemSearchTest(TestCase):
                      'output formatting fields should not be included in search info')
 
         
+
+
+class TestRightsExtrasTemplateTags(TestCase):
+
+    def test_access_code_abbreviation(self):
+        self.assertEqual('C108-a donor request',
+                         rights_extras.access_code_abbreviation('1'))
+        self.assertEqual('C108-a donor request',
+                         rights_extras.access_code_abbreviation(1))
+        self.assertEqual('Metadata only',
+                         rights_extras.access_code_abbreviation('13'))
+        # shouldn't error when there is no match
+        self.assertEqual(None,
+                         rights_extras.access_code_abbreviation('934'))
+        self.assertEqual(None,
+                         rights_extras.access_code_abbreviation('''obviously not
+                         an access code'''))

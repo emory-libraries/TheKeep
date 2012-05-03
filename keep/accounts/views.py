@@ -20,7 +20,7 @@ def login(request):
     return response
 
 def logout(request):
-    return authviews.logout(request, next_page=reverse('audio:index'))
+    return authviews.logout(request, next_page=reverse('site-index'))
 
 # NOTE: current encryption logic should be easily adapted to most of the
 # encryption algorithms supported by Crypto that allow for variable key length

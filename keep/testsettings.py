@@ -13,7 +13,7 @@ PIDMAN_PASSWORD = None
 PIDMAN_DOMAIN = None 
 
 # for tests, remove search form context processors
-# (otherwise, this adds a solr dependency to every page load0
+# (otherwise, this adds a solr dependency to every page load)
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.auth",
     "django.core.context_processors.debug",

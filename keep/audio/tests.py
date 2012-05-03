@@ -107,25 +107,6 @@ class AudioViewsTest(KeepTestCase):
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
 
-    def test_index(self):
-        # test audio app index page permissions
-        audio_index = reverse('audio:index')
-
-        # not logged in
-        response = self.client.get(audio_index)
-        code = response.status_code
-        expected = 302
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as AnonymousUser'
-                             % (expected, code, audio_index))
-
-        # logged in as staff
-        self.client.login(**ADMIN_CREDENTIALS)
-        response = self.client.get(audio_index)
-        code = response.status_code
-        expected = 200
-        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
-                             % (expected, code, audio_index))
-
     def test_upload_form(self):
         # test upload form
         upload_url = reverse('audio:upload')
@@ -734,7 +715,7 @@ class AudioViewsTest(KeepTestCase):
                 "successful save message set in response context")
             # currently redirects to audio index
             (redirect_url, code) = response.redirect_chain[0]
-            self.assert_(reverse('audio:index') in redirect_url,
+            self.assert_(reverse('site-index') in redirect_url,
                 "successful save redirects to audio index page")
             expected = 303      # redirect
             self.assertEqual(code, expected,
@@ -994,7 +975,7 @@ class AudioViewsTest(KeepTestCase):
             
             # currently redirects to audio index
             (redirect_url, code) = response.redirect_chain[0]
-            self.assert_(reverse('audio:index') in redirect_url,
+            self.assert_(reverse('site-index') in redirect_url,
                          "successful save redirects to audio index page")
 
             messages = [ str(msg) for msg in response.context['messages'] ]

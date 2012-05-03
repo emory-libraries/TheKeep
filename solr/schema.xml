@@ -56,9 +56,10 @@ see:
     <field name="owner" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="state" type="string" indexed="true" stored="true"/>
     <field name="dsids" type="string" indexed="true" stored="true" multiValued="true"/> 
-    <!-- explicitly define string-variants of date fields for wildcard searching -->
-    <field name="created_s" type="string" indexed="true" stored="true"/>
-    <field name="last_modified_s" type="string" indexed="true" stored="false"/>
+    <field name="created_date" type="string" indexed="true" stored="true"/>
+    <field name="created_month" type="string" indexed="true" stored="true"/>
+    <field name="created_year" type="string" indexed="true" stored="true"/>
+    <field name="last_modified_date" type="string" indexed="true" stored="true"/>
 
     <!-- Dublin Core fields -->
     <field name="title" type="text" indexed="true" stored="true"/>
@@ -180,9 +181,6 @@ see:
   <copyField source="pid" dest="text"/>
   <copyField source="label" dest="text"/>
   <copyField source="owner" dest="text"/>
-  <!-- copy datetime fields to string variants for wildcard searching -->
-  <copyField source="created" dest="created_s"/>
-  <copyField source="last_modified" dest="last_modified_s"/>
   <!--   all DC fields -->
   <copyField source="title" dest="text"/>
   <copyField source="contributor" dest="text"/>
@@ -223,5 +221,13 @@ see:
    <!-- facets -->
    <copyField source="added_by" dest="added_by_facet"/>
    <copyField source="users" dest="users_facet"/>
+  <copyField source="type" dest="type_facet"/>
+
+   <!-- copy first 10 chars of string-form datetime created to date -->
+   <copyField source="created" dest="created_date" maxChars="10"/>
+   <copyField source="last_modified" dest="last_modified_date" maxChars="10"/>
+   <!-- first 4 chars = year, first 7 = year-month  -->
+   <copyField source="created" dest="created_year" maxChars="4"/>
+   <copyField source="created" dest="created_month" maxChars="7"/>
 
 </schema>

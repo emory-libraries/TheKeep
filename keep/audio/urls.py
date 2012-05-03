@@ -2,7 +2,6 @@ from django.conf.urls.defaults import *
 from keep.audio.feeds import PodcastFeed
 
 urlpatterns = patterns('keep.audio.views',
-    url(r'^$', 'index', name='index'),
     url(r'^upload/$', 'upload', name='upload'),
     url(r'^feeds/$', 'feed_list', name='feed-list'),
     url(r'^feeds/(?P<page>[0-9]+)/$', PodcastFeed(), name='podcast-feed'),
