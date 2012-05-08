@@ -372,10 +372,18 @@ class AudioObjectEditForm(forms.Form):
     with individual :class:`~eulxml.forms.XmlObjectForm` form instances
     for each XML datastream.
     """
-    collection = DynamicChoiceField(label="Collection",
-        choices=_collection_options, required=True,
+    # collection = DynamicChoiceField(label="Collection",
+    #     choices=_collection_options, required=True,
+    #     help_text="Collection this item belongs to. " +
+    #     "Start typing collection number to let your browser search within the list.")
+
+    collection = forms.CharField(label='',
+        required=True, widget=forms.HiddenInput)
+    collection_label = forms.CharField(label='Collection',
+        required=True,  # not really...
         help_text="Collection this item belongs to. " +
-        "Start typing collection number to let your browser search within the list.")
+        "Begin typing collection number and/or title words and choose from the suggestions.",
+        widget=forms.TextInput(attrs={'class': 'long collection-suggest'}))
 
     error_css_class = 'error'
     required_css_class = 'required'
@@ -397,8 +405,13 @@ class AudioObjectEditForm(forms.Form):
             initial = {}
 
             # populate fields not auto-generated & handled by XmlObjectForm
-            if self.object_instance.collection_uri:
-                initial['collection'] = str(self.object_instance.collection_uri)
+            if self.object_instance.collection:
+                collection = self.object_instance.collection
+                initial['collection'] = collection.uri
+                label = collection.mods.content.title
+                if collection.mods.content.source_id:
+                    label = '%s %s' % (collection.mods.content.source_id, label)
+                initial['collection_label'] = label
 
             if self.object_instance.ark:
                 initial['identifier'] = self.object_instance.ark
@@ -445,7 +458,8 @@ class AudioObjectEditForm(forms.Form):
         if hasattr(self, 'cleaned_data'):
             # set collection if we have all the attributes we need
             if hasattr(self, 'object_instance'):
-                self.object_instance.collection_uri = self.cleaned_data['collection']
+                
+                self.object_instance.collection = self.cleaned_data['collection']
 
         # must return mods because XmlObjectForm depends on it for # validation
         return self.object_instance
