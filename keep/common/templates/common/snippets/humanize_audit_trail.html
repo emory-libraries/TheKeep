@@ -1,0 +1,26 @@
+{% load humanize_audit_trail %}
+
+<script type="text/javascript">
+
+$(document).ready(function(){
+
+        $(".audit_trail").hide();
+        $(".show_hide").show();
+
+    $('.show_hide').click(function(){
+        $(".audit_trail").slideToggle();
+    });
+
+});
+
+</script>
+
+<a class="show_hide">Show / hide audit trail</a>
+<div class="audit_trail">
+    {% with obj|humanize_audit_trail as audit %}
+        {% for entry in audit %}
+            <p>{{ entry.date }} | {{ entry.user }} | {{ entry.action }} | {{ entry.message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+</div>

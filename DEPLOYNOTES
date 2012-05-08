@@ -310,6 +310,7 @@ Release 1.4 (preliminary)
   ``apache/the_keep.conf`` for an example.)
 * Includes Solr changes; update Solr with the latest ``schema.xml``
   and reindex site content.
+* Update fedora with the latest polices and and reload policies.
 
 
 Release 1.3 - Search-based Report generation
