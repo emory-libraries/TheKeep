@@ -166,8 +166,8 @@ class CollectionForm(XmlObjectForm):
                 if len(mods_instance.origin_info.created) > 1:
                     initial['date_end'] = mods_instance.origin_info.created[1].date
 
-            if self.object_instance.collection_id is not None:
-                initial['collection'] = self.object_instance.collection_id
+            if self.object_instance.collection:
+                initial['collection'] = self.object_instance.collection.uri
 
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
@@ -207,7 +207,7 @@ class CollectionForm(XmlObjectForm):
 
             # set relation to archive object when an instance was passed in
             if hasattr(self, 'object_instance'):
-                self.object_instance.set_collection(self.cleaned_data['collection'])
+                self.object_instance.collection = self.object_instance.get_object(self.cleaned_data['collection'])
 
         # must return mods portion because XmlObjectForm depends on it for validation
         return self.instance

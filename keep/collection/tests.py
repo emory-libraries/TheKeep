@@ -76,30 +76,6 @@ class CollectionObjectTest(KeepTestCase):
         obj = self.repo.get_object(type=CollectionObject)
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, obj.info.owner)
 
-    def test_collection_info(self):
-        # test setting & getting collection membership
-        obj = self.repo.get_object(type=CollectionObject)
-        self.assertEqual(None, obj.collection_id,
-            "CollectionObject with no collection membership returns None for collection id")
-        self.assertEqual(None, obj.collection_label,
-            "CollectionObject with no collection membership returns None for collection label")
-
-        # set collection membership
-        collections = FedoraFixtures.archives()
-        obj.set_collection(collections[0].uri)
-        self.assertEqual(collections[0].uri, obj.collection_id)
-        # use fixture archives instead of the real one for label look-up
-        with patch('keep.collection.models.CollectionObject.archives',
-                   new=Mock(return_value=FedoraFixtures.archives())):
-            self.assertEqual(collections[0].label, obj.collection_label)
-
-        # update collection membership
-        obj.set_collection(collections[1].uri)
-        self.assertEqual(collections[1].uri, obj.collection_id)
-        with patch('keep.collection.models.CollectionObject.archives',
-                   new=Mock(return_value=FedoraFixtures.archives())):
-            self.assertEqual(collections[1].label, obj.collection_label)
-
     def test_update_dc(self):
         # DC should get updated from MODS & RELS-EXT on save
 
@@ -107,7 +83,7 @@ class CollectionObjectTest(KeepTestCase):
         obj = self.repo.get_object(type=CollectionObject)
         # collection membership in RELS-EXT
         collections = FedoraFixtures.archives()
-        obj.set_collection(collections[0].uri)
+        obj.collection = self.repo.get_object(collections[0].uri)
         obj.mods.content.source_id = '1000'
         obj.mods.content.title = 'Salman Rushdie Papers'
         obj.mods.content.resource_type = 'mixed material'
@@ -284,37 +260,37 @@ class CollectionObjectTest(KeepTestCase):
         
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
-        obj._collection_id = mockarchive.pid
         obj.dc.content.title = 'test collection'
 
         # test index data for parent archive separately
-        # so we can mock the call to initialize the parent CollectionObject
-        with patch('keep.collection.models.CollectionObject',
-                   new=Mock(return_value=mockarchive)):
+        # NOTE: collection is a descriptor so must be patched on the *class*
+        # instead of the object
+        with patch('keep.collection.models.CollectionObject.collection',
+                   mockarchive):
             arch_data = obj._index_data_archive()
-            self.assertEqual('info:fedora/' + obj.collection_id, arch_data['archive_id'],
-                             'parent collection object (archive) id should be set in index data')
+            self.assertEqual(obj.collection.uri, arch_data['archive_id'],
+                'parent collection object (archive) id should be set in index data')
             self.assertEqual(mockarchive.label, arch_data['archive_label'],
-                             'parent collection object (archive) label should be set in index data')
+                'parent collection object (archive) label should be set in index data')
             self.assertEqual(mockarchive.mods.content.short_name, arch_data['archive_short_name'],
-                             'parent collection object (archive) short name should be set in index data')
+                'parent collection object (archive) short name should be set in index data')
             # error if data is not serializable as json
             self.assert_(simplejson.dumps(arch_data))
 
         # skip index archive data and test the rest
-        obj._index_data_archive = Mock(return_value={})
-        desc_data = obj.index_data_descriptive()
-        self.assert_('source_id' not in desc_data,
-                     'source_id should not be included in index data when it is not set')  
-        self.assertEqual(obj.dc.content.title, desc_data['title'][0],
-                         'default index data fields should be present in data')
+        with patch.object(obj, '_index_data_archive', Mock(return_value={})):
+            desc_data = obj.index_data_descriptive()
+            self.assert_('source_id' not in desc_data,
+                         'source_id should not be included in index data when it is not set')  
+            self.assertEqual(obj.dc.content.title, desc_data['title'][0],
+                             'default index data fields should be present in data')
         
-        obj.mods.content.source_id = 100
-        desc_data = obj.index_data_descriptive()
-        self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
-                         'source id should be included in index data when set')
-        # error if data is not serializable as json
-        self.assert_(simplejson.dumps(desc_data))
+            obj.mods.content.source_id = 100
+            desc_data = obj.index_data_descriptive()
+            self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
+                             'source id should be included in index data when set')
+            # error if data is not serializable as json
+            self.assert_(simplejson.dumps(desc_data))
 
 
 # sample POST data for creating a collection
@@ -354,8 +330,8 @@ class TestCollectionForm(KeepTestCase):
         self.form = cforms.CollectionForm(self.data)
         self.obj = FedoraFixtures.rushdie_collection()
         self.archives = FedoraFixtures.archives()
-        # store initial collection id from fixture
-        self.collection_uri = self.obj.collection_id
+        # store initial collection object from fixture
+        self.collection = self.obj.collection
 
 
     def test_subform_classes(self):
@@ -416,13 +392,13 @@ class TestCollectionForm(KeepTestCase):
         form = cforms.CollectionForm(data, instance=self.obj)
         self.assertTrue(form.is_valid(), "test form object with test data is valid")
         form.update_instance()
-        self.assertEqual(self.archives[2].uri, self.obj.collection_id)
+        self.assertEqual(self.archives[2].uri, self.obj.collection.uri)
 
     def test_initial_data(self):
         form = cforms.CollectionForm(instance=self.obj)
         # custom fields that are not handled by XmlObjectForm have special logic
         # to ensure they get set when an instance is passed in
-        expected, got = self.collection_uri, form.initial['collection']
+        expected, got = self.collection.uri, form.initial['collection']
         self.assertEqual(expected, got,
             'collection uri is set correctly in form initial data from instance; expected %s, got %s' \
             % (expected, got))
@@ -517,7 +493,7 @@ class CollectionViewsTest(KeepTestCase):
         repo = Repository()
         obj = FedoraFixtures.rushdie_collection()
         # store initial collection id from fixture
-        collection_uri = obj.collection_id
+        collection_uri = obj.collection.uri
         obj.save()  # save to fedora for editing
         self.pids.append(obj.pid)
 

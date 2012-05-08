@@ -741,7 +741,7 @@ class AudioViewsTest(KeepTestCase):
                 audio_data['mods-origin_info-created-0-date_month']])
             self.assertEqual(created, updated_obj.mods.content.origin_info.created[0].date,
                 'mods date created in fedora matches posted date created')
-            self.assertEqual(self.rushdie.uriref, updated_obj.collection_uri,
+            self.assertEqual(self.rushdie.uriref, updated_obj.collection.uriref,
                 'collection id in fedora matches posted collection')
 
             # check that source tech fields were updated correctly
@@ -1672,7 +1672,7 @@ class TestAudioObject(KeepTestCase):
         self.obj.rights.content.create_access_status()
         self.obj.rights.content.access_status.code = '8'
         self.obj.rights.content.access_status.text = 'Material is in public domain'
-        self.obj.collection_uri = self.rushdie.uri
+        self.obj.collection = self.obj.get_object(self.rushdie.uri)
         self.obj._update_dc()
         
         self.assertEqual(title, self.obj.dc.content.title)
@@ -1742,10 +1742,10 @@ class TestAudioObject(KeepTestCase):
         # create test object and populate with minimal data
         obj = self.repo.get_object(type=audiomodels.AudioObject)
         obj.pid = 'foo:1'
-        obj._collection_uri = 'parent:1'
+        obj.collection = self.repo.get_object('parent:1')
         obj.dc.content.title = 'audio item'
         desc_data = obj.index_data()
-        self.assertEqual(obj.collection_uri, desc_data['collection_id'],
+        self.assertEqual(obj.collection.uri, desc_data['collection_id'],
                          'parent collection object id should be set in index data')
         self.assertEqual(mockmss.label, desc_data['collection_label'],
                           'parent collection object label should be set in index data' )
@@ -1756,9 +1756,9 @@ class TestAudioObject(KeepTestCase):
         # check CollectionObject use
         # get all args for collection object initializations
         args, kwargs = mockcollobj.call_args
-        self.assert_(obj.collection_uri in args,
-                     'object.collection_uri %s should be used to initialize a CollectionObject for collection info' \
-                     % obj.collection_uri)
+        self.assert_(obj.collection.uri in args,
+                     'object.collection.uri %s should be used to initialize a CollectionObject for collection info' \
+                     % obj.collection.uri)
         
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                          'default index data fields should be present in data (title)')
@@ -1931,11 +1931,11 @@ class TestAudioObject(KeepTestCase):
     def test_collection(self):
         FAKE_COLLECTION = 'info:fedora/test:FakeCollection'
 
-        self.obj.collection_uri = FAKE_COLLECTION
+        self.obj.collection = self.repo.get_object(FAKE_COLLECTION)
         self.obj.save()
 
         obj = self.repo.get_object(self.obj.pid, type=audiomodels.AudioObject)
-        self.assertEqual(FAKE_COLLECTION, str(obj.collection_uri))
+        self.assertEqual(FAKE_COLLECTION, obj.collection.uri)
 
         self.obj.collection_uri = None
         self.assertEqual(None, self.obj.collection_uri)

@@ -407,7 +407,7 @@ class AudioObjectEditForm(forms.Form):
             # populate fields not auto-generated & handled by XmlObjectForm
             if self.object_instance.collection:
                 collection = self.object_instance.collection
-                initial['collection'] = collection.uri
+                initial['collection'] = str(collection.uri)
                 label = collection.mods.content.title
                 if collection.mods.content.source_id:
                     label = '%s %s' % (collection.mods.content.source_id, label)
@@ -458,8 +458,7 @@ class AudioObjectEditForm(forms.Form):
         if hasattr(self, 'cleaned_data'):
             # set collection if we have all the attributes we need
             if hasattr(self, 'object_instance'):
-                
-                self.object_instance.collection = self.cleaned_data['collection']
+                self.object_instance.collection = self.object_instance.get_object(self.cleaned_data['collection'])
 
         # must return mods because XmlObjectForm depends on it for # validation
         return self.object_instance
