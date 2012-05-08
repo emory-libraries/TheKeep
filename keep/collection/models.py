@@ -6,7 +6,7 @@ from django.conf import settings
 
 from eulexistdb.manager import Manager
 from eulexistdb.models import XmlModel
-from eulfedora.models import XmlDatastream
+from eulfedora.models import XmlDatastream, Relation
 from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
@@ -140,6 +140,14 @@ class CollectionObject(DigitalObject):
         })
     'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
 
+
+    collection = Relation(relsext.isMemberOfCollection,
+                          type='self')  # collection object ? 
+    ''':class:`~keep.collection.models.CollectionObject for the
+    archive that this collection is a member of, via
+    `isMemberOfCollection` relation.
+    '''
+
     _collection_id = None
     _collection = None
     _collection_label = None
@@ -184,63 +192,6 @@ class CollectionObject(DigitalObject):
             self._update_dc()
 
         return super(CollectionObject, self).save(logMessage)
-
-    @property
-    def collection_id(self):
-        """Fedora URI for the archive collection this object is a member of.
-        
-        :type: string
-        """
-        # for now, a collection should only have one isMemberOfCollection relation
-        if self._collection_id is None:
-            uri = self.rels_ext.content.value(subject=self.uriref,
-                        predicate=relsext.isMemberOfCollection)
-            if uri is not None:
-                self._collection_id = str(uri)  # convert from URIRef to string
-        return self._collection_id
-
-    @property
-    def collection(self):
-        """CollectionObject for the archive this collection is a member of.
-
-        :type: CollectionObject
-        """
-        if self._collection is None and self.collection_id is not None:
-            repo = Repository()
-            self._collection = repo.get_object(self.collection_id, type=CollectionObject)
-        return self._collection
-
-    @property
-    def collection_label(self):
-        """Label of the archive this object is a member of.
-        
-        :type: string
-        """
-        if self._collection_label is None:
-            coll = self.collection
-            if coll:
-                self._collection_label = coll.label
-        return self._collection_label
-
-    def set_collection(self, collection_uri):
-        """Add or update the isMemberOfcollection relation in object RELS-EXT.
-
-        :param collection_uri: string containing collection URI
-        """
-
-        if not isinstance(collection_uri, URIRef):
-            collection_uri = URIRef(collection_uri)
-
-        # update/replace any existing collection membership (only one allowed, for now)
-        self.rels_ext.content.set((
-            self.uriref,
-            relsext.isMemberOfCollection,
-            collection_uri
-        ))
-        # clear out any cached collection id/label
-        self._collection_id = None
-        self._collection = None
-        self._collection_label = None
 
     @staticmethod
     def archives(format=None):
@@ -367,7 +318,7 @@ class CollectionObject(DigitalObject):
 
         data = super(CollectionObject, self).index_data_descriptive()
         data['object_type'] = 'collection'
-        if self.collection_id is not None:
+        if self.collection:
             data.update(self._index_data_archive())
                 
         # if source id is set, include it

@@ -29,7 +29,7 @@ class FedoraFixtures:
         obj.label = 'Salman Rushdie Collection'
         obj.mods.content.title = 'Salman Rushdie Collection'
         obj.mods.content.source_id = '1000'
-        obj.set_collection(FedoraFixtures.archives()[1].uri)
+        obj.collection = repo.get_object(FedoraFixtures.archives()[1].uri)
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1947, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=2008, point='end'))
@@ -44,7 +44,7 @@ class FedoraFixtures:
         obj.label = 'Thomas Esterbrook letter books'
         obj.mods.content.title = 'Thomas Esterbrook letter books'
         obj.mods.content.source_id = '123'
-        obj.set_collection(FedoraFixtures.archives()[2].uri)
+        obj.collection = repo.get_object(FedoraFixtures.archives()[2].uri)
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1855, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1861, point='end'))
@@ -59,7 +59,7 @@ class FedoraFixtures:
         obj.label = 'English documents collection'
         obj.mods.content.title = 'English documents collection'
         obj.mods.content.source_id = '309'
-        obj.set_collection(FedoraFixtures.archives()[1].uri)
+        obj.collection = repo.get_object(FedoraFixtures.archives()[1].uri)
         obj.mods.content.create_origin_info()
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1509, point='start'))
         obj.mods.content.origin_info.created.append(mods.DateCreated(date=1805, point='end'))

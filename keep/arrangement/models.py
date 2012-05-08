@@ -1,7 +1,7 @@
 import logging
 from django.db import models
 
-from eulfedora.models import FileDatastream, XmlDatastream
+from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.util import RequestFailed
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
@@ -70,7 +70,11 @@ class ArrangementObject(DigitalObject):
         })
     'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`ArrangementMods`'
 
-    _collection_uri = None
+
+    collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
+    ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
+    via `isMemberOfCollection` relation.
+    '''
 
     def index_data(self):
         '''Extend the default
@@ -88,7 +92,8 @@ class ArrangementObject(DigitalObject):
         data['object_type'] = 'born-digital'  # ??
 
         
-        #Collection Info
+        # Collection Info
+        # TODO: can we use Relation to improve this?
         collection = list(self.rels_ext.content.objects(self.uriref, relsext.isMemberOf))
         if collection:
             data['collection_id'] = collection[0]
@@ -139,45 +144,4 @@ class ArrangementObject(DigitalObject):
             data["simpleCollection_label"] = sc_labels
 
         return data
-
-
-    def _get_collection_uri(self):
-        # for now, an arrangement object should only have one isMemberOfCollection relation
-        if self._collection_uri is None:
-            self._collection_uri = self.rels_ext.content.value(
-                        subject=self.uriref,
-                        predicate=relsext.isMemberOfCollection)
-        return self._collection_uri
-
-    def _set_collection_uri(self, collection_uri):
-        # TODO: handle None!!!  don't set to rdflib.term.URIRef('None')), clear out rels-ext
-        if collection_uri is None:
-
-            # remove the current collection membership 
-            self.rels_ext.content.remove((
-                self.uriref,
-                relsext.isMemberOfCollection,
-                self._collection_uri))
-            
-            # clear out any cached collection id
-            self._collection_uri = None
-
-        else:
-            if not isinstance(collection_uri, URIRef):
-                collection_uri = URIRef(collection_uri)
-
-            # update/replace any existing collection membership (only one allowed, for now)
-            self.rels_ext.content.set((
-                self.uriref,
-                relsext.isMemberOfCollection,
-                collection_uri))
-            # clear out any cached collection id
-            self._collection_uri = None
-
-    # FIXME: CollectionObject has an equivalent property called
-    # collection_id; should these be consisent? common code?
-    collection_uri = property(_get_collection_uri, _set_collection_uri)
-    ':class:`~rdflib.URIRef` for the collection this object belongs to'
-
-
 

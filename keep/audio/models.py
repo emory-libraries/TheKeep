@@ -15,7 +15,7 @@ from django.db.models import permalink
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eullocal.django.taskresult.models import TaskResult
-from eulfedora.models import FileDatastream, XmlDatastream
+from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 
@@ -329,8 +329,10 @@ class AudioObject(DigitalObject):
     # JHOVE is xml, but treat it as a file for now since we're just storing it,
     # not doing any processing, updating, etc.
 
-
-    _collection_uri = None
+    collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
+    ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
+    via `isMemberOfCollection` relation.
+    '''
 
     def save(self, logMessage=None):
         '''Save the object.  If the content of any :class:`~AudioObject.mods`,
@@ -374,12 +376,6 @@ class AudioObject(DigitalObject):
                 return 'mp3'
             if self.compressed_audio.mimetype == 'audio/mp4':
                 return 'm4a'
-
-    def _collection_object(self):
-        repo = Repository()
-        coll_uri = self.collection_uri
-        if coll_uri:
-            return repo.get_object(coll_uri, type=CollectionObject)
 
     @property
     def conversion_result(self):
@@ -451,11 +447,11 @@ class AudioObject(DigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(AudioObject, self).index_data()
         data['object_type'] = 'audio'
-        if self.collection_uri is not None:
-            data['collection_id'] = self.collection_uri
+        if self.collection:
+            data['collection_id'] = self.collection.uri
             try:
                 # pull parent & archive collection objects directly from fedora
-                parent = CollectionObject(self.api, self.collection_uri)
+                parent = CollectionObject(self.api, self.collection.uri)
                 data['collection_label'] = parent.label
                 # NB: as of 2011-08-23, eulindexer doesn't support automatic
                 # reindexing of audio objects when their collection changes.
@@ -572,44 +568,6 @@ class AudioObject(DigitalObject):
         obj.digitaltech.content.duration = '%d' % round(wav_duration(filename))
 
         return obj
-
-    def _get_collection_uri(self):
-        # for now, an audio object should only have one isMemberOfCollection relation
-        if self._collection_uri is None:
-            self._collection_uri = self.rels_ext.content.value(
-                        subject=self.uriref,
-                        predicate=relsext.isMemberOfCollection)
-        return self._collection_uri
-
-    def _set_collection_uri(self, collection_uri):
-        # TODO: handle None!!!  don't set to rdflib.term.URIRef('None')), clear out rels-ext
-        if collection_uri is None:
-
-            # remove the current collection membership 
-            self.rels_ext.content.remove((
-                self.uriref,
-                relsext.isMemberOfCollection,
-                self._collection_uri))
-            
-            # clear out any cached collection id
-            self._collection_uri = None
-
-        else:
-            if not isinstance(collection_uri, URIRef):
-                collection_uri = URIRef(collection_uri)
-
-            # update/replace any existing collection membership (only one allowed, for now)
-            self.rels_ext.content.set((
-                self.uriref,
-                relsext.isMemberOfCollection,
-                collection_uri))
-            # clear out any cached collection id
-            self._collection_uri = None
-
-    # FIXME: CollectionObject has an equivalent property called
-    # collection_id; should these be consisent? common code?
-    collection_uri = property(_get_collection_uri, _set_collection_uri)
-    ':class:`~rdflib.URIRef` for the collection this object belongs to'
 
     @staticmethod
     def all():
