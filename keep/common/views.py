@@ -98,6 +98,9 @@ def search(request):
                 # write out list of field labels
                 writer.writerow(ctx_dict['display_labels'])
                 # then append all matching values
+                # FIXME: csv output for very large results is VERY slow
+                # TODO: append rows in chunks of 50-100, to handle
+                # large result sets better - maybe use paginator?
                 writer.writerows(solrquery)
                 return response
 

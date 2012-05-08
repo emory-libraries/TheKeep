@@ -117,7 +117,10 @@ class ItemSearch(forms.Form):
                                   key=operator.itemgetter(1))
     display_fields = forms.MultipleChoiceField(_display_field_choices, required=False,
          help_text=mark_safe('''Customize which fields should be displayed in search results.
-         If none are selected, uses default search results format.'''))
+         If none are selected, uses default search results format.  (Use the shift or control key to select multiple fields.)'''))
+    # NOTE: consider using checkbox for multiselect widget here
+    # - would require some styling, possibly additional logic to select all
+    
     output = forms.ChoiceField([('html', 'html'), ('csv', 'csv')], initial='html', required=False,
          help_text=mark_safe('''Output format.  If csv is selected, all matching rows will be
          selected and output as a downloadable CSV file.  CSV output is only valid when display
