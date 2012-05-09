@@ -799,6 +799,8 @@ class CollectionViewsTest(KeepTestCase):
         obj.save('audit trail test')
         self.pids.append(obj.pid)
 
+        self.client.login(**ADMIN_CREDENTIALS)
+
         audit_url = reverse('collection:audit-trail', kwargs={'pid': obj.pid})
         response = self.client.get(audit_url)
         expected, got = 200, response.status_code
@@ -819,8 +821,6 @@ class CollectionViewsTest(KeepTestCase):
         
         self.client.login(**ADMIN_CREDENTIALS)
         suggest_url = reverse('collection:suggest')
-
-        self.client.login(**ADMIN_CREDENTIALS)
 
         # no search term - empty result
         response = self.client.get(suggest_url)
