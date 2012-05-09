@@ -308,9 +308,10 @@ Release 1.4 (preliminary)
   single alias should be set up for the ``/static`` URL, pointing at
   the configured static directory.  (See latest
   ``apache/the_keep.conf`` for an example.)
-* Includes Solr changes; update Solr with the latest ``schema.xml``
-  and reindex site content.
-* Update fedora with the latest polices and and reload policies.
+* This update includes Solr index changes; update Solr with the latest
+  ``schema.xml`` and reindex site content.
+* This update requires modifications to Fedora XACML policies; update
+  Fedora with the latest polices and and reload them.
 
 
 Release 1.3 - Search-based Report generation
