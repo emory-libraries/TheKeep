@@ -26,6 +26,9 @@
      /* trigger change once manually so initial display will reflect field starting value */
      $('.checkbox-warning').change();
 
+     {# collection autocomplete #}
+     {% include "collection/snippets/collection_suggest_js.html" %}
+
     });
   </script>
 {% endblock %}
@@ -89,11 +92,12 @@
     {% if form.mods.non_field_errors %}
     {{ form.mods.non_field_errors }}
     {% endif %}
+ {% for field in form.hidden_fields %}{{ field }}{% endfor %}
 <table class="edit-form">
   {% if form.mods.non_field_errors %}
     <tr><td colspan="3">{{ form.non_field_errors }}</td></tr>
   {% endif %}
-  {% for field in form %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+  {% for field in form.visible_fields %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
   {% if form.mods.non_field_errors %}
     <tr><td colspan="3">{{ form.mods.non_field_errors }}</td></tr>
   {% endif %}

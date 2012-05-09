@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 import operator
 
+from keep.collection.forms import CollectionSuggestionField
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.models import Rights
 
@@ -40,22 +41,6 @@ def _simple_collection_options():
 
     return options
 
-def _collection_options():
-        collections = [c for c in CollectionObject.item_collections()
-                        if settings.FEDORA_PIDSPACE in c['pid'] ]
-        logging.debug('Calculated collections: ' + ' '.join(c['pid'] for c in collections))
-        # generate option list with URI as value and source id - title display
-        # sort on source id
-        options = [('info:fedora/' + c.get('pid', ''),
-                    '%s %s %s' % (c.get('source_id', ''),
-                                  c.get('archive_short_name', ''),
-                                  c.get('title', '')))
-                   for c in sorted(collections, key=lambda k: k.get('source_id', ''))]
-
-        # always include a blank option at the beginning of the list
-        # - not specified for search, force user to select on the edit form
-        options.insert(0, ('', EMPTY_LABEL_TEXT))
-        return options
 
 class ItemSearch(forms.Form):
     '''Form for searching for :class:`~keep.audio.models.AudioObject`
@@ -72,10 +57,8 @@ class ItemSearch(forms.Form):
             help_text='Search for title word or phrase.  May contain wildcards * or ?.')
     notes = forms.CharField(required=False,
             help_text='Search for word or phrase in general note, digitization purpose, or related files.  May contain wildcards * or ?.')
-    collection = DynamicChoiceField(label="Collection",  choices=_collection_options,
-                    help_text='''Limit to items in the specified collection.
-                    Start typing collection number to let your browser search within the list.''',
-                    required=False)
+
+    collection = CollectionSuggestionField(required=False)
     simpleCollection = DynamicChoiceField(choices=_simple_collection_options, label='Simple Collection', required=False,
                     help_text='Search for items with the specified SimpleCollection')
     content_model = forms.ChoiceField(label="Format",  choices=format_options,
@@ -166,7 +149,9 @@ class ItemSearch(forms.Form):
             # skip display-formatting fields
             if field in self.display_output_fields:
                 continue
-
+            if val is None:
+                val = ''
+                
             # Solr does not allow wildcards at the beginning of a field search
             # TODO: could this be handled as form field validation/cleaning?
             cleaned_val = val.lstrip('*?')
@@ -185,7 +170,6 @@ class ItemSearch(forms.Form):
             # skip blank fields (after solr wildcard clean-up)
             if not val:
                 continue
-
 
             # handle fields that need special logic
             if field == 'pid':
@@ -233,7 +217,8 @@ class ItemSearch(forms.Form):
                 if field == 'collection':
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
-                    search_info[key] = '%s - %s' % (val, Rights.access_terms_dict[val].abbreviation)
+                    search_info[key] = '%s - %s' % (val,
+                                                    Rights.access_terms_dict[val].abbreviation)
                 elif field == "content_model":
                     search_info[key] = dict(self.format_options)[val]
                 elif field == "simpleCollection":

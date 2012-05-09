@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import json
 import logging
 from mock import Mock, patch
 from os import path
@@ -798,8 +799,6 @@ class CollectionViewsTest(KeepTestCase):
         obj.save('audit trail test')
         self.pids.append(obj.pid)
 
-        self.client.login(**ADMIN_CREDENTIALS)
-
         audit_url = reverse('collection:audit-trail', kwargs={'pid': obj.pid})
         response = self.client.get(audit_url)
         expected, got = 200, response.status_code
@@ -808,6 +807,72 @@ class CollectionViewsTest(KeepTestCase):
                 % (expected, got, audit_url))
         self.assertContains(response, 'justification>audit trail test</audit')
 
+
+
+    @patch('keep.collection.views.solr_interface')
+    def test_suggest(self, mock_solr_interface):
+        solrquery = mock_solr_interface.return_value
+        solrquery.query.return_value = solrquery
+        solrquery.filter.return_value = solrquery
+        solrquery.field_limit.return_value = solrquery
+        solrquery.sort_by.return_value = solrquery
+        
+        self.client.login(**ADMIN_CREDENTIALS)
+        suggest_url = reverse('collection:suggest')
+
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # no search term - empty result
+        response = self.client.get(suggest_url)
+        self.assertEqual('application/json', response['Content-Type'],
+                         'suggest view should return json content')
+        # inspect result
+        data = json.loads(response.content)
+        self.assertEqual([], data,
+                         'suggest should return empty list for no search term')
+        # solr should not be called when there is no search term
+        solrquery.assert_not_called()
+
+        # sample solr results to test json return construction
+        result = [
+            {'pid': 'test:1', 'title': 'Rushdie Papers'},
+            {'pid': 'test:2', 'title': 'Salman Rushdie Collection',
+             'source_id': '1000', 'archive_short_name': 'MARBL',
+             'creator': 'Rushdie, Salman'}
+        ]
+        solrquery.__getitem__.return_value = result
+        # search term, inspect query args and json result
+        response = self.client.get(suggest_url, {'term': '1000 rushd'})
+        solrquery.filter.assert_called_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        solrquery.field_limit.assert_called_with(['pid', 'source_id', 'title',
+                                                        'archive_short_name', 'creator'])
+        solrquery.sort_by.assert_called_with('-score')
+        # search terms
+        solrquery.query.assert_called_with(['1000', 'rushd*'])
+        data = json.loads(response.content)
+        self.assertEqual(result[0]['pid'], data[0]['value'],
+                         'value should be set as item pid')
+        self.assertEqual(' ' + result[0]['title'], data[0]['label'],
+                         'label sholud be item title when there is no source id')
+        # second result has source id
+        self.assertEqual('%s %s' % (result[1]['source_id'],
+                                    result[1]['title']), data[1]['label'],
+                         'label should be source id + title when both are present')
+        # description - should use creator, if any
+        self.assertEqual('', data[0]['desc'])
+        self.assertEqual(result[1]['creator'], data[1]['desc'])
+        # category - should use archive short name, if any
+        self.assertEqual('', data[0]['category'])
+        self.assertEqual(result[1]['archive_short_name'], data[1]['category'])
+
+
+        # if wildcard returns no results, should try again without wildcard
+        solrquery.count.return_value = 0
+        response = self.client.get(suggest_url, {'term': '1000 rushd'})
+        # should query with the wildcard, then without when count is 0
+        solrquery.query.assert_any_call(['1000', 'rushd*'])
+        solrquery.query.assert_any_call(['1000', 'rushd'])
+        
 
 class FindingAidTest(KeepTestCase):
     exist_fixtures = {'directory':  path.join(path.dirname(path.abspath(__file__)), 'fixtures')}

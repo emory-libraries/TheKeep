@@ -1,8 +1,8 @@
 import logging
 
 from django import forms
-import django.forms
-from django.forms import BaseForm
+from django.core import validators
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
 from eulfedora.rdfns import relsext as relsextns
@@ -300,3 +300,86 @@ class SimpleCollectionEditForm(forms.Form):
                 logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
 
         return (success_count, fail_count) 
+
+
+class CollectionSuggestionWidget(forms.MultiWidget):
+    '''Custom :class:`django.forms.MultiWidget` for use with
+    :class:`CollectionSuggestionField`.
+    '''
+    def __init__(self, attrs=None):
+        hidden_attrs = {'class': 'collection-suggest-id' }
+        text_attrs = {'class': 'long collection-suggest' }
+        if attrs:
+            text_attrs.update(attrs)
+            hidden_attrs.update(attrs)
+        widgets = (forms.HiddenInput(attrs=hidden_attrs),
+                   forms.TextInput(attrs=text_attrs))
+        super(CollectionSuggestionWidget, self).__init__(widgets, attrs)
+
+    def decompress(self, pid):
+        # break single field value (pid) into multi-value needed for
+        # multi-value field
+        
+        if pid:
+            # main (hidden) value is collection id; if set, get collection
+            # information to display as pre-set value in the visible field
+            coll = CollectionObject.find_by_pid(pid)
+            if coll:
+                # if source id is available, include in label
+                if 'source_id' in coll:
+                    label = '%(source_id)s %(title)s' % coll
+                else:
+                    label = coll['title']
+            else:
+                # fallback - should only happen if collection is not
+                # indexed or pid is invalid
+                logger.error('No collection information found for %s' % pid)
+                label = '%s (title not found)' % pid
+                
+            return [pid, label]
+        
+        return [None, None]
+
+class CollectionSuggestionField(forms.MultiValueField):
+    '''Custom :class:`django.forms.MultiValueField` to support
+    auto-complete input for selecting collections.  This field is made
+    up of two fields: the primary field, a hidden field that stores
+    the pid for the selected
+    :class:`~keep.collection.models.CollectionObject`; and a text
+    field used for display, which is expected to be used as an
+    auto-complete input and set the hidden id.  
+    '''
+    
+    widget = CollectionSuggestionWidget
+
+    default_error_messages = {
+        'required': 'This field is required. You must choose a collection ' +
+	        'from the suggested values.'
+    }
+    
+    default_help_text = 'Collection this item belongs to. ' + \
+    	'Begin typing collection number and/or title words and choose from the suggestions.'
+
+
+    def __init__(self, *args, **kwargs):
+        errors = self.default_error_messages.copy()
+        if 'error_messages' in kwargs:
+            errors.update(kwargs['error_messages'])
+        localize = kwargs.get('localize', False)
+        help_text = kwargs.get('help_text', self.default_help_text)
+        fields = (
+            forms.CharField(error_messages=errors, localize=localize),
+            forms.CharField(error_messages=errors, localize=localize,
+                            help_text=help_text)
+        )
+        super(CollectionSuggestionField, self).__init__(fields, *args, **kwargs)
+
+    def compress(self, data_list):
+        if data_list:
+            # Raise a validation error if id is empty
+            # (label is for display purposes only, so doesn't really matter)
+            if data_list[0] in validators.EMPTY_VALUES:
+                raise ValidationError(self.error_messages['required'])
+            return data_list[0]
+        return None
+

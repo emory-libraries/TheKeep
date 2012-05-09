@@ -20,6 +20,8 @@
           source: "{% url search:suggest %}",
           minLength: 0,
           });
+        {# remove this when old search is removed from sidebar #}
+        {% include "collection/snippets/collection_suggest_js.html" %}
       });
     </script>
 

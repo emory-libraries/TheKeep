@@ -554,9 +554,7 @@ class AudioViewsTest(KeepTestCase):
                     "MODS EditForm is set in response context")
             self.assert_(isinstance(response.context['form'].object_instance, audiomodels.AudioObject),
                     "form instance is an AudioObject")
-            self.assertContains(response, self.rushdie.pid)
-            self.assertContains(response, self.esterbrook.pid)
-            self.assertContains(response, self.englishdocs.pid)
+            # edit form no longer contains collection pids (auto-complete instead of drop-down)
 
             # audio datastream links
             self.assertContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
@@ -666,7 +664,8 @@ class AudioViewsTest(KeepTestCase):
             self.assertEqual(item_rights.copyright_date, initial_data['copyright_date'])
 
             # POST data to update audio object in fedora
-            audio_data = {'collection': self.rushdie.uri,
+            audio_data = {'collection_0': self.rushdie.uri,
+                          'collection_1': self.rushdie.label,
                         'mods-title': u'new title \u2026',
                         'mods-note-label' : 'a general note',
                         #'mods-general_note-text': u'remember to ... with some unicode \u1f05',
@@ -960,7 +959,8 @@ class AudioViewsTest(KeepTestCase):
         edit_url = reverse('audio:edit', args=[obj.pid])
 
         # POST data to update audio object in fedora
-        audio_data = {'collection': self.rushdie.uri,
+        audio_data = {'collection_0': self.rushdie.uri,
+                      'collection_1': self.rushdie.label,
                     'mods-title': 'new title',
                     'mods-resource_type': 'sound recording',
                     # 'management' form data is required for django to process formsets/subforms
@@ -987,7 +987,6 @@ class AudioViewsTest(KeepTestCase):
         with patch('keep.audio.forms.CollectionObject.item_collections',
                    new=Mock(return_value=[coll_info])):
             response = self.client.post(edit_url, audio_data, follow=True)
-            
             # currently redirects to audio index
             (redirect_url, code) = response.redirect_chain[0]
             self.assert_(reverse('site-index') in redirect_url,

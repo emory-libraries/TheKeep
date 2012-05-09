@@ -107,6 +107,7 @@ class ArrangementObject(DigitalObject):
                 if parent.collection:
                     data['archive_id'] = parent.collection.uri
                     data['archive_label'] = parent.collection.label
+
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
             

@@ -12,9 +12,10 @@ from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
-from keep.collection.forms import NameForm
+from keep.collection.forms import NameForm, CollectionSuggestionField
 from keep.common.models import Rights
-from keep.common.forms import ReadonlyTextInput, _collection_options, rights_access_options, EMPTY_LABEL_TEXT, CommentForm
+from keep.common.forms import ReadonlyTextInput, rights_access_options, \
+     EMPTY_LABEL_TEXT, CommentForm
 
 logger = logging.getLogger(__name__)
 
@@ -372,10 +373,8 @@ class AudioObjectEditForm(forms.Form):
     with individual :class:`~eulxml.forms.XmlObjectForm` form instances
     for each XML datastream.
     """
-    collection = DynamicChoiceField(label="Collection",
-        choices=_collection_options, required=True,
-        help_text="Collection this item belongs to. " +
-        "Start typing collection number to let your browser search within the list.")
+    
+    collection = CollectionSuggestionField(required=True)
 
     error_css_class = 'error'
     required_css_class = 'required'

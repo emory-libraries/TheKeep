@@ -11,13 +11,15 @@ from rdflib.namespace import RDF
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.template import RequestContext
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
+from eulcommon.searchutil import search_terms
 from eulfedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
@@ -28,6 +30,8 @@ from keep.common.utils import solr_interface
 
 
 logger = logging.getLogger(__name__)
+
+json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
 @permission_required("common.marbl_allowed")
 def view(request, pid):
@@ -304,3 +308,56 @@ def simple_browse(request):
         response.status_code = response_code
     return response
 
+
+
+@permission_required("common.marbl_allowed")
+def collection_suggest(request):
+    '''Suggest view for collections, for use with use with `JQuery UI
+    Autocomplete`_ widget.  Searches for collections on all of the
+    terms passed in (as multiple keywords), similar to the way the
+    combined search works.
+
+    .. _JQuery UI Autocomplete: http://jqueryui.com/demos/autocomplete/
+
+    :param request: the http request passed to the original view
+        method (used to retrieve the search term)
+    '''
+    term = request.GET.get('term', '')
+
+    suggestions = []
+    
+    if term:
+        # If the search term doesn't end in space, add a wildcard to
+        # the last word to allow for partial word matching.
+        if term[-1] != ' ':
+            term += '*'
+        terms = search_terms(term)
+            
+        solr = solr_interface()
+        # common query parameters and options
+        base_query = solr.query() \
+                    .filter(content_model=CollectionObject.COLLECTION_CONTENT_MODEL) \
+                    .field_limit(['pid', 'source_id', 'title', 'archive_short_name',
+                                  'creator']) \
+                    .sort_by('-score') 
+        
+        q = base_query.query(terms)
+        
+        # NOTE: there seems to be a Lucene/Solr bug/quirk where adding
+        # a wildcard at the end of a word causes Solr not to match the
+        # exact word (even though docs indicate this should work).
+        # As a work-around, if we added a * and got 0 results,
+        # try the search again without the wildcard.
+        if term[-1] == '*' and q.count() == 0:
+            q = base_query.query(search_terms(term[:-1]))
+        
+        suggestions = [{'label': '%s %s' % (c.get('source_id', ''),
+                                            c.get('title', '(no title')),
+                        'value': c['pid'],  # FIXME: do we need URI here?
+                        'category':c.get('archive_short_name', ''),
+                        'desc': c.get('creator', '') }
+                       for c in q[:15] ]
+    
+    return  HttpResponse(json_serializer.encode(suggestions),
+                         mimetype='application/json')
+            

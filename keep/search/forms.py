@@ -12,7 +12,7 @@ class SolrSearchField(forms.CharField):
     and conversion for use with Solr searching via :mod:`sunburnt`.
 
     Returns a list of keyword terms tokenized into words and phrases
-    by :meth:`eulcommon.searchutil.search_terms`.  Validates that none
+    by :meth:`eulcommon.searchutil.parse_search_terms`.  Validates that none
     of the tokenized search terms starts with a wildcard * or ?, since
     Solr does not handle wildcards at the beginning of search terms.
     '''

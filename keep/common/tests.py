@@ -462,25 +462,28 @@ class SearchTest(KeepTestCase):
 
         # collection
         collpid = '%s:1' % settings.FEDORA_PIDSPACE
-        coll_info = {'pid': collpid, 'source_id': '1', 'title': 'Papers of Somebody Important'}
+        coll_info = {'pid': collpid, 'source_id': '1', 'title': 'Papers of Somebody Important',
+                     'collection_id': 'marbl:1'}
         colluri = 'info:fedora/%s' % collpid
         # modify item_collections so test pid will be in the form choice list
         mockcollobj.item_collections.return_value = [coll_info]
         # mock collection find by pid in the view for collection label look-up
-        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=coll_info)):
-            response = self.client.get(search_url, {'audio-collection':  colluri})
+        with patch('keep.common.forms.CollectionObject.find_by_pid',
+                   new=Mock(return_value=coll_info)):
+            response = self.client.get(search_url, {'audio-collection_0':  colluri})
             args, kwargs = self.mocksolr.query.call_args
             self.assertEqual(colluri, kwargs['collection_id'],
                 'collection search should filter on collection_id field')
-            self.assertPattern('Collection:.*%s' % coll_info['title'], response.content,
+            self.assertPattern('collection:.*%s' % coll_info['title'], response.content,
                 msg_prefix='search results page should include search term (collection by name)')
 
         # multiple fields
         # mock collection find by pid in the view for collection label look-up
-        with patch('keep.audio.views.CollectionObject.find_by_pid', new=Mock(return_value=coll_info)):
+        with patch('keep.audio.views.CollectionObject.find_by_pid',
+                   new=Mock(return_value=coll_info)):
             searchtitle = 'Moldy papers'
             searchdate = '1492*'
-            response = self.client.get(search_url, {'audio-collection':  colluri,
+            response = self.client.get(search_url, {'audio-collection_0':  colluri,
                 'audio-title': searchtitle, 'audio-date': searchdate})
             args, kwargs = self.mocksolr.query.call_args
             # all field should be in solr search
@@ -488,7 +491,7 @@ class SearchTest(KeepTestCase):
             self.assertEqual(searchtitle, kwargs['title'])
             self.assertEqual(searchdate, kwargs['date'])
             # all fields should display to user
-            self.assertPattern('Collection:.*%s' % coll_info['title'], response.content,
+            self.assertPattern('collection:.*%s' % coll_info['title'], response.content,
                 msg_prefix='search results page should include all search terms used (collection)')
             self.assertPattern('date:.*%s' % searchdate, response.content,
                 msg_prefix='search results page should include all search terms used (date)')
@@ -534,7 +537,7 @@ class ItemSearchTest(TestCase):
             {'pid': '%s:1' % settings.FEDORA_PIDSPACE, 'title': 'collection 1'},
             ]
 
-        form_data = {'collection': 'info:fedora/%s:1' % settings.FEDORA_PIDSPACE,
+        form_data = {'collection_0': 'info:fedora/%s:1' % settings.FEDORA_PIDSPACE,
                      'title': '*foo',
                      'notes': '?',
                      'pid': 'keep*',
@@ -543,7 +546,7 @@ class ItemSearchTest(TestCase):
                      }
         f = ItemSearch(form_data)
         search_opts = f.search_options()
-        self.assertEqual(form_data['collection'], search_opts['collection_id'],
+        self.assertEqual(form_data['collection_0'], search_opts['collection_id'],
                          'collection value should return collection_id search option')
         self.assertEqual(form_data['title'].lstrip('*'), search_opts['title'],
                          'leading wildcard should be removed')
@@ -572,7 +575,7 @@ class ItemSearchTest(TestCase):
         mockcollection.find_by_pid.return_value = 'my collection'
 
         f = ItemSearch()
-        form_data = {'collection': 'info:fedora/%s:1' % settings.FEDORA_PIDSPACE,
+        form_data = {'collection_0': 'info:fedora/%s:1' % settings.FEDORA_PIDSPACE,
                      'title': 'foo',
                      'display_fields': ['pid', 'title'],
                      'output': 'html',
@@ -581,7 +584,7 @@ class ItemSearchTest(TestCase):
         f = ItemSearch(form_data)
         search_info = f.search_info()
         self.assertEqual(mockcollection.find_by_pid.return_value,
-                         search_info['Collection'])
+                         search_info['collection'])
         self.assertEqual(form_data['title'], search_info['title'])
         self.assert_('pid' not in search_info,
                      'fields with initial/default value should not be included in search info')
