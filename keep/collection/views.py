@@ -304,8 +304,10 @@ def simple_browse(request):
 
 @permission_required("common.marbl_allowed")
 def collection_suggest(request):
-    '''Suggest view for collections, for use with use with `JQuery UI Autocomplete`_
-    widget.
+    '''Suggest view for collections, for use with use with `JQuery UI
+    Autocomplete`_ widget.  Searches for collections on all of the
+    terms passed in (as multiple keywords), similar to the way the
+    combined search works.
 
     .. _JQuery UI Autocomplete: http://jqueryui.com/demos/autocomplete/
 
@@ -317,27 +319,36 @@ def collection_suggest(request):
     suggestions = []
     
     if term:
-        # it the search term doesn't end in space, add a wildcard to the last word
-        # to allow for partial word matching as the user types
+        # If the search term doesn't end in space, add a wildcard to
+        # the last word to allow for partial word matching.
         if term[-1] != ' ':
             term += '*'
-            # possible Lucene/Solr bug? does not seem to match full words...
-            # (docs indicate it should)
         terms = search_terms(term)
             
         solr = solr_interface()
-        q = solr.query(terms) \
+        # common query parameters and options
+        base_query = solr.query() \
                     .filter(content_model=CollectionObject.COLLECTION_CONTENT_MODEL) \
                     .field_limit(['pid', 'source_id', 'title', 'archive_short_name',
                                   'creator']) \
-                    .sort_by('-score').paginate(rows=15)
+                    .sort_by('-score') 
+        
+        q = base_query.query(terms)
+        
+        # NOTE: there seems to be a Lucene/Solr bug/quirk where adding
+        # a wildcard at the end of a word causes Solr not to match the
+        # exact word (even though docs indicate this should work).
+        # As a work-around, if we added a * and got 0 results,
+        # try the search again without the wildcard.
+        if term[-1] == '*' and q.count() == 0:
+            q = base_query.query(search_terms(term[:-1]))
         
         suggestions = [{'label': '%s %s' % (c.get('source_id', ''),
                                             c.get('title', '(no title')),
                         'value': c['pid'],  # FIXME: do we need URI here?
                         'category':c.get('archive_short_name', ''),
                         'desc': c.get('creator', '') }
-                       for c in q]
+                       for c in q[:15] ]
     
     return  HttpResponse(json_serializer.encode(suggestions),
                          mimetype='application/json')
