@@ -56,6 +56,7 @@
   | <a href="{% url audio:raw-ds obj.pid 'Rights' %}">Rights</a>
   {# not all objects will have JHOVE, but go ahead and provide access for those that do #}
   {% if obj.jhove.exists %}| <a href="{% url audio:raw-ds obj.pid 'JHOVE' %}">JHOVE</a> {% endif %}
+  | <a href="{% url audio:audit-trail obj.pid %}">Audit Trail</a>
 </p>
 {% with obj.conversion_result as conversion %}
   {% if conversion %}

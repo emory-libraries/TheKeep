@@ -792,6 +792,21 @@ class CollectionViewsTest(KeepTestCase):
             'Expected %s but returned %s for %s (DC datastream)' \
                 % (expected, got, ds_url))
 
+    def test_audit_trail(self):
+        # test object with ingest message
+        obj = FedoraFixtures.rushdie_collection()
+        obj.save('audit trail test')
+        self.pids.append(obj.pid)
+
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        audit_url = reverse('collection:audit-trail', kwargs={'pid': obj.pid})
+        response = self.client.get(audit_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (raw audit trail xml)' \
+                % (expected, got, audit_url))
+        self.assertContains(response, 'justification>audit trail test</audit')
 
 
 class FindingAidTest(KeepTestCase):

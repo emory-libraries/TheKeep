@@ -22,7 +22,7 @@ from django.views.decorators.csrf import csrf_exempt
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eullocal.django.taskresult.models import TaskResult
-from eulfedora.views import raw_datastream
+from eulfedora.views import raw_datastream, raw_audit_trail
 from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.models import DigitalObjectSaveFailure
 
@@ -350,7 +350,17 @@ def view(request, pid):
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
-    return raw_datastream(request, pid, dsid, type=AudioObject, repo=Repository(request=request))
+    return raw_datastream(request, pid, dsid, type=AudioObject,
+                          repo=Repository(request=request))
+
+@permission_required("common.marbl_allowed")
+def view_audit_trail(request, pid):
+    'Access XML audit trail for an audio object'
+    # initialize local repo with logged-in user credentials & call eulfedora view
+    # FIXME: redundant across collection/arrangement/audio apps; consolidate?
+    return raw_audit_trail(request, pid, type=AudioObject,
+                           repo=Repository(request=request))
+
 
 @permission_required("common.marbl_allowed")
 def edit(request, pid):

@@ -9,6 +9,7 @@ urlpatterns = patterns('keep.audio.views',
     url(r'^(?P<pid>[^/]+)/edit/$', 'edit', name='edit'),
     url(r'^(?P<pid>[^/]+)/(?P<dsid>(MODS|RELS-EXT|DC|DigitalTech|SourceTech|Rights|JHOVE))/$',
             'view_datastream', name='raw-ds'),
+    url(r'^(?P<pid>[^/]+)/AUDIT/$', 'view_audit_trail', name='audit-trail'),
     url(r'^(?P<pid>[^/]+)/original/$', 'download_audio', {'type': 'original'},
             name='download-audio'),
     # NOTE: access copy filename extension is required for inclusion in iTunes

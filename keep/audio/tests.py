@@ -1089,6 +1089,25 @@ class AudioViewsTest(KeepTestCase):
                 % (expected, got, ds_url))
 
 
+    def test_audit_trail(self):
+        # create a test audio object with ingest message
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj.mods.content.title = 'test audio object'
+        obj.save('audit trail test')
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
+
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        audit_url = reverse('audio:audit-trail', kwargs={'pid': obj.pid})
+        response = self.client.get(audit_url)
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got,
+            'Expected %s but returned %s for %s (raw audit trail xml)' \
+                % (expected, got, audit_url))
+        self.assertContains(response, 'justification>audit trail test</audit')
+
+
     @patch('keep.audio.feeds.feed_items')
     @patch('keep.audio.feeds.PodcastFeed._get_collection_data', new=Mock(return_value={}))
     def test_podcast_feed(self, mockfeeditems):

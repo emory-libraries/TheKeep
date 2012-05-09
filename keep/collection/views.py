@@ -17,7 +17,7 @@ from django.shortcuts import render
 from django.template import RequestContext
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
-from eulfedora.views import raw_datastream
+from eulfedora.views import raw_datastream, raw_audit_trail
 from eulfedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
@@ -199,6 +199,14 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
+
+@permission_required("common.marbl_allowed")
+def view_audit_trail(request, pid):
+    'Access XML audit trail for a collection object'
+    # initialize local repo with logged-in user credentials & call eulfedora view
+    # FIXME: redundant across collection/arrangement/audio apps; consolidate?
+    return raw_audit_trail(request, pid, type=CollectionObject,
+                           repo=Repository(request=request))
 
 
 @permission_required("common.arrangement_allowed")

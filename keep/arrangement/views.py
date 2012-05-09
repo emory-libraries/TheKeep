@@ -17,7 +17,7 @@ from django.contrib import messages
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
-from eulfedora.views import raw_datastream
+from eulfedora.views import raw_datastream, raw_audit_trail
 
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -132,6 +132,14 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=ArrangementObject, repo=Repository(request=request))
+
+@permission_required("common.arrangement_allowed")
+def view_audit_trail(request, pid):
+    'Access XML audit trail'
+    # initialize local repo with logged-in user credentials & call eulfedora view
+    return raw_audit_trail(request, pid, type=ArrangementObject,
+                           repo=Repository(request=request))
+
 
 @permission_required("common.arrangement_allowed")
 @csrf_exempt

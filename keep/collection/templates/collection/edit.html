@@ -30,6 +30,7 @@
       <a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a>
       | <a href="{% url collection:raw-ds collection.pid 'DC' %}">DC</a>
       | <a href="{% url collection:raw-ds collection.pid 'RELS-EXT' %}">RELS-EXT</a>
+      | <a href="{% url collection:audit-trail collection.pid %}">Audit Trail</a>
     </p>
 {% endif %}
 <div class="instructions">
