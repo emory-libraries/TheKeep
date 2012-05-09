@@ -30,13 +30,6 @@ class UploadForm(forms.Form):
                               required=False)
 
 
-def _cmp_collections(a, b):
-    # compare pidspaces alphabetically, then compare pid length numerically
-    # (so that short pids sort before long ones), then compare pids
-    # alphabetically)
-    return cmp((a.pidspace, len(a.pid), a.pid),
-               (b.pidspace, len(b.pid), b.pid))
-
 class SimpleNoteForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to simplify editing
     a MODS :class:`~keep.mods.Note`.  Displays text content input only,
