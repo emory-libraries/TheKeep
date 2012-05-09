@@ -104,9 +104,9 @@ class ArrangementObject(DigitalObject):
                 data['collection_label'] = parent.label
                 # the parent collection of the collection this item belongs to is its archive
                 # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
-                data['archive_id'] = parent.collection.uri
-                archive = CollectionObject(self.api, parent.collection.uri)
-                data['archive_label'] = archive.label
+                if parent.collection:
+                    data['archive_id'] = parent.collection.uri
+                    data['archive_label'] = parent.collection.label
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
             
