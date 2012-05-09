@@ -3,7 +3,7 @@ import os
 import subprocess
 import tempfile
 import traceback
-from celery.decorators import task
+from celery.task import task
 
 from django.conf import settings
 
