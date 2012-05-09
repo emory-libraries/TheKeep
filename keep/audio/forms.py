@@ -12,9 +12,10 @@ from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
-from keep.collection.forms import NameForm
+from keep.collection.forms import NameForm, CollectionSuggestionField
 from keep.common.models import Rights
-from keep.common.forms import ReadonlyTextInput, _collection_options, rights_access_options, EMPTY_LABEL_TEXT, CommentForm
+from keep.common.forms import ReadonlyTextInput, rights_access_options, \
+     EMPTY_LABEL_TEXT, CommentForm
 
 logger = logging.getLogger(__name__)
 
@@ -372,18 +373,8 @@ class AudioObjectEditForm(forms.Form):
     with individual :class:`~eulxml.forms.XmlObjectForm` form instances
     for each XML datastream.
     """
-    # collection = DynamicChoiceField(label="Collection",
-    #     choices=_collection_options, required=True,
-    #     help_text="Collection this item belongs to. " +
-    #     "Start typing collection number to let your browser search within the list.")
-
-    collection = forms.CharField(label='',
-        required=True, widget=forms.HiddenInput)
-    collection_label = forms.CharField(label='Collection',
-        required=True,  # not really...
-        help_text="Collection this item belongs to. " +
-        "Begin typing collection number and/or title words and choose from the suggestions.",
-        widget=forms.TextInput(attrs={'class': 'long collection-suggest'}))
+    
+    collection = CollectionSuggestionField(required=True)
 
     error_css_class = 'error'
     required_css_class = 'required'
@@ -406,12 +397,7 @@ class AudioObjectEditForm(forms.Form):
 
             # populate fields not auto-generated & handled by XmlObjectForm
             if self.object_instance.collection:
-                collection = self.object_instance.collection
-                initial['collection'] = str(collection.uri)
-                label = collection.mods.content.title
-                if collection.mods.content.source_id:
-                    label = '%s %s' % (collection.mods.content.source_id, label)
-                initial['collection_label'] = label
+                initial['collection'] = str(self.object_instance.collection.uri)
 
             if self.object_instance.ark:
                 initial['identifier'] = self.object_instance.ark

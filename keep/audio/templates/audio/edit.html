@@ -26,20 +26,8 @@
      /* trigger change once manually so initial display will reflect field starting value */
      $('.checkbox-warning').change();
 
-     $("input.collection-suggest").categorycomplete({
-          source: "{% url collection:suggest %}",
-          minLength: 1,
-          focus: function(event, ui) {
-            $('input.collection-suggest').val(ui.item.label);
-            return false;
-          },
-          select: function(event, ui) {
-            $('#audio-edit input[name=collection]').val(ui.item.value);
-            $('input.collection-suggest').val(ui.item.label);
-            return  false;
-          }
-      });
-
+     {# collection autocomplete #}
+     {% include "collection/snippets/collection_suggest_js.html" %}
 
     });
   </script>
