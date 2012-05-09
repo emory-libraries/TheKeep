@@ -1944,6 +1944,8 @@ class TestAudioObject(KeepTestCase):
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         rqst.session = self.client.session
         new_obj = audiomodels.AudioObject.init_from_file(wav_filename, request=rqst)
+        # NOTE: when eulfedora switches to requests-backed API, this will need to change:
+        #  self.assertEqual(new_obj.api.username, user,
         self.assertEqual(new_obj.api.opener.username, user,
             'object initialized with request has user credentials configured for fedora access')
 
