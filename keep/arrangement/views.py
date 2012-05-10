@@ -35,8 +35,11 @@ finding_aid_id = 'rushdie1000'
 
 @permission_required("common.arrangement_allowed")
 def index(request):
-    #Return to "HOME Index page since there is not really an Arrangement Index
-    return render(request, 'audio/index.html')
+    # FIXME/TODO: there is no arrangement index; not sure why this
+    # view even exists, but other arrangement views reference it, so
+    # leaving at is for now.  Simply redirect to the main site index
+    # for now.
+    return HttpResponseSeeOtherRedirect(reverse('site-index'))
 
 @permission_required("common.arrangement_allowed")
 def edit(request, pid):
