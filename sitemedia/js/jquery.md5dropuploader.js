@@ -167,7 +167,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             if (allowed_types.length == 0 ||
                 $.inArray(file.type, allowed_types) != -1) {    // returns index or -1 if not found
                 // rudimentary list display
-                var p = $('<p><a class="remove">X</a> ' + file.fileName + ' ' +
+                   
+                var p = $('<p><a class="remove">X</a> ' + file.name + ' ' +
                     '<span class="file-info">(' + filesize_format(file.size) +
 		    ', ' + file.type + ')</span></p>');
                 $this.append(p);
@@ -189,7 +190,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
           var msg = "The following file(s) were not added because the " +
                 "type indicates they are not a supported upload formats:\n\n";
           $.each(not_allowed, function ( i, file ) {
-            msg += "  " + file.fileName + "\t" + file.type + "\n";
+            msg += "  " + file.name + "\t" + file.type + "\n";
           });
           alert(msg);
         }
@@ -201,7 +202,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             if (i >= start_processing) { 
                 // update status
                 file.status.html('calculating checksum');
-                console.log(file.fileName + ' calculating checksum')
+                console.log(file.name + ' calculating checksum')
                 var start_time = new Date();
                 var indicator = $('<p/>');
                 file.progress = $('<div class="progress-bar"/>');
@@ -214,7 +215,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                   // this is what we'll do after checksumming is complete
                   // TODO: ideally this should use a real js event framework
                   var end_time = new Date();
-                  console.log(file.fileName +
+                  console.log(file.name +
                               ' checksum calculation took ' +
                               ((end_time - start_time) / 1000) +
                               ' seconds.');
@@ -319,7 +320,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         // set header so django will exempt the ajax request from CSRF checking
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         // set required headers for processing the file
-        xhr.setRequestHeader('Content-Disposition', 'filename="' + file.fileName + '"');
+        xhr.setRequestHeader('Content-Disposition', 'filename="' + file.name + '"');
         xhr.setRequestHeader('Content-Type', file.type);
         xhr.setRequestHeader('Content-MD5', file.md5);
 
@@ -334,7 +335,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 // add form data for submission
                 // - adding to file dom element so we can easily remove individual files
                 file.status.parent().append('<input type="hidden" name="fileUploads" value="' + file.upload_id + '"/>');
-                file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.fileName + '"/>');
+                file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.name + '"/>');
 
              } else {
                 console.log('response status is ' + xhr.status)
@@ -433,7 +434,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         // if we're done with the file then record the md5sum
         md5.finish();
         file.md5 = md5.asString();
-        console.log(file.fileName + ' checksum ' + file.md5);
+        console.log(file.name + ' checksum ' + file.md5);
         // and go where the original caller asked us to
         next_step();
       }
