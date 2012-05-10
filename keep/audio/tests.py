@@ -234,6 +234,8 @@ class AudioViewsTest(KeepTestCase):
         upload_opts = {
             'originalFileNames': 'example.wav',
             'fileUploads': 'example-01.wav',
+            'collection_0' : self.rushdie.pid,
+            'comment': "This is a very interesting comment",
         }
         # POST wav file with correct checksum - should succeed
         response = self.client.post(upload_url, upload_opts)
@@ -255,6 +257,11 @@ class AudioViewsTest(KeepTestCase):
         # check that init from file worked correctly
         self.assertEqual(3, new_obj.digitaltech.content.duration,
                 'duration is set on new object created via upload (init from file worked correctly)')
+        self.assertEqual(new_obj.collection.pid, self.rushdie.pid,
+                         "New object should be a member of collection %s" % self.rushdie)
+        #audit trail messages
+        audit_trail = [a.message for a in new_obj.audit_trail.records]
+        self.assertIn(upload_opts['comment'], audit_trail)
 
         # task result should have been created to track mp3 conversion
         self.assert_(isinstance(new_obj.conversion_result, TaskResult),
@@ -280,7 +287,7 @@ class AudioViewsTest(KeepTestCase):
 
         # POST non-wav file - should fail
         with open(mp3_filename) as mp3:
-            response = self.client.post(upload_url, {'audio': mp3})
+            response = self.client.post(upload_url, {'audio': mp3, 'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
             result = response.context['ingest_results'][0]
             self.assertFalse(result['success'], 'success should be false on non-allowed type')
             self.assertEqual('''File type 'audio/mpeg' is not allowed''',
@@ -288,7 +295,8 @@ class AudioViewsTest(KeepTestCase):
         
         # POST a wav file - should result in a new object
         with open(wav_filename) as wav:
-            response = self.client.post(upload_url, {'audio': wav})
+            response = self.client.post(upload_url, {'audio': wav,
+                                                     'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
             result = response.context['ingest_results'][0]
             self.assertTrue(result['success'], 'success should be true for uploaded WAV')
             self.assertNotEqual(None, result['pid'],
@@ -299,6 +307,7 @@ class AudioViewsTest(KeepTestCase):
             repo = Repository()
             new_obj = repo.get_object(result['pid'], type=audiomodels.AudioObject)
             audit_messages = [a.message for a in new_obj.audit_trail.records]
+            self.assertEqual(new_obj.collection.pid, self.rushdie.pid)
             # check object was created with audio cmodel
             self.assertTrue(new_obj.has_model(audiomodels.AudioObject.AUDIO_CONTENT_MODEL),
                 "audio object was created with the correct content model")
@@ -337,7 +346,8 @@ class AudioViewsTest(KeepTestCase):
 
             #upload same file but add a comment
         with open(wav_filename) as wav:
-            response = self.client.post(upload_url, {'audio': wav, 'comment': "This is comment for the audit trail"})
+            response = self.client.post(upload_url, {'audio': wav, 'comment': "This is comment for the audit trail",
+                                                     'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
             result = response.context['ingest_results'][0]
             self.assertTrue(result['success'], 'success should be true for uploaded WAV')
             self.assertNotEqual(None, result['pid'],
@@ -348,6 +358,7 @@ class AudioViewsTest(KeepTestCase):
             repo = Repository()
             new_obj = repo.get_object(result['pid'], type=audiomodels.AudioObject)
             audit_messages = [a.message for a in new_obj.audit_trail.records]
+            self.assertEqual(new_obj.collection.pid, self.rushdie.pid)
 
             self.assertIn('This is comment for the audit trail', audit_messages,
                                 'Should have comment in audit trail')

@@ -55,6 +55,7 @@ def upload(request):
     generated form fields that indicate what was uploaded from the
     javascript code.
     '''
+    repo = Repository()
 
     ctx_dict = {}
 
@@ -68,6 +69,13 @@ def upload(request):
         if media_type  == 'multipart/form-data':
             #use default value for comment if no comment is provided in form
             comment = request.POST['comment'] if request.POST.has_key('comment') and request.POST['comment'] else 'ingesting audio'
+
+            #initilal collection
+
+            if request.POST.has_key('collection_0') and request.POST['collection_0']:
+                collection = repo.get_object(pid=request.POST['collection_0'], type=CollectionObject)
+            else:
+                collection = None
 
             # place-holder for files to be ingested, either from single-file upload
             # or batch upload; should be added to the dictionary as filepath: initial label
@@ -107,12 +115,12 @@ def upload(request):
             # NOTE: using this structure for easy of display in django templates (e.g., regroup)
             
             # process all files submitted for ingest (single or batch mode)
-            if files_to_ingest:            
+            if files_to_ingest:
                 m = magic.Magic(mime=True)
                 for filename, label in files_to_ingest.iteritems():
                     try:
                         file_info = {'label': label}
-                        
+
                         # check if file is an allowed type
                         
                         # NOTE: for single-file upload, browser-set type is
@@ -128,7 +136,13 @@ def upload(request):
                             file_info.update({'success': False,
                                     'message': '''File type '%s' is not allowed''' % type})
                             # if not an allowed type, no further processing
-                            continue     
+                            continue
+
+                        if collection is None:
+                            file_info.update({'success': False,
+                                    'message': '''Collection not selected'''})
+                            continue
+
 
                         # if there is an MD5 file (i.e., file was uploaded via ajax),
                         # use the contents of that file as checksum
@@ -142,6 +156,10 @@ def upload(request):
                         obj = AudioObject.init_from_file(filename,
                                     initial_label=label, request=request,                                    
                                     checksum=md5)
+
+                        #set collection on ingest
+                        obj.collection = collection
+
                         # NOTE: by sending a log message, we force Fedora to store an
                         # audit trail entry for object creation, which doesn't happen otherwise
                         obj.save(comment)
