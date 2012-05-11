@@ -64,7 +64,7 @@ tr.required {
   padding-right: 7px; /* overrides the default 7 20 7 0 */
 }
 
-.edit-form .help-text {
+.edit-form .help-text, form#upload .help-text {
     display:inline; /* keep on same line as input if the whole text fits */
     white-space:nowrap;
     color: gray;
@@ -341,4 +341,16 @@ a.remove {
 a.remove:link, a.remove:active, a.remove:visited {
   color: #4c4c4c;
   text-decoration: underline;
+}
+
+form#upload {
+  margin: 10px 0px;
+}
+
+form#upload > div {
+  margin: 5px 0px;
+}
+
+form#upload a.remove {
+  background: none;
 }

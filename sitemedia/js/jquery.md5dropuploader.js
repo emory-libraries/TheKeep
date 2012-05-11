@@ -334,8 +334,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 file.upload_id = xhr.responseText;
                 // add form data for submission
                 // - adding to file dom element so we can easily remove individual files
-                file.status.parent().append('<input type="hidden" name="fileUploads" value="' + file.upload_id + '"/>');
-                file.status.parent().append('<input type="hidden" name="originalFileNames" value="' + file.name + '"/>');
+                file.status.parent().append('<input type="hidden" name="uploaded_files" value="' + file.upload_id + '"/>');
+                file.status.parent().append('<input type="hidden" name="filenames" value="' + file.name + '"/>');
 
              } else {
                 console.log('response status is ' + xhr.status)

@@ -1,8 +1,10 @@
 import logging
+import os
 
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
 from eulxml.xmlmap import mods
@@ -19,17 +21,79 @@ from keep.common.forms import ReadonlyTextInput, rights_access_options, \
 
 logger = logging.getLogger(__name__)
 
-class UploadForm(forms.Form):
-    'Single-file upload form; takes a label and a file'
-    label = forms.CharField(max_length=255, # fedora label maxes out at 255 characters
-                help_text='Preliminary title for the object. 255 characters max. (optional)',
-                required=False)
-    collection = CollectionSuggestionField(required=True)
-    audio = forms.FileField(label="File")
-    comment = forms.CharField(max_length=255,
-                              help_text='Comment for auditing purposes. 255 characters max. (optional)',
-                              required=False)
+class FormListField(forms.MultipleChoiceField):
+    '''Simplified version of :class:`django.forms.MultipleChoiceField`
+    that returns a list of values, but does not do any checking that
+    items are a member of any list.
+    '''
+    # NOTE: currently has no output/widget handling, since it is only
+    # used to read and validate values posted via javascript
 
+    def validate(self, value):
+        """
+        Validates that the input is a list or tuple.
+        """
+        if self.required and not value:
+            raise ValidationError(self.error_messages['required'])
+
+
+class UploadForm(forms.Form):
+    '''Single-file upload form; takes a required collection and an optional
+    file and comment; collection and comment are also used with batch upload.'''
+    collection = CollectionSuggestionField(required=True)
+    audio = forms.FileField(label="File", required=False)
+    comment = forms.CharField(widget=forms.TextInput(attrs={'class': 'long'}),
+        help_text='Optional comment or log message for auditing purposes.',
+        required=False)
+    # list fields used only for reading/validating values added to the
+    # form via javascript upload
+    uploaded_files = FormListField(required=False)
+    filenames = FormListField(required=False)
+
+    def clean(self):
+        cleaned_data = super(UploadForm, self).clean()
+        audio_file = cleaned_data.get('audio')
+        uploaded_files = cleaned_data.get('uploaded_files')
+        filenames = cleaned_data.get('filenames')
+        
+        # one of audio file or upload files is required
+        if not audio_file and not uploaded_files:
+            raise ValidationError('No files were uploaded.')
+
+        # list of uploaded files and filenames needs to match
+        if len(uploaded_files) != len(filenames):
+            raise ValidationError('Could not match uploaded files with original filenames')
+
+        return cleaned_data
+
+    def files_to_ingest(self):
+        '''Construct a dictionary of the files to be ingested, based
+        on posted data-- either single-file upload or ajax batch
+        upload.  Returns a dictionary; key is the full filepath to the
+        temporary upload file, value is the original filename.
+        '''
+        files = {}
+
+        audio_file = self.cleaned_data.get('audio')
+        uploaded_files = self.cleaned_data.get('uploaded_files')
+        filenames = self.cleaned_data.get('filenames')
+
+        # check for a single audio file uploaded via form post
+        if audio_file:
+            files[audio_file.temporary_file_path()] = audio_file.name
+
+        # check for any batch-uploaded files
+        if uploaded_files:
+            for i in range(len(uploaded_files)):
+                # calculate full path to ajax upload file and add to list
+                filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
+                                        uploaded_files[i])
+                files[filepath] = filenames[i]
+
+        return files
+            
+
+        
 
 class SimpleNoteForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to simplify editing

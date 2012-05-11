@@ -57,7 +57,10 @@ def upload(request):
     '''
     repo = Repository()
 
-    ctx_dict = {}
+    ctx_dict = {
+        # list of allowed file types, in a format suited for passing to javascript
+        'js_allowed_types': mark_safe(json.dumps(allowed_audio_types))
+    }
 
     if request.method == 'POST':
         content_type = request.META.get('CONTENT_TYPE', 'application/octet-stream')        
@@ -67,48 +70,25 @@ def upload(request):
 
         # if form has been posted, process & ingest files
         if media_type  == 'multipart/form-data':
-            #use default value for comment if no comment is provided in form
-            comment = request.POST['comment'] if request.POST.has_key('comment') and request.POST['comment'] else 'ingesting audio'
-
-            #initilal collection
-
-            if request.POST.has_key('collection_0') and request.POST['collection_0']:
-                collection = repo.get_object(pid=request.POST['collection_0'], type=CollectionObject)
-            else:
-                collection = None
-
-            # place-holder for files to be ingested, either from single-file upload
-            # or batch upload; should be added to the dictionary as filepath: initial label
-            files_to_ingest = {}
 
             # check for a single file upload
             form = audioforms.UploadForm(request.POST, request.FILES)
-            # file is the only required field here, so if valid, process single file
-            if form.is_valid():
-                uploaded_file = request.FILES['audio']
-                # initial label now optional on single-file upload form
-                initial_label = form.cleaned_data['label']
-                # if not specified, use filename
-                if not initial_label:
-                    initial_label = uploaded_file.name
+            
+            # If form is not valid (i.e., no collection specified, no
+            # or mismatched files uploaded), bail out and redisplay
+            # form with any error messages.
+            if not form.is_valid():
+                ctx_dict['form'] = form
+                return render(request, 'audio/upload.html', ctx_dict)
 
-                files_to_ingest[uploaded_file.temporary_file_path()] = initial_label
-
-            # check for any batch-upload files
-            if request.POST.has_key('fileUploads'):                
-                uploaded_files = request.POST.getlist('fileUploads')
-                filenames = request.POST.getlist('originalFileNames')
-
-                if len(uploaded_files) != len(filenames):
-                    # this shouldn't happen unless the javascript uploader does something weird
-                    messages.error(request,
-                        'Could not correlate uploaded files with original filenames (invalid form data)')
-                else:
-                    for index in range(len(uploaded_files)):
-                        # calculate full path to upload file and add to files to be processed
-                        filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
-                                                    uploaded_files[index])
-                        files_to_ingest[filepath] = filenames[index]
+            # Form is valid. Get collection & check for optional comment
+            collection = repo.get_object(pid=form.cleaned_data['collection'],
+                                         type=CollectionObject)
+            # get user comment if any; default to a generic ingest comment
+            comment = form.cleaned_data['comment'] or 'ingesting audio'
+            # get dictionary of file path -> filename, based on form data
+            files_to_ingest = form.files_to_ingest()
+            
 
             results = []
             # results will be a list of dictionary to report per-file ingest success/failure
@@ -116,6 +96,7 @@ def upload(request):
             
             # process all files submitted for ingest (single or batch mode)
             if files_to_ingest:
+                # TODO: break this out into a separate function
                 m = magic.Magic(mime=True)
                 for filename, label in files_to_ingest.iteritems():
                     try:
@@ -207,7 +188,6 @@ def upload(request):
     # on GET or non-ajax POST, display the upload form
     ctx_dict['form'] = audioforms.UploadForm()
     # convert list of allowed types for passing to javascript
-    ctx_dict['js_allowed_types'] = mark_safe(json.dumps(allowed_audio_types))
 
     return render(request, 'audio/upload.html', ctx_dict)
     # NOTE: previously, this view set the response status code to the

@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
-from django.test import Client
+from django.test import Client, TestCase
 from django.utils import simplejson
 
 from eulfedora.server import Repository
@@ -24,8 +24,7 @@ from eulfedora.util import RequestFailed, ChecksumMismatch
 from eulxml.xmlmap  import load_xmlobject_from_string
 from eulxml.xmlmap import mods
 
-from keep.audio import forms as audioforms
-from keep.audio import models as audiomodels
+from keep.audio import forms as audioforms, models as audiomodels
 from keep.audio.feeds import PodcastFeed, feed_items
 from keep.audio.management.commands import ingest_cleanup
 from keep.audio.tasks import convert_wav_to_mp3
@@ -121,7 +120,14 @@ class AudioViewsTest(KeepTestCase):
                              % (expected, code, upload_url))
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], audioforms.UploadForm))
-        # is this sufficient? anything else to test here?
+
+        # collection is now required; posting without should re-display form with error
+        response = self.client.post(upload_url, {'comment': 'foo'})
+        self.assertNotEqual(None, response.context['form'])
+        self.assertFalse(response.context['form'].is_valid())
+        self.assertContains(response, 'You must choose a collection',
+            msg_prefix='When form is posted without a collection, the error is displayed')
+
 
     def test_ajax_file_upload(self):
         # test uploading files via ajax
@@ -232,9 +238,10 @@ class AudioViewsTest(KeepTestCase):
 
         # use the returned filename from the last (successful) response to test upload
         upload_opts = {
-            'originalFileNames': 'example.wav',
-            'fileUploads': 'example-01.wav',
+            'filenames': 'example.wav',
+            'uploaded_files': 'example-01.wav',
             'collection_0' : self.rushdie.pid,
+            'collection_1' : self.rushdie.label,
             'comment': "This is a very interesting comment",
         }
         # POST wav file with correct checksum - should succeed
@@ -2428,3 +2435,49 @@ class FeedItemsTest(KeepTestCase):
         self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
                          'kiosk feed solr search should filter on configured pidspace')
         
+
+
+class UploadFormTest(TestCase):
+    
+    def test_validation(self):
+        # no files (single or batch) - should be invalid
+        form = audioforms.UploadForm({'collection_0': 'some:pid',
+                                      'collection_1': 'a collection'})
+        self.assertFalse(form.is_valid())
+        self.assert_('No files were uploaded' in str(form._errors))
+
+        # mismatch on uploaded file/filenames
+        form = audioforms.UploadForm(data={'collection_0': 'some:pid',
+                                      'collection_1': 'a collection',
+                                      'uploaded_files': ['one', 'two'],
+                                      'filenames': ['one.doc']})
+        self.assertFalse(form.is_valid())
+        self.assert_('Could not match uploaded files with original filenames'
+                     in str(form._errors))
+
+        # ok if file lists match
+        form = audioforms.UploadForm(data={'collection_0': 'some:pid',
+                                      'collection_1': 'a collection',
+                                      'uploaded_files': ['one'],
+                                      'filenames': ['one.doc']})
+        self.assertTrue(form.is_valid())
+
+    def test_files_to_ingest(self):
+        form = audioforms.UploadForm()
+        mockuploadfile = Mock()
+        mockuploadfile.temporary_file_path.return_value = '/tmp/tmp-1234'
+        mockuploadfile.name = 'audio.file.wav'
+        form.cleaned_data = {'audio': mockuploadfile,
+                             'uploaded_files': ['/tmp/tmp-567',
+                                                '/tmp/tmp-89'],
+                             'filenames': ['side-a.wav', 'side-b.wav']
+                             }
+
+        files = form.files_to_ingest()
+        self.assertEqual(3, len(files))
+        self.assertEqual(files[mockuploadfile.temporary_file_path()],
+                         mockuploadfile.name)
+        self.assertEqual(files[form.cleaned_data['uploaded_files'][0]],
+                         form.cleaned_data['filenames'][0])
+        self.assertEqual(files[form.cleaned_data['uploaded_files'][1]],
+                         form.cleaned_data['filenames'][1])

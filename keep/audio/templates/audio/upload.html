@@ -66,11 +66,25 @@
   </p>
 
 
-<form enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
+<form id="upload" enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
+ {{ form.non_field_errors }}
+{% with form.collection as field %}
+  {% include "snippets/form_field.html" %} {# FIXME: why is help text not showing up ? #}
+{% endwith %}
+
  <div id="drop_target">
-   <p class='extra instructions'>Drag files here.</p>
-   {{ form.as_p }}  {# single-file upload (non HTML5 fall-back) #}
+   <p class='extra instructions'>Drag files here 
+	OR upload a single file with the file input below.</p>
+  {% with form.audio as field %} {# single-file upload (non HTML5 fall-back) #}
+    {% include "snippets/form_field.html" %}
+  {% endwith %}
+{#   {{ form.as_p }}  single-file upload (non HTML5 fall-back) #}
  </div> 
+
+{% with form.comment as field %}
+  {% include "snippets/form_field.html" %}
+{% endwith %}
+
  <input class="form-submit" type="submit" value="Submit" id='submit-upload'/>
 </form>
 {% endif %}
