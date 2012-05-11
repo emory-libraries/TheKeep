@@ -366,11 +366,11 @@ class CollectionSuggestionField(forms.MultiValueField):
         if 'error_messages' in kwargs:
             errors.update(kwargs['error_messages'])
         localize = kwargs.get('localize', False)
-        help_text = kwargs.get('help_text', self.default_help_text)
+        if 'help_text' not in kwargs:
+            kwargs['help_text'] = self.default_help_text
         fields = (
             forms.CharField(error_messages=errors, localize=localize),
-            forms.CharField(error_messages=errors, localize=localize,
-                            help_text=help_text)
+            forms.CharField(error_messages=errors, localize=localize)
         )
         super(CollectionSuggestionField, self).__init__(fields, *args, **kwargs)
 
