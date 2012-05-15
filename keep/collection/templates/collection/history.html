@@ -1,0 +1,11 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Collection : {{ obj.label }} : History{% endblock %}
+{% block content-title %}<a href="{% url collection:edit obj.pid %}">{{ obj.label }}</a>{% endblock %}
+
+{% block content-body %}
+{{ block.super }}
+<h2>Record History</h2>
+
+{% include "common/snippets/object_history.html" %}
+{% endblock %}

@@ -329,6 +329,20 @@ class AudioObject(DigitalObject):
     # JHOVE is xml, but treat it as a file for now since we're just storing it,
     # not doing any processing, updating, etc.
 
+    # map datastream IDs to human-readable names for inherited history_events method
+    component_key = {
+        'AUDIO': 'audio (master)',
+        'CompressedAudio': 'audio (access version)',
+        'SourceTech': 'source technical metadata',
+        'DigitalTech': 'digital technical metadata',
+        'JHOVE': 'technical metadata',
+        'MODS': 'descriptive metadata',
+        'DC': 'descriptive metadata',
+        'Rights': 'rights metadata',
+        'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
+    }
+
+
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
     ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
     via `isMemberOfCollection` relation.
@@ -447,7 +461,7 @@ class AudioObject(DigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(AudioObject, self).index_data()
         data['object_type'] = 'audio'
-        if self.collection:
+        if self.collection is not None:
             data['collection_id'] = self.collection.uri
             try:
                 # pull parent & archive collection objects directly from fedora

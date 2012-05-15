@@ -51,7 +51,10 @@
       | {{ access }}
     {% endif %}
   {% endwith %}
-  | <a href="{% url audio:raw-ds obj.pid 'MODS' %}">MODS</a>
+  {% if obj.audit_trail %}
+    <a href="{% url audio:history obj.pid %}">Record History</a> |
+  {% endif %}
+    <a href="{% url audio:raw-ds obj.pid 'MODS' %}">MODS</a>
   | <a href="{% url audio:raw-ds obj.pid 'DC' %}">DC</a>
   | <a href="{% url audio:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>
   | <a href="{% url audio:raw-ds obj.pid 'SourceTech' %}">SourceTech</a>
@@ -59,7 +62,9 @@
   | <a href="{% url audio:raw-ds obj.pid 'Rights' %}">Rights</a>
   {# not all objects will have JHOVE, but go ahead and provide access for those that do #}
   {% if obj.jhove.exists %}| <a href="{% url audio:raw-ds obj.pid 'JHOVE' %}">JHOVE</a> {% endif %}
-  | <a href="{% url audio:audit-trail obj.pid %}">Audit Trail</a>
+  {% if obj.audit_trail %}
+    | <a href="{% url audio:audit-trail obj.pid %}">Audit Trail</a>
+  {% endif %}
 </p>
 {% with obj.conversion_result as conversion %}
   {% if conversion %}
@@ -225,10 +230,6 @@ and they don't actually need to be editable for now.{% endcomment %}
     <table class="edit-form">
         {% for field in form.comments %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
-</div>
-
-<div style='margin-bottom: 15px'>
-    {% include 'common/snippets/humanize_audit_trail.html' %}
 </div>
 
 <input class="form-submit" type="submit" name="_save" value="Save"/>

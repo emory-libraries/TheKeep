@@ -31,7 +31,7 @@ from keep.audio.models import AudioObject
 from keep.audio.feeds import feed_items
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import CollectionObject 
-from keep.common.fedora import Repository
+from keep.common.fedora import Repository, history_view
 from keep.common.models import Rights
 from keep.common.utils import md5sum
 
@@ -428,6 +428,13 @@ def edit(request, pid):
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
         
+
+
+@permission_required("common.marbl_allowed")
+def history(request, pid):
+    return history_view(request, pid, type=AudioObject,
+                        template_name='audio/history.html')
+
 
 # download audio must be accessed by iTunes kiosk - should be IP restricted at apache level
 # cannot be restricted to staff only here

@@ -24,7 +24,7 @@ from eulfedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
 from keep.collection.models import CollectionObject, SimpleCollection
-from keep.common.fedora import Repository
+from keep.common.fedora import Repository, history_view
 from keep.common.rdfns import REPO
 from keep.common.utils import solr_interface
 
@@ -122,6 +122,13 @@ def edit(request, pid=None):
         context['collection'] = obj
 
     return render(request, 'collection/edit.html', context)
+
+
+def history(request, pid):
+    return history_view(request, pid, type=CollectionObject,
+                        template_name='collection/history.html')
+
+
 
 @staff_member_required
 def search(request):

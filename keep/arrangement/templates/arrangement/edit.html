@@ -118,12 +118,17 @@ function clearSeriesFields() {
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
 <p class='extra'>
-  | <a href="{% url arrangement:raw-ds obj.pid 'MODS' %}">MODS</a>
+  {% if obj.audit_trail %}
+    <a href="{% url arrangement:history obj.pid %}">Record History</a> |
+  {% endif %}
+    <a href="{% url arrangement:raw-ds obj.pid 'MODS' %}">MODS</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'DC' %}">DC</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'FileMasterTech' %}">FileTech</a>
   | <a href="{% url arrangement:raw-ds obj.pid 'Rights' %}">Rights</a>
-  | <a href="{% url arrangement:audit-trail obj.pid %}">Audit Trail</a>
+  {% if obj.audit_trail %}
+    <a href="{% url arrangement:audit-trail obj.pid %}">Audit Trail</a>
+  {% endif %}
 </p>
 
 
@@ -190,11 +195,6 @@ function clearSeriesFields() {
         {% for field in form.comments %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
 </div>
-
-<div style='margin-bottom: 15px'>
-    {% include 'common/snippets/humanize_audit_trail.html' %}
-</div>
-
 
 
 <input class="form-submit" type="submit" name="_save" value="Save" onClick='return formVerification();'/>

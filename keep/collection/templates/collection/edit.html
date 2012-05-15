@@ -27,10 +27,15 @@
 </p>
 {% if collection.pid %} {# when editing existing objects, link to raw datastreams #}
     <p class='extra'>
-      <a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a>
+      {% if collection.audit_trail %}
+        <a href="{% url collection:history collection.pid %}">Record History</a> |
+      {% endif %}
+        <a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a>
       | <a href="{% url collection:raw-ds collection.pid 'DC' %}">DC</a>
       | <a href="{% url collection:raw-ds collection.pid 'RELS-EXT' %}">RELS-EXT</a>
-      | <a href="{% url collection:audit-trail collection.pid %}">Audit Trail</a>
+      {% if collection.audit_trail %}
+        | <a href="{% url collection:audit-trail collection.pid %}">Audit Trail</a>
+      {% endif %}
     </p>
 {% endif %}
 <div class="instructions">
@@ -77,21 +82,10 @@
             {{ form.subforms.use_and_reproduction.as_p }}</td>
     </tr>
 
-    <tr id="comment">
-          <th>Comment</th>
-
-          <td>
-              {{  form.comment }}
-              {{  form.comment.help_text }}
-          </td>
-    </tr>
-
-
+    {% with form.comment as field %}
+      {% include 'snippets/form_field_tr.html' %}
+    {% endwith %}
 </table>
-
-<div style='margin-bottom: 15px'>
-    {% include 'common/snippets/humanize_audit_trail.html' with obj=collection %}
-</div>
 
 <input class="form-submit" type="submit" name="_save" value="Save"/>
 <input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>

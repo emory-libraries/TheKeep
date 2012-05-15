@@ -1,10 +1,14 @@
+from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.views.generic import TemplateView
+from django.shortcuts import render
 from django.utils.encoding import iri_to_uri
 
 from eulfedora import models, server
+from eulfedora.util import RequestFailed, PermissionDenied
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from pidservices.clients import parse_ark
@@ -32,7 +36,83 @@ class LocalMODS(xmlmap.mods.MODS):
     # short-cut to type-specific identifiers
     ark = xmlmap.StringField('mods:identifier[@type="ark"]')
     ark_uri = xmlmap.StringField('mods:identifier[@type="uri"][contains(., "ark:")]')
+
+
+
+class AuditTrailEvent(object):
+    '''An object to cluster a group of related Fedora
+    :class:`~eulfedora.xml.AuditTrailRecord` objects into a single
+    audit trail "event"; i.e., when a single edit form save updates
+    multiple datastreams and makes multiple API calls.
+
+    Initial arguments:
+
+    :param record: optional :class:`~eulfedora.xml.AuditTrailRecord`,
+      used to initialize values
+      
+    :param component_key: optional dictionary of human-readable names
+      keyed on datastream ID (or 
+      :attr:`~eulfedora.xml.AuditTrailRecord.component` in the audit trail)
+    '''
+
+    date = None
+    'approximate date for all records in this event'
+    user = None
+    'username for the user responsible for all API calls in this event'
+    components = []
+    'list of components modified by all API calls in this event'
+    message = None
+    'log message associated with all API calls in this event'
+    actions = set()
+    'uniqe set of all API actions included in this event'
     
+    def __init__(self, record=None, component_key=None):
+        if record:
+            self.date = record.date
+            self.user = record.user
+            self.message = record.message
+            if record.component:
+                self.components = [record.component]
+            self.actions = set([record.action])
+            
+        self.component_key = component_key
+
+    def add_record(self, record):
+        '''Add another :class:`~eulfedora.xml.AuditTrailRecord` to
+        this events (updates actions and components as appropriate). 
+
+        :param record: :class:`~eulfedora.xml.AuditTrailRecord`
+        '''
+        self.date = record.date
+        self.actions.add(str(record.action))
+        # component could be empty for non-datastream based actions
+        if record.component:
+            self.components.append(record.component)
+        
+    def component_names(self):
+        '''Return a list of human-readable names for the components
+        modified by this event; requires component_key to be set when
+        initialized.
+        '''
+        if self.component_key:
+            return set([self.component_key[c] for c in self.components
+                        if c in self.component_key])
+    
+    def user_name(self):
+        '''Return the full name for the user responsible for this
+        event, via :meth:`user_full_name`.
+        '''
+        return user_full_name(self.user)
+    
+    def action(self):
+        '''Brief, summary action label for the audit trail records
+        grouped in this event, e.g. ``modify`` or ``ingest``.
+        '''
+        if any(a.startswith('modify') for a in self.actions):
+            return 'edit'
+        elif self.actions:
+            return list(self.actions)[0]
+            
 
 class DigitalObject(models.DigitalObject):
     """Extend the default fedora DigitalObject class. Objects derived from
@@ -182,6 +262,55 @@ class DigitalObject(models.DigitalObject):
         data['users'] = [user_full_name(u) for u in self.audit_trail_users]
         return data
 
+    # map datastream IDs to human-readable names for inherited history_events method
+    # (common datastream IDs only here)
+    component_key = {
+        'MODS': 'descriptive metadata',
+        'DC': 'descriptive metadata',
+        'Rights': 'rights metadata',
+        'RELS-EXT': 'related objects',
+    }
+
+    def history_events(self):
+        '''Cluster API calls documented in the
+        :attr:`eulfedora.models.DigitalObject.audit_trail` into
+        "events", i.e. when updating an object requires updating
+        multiple datastreams and making multiple API calls.
+
+        :returns: list of :class:`AuditTrailEvent`
+        '''
+        
+        events = []
+        if self.audit_trail:
+            current = None
+            for r in self.audit_trail.records:
+                # if there is an event started, check if this record
+                # belongs to it
+                if current:
+                    # To be part of the same "event", the username and message
+                    # must match, and the datetime should be within 5 seconds
+                    # of the last update.  If any of those are untrue,
+                    # close the last event and start a new one.
+                    if r.user != current.user or r.message != current.message \
+                       or r.component in current.components \
+                       or (r.date - current.date) > timedelta(seconds=6):
+                        # add the event to the list - complete;
+                        events.append(current) 
+                        current = None  # trigger to start a new event
+                    else:
+                        # add to the current event
+                        current.add_record(r)
+
+                if current is None:
+                    # init a new event
+                    current = AuditTrailEvent(r, self.component_key)
+
+            # add the last event to the list
+            events.append(current)
+            
+        return events
+    
+
 def user_full_name(username):
     # get full name if possible from username
     name = None
@@ -212,6 +341,59 @@ class Repository(server.Repository):
     def __init__(self, username=None, password=None, request=None):        
         if request is not None and request.user.is_authenticated() and \
             'fedora_password' in request.session:            
-                username =request.user.username
+                username = request.user.username
                 password = decrypt(request.session['fedora_password'])
         super(Repository, self).__init__(username=username, password=password)
+
+
+# TODO: think about better ways to make re-usable views that apply to
+# objects across the project (also relevant to xml datastream and
+# audit trail views)
+
+def history_view(request, pid, type=DigitalObject,
+                 template_name='common/history.html'):
+    '''Re-usable view for displaying a human-readable version of the
+    history of a :class:`DigitalObject`.
+
+    :param request: http request
+    :param pid: object pid for which history should be displayed
+    :param type: optional subclass of :class:`DigitalObject`; if the
+	object does not have the appropriate content models, the view will
+        404
+    :param template_name: optional template to use when rendering this
+	view
+    '''
+    
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=type)
+    try:
+        # if this is not actually the right type of DigitalObject,
+        # then 404 (object is not available at this url)
+        if not obj.has_requisite_content_models:
+            raise Http404
+        return render(request, template_name, {'obj' : obj})
+
+    except PermissionDenied:
+        # Fedora may return a PermissionDenied error when accessing a datastream
+        # where the datastream does not exist, object does not exist, or user
+        # does not have permission to access the datastream
+
+        # check that the object exists - if not, 404        
+        if not obj.exists:
+            raise Http404
+        # for now, assuming that if object exists and has correct content models,
+        # it will have all the datastreams required for this view
+
+        return HttpResponseForbidden('Permission Denied to access %s' % pid,
+                                     mimetype='text/plain')
+
+    except RequestFailed as rf:
+        # if fedora actually returned a 404, propagate it
+        if rf.code == 404:
+            raise Http404
+        
+        msg = 'There was an error contacting the digital repository. ' + \
+              'This prevented us from accessing data. If this ' + \
+              'problem persists, please alert the repository ' + \
+              'administrator.'
+        return HttpResponse(msg, mimetype='text/plain', status=500)

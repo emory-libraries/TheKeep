@@ -1,0 +1,15 @@
+{# snipput to display human-readable version of audit trail #}
+{# expects DigitalObject as obj #}
+{% load humanize %}
+<ul>
+{% for ev in obj.history_events %}
+  <li>
+    <b>{{ ev.date|naturalday }}</b>: {# consider using naturaltime when we get to django 1.4 #}
+    {{ ev.action }} by {% firstof ev.user_name ev.user %}
+    {% if ev.message %} - {{ ev.message }}{% endif %}
+    {% if ev.action == 'edit' and ev.components %}
+      <br/>Modified {{ ev.component_names|join:", " }}
+    {% endif %}
+</li>
+{% endfor %}
+</ul>

@@ -19,7 +19,7 @@ from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream, raw_audit_trail
 
-from keep.common.fedora import Repository
+from keep.common.fedora import Repository, history_view
 from keep.arrangement import forms as arrangementforms
 from keep.arrangement.models import ArrangementObject
 from keep.common.eadmap import Series
@@ -142,6 +142,11 @@ def view_audit_trail(request, pid):
     # initialize local repo with logged-in user credentials & call eulfedora view
     return raw_audit_trail(request, pid, type=ArrangementObject,
                            repo=Repository(request=request))
+
+@permission_required("common.arrangement_allowed")
+def history(request, pid):
+    return history_view(request, pid, type=ArrangementObject,
+                        template_name='arrangement/history.html')
 
 
 @permission_required("common.arrangement_allowed")

@@ -76,6 +76,15 @@ class ArrangementObject(DigitalObject):
     via `isMemberOfCollection` relation.
     '''
 
+    component_key = {
+        'FileMasterTech': 'file technical metadata',
+        'MODS': 'descriptive metadata',
+        'DC': 'descriptive metadata',
+        'Rights': 'rights metadata',
+        'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
+    }
+
+
     def index_data(self):
         '''Extend the default
         :meth:`eulfedora.models.DigitalObject.index_data`

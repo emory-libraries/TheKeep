@@ -20,7 +20,7 @@ from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.common.forms import ItemSearch
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum, solr_interface
-from keep.common.templatetags import rights_extras, humanize_audit_trail
+from keep.common.templatetags import rights_extras
 from keep.testutil import KeepTestCase
 
 logger = logging.getLogger(__name__)
@@ -609,52 +609,3 @@ class TestRightsExtrasTemplateTags(TestCase):
         self.assertEqual(None,
                          rights_extras.access_code_abbreviation('''obviously not
                          an access code'''))
-
-
-class TestHumanizeAuditTrailTemplateTags(TestCase):
-
-    def setUp(self):
-        self.repo = Repository(username='fedoraAdmin', password='fedoraAdmin')
-        self.obj = self.repo.get_object()
-
-        self.obj.label = "change 1"
-        self.obj.save("First Change")
-        self.obj.label = "change 2"
-        self.obj.save("Second Change")
-        self.obj.label = "change 3"
-        self.obj.save("Third Change")
-        self.obj.label = "change 4"
-        self.obj.save("Forth Change")
-
-        self.pids = [self.obj.pid]
-
-    def tearDown(self):
-        for p in self.pids:
-            self.repo.purge_object(pid=p)
-
-
-
-    def test_humanize_audit_trail(self):
-       result = humanize_audit_trail.humanize_audit_trail(self.obj)
-
-       #The entries should be listed in order of most recent to oldest
-       self.assertEqual("First Change", result[3]['message'])
-       self.assertEqual("ingest", result[3]['action'])
-       self.assertEqual("fedoraAdmin", result[3]['user'])
-
-
-
-       self.assertEqual("Second Change", result[2]['message'])
-       self.assertEqual("modifyObject", result[2]['action'])
-       self.assertEqual("fedoraAdmin", result[2]['user'])
-
-       self.assertEqual("Third Change", result[1]['message'])
-       self.assertEqual("modifyObject", result[1]['action'])
-       self.assertEqual("fedoraAdmin", result[1]['user'])
-
-       self.assertEqual("Forth Change", result[0]['message'])
-       self.assertEqual("modifyObject", result[0]['action'])
-       self.assertEqual("fedoraAdmin", result[0]['user'])
-
-       logger.info("NOW: %s" % datetime.datetime.now() )
-       logger.info("AUDIT: %s" % result[0]['date'] )

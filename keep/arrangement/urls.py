@@ -1,10 +1,13 @@
 from django.conf.urls.defaults import *
+from keep.arrangement import views
 
-urlpatterns = patterns('keep.arrangement.views',
-    url(r'^$', 'index', name='index'),
-    url(r'^(?P<pid>[^/]+)/edit/$', 'edit', name='edit'),
+urlpatterns = patterns('',
+    url(r'^$', views.index, name='index'),
+    url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
+    url(r'^(?P<pid>[^/]+)/history/$', views.history, name='history'),
     url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>(FileMasterTech|Rights|MODS|RELS-EXT|DC))/$',
-            'view_datastream', name='raw-ds'),
-    url(r'^(?P<pid>[^/]+)/AUDIT/$', 'view_audit_trail', name='audit-trail'),
-    url(r'^get_selected_series_data/(?P<id>[^/]+)', 'get_selected_series_data', name='get_selected_series_data'),
+            views.view_datastream, name='raw-ds'),
+    url(r'^(?P<pid>[^/]+)/AUDIT/$', views.view_audit_trail, name='audit-trail'),
+    url(r'^get_selected_series_data/(?P<id>[^/]+)', views.get_selected_series_data,
+        name='get_selected_series_data'),
 )

@@ -4,8 +4,8 @@
 {% block item_title %}
 <p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
   {% if obj.part %} ({{ obj.part }}){% endif %}
-  {% if obj.collection_id %}
-    (part of <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{{ obj.collection_label }}</a>)
+  {% if obj.collection_id %} {{ obj.collection_id }}
+    (part of <a href="{# {% url collection:edit obj.collection_id|slice:'12:' %} #}">{{ obj.collection_label }}</a>)
   {% endif %} </p>
 {% endblock %}
 
