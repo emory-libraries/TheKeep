@@ -1,5 +1,5 @@
-import datetime
-from datetime import date
+from datetime import date, datetime, timedelta
+from dateutil.tz import tzutc
 import logging
 from mock import Mock, MagicMock, patch
 import os
@@ -12,11 +12,13 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase, Client
 
 from eulfedora.models import XmlDatastream
+from eulfedora.xml import AuditTrailRecord
 from eulxml.xmlmap import mods
 
 from keep.audio import models as audiomodels
 from keep.collection.fixtures import FedoraFixtures
-from keep.common.fedora import DigitalObject, LocalMODS, Repository
+from keep.common.fedora import DigitalObject, LocalMODS, Repository, \
+     AuditTrailEvent
 from keep.common.forms import ItemSearch
 from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum, solr_interface
@@ -127,83 +129,7 @@ class TestSolrInterface(TestCase):
         
         
 
-
-# extend Keep DigitalObject with to test ARK init logic
-class DcDigitalObject(DigitalObject):
-    NEW_OBJECT_VIEW = 'audio:view'    # required for minting pid
-
-
-# extend Keep DigitalObject with a MODS datastream to test ARK init logic
-class ModsDigitalObject(DcDigitalObject):
-    mods = XmlDatastream('MODS', 'MODS Metadata', LocalMODS, defaults={
-            'control_group': 'M',
-            'format': mods.MODS_NAMESPACE,
-            'versionable': True,
-        })
-
-
-class DigitalObjectTest(TestCase):
-    naan = '123'
-    noid = 'bcd'
-    testark = 'http://p.id/ark:/%s/%s' % (naan, noid)
-
-    @patch('keep.common.fedora.pidman')
-    def test_get_default_pid(self, mockpidman):
-        mockpidman.create_ark.return_value = self.testark
-        
-        digobj = DcDigitalObject(Mock())
-        digobj.label = 'my test object'
-        pid = digobj.get_default_pid()
-        self.assertEqual('%s:%s' % (settings.FEDORA_PIDSPACE, self.noid), pid)
-        # test/inspect mockpidman.create_ark arguments?
-
-        # generated ARK should be stored in dc:identifier
-        self.assert_(self.testark in digobj.dc.content.identifier_list)
-
-        
-    @patch('keep.common.fedora.pidman')
-    def test_get_default_pid__mods(self, mockpidman):
-        # mods variant
-        mockpidman.create_ark.return_value = self.testark
-        
-        digobj = ModsDigitalObject(Mock())
-        pid = digobj.get_default_pid()
-
-        # generated ARK should be stored in MODS in two forms
-        self.assertEqual(2, len(digobj.mods.content.identifiers))
-        # map mods:identifier to a dictionary so we can inspect by type
-        id_by_type = dict((id.type, id.text) for id in digobj.mods.content.identifiers)
-        self.assertEqual('ark:/%s/%s' % (self.naan, self.noid),
-            digobj.mods.content.ark,
-            'short-form ARK should be stored in mods:identifier with type "ark"')
-        self.assertEqual(self.testark, digobj.mods.content.ark_uri,
-            'resolvable ARK should be stored in mods:identifier with type "uri"')
-
-        # generated ark should not be stored in dc:identifier
-        self.assert_(self.testark not in digobj.dc.content.identifier_list)
-
-
-    def test_ark_access_uri(self):
-        # dc
-        dcobj = DcDigitalObject(Mock())
-        # not set in dc
-        self.assertEqual(None, dcobj.ark_access_uri)
-        dcobj.dc.content.identifier_list.extend([
-            'http://some.other/uri/foo/',
-            self.testark
-            ])
-        self.assertEqual(self.testark, dcobj.ark_access_uri)
-
-        # mods
-        modsobj = ModsDigitalObject(Mock())
-        # not set in mods
-        self.assertEqual(None, modsobj.ark_access_uri)
-        modsobj.mods.content.identifiers.extend([
-            mods.Identifier(type='uri', text='http://yet.an/other/url'),
-            mods.Identifier(type='uri', text=self.testark)
-            ])
-        self.assertEqual(self.testark, modsobj.ark_access_uri)
-       
+# FIXME: why is this in keep.common instead of arrangement ?
 
 class Test_DirPart(TestCase):
 
@@ -262,7 +188,6 @@ class ModsDigitalObject(DcDigitalObject):
             'versionable': True,
         })
 
-
 class DigitalObjectTest(TestCase):
     naan = '123'
     noid = 'bcd'
@@ -324,6 +249,64 @@ class DigitalObjectTest(TestCase):
             mods.Identifier(type='uri', text=self.testark)
             ])
         self.assertEqual(self.testark, modsobj.ark_access_uri)
+        
+    def test_history_events(self):
+        obj = DcDigitalObject(Mock())
+        with patch.object(DcDigitalObject, 'audit_trail') as mockaudit:
+            # two api calls with same user + message, different components
+            now = datetime.now(tz=tzutc())
+            mockaudit.records = [
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='DC'),
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='RELS-EXT'),
+            ]
+            # should collapse into one event
+            self.assertEqual(1, len(obj.history_events()))
+
+            # two api calls with different user
+            mockaudit.records = [
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='DC'),
+                AuditTrailRecord(date=now, user='you', message='update',
+                                 component='RELS-EXT'),
+            ]
+            # two different events
+            self.assertEqual(2, len(obj.history_events()))
+
+            # two api calls with same user but different message
+            mockaudit.records = [
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='DC'),
+                AuditTrailRecord(date=now, user='me', message='change',
+                                 component='RELS-EXT'),
+            ]
+            # two different events
+            self.assertEqual(2, len(obj.history_events()))
+            
+            # two api calls with same user + message but repeated component
+            mockaudit.records = [
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='DC'),
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='DC'),
+            ]
+            # two different events
+            self.assertEqual(2, len(obj.history_events()))
+        
+
+            # two api calls with same user + message, different components,
+            # but far enough in time they probably don't belong together
+            mockaudit.records = [
+                AuditTrailRecord(date=now, user='me', message='update',
+                                 component='DC'),
+                AuditTrailRecord(date=now + timedelta(seconds=10),
+                                 user='me', message='update',
+                                 component='RELS-EXT'),
+            ]
+            # should NOT be collapsed into one event
+            self.assertEqual(2, len(obj.history_events()))
+
 
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
@@ -609,3 +592,44 @@ class TestRightsExtrasTemplateTags(TestCase):
         self.assertEqual(None,
                          rights_extras.access_code_abbreviation('''obviously not
                          an access code'''))
+
+
+class TestAuditTrailEvent(TestCase):
+
+    def setUp(self):
+        self.ingest = AuditTrailRecord(date=datetime.now(tz=tzutc()),
+                                  user='admin',
+                                  message='initial ingest',
+                                  action='ingest')
+        self.modify = AuditTrailRecord(date=datetime.now(tz=tzutc()),
+                                       user='admin',
+                                       message='update something',
+                                       component='DC',
+                                       action='modifyDatastream')
+
+    def test_init(self):
+        event = AuditTrailEvent(self.ingest)
+        self.assertEqual(self.ingest.date, event.date)
+        self.assertEqual(self.ingest.user, event.user)
+        self.assertEqual(self.ingest.message, event.message)
+        self.assertEqual([], event.components)
+        self.assert_(self.ingest.action in event.actions)
+
+    def test_add_record(self):
+        event = AuditTrailEvent(self.ingest)
+        event.add_record(self.modify)
+        self.assertEqual(self.modify.date, event.date)
+        self.assert_(self.modify.component in event.components)
+        self.assert_(self.modify.action in event.actions)
+        
+    def test_component_names(self):
+        event = AuditTrailEvent(self.modify, {'DC': 'dublin core'})
+        self.assertEqual(set(['dublin core']), event.component_names())
+    
+    def action(self):
+        ingest_event = AuditTrailEvent(self.ingest)
+        self.assertEqual('ingest', ingest_event.action)
+
+        modify_event = AuditTrailEvent(self.modify)
+        self.assertEqual('modify', ingest_event.action)
+

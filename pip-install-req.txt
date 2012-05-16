@@ -22,3 +22,4 @@ poster
 httplib2
 unicodecsv
 south
+dateutil

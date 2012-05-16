@@ -67,6 +67,8 @@ class AuditTrailEvent(object):
     'uniqe set of all API actions included in this event'
     
     def __init__(self, record=None, component_key=None):
+        self.components = []
+        self.actions = set()
         if record:
             self.date = record.date
             self.user = record.user
@@ -103,7 +105,8 @@ class AuditTrailEvent(object):
         event, via :meth:`user_full_name`.
         '''
         return user_full_name(self.user)
-    
+
+    @property
     def action(self):
         '''Brief, summary action label for the audit trail records
         grouped in this event, e.g. ``modify`` or ``ingest``.
