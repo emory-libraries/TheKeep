@@ -134,11 +134,8 @@ class RightsForm(XmlObjectForm):
 
 
 class Series2PartForm(XmlObjectForm):
-    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.NamePart`
-
-        * suppress default label 'text'
-        * use :class:`~django.forms.TextInput` with class *long*
+    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit series
+    information in MODS
     '''
     title = forms.CharField(label='Series Title', required=False,
                             widget=forms.TextInput(attrs={'class': 'long series2_storedtitle'}))
@@ -162,11 +159,9 @@ class Series2PartForm(XmlObjectForm):
         model = Series2
 
 class SeriesPartForm(XmlObjectForm):
-    '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.NamePart`
-
-        * suppress default label 'text'
-        * use :class:`~django.forms.TextInput` with class *long*
+    '''
+    Custom :class:`~eulxml.forms.XmlObjectForm` to edit Series
+    information.
     '''
     title = forms.CharField(label='Series Title', required=False,
                             widget=forms.TextInput(attrs={'class': 'long series1_storedtitle'}))
@@ -191,8 +186,9 @@ class SeriesPartForm(XmlObjectForm):
         model = Series1
 
 class ArrangementModsForm(XmlObjectForm):
-    """:class:`~eulxml.forms.XmlObjectForm` to edit
-    :class:`~keep.common.models.Rights` metadata.
+    """
+    :class:`~eulxml.forms.XmlObjectForm` to edit
+    :class:`~keep.arrangment.models.ArrangementMods` metadata.
     """
     series = SubformField(formclass=SeriesPartForm)
 
@@ -205,6 +201,14 @@ class ArrangementModsForm(XmlObjectForm):
 
 
 class ArrangementObjectEditForm(forms.Form):
+    '''
+    Form to edit multiple datastreams on an
+    :class:`~keep.arangement.models.ArrangementObject`.  Wrapper for
+    editing :attr:`~keep.arangement.models.ArrangementObject.filetech`,
+    :attr:`~keep.arangement.models.ArrangementObject.mods`, and
+    :attr:`~keep.arangement.models.ArrangementObject.rights`.
+    
+    '''
     error_css_class = 'error'
     required_css_class = 'required'
 
@@ -239,7 +243,8 @@ class ArrangementObjectEditForm(forms.Form):
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='fs', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
-        self.comments = CommentForm( prefix='comments',**common_opts)
+        # FIXME: log message handling doesn't need a separate form
+        self.comments = CommentForm( prefix='comments',**common_opts)   # ?!
 
 
         for form in ( self.filetech,

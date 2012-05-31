@@ -43,11 +43,12 @@ def index(request):
 
 @permission_required("common.arrangement_allowed")
 def edit(request, pid):
-    '''Edit view for an arrangement object. Currently, create is not
-       supported on this form.
+    '''
+    Edit view for an arrangement object. Currently, create is not
+    supported on this form.
 
-       @param pid: The pid of the object being edited.
-       '''
+    :param pid: The pid of the object being edited.
+    '''
     repo = Repository(request=request)
     try:
         obj = repo.get_object(pid, type=ArrangementObject)
@@ -55,7 +56,8 @@ def edit(request, pid):
             # if data has been submitted, initialize form with request data and object mods
             form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
             if form.is_valid():
-                form.update_instance() 
+                form.update_instance()
+                # FIXME: clean up log message handling
                 if form.comments.cleaned_data.has_key('comment') and form.comments.cleaned_data['comment']:
                     comment = form.comments.cleaned_data['comment']
                 else:
@@ -145,6 +147,7 @@ def view_audit_trail(request, pid):
 
 @permission_required("common.arrangement_allowed")
 def history(request, pid):
+    'Display human-readable audit trail information.'
     return history_view(request, pid, type=ArrangementObject,
                         template_name='arrangement/history.html')
 
@@ -152,11 +155,13 @@ def history(request, pid):
 @permission_required("common.arrangement_allowed")
 @csrf_exempt
 def get_selected_series_data(request, id):
-    '''This is called from a JQuery ajax call. It filters on the passed series/subseries id
-       and returns a dictionary containing title, uri, ark, full id, and short id. A bit ugly
-       at the moment.
+    '''
+    This is called from a JQuery ajax call. It filters on the passed series/subseries id
+    and returns a dictionary containing title, uri, ark, full id, and short id. A bit ugly
+    at the moment.
 
-       @param id: The series or subseries id that more data is wanted from.
+    :param id: The series or subseries id that more data is wanted
+        from.
     '''
 
     # Query for the finding aid information.

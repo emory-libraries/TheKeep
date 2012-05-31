@@ -15,6 +15,7 @@ _access_term = namedtuple('_access_term', 'code abbreviation access text') # wra
 class _BaseRights(xmlmap.XmlObject):
     'Base class for Rights metadata objects'
     ROOT_NS = 'http://pid.emory.edu/ns/2010/rights'
+    'xml namespace'
     ROOT_NAMESPACES = { 'rt': ROOT_NS }
 
 class AccessStatus(_BaseRights):
@@ -92,8 +93,8 @@ class Rights(_BaseRights):
     block_external_access = xmlmap.SimpleBooleanField('rt:externalAccess',
         'deny', None,
         help_text='''DENY ACCESS to library patrons irrespective of Access Status.''')
-    '''block external access. If this is True then refuse patron access to this
-    item irrespective of :attr:access_status.'''
+    '''block external access. If this is True then refuse patron
+    access to this item irrespective of :attr:`access_status`.'''
     # NOTE: users have also requested a <rt:externalAccess>allow</rt:externalAccess>
     # to allow access irrespective of access_status. when we implement
     # that, we'll probably want to incorporate it into this property and
@@ -135,29 +136,51 @@ class _DirPart(object):
 
 
 class FileMasterTech_Base(xmlmap.XmlObject):
+    '''Base class for technical file metadata'''
+    
     ROOT_NS = 'http://pid.emory.edu/ns/2011/filemastertech'
+    'xml namespace'
     ROOT_NAMESPACES = {'fs': ROOT_NS }
     ROOT_NAME = 'file'
 
     BROWSABLE_COMPUTERS = ('Performa 5400','Performa 5300c')
+    'computers available for browse'  # ?
 
     local_id = xmlmap.StringField('fs:localId')
+    'local id'
     md5 = xmlmap.StringField('fs:md5')
+    'MD5 checksum'
     computer = xmlmap.StringField('fs:computer')
+    'computer name'
     path = xmlmap.StringField('fs:path')
+    'file path'
     rawpath = xmlmap.StringField('fs:rawpath')
+    'raw file path'    # encoded ? 
     attributes = xmlmap.StringField('fs:attributes')
+    'file system attributes'
     #created = DateField('fs:created')
     #modified = DateField('fs:modified')
     created = xmlmap.StringField('fs:created')
+    'date created'
     modified = xmlmap.StringField('fs:modified')
+    'date last modified'
     type = xmlmap.StringField('fs:type')
+    'type'
     creator = xmlmap.StringField('fs:creator')
+    'creator'
 
     def browsable(self):
+        '''Check if this file is browsable, based on :attr:`computer`
+        and the list of :attr:`BROWSABLE_COMPUTERS`.'''
         return self.computer in self.BROWSABLE_COMPUTERS
 
     def dir_parts(self):
+        '''
+        Directory parts based on path.    
+        '''
+        # FIXME: redundant code with rushdie webapp ?
+        # TODO: document what this actually does...
+        
         raw_parts = self.path.split('/')
 
         base = '/'
@@ -168,11 +191,16 @@ class FileMasterTech_Base(xmlmap.XmlObject):
             base = base + part + '/'
 
     def name(self):
-       return self.path.split('/')[-1]
+        '''file name (last portion of the file path)'''
+        return self.path.split('/')[-1]
 
 class FileMasterTech(xmlmap.XmlObject):
-    ROOT_NS = 'http://pid.emory.edu/ns/2011/filemastertech'
-    ROOT_NAMESPACES = {'fs': ROOT_NS }
+    ''':class:`~eulxml.models.XmlObject` for representing technical
+    file metadata'''
+    
+    ROOT_NS = 'http://pid.emory.edu/ns/2011/filemastertech'  # redundant ? 
+    ROOT_NAMESPACES = {'fs': ROOT_NS }	# redundant? 
     ROOT_NAME = 'document'
     file = xmlmap.NodeListField("fs:file", FileMasterTech_Base,
-    required=False)
+                                required=False)		# why separate? 
+    'file information; instance of :class:`FileMasterTech_Base`'  

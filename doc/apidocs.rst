@@ -36,14 +36,40 @@ Context Processors
 .. automodule:: keep.collection.context_processors
     :members:
 
+Arrangement
+-----------
+.. automodule:: keep.arrangement
+   :members:
+
+Models
+^^^^^^
+.. automodule:: keep.arrangement.models
+    :members:
+
+Forms
+^^^^^
+.. automodule:: keep.arrangement.forms
+    :members:
+
+Views
+^^^^^^
+.. automodule:: keep.arrangement.views
+    :members:
+
+Management Commands/Scripts
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: keep.arrangement.management.commands.migrate_rushdie
+    :members:
+
+.. automodule:: keep.arrangement.management.commands.load_arrangement
+    :members:
+
 
 Audio
 -----
 .. automodule:: keep.audio
-
-Django module for uploading audio content (either single files or in batches)
-for ingest into the repository, with functionality for editing metadata, and
-searching audio objects.
+    :members:
 
 Models
 ^^^^^^
@@ -89,6 +115,11 @@ Common code
 Fedora
 ^^^^^^
 .. automodule:: keep.common.fedora
+    :members:
+
+Models
+^^^^^^
+.. automodule:: keep.common.models
     :members:
 
 MODS

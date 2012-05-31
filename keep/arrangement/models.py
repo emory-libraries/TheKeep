@@ -17,35 +17,52 @@ from rdflib import URIRef
 logger = logging.getLogger(__name__)
 
 class Series_Base(mods.RelatedItem):
+    '''Base class for Series information; subclass of
+    :class:`eulxml.xmlmap.mods.RelatedItem`.'''
 
     uri = xmlmap.StringField('mods:identifier[@type="uri"]',
             required=False, verbose_name='URI Identifier')
+    'URI identifier'
 
     base_ark = xmlmap.StringField('mods:identifier[@type="base_ark"]',
             required=False, verbose_name='base ark target of document')
+    'base ARK of target document'
 
     full_id = xmlmap.StringField('mods:identifier[@type="full_id"]',
             required=False, verbose_name='full id of this node')
+    'full id' # ? 
 
     short_id = xmlmap.StringField('mods:identifier[@type="short_id"]',
             required=False, verbose_name='short id of this node')
+    'short id'
+
+# FIXME: what is the difference between series 1 and 2?
 
 class Series2(Series_Base):
+    '''Subseries'''
     series = xmlmap.NodeField("mods:relatedItem[@type='series']", Series_Base,
         required=False,
         help_text='subseries')
 
 class Series1(Series_Base):
+    '''Subseries'''
     series = xmlmap.NodeField("mods:relatedItem[@type='series']", Series2,
         required=False,
         help_text='subseries')
 
 class ArrangementMods(mods.MODS):
+    '''Subclass of :class:`eulxml.xmlmap.mods.MODS` with mapping for
+    series information.'''
     series = xmlmap.NodeField("mods:relatedItem[@type='series']", Series1,
         required=False,
         help_text='series')
+    'series'
 
 class ArrangementObject(DigitalObject):
+    '''Subclass of :class:`eulfedora.models.DigitalObject` for
+    "arrangement" content.'''
+
+    
     ARRANGEMENT_CONTENT_MODEL = 'info:fedora/emory-control:Arrangement-1.0'
     CONTENT_MODELS = [ ARRANGEMENT_CONTENT_MODEL ]
     NEW_OBJECT_VIEW = 'arrangement:edit'
@@ -56,24 +73,29 @@ class ArrangementObject(DigitalObject):
             'versionable': True,
         })
     '''access control metadata :class:`~eulfedora.models.XmlDatastream`
-    with content as :class:`Rights`'''
+    with content as :class:`Rights`; datastream id ``Rights``'''
 
     filetech = XmlDatastream("FileMasterTech", "File Technical Metadata", FileMasterTech ,defaults={
             'control_group': 'M',
             'versionable': True,
         })
+    '''file technical metadata
+    :class:`~eulfedora.models.XmlDatastream` with content as
+    :class:`keep.common.models.FileMasterTech`; datastream ID
+    ``FileMasterTech``'''
 
     mods = XmlDatastream('MODS', 'MODS Metadata', ArrangementMods, defaults={
             'control_group': 'M',
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
         })
-    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`ArrangementMods`'
+    '''MODS :class:`~eulfedora.models.XmlDatastream` with content as
+    :class:`ArrangementMods`; datstream ID ``MODS``'''
 
 
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
-    ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
-    via `isMemberOfCollection` relation.
+    ''':class:`~keep.collection.models.CollectionObject` that this
+    object is a member of, via `isMemberOfCollection` relation.
     '''
 
     component_key = {
@@ -87,9 +109,10 @@ class ArrangementObject(DigitalObject):
 
     def index_data(self):
         '''Extend the default
-        :meth:`eulfedora.models.DigitalObject.index_data`
-        method to include additional fields specific to Keep
-        Arrangement objects.'''
+        :meth:`eulfedora.models.DigitalObject.index_data` method to
+        include additional fields specific to Keep Arrangement
+        objects.  Includes collection and archive information, along
+        with arrangement id and access status.'''
         # NOTE: we don't want to rely on other objects being indexed in Solr,
         # so index data should not use Solr to find any related object info
         
