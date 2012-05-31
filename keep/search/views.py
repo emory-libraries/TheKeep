@@ -1,3 +1,4 @@
+import logging
 from datetime import date, timedelta
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
@@ -6,10 +7,14 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDict, SortedDict
 from eulcommon.searchutil import pages_to_show, parse_search_terms
+from keep.arrangement.models import ArrangementObject
+from keep.audio.models import AudioObject
 
 from keep.common.models import Rights
 from keep.common.utils import solr_interface
 from keep.search.forms import KeywordSearch
+
+logger = logging.getLogger(__name__)
 
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
@@ -150,6 +155,12 @@ def keyword_search(request):
                     
                 display_filters.append((label,
                                         unfacet_urlopts.urlencode()))
+        #Exclude results if user does not have correct perm
+        if not request.user.has_perm('common.marbl_allowed'):
+            q = q.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
+        if not request.user.has_perm('common.arrangement_allowed'):
+            q = q.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+
 
         # Update solr query to return values & counts for the
         # configured facet fields

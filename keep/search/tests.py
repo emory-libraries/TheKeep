@@ -1,14 +1,20 @@
+import logging
 from django import forms
+from django.contrib.auth.models import User, Permission
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.test import TestCase
 import json
 from mock import patch, Mock, MagicMock, call
 from sunburnt import sunburnt
+from keep.arrangement.models import ArrangementObject
+from keep.audio.models import AudioObject
 
 from keep.search.forms import SolrSearchField, KeywordSearch
 from keep.testutil import KeepTestCase
 from keep.audio.tests import ADMIN_CREDENTIALS
+
+logger = logging.getLogger(__name__)
 
 class SolrSearchFieldTest(TestCase):
 
@@ -59,6 +65,19 @@ class SolrSearchFieldTest(TestCase):
 class SearchViewsTest(KeepTestCase):
     fixtures =  ['users']
 
+    def setUp(self):
+        #get user
+        self.user = User.objects.get(username=ADMIN_CREDENTIALS['username'])
+        self.audio_perm = Permission.objects.get(codename='marbl_allowed')
+        self.bd_perm = Permission.objects.get(codename='arrangement_allowed')
+
+    def tearDown(self):
+        #rest user to superuser after test
+        self.user.user_permissions.clear()
+        self.user.is_superuser = True
+        self.user.save()
+
+
     @patch('keep.search.views.Paginator')
     def test_search(self, mockpaginator, mocksolr_interface):
         search_url = reverse('search:keyword')
@@ -103,6 +122,27 @@ class SearchViewsTest(KeepTestCase):
         self.assertEqual(call('-created'), sort_args[1])
         # - include relevance score in return values
         mocksolr.query.field_limit.assert_called_with(score=True)
+
+        #remove superuser from user and add perms
+        self.user.is_superuser = False
+
+        #exclude Born Digital content
+        self.user.user_permissions = [self.audio_perm]
+        self.user.save()
+
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
+        mocksolr.query.exclude.assert_called_with(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+
+        #exclude Audio content
+        self.user.user_permissions = [self.bd_perm]
+        self.user.save()
+
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
+        mocksolr.query.exclude.assert_called_with(content_model=AudioObject.AUDIO_CONTENT_MODEL)
+
+
 
     @patch('keep.search.views.Paginator')
     def test_search_by_user(self, mockpaginator, mocksolr_interface):

@@ -312,6 +312,9 @@ Release 1.4 (preliminary)
   ``schema.xml`` and reindex site content.
 * This update requires modifications to Fedora XACML policies; update
   Fedora with the latest polices and and reload them.
+* Run syncdb to load the Born Digital group using the following command::
+
+    $ python manage.py syncdb
 
 
 Release 1.3 - Search-based Report generation

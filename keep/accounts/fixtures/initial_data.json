@@ -1,0 +1,16 @@
+[
+    {
+        "pk": 1, 
+        "model": "auth.group", 
+        "fields": {
+            "name": "Born Digital",
+            "permissions": [
+                [
+                    "arrangement_allowed", 
+                    "common", 
+                    "permissions"
+                ]
+            ]
+        }
+    }
+]
