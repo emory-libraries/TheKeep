@@ -55,8 +55,12 @@
     {{ form.non_field_errors }}
 {% endif %}
 <table class="edit-form">
-  {% for field in form  %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-    {% if field.label != 'Comment' %}
+  {% for field in form  %}
+      {% if field.label != 'Comment' %}
+          {% include 'snippets/form_field_tr.html' %}
+      {% endif %}
+  {% endfor %}
+
         <tr id="creator">
           <th>Creator</th>
           <td class="multi-field">
@@ -64,8 +68,7 @@
                {% include 'snippets/edit_mods_name.html' %}
              {% endwith %} {# name subform as name #}
               </td>
-             </tr>
-    {% endif %}
+        </tr>
 
     <tr>
 
