@@ -354,3 +354,16 @@ form#upload > div {
 form#upload a.remove {
   background: none;
 }
+
+#content ul.horiz li {
+  display: inline-block;
+  background: none;
+  list-style-type: none;
+  margin: 0px;
+  margin-right: 1px;
+  padding: 0px 5px;
+  border-right: 1px solid gray;
+}
+#content ul.horiz li:last-child {
+  border-right: 0px;
+}

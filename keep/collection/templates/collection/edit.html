@@ -26,17 +26,17 @@
   {% endif %}
 </p>
 {% if collection.pid %} {# when editing existing objects, link to raw datastreams #}
-    <p class='extra'>
+    <ul class='extra horiz'>
       {% if collection.audit_trail %}
-        <a href="{% url collection:history collection.pid %}">Record History</a> |
+        <li><a href="{% url collection:history collection.pid %}">Event Log</a></li>
       {% endif %}
-        <a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a>
-      | <a href="{% url collection:raw-ds collection.pid 'DC' %}">DC</a>
-      | <a href="{% url collection:raw-ds collection.pid 'RELS-EXT' %}">RELS-EXT</a>
+        <li><a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a></li>
+        <li><a href="{% url collection:raw-ds collection.pid 'DC' %}">DC</a></li>
+        <li><a href="{% url collection:raw-ds collection.pid 'RELS-EXT' %}">RELS-EXT</a></li>
       {% if collection.audit_trail %}
-        | <a href="{% url collection:audit-trail collection.pid %}">Audit Trail</a>
+        <li><a href="{% url collection:audit-trail collection.pid %}">XML Audit Trail</a></li>
       {% endif %}
-    </p>
+    </ul>
 {% endif %}
 <div class="instructions">
     <h2>Instructions for using this form</h2>
