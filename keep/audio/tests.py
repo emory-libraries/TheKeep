@@ -469,8 +469,8 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A datastream as MP3)'
                              % (expected, code, download_url))
         
-
-    def test_edit(self):
+    @patch('keep.common.utils.solr_interface')  # for index page redirect
+    def test_edit(self, mocksolr):
         # create a test audio object to edit
         obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
         # pre-populate some data to check it is set in form instance
@@ -1559,51 +1559,53 @@ class DigitalTechTest(KeepTestCase):
         # TODO: validate against schema when we have one
 
 
-class RightsXmlTest(KeepTestCase):
-    FIXTURE =  '''<?xml version="1.0" encoding="UTF-8"?>
-<rt:rights version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rt="http://pid.emory.edu/ns/2010/rights"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/rights-1.xsd">
-    <rt:accessStatus code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessStatus>
-    <rt:copyrightholderName>Hughes, Carol</rt:copyrightholderName>
-    <rt:copyrightDate encoding="w3cdtf">1923</rt:copyrightDate>
-    <rt:ipNotes>Written permission required.</rt:ipNotes>
-</rt:rights>'''
+# TODO: move into eulcm.boda
 
-    def setUp(self):
-        super(RightsXmlTest, self).setUp()
-        self.rights = load_xmlobject_from_string(self.FIXTURE, audiomodels.Rights)
+# class RightsXmlTest(KeepTestCase):
+#     FIXTURE =  '''<?xml version="1.0" encoding="UTF-8"?>
+# <rt:rights version="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rt="http://pid.emory.edu/ns/2010/rights"  xsi="http://pid.emory.edu/ns/2010/sourcetech/v1/rights-1.xsd">
+#     <rt:accessStatus code="2">Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement</rt:accessStatus>
+#     <rt:copyrightholderName>Hughes, Carol</rt:copyrightholderName>
+#     <rt:copyrightDate encoding="w3cdtf">1923</rt:copyrightDate>
+#     <rt:ipNotes>Written permission required.</rt:ipNotes>
+# </rt:rights>'''
 
-    def test_init_types(self):
-        self.assert_(isinstance(self.rights, audiomodels.Rights))
-        self.assert_(isinstance(self.rights.access_status, commonmodels.AccessStatus))
+#     def setUp(self):
+#         super(RightsXmlTest, self).setUp()
+#         self.rights = load_xmlobject_from_string(self.FIXTURE, audiomodels.Rights)
 
-    def test_fields(self):
-        # check field values correctly accessible from fixture
-        self.assertEqual('2', self.rights.access_status.code)
-        self.assertEqual('Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement',
-            self.rights.access_status.text)
-        self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
-        self.assertEqual('1923', self.rights.copyright_date)
-        self.assertEqual('Written permission required.', self.rights.ip_note)
-        self.assertEqual(False, self.rights.block_external_access)
+#     def test_init_types(self):
+#         self.assert_(isinstance(self.rights, audiomodels.Rights))
+#         self.assert_(isinstance(self.rights.access_status, commonmodels.AccessStatus))
 
-    def test_create(self):
-        # test creating digitaltech metadata from scratch
-        rt = audiomodels.Rights()
-        rt.create_access_status()
-        rt.access_status.code = 8    # public domain
-        rt.access_status.text = 'In public domain, no contract restriction'
-        rt.copyright_holder_name = 'Mouse, Mickey'
-        rt.copyright_date = '1928'
-        rt.ip_note = 'See WATCH list for copyright contact info'
-        rt.block_external_access = True
+#     def test_fields(self):
+#         # check field values correctly accessible from fixture
+#         self.assertEqual('2', self.rights.access_status.code)
+#         self.assertEqual('Material under copyright; digital copy made under Section 108b or c; no explicit contract restrictions in the donor agreement',
+#             self.rights.access_status.text)
+#         self.assertEqual('Hughes, Carol', self.rights.copyright_holder_name)
+#         self.assertEqual('1923', self.rights.copyright_date)
+#         self.assertEqual('Written permission required.', self.rights.ip_note)
+#         self.assertEqual(False, self.rights.block_external_access)
 
-        # quick sanity check
-        self.assertTrue('<rt:rights' in rt.serialize())
+#     def test_create(self):
+#         # test creating digitaltech metadata from scratch
+#         rt = audiomodels.Rights()
+#         rt.create_access_status()
+#         rt.access_status.code = 8    # public domain
+#         rt.access_status.text = 'In public domain, no contract restriction'
+#         rt.copyright_holder_name = 'Mouse, Mickey'
+#         rt.copyright_date = '1928'
+#         rt.ip_note = 'See WATCH list for copyright contact info'
+#         rt.block_external_access = True
 
-        # also, did block_external_access actually create its subelement?
-        self.assertTrue('<rt:externalAccess>deny</' in rt.serialize())
+#         # quick sanity check
+#         self.assertTrue('<rt:rights' in rt.serialize())
 
-        # TODO: more fields tests; validate against schema when we have one
+#         # also, did block_external_access actually create its subelement?
+#         self.assertTrue('<rt:externalAccess>deny</' in rt.serialize())
+
+#         # TODO: more fields tests; validate against schema when we have one
 
 
 # tests for Audio DigitalObject

@@ -9,7 +9,7 @@ import operator
 
 from keep.collection.forms import CollectionSuggestionField
 from keep.collection.models import CollectionObject, SimpleCollection
-from keep.common.models import Rights
+from keep.common.models import rights_access_terms
 
 class ReadonlyTextInput(forms.TextInput):
     'Read-only variation on :class:`django.forms.TextInput`'
@@ -26,7 +26,8 @@ class ReadonlyTextInput(forms.TextInput):
 
 # rights access status code options - used in edit & search forms
 # use code for value, display code + abbreviation so code can be used for short-cut selection
-rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
+rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1]))
+                          for item in rights_access_terms ]
 rights_access_options.insert(0, ('', ''))
 
 EMPTY_LABEL_TEXT = ''

@@ -16,12 +16,13 @@ from django.utils import simplejson
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 from eulxml.xmlmap import mods
+from eulcm.xmlmap.mods import MODS
 
 from keep.arrangement.models import ArrangementObject
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
 from keep.collection import views
-from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
+from keep.collection.models import CollectionObject, FindingAid, SimpleCollection
 from keep.collection.views import _objects_by_type
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.rdfns import REPO
@@ -490,7 +491,8 @@ class CollectionViewsTest(KeepTestCase):
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
 
 
-    def test_edit(self):
+    @patch('keep.search.views.solr_interface')  # site-index on redirect
+    def test_edit(self, mock_solr_interface):
         repo = Repository()
         obj = FedoraFixtures.rushdie_collection()
         # store initial collection id from fixture
@@ -509,7 +511,7 @@ class CollectionViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
                 "MODS CollectionForm is set in response context")
-        self.assert_(isinstance(response.context['form'].instance, CollectionMods),
+        self.assert_(isinstance(response.context['form'].instance, MODS),
                 "form instance is a collection MODS XmlObject")
         self.assertContains(response, 'value="1000"',
                 msg_prefix='MSS # from existing object set as input value')

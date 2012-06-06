@@ -10,7 +10,7 @@ from eulcommon.searchutil import pages_to_show, parse_search_terms
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 
-from keep.common.models import Rights
+from keep.common.models import rights_access_terms_dict
 from keep.common.utils import solr_interface
 from keep.search.forms import KeywordSearch
 
@@ -149,7 +149,7 @@ def keyword_search(request):
                     label = '%s %s' % (filter, val)
                 elif filter == 'access status':
                     # use access status abbreviation instead of numeric code
-                    label = Rights.access_terms_dict[val].abbreviation
+                    label = rights_access_terms_dict[val].abbreviation
                 else:
                     label = val
                     

@@ -11,17 +11,18 @@ from django.core.urlresolvers import reverse
 
 from eulfedora.rdfns import relsext as relsextns
 from eulfedora.rdfns import model
+from eulcm.xmlmap.boda import FileMasterTech_Base
+
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from  keep.arrangement.management.commands import migrate_rushdie
-from keep.arrangement.models import ArrangementObject, Series1, Series2
+from keep.arrangement.models import ArrangementObject #, Series1, Series2
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
 from keep.testutil import KeepTestCase
 from keep.collection.fixtures import FedoraFixtures
 
-from keep.common.models import FileMasterTech_Base
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +234,7 @@ class ArrangementViewsTest(KeepTestCase):
         filetech_2.modified = ''
         filetech_2.type = 'PDF'
         filetech_2.creator = 'pdf'
+        # FIXME: is filetech used in these tests at all? 
       
         self.rushdie_obj.filetech.content.file.append(filetech_1)
         self.rushdie_obj.filetech.content.file.append(filetech_2)

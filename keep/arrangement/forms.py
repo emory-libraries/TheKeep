@@ -5,19 +5,16 @@ from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
+from eulcm.xmlmap.boda import Rights, ArrangementMods, \
+     Series1, Series2, FileMasterTech, FileMasterTech_Base
 
-from keep.common.models import FileMasterTech, Rights, FileMasterTech_Base
-from keep.common.forms import ReadonlyTextInput, CommentForm
+from keep.common.models import rights_access_terms_dict
+from keep.common.forms import ReadonlyTextInput, CommentForm, rights_access_options
 
-from keep.arrangement.models import ArrangementMods, Series1, Series2
 
 ##
 # Arrangement
 ##
-# rights access status code options - used in edit & search forms
-# use code for value, display code + abbreviation so code can be used for short-cut selection
-rights_access_options = [ (item[0], '%s : %s' % (item[0], item[1])) for item in Rights.access_terms ]
-rights_access_options.insert(0, ('', ''))
 
 
 class FileTechPartForm(XmlObjectForm):
@@ -125,7 +122,7 @@ class RightsForm(XmlObjectForm):
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
             access_code = self.cleaned_data['access']
-            access_text = Rights.access_terms_dict[access_code].text
+            access_text = rights_access_terms_dict[access_code].text
             self.instance.create_access_status()
             self.instance.access_status.code = access_code
             self.instance.access_status.text = access_text
