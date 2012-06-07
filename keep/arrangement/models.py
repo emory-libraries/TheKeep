@@ -1,5 +1,6 @@
 import logging
 from django.db import models
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.util import RequestFailed
@@ -18,8 +19,6 @@ from keep.collection.models import CollectionObject
 from rdflib import URIRef
 
 logger = logging.getLogger(__name__)
-
-
 
 
 
@@ -107,5 +106,47 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
             data["simpleCollection_label"] = sc_labels
 
         return data
-
         
+
+    @staticmethod
+    def by_arrangement_id(id, repo=None):
+        '''
+        Static method to find an :class:`ArrangementObject` by its
+        local or arrangement id.  Looks for the item in Solr and
+        returns an :class:`ArrangementObject` instance initialized
+        from the repository if a single match is found for the
+        requested id.
+
+        Raises :class:`django.core.exceptions.MultipleObjectsReturned`
+        if more than one match is found; raises
+        :class:`django.core.exceptions.ObjectDoesNotExist` if no
+        matches are found in the Solr index.
+
+        :param id: arrangement id or local id
+        
+        :param repo: optional :class:`eulfedora.server.Repository`
+            to use an existing connection with specific credentials
+            
+        :returns: :class:`ArrangementObject` 
+    
+        
+        '''
+        solr = solr_interface()
+        q = solr.query(arrangement_id=id,
+                   content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
+                   .field_limit('pid')
+
+        # check that we found one and only one
+        found = len(q)
+        # borrowing custom django exceptions for not found / too many
+        # matches
+        if found > 1:
+            raise MultipleObjectsReturned('Found %d matches for arrangement id %s' % \
+                                          (found, id))
+        if not found:
+            raise ObjectDoesNotExist('No match for arrangement id %s' % id)
+
+        if repo is None:
+            repo = Repository()
+            
+        return repo.get_object(q[0]['pid'], type=ArrangementObject)

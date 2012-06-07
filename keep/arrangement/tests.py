@@ -2,11 +2,13 @@ from rdflib import URIRef
 import logging
 import sys
 from mock import Mock, MagicMock, patch
+from sunburnt import sunburnt
 
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Permission
 from django.test import Client
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
 from eulfedora.rdfns import relsext as relsextns
@@ -358,3 +360,33 @@ class ArrangementViewsTest(KeepTestCase):
         #check audit trail
         audit_trail =  [a.message for a in obj.audit_trail.records]
         self.assertEqual(data['comments-comment'], audit_trail[-1])
+
+
+class ArrangementObjectTest(KeepTestCase):
+
+    @patch('keep.arrangement.models.solr_interface', spec=sunburnt.SolrInterface)
+    def test_by_arrangement_id(self, mocksolr):
+        # no match
+        self.assertRaises(ObjectDoesNotExist, ArrangementObject.by_arrangement_id,
+                          42)
+        solr = mocksolr.return_value
+        solr.query.assert_called_with(arrangement_id=42,
+                                      content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+        solr.query.return_value.field_limit.assert_called_with('pid')
+
+        # too many matches
+        solr.query.return_value.field_limit.return_value = [{'pid': 'pid:1'},
+                                                            {'pid': 'pid:2'}]
+        self.assertRaises(MultipleObjectsReturned, ArrangementObject.by_arrangement_id,
+                          42)
+
+        # one match
+        solr.query.return_value.field_limit.return_value = [{'pid': 'pid:1'}]
+        ao = ArrangementObject.by_arrangement_id(42)
+        self.assert_(isinstance(ao, ArrangementObject))
+
+        # custom repo object
+        mockrepo = Mock()
+        ao = ArrangementObject.by_arrangement_id(42, mockrepo)
+        mockrepo.get_object.assert_called_with('pid:1', type=ArrangementObject)
+        
