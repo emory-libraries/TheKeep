@@ -56,7 +56,7 @@
 {% endif %}
 <table class="edit-form">
   {% for field in form  %}
-      {% if field.label != 'Comment' %}
+      {% if field.name != 'comment' %} {# skip comment here; display at end of form #}
           {% include 'snippets/form_field_tr.html' %}
       {% endif %}
   {% endfor %}
