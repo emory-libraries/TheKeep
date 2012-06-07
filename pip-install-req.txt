@@ -23,3 +23,4 @@ httplib2
 unicodecsv
 south
 python-dateutil
+pytz
