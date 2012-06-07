@@ -39,6 +39,15 @@ When md5DropUploader detects that the browser supports required methods, it will
  show all .md5upload-supported elements and hide all .md5upload-not-supported
 elements.
 
+If you need to add external validation on a drop-upload form, in
+addition to the usual logic your validation function should store a
+boolean value in the data for the form element with a key of 'valid', e.g.:
+
+  $('form').data('valid', false);
+
+If the form 'valid' value is set to false, the drop-uploader submit
+handler will stop processing and not submit the form.  
+
 
 Adapted in part from https://github.com/texel/drag_drop_example/
 
@@ -269,6 +278,12 @@ Adapted in part from https://github.com/texel/drag_drop_example/
      */
     submitForm: function(event) {
         var $this = $(this);
+        // Support external validation: if a submit handler sets
+        // 'valid' to false on the form, bail out.  Assumes the external
+        // validation handles any errors/warnings.
+        if ($this.data('valid') == false) {
+            return false;
+        }
         // retrieve the md5 upload element relative to the form
         var uploader = $this.find('.md5uploader');
         // check if any dropped files have not yet been uploaded
