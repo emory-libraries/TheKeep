@@ -9,7 +9,7 @@ import operator
 
 from keep.collection.forms import CollectionSuggestionField
 from keep.collection.models import CollectionObject, SimpleCollection
-from keep.common.models import rights_access_terms
+from keep.common.models import rights_access_terms, rights_access_terms_dict
 
 class ReadonlyTextInput(forms.TextInput):
     'Read-only variation on :class:`django.forms.TextInput`'
@@ -219,7 +219,7 @@ class ItemSearch(forms.Form):
                     search_info[key] = CollectionObject.find_by_pid(val)
                 elif field == 'access_code':         # for rights, numeric code + abbreviation
                     search_info[key] = '%s - %s' % (val,
-                                                    Rights.access_terms_dict[val].abbreviation)
+                                                    rights_access_terms_dict[val].abbreviation)
                 elif field == "content_model":
                     search_info[key] = dict(self.format_options)[val]
                 elif field == "simpleCollection":
