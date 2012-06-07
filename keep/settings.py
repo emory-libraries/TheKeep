@@ -31,13 +31,15 @@ STATIC_URL = '/static/'
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
-STATICFILES_DIRS = (
+STATICFILES_DIRS = [
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(BASE_DIR, '..', 'sitemedia'),
-    os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib'),
-)
+]
+if 'VIRTUAL_ENV' in os.environ:
+    STATICFILES_DIRS.append(os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib'))
+
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -83,18 +85,13 @@ ROOT_URLCONF = 'keep.urls'
 TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, '..', 'templates'),
 ]
+# also look for templates in virtualenv
 if 'VIRTUAL_ENV' in os.environ:
     TEMPLATE_DIRS.extend([
         os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib'),
-        os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib'),
+        os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib')
     ])
 
-
-# also look for templates in virtualenv
-import os
-if 'VIRTUAL_ENV' in os.environ:
-    genlib_path = os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib')
-    TEMPLATE_DIRS.append(genlib_path)
 
 INSTALLED_APPS = (
     'django.contrib.admin',
