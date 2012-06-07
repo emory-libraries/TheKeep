@@ -9,34 +9,34 @@
   <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.md5dropuploader.js"></script>
   <script type="text/javascript" charset="utf-8">
      $(document).ready(function () {
+        // client-side form validation before submitting files
+        // NOTE: bind before md5 drop uploader so validation happens first
+        $('form#upload').submit(function(event){
+           var valid = true;
+           if (! $(this).find('#id_collection_0').val()) {
+              valid = false;
+              // add an error message if invalid (but only add once)
+              var error_list  = $('ul.errorlist');
+              if (! error_list.find('#collection-err').length) {
+                var err = $('<li id="collection-err">Collection is required.  ' + 
+                  'Type to search and select a collection from the suggested values.</li>');
+                error_list.append(err);
+               }
+           }
+           // store valid/invalid on form so md5 uploader can check
+           $(this).data('valid', valid); 
+           return valid;
+        });
+
         $("#drop_target").md5DropUploader({
             url : "{% url audio:upload %}",
            allowed_types : {{ js_allowed_types }},
         });
-
-         //set id to blank when collection is removed
-         $('input[id=id_collection_1]').keyup(function(){
-            if($('input[id=id_collection_1]').val()==''){
-                $('input[id=id_collection_0]').val('');
-
-            }
-
-        });
+        
      });
 
      {# collection autocomplete #}
      {% include "collection/snippets/collection_suggest_js.html" %}
-
-     function validate(f){
-         if(!$('input[id=id_collection_0]').attr('value') || $('input[id=id_collection_0]').val()==''){
-             $('ul.js-val').html('<li>Collection is required</li>');
-             return false;
-         }
-         else{
-             return true;
-         }
-     }
-  
   </script>
 {% endblock %}
 
@@ -85,9 +85,9 @@
   </p>
 
 
-<form id="upload" enctype="multipart/form-data" method="post" action="{% url audio:upload %}" onsubmit='return validate(this)'>{% csrf_token %}
+<form id="upload" enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
 
-<ul class='errorlist js-val'></ul>
+<ul class='errorlist'></ul>
 
  {{ form.non_field_errors }}
 {% with form.collection as field %}
