@@ -10,16 +10,20 @@
 {% endblock %}
 
 {% block item_info %}  {# FIXME: use horizontal list for this ? #}
-  <p> {{ obj.duration|intcomma }}s
+<ul class="horiz">
+ <li>{{ obj.duration|intcomma }}s</li>
   {% if obj.has_original %}
-     <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
-  | 
+     <li><a href="{% url audio:download-audio obj.pid %}">original audio</a></li>
   {% endif %}
   {% if obj.has_access_copy %}
-    <a href="{% url audio:download-compressed-audio obj.pid 'mp3' %}">access copy</a>
-    {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
-    {# TODO: mimetype icon ? #}
-  |
+    <li> 
+       <a href="{% url audio:download-compressed-audio obj.pid 'mp3' %}">access copy</a>
+      {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
+      {# TODO: mimetype icon ? #}
+    </li>
   {% endif %}
-  {{ obj.rights|join:', ' }}</p>
+  {% if obj.rights %}
+    <li>{{ obj.rights|join:', ' }}</li>
+  {% endif %}
+</ul>
 {% endblock %}

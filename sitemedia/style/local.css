@@ -355,6 +355,10 @@ form#upload a.remove {
   background: none;
 }
 
+#content ul.horiz  {
+  margin: 0px;
+  padding: 0px;
+}
 #content ul.horiz li {
   display: inline-block;
   background: none;
@@ -366,4 +370,7 @@ form#upload a.remove {
 }
 #content ul.horiz li:last-child {
   border-right: 0px;
+}
+#content ul.horiz li:first-child {
+  padding-left: 0px;
 }
