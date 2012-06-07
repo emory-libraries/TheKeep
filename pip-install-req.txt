@@ -25,3 +25,4 @@ south
 python-dateutil
 # dev eulcm content model objects (until initial eulcm release)
 -e git://github.com/emory-libraries/eulcm.git@develop#egg=eulcm
+pytz
