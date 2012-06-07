@@ -13,10 +13,29 @@
             url : "{% url audio:upload %}",
            allowed_types : {{ js_allowed_types }},
         });
+
+         //set id to blank when collection is removed
+         $('input[id=id_collection_1]').keyup(function(){
+            if($('input[id=id_collection_1]').val()==''){
+                $('input[id=id_collection_0]').val('');
+
+            }
+
+        });
      });
 
      {# collection autocomplete #}
      {% include "collection/snippets/collection_suggest_js.html" %}
+
+     function validate(f){
+         if(!$('input[id=id_collection_0]').attr('value') || $('input[id=id_collection_0]').val()==''){
+             $('ul.js-val').html('<li>Collection is required</li>');
+             return false;
+         }
+         else{
+             return true;
+         }
+     }
   
   </script>
 {% endblock %}
@@ -66,10 +85,13 @@
   </p>
 
 
-<form id="upload" enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
+<form id="upload" enctype="multipart/form-data" method="post" action="{% url audio:upload %}" onsubmit='return validate(this)'>{% csrf_token %}
+
+<ul class='errorlist js-val'></ul>
+
  {{ form.non_field_errors }}
 {% with form.collection as field %}
-  {% include "snippets/form_field.html" %} {# FIXME: why is help text not showing up ? #}
+  {% include "snippets/form_field.html" %}
 {% endwith %}
 
  <div id="drop_target">
