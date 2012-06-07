@@ -134,7 +134,7 @@ see:
     <field name="ip_note" type="text" indexed="true" stored="true" multiValued="true"/>
     
     <!-- ArrangementObject -->
-    <field name="arrangement_id" type="string" indexed="false" stored="true" multiValued="false"/>
+    <field name="arrangement_id" type="string" indexed="true" stored="true" multiValued="false"/>
     
     <!-- * both audio and collection objects -->
     <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
@@ -209,6 +209,8 @@ see:
    <copyField source="ip_note" dest="text"/>
    <copyField source="audit_trail_users" dest="text"/>
    <copyField source="users" dest="text"/>
+   <!-- boda arrangement id (temporary/dupe?) -->
+   <copyField source="arrangement_id" dest="text"/>
    <!-- copy other dates into common date field -->
    <copyField source="created" dest="date"/>
    <!-- audio note fields -->
