@@ -65,7 +65,7 @@
     <li><a href="{% url audio:raw-ds obj.pid 'JHOVE' %}">JHOVE</a></li>
   {% endif %}
   {% if obj.audit_trail %}
-    <li><a href="{% url audio:audit-trail obj.pid %}">Audit Trail</a></li>
+    <li><a href="{% url audio:audit-trail obj.pid %}">XML Audit Trail</a></li>
   {% endif %}
 </ul>
 {% with obj.conversion_result as conversion %}
