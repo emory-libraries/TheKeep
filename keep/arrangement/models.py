@@ -141,10 +141,10 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
         # borrowing custom django exceptions for not found / too many
         # matches
         if found > 1:
-            raise MultipleObjectsReturned('Found %d matches for arrangement id %s' % \
+            raise MultipleObjectsReturned('Found %d records with arrangement id %s' % \
                                           (found, id))
         if not found:
-            raise ObjectDoesNotExist('No match for arrangement id %s' % id)
+            raise ObjectDoesNotExist('No record found with arrangement id %s' % id)
 
         if repo is None:
             repo = Repository()
