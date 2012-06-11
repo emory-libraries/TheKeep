@@ -77,7 +77,7 @@ class Command(BaseCommand):
                             # our content currently only belongs to one;
                             # join into a single field that can be used for output
                             record['collection']  = ', '.join(record['simpleCollection_label'])
-                            print '  %(pid)s : %(title)s (%(collection)s)' % record
+                            print '  %(pid)s - %(title)s (%(collection)s)' % record
 
                         # skip this record, must be handled manually
                         continue
@@ -107,12 +107,12 @@ class Command(BaseCommand):
 
                 # set rights status based on verdict in csv
 
-                # TODO: what are we doing with missing/empty verdict ?
-                # skipping for now
+                # if no verdict is set, default to restricted
                 if not row['verdict']:
+                    row['verdict'] = 'Restricted'
                     if self.verbosity >= self.v_normal:
-                        print 'No verdict set for %(id)s' % row
-                    continue
+                        print 'No verdict set for %(id)s; defaulting to restricted' % row
+
                 
                 # set access code, 
                 verdict_assigned = self.set_access_status(obj,
