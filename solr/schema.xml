@@ -138,6 +138,9 @@ see:
     
     <!-- * both audio and collection objects -->
     <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
+
+    <!-- MD5 checksum for primary content datastream -->
+    <field name="content_md5" type="string" indexed="true" stored="true" multiValued="false"/>
     
     <!-- catchall field, containing all other searchable text fields (implemented
          via copyField further on in this schema  -->

@@ -75,14 +75,21 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
 
         #Arrangement unique id
         try:
-            if self.filetech.content.file and self.filetech.content.file[0].local_id:
-                data["arrangement_id"] = self.filetech.content.file[0].local_id
+            if self.filetech.content.file:
+                if self.filetech.content.file[0].local_id:
+                    data["arrangement_id"] = self.filetech.content.file[0].local_id
+                if self.filetech.content.file[0].md5:
+                    data['content_md5'] = self.filetech.content.file[0].md5
         except Exception as e:
-            logging.error("Could not get Arrangement_Id for %s: %s" % self.pid, e)
+            logging.error("Error getting arrangement id or content MD5 for %s: %s" % self.pid, e)
 
         # rights access status code
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
+            # normally this should be picked up via dc:rights, but arrangement
+            # objects don't seem to have DC fields populated
+            data['rights'] = self.rights.content.access_status.text
+
 
         #get simple collections that have an association with this object
         try:
@@ -104,6 +111,9 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
             data["simpleCollection_id"] = sc_ids
         if sc_labels:
             data["simpleCollection_label"] = sc_labels
+
+            
+
 
         return data
         

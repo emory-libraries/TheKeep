@@ -540,6 +540,9 @@ class AudioObject(DigitalObject):
         if self.mods.content.origin_info and \
            self.mods.content.origin_info.issued:
             data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
+
+        if self.audio.exists:
+            data['content_md5'] = self.audio.checksum
             
         return data
 
