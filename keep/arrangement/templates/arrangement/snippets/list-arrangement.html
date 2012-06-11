@@ -7,7 +7,8 @@
   {% if obj.collection_id or obj.simpleCollection_id %}
     (part of 
      {% if obj.collection_id %}
-       <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{{ obj.collection_label }}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
+      {# fallback to collection pid if label not found (should only happen in dev/test) #}
+       <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{% firstof obj.collection_label obj.collection_id %}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
      {% if obj.simpleCollection_label %}
        {{ obj.simpleCollection_label|join:"; " }}{% endif %})
   {% endif %} 
