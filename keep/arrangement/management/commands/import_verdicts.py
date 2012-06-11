@@ -8,6 +8,7 @@ from eulfedora.util import RequestFailed
 from keep.arrangement.models import ArrangementObject
 from keep.common.models import rights_access_terms_dict
 from keep.common.eadmap import Series
+from keep.common.utils import solr_interface
 
 class Command(BaseCommand):
     help = 'Import verdicts from a CSV file to arrangement objects in the repository'
@@ -59,10 +60,48 @@ class Command(BaseCommand):
         for row in csvreader:
             stats['rows'] += 1
             try:
+
+                # check if there is a duplicate checksum
+                if row['checksum']:
+                    solr = solr_interface()
+                    q = solr.query(content_md5=row['checksum'],
+                                   content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
+                                   .field_limit(['pid', 'title', 'simpleCollection_label'])
+                    num_found = len(q)
+                    if num_found > 1:
+                        print 'Error: found more than one record with matching checksum for %s:' \
+                              % row['id']
+
+                        for record in q:
+                            # simple collection field is multiple, even though
+                            # our content currently only belongs to one;
+                            # join into a single field that can be used for output
+                            record['collection']  = ', '.join(record['simpleCollection_label'])
+                            print '  %(pid)s : %(title)s (%(collection)s)' % record
+
+                        # skip this record, must be handled manually
+                        continue
+
+                    # if there is exactly one match, save it to confirm with
+                    # pid found by arrangement id
+                    elif num_found == 1:
+                        checksum_pid = q[0]['pid']
+                        
+
+                
                 obj = ArrangementObject.by_arrangement_id(row['id'])
                 if self.verbosity > self.v_normal:
                     print 'Found %s for arrangement id %s' % \
                           (obj.pid, row['id'])
+
+                if obj.pid != checksum_pid:
+                    print 'Error: pid found by checksum (%s) does not match pid found by arrangement id (%s)' \
+                          % (checksum_pid, obj.pid)
+                    
+                    continue
+
+
+
                     
                 stats['found'] += 1
 
@@ -229,15 +268,12 @@ class Command(BaseCommand):
 
         # set series details in mods
                     
-        # NOTE: exact structure is undocumented and probably not
-        # exactly what we really want;
-        # seems to be subseries at outer level, with series nested under,
-        # even in cases with no subseries (?)
+        # NOTE: exact structure is undocumented and probably not what
+        # we really want in the long-term; trying to keep consistent
+        # with current ocntent for now...
 
-        # FIXME: is this order correct ? 
-    
-        # store previous series value (if any), to report if there is
-        # a change
+        # store previous series/subseries value (if set), to report if
+        # there is a change
         prev_series = None
         if obj.mods.content.series and obj.mods.content.series.title:
             if obj.mods.content.series.series and \
@@ -249,9 +285,17 @@ class Command(BaseCommand):
                 prev_series = obj.mods.content.series.title
 
         obj.mods.content.create_series()
-        obj.mods.content.series.create_series()
-        self.set_series_info(obj.mods.content.series.series,
-                                           series)
+        if subseries:
+            # If there is a subseries, set series info as
+            # mods.content.series.series 
+            obj.mods.content.series.create_series()
+            self.set_series_info(obj.mods.content.series.series,
+                                 series)
+        else:
+            # If there is a series and no subseries, set series info
+            # as mods.content.series 
+            self.set_series_info(obj.mods.content.series,
+                                 series)
 
         # if there is a subseries, set it
         if subseries:
@@ -268,6 +312,8 @@ class Command(BaseCommand):
                and self.verbosity >= self.v_normal:
             print 'Previous series for %s was %s; now %s' % \
                   (obj.pid, prev_series, new_series)
+
+        return new_series
 
 
     def set_series_info(self, mods_series, series):
