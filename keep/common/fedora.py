@@ -349,6 +349,13 @@ class Repository(server.Repository):
         super(Repository, self).__init__(username=username, password=password)
 
 
+class TypeInferringRepository(server.TypeInferringRepository, Repository):
+    '''Make :class:`eulfedora.server.TypeInferringRepository`
+    available with local defaults, based on :class:`Repository`
+    subclass.
+    '''
+    pass
+
 # TODO: think about better ways to make re-usable views that apply to
 # objects across the project (also relevant to xml datastream and
 # audit trail views)
