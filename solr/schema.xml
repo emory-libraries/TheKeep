@@ -214,6 +214,8 @@ see:
    <copyField source="users" dest="text"/>
    <!-- boda arrangement id (temporary/dupe?) -->
    <copyField source="arrangement_id" dest="text"/>
+   <!-- boda processing batch (temporary?) -->
+   <copyField source="simpleCollection_label" dest="text"/>
    <!-- copy other dates into common date field -->
    <copyField source="created" dest="date"/>
    <!-- audio note fields -->
