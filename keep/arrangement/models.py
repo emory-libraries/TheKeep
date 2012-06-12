@@ -8,7 +8,7 @@ from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eulfedora.rdfns import relsext
 
-from eulcm.models.boda import Arrangement
+from eulcm.models.boda import Arrangement, RushdieFile
 
 
 from keep.collection.models import SimpleCollection
@@ -88,7 +88,9 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
             data['access_code'] = self.rights.content.access_status.code
             # normally this should be picked up via dc:rights, but arrangement
             # objects don't seem to have DC fields populated
-            data['rights'] = self.rights.content.access_status.text
+            # NOTE: migrated items don't seem to have rights text set
+            if self.rights.content.access_status.text:
+                data['rights'] = self.rights.content.access_status.text
 
 
         #get simple collections that have an association with this object
@@ -160,3 +162,8 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
             repo = Repository()
             
         return repo.get_object(q[0]['pid'], type=ArrangementObject)
+
+
+class RushdieArrangementFile(RushdieFile, ArrangementObject):
+    CONTENT_MODELS = [ RushdieFile.RUSHDIE_FILE_CMODEL,
+                       Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
