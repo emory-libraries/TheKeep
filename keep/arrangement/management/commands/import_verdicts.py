@@ -18,7 +18,7 @@ class Command(BaseCommand):
                     help='CSV file with verdict information (REQUIRED)'),
         make_option('-n', '--noact', action='store_true', default=False,
                     help='''Test run: report what would be done, but do not modify
-                    anythin in the repository'''),
+                    anything in the repository'''),
         )
 
     # expected columns in the csv file
