@@ -47,7 +47,9 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
     def __init__(self, *args, **kwargs):
         super(SimpleCollection, self).__init__(*args, **kwargs)
 
-        if not self.exists:
+        # Only set type when creating a new object, as determined
+        # by base class
+        if self._create:
             self.type = REPO.SimpleCollection
 
     def index_data(self):

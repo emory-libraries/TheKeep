@@ -997,12 +997,11 @@ class SimpleCollectionTest( KeepTestCase):
             
 
     def test_creation(self):
-        obj = self.repo.get_object(type = SimpleCollection)
+        obj = self.repo.get_object(type=SimpleCollection)
         obj.mods.content.create_restrictions_on_access()
         obj.mods.content.restrictions_on_access.text = 'processed'
         saved = obj.save()
-        pid = obj.pid
-        self.pids.append(pid)
+        self.pids.append(obj.pid)
 
         self.assertTrue(saved)
         self.assertEqual(obj. COLLECTION_CONTENT_MODEL, 'info:fedora/emory-control:Collection-1.0')
@@ -1011,6 +1010,9 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertTrue((obj.uriref, RDF.type, REPO.SimpleCollection) in obj.rels_ext.content,
                         'The collection is of type SimpleCollection')
 
+        # init non-existent pid
+        # should not raise exception by trying to set type
+        self.repo.get_object(type=SimpleCollection, pid='foo:1')
 
     def test__objects_by_type(self):
         #Test Simple collection
