@@ -13,6 +13,9 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 DEV_ENV = True
 
+#if True the beta warning banner is displayed on the site
+ENABLE_BETA_WARNING = False
+
 # IP addresses that should be allowed to see DEBUG info 
 INTERNAL_IPS = ('127.0.0.1', '127.0.1.1', )
 

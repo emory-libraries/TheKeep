@@ -25,8 +25,6 @@
       });
     </script>
 
-    {% include 'common/snippets/beta_warning.html' %}
-
 {% if not DEBUG %} {# google analytics tracking code #}
 <script type="text/javascript">
   var _gaq = _gaq || [];
@@ -40,6 +38,10 @@
   })();
 {% endif %}
 </script>
+
+{% if ENABLE_BETA_WARNING %}
+    {% include 'common/snippets/beta_warning.html' %}
+{% endif %}
 
 {% endblock %}
 

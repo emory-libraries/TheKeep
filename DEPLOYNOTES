@@ -316,6 +316,10 @@ Release 1.4 (preliminary)
 
     $ python manage.py syncdb
 
+* When the code is deployed to staging the ENABLE_BETA_WARNING variable should be set in localsettings.py::
+
+    ENABLE_BETA_WARNING = True
+
 
 Release 1.3 - Search-based Report generation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
