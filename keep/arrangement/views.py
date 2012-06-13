@@ -19,7 +19,8 @@ from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream, raw_audit_trail
 
-from keep.common.fedora import Repository, history_view
+from keep.common.fedora import Repository, history_view, \
+     TypeInferringRepository
 from keep.arrangement import forms as arrangementforms
 from keep.arrangement.models import ArrangementObject
 from keep.common.eadmap import Series
@@ -49,9 +50,10 @@ def edit(request, pid):
 
     :param pid: The pid of the object being edited.
     '''
-    repo = Repository(request=request)
+    repo = TypeInferringRepository(request=request)
     try:
-        obj = repo.get_object(pid, type=ArrangementObject)
+        # allow to infer type ? 
+        obj = repo.get_object(pid)
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
@@ -136,7 +138,9 @@ def edit(request, pid):
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
-    return raw_datastream(request, pid, dsid, type=ArrangementObject, repo=Repository(request=request))
+    # use type-inferring repo to pick up rushdie file or generic arrangement
+    return raw_datastream(request, pid, dsid,
+                          repo=TypeInferringRepository(request=request))
 
 @permission_required("common.arrangement_allowed")
 def view_audit_trail(request, pid):
