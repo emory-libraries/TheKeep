@@ -1,13 +1,14 @@
-import csv
 from collections import defaultdict
 import magic
 from optparse import make_option
 import os.path
+from rdflib import URIRef
+
 from django.core.management.base import BaseCommand, CommandError
+
 from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.util import RequestFailed
 from eulcm.models.boda import RushdieFile
-from rdflib import URIRef
 
 from keep.arrangement.models import ArrangementObject
 from keep.collection.models import SimpleCollection as ProcessingBatch
@@ -16,7 +17,15 @@ from keep.common.utils import md5sum
 
 class Command(BaseCommand):
     help = '''Import content from a mounted disk image to arrangement objects in the
-repository (one-time import for 5300c content)'''
+repository (one-time import for 5300c content)
+
+   <mounted disk image path>   base path for locally-accessible content
+	from the 5300c disk image
+
+   <batch id> pid for the 5300c processing batch object (used to find
+	the records to be updated)
+
+'''
     args = '<mounted disk image path> <batch id>'
     option_list = BaseCommand.option_list + (
         make_option('-n', '--noact', action='store_true', default=False,
@@ -49,7 +58,9 @@ repository (one-time import for 5300c content)'''
         items = list(batch.rels_ext.content.objects(batch.uriref, relsext.hasMember))
 
         mimemagic = magic.Magic(mime=True)
-
+        
+        stats = defaultdict(int)
+        
         for i in items:
             # for now, init as file objects since we expect to add original file content
             # (still has arrangement metadata + filetech)
@@ -59,8 +70,10 @@ repository (one-time import for 5300c content)'''
             # but only a handful actually exist in dev/test repo; just skip 
             if not obj.exists:
                 continue
-            
-            print '%s %s' % (obj.pid, obj.label)
+
+            # number of objects
+            stats['count'] += 1
+
             if obj.original.exists:
                 print '%s already has original datastream; skipping' % obj.pid
                 continue
@@ -93,12 +106,12 @@ repository (one-time import for 5300c content)'''
                 local_path = local_path[len(mac_hd_path):]
             disk_path = os.path.join(base_path, local_path)
             if not os.path.isfile(disk_path):
-                print 'Computed disk image path %s is not a file' % disk_path
+                print 'Error: computed disk image path \'%s\' is not a file' % disk_path
                 continue
             
             local_md5 = md5sum(disk_path)
             if filetech_md5 is not None and local_md5 != filetech_md5:
-                print 'Local MD5 checksum (%s) does not match checksum in filetech (%s)' \
+                print 'Error: Local MD5 checksum (%s) does not match checksum in filetech (%s)' \
                       % (local_md5, filetech_md5)
                 # stop processing this record
                 continue
@@ -109,6 +122,8 @@ repository (one-time import for 5300c content)'''
             
 
             mimetype = mimemagic.from_file(disk_path)
+            # FIXME: getting a lot of 'application/octet-stream'
+            # presumably this is old mac content not being recognized
             with open(disk_path) as original_file:
                 obj.original.content = original_file
                 obj.original.checksum = local_md5
@@ -120,7 +135,18 @@ repository (one-time import for 5300c content)'''
                                        URIRef(RushdieFile.RUSHDIE_FILE_CMODEL)))
                     
                 if not noact:
-                    # TODO: try/catch, reporting/stats
-                    obj.save('adding original file content from disk image')
-                
+                    try:
+                        obj.save('adding original file content from disk image')
+                        stats['updated'] += 1
+                        
+                    except RequestFailed:
+                        print 'Error saving %s' % obj.pid
+                        stats['save_error'] += 1
+
             
+        # summary
+        if self.verbosity >= self.v_normal:
+            print '''\nProcessed %(count)d records''' % stats
+            if not noact:
+                print 'Updated %(updated)d record(s); error saving %(save_error)d records' \
+                      % stats
