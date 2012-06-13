@@ -1898,10 +1898,14 @@ class TestAudioObject(KeepTestCase):
 
         colls = [mockmss, mockarchive]
         # pretend original exists in fedora
-        with patch.object(obj.audio, 'exists', new=True):
+        with patch.object(obj, 'audio') as mockaudio:
+            mockaudio.exists = True
+            mockaudio.checksum = 'test audio MD5'
             desc_data = obj.index_data()
             self.assertEqual(True, desc_data['has_original'],
-                         'has_original should be true when object has original audio datastream')
+                             'has_original should be true when object has original audio datastream')
+            self.assertEqual(mockaudio.checksum, desc_data['content_md5'])
+            
 
         
 
