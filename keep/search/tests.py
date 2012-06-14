@@ -9,6 +9,7 @@ from mock import patch, Mock, MagicMock, call
 from sunburnt import sunburnt
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
+from keep.collection.models import SimpleCollection
 
 from keep.search.forms import SolrSearchField, KeywordSearch
 from keep.testutil import KeepTestCase
@@ -84,7 +85,8 @@ class SearchViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+                       'exclude']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # no guest access
@@ -132,7 +134,9 @@ class SearchViewsTest(KeepTestCase):
 
         self.client.login(**ADMIN_CREDENTIALS)
         response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
-        mocksolr.query.exclude.assert_called_with(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+        args = [c[1]['content_model'] for c in mocksolr.query.exclude.call_args_list]
+        self.assertIn(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, args)
+        self.assertIn(SimpleCollection.COLLECTION_CONTENT_MODEL, args)
 
         #exclude Audio content
         self.user.user_permissions = [self.bd_perm]
@@ -377,7 +381,8 @@ class SearchTemplatesTest(TestCase):
         {'pid': 'audio:1', 'object_type': 'audio', 'title': 'recording'},
         {'pid': 'coll:1', 'object_type': 'collection', 'title': 'mss 123',
          'dsids': ['MODS'],},
-        {'pid': 'scoll:1', 'object_type': 'collection', 'title': 'process batch',},
+        {'pid': 'scoll:1', 'object_type': 'collection', 'title': 'process batch',
+         'content_model': SimpleCollection.COLLECTION_CONTENT_MODEL},
         {'pid': 'boda:1', 'object_type': 'born-digital', 'title': 'email'}
     ]
             

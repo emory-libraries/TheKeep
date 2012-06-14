@@ -1,10 +1,10 @@
 {% extends 'search/snippets/list-item.html' %}
 
 {% block item_title %}
-  {% if 'MODS' in obj.dsids %} {# collection 1.1 #}
-    {% url collection:edit obj.pid as edit_url %}
-  {% else %} {# collection 1.0 AKA "Simple" collection #}
-   {% url collection:simple_edit obj.pid as edit_url %}
+  {% if 'info:fedora/emory-control:Collection-1.0' in obj.content_model %} {# collection 1.0 AKA "Simple" collection #}
+    {% url collection:simple_edit obj.pid as edit_url %}
+  {% else %}
+   {% url collection:edit obj.pid as edit_url %} {# collection 1.1 #}
   {% endif %}
   <p>
     <a href="{{ edit_url }}">{{ obj.title|default:'(no title)' }}</a>
