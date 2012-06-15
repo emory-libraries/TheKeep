@@ -15,9 +15,8 @@ Release 1.4
 * When ingesting a composite file or batch of files, an archivist or
   curator can enter an optional log message for auditing purposes.
 * Updated to use Django staticfiles app to manage static site content.
-* Added ENABLE_BETA_WARNING variable in localsettings to indicate if the
-  beta warning banner should be dislayed.
-* Added context processor to populate ENABLE_BETA_WARNING in templates.
+* Added support for a beta warning to be displayend in test/staging
+  sites; turn on via **ENABLE_BETA_WARNING** setting.
 
 Release 1.3
 -----------

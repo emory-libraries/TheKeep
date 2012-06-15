@@ -294,8 +294,8 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 -------------
 
-Release 1.4 (preliminary)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Release 1.4 - search and ingest enhancements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * The Keep has been updated to make use of Django's
   :mod:`~django.contrib.staticfiles` application for managing static
@@ -316,7 +316,8 @@ Release 1.4 (preliminary)
 
     $ python manage.py syncdb
 
-* When the code is deployed to staging the ENABLE_BETA_WARNING variable should be set in localsettings.py::
+* When the code is deployed to staging the ENABLE_BETA_WARNING
+  variable should be set in localsettings.py::
 
     ENABLE_BETA_WARNING = True
 
