@@ -14,6 +14,7 @@ http://waterhouse.library.emory.edu:8080/hudson/job/pidman-rest-client-1.1.x/11/
 python-magic
 pycrypto
 django-celery
+celery==2.5.1
 mutagen
 poster
 #sunburnt>=0.6
