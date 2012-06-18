@@ -124,6 +124,10 @@ repository (one-time import for 5300c content)
             mimetype = mimemagic.from_file(disk_path)
             # FIXME: getting a lot of 'application/octet-stream'
             # presumably this is old mac content not being recognized
+
+            # TODO: see rushdie-tools script mactype2mimetype
+            # for possibly better mimetype handling
+            
             with open(disk_path) as original_file:
                 obj.original.content = original_file
                 obj.original.checksum = local_md5
