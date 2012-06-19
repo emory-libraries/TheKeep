@@ -11,9 +11,11 @@ from bodatools.binfile import eudora
 from eulfedora.rdfns import relsext, model as modelns
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
-from keep.arrangement.models import ArrangementObject
+from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
+     EmailMessage, Mailbox
 from keep.collection.models import SimpleCollection as ProcessingBatch
 from keep.common.fedora import Repository
+from keep.common.utils import md5sum, solr_interface
 
 
 class Command(BaseCommand):
@@ -83,7 +85,7 @@ Eudora files. (One-time import for 5300c content)
 
         self.stats = defaultdict(int)
         # purge bogus email 'arrangement' objects that belong to this batch
-        self.remove_arrangement_emails(batch)
+        #TEMP self.remove_arrangement_emails(batch)
         self.ingest_email(folder_path)
 
 
@@ -165,7 +167,9 @@ Eudora files. (One-time import for 5300c content)
 
 
     def ingest_email(self, folder_base):
+
         for folder_name, folder_file in self.email_folders.iteritems():
+
             folder_path = os.path.join(folder_base, folder_file)
             folder_toc = os.path.join(folder_base, folder_file + '.toc')
             # if either data or index file is not present, bail out
@@ -174,21 +178,127 @@ Eudora files. (One-time import for 5300c content)
                 print 'Error: folder files %s not found at base path "%s"' % \
                       (folder_file, folder_base)
                 continue
+            
+            # find the index/data file objects for this folder in fedora
+            # by checksums from the originals;
+            # check if they are associated with an existing mailbox object
+            mailbox = None
+
+            mbox_obj = self.find_file_object(folder_path)
+            if mbox_obj is None:
+                # these records should be found in production
+                print 'Warning: record not found for folder data file "%s"' % folder_file
+            elif mbox_obj.mailbox:
+                mailbox = mbox_obj.mailbox
+                    
+            toc_obj = self.find_file_object(folder_toc)
+            if toc_obj is None:
+                print 'Warning: record not found for folder index file "%s.toc"' % folder_file
+            elif toc_obj.mailbox:
+                mailbox = toc_obj.mailbox
+
+            # mailbox not found via folder file objects, so create it
+            if mailbox is None:
+                if self.verbosity > self.v_normal:
+                    print 'Mailbox object for %s not found; creating one' % folder_name
+                    
+                mailbox = self.repo.get_object(type=Mailbox)
+                desc = 'Rushdie\'s email from his PowerBook 5300c: "%s" folder' % \
+                       folder_name 
+                mailbox.label = desc
+                mailbox.dc.content.title = desc
+                
+                # save to get a pid, add mailbox rel to file objects
+                if not self.noact:
+                    # TODO: fedora error handling
+                    mailbox.save('email folder object for %s' % folder_name)
+                    self.stats['ingested'] += 1
+                    if self.verbosity >= self.v_normal:
+                        print 'Created new mailbox object for %s as %s' % \
+                              (folder_name, mailbox.pid)
+                        
+                    if mbox_obj:
+                        mbox_obj.mailbox = mailbox
+                        mbox_obj.save('associating with mailbox object')
+                        self.stats['updated'] += 1
+                    if toc_obj:
+                        toc_obj.mailbox = mailbox
+                        toc_obj.save('associating with mailbox object')
+                        self.stats['updated'] += 1
+                
 
             with open(folder_toc) as tocdata, open(folder_path) as mbox:
                 toc = eudora.Toc(tocdata)
-                msgs = list(toc.messages)
-                if self.verbosity >= self.v_normal:
-                    print '%s: %d messages' % (toc.name, len(msgs))
-                    
-                for msg in msgs:
+                for msg in toc.messages:
                     # get data from mbox file based on msg offset/size
+                    mbox.seek(msg.offset)
                     msg_data = mbox.read(msg.size)
                     email_msg = email.message_from_string(msg_data)
-                    print '  To %s; From %s; %s' % \
-                          (email_msg['To'], email_msg['From'], email_msg.get('Subject', ''))
+
+                    msg_obj = self.repo.get_object(type=EmailMessage)
+
+                    # NOTE: *redact* emails before creating label!
+
+                    
+                    # contstruct an email label
+                    label = u'Email from %s' % unicode(email_msg['From'], errors='ignore')
+                    if email_msg.get('To', None):
+                        # FIXME: could have multiple recipients
+                        to = unicode(email_msg['To'], errors='ignore')
+                        label += u' to %s' % unicode(email_msg['To'], errors='ignore')
+
+                    # date/subject not always present
+                    if email_msg.get('Date', None):
+                        label += u' on %s' % email_msg['Date']
+                    if email_msg.get('Subject', None):
+                        label += u' %s' % unicode(email_msg['Subject'], errors='ignore')
+                        
+                    msg_obj.mime_data.content = email_msg
+                    msg_obj.label = label
+                    msg_obj.dc.content.title = label
+                    # TODO: need to set CERP
+
+                    # TODO: check for duplicate content via checksum (?)
+
+                    # associate with current mailbox object
+                    msg_obj.mailbox = mailbox
+                    if not self.noact:
+                        msg_obj.save('ingesting email message from rushdie 5300c')
+                        if self.verbosity >= self.v_normal:
+                            print 'Ingested message %s : %s' % \
+                                  (msg_obj.pid, msg_obj.label)
+                        self.stats['ingested'] += 1
+
+                    # RSK TEMP: test just ingesting one
+                    break
 
                 
         
             # TODO: make sure to ingest as restricted / not processed
             # (don't expose anything by default or by mistake)
+
+            # TODO: created objects should all belong to parent collection
+            # (i.e., rushdie archival collection)
+
+
+        # summary
+        if self.verbosity >= self.v_normal and not self.noact:
+            print '''\nCreated %(ingested)d records, updated %(updated)d''' % self.stats
+
+
+
+    def find_file_object(self, file_path):
+        '''Find a file object by checksum in fedora based on a file
+        path.  Returns a file object if one matches the checksum for
+        the file specified, or else None if no match is found. 
+
+        :returns:  :class:`keep.arrangement.models.RushdieArrangementFile` or
+		None
+        '''
+        
+        
+        file_md5 = md5sum(file_path)
+        solr = solr_interface()
+        q = solr.query(content_md5=file_md5).field_limit('pid')
+        if len(q):
+            return self.repo.get_object(q[0]['pid'], type=RushdieArrangementFile)
