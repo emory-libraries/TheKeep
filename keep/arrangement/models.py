@@ -8,7 +8,7 @@ from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eulfedora.rdfns import relsext
 
-from eulcm.models.boda import Arrangement, RushdieFile
+from eulcm.models import boda
 
 
 from keep.collection.models import SimpleCollection
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 
-class ArrangementObject(Arrangement, ArkPidDigitalObject):
+class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     '''Subclass of :class:`eulfedora.models.DigitalObject` for
     "arrangement" content.'''
 
@@ -164,6 +164,15 @@ class ArrangementObject(Arrangement, ArkPidDigitalObject):
         return repo.get_object(q[0]['pid'], type=ArrangementObject)
 
 
-class RushdieArrangementFile(RushdieFile, ArrangementObject):
-    CONTENT_MODELS = [ RushdieFile.RUSHDIE_FILE_CMODEL,
-                       Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
+class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
+    CONTENT_MODELS = [ boda.RushdieFile.RUSHDIE_FILE_CMODEL,
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
+
+
+class EmailMessage(boda.EmailMessage, ArrangementObject):
+    CONTENT_MODELS = [ boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
+
+class Mailbox(boda.Mailbox, ArrangementObject):
+    CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
