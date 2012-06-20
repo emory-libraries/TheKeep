@@ -1,25 +1,26 @@
 import logging
 from django.db import models
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from rdflib import URIRef
 
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.util import RequestFailed
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
-from eulfedora.rdfns import relsext
-
+from eulfedora.rdfns import relsext, model as modelns
 from eulcm.models import boda
-
 
 from keep.collection.models import SimpleCollection
 from keep.common.fedora import ArkPidDigitalObject, Repository
 from keep.common.utils import solr_interface
-
 from keep.collection.models import CollectionObject
-from rdflib import URIRef
 
 logger = logging.getLogger(__name__)
 
+
+# content models currently used for xacml access / restriction
+ACCESS_ALLOWED_CMODEL = "info:fedora/emory-control:ArrangementAccessAllowed-1.0"
+ACCESS_RESTRICTED_CMODEL = "info:fedora/emory-control:ArrangementAccessRestricted-1.0"
 
 
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
@@ -35,6 +36,64 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         'Rights': 'rights metadata',
         'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
     }
+
+    status_codes = {'processed': 'A', 'accessioned' : 'I'}
+    # map arrangement status to fedora object state
+
+    def _get_arrangement_status(self):
+        for status, code in self.status_codes.iteritems():
+            if self.state == code:
+                return status
+            
+    def _set_arrangement_status(self, status):
+        if status not in self.status_codes:
+            raise ValueError('%s is not a recognized arrangement status' % status)
+        self.state = self.status_codes[status]
+        
+    arrangement_status = property(_get_arrangement_status, _set_arrangement_status)
+    'arrangement status, i.e., whether this item is processed or accessioned'
+
+    
+    def save(self, logMessage=None):
+        '''Save the object.  If the content of the rights datastream
+        has changed, update content models used to control access to
+        match the current rights access code.
+
+        :param logMessage: optional log message
+        '''
+        if self.rights.isModified:
+            self._update_access_cmodel()
+
+        return super(ArrangementObject, self).save(logMessage)
+
+
+    def _update_access_cmodel(self):
+        # update access/restriction content models based on rights access code
+        
+        # FIXME: is there not a better way to add/remove cmodels ? 
+        _allowed_triple = (self.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
+        _restricted_triple = (self.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
+        
+        if self.rights.content.access_status and \
+           self.rights.content.access_status.code == '2':
+            # FIXME: sholudn't have to hard code this number;
+            # can we use researcher_access check instead ? 
+
+            # allow access.
+            # remove restricted if present, add allowed if not present
+            if _restricted_triple in self.rels_ext.content:
+                self.rels_ext.content.remove(_restricted_triple)
+            if _allowed_triple not in self.rels_ext.content:
+                self.rels_ext.content.add(_allowed_triple)
+
+        else:
+            # deny access.
+            # remove allowed if present, add restricted if not present
+            if _allowed_triple in self.rels_ext.content:
+                self.rels_ext.content.remove(_allowed_triple)
+            if _restricted_triple not in self.rels_ext.content:
+                self.rels_ext.content.add(_restricted_triple)
+
 
     def index_data(self):
         '''Extend the default

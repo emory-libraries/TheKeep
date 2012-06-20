@@ -73,7 +73,8 @@ def edit(request, pid):
                 restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
 
-                # TODO: move this logic into arrangement object (pre-save)
+                # TODO: this logic has been moved into arrangement
+                # object as a pre-save step; test/confirm that it is ok to remove here
                 status = request.POST['rights-access']
                 if status == "2":
                     if restricted in obj.rels_ext.content:

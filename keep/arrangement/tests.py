@@ -11,14 +11,14 @@ from django.test import Client
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
-from eulfedora.rdfns import relsext as relsextns
-from eulfedora.rdfns import model
+from eulfedora.rdfns import relsext as relsextns, model as modelns
 from eulcm.xmlmap.boda import FileMasterTech_Base
 
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
-from  keep.arrangement.management.commands import migrate_rushdie
-from keep.arrangement.models import ArrangementObject #, Series1, Series2
+from keep.arrangement.management.commands import migrate_rushdie
+from keep.arrangement.models import ArrangementObject, \
+     ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -106,7 +106,7 @@ class TestMigrateRushdie(TestCase):
         self.digObj.api.addDatastream(self.digObj.pid, "MARBL-ANALYSIS",
                                            "MARBL-ANALYSIS",  mimeType="application/xml", content= self.MA_FIXTURE)
         #Remove Arrangement model so it can be added later
-        relation = (self.digObj.uriref, model.hasModel, "info:fedora/emory-control:Arrangement-1.0")
+        relation = (self.digObj.uriref, modelns.hasModel, "info:fedora/emory-control:Arrangement-1.0")
         self.digObj.rels_ext.content.remove(relation)
         self.digObj.save()
 
@@ -166,7 +166,7 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.rights.content.access_status.code, "2")
         #RELS-EXT
         self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
-        self.assertTrue((obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
+        self.assertTrue((obj.uriref, modelns.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
         #Label and DS
         self.assertEqual(obj.label, "x - the roles", "Label should be set to last part of path")
         self.assertEqual(obj.owner, "thekeep-project", "owner should be set to 'thekeep-project'")
@@ -389,4 +389,43 @@ class ArrangementObjectTest(KeepTestCase):
         mockrepo = Mock()
         ao = ArrangementObject.by_arrangement_id(42, mockrepo)
         mockrepo.get_object.assert_called_with('pid:1', type=ArrangementObject)
+
+    def test_arrangement_status(self):
+        obj = ArrangementObject(Mock())
+        obj.arrangement_status = 'processed'
+        self.assertEqual('A', obj.state)
+        self.assertEqual('processed', obj.arrangement_status)
         
+        obj.arrangement_status = 'accessioned'
+        self.assertEqual('I', obj.state)
+        self.assertEqual('accessioned', obj.arrangement_status)
+
+        value_error = None
+        try:
+            obj.arrangement_status = 'bogus'
+        except ValueError:
+            value_error = True
+
+        self.assertTrue(value_error,
+                        'attempting to assign an unknown status should raise a ValueError')
+
+    def test_update_access_cmodel(self):
+        obj = ArrangementObject(Mock())
+        # no status set - should be set to restricted
+        obj._update_access_cmodel()
+        
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
+                     in obj.rels_ext.content)
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
+                     not in obj.rels_ext.content)
+
+        # set to status code 2 = access allowed
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = '2'
+        
+        obj._update_access_cmodel()
+        
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
+                     not in obj.rels_ext.content)
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
+                     in obj.rels_ext.content)
