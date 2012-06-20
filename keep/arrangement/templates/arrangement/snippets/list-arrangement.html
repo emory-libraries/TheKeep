@@ -1,9 +1,21 @@
 {% extends 'search/snippets/list-item.html' %}
 
 {% block item_title %}
-<p><a href="{% url arrangement:edit obj.pid %}"> 
-   {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}  
- {% firstof obj.title obj.label '(no title)' %}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
+<p><a href="{% url arrangement:edit obj.pid %}">
+   {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}
+    {% comment %} Show both title and label if they are different.
+    Show '(no title)' if both are blank {% endcomment %}
+    {% if not obj.title and not obj.label %}
+        (no title)
+    {% else %}
+        {% if obj.title != obj.label %}
+            {{ obj.title }} {{ obj.label }}
+            {% else %}
+            {{ obj.title }}
+        {% endif %}
+
+    {% endif %}
+    {% if obj.part %} ({{ obj.part }}){% endif %}</a>
   {% if obj.collection_id or obj.simpleCollection_id %}
     (part of 
      {% if obj.collection_id %}

@@ -230,7 +230,26 @@ class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
 
 class EmailMessage(boda.EmailMessage, ArrangementObject):
     CONTENT_MODELS = [ boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
-                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
+
+    def index_data(self):
+        '''Extend the :meth:`keep.arrangement.models.ArrangementObject.index_data` method to
+        include additional data specific to EmailMessages objects.
+        '''
+
+        data = super(EmailMessage, self).index_data()
+
+        #info for email label
+        if 'label' not in data or not data['label']:
+            sender = self.cerp.content.from_list[0]
+            to = self.cerp.content.to_list[0]
+            if len(self.cerp.content.to_list) > 1:
+                to = "%s %s" % (to, 'et al.')
+            subject = self.cerp.content.subject_list[0]
+            data['label'] = 'Email from %s to %s %s' % \
+            (sender, to, subject)
+
+        return data
 
 class Mailbox(boda.Mailbox, ArrangementObject):
     CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
