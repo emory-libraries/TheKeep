@@ -276,6 +276,7 @@ class SimpleCollectionEditForm(forms.Form):
         fail_count = 0
 
         #translate form status codes to fedora state code
+        # TODO: shift this logic to arrangement object for re-use
         codes = {'Processed': 'A', 'Accessioned' : 'I'}
 
         #target state for every object in the collection

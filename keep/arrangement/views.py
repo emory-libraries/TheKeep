@@ -59,7 +59,7 @@ def edit(request, pid):
             form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
             if form.is_valid():
                 form.update_instance()
-                # FIXME: clean up log message handling
+                # FIXME: clean up log message handling; use form validation/form data
                 if form.comments.cleaned_data.has_key('comment') and form.comments.cleaned_data['comment']:
                     comment = form.comments.cleaned_data['comment']
                 else:
@@ -68,9 +68,12 @@ def edit(request, pid):
                 action = 'updated'
 
                 #Add /remove Allowed Restricted Content Models based on status
+                # TODO: store these content models in variables that can be referenced/reused
                 allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
                 restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
+
+                # TODO: move this logic into arrangement object (pre-save)
                 status = request.POST['rights-access']
                 if status == "2":
                     if restricted in obj.rels_ext.content:
@@ -84,8 +87,6 @@ def edit(request, pid):
                     if restricted not in obj.rels_ext.content:
                         obj.rels_ext.content.add(restricted)
 
-                # NOTE: by sending a log message, we force Fedora to store an
-                # audit trail entry for object creation, which doesn't happen otherwise
                 obj.save(comment)
                 messages.success(request, 'Successfully %s arrangement <a href="%s">%s</a>' % \
                             (action, reverse('arrangement:edit', args=[obj.pid]), obj.pid))
