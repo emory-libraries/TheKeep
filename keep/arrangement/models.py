@@ -53,6 +53,14 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     arrangement_status = property(_get_arrangement_status, _set_arrangement_status)
     'arrangement status, i.e., whether this item is processed or accessioned'
 
+    _deprecated_collection = Relation(relsext.isMemberOf, type=CollectionObject)
+    ''':class:`~keep.collection.models.collection.v1_1.Collection` that this
+    object is a member of, via `isMemberOf` relation.
+    
+    **deprecated** because these objects should be using **isMemberOfCollection**
+    '''
+
+
     
     def save(self, logMessage=None):
         '''Save the object.  If the content of the rights datastream
@@ -179,6 +187,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         return data
         
 
+
     @staticmethod
     def by_arrangement_id(id, repo=None):
         '''
@@ -223,6 +232,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         return repo.get_object(q[0]['pid'], type=ArrangementObject)
 
 
+
 class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
     CONTENT_MODELS = [ boda.RushdieFile.RUSHDIE_FILE_CMODEL,
                        boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
@@ -232,33 +242,42 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
     CONTENT_MODELS = [ boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
                        boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
 
+    @property
     def headers(self):
         '''
-        Returns headers in a dict
+        Access CERP headers as a dictionary.
         '''
         return {h.name : h.value for h in self.cerp.content.headers}
 
     def email_label(self):
         '''
-        Constructs label based on to, from, subject and date.
-        '''
-        if not self.label:
-            sender = self.cerp.content.from_list[0]
-            to = self.cerp.content.to_list[0]
-            if len(self.cerp.content.to_list) > 1:
-                to = "%s %s" % (to, 'et al.')
-            subject = self.cerp.content.subject_list[0]
-            headers = self.headers()
-            date = headers.get('Date', None)
-            if date is not None:
-                date = ' on %s' % date
-            else:
-                date = ''
+        Construct a label based on to, from, subject and date as
+        stored in :attr:`EmailMessage.cerp.content`.
 
-            label = 'Email from %s to %s %s%s' % \
-            (sender, to, subject, date)
-        else:
-            label = self.label
+        Returns object label if set.
+        '''
+        if self.label:
+            return self.label
+
+        # TODO: we probably should have better error handling
+        # (cerp not present? expected fields not set?)
+
+        # sender & to should always be present
+        sender = self.cerp.content.from_list[0]
+        to = self.cerp.content.to_list[0]
+        if len(self.cerp.content.to_list) > 1:
+            to = '%s et al.' % to
+                
+        label = 'Email from %s to %s' % (sender, to)
+
+        if self.cerp.content.subject_list:
+            subject = self.cerp.content.subject_list[0]
+            label += ' %s' % subject
+            
+        date = self.headers.get('Date', None)
+        if date is not None:
+            label += ' on %s' % date
+
         return label
 
 
@@ -268,9 +287,12 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         '''
 
         data = super(EmailMessage, self).index_data()
-
-        #info for email label
         data['label'] = self.email_label()
+        # email does not have filetech or content; use mime data checksum
+        # for content md5
+        if self.mime_data.exists:
+             data['content_md5'] = self.mime_data.checksum
+
         return data
 
 class Mailbox(boda.Mailbox, ArrangementObject):

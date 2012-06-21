@@ -437,14 +437,11 @@ class EmailMessageTest(KeepTestCase):
         self.repo = Repository()
         self.pids = []
 
-        #create EmailMessage
+        # test EmailMessage
         self.email = self.repo.get_object(type=EmailMessage)
         self.email.cerp.content.from_list = ['sender@sendmail.com']
         self.email.cerp.content.to_list = ['otherguy@friend.com']
         self.email.cerp.content.subject_list = ['Interesting Subject']
-        self.pid = 'fake:pid123'
-        #self.email.save()
-        #self.pids.append(self.email.pid)
 
     def tearDown(self):
         for pid in self.pids:
@@ -459,45 +456,62 @@ class EmailMessageTest(KeepTestCase):
         h2.value = "value for header 2"
         self.email.cerp.content.headers.append(h1)
         self.email.cerp.content.headers.append(h2)
-        headers = self.email.headers()
-        self.assertEqual(headers['HEADER 1'], 'value for header 1')
-        self.assertEqual(headers['HEADER 2'], 'value for header 2')
+        self.assertEqual(self.email.headers['HEADER 1'], 'value for header 1')
+        self.assertEqual(self.email.headers['HEADER 2'], 'value for header 2')
 
 
-
-
-
-    def test_emal_label(self):
-        #no label and one person in to field
+    def test_email_label(self):
+        # no object label and one person in to field
         label = self.email.email_label()
         self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com Interesting Subject',
                          label,
                          'Should construct label when it does not exist')
 
-        #more then one person in to list
+        # more then one person in to list
         self.email.cerp.content.to_list.append('additional.person@friend.com')
         label = self.email.email_label()
         self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. Interesting Subject',
                          label,
                          'only show first to email address when there are more than one')
 
-        #has a date
+        # no subject
+        self.email.cerp.content.subject_list = []
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al.',
+                         self.email.email_label(),
+                         'Display message without subject when no subject is present')
+
+        # has a date
         date_header = cerp.Header()
         date_header.name = 'Date'
         date_header.value = 'Friday 13 200 13:00'
         self.email.cerp.content.headers.append(date_header)
         label = self.email.email_label()
-        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. Interesting Subject on Friday 13 200 13:00',
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. on Friday 13 200 13:00',
                          label,
                          'only show first to email address when there are more than one')
-        #label already  exists
+        
+        # object label already exists
         self.email.label = "label we want to keep"
         label = self.email.email_label()
         self.assertEqual(self.email.label, label, 'label should be preserved when it exists')
 
-    def test_index_data(self):
-       #NOTE the logic for creating the label is in the label test
+        
 
-        #test to make sure label exists in index data
+    def test_index_data(self):
+        # NOTE: logic for creating the label is in the label test
+
+        # test to make sure label exists in index data
         data = self.email.index_data()
         self.assertIn('label', data.keys())
+        # mime_data does not exist, so no c
+        self.assert_('content_md5' not in data,
+                     'content_md5 should not be set when mime data does not exist')
+
+        # patch mime data to test exists /cchecksum
+        with patch.object(self.email, 'mime_data', Mock()) as mock_mime:
+            mock_mime.exists = True
+            mock_mime.checksum = 'test checksum value'
+
+            data = self.email.index_data()
+            self.assertEqual(self.email.mime_data.checksum, data['content_md5'])
+        
