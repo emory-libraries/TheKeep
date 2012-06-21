@@ -232,6 +232,36 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
     CONTENT_MODELS = [ boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
                        boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
 
+    def headers(self):
+        '''
+        Returns headers in a dict
+        '''
+        return {h.name : h.value for h in self.cerp.content.headers}
+
+    def email_label(self):
+        '''
+        Constructs label based on to, from, subject and date.
+        '''
+        if not self.label:
+            sender = self.cerp.content.from_list[0]
+            to = self.cerp.content.to_list[0]
+            if len(self.cerp.content.to_list) > 1:
+                to = "%s %s" % (to, 'et al.')
+            subject = self.cerp.content.subject_list[0]
+            headers = self.headers()
+            date = headers.get('Date', None)
+            if date is not None:
+                date = ' on %s' % date
+            else:
+                date = ''
+
+            label = 'Email from %s to %s %s%s' % \
+            (sender, to, subject, date)
+        else:
+            label = self.label
+        return label
+
+
     def index_data(self):
         '''Extend the :meth:`keep.arrangement.models.ArrangementObject.index_data` method to
         include additional data specific to EmailMessages objects.
@@ -240,15 +270,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         data = super(EmailMessage, self).index_data()
 
         #info for email label
-        if 'label' not in data or not data['label']:
-            sender = self.cerp.content.from_list[0]
-            to = self.cerp.content.to_list[0]
-            if len(self.cerp.content.to_list) > 1:
-                to = "%s %s" % (to, 'et al.')
-            subject = self.cerp.content.subject_list[0]
-            data['label'] = 'Email from %s to %s %s' % \
-            (sender, to, subject)
-
+        data['label'] = self.email_label()
         return data
 
 class Mailbox(boda.Mailbox, ArrangementObject):

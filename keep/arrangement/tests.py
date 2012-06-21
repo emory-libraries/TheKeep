@@ -13,12 +13,13 @@ from django.core.urlresolvers import reverse
 
 from eulfedora.rdfns import relsext as relsextns, model as modelns
 from eulcm.xmlmap.boda import FileMasterTech_Base
+from eulxml.xmlmap import cerp
 
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from keep.arrangement.management.commands import migrate_rushdie
 from keep.arrangement.models import ArrangementObject, \
-     ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL
+     ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -429,3 +430,74 @@ class ArrangementObjectTest(KeepTestCase):
                      not in obj.rels_ext.content)
         self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
                      in obj.rels_ext.content)
+
+class EmailMessageTest(KeepTestCase):
+
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+        #create EmailMessage
+        self.email = self.repo.get_object(type=EmailMessage)
+        self.email.cerp.content.from_list = ['sender@sendmail.com']
+        self.email.cerp.content.to_list = ['otherguy@friend.com']
+        self.email.cerp.content.subject_list = ['Interesting Subject']
+        self.pid = 'fake:pid123'
+        #self.email.save()
+        #self.pids.append(self.email.pid)
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+    def test_headers(self):
+        h1 = cerp.Header()
+        h1.name = "HEADER 1"
+        h1.value = "value for header 1"
+        h2 = cerp.Header()
+        h2.name = "HEADER 2"
+        h2.value = "value for header 2"
+        self.email.cerp.content.headers.append(h1)
+        self.email.cerp.content.headers.append(h2)
+        headers = self.email.headers()
+        self.assertEqual(headers['HEADER 1'], 'value for header 1')
+        self.assertEqual(headers['HEADER 2'], 'value for header 2')
+
+
+
+
+
+    def test_emal_label(self):
+        #no label and one person in to field
+        label = self.email.email_label()
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com Interesting Subject',
+                         label,
+                         'Should construct label when it does not exist')
+
+        #more then one person in to list
+        self.email.cerp.content.to_list.append('additional.person@friend.com')
+        label = self.email.email_label()
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. Interesting Subject',
+                         label,
+                         'only show first to email address when there are more than one')
+
+        #has a date
+        date_header = cerp.Header()
+        date_header.name = 'Date'
+        date_header.value = 'Friday 13 200 13:00'
+        self.email.cerp.content.headers.append(date_header)
+        label = self.email.email_label()
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. Interesting Subject on Friday 13 200 13:00',
+                         label,
+                         'only show first to email address when there are more than one')
+        #label already  exists
+        self.email.label = "label we want to keep"
+        label = self.email.email_label()
+        self.assertEqual(self.email.label, label, 'label should be preserved when it exists')
+
+    def test_index_data(self):
+       #NOTE the logic for creating the label is in the label test
+
+        #test to make sure label exists in index data
+        data = self.email.index_data()
+        self.assertIn('label', data.keys())
