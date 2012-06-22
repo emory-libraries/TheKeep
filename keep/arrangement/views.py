@@ -4,6 +4,7 @@ import urllib2
 from rdflib import URIRef
 
 from django.conf import settings
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
@@ -21,6 +22,7 @@ from eulfedora.views import raw_datastream, raw_audit_trail
 
 from keep.common.fedora import Repository, history_view, \
      TypeInferringRepository
+from keep.common.utils import solr_interface
 from keep.arrangement import forms as arrangementforms
 from keep.arrangement.models import ArrangementObject
 from keep.common.eadmap import Series
@@ -204,3 +206,43 @@ def get_selected_series_data(request, id):
     series_data = simplejson.dumps(series_data)
 
     return HttpResponse(series_data, content_type='application/json')
+
+
+@permission_required("common.arrangement_allowed")
+def email_view(request, pid):
+    '''
+    View for an EmailMessage object.
+
+    :param pid: The pid of the object.
+    '''
+    repo = TypeInferringRepository(request=request)
+    obj = repo.get_object(pid)
+
+    return render(request, 'arrangement/email_view.html',
+                  {'obj' : obj})
+
+@permission_required("common.arrangement_allowed")
+def mailbox_view(request, pid):
+    '''
+    View for an Mailbox object..
+
+    :param pid: The pid of the object.
+    '''
+
+    solr = solr_interface()
+    q = solr.query(pid=pid).field_limit(['label', 'title', 'hasPart'])
+    result = q.execute()
+    mailbox = result[0]
+    #get title and label from mailbox query
+    mailbox_title = mailbox['title']
+    mailbox_label = mailbox['label']
+
+    #get labels and pids for each message object
+    solr = solr_interface()
+    q = solr.query(isPartOf='info:fedora/%s' % pid)
+    paginator = Paginator(q, 20)
+
+
+
+    return render(request, 'arrangement/mailbox_view.html',
+                  {'title': mailbox_title, 'label': mailbox_label, 'emails': paginator})

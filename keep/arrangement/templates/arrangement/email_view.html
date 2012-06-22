@@ -1,0 +1,34 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Arrangment : Email: {{ obj.cerp.content.subject_list.0 }}  ({{ obj.pid }}) {% endblock %}
+
+{% block content-body %}
+{{ block.super }}
+    <div style="margin-bottom: 30px">
+        <a href="{% url arrangement:mailbox obj.mailbox %}">Go to mailbox</a>
+    </div>
+     {% with obj.cerp.content as email %}
+
+             <h3 style="display: inline;">Subject: </h3>
+             <span>{{ email.subject_list.0 }}</span>
+         </div>
+         <div>
+             <h3 style="display: inline;">From: </h3>
+             <span>{{ email.from_list.0 }}</span>
+         </div>
+
+         <div>
+             <h3 style="display: inline;">To: </h3>
+             <span>{{ email.to_list|join:'; ' }}</span>
+         </div>
+         <div>
+             <h3 style="display: inline;">Date: </h3>
+             <span>{{ obj.headers.Date }}</span>
+         </div>
+
+         <div style="margin-top: 15px; overflow: auto;">
+         <pre>{{ email.single_body.content.node.text }} </pre>
+         </div>
+     {% endwith %}
+
+{% endblock %}

@@ -1,7 +1,16 @@
 {% extends 'search/snippets/list-item.html' %}
 
 {% block item_title %}
-<p><a href="{% url arrangement:edit obj.pid %}">
+<p>
+    {# email or mailbox objects #}
+    {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model %}
+        <a href="{% url arrangement:email obj.pid %}">
+        {% else %} {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+            <a href="{% url arrangement:mailbox obj.pid %}">
+        {% else %} {# other objects #}
+        <a href="{% url arrangement:edit obj.pid %}">
+        {% endif %}
+    {% endif %}
    {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}
     {% comment %} Show both title and label if they are different.
     Show '(no title)' if both are blank {% endcomment %}
