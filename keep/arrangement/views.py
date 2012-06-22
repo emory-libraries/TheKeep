@@ -144,8 +144,14 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
     # use type-inferring repo to pick up rushdie file or generic arrangement
-    return raw_datastream(request, pid, dsid,
+    response = raw_datastream(request, pid, dsid,
                           repo=TypeInferringRepository(request=request))
+
+    # work-around for email MIME data : display as plain text so it
+    # can be viewed in the browser
+    if response['Content-Type'] == 'message/rfc822':
+        response['Content-Type'] = 'text/plain'
+    return response
 
 @permission_required("common.arrangement_allowed")
 def view_audit_trail(request, pid):
