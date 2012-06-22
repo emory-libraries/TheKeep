@@ -4,7 +4,7 @@ import urllib2
 from rdflib import URIRef
 
 from django.conf import settings
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
+from eulcommon.searchutil import pages_to_show
 from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream, raw_audit_trail
@@ -240,9 +241,26 @@ def mailbox_view(request, pid):
     #get labels and pids for each message object
     solr = solr_interface()
     q = solr.query(isPartOf='info:fedora/%s' % pid)
-    paginator = Paginator(q, 20)
 
-
+    paginator = Paginator(q, 30)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        results = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        results = paginator.page(paginator.num_pages)
+    # calculate page links to show
+    show_pages = pages_to_show(paginator, page)
 
     return render(request, 'arrangement/mailbox_view.html',
-                  {'title': mailbox_title, 'label': mailbox_label, 'emails': paginator})
+                  {'title': mailbox_title,
+                   'label': mailbox_label,
+                   'page': results,
+                   'show_pages': show_pages,
+                   'search_opts': request.GET.urlencode(),
+                  })
+
+
+

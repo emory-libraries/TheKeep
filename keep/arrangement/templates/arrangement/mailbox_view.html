@@ -1,4 +1,5 @@
 {% extends "site_base.html" %}
+{% load search_utils %}
 
 {% block page-subtitle %}: Arrangment : View {{ title }} {{ label }}{% endblock %}
 
@@ -11,12 +12,12 @@
 {{ block.super }}
     <h1>{{ title }} {{ label }}</h1>
 
-    {% for obj in emails.object_list %}
+    {% for obj in page.object_list %}
         <div class="search-result email">
             {% include 'arrangement/snippets/list-arrangement.html' %}
         </div>
     {% endfor %}
 
-
+{% pagination_links page show_pages search_opts %}
 
 {% endblock %}
