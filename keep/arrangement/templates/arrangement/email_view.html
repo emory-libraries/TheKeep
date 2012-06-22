@@ -2,11 +2,15 @@
 
 {% block page-subtitle %}: Arrangment : Email: {{ obj.cerp.content.subject_list.0 }}  ({{ obj.pid }}) {% endblock %}
 
+
 {% block content-body %}
+
+
 {{ block.super }}
     <div style="margin-bottom: 30px">
-        <a href="{% url arrangement:mailbox obj.mailbox %}">Go to mailbox</a>
+        Mailbox: <a href="{% url arrangement:mailbox obj.mailbox %}">{{ obj.mailbox.label }}</a>
     </div>
+
      {% with obj.cerp.content as email %}
 
              <h3 style="display: inline;">Subject: </h3>
@@ -27,8 +31,12 @@
          </div>
 
          <div style="margin-top: 15px; overflow: auto;">
-         <pre>{{ email.single_body.content.node.text }} </pre>
+           <pre>{{ email.single_body.content }}<pre>
          </div>
      {% endwith %}
+
+
+
+    {% include 'arrangement/snippets/ds_links.html' %}
 
 {% endblock %}
