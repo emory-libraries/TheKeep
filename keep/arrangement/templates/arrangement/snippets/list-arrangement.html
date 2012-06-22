@@ -29,5 +29,9 @@
 {% endblock %}
 
 {% block item_info %} 
-  <p>{{ obj.rights|join:', ' }}</p>
+  <ul class='horiz'>
+    <li>{{ obj.rights|join:', ' }}</li>
+    {# display processed/unprocessed status (currently based on object state)  #}
+    <li>{% if obj.state == 'A' %}processed{% endif %}{% if obj.state == 'I'%}accessioned{% endif %}</li>
+  </ul>
 {% endblock %}
