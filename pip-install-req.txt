@@ -1,15 +1,13 @@
 django==1.3.1
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.17.0-dev.tar.gz
-#eulxml
-# eulxml 0.17 for lazy-loading schema, 0.17.1 for xpath.parse correction
-eulxml>=0.18.0
+#eulxml>=0.18.0
+# dev eulxml for cerp updates
+-e git://github.com/emory-libraries/eulxml.git@develop#egg=eulxml
 eulfedora>=0.19.0
 #eulexistdb>=0.15.1
 # need branch until eulxml update is released
 -e git://github.com/emory-libraries/eulexistdb.git@feature/eulxml-date-update#egg=eulexistdb
-# need dev eulcommon for search term parsing with field:value
--e git://github.com/emory-libraries/eulcommon.git@develop#egg=eulcommon
-#eulcommon>=0.16.2
+eulcommon>=0.17.0
 http://waterhouse.library.emory.edu:8080/hudson/job/pidman-rest-client-1.1.x/11/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
 python-magic
 pycrypto
@@ -26,4 +24,6 @@ python-dateutil
 # dev eulcm content model objects (until initial eulcm release)
 -e git://github.com/emory-libraries/eulcm.git@develop#egg=eulcm
 pytz
-bodatools
+# dev bodatools for email objects
+#bodatools
+-e git://github.com/emory-libraries/bodatools.git@develop#egg=bodatools
