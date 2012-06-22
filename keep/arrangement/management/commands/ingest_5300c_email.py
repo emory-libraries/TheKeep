@@ -281,6 +281,10 @@ Eudora files. (One-time import for 5300c content)
 
             with open(folder_toc) as tocdata, open(folder_path) as mbox:
                 toc = eudora.Toc(tocdata)   # load as eudora toc binfile
+
+                # eudora Toc returns messages in folder order;
+                # pass order in to store in CERP for sorting/display
+                folder_order = 0
                 for msg in toc.messages:
                     self.stats['message'] += 1
                     
@@ -289,7 +293,8 @@ Eudora files. (One-time import for 5300c content)
                     # read message content from mailbox data file
                     msg_data = mbox.read(msg.size)
 
-                    self.ingest_message(msg_data, mailbox)
+                    self.ingest_message(msg_data, mailbox, folder_order)
+                    folder_order += 1
                     # max to ingest for testing
                     if self.max_ingest and self.stats['ingested'] >= self.max_ingest:
                         break
@@ -328,7 +333,7 @@ Eudora files. (One-time import for 5300c content)
         return content
 
 
-    def ingest_message(self, msg_data, mailbox):
+    def ingest_message(self, msg_data, mailbox, folder_order):
 
         # read content and redact IP addresses / email addresses
         msg_data = self.redact_email(msg_data)
@@ -370,7 +375,9 @@ Eudora files. (One-time import for 5300c content)
         msg_obj = self.repo.get_object(type=EmailMessagePidReuse)
 
         # generate cerp from mime message
-        msg_obj.cerp.content = cerp.Message.from_email_message(email_msg)
+        # - store folder order as message local id 
+        msg_obj.cerp.content = cerp.Message.from_email_message(email_msg,
+                                                               local_id=folder_order)
 
         # The generated CERP may have modified mac roman charset headers
         # which were needed to convert instead of the original;
