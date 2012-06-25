@@ -16,12 +16,13 @@ from django.utils import simplejson
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 from eulxml.xmlmap import mods
+from eulcm.xmlmap.mods import MODS
 
 from keep.arrangement.models import ArrangementObject
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
 from keep.collection import views
-from keep.collection.models import CollectionObject, CollectionMods, FindingAid, SimpleCollection
+from keep.collection.models import CollectionObject, FindingAid, SimpleCollection
 from keep.collection.views import _objects_by_type
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.rdfns import REPO
@@ -490,7 +491,8 @@ class CollectionViewsTest(KeepTestCase):
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
 
 
-    def test_edit(self):
+    @patch('keep.search.views.solr_interface')  # site-index on redirect
+    def test_edit(self, mock_solr_interface):
         repo = Repository()
         obj = FedoraFixtures.rushdie_collection()
         # store initial collection id from fixture
@@ -509,7 +511,7 @@ class CollectionViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
                 "MODS CollectionForm is set in response context")
-        self.assert_(isinstance(response.context['form'].instance, CollectionMods),
+        self.assert_(isinstance(response.context['form'].instance, MODS),
                 "form instance is a collection MODS XmlObject")
         self.assertContains(response, 'value="1000"',
                 msg_prefix='MSS # from existing object set as input value')
@@ -995,12 +997,11 @@ class SimpleCollectionTest( KeepTestCase):
             
 
     def test_creation(self):
-        obj = self.repo.get_object(type = SimpleCollection)
+        obj = self.repo.get_object(type=SimpleCollection)
         obj.mods.content.create_restrictions_on_access()
         obj.mods.content.restrictions_on_access.text = 'processed'
         saved = obj.save()
-        pid = obj.pid
-        self.pids.append(pid)
+        self.pids.append(obj.pid)
 
         self.assertTrue(saved)
         self.assertEqual(obj. COLLECTION_CONTENT_MODEL, 'info:fedora/emory-control:Collection-1.0')
@@ -1009,6 +1010,9 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertTrue((obj.uriref, RDF.type, REPO.SimpleCollection) in obj.rels_ext.content,
                         'The collection is of type SimpleCollection')
 
+        # init non-existent pid
+        # should not raise exception by trying to set type
+        self.repo.get_object(type=SimpleCollection, pid='foo:1')
 
     def test__objects_by_type(self):
         #Test Simple collection

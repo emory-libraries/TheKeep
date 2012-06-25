@@ -1,13 +1,27 @@
 {% extends 'search/snippets/list-item.html' %}
 
 {% block item_title %}
-<p><a href="{% url arrangement:edit obj.pid %}"> 
-   {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}  
- {% firstof obj.title obj.label '(no title)' %}{% if obj.part %} ({{ obj.part }}){% endif %}</a>
+<p>
+    {# email or mailbox objects #}
+    {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model %}
+        <a href="{% url arrangement:email obj.pid %}">
+        {% else %} {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+            <a href="{% url arrangement:mailbox obj.pid %}">
+        {% else %} {# other objects #}
+        <a href="{% url arrangement:edit obj.pid %}">
+        {% endif %}
+    {% endif %}
+   {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}
+    {% comment %} Show both title and label if they are different.
+    Show '(no title)' if both are blank {% endcomment %}
+    {% firstof obj.title obj.label '(no title)' %}
+    {% if obj.title and obj.title|slugify != obj.label|slugify %} {{ obj.label }}{% endif %}
+    {% if obj.part %} ({{ obj.part }}){% endif %}</a>
   {% if obj.collection_id or obj.simpleCollection_id %}
     (part of 
      {% if obj.collection_id %}
-       <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{{ obj.collection_label }}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
+      {# fallback to collection pid if label not found (should only happen in dev/test) #}
+       <a href="{% url collection:edit obj.collection_id|slice:'12:' %}">{% firstof obj.collection_label obj.collection_id %}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
      {% if obj.simpleCollection_label %}
        {{ obj.simpleCollection_label|join:"; " }}{% endif %})
   {% endif %} 
@@ -15,5 +29,9 @@
 {% endblock %}
 
 {% block item_info %} 
-  <p>{{ obj.rights|join:', ' }}</p>
+  <ul class='horiz'>
+    <li>{{ obj.rights|join:', ' }}</li>
+    {# display processed/unprocessed status (currently based on object state)  #}
+    <li>{% if obj.state == 'A' %}processed{% endif %}{% if obj.state == 'I'%}accessioned{% endif %}</li>
+  </ul>
 {% endblock %}

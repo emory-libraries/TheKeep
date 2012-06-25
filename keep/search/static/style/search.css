@@ -17,6 +17,9 @@
 .search-result.audio {
     background-image: url('../images/sound.png');
 }
+.search-result.email {
+    background-image: url('../images/email.png');
+}
 .search-result.collection {
     background-image: url('../images/full-box.png');
 }

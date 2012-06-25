@@ -18,10 +18,12 @@ from eullocal.django.taskresult.models import TaskResult
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
+from eulcm.xmlmap.boda import Rights
+
 
 from keep.collection.models import CollectionObject
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
-from keep.common.models import _BaseRights, Rights
+from keep.common.models import allow_researcher_access
 
 logger = logging.getLogger(__name__)
 
@@ -402,7 +404,7 @@ class AudioObject(DigitalObject):
 
     @property
     def researcher_access(self):
-        return self.rights.content.researcher_access
+        return allow_researcher_access(self.rights.content)
 
     def _update_dc(self):
         '''Update Dublin Core (derivative metadata) based on master metadata
@@ -538,6 +540,9 @@ class AudioObject(DigitalObject):
         if self.mods.content.origin_info and \
            self.mods.content.origin_info.issued:
             data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
+
+        if self.audio.exists:
+            data['content_md5'] = self.audio.checksum
             
         return data
 

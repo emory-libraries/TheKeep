@@ -52,12 +52,16 @@
 
   <div id="search-key">
     <div class="search-result audio">audio</div>
+    <div class="search-result email">email</div>
     <div class="search-result collection">collection</div>
     <div class="search-result">other</div>
   </div>
 
   {% for obj in page.object_list %}
-  <div class="search-result {{ obj.object_type }}">
+      {% comment %} display correct icon and other info based on content model or obj_type.
+      This should be cleaned up later by creating better obj_types
+      {% endcomment %}
+      <div class="search-result {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}email{% else %} {{ obj.object_type }} {% endif %}">
     {% if show_relevance and obj.score %}
       <div class="relevance">
         <div class="score" style="width:{% widthratio obj.score  1 100 %}px">&nbsp;</div>

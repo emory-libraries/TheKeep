@@ -20,7 +20,7 @@ from keep.collection.fixtures import FedoraFixtures
 from keep.common.fedora import DigitalObject, LocalMODS, Repository, \
      AuditTrailEvent
 from keep.common.forms import ItemSearch
-from keep.common.models import _DirPart, FileMasterTech, FileMasterTech_Base
+from keep.common.models import _DirPart #, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, md5sum, solr_interface
 from keep.common.templatetags import rights_extras
 from keep.testutil import KeepTestCase
@@ -144,34 +144,28 @@ class Test_DirPart(TestCase):
         self.assertEqual('/computerbasefileName/', dir_part.path())
 
 
-class TestFileMasterTech(TestCase):
+# TODO: move into eulcm
 
-    def setUp(self):
-        self.repo = Repository()
-        self.obj = self.repo.get_object(type=Obj4Test)
-        self.obj.file_master.content.file.append(FileMasterTech_Base())
-        self.obj.file_master.content.file[0].computer = "MyTestComputer"
-        self.obj.file_master.content.file[0].path = "/path/to/some/file"
+# class TestFileMasterTech(TestCase):
 
-
-    def test_dirparts(self):
-        parts = list(self.obj.file_master.content.file[0].dir_parts())
-        self.assertEqual(unicode(parts[0]), 'path')
-        self.assertEqual(unicode(parts[1]), 'to')
-        self.assertEqual(unicode(parts[2]), 'some')
+#     def setUp(self):
+#         self.repo = Repository()
+#         self.obj = self.repo.get_object(type=Obj4Test)
+#         self.obj.file_master.content.file.append(FileMasterTech_Base())
+#         self.obj.file_master.content.file[0].computer = "MyTestComputer"
+#         self.obj.file_master.content.file[0].path = "/path/to/some/file"
 
 
-    def test_name(self):
-        self.assertEqual(self.obj.file_master.content.file[0].name(), 'file')
+#     def test_dirparts(self):
+#         parts = list(self.obj.file_master.content.file[0].dir_parts())
+#         self.assertEqual(unicode(parts[0]), 'path')
+#         self.assertEqual(unicode(parts[1]), 'to')
+#         self.assertEqual(unicode(parts[2]), 'some')
 
 
+#     def test_name(self):
+#         self.assertEqual(self.obj.file_master.content.file[0].name(), 'file')
 
-
-class Obj4Test(DigitalObject):
-    file_master = XmlDatastream("FileMasterTech", "Test DS for FileMasterTech", FileMasterTech, defaults={
-            'control_group': 'M',
-            'versionable': True,
-        })
 
 
 
@@ -333,6 +327,7 @@ class SearchTest(KeepTestCase):
     mocksolr.Q.return_value = mocksolr.query
 
     @patch('keep.common.views.solr_interface', mocksolr)
+    @patch('keep.search.views.solr_interface', mocksolr)  # redirect to home page
     @patch('keep.common.forms.CollectionObject')
     def test_search(self, mockcollobj):
         collections = [
@@ -481,6 +476,7 @@ class SearchTest(KeepTestCase):
             self.assertPattern('title:.*%s' % searchtitle, response.content,
                 msg_prefix='search results page should include all search terms used (title)')
 
+    @patch('keep.search.views.solr_interface', mocksolr)  # redirect to home page
     @patch('keep.common.views.solr_interface', mocksolr)
     def test_search_csv(self):
         # test advanced search with CSV output

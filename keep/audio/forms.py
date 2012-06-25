@@ -9,13 +9,14 @@ from django.utils.safestring import mark_safe
 
 from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
+from eulcm.xmlmap.boda import Rights
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
 from keep.collection.models import CollectionObject
 from keep.collection.forms import NameForm, CollectionSuggestionField
-from keep.common.models import Rights
+from keep.common.models import rights_access_terms_dict
 from keep.common.forms import ReadonlyTextInput, rights_access_options, \
      EMPTY_LABEL_TEXT, CommentForm
 
@@ -411,7 +412,7 @@ class RightsForm(XmlObjectForm):
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
             access_code = self.cleaned_data['access']
-            access_text = Rights.access_terms_dict[access_code].text
+            access_text = rights_access_terms_dict[access_code].text
             self.instance.create_access_status()
             self.instance.access_status.code = access_code
             self.instance.access_status.text = access_text

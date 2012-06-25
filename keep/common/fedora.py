@@ -117,7 +117,7 @@ class AuditTrailEvent(object):
             return list(self.actions)[0]
             
 
-class DigitalObject(models.DigitalObject):
+class ArkPidDigitalObject(models.DigitalObject):
     """Extend the default fedora DigitalObject class. Objects derived from
     this one will automatically have their owner set to
     ``settings.FEDORA_OBJECT_OWNERID``. This happens only when the fedora
@@ -339,7 +339,7 @@ class Repository(server.Repository):
     back to the default logic, which uses Django settings for Fedora credentials.
     """
 
-    default_object_type = DigitalObject
+    default_object_type = ArkPidDigitalObject
 
     def __init__(self, username=None, password=None, request=None):        
         if request is not None and request.user.is_authenticated() and \
@@ -349,11 +349,18 @@ class Repository(server.Repository):
         super(Repository, self).__init__(username=username, password=password)
 
 
+class TypeInferringRepository(server.TypeInferringRepository, Repository):
+    '''Make :class:`eulfedora.server.TypeInferringRepository`
+    available with local defaults, based on :class:`Repository`
+    subclass.
+    '''
+    pass
+
 # TODO: think about better ways to make re-usable views that apply to
 # objects across the project (also relevant to xml datastream and
 # audit trail views)
 
-def history_view(request, pid, type=DigitalObject,
+def history_view(request, pid, type=ArkPidDigitalObject,
                  template_name='common/history.html'):
     '''Re-usable view for displaying a human-readable version of the
     history of a :class:`DigitalObject`.
@@ -400,3 +407,7 @@ def history_view(request, pid, type=DigitalObject,
               'problem persists, please alert the repository ' + \
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
+
+
+# alias for now, clean up later
+DigitalObject = ArkPidDigitalObject

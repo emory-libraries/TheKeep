@@ -1,0 +1,43 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Arrangment : Email: {{ obj.cerp.content.subject_list.0 }}  ({{ obj.pid }}) {% endblock %}
+
+
+{% block content-body %}
+
+
+{{ block.super }}
+    <div class="mailbox-link">
+        Mailbox: <a href="{% url arrangement:mailbox obj.mailbox %}">{{ obj.mailbox.label }}</a>
+    </div>
+
+     {% with obj.cerp.content as email %}
+
+             <h3 class="email-field">Subject: </h3>
+             <span>{{ email.subject_list.0 }}</span>
+         </div>
+         <div>
+             <h3 class="email-field">From: </h3>
+             <span>{{ email.from_list.0 }}</span>
+         </div>
+
+         <div>
+             <h3 class="email-field">To: </h3>
+             <span>{{ email.to_list|join:'; ' }}</span>
+         </div>
+         <div>
+             <h3 class="email-field">Date: </h3>
+             <span>{{ obj.headers.Date }}</span>
+         </div>
+
+         <div class="email-body" >
+         {# having to check for both version of the text because some emails are stored in one or the other. #}
+         <span class="email-text">{% firstof email.single_body.content.content email.single_body.content.node.text %} </span>
+         </div>
+     {% endwith %}
+
+
+
+    {% include 'arrangement/snippets/ds_links.html' %}
+
+{% endblock %}

@@ -19,6 +19,7 @@ from django.template import RequestContext
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
+from eulcm.xmlmap.boda import Rights
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eullocal.django.taskresult.models import TaskResult
@@ -32,7 +33,6 @@ from keep.audio.feeds import feed_items
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.collection.models import CollectionObject 
 from keep.common.fedora import Repository, history_view
-from keep.common.models import Rights
 from keep.common.utils import md5sum
 
 logger = logging.getLogger(__name__)

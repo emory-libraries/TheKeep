@@ -9,10 +9,11 @@ from eulfedora.rdfns import relsext as relsextns
 
 from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField
+from eulcm.xmlmap.mods import MODS
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 
 from keep.arrangement.models import ArrangementObject
-from keep.collection.models import CollectionMods, CollectionObject, SimpleCollection
+from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
 
 logger = logging.getLogger(__name__)
@@ -144,7 +145,7 @@ class CollectionForm(XmlObjectForm):
                     widget=forms.TextInput(attrs={'class': 'long'}))
 
     class Meta:
-        model = CollectionMods
+        model = MODS
         fields = (
             'collection', 'source_id', 'title', 'resource_type', 'name',
             'restrictions_on_access', 'use_and_reproduction',
@@ -230,7 +231,7 @@ class SimpleCollectionModsForm(XmlObjectForm):
            help_text='Indicates if collection members are visible')
 
     class Meta:
-        model = CollectionMods
+        model = MODS
         fields = [ 'restrictions_on_access' ]
 
 
@@ -275,6 +276,7 @@ class SimpleCollectionEditForm(forms.Form):
         fail_count = 0
 
         #translate form status codes to fedora state code
+        # TODO: shift this logic to arrangement object for re-use
         codes = {'Processed': 'A', 'Accessioned' : 'I'}
 
         #target state for every object in the collection

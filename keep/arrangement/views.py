@@ -4,6 +4,7 @@ import urllib2
 from rdflib import URIRef
 
 from django.conf import settings
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
@@ -15,11 +16,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
+from eulcommon.searchutil import pages_to_show
 from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream, raw_audit_trail
 
-from keep.common.fedora import Repository, history_view
+from keep.common.fedora import Repository, history_view, \
+     TypeInferringRepository
+from keep.common.utils import solr_interface
 from keep.arrangement import forms as arrangementforms
 from keep.arrangement.models import ArrangementObject
 from keep.common.eadmap import Series
@@ -49,15 +53,16 @@ def edit(request, pid):
 
     :param pid: The pid of the object being edited.
     '''
-    repo = Repository(request=request)
+    repo = TypeInferringRepository(request=request)
     try:
-        obj = repo.get_object(pid, type=ArrangementObject)
+        # allow to infer type ? 
+        obj = repo.get_object(pid)
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
             if form.is_valid():
                 form.update_instance()
-                # FIXME: clean up log message handling
+                # FIXME: clean up log message handling; use form validation/form data
                 if form.comments.cleaned_data.has_key('comment') and form.comments.cleaned_data['comment']:
                     comment = form.comments.cleaned_data['comment']
                 else:
@@ -66,9 +71,13 @@ def edit(request, pid):
                 action = 'updated'
 
                 #Add /remove Allowed Restricted Content Models based on status
+                # TODO: store these content models in variables that can be referenced/reused
                 allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
                 restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
+
+                # TODO: this logic has been moved into arrangement
+                # object as a pre-save step; test/confirm that it is ok to remove here
                 status = request.POST['rights-access']
                 if status == "2":
                     if restricted in obj.rels_ext.content:
@@ -82,8 +91,6 @@ def edit(request, pid):
                     if restricted not in obj.rels_ext.content:
                         obj.rels_ext.content.add(restricted)
 
-                # NOTE: by sending a log message, we force Fedora to store an
-                # audit trail entry for object creation, which doesn't happen otherwise
                 obj.save(comment)
                 messages.success(request, 'Successfully %s arrangement <a href="%s">%s</a>' % \
                             (action, reverse('arrangement:edit', args=[obj.pid]), obj.pid))
@@ -136,7 +143,15 @@ def edit(request, pid):
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
-    return raw_datastream(request, pid, dsid, type=ArrangementObject, repo=Repository(request=request))
+    # use type-inferring repo to pick up rushdie file or generic arrangement
+    response = raw_datastream(request, pid, dsid,
+                          repo=TypeInferringRepository(request=request))
+
+    # work-around for email MIME data : display as plain text so it
+    # can be viewed in the browser
+    if response['Content-Type'] == 'message/rfc822':
+        response['Content-Type'] = 'text/plain'
+    return response
 
 @permission_required("common.arrangement_allowed")
 def view_audit_trail(request, pid):
@@ -198,3 +213,57 @@ def get_selected_series_data(request, id):
     series_data = simplejson.dumps(series_data)
 
     return HttpResponse(series_data, content_type='application/json')
+
+
+@permission_required("common.arrangement_allowed")
+def email_view(request, pid):
+    '''
+    View for an EmailMessage object.
+
+    :param pid: The pid of the object.
+    '''
+    repo = TypeInferringRepository(request=request)
+    obj = repo.get_object(pid)
+
+    return render(request, 'arrangement/email_view.html',
+                  {'obj' : obj})
+
+@permission_required("common.arrangement_allowed")
+def mailbox_view(request, pid):
+    '''
+    View for an Mailbox object..
+
+    :param pid: The pid of the object.
+    '''
+
+    solr = solr_interface()
+    q = solr.query(pid=pid).field_limit(['label', 'title', 'hasPart'])
+    result = q.execute()
+    mailbox = result[0]
+    #get title and label from mailbox query
+    mailbox_title = mailbox['title']
+    mailbox_label = mailbox['label']
+
+    #get labels and pids for each message object
+    solr = solr_interface()
+    q = solr.query(isPartOf='info:fedora/%s' % pid)
+
+    paginator = Paginator(q, 30)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        results = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        results = paginator.page(paginator.num_pages)
+    # calculate page links to show
+    show_pages = pages_to_show(paginator, page)
+
+    return render(request, 'arrangement/mailbox_view.html',
+                  {'title': mailbox_title,
+                   'label': mailbox_label,
+                   'page': results,
+                   'show_pages': show_pages,
+                   'search_opts': request.GET.urlencode(),
+                  })

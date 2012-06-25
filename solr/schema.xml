@@ -134,10 +134,13 @@ see:
     <field name="ip_note" type="text" indexed="true" stored="true" multiValued="true"/>
     
     <!-- ArrangementObject -->
-    <field name="arrangement_id" type="string" indexed="false" stored="true" multiValued="false"/>
+    <field name="arrangement_id" type="string" indexed="true" stored="true" multiValued="false"/>
     
     <!-- * both audio and collection objects -->
     <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
+
+    <!-- MD5 checksum for primary content datastream -->
+    <field name="content_md5" type="string" indexed="true" stored="true" multiValued="false"/>
     
     <!-- catchall field, containing all other searchable text fields (implemented
          via copyField further on in this schema  -->
@@ -209,6 +212,10 @@ see:
    <copyField source="ip_note" dest="text"/>
    <copyField source="audit_trail_users" dest="text"/>
    <copyField source="users" dest="text"/>
+   <!-- boda arrangement id (temporary/dupe?) -->
+   <copyField source="arrangement_id" dest="text"/>
+   <!-- boda processing batch (temporary?) -->
+   <copyField source="simpleCollection_label" dest="text"/>
    <!-- copy other dates into common date field -->
    <copyField source="created" dest="date"/>
    <!-- audio note fields -->

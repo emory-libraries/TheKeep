@@ -7,8 +7,8 @@
    {% endblock %}
    {% block item_info  %}{% endblock %}{# add item detail content here #}
    {% block upload_info %} {# recommended to leave this as is, but extend if needed #}
-     Uploaded {{ obj.created|naturalday }}{% if obj.added_by %} by {{ obj.added_by }}{% endif %}; 
-    last modified {{ obj.last_modified|naturalday }}.</p>
+     Uploaded {{ obj.created|naturalday }}{% if obj.added_by %} by {{ obj.added_by }}{% endif %}{% if obj.created != obj.last_modified %}; {# suppress if not modified since upload #}
+    last modified {{ obj.last_modified|naturalday }}{% endif %}.</p>
    {% endblock %}
 </div>
 {% endblock %}

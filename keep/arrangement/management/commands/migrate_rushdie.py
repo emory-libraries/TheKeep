@@ -6,6 +6,7 @@ from xml.etree import ElementTree
 
 from eulfedora.rdfns import relsext as relsextns
 from eulfedora.rdfns import model
+from eulcm.xmlmap.boda import FileMasterTech_Base
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -13,7 +14,6 @@ from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.eadmap import Series
 from keep.common.fedora import Repository
-from keep.common.models import FileMasterTech_Base
 
 logger = logging.getLogger(__name__)
 

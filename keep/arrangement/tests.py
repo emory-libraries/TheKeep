@@ -2,26 +2,30 @@ from rdflib import URIRef
 import logging
 import sys
 from mock import Mock, MagicMock, patch
+from sunburnt import sunburnt
 
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.contrib.auth.models import Permission
 from django.test import Client
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
-from eulfedora.rdfns import relsext as relsextns
-from eulfedora.rdfns import model
+from eulfedora.rdfns import relsext as relsextns, model as modelns
+from eulcm.xmlmap.boda import FileMasterTech_Base
+from eulxml.xmlmap import cerp
+
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
-from  keep.arrangement.management.commands import migrate_rushdie
-from keep.arrangement.models import ArrangementObject, Series1, Series2
+from keep.arrangement.management.commands import migrate_rushdie
+from keep.arrangement.models import ArrangementObject, \
+     ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage, Mailbox
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
 from keep.testutil import KeepTestCase
 from keep.collection.fixtures import FedoraFixtures
 
-from keep.common.models import FileMasterTech_Base
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +107,7 @@ class TestMigrateRushdie(TestCase):
         self.digObj.api.addDatastream(self.digObj.pid, "MARBL-ANALYSIS",
                                            "MARBL-ANALYSIS",  mimeType="application/xml", content= self.MA_FIXTURE)
         #Remove Arrangement model so it can be added later
-        relation = (self.digObj.uriref, model.hasModel, "info:fedora/emory-control:Arrangement-1.0")
+        relation = (self.digObj.uriref, modelns.hasModel, "info:fedora/emory-control:Arrangement-1.0")
         self.digObj.rels_ext.content.remove(relation)
         self.digObj.save()
 
@@ -163,7 +167,7 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.rights.content.access_status.code, "2")
         #RELS-EXT
         self.assertTrue((obj.uriref, relsextns.isMemberOf, self.mc.uriref) in obj.rels_ext.content, "Object should have isMember relation to master collection")
-        self.assertTrue((obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
+        self.assertTrue((obj.uriref, modelns.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0")) in obj.rels_ext.content, "Object should have Allowed Content Model")
         #Label and DS
         self.assertEqual(obj.label, "x - the roles", "Label should be set to last part of path")
         self.assertEqual(obj.owner, "thekeep-project", "owner should be set to 'thekeep-project'")
@@ -207,7 +211,7 @@ class ArrangementViewsTest(KeepTestCase):
         #self.rushdie_obj.rels_ext.content.add(relation)
 
         self.rushdie_obj.label = "Test Rushdie Object"
-        
+
 
         #Create some test filetech content
         filetech_1 = FileMasterTech_Base()
@@ -233,6 +237,7 @@ class ArrangementViewsTest(KeepTestCase):
         filetech_2.modified = ''
         filetech_2.type = 'PDF'
         filetech_2.creator = 'pdf'
+        # FIXME: is filetech used in these tests at all? 
       
         self.rushdie_obj.filetech.content.file.append(filetech_1)
         self.rushdie_obj.filetech.content.file.append(filetech_2)
@@ -245,7 +250,25 @@ class ArrangementViewsTest(KeepTestCase):
         self.rushdie_obj.mods.content.series.series.title = 'series_title_vale'
 
         self.rushdie_obj.save()
-        self.pids.append(self.rushdie_obj.pid) 
+        self.pids.append(self.rushdie_obj.pid)
+
+        #create a mailbox
+        self.mailbox = self.repo.get_object(type=Mailbox)
+        self.mailbox.pid = 'mailbox:pid'
+        self.mailbox.label = 'TestMailBox'
+
+        # create emmail for test DO NOT INGEST this is used with mock for get_object return value
+        self.email = self.repo.get_object(type=EmailMessage)
+        self.email.pid = 'email:pid'
+        self.email.cerp.content.from_list = ['sender@sendmail.com']
+        self.email.cerp.content.to_list = ['guy1@friend.com', 'guy2@friend.com']
+        self.email.cerp.content.subject_list = ['Interesting Subject']
+        self.email.mailbox = self.mailbox
+        h1 = cerp.Header()
+        h1.name='Date'
+        h1.value = 'Fri May 11 2012'
+        self.email.cerp.content.headers.append(h1)
+
 
     def tearDown(self):
         super(ArrangementViewsTest, self).tearDown()
@@ -356,3 +379,199 @@ class ArrangementViewsTest(KeepTestCase):
         #check audit trail
         audit_trail =  [a.message for a in obj.audit_trail.records]
         self.assertEqual(data['comments-comment'], audit_trail[-1])
+
+    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
+    def test_email_view(self, mockget_obj):
+        mockget_obj.return_value = self.email
+
+
+        #non-authenticated user
+        email_url = reverse('arrangement:email', kwargs={'pid': 'email:pid'})
+
+        respons = self.client.get(email_url)
+        code = respons.status_code
+        self.assertEqual(302, code, 'non-authenticated user does not have acccess to page')
+
+        #authenticated user
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(email_url)
+        code = response.status_code
+        self.assertEqual(200, code, 'authenticated should have acccess to page')
+
+        #check for email field values
+        self.assertContains(response, 'Interesting Subject')
+        self.assertContains(response, 'sender@sendmail.com')
+        self.assertContains(response, 'guy1@friend.com; guy2@friend.com')
+        self.assertContains(response, 'Fri May 11 2012')
+
+
+    @patch('keep.arrangement.views.solr_interface')
+    def test_mailbox_view(self, mocksolr):
+        #non-authenticated user
+        mailbox_url = reverse('arrangement:mailbox', kwargs={'pid': 'mailbox:pid'})
+        respons = self.client.get(mailbox_url)
+        code = respons.status_code
+        self.assertEqual(302, code, 'non-authenticated user does not have acccess to page')
+
+        #authenticated user
+        self.client.login(**ADMIN_CREDENTIALS)
+        respons = self.client.get(mailbox_url)
+        code = respons.status_code
+        self.assertEqual(200, code, 'authenticated should have acccess to page')
+
+        self.assertEqual(mocksolr.return_value.query.call_args_list[0][1], {'pid':'mailbox:pid'})
+        self.assertEqual(mocksolr.return_value.query.call_args_list[1][1], {'isPartOf':'info:fedora/mailbox:pid'})
+        
+
+class ArrangementObjectTest(KeepTestCase):
+
+    @patch('keep.arrangement.models.solr_interface', spec=sunburnt.SolrInterface)
+    def test_by_arrangement_id(self, mocksolr):
+        # no match
+        self.assertRaises(ObjectDoesNotExist, ArrangementObject.by_arrangement_id,
+                          42)
+        solr = mocksolr.return_value
+        solr.query.assert_called_with(arrangement_id=42,
+                                      content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+        solr.query.return_value.field_limit.assert_called_with('pid')
+
+        # too many matches
+        solr.query.return_value.field_limit.return_value = [{'pid': 'pid:1'},
+                                                            {'pid': 'pid:2'}]
+        self.assertRaises(MultipleObjectsReturned, ArrangementObject.by_arrangement_id,
+                          42)
+
+        # one match
+        solr.query.return_value.field_limit.return_value = [{'pid': 'pid:1'}]
+        ao = ArrangementObject.by_arrangement_id(42)
+        self.assert_(isinstance(ao, ArrangementObject))
+
+        # custom repo object
+        mockrepo = Mock()
+        ao = ArrangementObject.by_arrangement_id(42, mockrepo)
+        mockrepo.get_object.assert_called_with('pid:1', type=ArrangementObject)
+
+    def test_arrangement_status(self):
+        obj = ArrangementObject(Mock())
+        obj.arrangement_status = 'processed'
+        self.assertEqual('A', obj.state)
+        self.assertEqual('processed', obj.arrangement_status)
+        
+        obj.arrangement_status = 'accessioned'
+        self.assertEqual('I', obj.state)
+        self.assertEqual('accessioned', obj.arrangement_status)
+
+        value_error = None
+        try:
+            obj.arrangement_status = 'bogus'
+        except ValueError:
+            value_error = True
+
+        self.assertTrue(value_error,
+                        'attempting to assign an unknown status should raise a ValueError')
+
+    def test_update_access_cmodel(self):
+        obj = ArrangementObject(Mock())
+        # no status set - should be set to restricted
+        obj._update_access_cmodel()
+        
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
+                     in obj.rels_ext.content)
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
+                     not in obj.rels_ext.content)
+
+        # set to status code 2 = access allowed
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = '2'
+        
+        obj._update_access_cmodel()
+        
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
+                     not in obj.rels_ext.content)
+        self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
+                     in obj.rels_ext.content)
+
+class EmailMessageTest(KeepTestCase):
+
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+        # test EmailMessage
+        self.email = self.repo.get_object(type=EmailMessage)
+        self.email.cerp.content.from_list = ['sender@sendmail.com']
+        self.email.cerp.content.to_list = ['otherguy@friend.com']
+        self.email.cerp.content.subject_list = ['Interesting Subject']
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
+    def test_headers(self):
+        h1 = cerp.Header()
+        h1.name = "HEADER 1"
+        h1.value = "value for header 1"
+        h2 = cerp.Header()
+        h2.name = "HEADER 2"
+        h2.value = "value for header 2"
+        self.email.cerp.content.headers.append(h1)
+        self.email.cerp.content.headers.append(h2)
+        self.assertEqual(self.email.headers['HEADER 1'], 'value for header 1')
+        self.assertEqual(self.email.headers['HEADER 2'], 'value for header 2')
+
+
+    def test_email_label(self):
+        # no object label and one person in to field
+        label = self.email.email_label()
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com Interesting Subject',
+                         label,
+                         'Should construct label when it does not exist')
+
+        # more then one person in to list
+        self.email.cerp.content.to_list.append('additional.person@friend.com')
+        label = self.email.email_label()
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. Interesting Subject',
+                         label,
+                         'only show first to email address when there are more than one')
+
+        # no subject
+        self.email.cerp.content.subject_list = []
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al.',
+                         self.email.email_label(),
+                         'Display message without subject when no subject is present')
+
+        # has a date
+        date_header = cerp.Header()
+        date_header.name = 'Date'
+        date_header.value = 'Friday 13 200 13:00'
+        self.email.cerp.content.headers.append(date_header)
+        label = self.email.email_label()
+        self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. on Friday 13 200 13:00',
+                         label,
+                         'only show first to email address when there are more than one')
+        
+        # object label already exists
+        self.email.label = "label we want to keep"
+        label = self.email.email_label()
+        self.assertEqual(self.email.label, label, 'label should be preserved when it exists')
+
+        
+
+    def test_index_data(self):
+        # NOTE: logic for creating the label is in the label test
+
+        # test to make sure label exists in index data
+        data = self.email.index_data()
+        self.assertIn('label', data.keys())
+        # mime_data does not exist, so no c
+        self.assert_('content_md5' not in data,
+                     'content_md5 should not be set when mime data does not exist')
+
+        # patch mime data to test exists /cchecksum
+        with patch.object(self.email, 'mime_data', Mock()) as mock_mime:
+            mock_mime.exists = True
+            mock_mime.checksum = 'test checksum value'
+
+            data = self.email.index_data()
+            self.assertEqual(self.email.mime_data.checksum, data['content_md5'])
+        

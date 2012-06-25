@@ -10,59 +10,47 @@ from eulfedora.models import XmlDatastream, Relation
 from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
+from eulcm.models.collection.v1_1 import Collection
+from eulcm.models.collection.v1_0 import Collection as Collectionv1_0
+from eulcm.xmlmap.mods import MODS
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eulxml.xmlmap.eadmap import EAD_NAMESPACE, EncodedArchivalDescription
 
-from keep.common.fedora import DigitalObject, Repository, LocalMODS
+from keep.common.fedora import ArkPidDigitalObject, Repository, LocalMODS
 from keep.common.rdfns import REPO
 from keep.common.utils import solr_interface
 
 logger = logging.getLogger(__name__)
 
-class CollectionMods(LocalMODS):
-    '''Collection-specific MODS, based on :class:`keep.common.fedora.LocalMODS`.'''
-    source_id = xmlmap.IntegerField("mods:identifier[@type='local_source_id']")
-    short_name = xmlmap.StringField("mods:identifier[@type='local_short_name']") # archive shortnames
-    'local source identifier as an integer'
-    # possibly map identifier type uri as well ?
-    # TODO: (maybe) - single name here, multiple names on standard MODS
-    # relatedItem type host - not editable on form, but may want mapping for easy access
-    # - same for relatedItem type isReferencedyBy
-    restrictions_on_access = xmlmap.NodeField('mods:accessCondition[@type="restrictions on access"]',
-                                              mods.AccessCondition)
-    ':class:`keep.mods.AccessCondition`'
-    use_and_reproduction = xmlmap.NodeField('mods:accessCondition[@type="use and reproduction"]',
-                                              mods.AccessCondition)
-    ':class:`keep.mods.AccessCondition`'
 
-
-class SimpleCollection(DigitalObject):
-    '''This is a simple DC only collection
+class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
+    '''This is a simple DC only collection  LIES
     '''
-
-    COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.0'
-    CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
 
     NEW_OBJECT_VIEW = 'collection:simple_edit'
 
-    mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
+    # FIXME: why do we have mods on a dc-only collection ? 
+    mods = XmlDatastream('MODS', 'Descriptive Metadata (MODS)', MODS, defaults={
             'control_group': 'M',
             'format': mods.MODS_NAMESPACE,
             'versionable': True,
         })
-    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
+    '''MODS :class:`~eulfedora.models.XmlDatastream` with content as
+    :class:`eulxml.xmlmap.mods.MODS`; versionable, datastream ID
+    ``MODS``'''
 
-    #override this function and add additional functionality
+    type = Relation(RDF.type)  
+
+
+    # override this function and add additional functionality
     def __init__(self, *args, **kwargs):
         super(SimpleCollection, self).__init__(*args, **kwargs)
 
-        #set RDF.type in rels_ext only if it is a new object
-        try:
-            created = self.created # only used to check the existence of created var
-        except TypeError:
-            self.rels_ext.content.add((self.uriref, RDF.type, REPO.SimpleCollection))
-
+        # Only set type when creating a new object, as determined
+        # by base class
+        if self._create:
+            self.type = REPO.SimpleCollection
 
     def index_data(self):
         '''Extend the default
@@ -77,12 +65,8 @@ class SimpleCollection(DigitalObject):
         data['object_type'] = 'collection'
         # FIXME: do we need to differentiate collection vs. simple collection ? 
 
-        if self.rels_ext is not None:
-            try:
-                type = list(self.rels_ext.content.objects(self.uriref, RDF.type))[0]
-                data['type'] = type
-            except IndexError:
-                pass
+        if self.type:
+            data['type'] = self.type
 
         return data
 
@@ -125,32 +109,12 @@ class SimpleCollection(DigitalObject):
 
 
 
-class CollectionObject(DigitalObject):
+class CollectionObject(Collection, ArkPidDigitalObject):
     '''Fedora Collection Object.  Extends :class:`~eulfedora.models.DigitalObject`.
     This really represents an archival collection
     '''
-    COLLECTION_CONTENT_MODEL = 'info:fedora/emory-control:Collection-1.1'
-    CONTENT_MODELS = [ COLLECTION_CONTENT_MODEL ]
     NEW_OBJECT_VIEW = 'collection:view'
 
-    mods = XmlDatastream('MODS', 'MODS Metadata', CollectionMods, defaults={
-            'control_group': 'M',
-            'format': mods.MODS_NAMESPACE,
-            'versionable': True,
-        })
-    'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`CollectionMods`'
-
-
-    collection = Relation(relsext.isMemberOfCollection,
-                          type='self')  # collection object ? 
-    ''':class:`~keep.collection.models.CollectionObject for the
-    archive that this collection is a member of, via
-    `isMemberOfCollection` relation.
-    '''
-
-    _collection_id = None
-    _collection = None
-    _collection_label = None
     _archives = None
 
     def _update_dc(self):
@@ -340,7 +304,7 @@ class CollectionObject(DigitalObject):
                 data['archive_short_name'] = archive.mods.content.short_name
             except RequestFailed as rf:
                 logger.error('Error accessing archive object %s in Fedora: %s' % \
-                             (self.collection_id, rf))
+                             (self.collection.pid, rf))
         return data
 
 

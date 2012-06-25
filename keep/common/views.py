@@ -14,7 +14,7 @@ from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common import forms as commonforms
-from keep.common.models import Rights
+#from keep.common.models import Rights
 from keep.common.utils import solr_interface
 import unicodecsv
 

@@ -1,102 +1,33 @@
 import logging
 from django.db import models
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from rdflib import URIRef
 
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.util import RequestFailed
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
-from eulfedora.rdfns import relsext
+from eulfedora.rdfns import relsext, model as modelns
+from eulcm.models import boda
 
 from keep.collection.models import SimpleCollection
-from keep.common.fedora import DigitalObject, Repository
-from keep.common.models import Rights, FileMasterTech
-
+from keep.common.fedora import ArkPidDigitalObject, Repository
+from keep.common.utils import solr_interface
 from keep.collection.models import CollectionObject
-from rdflib import URIRef
 
 logger = logging.getLogger(__name__)
 
-class Series_Base(mods.RelatedItem):
-    '''Base class for Series information; subclass of
-    :class:`eulxml.xmlmap.mods.RelatedItem`.'''
 
-    uri = xmlmap.StringField('mods:identifier[@type="uri"]',
-            required=False, verbose_name='URI Identifier')
-    'URI identifier'
+# content models currently used for xacml access / restriction
+ACCESS_ALLOWED_CMODEL = "info:fedora/emory-control:ArrangementAccessAllowed-1.0"
+ACCESS_RESTRICTED_CMODEL = "info:fedora/emory-control:ArrangementAccessRestricted-1.0"
 
-    base_ark = xmlmap.StringField('mods:identifier[@type="base_ark"]',
-            required=False, verbose_name='base ark target of document')
-    'base ARK of target document'
 
-    full_id = xmlmap.StringField('mods:identifier[@type="full_id"]',
-            required=False, verbose_name='full id of this node')
-    'full id' # ? 
-
-    short_id = xmlmap.StringField('mods:identifier[@type="short_id"]',
-            required=False, verbose_name='short id of this node')
-    'short id'
-
-# FIXME: what is the difference between series 1 and 2?
-
-class Series2(Series_Base):
-    '''Subseries'''
-    series = xmlmap.NodeField("mods:relatedItem[@type='series']", Series_Base,
-        required=False,
-        help_text='subseries')
-
-class Series1(Series_Base):
-    '''Subseries'''
-    series = xmlmap.NodeField("mods:relatedItem[@type='series']", Series2,
-        required=False,
-        help_text='subseries')
-
-class ArrangementMods(mods.MODS):
-    '''Subclass of :class:`eulxml.xmlmap.mods.MODS` with mapping for
-    series information.'''
-    series = xmlmap.NodeField("mods:relatedItem[@type='series']", Series1,
-        required=False,
-        help_text='series')
-    'series'
-
-class ArrangementObject(DigitalObject):
+class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     '''Subclass of :class:`eulfedora.models.DigitalObject` for
     "arrangement" content.'''
 
-    
-    ARRANGEMENT_CONTENT_MODEL = 'info:fedora/emory-control:Arrangement-1.0'
-    CONTENT_MODELS = [ ARRANGEMENT_CONTENT_MODEL ]
     NEW_OBJECT_VIEW = 'arrangement:edit'
-
-    rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
-        defaults={
-            'control_group': 'M',
-            'versionable': True,
-        })
-    '''access control metadata :class:`~eulfedora.models.XmlDatastream`
-    with content as :class:`Rights`; datastream id ``Rights``'''
-
-    filetech = XmlDatastream("FileMasterTech", "File Technical Metadata", FileMasterTech ,defaults={
-            'control_group': 'M',
-            'versionable': True,
-        })
-    '''file technical metadata
-    :class:`~eulfedora.models.XmlDatastream` with content as
-    :class:`keep.common.models.FileMasterTech`; datastream ID
-    ``FileMasterTech``'''
-
-    mods = XmlDatastream('MODS', 'MODS Metadata', ArrangementMods, defaults={
-            'control_group': 'M',
-            'format': mods.MODS_NAMESPACE,
-            'versionable': True,
-        })
-    '''MODS :class:`~eulfedora.models.XmlDatastream` with content as
-    :class:`ArrangementMods`; datstream ID ``MODS``'''
-
-
-    collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
-    ''':class:`~keep.collection.models.CollectionObject` that this
-    object is a member of, via `isMemberOfCollection` relation.
-    '''
 
     component_key = {
         'FileMasterTech': 'file technical metadata',
@@ -105,6 +36,71 @@ class ArrangementObject(DigitalObject):
         'Rights': 'rights metadata',
         'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
     }
+
+    status_codes = {'processed': 'A', 'accessioned' : 'I'}
+    # map arrangement status to fedora object state
+
+    def _get_arrangement_status(self):
+        for status, code in self.status_codes.iteritems():
+            if self.state == code:
+                return status
+            
+    def _set_arrangement_status(self, status):
+        if status not in self.status_codes:
+            raise ValueError('%s is not a recognized arrangement status' % status)
+        self.state = self.status_codes[status]
+        
+    arrangement_status = property(_get_arrangement_status, _set_arrangement_status)
+    'arrangement status, i.e., whether this item is processed or accessioned'
+
+    _deprecated_collection = Relation(relsext.isMemberOf, type=CollectionObject)
+    ''':class:`~keep.collection.models.collection.v1_1.Collection` that this
+    object is a member of, via `isMemberOf` relation.
+    
+    **deprecated** because these objects should be using **isMemberOfCollection**
+    '''
+
+
+    
+    def save(self, logMessage=None):
+        '''Save the object.  If the content of the rights datastream
+        has changed, update content models used to control access to
+        match the current rights access code.
+
+        :param logMessage: optional log message
+        '''
+        if self.rights.isModified:
+            self._update_access_cmodel()
+
+        return super(ArrangementObject, self).save(logMessage)
+
+
+    def _update_access_cmodel(self):
+        # update access/restriction content models based on rights access code
+        
+        # FIXME: is there not a better way to add/remove cmodels ? 
+        _allowed_triple = (self.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
+        _restricted_triple = (self.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
+        
+        if self.rights.content.access_status and \
+           self.rights.content.access_status.code == '2':
+            # FIXME: sholudn't have to hard code this number;
+            # can we use researcher_access check instead ? 
+
+            # allow access.
+            # remove restricted if present, add allowed if not present
+            if _restricted_triple in self.rels_ext.content:
+                self.rels_ext.content.remove(_restricted_triple)
+            if _allowed_triple not in self.rels_ext.content:
+                self.rels_ext.content.add(_allowed_triple)
+
+        else:
+            # deny access.
+            # remove allowed if present, add restricted if not present
+            if _allowed_triple in self.rels_ext.content:
+                self.rels_ext.content.remove(_allowed_triple)
+            if _restricted_triple not in self.rels_ext.content:
+                self.rels_ext.content.add(_restricted_triple)
 
 
     def index_data(self):
@@ -116,7 +112,7 @@ class ArrangementObject(DigitalObject):
         # NOTE: we don't want to rely on other objects being indexed in Solr,
         # so index data should not use Solr to find any related object info
         
-        repo = Repository()
+        repo = Repository()   # FIXME: use relation from current object instead
 
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(ArrangementObject, self).index_data()
@@ -146,14 +142,23 @@ class ArrangementObject(DigitalObject):
 
         #Arrangement unique id
         try:
-            if self.filetech.content.file and self.filetech.content.file[0].local_id:
-                data["arrangement_id"] = self.filetech.content.file[0].local_id
+            if self.filetech.content.file:
+                if self.filetech.content.file[0].local_id:
+                    data["arrangement_id"] = self.filetech.content.file[0].local_id
+                if self.filetech.content.file[0].md5:
+                    data['content_md5'] = self.filetech.content.file[0].md5
         except Exception as e:
-            logging.error("Could not get Arrangement_Id for %s: %s" % self.pid, e)
+            logging.error("Error getting arrangement id or content MD5 for %s: %s" % self.pid, e)
 
         # rights access status code
         if self.rights.content.access_status:
             data['access_code'] = self.rights.content.access_status.code
+            # normally this should be picked up via dc:rights, but arrangement
+            # objects don't seem to have DC fields populated
+            # NOTE: migrated items don't seem to have rights text set
+            if self.rights.content.access_status.text:
+                data['rights'] = self.rights.content.access_status.text
+
 
         #get simple collections that have an association with this object
         try:
@@ -176,5 +181,124 @@ class ArrangementObject(DigitalObject):
         if sc_labels:
             data["simpleCollection_label"] = sc_labels
 
+            
+
+
+        return data
+        
+
+
+    @staticmethod
+    def by_arrangement_id(id, repo=None):
+        '''
+        Static method to find an :class:`ArrangementObject` by its
+        local or arrangement id.  Looks for the item in Solr and
+        returns an :class:`ArrangementObject` instance initialized
+        from the repository if a single match is found for the
+        requested id.
+
+        Raises :class:`django.core.exceptions.MultipleObjectsReturned`
+        if more than one match is found; raises
+        :class:`django.core.exceptions.ObjectDoesNotExist` if no
+        matches are found in the Solr index.
+
+        :param id: arrangement id or local id
+        
+        :param repo: optional :class:`eulfedora.server.Repository`
+            to use an existing connection with specific credentials
+            
+        :returns: :class:`ArrangementObject` 
+    
+        
+        '''
+        solr = solr_interface()
+        q = solr.query(arrangement_id=id,
+                   content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
+                   .field_limit('pid')
+
+        # check that we found one and only one
+        found = len(q)
+        # borrowing custom django exceptions for not found / too many
+        # matches
+        if found > 1:
+            raise MultipleObjectsReturned('Found %d records with arrangement id %s' % \
+                                          (found, id))
+        if not found:
+            raise ObjectDoesNotExist('No record found with arrangement id %s' % id)
+
+        if repo is None:
+            repo = Repository()
+            
+        return repo.get_object(q[0]['pid'], type=ArrangementObject)
+
+
+
+class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
+    CONTENT_MODELS = [ boda.RushdieFile.RUSHDIE_FILE_CMODEL,
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
+
+
+class EmailMessage(boda.EmailMessage, ArrangementObject):
+    CONTENT_MODELS = [ boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
+
+    NEW_OBJECT_VIEW = 'arrangement:email'
+
+    @property
+    def headers(self):
+        '''
+        Access CERP headers as a dictionary.
+        '''
+        return {h.name : h.value for h in self.cerp.content.headers}
+
+    def email_label(self):
+        '''
+        Construct a label based on to, from, subject and date as
+        stored in :attr:`EmailMessage.cerp.content`.
+
+        Returns object label if set.
+        '''
+        if self.label:
+            return self.label
+
+        # TODO: we probably should have better error handling
+        # (cerp not present? expected fields not set?)
+
+        # sender & to should always be present
+        sender = self.cerp.content.from_list[0]
+        to = self.cerp.content.to_list[0]
+        if len(self.cerp.content.to_list) > 1:
+            to = '%s et al.' % to
+                
+        label = 'Email from %s to %s' % (sender, to)
+
+        if self.cerp.content.subject_list:
+            subject = self.cerp.content.subject_list[0]
+            label += ' %s' % subject
+            
+        date = self.headers.get('Date', None)
+        if date is not None:
+            label += ' on %s' % date
+
+        return label
+
+
+    def index_data(self):
+        '''Extend the :meth:`keep.arrangement.models.ArrangementObject.index_data` method to
+        include additional data specific to EmailMessages objects.
+        '''
+
+        data = super(EmailMessage, self).index_data()
+        data['label'] = self.email_label()
+        # email does not have filetech or content; use mime data checksum
+        # for content md5
+        if self.mime_data.exists:
+             data['content_md5'] = self.mime_data.checksum
+
         return data
 
+class Mailbox(boda.Mailbox, ArrangementObject):
+    CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
+                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
+    
+    NEW_OBJECT_VIEW = 'arrangement:mailbox'
