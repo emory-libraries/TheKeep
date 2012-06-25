@@ -1,7 +1,6 @@
 from collections import namedtuple
 from django.db import models
 from eulxml import xmlmap
-from eulxml.xmlmap.fields import DateField
 
 class Permissions(models.Model):
     class Meta:
