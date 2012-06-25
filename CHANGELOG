@@ -3,8 +3,8 @@
 CHANGELOG
 =========
 
-Release 1.4
------------
+Release 1.4 - search, audit trail, and collection enhancements
+--------------------------------------------------------------
 
 * A logged in user can perform a simple keyword search to quickly find
   any records in the repository that contain the relevant keywords, so
@@ -12,8 +12,32 @@ Release 1.4
 * A logged in user can search for records by the user who uploaded
   them, in order to easily find records they created or items uploaded
   by a specific user.
+* A logged in user can search for records by creation date, in order to 
+  easily find recent items or items uploaded on a specific date.
+* A user can filter keyword search results by type
+  (collection/audio/born-digital), collection, rights status, or
+  upload user so that they can easily narrow a large result set to the
+  items they are interested in.
 * When ingesting a composite file or batch of files, an archivist or
   curator can enter an optional log message for auditing purposes.
+* An archivist can make an optional comment when making metadata
+  changes using any edit form, so that the audit trail will be a more
+  useful record of changes made to an object.
+* Logged in users can quickly select a collection on edit, upload and
+  audo/arrangement search form by typing any part of the collection
+  name or number and choosing from matching suggestions.
+* An archivist or curator uploading files for ingest must associate
+  them with an archival collection, so that the content is linked to
+  the appropriate collection from the point of ingest.
+* An archivist can view a human-readable version of the Fedora audit
+  trail for an item in order to review the history of all actions on a
+  file since ingest.
+* When a user attempts to upload a file without choosing a collection
+  they see an error message, so that they don't waste time uploading
+  files without setting a required field.
+* Only authorized users, within the born-digital archives group, can
+  access born-digital archival objects and metadata via the combined
+  search. 
 * Updated to use Django staticfiles app to manage static site content.
 * Added support for a beta warning to be displayend in test/staging
   sites; turn on via **ENABLE_BETA_WARNING** setting.
