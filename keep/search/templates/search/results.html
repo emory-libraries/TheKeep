@@ -22,7 +22,7 @@
       <ul>
       {% for val, count in results %}
         <li><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
-            ({{ count }})</li>
+            ({{ count|intcomma }})</li>
       {% endfor %}
       </ul>
     {% endfor %}
