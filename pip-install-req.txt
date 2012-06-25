@@ -1,12 +1,8 @@
 django==1.3.1
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.17.0-dev.tar.gz
-#eulxml>=0.18.0
-# dev eulxml for cerp updates
--e git://github.com/emory-libraries/eulxml.git@develop#egg=eulxml
+eulxml>=0.18.0
 eulfedora>=0.19.0
-#eulexistdb>=0.15.1
-# need branch until eulxml update is released
--e git://github.com/emory-libraries/eulexistdb.git@feature/eulxml-date-update#egg=eulexistdb
+eulexistdb>=0.15.2
 eulcommon>=0.17.0
 http://waterhouse.library.emory.edu:8080/hudson/job/pidman-rest-client-1.1.x/11/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
 python-magic
