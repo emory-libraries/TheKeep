@@ -19,7 +19,7 @@ from eulxml.xmlmap import cerp
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from keep.arrangement.management.commands import migrate_rushdie
 from keep.arrangement.models import ArrangementObject, \
-     ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage
+     ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage, Mailbox
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
@@ -211,7 +211,7 @@ class ArrangementViewsTest(KeepTestCase):
         #self.rushdie_obj.rels_ext.content.add(relation)
 
         self.rushdie_obj.label = "Test Rushdie Object"
-        
+
 
         #Create some test filetech content
         filetech_1 = FileMasterTech_Base()
@@ -250,7 +250,25 @@ class ArrangementViewsTest(KeepTestCase):
         self.rushdie_obj.mods.content.series.series.title = 'series_title_vale'
 
         self.rushdie_obj.save()
-        self.pids.append(self.rushdie_obj.pid) 
+        self.pids.append(self.rushdie_obj.pid)
+
+        #create a mailbox
+        self.mailbox = self.repo.get_object(type=Mailbox)
+        self.mailbox.pid = 'mailbox:pid'
+        self.mailbox.label = 'TestMailBox'
+
+        # create emmail for test DO NOT INGEST this is used with mock for get_object return value
+        self.email = self.repo.get_object(type=EmailMessage)
+        self.email.pid = 'email:pid'
+        self.email.cerp.content.from_list = ['sender@sendmail.com']
+        self.email.cerp.content.to_list = ['guy1@friend.com', 'guy2@friend.com']
+        self.email.cerp.content.subject_list = ['Interesting Subject']
+        self.email.mailbox = self.mailbox
+        h1 = cerp.Header()
+        h1.name='Date'
+        h1.value = 'Fri May 11 2012'
+        self.email.cerp.content.headers.append(h1)
+
 
     def tearDown(self):
         super(ArrangementViewsTest, self).tearDown()
@@ -362,6 +380,48 @@ class ArrangementViewsTest(KeepTestCase):
         audit_trail =  [a.message for a in obj.audit_trail.records]
         self.assertEqual(data['comments-comment'], audit_trail[-1])
 
+    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
+    def test_email_view(self, mockget_obj):
+        mockget_obj.return_value = self.email
+
+
+        #non-authenticated user
+        email_url = reverse('arrangement:email', kwargs={'pid': 'email:pid'})
+
+        respons = self.client.get(email_url)
+        code = respons.status_code
+        self.assertEqual(302, code, 'non-authenticated user does not have acccess to page')
+
+        #authenticated user
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(email_url)
+        code = response.status_code
+        self.assertEqual(200, code, 'authenticated should have acccess to page')
+
+        #check for email field values
+        self.assertContains(response, 'Interesting Subject')
+        self.assertContains(response, 'sender@sendmail.com')
+        self.assertContains(response, 'guy1@friend.com; guy2@friend.com')
+        self.assertContains(response, 'Fri May 11 2012')
+
+
+    @patch('keep.arrangement.views.solr_interface')
+    def test_mailbox_view(self, mocksolr):
+        #non-authenticated user
+        mailbox_url = reverse('arrangement:mailbox', kwargs={'pid': 'mailbox:pid'})
+        respons = self.client.get(mailbox_url)
+        code = respons.status_code
+        self.assertEqual(302, code, 'non-authenticated user does not have acccess to page')
+
+        #authenticated user
+        self.client.login(**ADMIN_CREDENTIALS)
+        respons = self.client.get(mailbox_url)
+        code = respons.status_code
+        self.assertEqual(200, code, 'authenticated should have acccess to page')
+
+        self.assertEqual(mocksolr.return_value.query.call_args_list[0][1], {'pid':'mailbox:pid'})
+        self.assertEqual(mocksolr.return_value.query.call_args_list[1][1], {'isPartOf':'info:fedora/mailbox:pid'})
+        
 
 class ArrangementObjectTest(KeepTestCase):
 

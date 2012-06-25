@@ -267,6 +267,3 @@ def mailbox_view(request, pid):
                    'show_pages': show_pages,
                    'search_opts': request.GET.urlencode(),
                   })
-
-
-
