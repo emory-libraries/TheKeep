@@ -1,5 +1,6 @@
 {% extends 'search/snippets/list-item.html' %}
 {% load humanize %}
+{% load audio_extras %}
 
 {% block item_title %}
 <p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
@@ -9,8 +10,9 @@
   {% endif %} </p>
 {% endblock %}
 
-{% block item_info %}  {# FIXME: use horizontal list for this ? #}
-  <p> {{ obj.duration|intcomma }}s
+{% block item_info %}  {# TODO: use horizontal list for this #}
+  <p>
+  {% if obj.duration %}{{ obj.duration|seconds_duration }} | {% endif %}
   {% if obj.has_original %}
      <a href="{% url audio:download-audio obj.pid %}">original audio</a> 
   | 
@@ -25,7 +27,7 @@
     <a href="{{ access_url }}">access copy</a>
     {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
     {# TODO: mimetype icon ? #}
-  |
+  {% if obj.rights %} | {% endif %}
   {% endif %}
   {{ obj.rights|join:', ' }}</p>
 {% endblock %}

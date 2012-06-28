@@ -1,4 +1,5 @@
 {% extends "site_base.html" %}
+{% load audio_extras %}
 
 {% block page-subtitle %}: Audio : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Audio File{% endblock %}
@@ -39,7 +40,10 @@
 <ul class='extra dslist horiz'>
   {% with 'original audio' as original %}
     {% if obj.audio.exists %}
-      <li><a href="{% url audio:download-audio obj.pid %}">{{ original }}</a></li>
+      <li>
+        <a href="{% url audio:download-audio obj.pid %}">{{ original }}</a>
+        {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
+      </li>
     {% else %}
       <li>{{ original }}</li>
     {% endif %}
