@@ -9,6 +9,8 @@ python-magic
 pycrypto
 django-celery
 celery==2.5.1
+# known working version of kombu; 2.2.3 causes an error (with celery)
+kombu==2.1.8
 mutagen
 poster
 #sunburnt>=0.6
