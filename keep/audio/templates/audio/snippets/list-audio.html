@@ -4,7 +4,7 @@
 {% block item_title %}
 <p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
   {% if obj.part %} ({{ obj.part }}){% endif %}
-  {% if obj.collection_id %} {{ obj.collection_id }}
+  {% if obj.collection_id %} 
     (part of <a href="{# {% url collection:edit obj.collection_id|slice:'12:' %} #}">{{ obj.collection_label }}</a>)
   {% endif %} </p>
 {% endblock %}
@@ -16,7 +16,13 @@
   | 
   {% endif %}
   {% if obj.has_access_copy %}
-    <a href="{% url audio:download-compressed-audio obj.pid 'mp3' %}">access copy</a>
+    {% if obj.access_copy_mimetype == "audio/mp4" %}
+      {% url audio:download-compressed-audio obj.pid 'm4a' as access_url %}
+    {% else %} {# default to mp3 otherwise #}
+      {% url audio:download-compressed-audio obj.pid 'mp3' as access_url %}
+    {% endif %}
+
+    <a href="{{ access_url }}">access copy</a>
     {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
     {# TODO: mimetype icon ? #}
   |
