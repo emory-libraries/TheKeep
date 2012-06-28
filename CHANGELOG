@@ -3,6 +3,16 @@
 CHANGELOG
 =========
 
+Release 1.4.1 
+-------------
+
+* Correct a bug in the access link URL for downloading MP4/M4A version
+  of audio items in the new combined search.
+* Users can view the duration for audio items in the search display in
+  HH:MM:SS format rather than in total seconds, so that duration can
+  be easily understood.
+
+
 Release 1.4 - search, audit trail, and collection enhancements
 --------------------------------------------------------------
 
