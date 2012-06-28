@@ -5,7 +5,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 from eulfedora.util import RequestFailed
 
-from keep.arrangement.models import ArrangementObject
+from keep.arrangement.models import ArrangementObject, EmailMessage
 from keep.common.models import rights_access_terms_dict
 from keep.common.eadmap import Series
 from keep.common.utils import solr_interface
@@ -16,6 +16,9 @@ class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
         make_option('--csv', dest='csvfile',
                     help='CSV file with verdict information (REQUIRED)'),
+        make_option('--email', dest='email',
+                    action='store_true', default=False,
+                    help='Use this option when processing CSV with verdicts for emails'),
         make_option('-n', '--noact', action='store_true', default=False,
                     help='''Test run: report what would be done, but do not modify
                     anything in the repository'''),
@@ -31,7 +34,16 @@ class Command(BaseCommand):
     csv_verdict = {
         'As Is': '2',
         'Restricted': '4',
-        'Virtual': '2'
+        'Virtual': '2',
+        'needs-review' : '4',
+        'family-corr' : '4',
+        'rushdie-restrict' : '4',
+        'restricted-marbl' : '4',
+        'rushdie-approve': '2',
+        'in': '2',
+        'out': '2',
+        'old-in': '2',
+        'old-out': '2'
     }
 
     # default django verbosity levels: 0 = none, 1 = normal, 2 = all
@@ -41,7 +53,7 @@ class Command(BaseCommand):
     rushdie_eadid = 'rushdie1000'
     rushdie_ead_baseurl = 'https://findingaids.library.emory.edu/documents/rushdie1000/'
 
-    def handle(self, csvfile=None, verbosity=1, noact=False, *args, **options):
+    def handle(self, csvfile=None, verbosity=1, noact=False, email=False, *args, **options):
         if csvfile is None:
             raise CommandError('CSV filename is required')
         self.verbosity = int(verbosity)  # ensure we compare int to int
@@ -54,98 +66,112 @@ class Command(BaseCommand):
         # skip header row
         csvreader.next()
 
-        stats = defaultdict(int)
-        verdict_stats = defaultdict(int)
+        self.stats = defaultdict(int)
+        self.verdict_stats = defaultdict(int)
         series_stats = defaultdict(int)
         for row in csvreader:
-            stats['rows'] += 1
+            self.stats['rows'] += 1
             try:
+                # if email flag then only run logic for email objects
+                if email:
+                    if not row['checksum']:
+                        print "Row Missing checksum"
+                        continue
+                    else:
+                        checksum = row['checksum']
+                    if not row['path']:
+                        print "Row Missing path"
+                        continue
+                    else:
+                        path = row['path']
 
-                # check if there is a duplicate checksum
-                if row['checksum']:
-                    solr = solr_interface()
-                    q = solr.query(content_md5=row['checksum'],
-                                   content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
-                                   .field_limit(['pid', 'title', 'simpleCollection_label'])
-                    num_found = len(q)
-                    if num_found > 1:
-                        print 'Error: found more than one record with matching checksum for %s:' \
-                              % row['id']
+                    self.procss_email(checksum, path, noact)
+                else:
+                    # check if there is a duplicate checksum
+                    if row['checksum']:
+                        solr = solr_interface()
+                        q = solr.query(content_md5=row['checksum'],
+                                       content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
+                                       .field_limit(['pid', 'title', 'simpleCollection_label'])
+                        num_found = len(q)
+                        if num_found > 1:
+                            print 'Error: found more than one record with matching checksum for %s:' \
+                                  % row['id']
 
-                        for record in q:
-                            # simple collection field is multiple, even though
-                            # our content currently only belongs to one;
-                            # join into a single field that can be used for output
-                            record['collection']  = ', '.join(record['simpleCollection_label'])
-                            print '  %(pid)s - %(title)s (%(collection)s)' % record
+                            for record in q:
+                                # simple collection field is multiple, even though
+                                # our content currently only belongs to one;
+                                # join into a single field that can be used for output
+                                record['collection']  = ', '.join(record['simpleCollection_label'])
+                                print '  %(pid)s - %(title)s (%(collection)s)' % record
 
-                        # skip this record, must be handled manually
+                            # skip this record, must be handled manually
+                            continue
+
+                        # if there is exactly one match, save it to confirm with
+                        # pid found by arrangement id
+                        elif num_found == 1:
+                            checksum_pid = q[0]['pid']
+
+
+
+                    obj = ArrangementObject.by_arrangement_id(row['id'])
+                    if self.verbosity > self.v_normal:
+                        print 'Found %s for arrangement id %s' % \
+                              (obj.pid, row['id'])
+
+                    if obj.pid != checksum_pid:
+                        print 'Error: pid found by checksum (%s) does not match pid found by arrangement id (%s)' \
+                              % (checksum_pid, obj.pid)
+
                         continue
 
-                    # if there is exactly one match, save it to confirm with
-                    # pid found by arrangement id
-                    elif num_found == 1:
-                        checksum_pid = q[0]['pid']
-                        
-
-                
-                obj = ArrangementObject.by_arrangement_id(row['id'])
-                if self.verbosity > self.v_normal:
-                    print 'Found %s for arrangement id %s' % \
-                          (obj.pid, row['id'])
-
-                if obj.pid != checksum_pid:
-                    print 'Error: pid found by checksum (%s) does not match pid found by arrangement id (%s)' \
-                          % (checksum_pid, obj.pid)
-                    
-                    continue
 
 
 
-                    
-                stats['found'] += 1
+                    self.stats['found'] += 1
 
-                # set rights status based on verdict in csv
+                    # set rights status based on verdict in csv
 
-                # if no verdict is set, default to restricted
-                if not row['verdict']:
-                    row['verdict'] = 'Restricted'
-                    if self.verbosity >= self.v_normal:
-                        print 'No verdict set for %(id)s; defaulting to restricted' % row
+                    # if no verdict is set, default to restricted
+                    if not row['verdict']:
+                        row['verdict'] = 'Restricted'
+                        if self.verbosity >= self.v_normal:
+                            print 'No verdict set for %(id)s; defaulting to restricted' % row
 
-                
-                # set access code, 
-                verdict_assigned = self.set_access_status(obj,
-                                                          row['verdict'], row)
-                if verdict_assigned:
-                    # update tally for this verdict if successful
-                    verdict_stats[verdict_assigned] += 1
 
-                # set series/subseries information
-                series = self.set_series(obj, row)
-                if series:
-                    series_stats[series] += 1
+                    # set access code,
+                    verdict_assigned = self.set_access_status(obj,
+                                                              row['verdict'], row)
+                    if verdict_assigned:
+                        # update tally for this verdict if successful
+                        self.verdict_stats[verdict_assigned] += 1
 
-                # if not noact mode, save object
-                if not noact:
-                    try:
-                        # only save if changed, so we can keep track of
-                        # how many updates are made
-                        if obj.rights.isModified() or obj.mods.isModified():  
-                            updated = obj.save('import verdict & series/subseries')
-                            stats['updated'] += 1
-                            
-                    except RequestFailed:
-                        print 'Error saving %s' % obj.pid
-                        stats['save_error'] += 1
-                    
+                    # set series/subseries information
+                    series = self.set_series(obj, row)
+                    if series:
+                        series_stats[series] += 1
+
+                    # if not noact mode, save object
+                    if not noact:
+                        try:
+                            # only save if changed, so we can keep track of
+                            # how many updates are made
+                            if obj.rights.isModified() or obj.mods.isModified():
+                                updated = obj.save('import verdict & series/subseries')
+                                self.stats['updated'] += 1
+
+                        except RequestFailed:
+                            print 'Error saving %s' % obj.pid
+                            self.stats['save_error'] += 1
+
 
             except ObjectDoesNotExist as err:
-                stats['not_found'] +=1
+                self.stats['not_found'] +=1
                 if self.verbosity >= self.v_normal:
                     print 'Error: %s' % err
             except MultipleObjectsReturned as err:
-                stats['too_many'] += 1   
+                self.stats['too_many'] += 1
                 if self.verbosity >= self.v_normal:
                     print 'Error: %s' % err
 
@@ -153,16 +179,16 @@ class Command(BaseCommand):
         # summary
         if self.verbosity >= self.v_normal:
             print '''\nProcessed %(rows)d rows and found %(found)d corresponding record(s)
-%(not_found)d record(s) not found, %(too_many)d with multiple matches''' % stats
+%(not_found)d record(s) not found, %(too_many)d with multiple matches''' % self.stats
             print 'Verdicts imported:\n    ' + \
                   '; '.join('%d %s' % (n, v)
-                            for v, n in verdict_stats.iteritems())
+                            for v, n in self.verdict_stats.iteritems())
             print 'Series and subseries assigned:\n  '+ \
                   '\n  '.join('%s : %d' % (v, n)
                             for v, n in series_stats.iteritems())
             if not noact:
                 print 'Updated %(updated)d record(s); error saving %(save_error)d records' \
-                      % stats
+                      % self.stats
                     
             
 
@@ -335,3 +361,35 @@ class Command(BaseCommand):
         url_parts.append(series_info['short_id'])
         mods_series.uri = '/'.join(url_parts)
 
+    def procss_email(self, checksum, path, noact):
+        '''Process verdicts for email content.
+
+        :param checksum: checksum from the CSV file to search on
+
+        :param path: folder/subject of the email message.
+        This is used to determine verdict
+
+        :param noact: specifies noact mode
+
+        '''
+        obj = EmailMessage.by_checksum(checksum)
+        self.stats['found'] += 1
+
+        verdict = path.split('/')[0]
+        verdict_assigned = self.set_access_status(obj, verdict, {'verdict': verdict, 'id': checksum})
+        self.verdict_stats[verdict_assigned] += 1
+
+        if not noact:
+            try:
+                # only save if changed, so we can keep track of
+                # how many updates are made
+                if obj.rights.isModified() or obj.mods.isModified():
+                    updated = obj.save('import verdict & series/subseries')
+                    self.stats['updated'] += 1
+
+            except RequestFailed:
+                print 'Error saving %s' % obj.pid
+                self.stats['save_error'] += 1
+
+            print 'Updated %(updated)d record(s); error saving %(save_error)d records' \
+                      % self.stats

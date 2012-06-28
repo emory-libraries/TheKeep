@@ -574,4 +574,31 @@ class EmailMessageTest(KeepTestCase):
 
             data = self.email.index_data()
             self.assertEqual(self.email.mime_data.checksum, data['content_md5'])
+
+
+    @patch('keep.arrangement.models.solr_interface', spec=sunburnt.SolrInterface)
+    def test_by_checksum(self, mocksolr):
+        # no match
+        self.assertRaises(ObjectDoesNotExist, EmailMessage.by_checksum,
+                          42)
+        solr = mocksolr.return_value
+        solr.query.assert_called_with(content_md5=42,
+                                      content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+        solr.query.return_value.field_limit.assert_called_with('pid')
+
+        # too many matches
+        solr.query.return_value.field_limit.return_value = [{'pid': 'pid:1'},
+                                                            {'pid': 'pid:2'}]
+        self.assertRaises(MultipleObjectsReturned, EmailMessage.by_checksum,
+                          42)
+
+        # one match
+        solr.query.return_value.field_limit.return_value = [{'pid': 'pid:1'}]
+        em = EmailMessage.by_checksum(42)
+        self.assert_(isinstance(em, EmailMessage))
+
+        # custom repo object
+        mockrepo = Mock()
+        em = EmailMessage.by_checksum(42, mockrepo)
+        mockrepo.get_object.assert_called_with('pid:1', type=EmailMessage)
         
