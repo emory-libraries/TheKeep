@@ -383,7 +383,7 @@ class Command(BaseCommand):
             try:
                 # only save if changed, so we can keep track of
                 # how many updates are made
-                if obj.rights.isModified() or obj.mods.isModified():
+                if obj.rights.isModified():
                     updated = obj.save('import verdict & series/subseries')
                     self.stats['updated'] += 1
 
