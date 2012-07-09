@@ -9,15 +9,6 @@ from urlparse import urlparse
 from django.conf import settings
 from django.contrib.sites.models import Site
 
-# NOTE: this is *not* in svn because it contains sensitive info
-# to be redacted email messages
-from keep.common.email_redactions import redactions
-# content should look something like this:
-# redactions = {
-#    r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}': 'IP address',
-# }
-#    regex to replace : label to display (i.e., [REDACTED: IP address])
-
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +87,19 @@ def redact_email(content):
     '''Replace any sensitive information in the email message with
     a redacted text label.
     '''
+    # NOTE: this is *not* in svn because it contains sensitive info
+    # to be redacted email messages
+
+    # ** ONLY required for this method **
+    # Should error if import file is not available.
+
+    from keep.common.email_redactions import redactions
+    # content should look something like this:
+    # redactions = {
+    #    r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}': 'IP address',
+    # }
+    #    regex to replace : label to display (i.e., [REDACTED: IP address])
+
     for regex, label in redactions.iteritems():
         content = re.sub(regex, '[REDACTED: %s]' % label, content,
                      flags=re.MULTILINE | re.IGNORECASE)
