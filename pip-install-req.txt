@@ -7,7 +7,7 @@ eulcommon>=0.17.0
 http://waterhouse.library.emory.edu:8080/hudson/job/pidman-rest-client-1.1.x/11/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
 python-magic
 pycrypto
-django-celery
+django-celery==2.5.5
 celery==2.5.1
 mutagen
 poster
