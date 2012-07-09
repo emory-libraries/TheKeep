@@ -249,7 +249,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         '''
         Access CERP headers as a dictionary.
         '''
-        return dict((h.name, h.value) for h in self.cerp.content.headers)
+        return dict([(h.name, h.value) for h in self.cerp.content.headers])
 
     def email_label(self):
         '''
