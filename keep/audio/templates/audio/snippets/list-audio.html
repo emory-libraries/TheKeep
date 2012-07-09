@@ -1,5 +1,6 @@
 {% extends 'search/snippets/list-item.html' %}
 {% load humanize %}
+{% load audio_extras %}
 
 {% block item_title %}
 <p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
@@ -11,13 +12,18 @@
 
 {% block item_info %}
 <ul class="horiz">
- <li>{{ obj.duration|intcomma }}s</li>
+ {% if obj.duration %}<li>{{ obj.duration|seconds_duration }}</li>{% endif %}
   {% if obj.has_original %}
      <li><a href="{% url audio:download-audio obj.pid %}">original audio</a></li>
   {% endif %}
   {% if obj.has_access_copy %}
+    {% if obj.access_copy_mimetype == "audio/mp4" %}
+      {% url audio:download-compressed-audio obj.pid 'm4a' as access_url %}
+    {% else %} {# default to mp3 otherwise #}
+      {% url audio:download-compressed-audio obj.pid 'mp3' as access_url %}
+    {% endif %}
     <li> 
-       <a href="{% url audio:download-compressed-audio obj.pid 'mp3' %}">access copy</a>
+      <a href="{{ access_url }}">access copy</a>
       {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
       {# TODO: mimetype icon ? #}
     </li>

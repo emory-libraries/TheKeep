@@ -131,6 +131,11 @@ def keyword_search(request):
             # For multi-valued fields (author, subject), we could have multiple
             # filters on the same field; treat all facet fields as lists.
             for val in request.GET.getlist(filter):
+
+                # ignore any facet if the value is not set
+                if not val:
+                    continue
+                
                 # filter the current solr query
                 q = q.filter(**{facet_field: val})
 

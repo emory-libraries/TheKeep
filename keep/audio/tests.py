@@ -28,6 +28,7 @@ from keep.audio import forms as audioforms, models as audiomodels
 from keep.audio.feeds import PodcastFeed, feed_items
 from keep.audio.management.commands import ingest_cleanup
 from keep.audio.tasks import convert_wav_to_mp3
+from keep.audio.templatetags import audio_extras
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
 from keep.common import models as commonmodels
@@ -2487,3 +2488,19 @@ class UploadFormTest(TestCase):
                          form.cleaned_data['filenames'][0])
         self.assertEqual(files[form.cleaned_data['uploaded_files'][1]],
                          form.cleaned_data['filenames'][1])
+
+class TestAudioExtrasTemplateTags(TestCase):
+
+    def test_seconds_duration(self):
+        self.assertEqual('0:00:01',
+                         audio_extras.seconds_duration(1))
+        self.assertEqual('0:00:01',
+                         audio_extras.seconds_duration('1'))
+        self.assertEqual('0:01:05',
+                         audio_extras.seconds_duration(65))
+        self.assertEqual('3:22:17',
+                         audio_extras.seconds_duration(3*60*60 + 22*60 + 17))
+        self.assertEqual('16:21:13',
+                         audio_extras.seconds_duration(16*60*60 + 21*60 + 13))
+        self.assertEqual('',
+                         audio_extras.seconds_duration(''))
