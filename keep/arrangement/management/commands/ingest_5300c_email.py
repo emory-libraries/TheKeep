@@ -12,6 +12,7 @@ from django.core.urlresolvers import reverse
 
 from bodatools.binfile import eudora
 from eulfedora.rdfns import relsext, model as modelns
+from eulfedora.util import RequestFailed
 from eulxml.xmlmap import mods, cerp
 from pidservices.clients import parse_ark
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
@@ -279,25 +280,26 @@ Eudora files. (One-time import for 5300c content)
                 
                 
 
-            with open(folder_toc) as tocdata, open(folder_path) as mbox:
-                toc = eudora.Toc(tocdata)   # load as eudora toc binfile
+            with open(folder_toc) as tocdata:
+                with open(folder_path) as mbox:
+                    toc = eudora.Toc(tocdata)   # load as eudora toc binfile
 
-                # eudora Toc returns messages in folder order;
-                # pass order in to store in CERP for sorting/display
-                folder_order = 0
-                for msg in toc.messages:
-                    self.stats['message'] += 1
-                    
-                    # get data from mbox file based on msg offset/size
-                    mbox.seek(msg.offset)
-                    # read message content from mailbox data file
-                    msg_data = mbox.read(msg.size)
-
-                    self.ingest_message(msg_data, mailbox, folder_order)
-                    folder_order += 1
-                    # max to ingest for testing
-                    if self.max_ingest and self.stats['ingested'] >= self.max_ingest:
-                        break
+                    # eudora Toc returns messages in folder order;
+                    # pass order in to store in CERP for sorting/display
+                    folder_order = 0
+                    for msg in toc.messages:
+                        self.stats['message'] += 1
+                        
+                        # get data from mbox file based on msg offset/size
+                        mbox.seek(msg.offset)
+                        # read message content from mailbox data file
+                        msg_data = mbox.read(msg.size)
+                        
+                        self.ingest_message(msg_data, mailbox, folder_order)
+                        folder_order += 1
+                        # max to ingest for testing
+                        if self.max_ingest and self.stats['ingested'] >= self.max_ingest:
+                            break
 
         # summary
 
