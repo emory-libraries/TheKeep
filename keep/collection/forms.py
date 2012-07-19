@@ -124,7 +124,7 @@ class CollectionForm(XmlObjectForm):
 
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
     collection = DynamicChoiceField(label="Archive",  choices=archive_choices,
-                    required=False,
+                    required=True,
                     help_text="Owning repository for this collection of materials.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",
