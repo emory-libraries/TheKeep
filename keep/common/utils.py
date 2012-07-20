@@ -55,6 +55,8 @@ def solr_interface():
     http_opts = {}
     if hasattr(settings, 'SOLR_CA_CERT_PATH'):
         http_opts['ca_certs'] = settings.SOLR_CA_CERT_PATH
+    if getattr(settings, 'SOLR_DISABLE_CERT_CHECK', False):
+        http_opts['disable_ssl_certificate_validation'] = True
 
     # use http proxy if set in ENV
     http_proxy = os.getenv('HTTP_PROXY', None)
