@@ -354,8 +354,15 @@ class TestCollectionForm(KeepTestCase):
                     "name_parts form should be instance of NamePartForm, got %s" % \
                     fs.__class__)
 
-    def test_update_instance(self):
+    @patch('keep.collection.forms.solr_interface')
+    def test_update_instance(self, mock_solr_interface):
         # test custom save logic for date created
+
+        # configure solr response for form validation
+        solr_response = mock_solr_interface.return_value.query.return_value \
+                            .execute.return_value
+        solr_response.result.numFound = 0
+
         # - must be valid to update instance
         self.assertTrue(self.form.is_valid(), "test form object with test data is valid")
         # initial data has start and end date
@@ -433,8 +440,15 @@ class CollectionViewsTest(KeepTestCase):
             except RequestFailed:
                 logger.warn('Failed to purge %s in tear down' % pid)
 
-    def test_create(self):
+    @patch('keep.collection.forms.solr_interface')
+    def test_create(self, mock_solr_interface):
         # test creating a collection object
+
+        # configure solr response for form validation
+        solr_response = mock_solr_interface.return_value.query.return_value \
+                            .execute.return_value
+        solr_response.result.numFound = 0
+
         # log in as staff
         # NOTE: using admin view so user credentials will be used to access fedora
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
@@ -462,9 +476,20 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, 'Select a valid choice',
             msg_prefix='error message for collection pid not in list')
 
+        # submit a duplicate collection - should redisplay with errors
+        data = COLLECTION_DATA.copy()
+        solr_response.result.numFound = 1
+        solr_response[0]['pid'] = 'pidspace:otherpid'
+        response = self.client.post(new_coll_url, data)
+        self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
+                "MODS CollectionForm is set in response context after duplicate submission")
+        self.assertContains(response, 'A collection already exists with this Archive and Source Id', 2,
+            msg_prefix='error message for duplicate archive/source id')
+
         # POST and create new object, verify in fedora
         data = COLLECTION_DATA.copy()
         data['_save_continue'] = True   # use 'save and continue' so we can get created object from response
+        solr_response.result.numFound = 0
         response = self.client.post(new_coll_url, data, follow=True)
         # do we need to test actual response, redirect ?
         messages = [ str(msg) for msg in response.context['messages'] ]
@@ -491,8 +516,14 @@ class CollectionViewsTest(KeepTestCase):
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
 
 
-    @patch('keep.search.views.solr_interface')  # site-index on redirect
+#    @patch('keep.search.views.solr_interface')  # site-index on redirect - do we need this too?
+    @patch('keep.collection.forms.solr_interface')
     def test_edit(self, mock_solr_interface):
+        # configure solr response for form validation
+        solr_response = mock_solr_interface.return_value.query.return_value \
+                            .execute.return_value
+        solr_response.result.numFound = 0
+
         repo = Repository()
         obj = FedoraFixtures.rushdie_collection()
         # store initial collection id from fixture
@@ -605,6 +636,16 @@ class CollectionViewsTest(KeepTestCase):
         messages = [ str(msg) for msg in response.context['messages'] ]
         self.assert_('Successfully created collection' in messages[0],
             'successful collection creation message displayed to user on save and continue editing')
+
+        # editing source id/archive to create a duplicate should fail.
+        data = COLLECTION_DATA.copy()
+        solr_response.result.numFound = 1
+        solr_response[0]['pid'] = 'pidspace:otherpid'
+        response = self.client.post(new_collection_url, data, follow=True)
+        self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
+                "MODS CollectionForm is set in response context after duplicate submission")
+        self.assertContains(response, 'A collection already exists with this Archive and Source Id', 2,
+            msg_prefix='error message for duplicate archive/source id')
 
         # attempt to edit non-existent record
         edit_url = reverse('collection:edit', args=['my-bogus-pid:123'])

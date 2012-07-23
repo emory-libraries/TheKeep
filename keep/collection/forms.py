@@ -15,6 +15,7 @@ from eulcommon.djangoextras.formfields import DynamicChoiceField
 from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.fedora import Repository
+from keep.common.utils import solr_interface
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +180,48 @@ class CollectionForm(XmlObjectForm):
 
         super(CollectionForm, self).__init__(data=data, instance=mods_instance,
                                              **kwargs)
+
+    def clean(self):
+        """Perform cross-field validation/cleaning on the form. Currently,
+        verify that collection and source_id are unique together.
+        """
+        cleaned_data = super(CollectionForm, self).clean()
+        if self._duplicate_exists(cleaned_data):
+            msg = "A collection already exists with this Archive and Source Id."
+            self._errors['collection'] = self.error_class([msg])
+            self._errors['source_id'] = self.error_class([msg])
+            del cleaned_data['collection']
+            del cleaned_data['source_id']
+
+        return cleaned_data
+
+    def _duplicate_exists(self, cleaned_data):
+        """Determine if saving this form would create a duplicate
+        collection. Specifically, verify that there is no other collection
+        with the same collection (archive) and source_id present in solr.
+        """
+        collection = cleaned_data.get('collection')
+        source_id = cleaned_data.get('source_id')
+
+        solr = solr_interface()
+        query = solr.query(
+                content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                source_id=source_id, archive_id=collection)
+        response = query.execute()
+
+        # if there are no matches then this is definitely not a 
+        if response.result.numFound == 0:
+            return False
+
+        if response.result.numFound > 1:
+            # if there's already more than one match then this is definitely
+            # a duplicate
+            return True
+
+        # otherwise there's exactly oone. if it's this object then this *is*
+        # the collection with that archive/id.
+        return (response[0]['pid'] != self.object_instance.pid)
+
 
     def update_instance(self):
         # override default update to handle extra fields (collection & dates)
