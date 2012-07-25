@@ -186,7 +186,9 @@ class CollectionForm(XmlObjectForm):
         verify that collection and source_id are unique together.
         """
         cleaned_data = super(CollectionForm, self).clean()
-        if self._duplicate_exists(cleaned_data):
+        if cleaned_data.get('collection', '') and \
+           cleaned_data.get('source_id', '') and \
+           self._duplicate_exists(cleaned_data):
             msg = "A collection already exists with this Archive and Source Id."
             self._errors['collection'] = self.error_class([msg])
             self._errors['source_id'] = self.error_class([msg])
