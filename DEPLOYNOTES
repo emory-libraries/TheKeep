@@ -101,7 +101,14 @@ Fedora
 The Keep expects to connect to a Fedora-Commons repository version
 3.4.x.  Fedora should be configured as follows:
 
-*  LDAP login filter
+* LDAP login filter
+* To support large file ingest, the storage length for uploaded file
+  should be increased from the default value of 5 minutes, e.g.::
+
+.. code-block:: xml
+
+  <param name="uploadStorageMinutes" value="15">
+
 *  XACML policy enforcement enabled with  a combining algorithm of
    Permit-Overrides.  You should have the following in the fedora.fcfg:
 
