@@ -254,11 +254,16 @@ Eudora files. (One-time import for 5300c content)
                 # save to get a pid, add mailbox rel to file objects
                 if not self.noact:
                     # TODO: fedora error handling
-                    mailbox.save('email folder object for %s' % folder_name)
-                    self.stats['ingested'] += 1
-                    if self.verbosity >= self.v_normal:
-                        print 'Created new mailbox object for %s as %s' % \
-                              (folder_name, mailbox.pid)
+                    try:
+                        mailbox.save('email folder object for %s' % folder_name)
+                        self.stats['ingested'] += 1
+                        if self.verbosity >= self.v_normal:
+                            print 'Created new mailbox object for %s as %s' % \
+                                  (folder_name, mailbox.pid)
+                    except RequestFailed as rf:
+                        self.stats['ingest_error'] += 1
+                        print 'Failed to create folder object for %s in Fedora: %s' % \
+                              (folder_name, rf)
                         
                     if mbox_obj:
                         mbox_obj.mailbox = mailbox
@@ -307,6 +312,9 @@ Eudora files. (One-time import for 5300c content)
             print '''\nProcessed %(folder)d mail folders and %(message)d messages; %(previously_ingested)d messages previously ingested'''  % self.stats
             if not self.noact:
                 print '''\nCreated %(ingested)d records, updated %(updated)d''' % self.stats
+                if self.stats['ingest_error']:
+                    print '''Error ingesting %(ingest_error)d records''' % self.stats
+
 
 
 
@@ -317,7 +325,7 @@ Eudora files. (One-time import for 5300c content)
 
         :returns:  :class:`keep.arrangement.models.RushdieArrangementFile` or
 		None
-        '''        
+        '''
         file_md5 = md5sum(file_path)
         solr = solr_interface()
         q = solr.query(content_md5=file_md5).field_limit('pid')
@@ -468,11 +476,16 @@ Eudora files. (One-time import for 5300c content)
         msg_obj.rights.content.access_status.text = rights_access_terms_dict["10"].text
         
         if not self.noact:
-            msg_obj.save('ingesting email message from rushdie 5300c')
-            if self.verbosity >= self.v_normal:
-                print 'Ingested message %s : %s' % \
-                      (msg_obj.pid, msg_obj.label)
-                self.stats['ingested'] += 1
+            try:
+                msg_obj.save('ingesting email message from rushdie 5300c')
+                if self.verbosity >= self.v_normal:
+                    print 'Ingested message %s : %s' % \
+                          (msg_obj.pid, msg_obj.label)
+                    self.stats['ingested'] += 1
+            except RequestFailed as rf:
+                self.stats['ingest_error'] += 1
+                print 'Error ingesting email message %s: %s' % \
+                      (msg_obj.label, rf)
 
 
     def email_attachments(self, msg):
