@@ -212,6 +212,7 @@ see:
    <copyField source="ip_note" dest="text"/>
    <copyField source="audit_trail_users" dest="text"/>
    <copyField source="users" dest="text"/>
+   <copyField source="content_md5" dest="text"/>
    <!-- boda arrangement id (temporary/dupe?) -->
    <copyField source="arrangement_id" dest="text"/>
    <!-- boda processing batch (temporary?) -->

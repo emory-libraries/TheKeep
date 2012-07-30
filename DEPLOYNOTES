@@ -301,6 +301,13 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 -------------
 
+Release 1.5 (preliminary)
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* This update includes Solr index changes; update Solr with the latest
+  ``schema.xml`` and reindex site content.
+
+
 Release 1.4 - search and ingest enhancements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
