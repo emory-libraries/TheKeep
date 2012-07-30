@@ -1,7 +1,8 @@
 {% extends "site_base.html" %}
 {% load search_utils %}
 
-{% block page-subtitle %}: Arrangment : View {{ title }} {{ label }}{% endblock %}
+{% block page-subtitle %}: Arrangment : {{ title }}
+{% if title != label %}{{ label }}{% endif %}{% endblock %}
 
 {% block style %}
     {{ block.super }}
@@ -10,8 +11,9 @@
 
 {% block content-body %}
 {{ block.super }}
-    <h1>{{ title }} {{ label }}</h1>
+    <h1>{{ title }}{% if title != label %}{{ label }}{% endif %}</h1>
 
+    <p>Messages in this folder:</p>
     {% for obj in page.object_list %}
         <div class="search-result email">
             {% include 'arrangement/snippets/list-arrangement.html' %}
