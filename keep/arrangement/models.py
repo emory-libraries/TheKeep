@@ -60,6 +60,10 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     **deprecated** because these objects should be using **isMemberOfCollection**
     '''
 
+    collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
+    ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
+    via `isMemberOfCollection` relation.
+    '''
 
     
     def save(self, logMessage=None):
@@ -121,26 +125,28 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
         
         # Collection Info
-        # TODO: can we use Relation to improve this?
-        collection = list(self.rels_ext.content.objects(self.uriref, relsext.isMemberOf))
-        if collection:
-            data['collection_id'] = collection[0]
+        if self._deprecated_collection:
+            collection = self._deprecated_collection
+        elif self.collection:
+            collection = self.collection
+        else:
+            collection = None
 
+        if collection:
+            data['collection_id'] = collection.uri
             try:
                 # pull parent & archive collection objects directly from fedora
-                parent = CollectionObject(self.api, collection[0])
-                data['collection_label'] = parent.label
+                data['collection_label'] = collection.label
                 # the parent collection of the collection this item belongs to is its archive
-                # FIXME: CollectionObject uses collection_id where AudioObject uses collection_uri
-                if parent.collection:
-                    data['archive_id'] = parent.collection.uri
-                    data['archive_label'] = parent.collection.label
+                if collection.collection:
+                    data['archive_id'] = collection.collection.uri
+                    data['archive_label'] = collection.collection.label
 
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
             
 
-        #Arrangement unique id
+        # Arrangement unique id
         try:
             if self.filetech.content.file:
                 if self.filetech.content.file[0].local_id:
@@ -160,7 +166,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                 data['rights'] = self.rights.content.access_status.text
 
 
-        #get simple collections that have an association with this object
+        # get simple collections that have an association with this object
         try:
             simple_collections = repo.risearch.get_subjects(relsext.hasMember, self.uriref)
             simple_collections =list(simple_collections)
