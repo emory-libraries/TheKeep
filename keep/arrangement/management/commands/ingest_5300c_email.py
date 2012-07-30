@@ -330,8 +330,10 @@ Eudora files. (One-time import for 5300c content)
         a redacted text label.
         '''
         for regex, label in redactions.iteritems():
-            content = re.sub(regex, '[REDACTED: %s]' % label, content,
-                         flags=re.MULTILINE | re.IGNORECASE)
+            # NOTE: flags argument to re.sub not supported until python 2.7;
+            # compile the regex to flags before substituting
+            reg = re.compile(regex, flags=re.MULTILINE | re.IGNORECASE)
+            content = re.sub(regex, '[REDACTED: %s]' % label, content)
         return content
 
 
