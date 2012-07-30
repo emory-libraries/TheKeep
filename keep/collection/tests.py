@@ -1033,7 +1033,10 @@ class SimpleCollectionTest( KeepTestCase):
 
     def tearDown(self):
         for pid in self.pids:
-            self.repo.purge_object(pid)
+            try:
+                self.repo.purge_object(pid)
+            except RequestFailed:
+                logger.warning('Failed to purge %s in tearDown' % pid)
 
             
 
@@ -1056,11 +1059,16 @@ class SimpleCollectionTest( KeepTestCase):
         self.repo.get_object(type=SimpleCollection, pid='foo:1')
 
     def test__objects_by_type(self):
-        #Test Simple collection
+        # run an RIsearch query with flush changes so test does not fail
+        # when syncUpdates is turned off
+        self.repo.risearch.count_statements('* * *', flush=True)
+        
+        # Test Simple collection
         objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
         obj_list = list(objs)
         self.assertTrue(len(obj_list) == 2)
-        self.assertTrue(isinstance(obj_list[0], SimpleCollection), "object is of type SimpleCollection")
+        self.assertTrue(isinstance(obj_list[0], SimpleCollection),
+                        "object is of type SimpleCollection")
 
         #Test Simple collection wtith no obj type
         objs = _objects_by_type(REPO.SimpleCollection)
@@ -1085,6 +1093,10 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertContains(response, 'Accessioned', msg_prefix='Status of collection should be Accessioned')
 
     def test_browse(self):
+        # run an RIsearch query with flush changes so test does not fail
+        # when syncUpdates is turned off
+        self.repo.risearch.count_statements('* * *', flush=True)
+        
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         browse_url = reverse('collection:simple_browse')
         response = self.client.get(browse_url)
