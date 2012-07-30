@@ -6,8 +6,9 @@
   {% if obj.original.exists %}
     <li>
        <a href="{% url arrangement:raw-ds obj.pid 'ORIGINAL' %}"
-          title="original file; {{ obj.original.mimetype}}, {{ obj.original.size|filesizeformat }}"
+          title="original file; {{ obj.original.mimetype}}, {{ obj.original.size|filesizeformat }}; MD5 checksum {{ obj.original.checksum }}"
           >Original</a>
+       ({{ obj.original.checksum }})
     </li>
   {% endif %}
   {% if obj.mods.exists %}
@@ -19,7 +20,9 @@
     <li><a href="{% url arrangement:raw-ds obj.pid 'FileMasterTech' %}">FileTech</a></li>
   {% endif %}
   {% if obj.mime_data.exists %}
-    <li><a href="{% url arrangement:raw-ds obj.pid 'MIME' %}">MIME</a></li>
+    <li><a href="{% url arrangement:raw-ds obj.pid 'MIME' %}"
+           title="raw email message; MD5 checksum {{ obj.mime_data.checksum }}">MIME</a> 
+    </li>
   {% endif %}
   {% if obj.cerp.exists %}
     <li><a href="{% url arrangement:raw-ds obj.pid 'CERP' %}">CERP</a></li>
@@ -29,3 +32,12 @@
     <li><a href="{% url arrangement:audit-trail obj.pid %}">XML Audit Trail</a></li>
   {% endif %}
 </ul>
+
+{# display checksum for original datastream, if present #}
+{# TODO: find a better way/place to display original checksum (view page doesn't exist yet) #}
+{% if obj.original.exists %}
+  <p class="extra">Original file checksum: {{ obj.original.checksum }}</p>
+{% endif %}
+{% if obj.mime_data.exists %}
+  <p class="extra">MIME message checksum: {{ obj.mime_data.checksum }}</p>
+{% endif %}

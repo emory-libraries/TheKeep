@@ -87,6 +87,11 @@
   {% endif %}
 {% endwith %}
 
+{# display checksum for original audio #}
+{# TODO: find a better way/place to display original checksum (view page doesn't exist yet) #}
+{% if obj.audio.exists %}
+  <p class="extra">Original audio checksum: {{ obj.audio.checksum }}</p>
+{% endif %}
 
 <div class="instructions">
     <h2>Instructions for using this form</h2>
