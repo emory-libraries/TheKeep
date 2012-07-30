@@ -35,6 +35,25 @@ repository (one-time import for 5300c content)
     # default django verbosity levels: 0 = none, 1 = normal, 2 = all
     v_normal = 1
 
+    # NOTE: mimetype mappings based roughly on values from
+    # mactype2mimetype script in rushdie-tools svn
+    # However, 5300c filetech only includes creator and not type.
+    # Using this typemap and equivalent creator values.
+    #
+    # typemap = {
+    #      'CWWP': 'application/x-clarisworks',  
+    #      'MW2D': 'application/macwriteii',
+    #      'MWPd': 'application/x-macwritepro',  (MWII)
+    #      'TEXT': 'text/plain',		(MWPR)
+    # }
+
+    filecreator_mimetype = {
+        'MWII': 'application/macwriteii',
+        'MWPR': 'application/x-macwritepro',
+        'BOBO': 'application/x-clarisworks'
+    }
+    '''Mapping between known filetech creator values and equivalent mimetypes'''
+    # unknowns: CSOm (eudora email .toc)
 
     def handle(self, base_path=None, batch_id=None, verbosity=1, noact=False, *args, **options):
         # check path
@@ -122,8 +141,15 @@ repository (one-time import for 5300c content)
             
 
             mimetype = mimemagic.from_file(disk_path)
-            # FIXME: getting a lot of 'application/octet-stream'
-            # presumably this is old mac content not being recognized
+            # if we get a generic mimetype, attempt to infer a better
+            # one based on known file creators in filetech metadata 
+            if mimetype == 'application/octet-stream':
+                if obj.filetech.content.file[0].creator in self.filecreator_mimetype:
+                    mimetype = self.filecreator_mimetype[obj.filetech.content.file[0].creator]
+                    
+                else:
+                    print 'Warning: using generic mimetype %s for %s (file creator "%s")' % \
+                          (mimetype, disk_path, obj.filetech.content.file[0].creator)
 
             # TODO: see rushdie-tools script mactype2mimetype
             # for possibly better mimetype handling
