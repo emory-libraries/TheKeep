@@ -1,6 +1,8 @@
 django==1.3.1
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.17.0-dev.tar.gz
-eulxml>=0.18.0
+#eulxml>=0.18.0
+# need unreleased eulxml for cerp improvements
+-e git://github.com/emory-libraries/eulxml.git@develop#egg=eulxml
 eulfedora>=0.19.0
 eulexistdb>=0.15.2
 eulcommon>=0.17.0
