@@ -92,6 +92,9 @@ Management Commands/Scripts
 .. automodule:: keep.audio.management.commands.ingest_cleanup
     :members:
 
+.. automodule:: keep.audio.manangement.commands.generate_access_copy
+    :members:
+
 Context Processors
 ^^^^^^^^^^^^^^^^^^
 .. automodule:: keep.audio.context_processors
