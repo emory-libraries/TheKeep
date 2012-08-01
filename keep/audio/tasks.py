@@ -6,6 +6,7 @@ import traceback
 from celery.task import task
 
 from django.conf import settings
+from eullocal.django.taskresult.models import TaskResult
 
 from keep.audio.models import AudioObject, check_wav_mp3_duration
 from keep.common.fedora import Repository
@@ -143,3 +144,12 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 # log the exception but don't raise it - not a conversion error to report to user
                 logger.error("Error removing mp3 file %s: %s" %  (mp3_file_path, e))
          
+
+def queue_access_copy(obj, extra_convert_args=None):
+    if extra_convert_args is None:
+        extra_convert_args = {}
+    task = convert_wav_to_mp3.delay(obj.pid, **extra_convert_args)
+    # create a task result object to track conversion status
+    result = TaskResult(label='Generate MP3', object_id=obj.pid,
+        url=obj.get_absolute_url(), task_id=task.task_id)
+    result.save()

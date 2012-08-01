@@ -22,7 +22,6 @@ from django.views.decorators.csrf import csrf_exempt
 from eulcm.xmlmap.boda import Rights
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
-from eullocal.django.taskresult.models import TaskResult
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.models import DigitalObjectSaveFailure
@@ -30,7 +29,7 @@ from eulfedora.models import DigitalObjectSaveFailure
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject
 from keep.audio.feeds import feed_items
-from keep.audio.tasks import convert_wav_to_mp3
+from keep.audio.tasks import queue_access_copy
 from keep.collection.models import CollectionObject 
 from keep.common.fedora import Repository, history_view
 from keep.common.utils import md5sum
@@ -146,12 +145,8 @@ def upload(request):
                         obj.save(comment)
                         file_info.update({'success': True, 'pid': obj.pid})
                         # Start asynchronous task to convert audio for access
-                        result = convert_wav_to_mp3.delay(obj.pid, use_wav=filename,
-                            remove_wav=True)    # remove after, since ingest is done
-                        # create a task result object to track conversion status
-                        task = TaskResult(label='Generate MP3', object_id=obj.pid,
-                            url=obj.get_absolute_url(), task_id=result.task_id)
-                        task.save()
+                        queue_access_copy(obj, use_wav=filename,
+                                          remove_wav=True)
 
                         # NOTE: could remove MD5 file (if any) here, but MD5 files
                         # should be small and will get cleaned up by the cron script
