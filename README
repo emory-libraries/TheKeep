@@ -112,6 +112,6 @@ The Keep requires the following network resources:
 
 For more detailed information, including installation instructions and upgrade
 notes, see :ref:`DEPLOYNOTES`.  For details about the features included in each release,
-see :ref:`CHANGELOG`.
+see :ref:`CHANGELOG`.  See :ref:`APP_MANAGEMENT` for documentation on application management steps that currently cannot be performed within the web application.
 
 

@@ -20,6 +20,7 @@ Contents
 
     apidocs
     readme
+    app_management
     deploynotes
     changelog
 
