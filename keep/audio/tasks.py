@@ -145,9 +145,7 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 logger.error("Error removing mp3 file %s: %s" %  (mp3_file_path, e))
          
 
-def queue_access_copy(obj, extra_convert_args=None):
-    if extra_convert_args is None:
-        extra_convert_args = {}
+def queue_access_copy(obj, **extra_convert_args):
     task = convert_wav_to_mp3.delay(obj.pid, **extra_convert_args)
     # create a task result object to track conversion status
     result = TaskResult(label='Generate MP3', object_id=obj.pid,
