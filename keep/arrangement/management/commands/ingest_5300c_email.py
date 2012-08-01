@@ -1,7 +1,8 @@
 import codecs
 from collections import defaultdict
-import hashlib
 import email
+from getpass import getpass
+import hashlib
 from optparse import make_option
 import os
 import re
@@ -42,6 +43,17 @@ UNUSED_PID_URL = 'http://rushdie.5300c.email.message/unused'
 # bit of a cheat so we can find the pids easily, because pidman
 # REST API currently does not support searching by name
 
+def get_password_opt(option, opt, value, parser):
+    '''Use :meth:`getpass.getpass` to prompt for a password for a
+    command-line argument.'''
+    # if a value was specified on the command-line, use that
+    # otherwise, prompt with getpass
+    if not value:
+        value = getpass()
+
+    # store the value
+    parser.values.password = value
+    
 
 
 class Command(BaseCommand):
@@ -69,6 +81,13 @@ Eudora files. (One-time import for 5300c content)
         make_option('--purge-only', action='store_true', default=False,
                     help='''Only purge old metadata email records; do not 
                     ingest email messages'''),
+
+        # optional fedora credentials
+        make_option('--user', metavar='FEDORA_USER', dest='username',
+            help='''Connect to Fedora as the specified user'''),
+        make_option('--password', metavar='FEDORA_PASSWORD', dest='password',
+            help='''Connect to Fedora with the specified password (leave blank for prompt)''',
+            action="callback", callback=get_password_opt, type='string'),
 
         )
     # default django verbosity levels: 0 = none, 1 = normal, 2 = all
@@ -104,7 +123,13 @@ Eudora files. (One-time import for 5300c content)
             raise CommandError('Eudora folder path "%s" is not a directory' % folder_path)
         self.noact = noact
         
-        self.repo = Repository()
+        # check for any specified fedora credentials
+        fedora_opts = {}
+        if 'user' in options:
+            fedora_opts['username'] = options['user']
+        if 'password' in options:
+            fedora_opts['password'] = options['password']
+        self.repo = Repository(**fedora_opts)
         batch = self.repo.get_object(batch_id, type=ProcessingBatch)
         if not batch.exists:
             raise CommandError('Processing batch %s not found' % batch_id)
@@ -569,7 +594,6 @@ class PidReuseDigitalObject(ArkPidDigitalObject):
             # if we run out of pids re-use, fall back to default behavior
             return super(PidReuseDigitalObject, self).get_default_pid()
 
-    
 
 
 # extend standard mailbox/email objects to get pid re-use behavior
