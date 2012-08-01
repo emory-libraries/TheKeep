@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 
 from keep.audio.models import AudioObject
 from keep.audio.tasks import queue_access_copy
+from keep.common.fedora import Repository
 
 # This command is structured with the intention that it could be generalized
 # to handle more than just AudioObjects. For now, module dependencies
@@ -25,7 +26,7 @@ class Command(BaseCommand):
         doing that.
         '''
 
-        obj = self.repo.get_object(pid=pid, type=repo.infer_object_subtype)
+        obj = self.repo.get_object(pid=pid, type=self.repo.infer_object_subtype)
         if not obj.exists:
             if self.verbosity >= 1:
                 print "No such PID; skipped:", pid
