@@ -1,15 +1,15 @@
 .. _DEPLOYNOTES:
 
 DEPLOYNOTES
-===========
+***********
 
 Instructions for installation & upgrade notes.
 
 Installation
-------------
+============
 
 Software Dependencies
-~~~~~~~~~~~~~~~~~~~~~
+---------------------
 
 We recommend the use of `pip <http://pip.openplans.org/>`_ and `virtualenv
 <http://virtualenv.openplans.org/>`_ for environment and dependency
@@ -103,7 +103,7 @@ The Keep expects to connect to a Fedora-Commons repository version
 
 * LDAP login filter
 * To support large file ingest, the storage length for uploaded file
-  should be increased from the default value of 5 minutes, e.g.::
+  should be increased from the default value of 5 minutes, e.g.:
 
 .. code-block:: xml
 
@@ -179,7 +179,7 @@ apt-get install lame``.
 
 
 Install the Application
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 Apache
 ^^^^^^
@@ -266,11 +266,34 @@ on configuring celery to run as a daemon.
 
 
 Notes for Developers
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 The following instructions can be ignored when deploying to a staging
 or production environment, but may be helpful to a developer working
 on the project or running automated tests.
+
+Purging Records from the Keep
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Keep web application does not currently support deletion, so on occasion developers may be asked to remove records (e.g., items that should not have been ingested or duplicate records).  To purge a Keep record, use the current process.
+
+* Secure shell into the production deployed instance of the Keep and start the python console::
+
+  > $ python manage.py shell
+
+* Initialize a repository connection to inspect and purge objects.  Retrieve the object by pid, but be sure to check the object label or other metadata to confirm it matches information provided about the object to be deleted::
+
+   >>> from keep.common.fedora import Repository
+   >>> from keep.audio.models import AudioObject
+   >>> repo = Repository()
+   >>> obj = repo.get_object('emory:bt0nm', type=AudioObject)
+   >>> obj.label
+   'record 5 side A.wav'
+   >>> repo.purge_object(obj.pid, 'purge at user request - duplicate')
+   True
+
+* Update the corresponding ARK in the PID manager to mark the default target as inactive (either use the web admin and search by pid or or alternately use the Python pidman client in the django console if you are removing a large number of records).
+
 
 Session configuration
 ^^^^^^^^^^^^^^^^^^^^^
@@ -299,17 +322,17 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
 
 Upgrade Notes
--------------
+=============
 
 Release 1.5 (preliminary)
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 
 * This update includes Solr index changes; update Solr with the latest
   ``schema.xml`` and reindex site content.
 
 
 Release 1.4 - search and ingest enhancements
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------
 
 * The Keep has been updated to make use of Django's
   :mod:`~django.contrib.staticfiles` application for managing static
@@ -337,7 +360,7 @@ Release 1.4 - search and ingest enhancements
 
 
 Release 1.3 - Search-based Report generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------------
 
 * Fabric deploy script has been updated to follow latest fabfile best
   practices & local conventions.  Run ``fab -l`` and ``fab -d deploy``
@@ -367,7 +390,8 @@ Release 1.3 - Search-based Report generation
 
 
 Release 1.2 - Verdict App
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
+
 * Configure the LOGGING section in the localsettings.py file on the remote server
   based on the example in the localsettings.py.dist file.
   Log rotation need to be set for this file as well.
@@ -385,7 +409,7 @@ Release 1.2 - Verdict App
    - reload policies on fedora
     
 
-* The solr scheama should be updated:
+* The solr schema should be updated:
     - Copy <project base>/solr/schema.xml to the appropriate solr core
     - Solr should be restarted
 
@@ -427,7 +451,7 @@ Release 1.2 - Verdict App
 
 
 Release 1.1 - Metadata Migration
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
 * The kiosk RSS feed now links to files in the old Digital Masters datastore
   once their metadata records are in The Keep. This requires setting an
@@ -472,7 +496,7 @@ Release 1.1 - Metadata Migration
   is complete, these files may be archived and/or deleted.
 
 Release 1.0.3
-~~~~~~~~~~~~~
+-------------
 
 * This release depends on a newer version of python-eulcore. Activate
   the virtualenv and update::
@@ -496,7 +520,7 @@ Release 1.0.3
         pidman.update_ark(obj.noid, name=obj.label)
 
 Release 1.0.2
-~~~~~~~~~~~~~
+-------------
 
 The Fedora XACML policy has been corrected for the production
 environment.  Please update the Fedora policies to this tag:
@@ -508,7 +532,7 @@ possible additional steps for customizing this policy (for
 non-production environment).
 
 Release 1.0 - Min Items, part IV
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
 
 * We are using a newer version of python-eulcore. To update::
 
@@ -525,7 +549,7 @@ Release 1.0 - Min Items, part IV
   Developers are affected by this configuration change and should consult `Notes for Developers`_.
 
 Release 0.9 - Min Items, part III
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------
 
 * The application now includes an asynchronous task for generating MP3 files,
   which requires LAME, celery configuration, and a celery broker.  See
@@ -606,7 +630,8 @@ Release 0.9 - Min Items, part III
   is now ``src/keep`` instead of ``src/digitalmasters`` .
 
 Release 0.8 - Min Items, part II
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------
+
 * The app now depends on the standard django ``sites`` module. This module
   stores some data in the relational database. To initialize it, sync the db::
 
@@ -643,7 +668,8 @@ Release 0.8 - Min Items, part II
 
 
 Release 0.7 - Min Items, part I
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------
+
 * The new batch-upload/ingest process may result in uploaded files
   that will need to be cleaned up.  See `Ingest clean-up cron job`_ .
 
@@ -677,7 +703,8 @@ Release 0.7 - Min Items, part I
 
 
 Release 0.6
-~~~~~~~~~~~
+-----------
+
 * Requires Fedora 3.4 or greater with LDAP login configured.
 * Requires Fedora XACML policies (bundled with other local policies in
   https://svn.library.emory.edu/svn/fedora/repository-policies/ )
