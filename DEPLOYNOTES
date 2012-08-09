@@ -306,6 +306,38 @@ Release 1.5 (preliminary)
 
 * This update includes Solr index changes; update Solr with the latest
   ``schema.xml`` and reindex site content.
+* Previously ingested and migrated Arrangement objects were associated with
+  the Rushdie collection incorrectly (using the isMemberOf relation instead of
+  isMemberOfCollection).  This can be corrected in the Django console as follows::
+
+  $ python manage.py shell
+
+  .. code-block:: python
+
+    from keep.common.fedora import Repository
+    from keep.arrangement.models import ArrangementObject
+
+    repo = Repository(username='fedoraAdmin', password='fedoraAdmin')
+    objs = repo.get_objects_with_cmodel(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, type=ArrangementObject)
+
+    for obj in objs:
+        if obj._deprecated_collection is not None:
+
+            if obj._deprecated_collection.exists and obj._deprecated_collection.has_requisite_content_models:
+              # populate collection if not set
+              if not obj.collection:
+                obj.collection = obj._deprecated_collection
+              # remove deprecated collection
+              del obj._deprecated_collection
+              # save changes
+              obj.save('converting incorrect collection membership from isMemberOf to isMemberOfCollection')
+
+.. Note::
+
+   In a development or staging environment where a collection is incorrectly referenced but does not
+   exist, you may want to check the deprecated collection by pid.  In particular, it is important
+   not to remove all ``isMemberOf`` relations, because Rushdie Mailbox objects are associated with 
+   their corresponding Email account objects via ``isMemberOf``.              
 
 
 Release 1.4 - search and ingest enhancements
