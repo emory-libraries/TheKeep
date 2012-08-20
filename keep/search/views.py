@@ -42,7 +42,6 @@ def site_index(request):
                           limit=10, mincount=1) \
                 .paginate(rows=0)
     facets = facetq.execute().facet_counts.facet_fields
-    print facets
 
     # reverse order and convert to datetime.date for use with naturalday
     recent_items = []
@@ -67,7 +66,6 @@ def site_index(request):
     for month, count in recent_month_facet:
         y,m = month.split('-')
         recent_months.append((date(int(y), int(m), 1), count))
-    print 'recent_months = ', recent_months
 
     return render(request, 'search/site_index.html',
                   {'recent_items': recent_items, 'recent_months': recent_months,
