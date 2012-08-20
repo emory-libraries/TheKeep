@@ -11,7 +11,12 @@ from keep.common.eadmap import Series
 from keep.common.utils import solr_interface
 
 class Command(BaseCommand):
-    help = 'Import verdicts from a CSV file to arrangement objects in the repository'
+    help = '''Import verdicts from a CSV file to arrangement objects in the repository.
+
+    Known verdicts will be mapped to their numeric access status code within the Keep; unset
+    or unrecognized verdicts will be mapped to Undetermined.  The script will report on any
+    errors that cannot be handled automatically (e.g., two records with the same checksum).
+    '''
     args = '--csv <csvfile>'
     option_list = BaseCommand.option_list + (
         make_option('--csv', dest='csvfile',
@@ -31,6 +36,7 @@ class Command(BaseCommand):
         'computer', 'size')
 
     # map text verdicts from csv file to rights access code
+    unknown_access_status = '10'
     csv_verdict = {
         'As Is': '2',
         'Restricted': '4',
@@ -43,8 +49,10 @@ class Command(BaseCommand):
         'in': '2',
         'out': '2',
         'old-in': '2',
-        'old-out': '2'
+        'old-out': '2',
+        'Undetermined': unknown_access_status,
     }
+
 
     # default django verbosity levels: 0 = none, 1 = normal, 2 = all
     v_normal = 1
@@ -133,11 +141,11 @@ class Command(BaseCommand):
 
                     # set rights status based on verdict in csv
 
-                    # if no verdict is set, default to restricted
+                    # if no verdict is set, default to undetermined
                     if not row['verdict']:
-                        row['verdict'] = 'Restricted'
+                        row['verdict'] = 'Undetermined'
                         if self.verbosity >= self.v_normal:
-                            print 'No verdict set for %(id)s; defaulting to restricted' % row
+                            print 'No verdict set for %(id)s; defaulting to %(verdict)s' % row
 
 
                     # set access code,
@@ -203,12 +211,9 @@ class Command(BaseCommand):
         
         verdict = verdict.strip()
         if verdict not in self.csv_verdict:
+            verdict = 'Undetermined'
             if self.verbosity >= self.v_normal:
-                print 'Verdict "%(verdict)s" not recognized (%(id)s)' % data
-                
-            # stop processing
-            return False
-
+                print 'Verdict "%(verdict)s" not recognized (%(id)s); setting to Undetermined' % data
     
         # set code & text based on verdict in CSV
 
