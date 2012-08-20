@@ -12,6 +12,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 
 from eulfedora.rdfns import relsext as relsextns, model as modelns
+from eulcm.models import boda
 from eulcm.xmlmap.boda import FileMasterTech_Base
 from eulxml.xmlmap import cerp
 
@@ -381,49 +382,78 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertEqual(data['comments-comment'], audit_trail[-1])
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
-    def test_email_view(self, mockget_obj):
+    def test_view(self, mockget_obj):
+        # test generic view functionality (perms)
+        mockget_obj.return_value = self.email
+        
+        # non-authenticated user
+        view_url = reverse('arrangement:view', kwargs={'pid': 'test:pid'})
+
+        response = self.client.get(view_url)
+        self.assertEqual(302, response.status_code, 
+            'non-authenticated user should not have acccess to view arrangement items')
+
+        # authenticated user (WITH arrangement perms)
+        self.client.login(**ADMIN_CREDENTIALS)
+        response = self.client.get(view_url)
+        self.assertEqual(200, response.status_code, 
+            'authenticated admin user can view arrangement item')
+
+        # unsupported object type should 404
+        fileobj = boda.RushdieFile(Mock())  # using mock for api
+        mockget_obj.return_value = fileobj
+        response = self.client.get(view_url)
+        self.assertEqual(404, response.status_code,
+            'unsupported object types should 404')
+        
+
+    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
+    def test_view_email(self, mockget_obj):
+        # test email message view specifics
         mockget_obj.return_value = self.email
 
-
-        #non-authenticated user
-        email_url = reverse('arrangement:email', kwargs={'pid': 'email:pid'})
-
-        respons = self.client.get(email_url)
-        code = respons.status_code
-        self.assertEqual(302, code, 'non-authenticated user does not have acccess to page')
-
-        #authenticated user
+        email_view_url = reverse('arrangement:view', kwargs={'pid': 'test:pid'})
+        
+        # authenticated user
         self.client.login(**ADMIN_CREDENTIALS)
-        response = self.client.get(email_url)
-        code = response.status_code
-        self.assertEqual(200, code, 'authenticated should have acccess to page')
 
-        #check for email field values
-        self.assertContains(response, 'Interesting Subject')
-        self.assertContains(response, 'sender@sendmail.com')
-        self.assertContains(response, 'guy1@friend.com; guy2@friend.com')
-        self.assertContains(response, 'Fri May 11 2012')
+        response = self.client.get(email_view_url)
+        template_names = [t.name for t in response.templates]
+        self.assert_('arrangement/email_view.html' in template_names,
+            'email_view.html template should be used to render email message objects')
+        
+        # check for email content values
+        self.assertContains(response, 'Interesting Subject',
+            msg_prefix='email view should include message subject')
+        self.assertContains(response, 'sender@sendmail.com',
+            msg_prefix='email view should include message email address')
+        self.assertContains(response, 'guy1@friend.com; guy2@friend.com',
+            msg_prefix='email view should include message recipients')
+        self.assertContains(response, 'Fri May 11 2012',
+            msg_prefix='email view should include message date')
 
         self.assertContains(response, reverse('arrangement:edit', kwargs={'pid': 'email:pid'}),
             msg_prefix='email detail page should link to arrangement edit page')
 
 
+    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     @patch('keep.arrangement.views.solr_interface')
-    def test_mailbox_view(self, mocksolr):
-        #non-authenticated user
-        mailbox_url = reverse('arrangement:mailbox', kwargs={'pid': 'mailbox:pid'})
-        respons = self.client.get(mailbox_url)
-        code = respons.status_code
-        self.assertEqual(302, code, 'non-authenticated user does not have acccess to page')
+    def test_view_mailbox(self, mocksolr, mockget_obj):
+        mbox = boda.Mailbox(Mock())  # using mock for api
+        mbox.pid = 'mailbox:pid'
+        mbox.label = 'Email folder "In"'
+        mockget_obj.return_value = mbox
+        view_mailbox_url = reverse('arrangement:view', kwargs={'pid': 'mailbox:pid'})
 
-        #authenticated user
+        # authenticated user
         self.client.login(**ADMIN_CREDENTIALS)
-        response = self.client.get(mailbox_url)
-        self.assertEqual(200, response.status_code, 
-            'authenticated user should have acccess to page')
 
-        self.assertEqual(mocksolr.return_value.query.call_args_list[0][1], {'pid':'mailbox:pid'})
-        self.assertEqual(mocksolr.return_value.query.call_args_list[1][1], {'isPartOf':'info:fedora/mailbox:pid'})
+        response = self.client.get(view_mailbox_url)
+        template_names = [t.name for t in response.templates]
+        self.assert_('arrangement/mailbox_view.html' in template_names,
+            'mailbox_view.html template should be used to render email mailbox object')
+
+        mocksolr.return_value.query.assert_called_with(isPartOf=mbox.uri)
 
         self.assertContains(response, reverse('arrangement:edit', kwargs={'pid': 'mailbox:pid'}),
             msg_prefix='mailbox detail page should link to arrangement edit page')

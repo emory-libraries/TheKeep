@@ -3,11 +3,8 @@
 {% block item_title %}
 <p>
   {# generate view url for email or mailbox objects #}
-  {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model %}
-    {% url arrangement:email obj.pid as view_url %}
-  {% endif %}
-  {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
-    {% url arrangement:mailbox obj.pid as view_url %}
+  {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+    {% url arrangement:view obj.pid as view_url %}
   {% endif %}
   {# other objects do not yet have a view url; all arrangement objects use the same edit url #}
   {% url arrangement:edit obj.pid as edit_url %}

@@ -1,8 +1,8 @@
 {% extends "site_base.html" %}
 {% load search_utils %}
 
-{% block page-subtitle %}: Arrangment : {{ title }}
-{% if title != label %}{{ label }}{% endif %}{% endblock %}
+{% block page-subtitle %}: Arrangment : {{ obj.title }}
+{% if obj.title != obj.label %}{{ obj.label }}{% endif %}{% endblock %}
 
 {% block style %}
     {{ block.super }}
@@ -11,9 +11,9 @@
 
 {% block content-body %}
 {{ block.super }}
-    <h1>{{ title }}{% if title != label %}{{ label }}{% endif %}</h1>
+    <h1>{{ obj.title }}{% if obj.title != obj.label %} {{ obj.label }}{% endif %}</h1>
 
-    <p><a href="{% url arrangement:edit pid %}">Edit mailbox</a> (assign series and rights information)</p>
+    <p><a href="{% url arrangement:edit obj.pid %}">Edit mailbox</a> (assign series and rights information)</p>
 
     <p>Messages in this folder:</p>
     {% for obj in page.object_list %}

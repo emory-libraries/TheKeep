@@ -10,6 +10,5 @@ urlpatterns = patterns('',
     url(r'^(?P<pid>[^/]+)/AUDIT/$', views.view_audit_trail, name='audit-trail'),
     url(r'^get_selected_series_data/(?P<id>[^/]+)', views.get_selected_series_data,
         name='get_selected_series_data'),
-    url(r'^email/(?P<pid>[^/]+)/$', views.email_view, name='email'),
-    url(r'^mailbox/(?P<pid>[^/]+)/$', views.mailbox_view, name='mailbox'),
+    url(r'^(?P<pid>[^/]+)/$', views.view_item, name='view'),
 )

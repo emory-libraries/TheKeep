@@ -1,6 +1,6 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: Arrangment : Email: {{ obj.cerp.content.subject_list.0 }}  ({{ obj.pid }}) {% endblock %}
+{% block page-subtitle %}: Arrangment : Email {{ obj.cerp.content.subject_list.0 }} {% endblock %}
 
 
 {% block content-body %}
@@ -8,7 +8,7 @@
 
 {{ block.super }}
     <div class="mailbox-link">
-        Mailbox: <a href="{% url arrangement:mailbox obj.mailbox %}">{{ obj.mailbox.label }}</a>
+        Mailbox: <a href="{% url arrangement:view obj.mailbox.pid %}">{{ obj.mailbox.label }}</a>
     </div>
 
      {% with obj.cerp.content as email %}
@@ -37,6 +37,6 @@
      {% endwith %}
 
     {% include 'arrangement/snippets/ds_links.html' %}
-    
+
     <p><a href="{% url arrangement:edit obj.pid %}">Edit message</a> (assign series and rights information)</p>
 {% endblock %}

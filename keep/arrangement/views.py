@@ -17,6 +17,7 @@ from django.contrib import messages
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulcommon.searchutil import pages_to_show
+from eulcm.models import boda
 from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream, raw_audit_trail
@@ -78,7 +79,7 @@ def edit(request, pid):
 
                 # TODO: this logic has been moved into arrangement
                 # object as a pre-save step; test/confirm that it is ok to remove here
-                status = request.POST['rights-access']
+                status = request.POST['rights-access']  
                 if status == "2":
                     if restricted in obj.rels_ext.content:
                         obj.rels_ext.content.remove(restricted)
@@ -216,55 +217,44 @@ def get_selected_series_data(request, id):
 
 
 @permission_required("common.arrangement_allowed")
-def email_view(request, pid):
+def view_item(request, pid):
     '''
-    View for an EmailMessage object.
+    Display information about a single object.  Currently
+    only supports :class:`eulcm.models.boda.EmailMessage`
+    and :class:`eulcm.models.boda.Mailbox` objects.
 
-    :param pid: The pid of the object.
+    :param pid: The pid of the object to be displayed.
     '''
+
     repo = TypeInferringRepository(request=request)
     obj = repo.get_object(pid)
+    context = {'obj': obj}
+    if isinstance(obj, boda.EmailMessage):
+        template_name = 'arrangement/email_view.html'
+    elif isinstance(obj, boda.Mailbox):
+        template_name = 'arrangement/mailbox_view.html'
 
-    return render(request, 'arrangement/email_view.html',
-                  {'obj' : obj})
+        # use Solr to find paginated messages in this mailbox
+        solr = solr_interface()
+        q = solr.query(isPartOf=obj.uri)
+        paginator = Paginator(q, 30)
+        try:
+            page = int(request.GET.get('page', '1'))
+        except ValueError:
+            page = 1
+        try:
+            results = paginator.page(page)
+        except (EmptyPage, InvalidPage):
+            results = paginator.page(paginator.num_pages)
+        # calculate page links to show
+        show_pages = pages_to_show(paginator, page)
+        # add paginated messages to context
+        context.update({
+            'page': results,
+            'show_pages': show_pages,
+            'search_opts': request.GET.urlencode()
+        })
+    else:
+        raise Http404
 
-@permission_required("common.arrangement_allowed")
-def mailbox_view(request, pid):
-    '''
-    View for an Mailbox object..
-
-    :param pid: The pid of the object.
-    '''
-
-    solr = solr_interface()
-    q = solr.query(pid=pid).field_limit(['label', 'title', 'hasPart'])
-    result = q.execute()
-    mailbox = result[0]
-    #get title and label from mailbox query
-    mailbox_title = mailbox['title']
-    mailbox_label = mailbox['label']
-
-    #get labels and pids for each message object
-    solr = solr_interface()
-    q = solr.query(isPartOf='info:fedora/%s' % pid)
-
-    paginator = Paginator(q, 30)
-    try:
-        page = int(request.GET.get('page', '1'))
-    except ValueError:
-        page = 1
-    try:
-        results = paginator.page(page)
-    except (EmptyPage, InvalidPage):
-        results = paginator.page(paginator.num_pages)
-    # calculate page links to show
-    show_pages = pages_to_show(paginator, page)
-
-    return render(request, 'arrangement/mailbox_view.html',
-                  {'title': mailbox_title,
-                   'label': mailbox_label,
-                   'pid': pid,
-                   'page': results,
-                   'show_pages': show_pages,
-                   'search_opts': request.GET.urlencode(),
-                  })
+    return render(request, template_name, context)
