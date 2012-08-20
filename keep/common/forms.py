@@ -187,6 +187,10 @@ class ItemSearch(forms.Form):
 
             # collection objects are indexed as collection_id in solr
             elif field in ['collection', 'simpleCollection']:
+                # collection is indexed by URI, but collection suggest field
+                # only returns the pid; convert to search format
+                if not val.startswith('info:fedora/'):
+                    val = 'info:fedora/%s' % val
                 search_opts['%s_id' % field] = val
 
             # all other fields: solr search field = form field

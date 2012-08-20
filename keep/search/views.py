@@ -34,9 +34,10 @@ def site_index(request):
 
     # search for all content added in the last month
     # and return just the facets for date created
+    # - limit of 31 to ensure we get all dates in range
     facetq = solr.query().filter(created_date__range=(month_ago, today))  \
                 .facet_by('created_date', sort='index',
-                          limit=10, mincount=1) \
+                          limit=31, mincount=1) \
                 .facet_by('collection_label', sort='count',
                           limit=10, mincount=1) \
                 .paginate(rows=0)
@@ -47,7 +48,8 @@ def site_index(request):
     recent_items = []
     recent_dates = facets['created_date']
     recent_dates.reverse()
-    for day, count in recent_dates:
+    # limit to just the 10 most recent dates
+    for day, count in recent_dates[:10]:
         y,m,d = day.split('-')
         recent_items.append((date(int(y),int(m),int(d)), count))
 

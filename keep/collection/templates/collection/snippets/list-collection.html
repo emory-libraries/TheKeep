@@ -14,9 +14,16 @@
 {% endblock %}
 
 {% block item_info %}
-  {% if obj.creator %} <p>{{ obj.creator|join:'; ' }}</p>{% endif %}
   {# display number of items for "simple" collections #}
-  {% if obj.hasMember %}
-    <p>{{ obj.hasMember|length }} item{{ obj.hasMember|pluralize }}</p>
+  {% if 'info:fedora/emory-control:Collection-1.0' in obj.content_model %} {# collection 1.0 AKA "Simple" collection #}
+    {% if obj.hasMember %}
+      <p>{{ obj.hasMember|length }} item{{ obj.hasMember|pluralize }}</p>
+    {% endif %}
+  {% else %}
+    <ul class="horiz">
+    {% if obj.creator %}<li>{{ obj.creator|join:'; ' }}</li>{% endif %}
+     <li><a href="{% url search:keyword %}?collection={{ obj.label }}">find items in this collection</a></li>
+    </ul>
   {% endif %}
+
 {% endblock %}

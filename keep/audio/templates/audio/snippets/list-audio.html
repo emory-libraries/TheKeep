@@ -5,8 +5,13 @@
 {% block item_title %}
 <p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
   {% if obj.part %} ({{ obj.part }}){% endif %}
-  {% if obj.collection_id %} 
-    (part of <a href="{# {% url collection:edit obj.collection_id|slice:'12:' %} #}">{{ obj.collection_label }}</a>)
+  {% if obj.collection_id %}
+    {% if 'info:fedora' in obj.collection_id %}
+      {% url collection:edit obj.collection_id|slice:'12:' as collection_url %}
+    {% else %}
+      {% url collection:edit obj.collection_id as collection_url %}
+    {% endif %}
+    (part of <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>)
   {% endif %} </p>
 {% endblock %}
 
