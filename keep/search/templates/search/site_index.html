@@ -12,22 +12,42 @@
 
 <h3>View recently added items</h3>
 
-<h4>By day</h4>
-<ul>
-  {% for date, count in recent_items %}
-  <li><a href="{% url search:keyword %}?keyword=created:{{ date|date:'Y-m-d' }}">{{ date|naturalday }}</a> ({{ count }})</li>
-  {% empty %}
-    <li>No new items have been added in the last 30 days.</li>
-  {% endfor %}
-</ul>
+<div class="half-column">
+	{% if recent_months %}
+	<h4>By month</h4>
+	<ul>
+		{% for month, count in recent_months %}
+		<li><a href="{% url search:keyword %}?keyword=created:{{ month|date:'Y-m' }}"
+			title="search for items added in {{ month|date:'F Y' }}">{{ month|date:'F Y' }}</a> ({{ count }})</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
 
-{% if recent_months %}
-<h4>By month</h4>
-<ul>
-  {% for date, count in recent_months %}
-  <li><a href="{% url search:keyword %}?keyword=created:{{ date }}">{{ date }}</a> ({{ count }})</li>
-  {% endfor %}
-</ul>
+	<h4>By day</h4>
+	<ul>
+		{% for day, count in recent_items %}
+		<li><a href="{% url search:keyword %}?keyword=created:{{ day|date:'Y-m-d' }}"
+			title="search for all items added on {{ day }}">{{ day|naturalday }}</a> ({{ count }})</li>
+		{% empty %}
+		<li>No new items have been added in the last 30 days.</li>
+		{% endfor %}
+	</ul>
+</div>
+
+{% if recent_collections %}
+<div class="half-column">
+	<h4>By collection</h4>
+	<ul>
+		{% for collection, count in recent_collections %}
+		<li><a href="{% url search:keyword %}?collection={{ collection }}"
+			title="search for all items in {{ collection }} sorted by date added">{{ collection }}</a> ({{ count }})</li>
+		{% empty %}
+		<li>No new items have been added in the last 30 days.</li>
+		{% endfor %}
+	</ul>
+</div>
 {% endif %}
+
+
 
 {% endblock %}

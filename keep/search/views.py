@@ -33,7 +33,7 @@ def site_index(request):
     solr = solr_interface()
 
     # search for all content added in the last month
-    # and return just the facets for date created
+    # and return just the facets for date created and collection name
     # - limit of 31 to ensure we get all dates in range
     facetq = solr.query().filter(created_date__range=(month_ago, today))  \
                 .facet_by('created_date', sort='index',
@@ -53,17 +53,25 @@ def site_index(request):
         y,m,d = day.split('-')
         recent_items.append((date(int(y),int(m),int(d)), count))
 
+    recent_collections = facets['collection_label']
+
     # search for content added in the last few months
     # and return just the facets for year-month
     facetq = solr.query().filter(created_date__range=(three_months, today))  \
                 .facet_by('created_month', sort='index',
                           mincount=1) \
-                .paginate(rows=0)
-    recent_months = facetq.execute().facet_counts.facet_fields['created_month']
-    recent_months.reverse()
+                .paginate(rows=0)                
+    recent_month_facet = facetq.execute().facet_counts.facet_fields['created_month']
+    recent_month_facet.reverse()
+    recent_months = []
+    for month, count in recent_month_facet:
+        y,m = month.split('-')
+        recent_months.append((date(int(y), int(m), 1), count))
+    print 'recent_months = ', recent_months
 
     return render(request, 'search/site_index.html',
-                  {'recent_items': recent_items, 'recent_months': recent_months})
+                  {'recent_items': recent_items, 'recent_months': recent_months,
+                  'recent_collections': recent_collections})
 
 
 @login_required

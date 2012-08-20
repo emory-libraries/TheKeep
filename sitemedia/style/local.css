@@ -378,6 +378,11 @@ form#upload a.remove {
   padding-left: 0px;
 }
 
+.half-column {
+  float: left;
+  width: 50%;
+}
+
 /* style for email view  */
 
 .mailbox-link{margin-bottom: 30px}
