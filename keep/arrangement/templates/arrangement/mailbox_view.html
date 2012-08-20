@@ -13,6 +13,8 @@
 {{ block.super }}
     <h1>{{ title }}{% if title != label %}{{ label }}{% endif %}</h1>
 
+    <p><a href="{% url arrangement:edit pid %}">Edit mailbox</a> (assign series and rights information)</p>
+
     <p>Messages in this folder:</p>
     {% for obj in page.object_list %}
         <div class="search-result email">

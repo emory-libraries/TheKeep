@@ -22,6 +22,11 @@ class FileTechPartForm(XmlObjectForm):
     :class:`~keep.common.models.Rights` metadata.
     """
 
+    # TODO: none of these fields are actually editable.  
+    # If that continues to be the case, we should remove
+    # this form and simply display the file-tech metadata
+    # on the appropriate page.
+
     #created = W3CDateField(required=False)
     #modified = W3CDateField(required=False)
 
@@ -266,7 +271,8 @@ class ArrangementObjectEditForm(forms.Form):
         # override default update to handle extra fields
         self.object_instance.mods.content = self.mods.update_instance()
         self.object_instance.rights.content = self.rights.update_instance()
-        self.object_instance.filetech.content = self.filetech.update_instance()
+        # NOTE: filetech form is currently used entirely for display,
+        # all fields are read-only. Do NOT update object file-tech metadata.
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance

@@ -2,16 +2,21 @@
 
 {% block item_title %}
 <p>
-    {# email or mailbox objects #}
-    {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model %}
-        <a href="{% url arrangement:email obj.pid %}">
-        {% else %} {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
-            <a href="{% url arrangement:mailbox obj.pid %}">
-        {% else %} {# other objects #}
-        <a href="{% url arrangement:edit obj.pid %}">
-        {% endif %}
-    {% endif %}
-   {% if obj.arrangement_id %}{{obj.arrangement_id|default:''}} : {% endif %}
+  {# generate view url for email or mailbox objects #}
+  {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model %}
+    {% url arrangement:email obj.pid as view_url %}
+  {% endif %}
+  {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+    {% url arrangement:mailbox obj.pid as view_url %}
+  {% endif %}
+  {# other objects do not yet have a view url; all arrangement objects use the same edit url #}
+  {% url arrangement:edit obj.pid as edit_url %}
+
+  <a class="edit-link" href="{{ edit_url }}">edit</a>
+  {# NOTE: could only display edit link for email content; displaying for all arrangement items for consistency #}
+
+  <a href="{% firstof view_url edit_url %}"> {# link to view if available, otherwise to edit form #}
+   {% if obj.arrangement_id %}{{ obj.arrangement_id|default:''}} : {% endif %}
     {% comment %} Show both title and label if they are different.
     Show '(no title)' if both are blank {% endcomment %}
     {% firstof obj.title obj.label '(no title)' %}
@@ -25,16 +30,17 @@
        {% else %}
           {% url collection:edit obj.collection_id as collection_url %}
        {% endif %}
-      <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>){% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
-     {% if obj.simpleCollection_label %} {# FIXME: should probably link here, but simple collection is multiple #}
-       {{ obj.simpleCollection_label|join:"; " }}{% endif %})
+      <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
+      {% if obj.simpleCollection_label %} {# FIXME: should probably link here, but simple collection is multiple #}
+-       {{ obj.simpleCollection_label|join:"; " }}{% endif %})
   {% endif %} 
+
 </p>
 {% endblock %}
 
 {% block item_info %} 
   <ul class='horiz'>
-    <li>{{ obj.rights|join:', ' }}</li>
+    {% if obj.rights %}<li>{{ obj.rights|join:', ' }}</li>{% endif %}
     {# display processed/unprocessed status (currently based on object state)  #}
     <li>{% if obj.state == 'A' %}processed{% endif %}{% if obj.state == 'I'%}accessioned{% endif %}</li>
   </ul>

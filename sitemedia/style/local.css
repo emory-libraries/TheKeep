@@ -362,7 +362,7 @@ form#upload a.remove {
 }
 
 #content ul.horiz li {
-  display: inline-block;
+  display: inline;
   background: none;
   list-style-type: none;
   margin: 0px;
@@ -381,6 +381,12 @@ form#upload a.remove {
 .half-column {
   float: left;
   width: 50%;
+}
+
+.edit-link {
+  float: right;
+  font-variant: small-caps;
+  padding-left: 5px;
 }
 
 /* style for email view  */

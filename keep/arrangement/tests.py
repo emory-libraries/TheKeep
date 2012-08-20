@@ -404,6 +404,9 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertContains(response, 'guy1@friend.com; guy2@friend.com')
         self.assertContains(response, 'Fri May 11 2012')
 
+        self.assertContains(response, reverse('arrangement:edit', kwargs={'pid': 'email:pid'}),
+            msg_prefix='email detail page should link to arrangement edit page')
+
 
     @patch('keep.arrangement.views.solr_interface')
     def test_mailbox_view(self, mocksolr):
@@ -415,12 +418,15 @@ class ArrangementViewsTest(KeepTestCase):
 
         #authenticated user
         self.client.login(**ADMIN_CREDENTIALS)
-        respons = self.client.get(mailbox_url)
-        code = respons.status_code
-        self.assertEqual(200, code, 'authenticated should have acccess to page')
+        response = self.client.get(mailbox_url)
+        self.assertEqual(200, response.status_code, 
+            'authenticated user should have acccess to page')
 
         self.assertEqual(mocksolr.return_value.query.call_args_list[0][1], {'pid':'mailbox:pid'})
         self.assertEqual(mocksolr.return_value.query.call_args_list[1][1], {'isPartOf':'info:fedora/mailbox:pid'})
+
+        self.assertContains(response, reverse('arrangement:edit', kwargs={'pid': 'mailbox:pid'}),
+            msg_prefix='mailbox detail page should link to arrangement edit page')
         
 
 class ArrangementObjectTest(KeepTestCase):

@@ -263,6 +263,7 @@ def mailbox_view(request, pid):
     return render(request, 'arrangement/mailbox_view.html',
                   {'title': mailbox_title,
                    'label': mailbox_label,
+                   'pid': pid,
                    'page': results,
                    'show_pages': show_pages,
                    'search_opts': request.GET.urlencode(),

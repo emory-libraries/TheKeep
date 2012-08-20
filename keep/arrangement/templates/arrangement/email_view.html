@@ -36,8 +36,7 @@
          </div>
      {% endwith %}
 
-
-
     {% include 'arrangement/snippets/ds_links.html' %}
-
+    
+    <p><a href="{% url arrangement:edit obj.pid %}">Edit message</a> (assign series and rights information)</p>
 {% endblock %}

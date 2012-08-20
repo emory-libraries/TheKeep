@@ -150,8 +150,9 @@ function clearSeriesFields() {
     </table>
 </div>
 
-
-
+{# NOTE:  filetech edit form is currently for display only (i.e., no editable fields) #}
+{# only display this section if the object actually has filetech #}
+{% if obj.filetech.exists %}
 <h3 id="FileTech-label" class="section-head toggle">File Tech Metadata</h3>
 <div id="FileTech">
     {{ form.filetech.non_field_errors }}
@@ -166,7 +167,7 @@ function clearSeriesFields() {
         </td></tr>
     </table>
 </div>
-
+{% endif %}
 
 <h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
 <div id="rights">
