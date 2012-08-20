@@ -303,6 +303,10 @@ class SearchViewsTest(KeepTestCase):
         self.assertEqual('cat user:"Thing One" ', data[0]['value'])
         self.assertEqual('cat user:"Thing Two" ', data[1]['value'])
 
+        # non-empty but invalid parse result should not error
+        response = self.client.get(suggest_url, {'term': ':'})
+        self.assertEqual(200, response.status_code)  # was getting a 500 error before fix
+
 
     @patch('keep.search.views.Paginator')
     def test_search_by_created(self, mockpaginator, mocksolr_interface):

@@ -37,8 +37,11 @@ def site_index(request):
     facetq = solr.query().filter(created_date__range=(month_ago, today))  \
                 .facet_by('created_date', sort='index',
                           limit=10, mincount=1) \
+                .facet_by('collection_label', sort='count',
+                          limit=10, mincount=1) \
                 .paginate(rows=0)
     facets = facetq.execute().facet_counts.facet_fields
+    print facets
 
     # reverse order and convert to datetime.date for use with naturalday
     recent_items = []
@@ -272,10 +275,10 @@ def keyword_search_suggest(request):
         try:
             # parse could error in some cases
             parsed_terms = parse_search_terms(term_suffix)
+            field, prefix = parsed_terms[-1]
         except Exception:
             field, prefix = None, ''
 
-        field, prefix = parsed_terms[-1]
         if prefix is None:
             prefix = ''
 
