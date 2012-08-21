@@ -182,20 +182,21 @@ function clearSeriesFields() {
 <div>
   {{ form.non_field_errors }}
   <table class="edit-form">
+  {# NOTE:  only file objects can have a pdf; don't display for email objects #}
+  {% if obj.pdf %}
     {% with field=form.pdf %}{% include 'snippets/form_field_tr.html' %}{% endwith %}
     {# information about current PDF datastream, if any #}
     <tr>
       <td></td>
       <td>
         {% if obj.pdf.exists %}
-          <a href="{% url arrangement:raw-ds obj.pid obj.pdf.id %}">PDF</a> 
+          <a href="{% url arrangement:raw-ds obj.pid obj.pdf.id %}">{% firstof obj.pdf.label 'PDF' %}</a> 
           ({{ obj.pdf.size|filesizeformat }}) added {{ obj.pdf.created }}
         {% else %}
           (no PDF)
         {% endif %}
     </tr>
-    <table>
-
+    {% endif %}
 
     {% with field=form.comment %}{% include 'snippets/form_field_tr.html' %}{% endwith %}
   </table>

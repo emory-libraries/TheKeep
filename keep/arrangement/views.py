@@ -63,7 +63,7 @@ def edit(request, pid):
             form = arrangementforms.ArrangementObjectEditForm(request.POST, files=request.FILES, instance=obj)
             if form.is_valid():
                 form.update_instance()
-                if form.cleaned_data.has_key('comment') and form.cleaned_data['comment']:
+                if form.cleaned_data.get('comment', None):
                     comment = form.cleaned_data['comment']
                 else:
                     # NOTE: we could put this in the comment field as the default/initial value...

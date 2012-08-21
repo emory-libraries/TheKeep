@@ -19,7 +19,7 @@ from eulxml.xmlmap import cerp
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from keep.arrangement.management.commands import migrate_rushdie
-from keep.arrangement.models import ArrangementObject, \
+from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
      ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage, Mailbox
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
@@ -99,7 +99,7 @@ class TestMigrateRushdie(TestCase):
         self.pids.append(self.mc.pid)
 
         #Create a a DigitalObject
-        self.digObj = self.repo.get_object(type=ArrangementObject)
+        self.digObj = self.repo.get_object(type=RushdieArrangementFile)
         self.digObj.label = "Object For Test"
         self.digObj.save()
         self.pids.append(self.digObj.pid)
@@ -281,7 +281,12 @@ class ArrangementViewsTest(KeepTestCase):
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
 
-    def test_edit_form(self):
+    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
+    def test_edit_form(self, mockget_obj):
+
+        # test generic view functionality (perms)
+        mockget_obj.return_value = self.rushdie_obj
+
         arrangement_data =  {
             u'fs-file-MAX_NUM_FORMS': [u''],
             u'fs-file-TOTAL_FORMS': [u'2'],
@@ -326,6 +331,7 @@ class ArrangementViewsTest(KeepTestCase):
 
         # logged in as staff
         self.client.login(**ADMIN_CREDENTIALS)
+
         # on GET, should display the form
         response = self.client.get(edit_url, {'rights-access': '2'})
         code = response.status_code
@@ -357,6 +363,11 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertContains(response, self.rushdie_obj.mods.content.series.title)
         self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
 
+        # should display pdf file input for file object
+        # FIXME: not detecting object type correctly (?)
+        # self.assertContains(response, '<input name="pdf"',
+        #     msg_prefix='edit form should display PDF file input for file object')
+
         #TODO additional tests should be added
 
         response = self.client.post(edit_url, arrangement_data)
@@ -366,20 +377,20 @@ class ArrangementViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         obj = self.repo.get_object(type=ArrangementObject, pid=self.rushdie_obj.pid)
 
-        #check audit trail
-        audit_trail =  [a.message for a in obj.audit_trail.records]
-        self.assertEqual('update metadata', audit_trail[-1])
+        # check audit trail (default message)
+        self.assertEqual('update metadata', obj.audit_trail.records[-1].message)
 
+        # test optional comment input
         data = arrangement_data.copy()
         data['comment'] = 'This is a comment'
-        data['rights-access'] = 1 # need to change someting to trigger a save
+        data['rights-access'] = 1 # need to change something to trigger a save
         response = self.client.post(edit_url, data)
 
         obj = self.repo.get_object(type=ArrangementObject, pid=self.rushdie_obj.pid)
+        # check audit trail message
+        self.assertEqual(data['comment'], obj.audit_trail.records[-1].message)
 
-        #check audit trail
-        audit_trail =  [a.message for a in obj.audit_trail.records]
-        self.assertEqual(data['comment'], audit_trail[-1])
+        # test upload PDF
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     def test_view(self, mockget_obj):

@@ -215,7 +215,6 @@ class ArrangementObjectEditForm(forms.Form):
     error_css_class = 'error'
     required_css_class = 'required'
 
-    #pdf = forms.FileField(label='PDF', required=False)
     pdf = forms.FileField(label='PDF', required=False,
         help_text="Upload a PDF version of this document for researcher access",
         validators=[FileTypeValidator(types=['application/pdf'],
@@ -241,12 +240,6 @@ class ArrangementObjectEditForm(forms.Form):
             self.object_instance = instance
             orig_initial = initial
             initial = {}
-            # if hasattr(instance, 'pdf') and instance.pdf.exists:
-            #     initial['filespdf'] = instance.pdf.content
-
-            # populate fields not auto-generated & handled by XmlObjectForm
-            #if self.object_instance.collection_uri:
-                #initial['collection'] = str(self.object_instance.collection_uri)
 
             if self.object_instance.ark:
                 initial['identifier'] = self.object_instance.ark
@@ -257,7 +250,6 @@ class ArrangementObjectEditForm(forms.Form):
             initial.update(orig_initial)
 
         common_opts = {'data': data, 'initial': initial}
-        print 'initial data= ', initial
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='fs', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
@@ -266,7 +258,7 @@ class ArrangementObjectEditForm(forms.Form):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
-        super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial)
+        super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial, **kwargs)
 
     def is_valid(self):
         return all(form.is_valid() for form in \
@@ -285,10 +277,13 @@ class ArrangementObjectEditForm(forms.Form):
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
-        #if hasattr(self, 'cleaned_data'):
-            # set collection if we have all the attributes we need
-            #if hasattr(self, 'object_instance'):
-                #self.object_instance.collection_uri = self.cleaned_data['collection']
+        if hasattr(self, 'cleaned_data'):
+            # if a pdf was uploaded and this object has a pdf datastream, update the content
+            if self.cleaned_data.get('pdf', None) and hasattr(self.object_instance, 'pdf'):
+                uploaded_file = self.cleaned_data['pdf']
+                self.object_instance.pdf.content = uploaded_file
+                self.object_instance.pdf.mimetype = uploaded_file.content_type
+                self.object_instance.pdf.label = uploaded_file.name
 
         # must return mods because XmlObjectForm depends on it for # validation
         return self.object_instance
