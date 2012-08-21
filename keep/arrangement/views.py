@@ -60,43 +60,20 @@ def edit(request, pid):
         obj = repo.get_object(pid)
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
-            form = arrangementforms.ArrangementObjectEditForm(request.POST, instance=obj)
+            form = arrangementforms.ArrangementObjectEditForm(request.POST, files=request.FILES, instance=obj)
             if form.is_valid():
                 form.update_instance()
-                # FIXME: clean up log message handling; use form validation/form data
-                if form.comments.cleaned_data.has_key('comment') and form.comments.cleaned_data['comment']:
-                    comment = form.comments.cleaned_data['comment']
+                if form.cleaned_data.has_key('comment') and form.cleaned_data['comment']:
+                    comment = form.cleaned_data['comment']
                 else:
+                    # NOTE: we could put this in the comment field as the default/initial value...
                     comment = "update metadata"
 
-                action = 'updated'
-
-                #Add /remove Allowed Restricted Content Models based on status
-                # TODO: store these content models in variables that can be referenced/reused
-                allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
-                restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
-
-
-                # TODO: this logic has been moved into arrangement
-                # object as a pre-save step; test/confirm that it is ok to remove here
-                status = request.POST['rights-access']  
-                if status == "2":
-                    if restricted in obj.rels_ext.content:
-                        obj.rels_ext.content.remove(restricted)
-                    if allowed not in obj.rels_ext.content:
-                        obj.rels_ext.content.add(allowed)
-
-                else:
-                    if allowed in obj.rels_ext.content:
-                        obj.rels_ext.content.remove(allowed)
-                    if restricted not in obj.rels_ext.content:
-                        obj.rels_ext.content.add(restricted)
-
                 obj.save(comment)
-                messages.success(request, 'Successfully %s arrangement <a href="%s">%s</a>' % \
-                            (action, reverse('arrangement:edit', args=[obj.pid]), obj.pid))
+                messages.success(request, 'Successfully updated arrangement <a href="%s">%s</a>' % \
+                            (reverse('arrangement:edit', args=[obj.pid]), obj.pid))
             
-                # form submitted via normal save button - redirect to main audio page
+                # form submitted via normal save button - redirect to arrangement index (currently site index)
                 if '_save_continue' not in request.POST:
                     return HttpResponseSeeOtherRedirect(reverse('arrangement:index'))
 

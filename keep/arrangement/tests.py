@@ -313,7 +313,7 @@ class ArrangementViewsTest(KeepTestCase):
             u'mods-series-full_id': [u'rushdie1000_series4'],
             u'mods-series-title': [u'Correspondence'],
             u'rights-access_restriction_expiration_month': [u'MM'],
-            u'comments-comment': [u''],
+            u'comment': [u''],
             u'rights-copyright_date_month': [u'MM'],
             u'mods-series-series-base_ark': [u''],
             u'rights-ip_note': [u''],
@@ -371,7 +371,7 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertEqual('update metadata', audit_trail[-1])
 
         data = arrangement_data.copy()
-        data['comments-comment'] = 'This is a comment'
+        data['comment'] = 'This is a comment'
         data['rights-access'] = 1 # need to change someting to trigger a save
         response = self.client.post(edit_url, data)
 
@@ -379,7 +379,7 @@ class ArrangementViewsTest(KeepTestCase):
 
         #check audit trail
         audit_trail =  [a.message for a in obj.audit_trail.records]
-        self.assertEqual(data['comments-comment'], audit_trail[-1])
+        self.assertEqual(data['comment'], audit_trail[-1])
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     def test_view(self, mockget_obj):

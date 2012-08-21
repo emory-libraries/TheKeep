@@ -4,6 +4,7 @@ from eulxml.xmlmap import mods
 
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
+from eulcommon.djangoextras.validators import FileTypeValidator
 
 from eulcm.xmlmap.boda import Rights, ArrangementMods, \
      Series1, Series2, FileMasterTech, FileMasterTech_Base
@@ -214,20 +215,34 @@ class ArrangementObjectEditForm(forms.Form):
     error_css_class = 'error'
     required_css_class = 'required'
 
+    #pdf = forms.FileField(label='PDF', required=False)
+    pdf = forms.FileField(label='PDF', required=False,
+        help_text="Upload a PDF version of this document for researcher access",
+        validators=[FileTypeValidator(types=['application/pdf'],
+            message='Please upload a valid PDF')])
+
+    comment = forms.CharField(max_length=255, label="Comment",  required=False,
+        help_text="Brief description of changes to be stored in item history (optional)",
+        widget=forms.TextInput(attrs={'class': 'long'}))
+
     def __init__(self, data=None, instance=None, initial={}, **kwargs):       
 
         if instance is None:
             filetech_instance = None
             rights_instance = None
             mods_instance = None
-            comment_instance = None
         else:
-            filetech_instance = instance.filetech.content
+            if hasattr(instance, 'filetech') and instance.filetech.exists:
+                filetech_instance = instance.filetech.content
+            else:
+                filetech_instance = None
             rights_instance = instance.rights.content
             mods_instance = instance.mods.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
+            # if hasattr(instance, 'pdf') and instance.pdf.exists:
+            #     initial['filespdf'] = instance.pdf.content
 
             # populate fields not auto-generated & handled by XmlObjectForm
             #if self.object_instance.collection_uri:
@@ -242,17 +257,12 @@ class ArrangementObjectEditForm(forms.Form):
             initial.update(orig_initial)
 
         common_opts = {'data': data, 'initial': initial}
+        print 'initial data= ', initial
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='fs', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
-        # FIXME: log message handling doesn't need a separate form
-        self.comments = CommentForm( prefix='comments',**common_opts)   # ?!
 
-
-        for form in ( self.filetech,
-                      self.rights,
-                      self.mods,
-                      self.comments):
+        for form in (self.filetech, self.rights, self.mods):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
@@ -264,7 +274,6 @@ class ArrangementObjectEditForm(forms.Form):
                       self.mods,
                       self.rights,
                       self.filetech,
-                      self.comments,
                     ])
 
     def update_instance(self):

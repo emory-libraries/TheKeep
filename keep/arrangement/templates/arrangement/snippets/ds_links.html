@@ -11,6 +11,9 @@
        ({{ obj.original.checksum }})
     </li>
   {% endif %}
+  {% if obj.pdf and obj.pdf.exists %}
+    <li><a href="{% url arrangement:raw-ds obj.pid 'PDF' %}">PDF</a></li>
+  {% endif %}
   {% if obj.mods.exists %}
     <li><a href="{% url arrangement:raw-ds obj.pid 'MODS' %}">MODS</a></li>
   {% endif %}
