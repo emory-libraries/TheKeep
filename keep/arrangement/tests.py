@@ -365,9 +365,8 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
 
         # should display pdf file input for file object
-        # FIXME: not detecting object type correctly (?)
-        # self.assertContains(response, '<input name="pdf"',
-        #     msg_prefix='edit form should display PDF file input for file object')
+        self.assertContains(response, '<input type="file" name="pdf"',
+            msg_prefix='edit form should display PDF file input for file object')
 
         #TODO additional tests should be added
 
