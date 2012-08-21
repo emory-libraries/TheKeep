@@ -455,8 +455,8 @@ class ArrangementViewsTest(KeepTestCase):
 
         mocksolr.return_value.query.assert_called_with(isPartOf=mbox.uri)
 
-        self.assertContains(response, reverse('arrangement:edit', kwargs={'pid': 'mailbox:pid'}),
-            msg_prefix='mailbox detail page should link to arrangement edit page')
+        self.assertNotContains(response, reverse('arrangement:edit', kwargs={'pid': 'mailbox:pid'}),
+            msg_prefix='mailbox detail page should NOT link to arrangement edit page')
         
 
 class ArrangementObjectTest(KeepTestCase):

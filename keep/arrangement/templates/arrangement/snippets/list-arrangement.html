@@ -9,7 +9,10 @@
   {# other objects do not yet have a view url; all arrangement objects use the same edit url #}
   {% url arrangement:edit obj.pid as edit_url %}
 
-  <a class="edit-link" href="{{ edit_url }}">edit</a>
+  {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' not in obj.content_model %}
+  {# do NOT display edit link for mailbox objects (not currently editable) #}
+    <a class="edit-link" href="{{ edit_url }}">edit</a>
+  {% endif %}
   {# NOTE: could only display edit link for email content; displaying for all arrangement items for consistency #}
 
   <a href="{% firstof view_url edit_url %}"> {# link to view if available, otherwise to edit form #}
@@ -29,7 +32,7 @@
        {% endif %}
       <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
       {% if obj.simpleCollection_label %} {# FIXME: should probably link here, but simple collection is multiple #}
--       {{ obj.simpleCollection_label|join:"; " }}{% endif %})
+       {{ obj.simpleCollection_label|join:"; " }}{% endif %})
   {% endif %} 
 
 </p>
