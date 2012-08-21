@@ -367,6 +367,9 @@ class ArrangementViewsTest(KeepTestCase):
         # should display pdf file input for file object
         self.assertContains(response, '<input type="file" name="pdf"',
             msg_prefix='edit form should display PDF file input for file object')
+        # should display info about current pdf
+        self.assertContains(response, '(no PDF)',
+            msg_prefix='edit form should indicate object does not currently have a PDF')
 
         #TODO additional tests should be added
 
@@ -403,6 +406,13 @@ class ArrangementViewsTest(KeepTestCase):
         obj = self.repo.get_object(type=RushdieArrangementFile, pid=self.rushdie_obj.pid)
         self.assertEqual(pdf_content, obj.pdf.content.read())
         self.assertEqual('test.pdf', obj.pdf.label)
+
+        # form display for item with a pdf should display pdf details
+        response = self.client.get(edit_url)
+        self.assertContains(response, 'test.pdf',
+            msg_prefix='pdf filename should be displayed when object has a pdf')
+        self.assertContains(response, reverse('arrangement:raw-ds', args=[self.rushdie_obj.pid, 'PDF']),
+            msg_prefix='edit form should link to PDF view when object has a pdf')
 
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
