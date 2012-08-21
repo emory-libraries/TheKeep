@@ -4,6 +4,7 @@ from eulxml.xmlmap import mods
 
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
+from eulcommon.djangoextras.validators import FileTypeValidator
 
 from eulcm.xmlmap.boda import Rights, ArrangementMods, \
      Series1, Series2, FileMasterTech, FileMasterTech_Base
@@ -214,24 +215,31 @@ class ArrangementObjectEditForm(forms.Form):
     error_css_class = 'error'
     required_css_class = 'required'
 
+    pdf = forms.FileField(label='PDF', required=False,
+        help_text="Upload a PDF version of this document for researcher access",
+        validators=[FileTypeValidator(types=['application/pdf'],
+            message='Please upload a valid PDF')])
+
+    comment = forms.CharField(max_length=255, label="Comment",  required=False,
+        help_text="Brief description of changes to be stored in item history (optional)",
+        widget=forms.TextInput(attrs={'class': 'long'}))
+
     def __init__(self, data=None, instance=None, initial={}, **kwargs):       
 
         if instance is None:
             filetech_instance = None
             rights_instance = None
             mods_instance = None
-            comment_instance = None
         else:
-            filetech_instance = instance.filetech.content
+            if hasattr(instance, 'filetech') and instance.filetech.exists:
+                filetech_instance = instance.filetech.content
+            else:
+                filetech_instance = None
             rights_instance = instance.rights.content
             mods_instance = instance.mods.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
-
-            # populate fields not auto-generated & handled by XmlObjectForm
-            #if self.object_instance.collection_uri:
-                #initial['collection'] = str(self.object_instance.collection_uri)
 
             if self.object_instance.ark:
                 initial['identifier'] = self.object_instance.ark
@@ -245,18 +253,12 @@ class ArrangementObjectEditForm(forms.Form):
         self.filetech = FileTechEditForm(instance=filetech_instance, prefix='fs', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
         self.mods = ArrangementModsForm(instance=mods_instance, prefix='mods', **common_opts)
-        # FIXME: log message handling doesn't need a separate form
-        self.comments = CommentForm( prefix='comments',**common_opts)   # ?!
 
-
-        for form in ( self.filetech,
-                      self.rights,
-                      self.mods,
-                      self.comments):
+        for form in (self.filetech, self.rights, self.mods):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
-        super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial)
+        super(ArrangementObjectEditForm, self).__init__(data=data, initial=initial, **kwargs)
 
     def is_valid(self):
         return all(form.is_valid() for form in \
@@ -264,7 +266,6 @@ class ArrangementObjectEditForm(forms.Form):
                       self.mods,
                       self.rights,
                       self.filetech,
-                      self.comments,
                     ])
 
     def update_instance(self):
@@ -276,10 +277,13 @@ class ArrangementObjectEditForm(forms.Form):
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
-        #if hasattr(self, 'cleaned_data'):
-            # set collection if we have all the attributes we need
-            #if hasattr(self, 'object_instance'):
-                #self.object_instance.collection_uri = self.cleaned_data['collection']
+        if hasattr(self, 'cleaned_data'):
+            # if a pdf was uploaded and this object has a pdf datastream, add/update content
+            if self.cleaned_data.get('pdf', None) and hasattr(self.object_instance, 'pdf'):
+                uploaded_file = self.cleaned_data['pdf']
+                self.object_instance.pdf.content = uploaded_file
+                self.object_instance.pdf.mimetype = uploaded_file.content_type
+                self.object_instance.pdf.label = uploaded_file.name
 
         # must return mods because XmlObjectForm depends on it for # validation
         return self.object_instance

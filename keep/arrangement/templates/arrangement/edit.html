@@ -1,4 +1,5 @@
 {% extends "site_base.html" %}
+{% load humanize %}
 
 {% block page-subtitle %}: Arrangment : Edit {{ obj.label }} {% if obj.filetech.content.local_id %}({{ obj.filetech.content.local_id }}){% endif %}{% endblock %}
 {% block content-title %}Edit Arrangment File {% endblock %}
@@ -127,7 +128,7 @@ function clearSeriesFields() {
     {# NOTE: some overlap with collection edit form instructions #}
 </div>
 <div id="arrangement-edit">
-<form method="post" name="edit_form">{% csrf_token %}
+<form enctype="multipart/form-data" method="post" name="edit_form">{% csrf_token %}
 
 <h3 id="mods-label" class="section-head toggle">Descriptive Metadata</h3>
 <div id="mods">
@@ -177,11 +178,28 @@ function clearSeriesFields() {
     </table>
 </div>
 
-<div id="comments">
-    {{ form.comments.non_field_errors }}
-    <table class="edit-form">
-        {% for field in form.comments %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
-    </table>
+{# top-level form fields: pdf, comment #}
+<div>
+  {{ form.non_field_errors }}
+  <table class="edit-form">
+  {# NOTE:  only file objects can have a pdf; don't display for email objects #}
+  {% if obj.pdf %}
+    {% with field=form.pdf %}{% include 'snippets/form_field_tr.html' %}{% endwith %}
+    {# information about current PDF datastream, if any #}
+    <tr>
+      <td></td>
+      <td>
+        {% if obj.pdf.exists %}
+          <a href="{% url arrangement:raw-ds obj.pid obj.pdf.id %}">{% firstof obj.pdf.label 'PDF' %}</a> 
+          ({{ obj.pdf.size|filesizeformat }}) added {{ obj.pdf.created }}
+        {% else %}
+          (no PDF)
+        {% endif %}
+    </tr>
+    {% endif %}
+
+    {% with field=form.comment %}{% include 'snippets/form_field_tr.html' %}{% endwith %}
+  </table>
 </div>
 
 

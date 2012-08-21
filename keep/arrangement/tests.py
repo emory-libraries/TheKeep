@@ -2,14 +2,14 @@ from rdflib import URIRef
 import logging
 import sys
 from mock import Mock, MagicMock, patch
+import os
 from sunburnt import sunburnt
 
-from django.test import TestCase
-from django.contrib.auth.models import User
-from django.contrib.auth.models import Permission
-from django.test import Client
+from django.conf import settings
+from django.contrib.auth.models import User, Permission
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.test import Client, TestCase
 
 from eulfedora.rdfns import relsext as relsextns, model as modelns
 from eulcm.models import boda
@@ -19,7 +19,7 @@ from eulxml.xmlmap import cerp
 
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from keep.arrangement.management.commands import migrate_rushdie
-from keep.arrangement.models import ArrangementObject, \
+from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
      ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage, Mailbox
 from keep.collection.models import SimpleCollection, CollectionObject
 from keep.common.fedora import Repository
@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
+
+pdf_filename = os.path.join(settings.BASE_DIR, 'arrangement', 'fixtures', 'test.pdf')
 
 class PermissionsCheckTest(TestCase):
     fixtures =  ['users']
@@ -99,7 +101,7 @@ class TestMigrateRushdie(TestCase):
         self.pids.append(self.mc.pid)
 
         #Create a a DigitalObject
-        self.digObj = self.repo.get_object(type=ArrangementObject)
+        self.digObj = self.repo.get_object(type=RushdieArrangementFile)
         self.digObj.label = "Object For Test"
         self.digObj.save()
         self.pids.append(self.digObj.pid)
@@ -205,7 +207,7 @@ class ArrangementViewsTest(KeepTestCase):
         self.englishdocs = FedoraFixtures.englishdocs_collection()
         self.englishdocs.save()
 
-        self.rushdie_obj = self.repo.get_object(type=ArrangementObject)
+        self.rushdie_obj = self.repo.get_object(type=RushdieArrangementFile)
 
         #Add Link pointing to the top level rushdie collection
         #relation = (self.rushdie_obj.uriref, model.isMemberOfCollection, "info:fedora/keep-athom09:349")
@@ -281,7 +283,11 @@ class ArrangementViewsTest(KeepTestCase):
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
 
-    def test_edit_form(self):
+    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
+    def test_edit_form(self, mock_getobj):
+
+        mock_getobj.return_value = self.rushdie_obj
+
         arrangement_data =  {
             u'fs-file-MAX_NUM_FORMS': [u''],
             u'fs-file-TOTAL_FORMS': [u'2'],
@@ -313,7 +319,7 @@ class ArrangementViewsTest(KeepTestCase):
             u'mods-series-full_id': [u'rushdie1000_series4'],
             u'mods-series-title': [u'Correspondence'],
             u'rights-access_restriction_expiration_month': [u'MM'],
-            u'comments-comment': [u''],
+            u'comment': [u''],
             u'rights-copyright_date_month': [u'MM'],
             u'mods-series-series-base_ark': [u''],
             u'rights-ip_note': [u''],
@@ -326,6 +332,7 @@ class ArrangementViewsTest(KeepTestCase):
 
         # logged in as staff
         self.client.login(**ADMIN_CREDENTIALS)
+
         # on GET, should display the form
         response = self.client.get(edit_url, {'rights-access': '2'})
         code = response.status_code
@@ -357,6 +364,11 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertContains(response, self.rushdie_obj.mods.content.series.title)
         self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
 
+        # should display pdf file input for file object
+        # FIXME: not detecting object type correctly (?)
+        # self.assertContains(response, '<input name="pdf"',
+        #     msg_prefix='edit form should display PDF file input for file object')
+
         #TODO additional tests should be added
 
         response = self.client.post(edit_url, arrangement_data)
@@ -366,20 +378,33 @@ class ArrangementViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         obj = self.repo.get_object(type=ArrangementObject, pid=self.rushdie_obj.pid)
 
-        #check audit trail
-        audit_trail =  [a.message for a in obj.audit_trail.records]
-        self.assertEqual('update metadata', audit_trail[-1])
+        # check audit trail (default message)
+        self.assertEqual('update metadata', obj.audit_trail.records[-1].message)
 
+        # test optional comment input
         data = arrangement_data.copy()
-        data['comments-comment'] = 'This is a comment'
-        data['rights-access'] = 1 # need to change someting to trigger a save
+        data['comment'] = 'This is a comment'
+        data['rights-access'] = 1 # need to change something to trigger a save
         response = self.client.post(edit_url, data)
 
         obj = self.repo.get_object(type=ArrangementObject, pid=self.rushdie_obj.pid)
+        # check audit trail message
+        self.assertEqual(data['comment'], obj.audit_trail.records[-1].message)
 
-        #check audit trail
-        audit_trail =  [a.message for a in obj.audit_trail.records]
-        self.assertEqual(data['comments-comment'], audit_trail[-1])
+        # test uploading a PDF file
+        with open(pdf_filename) as pdf:            
+            data = arrangement_data.copy()
+            data['pdf'] = pdf
+            response = self.client.post(edit_url, data)
+
+        # check that PDF was saved to fedora (more tests on form update_instance method)
+        with open(pdf_filename) as pdf:
+            pdf_content = pdf.read()
+
+        obj = self.repo.get_object(type=RushdieArrangementFile, pid=self.rushdie_obj.pid)
+        self.assertEqual(pdf_content, obj.pdf.content.read())
+        self.assertEqual('test.pdf', obj.pdf.label)
+
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     def test_view(self, mockget_obj):
@@ -637,4 +662,32 @@ class EmailMessageTest(KeepTestCase):
         mockrepo = Mock()
         em = EmailMessage.by_checksum(42, mockrepo)
         mockrepo.get_object.assert_called_with('pid:1', type=EmailMessage)
+
+
+#arrangementforms.ArrangementObjectEditForm))
+#class ArrangementObjectEditFormTest(KeepTestCase):
+class ArrangementObjectEditFormTest(TestCase):
+
+    def test_update_instance(self):
+        # test pdf update
+        emailobj = EmailMessage(Mock())
+        emailobj.pid = 'testemail:1'
+        mock_upload = Mock()
+        mock_upload.content_type = 'application/pdf'
+        mock_upload.name = 'MyDocument.pdf'
+        editform = arrangementforms.ArrangementObjectEditForm(instance=emailobj)
+        editform.cleaned_data = {'pdf': mock_upload}
+
+        editform.update_instance()
+        # email has no pdf - should not error attempting to add one
+        self.assertFalse(hasattr(emailobj, 'pdf'))
+
+        fileobj = RushdieArrangementFile(Mock())
+        fileobj.pid = 'testfile:1'
+        editform = arrangementforms.ArrangementObjectEditForm(instance=fileobj)
+        editform.cleaned_data = {'pdf': mock_upload}
+        editform.update_instance()
+        self.assertEqual(mock_upload.name, fileobj.pdf.label)
+        self.assertEqual(mock_upload.content_type, fileobj.pdf.mimetype)
+        self.assertEqual(mock_upload, fileobj.pdf.content)
         
