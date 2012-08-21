@@ -278,7 +278,7 @@ class ArrangementObjectEditForm(forms.Form):
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
-            # if a pdf was uploaded and this object has a pdf datastream, update the content
+            # if a pdf was uploaded and this object has a pdf datastream, add/update content
             if self.cleaned_data.get('pdf', None) and hasattr(self.object_instance, 'pdf'):
                 uploaded_file = self.cleaned_data['pdf']
                 self.object_instance.pdf.content = uploaded_file

@@ -56,7 +56,6 @@ def edit(request, pid):
     '''
     repo = TypeInferringRepository(request=request)
     try:
-        # allow to infer type ? 
         obj = repo.get_object(pid)
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods

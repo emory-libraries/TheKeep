@@ -2,14 +2,14 @@ from rdflib import URIRef
 import logging
 import sys
 from mock import Mock, MagicMock, patch
+import os
 from sunburnt import sunburnt
 
-from django.test import TestCase
-from django.contrib.auth.models import User
-from django.contrib.auth.models import Permission
-from django.test import Client
+from django.conf import settings
+from django.contrib.auth.models import User, Permission
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.test import Client, TestCase
 
 from eulfedora.rdfns import relsext as relsextns, model as modelns
 from eulcm.models import boda
@@ -32,6 +32,8 @@ logger = logging.getLogger(__name__)
 
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
+
+pdf_filename = os.path.join(settings.BASE_DIR, 'arrangement', 'fixtures', 'test.pdf')
 
 class PermissionsCheckTest(TestCase):
     fixtures =  ['users']
@@ -205,7 +207,7 @@ class ArrangementViewsTest(KeepTestCase):
         self.englishdocs = FedoraFixtures.englishdocs_collection()
         self.englishdocs.save()
 
-        self.rushdie_obj = self.repo.get_object(type=ArrangementObject)
+        self.rushdie_obj = self.repo.get_object(type=RushdieArrangementFile)
 
         #Add Link pointing to the top level rushdie collection
         #relation = (self.rushdie_obj.uriref, model.isMemberOfCollection, "info:fedora/keep-athom09:349")
@@ -282,10 +284,9 @@ class ArrangementViewsTest(KeepTestCase):
         self.repo.purge_object(self.englishdocs.pid)
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
-    def test_edit_form(self, mockget_obj):
+    def test_edit_form(self, mock_getobj):
 
-        # test generic view functionality (perms)
-        mockget_obj.return_value = self.rushdie_obj
+        mock_getobj.return_value = self.rushdie_obj
 
         arrangement_data =  {
             u'fs-file-MAX_NUM_FORMS': [u''],
@@ -390,7 +391,20 @@ class ArrangementViewsTest(KeepTestCase):
         # check audit trail message
         self.assertEqual(data['comment'], obj.audit_trail.records[-1].message)
 
-        # test upload PDF
+        # test uploading a PDF file
+        with open(pdf_filename) as pdf:            
+            data = arrangement_data.copy()
+            data['pdf'] = pdf
+            response = self.client.post(edit_url, data)
+
+        # check that PDF was saved to fedora (more tests on form update_instance method)
+        with open(pdf_filename) as pdf:
+            pdf_content = pdf.read()
+
+        obj = self.repo.get_object(type=RushdieArrangementFile, pid=self.rushdie_obj.pid)
+        self.assertEqual(pdf_content, obj.pdf.content.read())
+        self.assertEqual('test.pdf', obj.pdf.label)
+
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     def test_view(self, mockget_obj):
@@ -648,4 +662,32 @@ class EmailMessageTest(KeepTestCase):
         mockrepo = Mock()
         em = EmailMessage.by_checksum(42, mockrepo)
         mockrepo.get_object.assert_called_with('pid:1', type=EmailMessage)
+
+
+#arrangementforms.ArrangementObjectEditForm))
+#class ArrangementObjectEditFormTest(KeepTestCase):
+class ArrangementObjectEditFormTest(TestCase):
+
+    def test_update_instance(self):
+        # test pdf update
+        emailobj = EmailMessage(Mock())
+        emailobj.pid = 'testemail:1'
+        mock_upload = Mock()
+        mock_upload.content_type = 'application/pdf'
+        mock_upload.name = 'MyDocument.pdf'
+        editform = arrangementforms.ArrangementObjectEditForm(instance=emailobj)
+        editform.cleaned_data = {'pdf': mock_upload}
+
+        editform.update_instance()
+        # email has no pdf - should not error attempting to add one
+        self.assertFalse(hasattr(emailobj, 'pdf'))
+
+        fileobj = RushdieArrangementFile(Mock())
+        fileobj.pid = 'testfile:1'
+        editform = arrangementforms.ArrangementObjectEditForm(instance=fileobj)
+        editform.cleaned_data = {'pdf': mock_upload}
+        editform.update_instance()
+        self.assertEqual(mock_upload.name, fileobj.pdf.label)
+        self.assertEqual(mock_upload.content_type, fileobj.pdf.mimetype)
+        self.assertEqual(mock_upload, fileobj.pdf.content)
         
