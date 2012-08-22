@@ -37,10 +37,10 @@ class AudioMods(LocalMODS):
     # possibly map identifier type uri as well ?
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
           mods.TypedNote, required=False)
-    ':class:`~keep.mods.TypedNote` with `type="general"`'
+    ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="general"`'
     part_note = xmlmap.NodeField('mods:note[@type="part number"]',
                                  mods.TypedNote)
-    ':class:`~keep.mods.TypedNote` with `type="part number"`'
+    ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="part number"`'
 
     dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
             required=False, verbose_name='Record ID/Filename')

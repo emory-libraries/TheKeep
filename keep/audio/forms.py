@@ -98,7 +98,7 @@ class UploadForm(forms.Form):
 
 class SimpleNoteForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to simplify editing
-    a MODS :class:`~keep.mods.Note`.  Displays text content input only,
+    a MODS :class:`~eulxml.xmlmap.mods.Note`.  Displays text content input only,
     as a :class:`~django.forms.Textarea` with no label; no other note attributes
     are displayed.
     """
@@ -110,7 +110,7 @@ class SimpleNoteForm(XmlObjectForm):
 
 class SimpleDateForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to edit a MODS
-    :class:`~keep.mods.Date`.  Currently only allows editing the date
+    :class:`~eulxml.xmlmap.mods.Date`.  Currently only allows editing the date
     value itself, using a :class:`~eulcommon.djangoextras.formfields.W3CDateField`.
     """
     date = W3CDateField(label='', required=False)
@@ -121,7 +121,7 @@ class SimpleDateForm(XmlObjectForm):
 
 class OriginInfoForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.OriginInfo`.  Currently only consists
+    :class:`~eulxml.xmlmap.mods.OriginInfo`.  Currently only consists
     of simple date entry for date created and issued using :class:`SimpleDateForm`.
     """
     form_label = 'Origin Info'

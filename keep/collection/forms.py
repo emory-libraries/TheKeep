@@ -54,7 +54,7 @@ class CollectionSearch(forms.Form):
 
 class AccessConditionForm(XmlObjectForm):
     '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.AccessCondition` :
+    :class:`~eulcm.xmlmap.mods.AccessCondition` :
 
         * suppress default label of 'text'
         * use :class:`~django.forms.Textarea` widget
@@ -67,7 +67,7 @@ class AccessConditionForm(XmlObjectForm):
 
 class NamePartForm(XmlObjectForm):
     '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.NamePart`
+    :class:`~eulcm.xmlmap.mods.NamePart`
 
         * suppress default label 'text'
         * use :class:`~django.forms.TextInput` with class *long*
@@ -79,7 +79,7 @@ class NamePartForm(XmlObjectForm):
 
 class RoleForm(XmlObjectForm):
     '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS name
-    :class:`~keep.mods.Role` information
+    :class:`~eulxml.xmlmap.mods.Role` information
 
         * suppress default label 'text'
         * configure type with initial value 'text' and make read-only
@@ -93,10 +93,10 @@ class RoleForm(XmlObjectForm):
 
 class NameForm(XmlObjectForm):
     '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
-    :class:`~keep.mods.Name` information.
+    :class:`~eulxml.xmlmap.mods.Name` information.
 
-        * use custom :class:`~keep.mods.NamePart` and
-          :class:`~keep.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
+        * use custom :class:`~eulxml.xmlmap.mods.NamePart` and
+          :class:`~eulxml.xmlmap.mods.Role` forms (:class:`NamePartForm`, :class:`RoleForm`)
         * customize id field label & help text
         * suppress displayForm and affiliation fields
     '''

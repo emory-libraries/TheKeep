@@ -92,7 +92,7 @@ Management Commands/Scripts
 .. automodule:: keep.audio.management.commands.ingest_cleanup
     :members:
 
-.. automodule:: keep.audio.manangement.commands.generate_access_copy
+.. automodule:: keep.audio.management.commands.generate_access_copy
     :members:
 
 Context Processors
@@ -125,10 +125,6 @@ Models
 .. automodule:: keep.common.models
     :members:
 
-MODS
-^^^^
-.. automodule:: keep.mods
-    :members:
 
 Utilities
 ^^^^^^^^^

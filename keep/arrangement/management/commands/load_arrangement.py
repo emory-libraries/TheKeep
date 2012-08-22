@@ -11,7 +11,7 @@ from keep.arrangement.models import ArrangementObject
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common.eadmap import Series
 from keep.common.fedora import Repository
-from keep.common.models import FileMasterTech_Base
+from eulcm.xmlmap.boda import FileMasterTech_Base
 
 
 class Command(BaseCommand):
