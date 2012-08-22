@@ -3,6 +3,45 @@
 CHANGELOG
 =========
 
+Release 1.5 (preliminary)
+-------------------------
+
+* A logged in user can see a checksum for binary file content on the record
+  detail page (currently edit page), in order to verify file authenticity.
+* A logged in user can search file content by checksum, in order to match 
+  ingested content with original metadata.
+* A logged in user can identify email records and see high-level email 
+  information in Keep search results, so that email can be distinguished 
+  from other types of files.
+* When a user clicks on an email record in the search results, they are 
+  taken to a brief view page so that they can see information about the 
+  email instead of loading the default arrangement edit form which does 
+  not entirely apply to email.
+* A system administrator or developer can run a script to import verdict
+  and series information (in a CSV file) for the processed 5300c files into
+  the repository, so that verdict and series decisions do not have to be 
+  entered one at a time.
+* A system administrator or developer can run a script to ingest 5300c email
+  messages into the repository, so that email verdicts can be imported and 
+  email content can eventually be made accessible to researchers.
+* A system administrator or developer can run a script to add item level 
+  content for non-email files to 5300c metadata-only records in the repository, 
+  so that processed file content can be made accessible to users for research
+  purposes.
+* A system administrator or developer can run a script to import verdict 
+  information from a CSV file for 5300c email messages, so that verdicts from 
+  messages sorted in the emulation can be applied to repository items.
+* Recently added items on site home page now includes a list of collections
+  with items added in the past 30 days.
+
+Bug fixes:
+ * Corrected item level search results link to parent collection
+ * Search audio/arrangement items (old search) by collection (broken after change
+   to auto-complete collection input)
+ * Corrected sorting for recently added items by day (on site home page) 
+
+
+
 Release 1.4.2
 -------------
 

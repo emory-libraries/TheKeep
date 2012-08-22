@@ -306,6 +306,7 @@ Release 1.5 (preliminary)
 
 * This update includes Solr index changes; update Solr with the latest
   ``schema.xml`` and reindex site content.
+
 * Previously ingested and migrated Arrangement objects were associated with
   the Rushdie collection incorrectly (using the isMemberOf relation instead of
   isMemberOfCollection).  This can be corrected in the Django console as follows::
@@ -337,7 +338,41 @@ Release 1.5 (preliminary)
    In a development or staging environment where a collection is incorrectly referenced but does not
    exist, you may want to check the deprecated collection by pid.  In particular, it is important
    not to remove all ``isMemberOf`` relations, because Rushdie Mailbox objects are associated with 
-   their corresponding Email account objects via ``isMemberOf``.              
+   their corresponding Email account objects via ``isMemberOf``.        
+
+* This release includes several one-time scripts to import content and verdict
+  for Rushdie's 5300c computer.  These should be run by a developer or someone familiar with 
+  both the site and the content as follows, in this order:
+
+  1. Import series and verdict information for non-email content based on a CSV file, which will be 
+     provided by born-digital archivist or project manager::
+
+      $ python manage.py import_verdict --csv=/path/to/csvfile
+
+     Note that this step may identify duplicate records, which will require manual clean up; any 
+     clean up should be completed **before** running the next script (import_content).
+
+  2. Import file content for non-email objects.  This will require the 5300c disk
+     image be mounted on the local file system, using a command something like this::
+
+     $ sudo mount 5300c.img -o loop -t hfs /mnt/rushdie_5300c
+
+     Then run the script to import file content from the disk image, providing it the pid
+     for the 5300c processing batch (aka "simple collection")::
+
+     $ python manage.py import_content /mnt/rushdie_5300c emory:bm4pr 
+
+  3. Import email messages from the 5300c disk image; pid should be the processing batch (aka "simple collection")
+     id; file path should be the location of Eudora email content::
+
+     $ python manage.py ingest_5300c_email emory:bm4pr /path/to/Eudora\ Folder/ --user=<user> --password=
+
+  4. Import series and verdict information for email content based on a CSV file::
+
+     $ python manage.py import_verdicts --email --csv=/path/to/5300c_email_verdicts.csv
+
+  The output from each of these scripts should be collected and sent to project managers and/or
+  born-digital archivists for review.
 
 
 Release 1.4 - search and ingest enhancements
