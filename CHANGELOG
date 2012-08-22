@@ -3,6 +3,14 @@
 CHANGELOG
 =========
 
+Release 1.4.2
+-------------
+
+* Make Archive required in the collection create and edit forms.
+* Prevent the creation of collections with duplicate Source Id in the same
+  Archive.
+
+
 Release 1.4.1 
 -------------
 
