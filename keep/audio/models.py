@@ -220,6 +220,7 @@ class CodecCreator(_BaseDigitalTech):
         '3': (('Dell Optiplex 755', 'Apogee Rosetta 200'), 'Sound Forge',  '9.0'),
         '4': (('Dell Optiplex 755',), 'iTunes',  None),
         '5': (('Unknown',), 'Unknown',  None),
+        '6': (('iMac', 'Benchmark ADC1'), 'Adobe Audition CS6', '5.0'),
     }
     'controlled vocabulary for codec creator configurations'
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
