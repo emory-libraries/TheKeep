@@ -8,7 +8,6 @@
        <a href="{% url arrangement:raw-ds obj.pid 'ORIGINAL' %}"
           title="original file; {{ obj.original.mimetype}}, {{ obj.original.size|filesizeformat }}; MD5 checksum {{ obj.original.checksum }}"
           >Original</a>
-       ({{ obj.original.checksum }})
     </li>
   {% endif %}
   {% if obj.pdf and obj.pdf.exists %}
