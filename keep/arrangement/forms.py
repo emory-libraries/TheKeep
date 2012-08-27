@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.safestring import mark_safe
 
 from eulxml.xmlmap import mods
 
@@ -216,7 +217,8 @@ class ArrangementObjectEditForm(forms.Form):
     required_css_class = 'required'
 
     pdf = forms.FileField(label='PDF', required=False,
-        help_text="Upload a PDF version of this document for researcher access",
+        help_text=mark_safe('''Upload a PDF version of this document for researcher access. <br/>
+        After selecting your PDF, click "Save" below to submit the form and upload the file.'''),
         validators=[FileTypeValidator(types=['application/pdf'],
             message='Please upload a valid PDF')])
 
