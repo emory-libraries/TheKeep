@@ -107,11 +107,14 @@ def edit(request, pid=None):
             # GET - display the form for editing
             # FIXME: special fields not getting set!
             form = CollectionForm(instance=obj)
-    except RequestFailed, e:
-        # if there was a 404 accessing object MODS, raise http404
-        # NOTE: this probably doesn't distinguish between object exists with
-        # no MODS and object does not exist at all
-        if e.code == 404:
+
+    except RequestFailed as e: 
+        # if there was an error accessing the object raise http404
+        # or the object does not exist, raise a 404
+        # NOTE: this will 404 for any object where current credentials
+        # do not allow user to access object info (i.e., insufficient
+        # permissions to even know whether or not the object exists)
+        if not obj.exists or e.code == 404:
             raise Http404
         # otherwise, re-raise and handle as a common fedora connection error
         else:
