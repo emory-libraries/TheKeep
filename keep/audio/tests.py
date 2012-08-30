@@ -87,7 +87,10 @@ class AudioViewsTest(KeepTestCase):
         super(AudioViewsTest, self).tearDown()
         # purge any objects created by individual tests
         for pid in self.pids:
-            self.repo.purge_object(pid)
+            try:
+                self.repo.purge_object(pid)
+            except:
+                logger.info('could not purge %s' % pid)
         # restore podcast pagination setting
         if self.max_per_podcast is not None:
             settings.MAX_ITEMS_PER_PODCAST_FEED = self.max_per_podcast
@@ -1224,6 +1227,27 @@ class AudioViewsTest(KeepTestCase):
         response = self.client.get(feed_list_url)
         self.assertContains(response, reverse('audio:podcast-feed', args=[1]))
         self.assertContains(response, reverse('audio:podcast-feed', args=[2]))
+
+    def test_generate_access_copy(self):
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # upload file to queue
+        with open(wav_filename) as wav:
+            response = self.client.post(reverse('audio:upload'), {'audio': wav,
+                                                     'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+            result = response.context['ingest_results'][0]
+            pid = result['pid']
+            self.pids.append(pid)
+
+        #make ajax request to quueue access copy generation
+        response = self.client.post(reverse('audio:generate-access-copy'), data={'pid': pid}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+
+        obj = self.repo.get_object(pid=pid, type=self.repo.infer_object_subtype)
+        conversions = TaskResult.objects.filter(object_id=pid).order_by('-created')
+
+        #There should be 2 in the queue one from the upload and one from ajax request
+        self.assertEqual(2,len(conversions))
+
 
 # TODO: mock out the fedora connection and find a way to verify that we
 # handle fedora outages appropriately

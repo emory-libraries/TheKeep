@@ -27,10 +27,19 @@
      /* trigger change once manually so initial display will reflect field starting value */
      $('.checkbox-warning').change();
 
+     $("#generate_access_copy").click(function() {
+        $.post("{% url audio:generate-access-copy %}", 
+            {'pid': "{{ obj.pid }}"  }, 
+            function() {
+                $("#generate_access_copy_item").html('generate access copy');
+            });
+     });
+
      {# collection autocomplete #}
      {% include "collection/snippets/collection_suggest_js.html" %}
 
     });
+
   </script>
 {% endblock %}
 
@@ -52,7 +61,11 @@
     {% if obj.compressed_audio.exists %}
       <li><a href="{{ obj.get_access_url }}">{{ access }}</a></li>
     {% else %}
-      <li>{{ access }}</li>
+            <li id='generate_access_copy_item'>
+            {% if obj.conversion_result.created %}
+                access copy requested {{ obj.conversion_result.created|timesince }} ago
+            {% endif %}
+                <a href='#' id='generate_access_copy'> generate access copy</a></li>
     {% endif %}
   {% endwith %}
   {% if obj.audit_trail %}

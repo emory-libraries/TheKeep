@@ -16,6 +16,7 @@ from django.http import HttpResponse, Http404, HttpResponseForbidden, \
     HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render
 from django.template import RequestContext
+from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 
@@ -485,3 +486,23 @@ def feed_list(request):
         'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,
         'pages': paginated_objects.page_range,
         })
+
+@permission_required("common.marbl_allowed")
+@csrf_exempt
+def generate_access_copy(request):
+    '''
+    Generates access copy for audio item for pid from AJAX request
+    '''
+    ret = 1
+
+
+    pid = request.POST.get('pid')
+
+    try:
+        repo = Repository(request=request)
+        obj = repo.get_object(pid, type=AudioObject)
+        queue_access_copy(obj)
+    except:
+        ret = -1
+
+    return HttpResponse(simplejson.dumps({'return':ret}), content_type='application/json')
