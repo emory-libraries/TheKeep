@@ -368,7 +368,7 @@ form#upload a.remove {
   margin: 0px;
   margin-right: 1px;
   padding: 0px 5px;
-  padding-left: 0px;
+  padding-left: 7px;
   border-right: 1px solid gray;
 }
 #content ul.horiz li:last-child {
