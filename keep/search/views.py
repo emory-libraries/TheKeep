@@ -308,10 +308,17 @@ def keyword_search_suggest(request):
                 # suggest full dates
                 else:
                     result_fmt = '%s '
-            else:
+            elif field in ['added_by', 'user']: # added_by or user
                 sort = 'count'
                 category = 'Users'
                 result_fmt = '"%s" '
+            elif field == 'coll':
+                sort = 'count'
+                category = 'Collections'
+                result_fmt = '"%s" '
+                # if collection number facet by collection_source_id
+#                if parsed_terms[1].isdigit():
+#                    facet_field = 'collection_source_id'
 
             solr = solr_interface()
             facetq = solr.query().paginate(rows=0)
