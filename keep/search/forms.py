@@ -70,7 +70,7 @@ class KeywordSearch(forms.Form):
         'user': 'users',
         'added_by': 'added_by',
         'created': 'created_date',
-        'coll': 'collection_label' # can either be collection_src_id or collection_label
+        'coll': 'collection_label' # can either be collection_source_id or collection_label
     }
     '''Dictionary of fields that can be used via the keyword search box.
     Key is the field name users should use in the search box; corresponding
@@ -89,7 +89,7 @@ class KeywordSearch(forms.Form):
         'user': 'users_facet',
         'added_by': 'added_by_facet',
         'created': 'created_date',
-        'coll': 'collection_label_facet', # can either be collection_src_id_facet or collection_label_facet
+        'coll': 'collection_label_facet', # can either be collection_source_id_facet or collection_label_facet
     }
     '''Dictionary of fields that can be faceted, e.g. for
     autocomplete in keyword search.  Key is the search box field; value is
@@ -104,7 +104,7 @@ class KeywordSearch(forms.Form):
         ('added by', 'added_by_facet'),
         ('modified by', 'users_facet'),
         ('year', 'created_year'),
-        ('coll', 'collection_label_facet'), # can either be collection_src_id_facet or collection_label_facet
+        ('coll', 'collection_label_facet'), # can either be collection_source_id_facet or collection_label_facet
 
     ])
     ''':class:`~django.utils.datastructures.SortedDict` of facet

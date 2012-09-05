@@ -123,6 +123,7 @@ def keyword_search(request):
                 # add field/value search to the solr query
                 q = q.query(**{solr_field: search_val})
                 # add to search info for display to user
+                field = 'collection' if field== 'coll' else field
                 search_info.update({field: val})
 
         # search on all collected search terms
@@ -216,6 +217,9 @@ def keyword_search(request):
         facets = SortedDict()
         facet_fields = results.object_list.facet_counts.facet_fields
         for display_name, field in searchform.facet_field_names.iteritems():
+            #do not display coll facet because it is redundant with the collection facet
+            if display_name == 'coll':
+                continue
             if field in facet_fields and facet_fields[field]:
                 show_facets = []
                 # skip any display facet values that are already in effect
@@ -225,7 +229,6 @@ def keyword_search(request):
                 if show_facets:
                     facets[display_name] = show_facets
 
-        del facets['coll'] # delete coll facet because it is redundant with collection facet
         ctx.update({
             'page': results,
             'show_pages': show_pages,
