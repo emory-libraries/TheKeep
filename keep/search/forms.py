@@ -89,6 +89,7 @@ class KeywordSearch(forms.Form):
         'user': 'users_facet',
         'added_by': 'added_by_facet',
         'created': 'created_date',
+        'coll': 'collection_label_facet'
 
     }
     '''Dictionary of fields that can be faceted, e.g. for
