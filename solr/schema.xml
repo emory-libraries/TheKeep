@@ -120,7 +120,7 @@ see:
     <field name="date_issued" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="access_code" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="collection_id" type="string" indexed="true" stored="true" multiValued="false"/>
-    <field name="collection_label" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="collection_label" type="text" indexed="true" stored="true" multiValued="false"/>
     <field name="simpleCollection_id" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="simpleCollection_label" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="researcher_access" type="boolean" indexed="true" stored="true" multiValued="false"/>
@@ -140,7 +140,7 @@ see:
     <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
 
     <!-- * both audio and arrangement objects -->
-    <field name="collection_source_id" type="integer" indexed="true" stored="true" multiValued="false"/>
+    <field name="collection_source_id" type="text" indexed="true" stored="true" multiValued="false"/>
 
     <!-- MD5 checksum for primary content datastream -->
     <field name="content_md5" type="string" indexed="true" stored="true" multiValued="false"/>
@@ -234,7 +234,6 @@ see:
    <copyField source="users" dest="users_facet"/>
    <copyField source="type" dest="type_facet"/>
    <copyField source="collection_label" dest="collection_label_facet"/>
-   <copyField source="collection_source_id" dest="collection_source_id_facet"/>
 
    <!-- copy first 10 chars of string-form datetime created to date -->
    <copyField source="created" dest="created_date" maxChars="10"/>

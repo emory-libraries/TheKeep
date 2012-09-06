@@ -495,6 +495,25 @@ class ArrangementViewsTest(KeepTestCase):
 
 class ArrangementObjectTest(KeepTestCase):
 
+    def setUp(self):
+        self.repo = Repository()
+        self.pids = []
+
+        # create test collection
+        coll = self.repo.get_object(type=CollectionObject)
+        coll.pid='parent:1'
+        coll.mods.content.source_id='12345'
+
+        #create test arrangement object
+        self.arr = self.repo.get_object(type=ArrangementObject)
+        self.arr.pid = 'foo:1'
+        self.arr.collection = coll
+
+
+    def tearDown(self):
+        for pid in self.pids:
+            self.repo.purge_object(pid)
+
     @patch('keep.arrangement.models.solr_interface', spec=sunburnt.SolrInterface)
     def test_by_arrangement_id(self, mocksolr):
         # no match
@@ -560,6 +579,14 @@ class ArrangementObjectTest(KeepTestCase):
                      not in obj.rels_ext.content)
         self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
                      in obj.rels_ext.content)
+
+    def test_index_data(self):
+        idx_data = self.arr.index_data()
+        self.assertEqual('born-digital', idx_data['object_type'])
+        self.assertEqual(self.arr.pid, idx_data['pid'])
+        self.assertIn(self.arr.owner, idx_data['owner'])
+        self.assertEquals(self.arr.collection.uri, idx_data['collection_id'])
+        self.assertEquals(self.arr.collection.mods.content.source_id, idx_data['collection_source_id'])
 
 class EmailMessageTest(KeepTestCase):
 

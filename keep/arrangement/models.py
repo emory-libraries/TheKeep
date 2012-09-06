@@ -137,7 +137,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         if collection:
             
             # collection_source_id
-            if collection.mods.content.source_id is not None:
+            if collection.mods.content.source_id:
                 data['collection_source_id'] = collection.mods.content.source_id
             data['collection_id'] = collection.uri
             try:
