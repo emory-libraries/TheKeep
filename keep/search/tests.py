@@ -190,6 +190,37 @@ class SearchViewsTest(KeepTestCase):
         mocksolr.query.query.assert_called_with('foo:bar')
 
     @patch('keep.search.views.Paginator')
+    def test_search_by_coll(self, mockpaginator, mocksolr_interface):
+        search_url = reverse('search:keyword')
+        mocksolr = mocksolr_interface.return_value
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # search by coll (collection) label
+        response = self.client.get(search_url, {'keyword': 'coll:kittens'})
+        # check solr query args
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_any_call(collection_label='kittens')
+        # - sort by score then date when fielded search terms
+        sort_args = mocksolr.query.sort_by.call_args_list[-2:]
+        self.assertEqual(call('-score'), sort_args[0])
+        self.assertEqual(call('-created'), sort_args[1])
+        # - include relevance score in return values
+        mocksolr.query.field_limit.assert_called_with(score=True)
+
+        # search by coll (collection) source_id
+        response = self.client.get(search_url, {'keyword': 'coll:200'})
+        # check solr query args
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_any_call(collection_source_id='200')
+
+
+    @patch('keep.search.views.Paginator')
     def test_search_facets(self, mockpaginator, mocksolr_interface):
         # test facet logic in the search
         search_url = reverse('search:keyword')

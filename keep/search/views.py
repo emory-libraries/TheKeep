@@ -113,6 +113,9 @@ def keyword_search(request):
             else:
                 solr_field = searchform.allowed_fields[field]
                 search_val = val
+                # special case for searching for collection source id
+                if field == 'coll' and search_val and search_val.isdigit():
+                    solr_field = 'collection_source_id'
                 # add wildcard to end of search dates
                 # (indexed by YYYY-MM-DD; allow match on YYYY or YYYY-MM)
                 if field == 'created':
@@ -120,6 +123,7 @@ def keyword_search(request):
                 # add field/value search to the solr query
                 q = q.query(**{solr_field: search_val})
                 # add to search info for display to user
+                field = 'collection' if field== 'coll' else field
                 search_info.update({field: val})
 
         # search on all collected search terms
@@ -213,6 +217,9 @@ def keyword_search(request):
         facets = SortedDict()
         facet_fields = results.object_list.facet_counts.facet_fields
         for display_name, field in searchform.facet_field_names.iteritems():
+            #do not display coll facet because it is redundant with the collection facet
+            if display_name == 'coll':
+                continue
             if field in facet_fields and facet_fields[field]:
                 show_facets = []
                 # skip any display facet values that are already in effect
@@ -308,10 +315,18 @@ def keyword_search_suggest(request):
                 # suggest full dates
                 else:
                     result_fmt = '%s '
-            else:
+            elif field in ['added_by', 'user']: # added_by or user
                 sort = 'count'
                 category = 'Users'
                 result_fmt = '"%s" '
+            elif field == 'coll':
+                sort = 'count'
+                category = 'Collections'
+                result_fmt = '"%s" '
+
+                #if the term is numbric facet by source_id
+                if prefix and prefix.isdigit():
+                    facet_field = 'collection_source_id_facet'
 
             solr = solr_interface()
             facetq = solr.query().paginate(rows=0)

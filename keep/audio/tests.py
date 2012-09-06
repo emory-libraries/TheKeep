@@ -1640,6 +1640,7 @@ class TestAudioObject(KeepTestCase):
 
     def setUp(self):
         super(TestAudioObject, self).setUp()
+        self.pids = []
         # create a test audio object to edit
         with open(wav_filename) as wav:
             self.obj = self.repo.get_object(type=audiomodels.AudioObject)
@@ -1647,15 +1648,17 @@ class TestAudioObject(KeepTestCase):
             self.obj.dc.content.title = self.obj.label
             self.obj.audio.content = wav
             self.obj.save()
+            self.pids.append(self.obj.pid)
             
         # collection fixture
         self.rushdie = FedoraFixtures.rushdie_collection()
         self.rushdie.save()
+        self.pids.append(self.rushdie.pid)
 
     def tearDown(self):
         super(TestAudioObject, self).tearDown()
 
-        for pid in [self.obj.pid, self.rushdie.pid]:
+        for pid in self.pids:
             try:
                 self.repo.purge_object(pid, "removing unit test fixture")
             except RequestFailed:
@@ -1803,9 +1806,12 @@ class TestAudioObject(KeepTestCase):
         mockcollobj.side_effect = get_coll
         
         # create test object and populate with minimal data
+        coll = self.repo.get_object(type=CollectionObject)
+        coll.pid='parent:1'
+        coll.mods.content.source_id='12345'
         obj = self.repo.get_object(type=audiomodels.AudioObject)
         obj.pid = 'foo:1'
-        obj.collection = self.repo.get_object('parent:1')
+        obj.collection = coll
         obj.dc.content.title = 'audio item'
         desc_data = obj.index_data()
         self.assertEqual(obj.collection.uri, desc_data['collection_id'],
@@ -1822,6 +1828,9 @@ class TestAudioObject(KeepTestCase):
         self.assert_(obj.collection.uri in args,
                      'object.collection.uri %s should be used to initialize a CollectionObject for collection info' \
                      % obj.collection.uri)
+        self.assertEquals(obj.collection.mods.content.source_id, desc_data['collection_source_id'],
+                          'collection_source_id should be %s but is is %s' %
+                          (obj.collection.mods.content.source_id, desc_data['collection_source_id']))
         
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                          'default index data fields should be present in data (title)')
