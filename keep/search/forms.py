@@ -65,6 +65,7 @@ class KeywordSearch(forms.Form):
     keyword = SolrSearchField(required=False,
                               help_text=help_info)
 
+    # TODO see if there is a way to combine the logic / fields for allowed_fields,  field_descriptions, facet_fields, facet_field_names
     # fields that can be used in keyword search
     allowed_fields = {
         'user': 'users',
@@ -89,17 +90,19 @@ class KeywordSearch(forms.Form):
         'user': 'users_facet',
         'added_by': 'added_by_facet',
         'created': 'created_date',
-        'coll': 'collection_label_facet'
 
     }
     '''Dictionary of fields that can be faceted, e.g. for
     autocomplete in keyword search.  Key is the search box field; value is
     the Solr facet field.
     '''
+    # NOTE: we are not using auto-complete with coll search because it is limited to starts-with searching
+
     facet_fields['created'] = 'created_date'
 
     facet_field_names = SortedDict([
         ('type', 'object_type'),
+        # we need a facet field for collection to display collection names but the noon-facet version is used for searching
         ('collection', 'collection_label_facet'),
         ('access status', 'access_code'),
         ('added by', 'added_by_facet'),

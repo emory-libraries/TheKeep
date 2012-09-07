@@ -319,10 +319,6 @@ def keyword_search_suggest(request):
                 sort = 'count'
                 category = 'Users'
                 result_fmt = '"%s" '
-            elif field == 'coll':
-                sort = 'count'
-                category = 'Collections'
-                result_fmt = '"%s" '
 
                 #if the term is numbric facet by source_id
                 if prefix and prefix.isdigit():
