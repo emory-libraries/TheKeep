@@ -488,21 +488,23 @@ def feed_list(request):
         })
 
 @permission_required("common.marbl_allowed")
-@csrf_exempt
-def generate_access_copy(request):
+def queue_generate_access_copy(request, pid):
     '''
-    Generates access copy for audio item for pid from AJAX request
+    Generates access copy for audio item for pid from AJAX request.
+    Returns 'queued' on success and 'error' on any error.
+
+    :param pid: The pid of the object to be generated.
+        from.
     '''
-    ret = 1
+    ret = "queued"
 
-
-    pid = request.POST.get('pid')
-
+    # TODO May want to prevent queuing of more than one at a time or within a time period.
+    # TODO For now javascript disables the link until the page is refreshed.
     try:
         repo = Repository(request=request)
         obj = repo.get_object(pid, type=AudioObject)
         queue_access_copy(obj)
     except:
-        ret = -1
+        ret = "error"
 
     return HttpResponse(simplejson.dumps({'return':ret}), content_type='application/json')

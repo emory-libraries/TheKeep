@@ -3,7 +3,7 @@ from keep.audio.feeds import PodcastFeed
 from keep.audio import views
 
 urlpatterns = patterns('',
-    url(r'^generate_access_copy/$', views.generate_access_copy, name='generate-access-copy'),
+    url(r'^(?P<pid>[^/]+)/queue_generate_access_copy/$', views.queue_generate_access_copy, name='queue-generate-access-copy'),
     url(r'^upload/$', views.upload, name='upload'),
     url(r'^feeds/$', views.feed_list, name='feed-list'),
     url(r'^feeds/(?P<page>[0-9]+)/$', PodcastFeed(), name='podcast-feed'),

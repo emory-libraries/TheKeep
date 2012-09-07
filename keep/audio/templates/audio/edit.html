@@ -27,13 +27,21 @@
      /* trigger change once manually so initial display will reflect field starting value */
      $('.checkbox-warning').change();
 
-     $("#generate_access_copy").click(function() {
-        $.post("{% url audio:generate-access-copy %}", 
-            {'pid': "{{ obj.pid }}"  }, 
-            function() {
-                $("#generate_access_copy_item").html('generate access copy');
-            });
-     });
+     $("#queue_generate_access_copy").click(function() {
+        var token = $("#csrftoken input").attr("value");
+        alert(token);
+        $.ajax({
+            type:'POST',
+            url: "{% url audio:queue-generate-access-copy pid=obj.pid %}",
+            //headers: {'X-CSRF-TOKEN': token},
+            beforeSend: function(xhr) {
+              xhr.setRequestHeader('X-CSRFTOKEN', token);
+            },
+            success: function() {
+                $("#queue_generate_access_copy_item").html('generate access copy');
+            }
+        }); //end ajax
+     }); //end of click
 
      {# collection autocomplete #}
      {% include "collection/snippets/collection_suggest_js.html" %}
@@ -45,6 +53,7 @@
 
 {% block content-body %}
 {{ block.super }}
+<div id="csrftoken">{% csrf_token %}</div> {# embed csrf for use in ajax calls #}
 <h2>{{ obj.label }}</h2>
 <ul class='extra dslist horiz'>
   {% with 'original audio' as original %}
@@ -60,13 +69,11 @@
   {% with 'access copy' as access %}
     {% if obj.compressed_audio.exists %}
       <li><a href="{{ obj.get_access_url }}">{{ access }}</a></li>
-    {% else %}
-            <li id='generate_access_copy_item'>
-            {% if obj.conversion_result.created %}
-                access copy requested {{ obj.conversion_result.created|timesince }} ago
-            {% endif %}
-                <a href='#' id='generate_access_copy'> generate access copy</a></li>
     {% endif %}
+      
+    <li id='queue_generate_access_copy_item'>
+        <a href='#' id='queue_generate_access_copy'> generate access copy</a>
+    </li>
   {% endwith %}
   {% if obj.audit_trail %}
     <li><a href="{% url audio:history obj.pid %}">Event Log</a></li>

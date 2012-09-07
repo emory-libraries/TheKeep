@@ -1,5 +1,6 @@
 import cStringIO
 from datetime import date, datetime
+import json
 import logging
 from mock import Mock, MagicMock, patch
 import os
@@ -1228,7 +1229,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertContains(response, reverse('audio:podcast-feed', args=[1]))
         self.assertContains(response, reverse('audio:podcast-feed', args=[2]))
 
-    def test_generate_access_copy(self):
+    def test_queue_generate_access_copy(self):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # upload file to queue
@@ -1239,8 +1240,10 @@ class AudioViewsTest(KeepTestCase):
             pid = result['pid']
             self.pids.append(pid)
 
-        #make ajax request to quueue access copy generation
-        response = self.client.post(reverse('audio:generate-access-copy'), data={'pid': pid}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        # make ajax request to quueue access copy generation
+        response = self.client.post(reverse('audio:queue-generate-access-copy', kwargs={'pid': pid}), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        ret = json.loads(response.content)
+        self.assertEquals(ret['return'], 'queued')
 
         obj = self.repo.get_object(pid=pid, type=self.repo.infer_object_subtype)
         conversions = TaskResult.objects.filter(object_id=pid).order_by('-created')
