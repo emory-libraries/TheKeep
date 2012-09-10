@@ -29,7 +29,6 @@
 
      $("#queue_generate_access_copy").click(function() {
         var token = $("#csrftoken input").attr("value");
-        alert(token);
         $.ajax({
             type:'POST',
             url: "{% url audio:queue-generate-access-copy pid=obj.pid %}",
