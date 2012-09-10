@@ -464,7 +464,7 @@ class AudioObject(DigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(AudioObject, self).index_data()
         data['object_type'] = 'audio'
-        if self.collection is not None:
+        if self.collection and self.collection.exists:
 
             # collection_source_id
             if self.collection.mods.content.source_id:

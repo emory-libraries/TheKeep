@@ -134,7 +134,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         else:
             collection = None
 
-        if collection:
+        if collection and collection.exists:
             
             # collection_source_id
             if collection.mods.content.source_id:
