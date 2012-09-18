@@ -38,7 +38,7 @@ def site_index(request):
     facetq = solr.query().filter(created_date__range=(month_ago, today))  \
                 .facet_by('created_date', sort='index',
                           limit=31, mincount=1) \
-                .facet_by('collection_label', sort='count',
+                .facet_by('collection_label_facet', sort='count',
                           limit=10, mincount=1) \
                 .paginate(rows=0)
     facets = facetq.execute().facet_counts.facet_fields
@@ -52,7 +52,7 @@ def site_index(request):
         y,m,d = day.split('-')
         recent_items.append((date(int(y),int(m),int(d)), count))
 
-    recent_collections = facets['collection_label']
+    recent_collections = facets['collection_label_facet']
 
     # search for content added in the last few months
     # and return just the facets for year-month

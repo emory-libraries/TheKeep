@@ -30,6 +30,7 @@ Management Commands/Scripts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autoclass:: keep.collection.management.commands.load_ead.Command
     :members:
+.. autoclass:: keep.collection.management.commands.repair_arks.Command
 
 Context Processors
 ^^^^^^^^^^^^^^^^^^
