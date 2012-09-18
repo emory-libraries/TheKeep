@@ -22,8 +22,8 @@ class Command(BaseCommand):
     based on the correct ARK from PIDMAN.
 
     '''
-
-    help = 'Repair ARKs on Keep Collections'
+    args = '[PID [PID...]]'
+    help = 'Repair ARKs on Keep Collections. It optionally accepts a list of PIDs to be repaired.'
 
     option_list = BaseCommand.option_list + (
         make_option('--dry-run',
@@ -31,9 +31,6 @@ class Command(BaseCommand):
             action='store_true',
             default=False,
             help='Report which ARKs would be repaired'),
-        make_option('--pids',
-            dest='pid_list',
-            help='A comma separated list of pids'),
         )
 
     def handle(self, *args, **options):
@@ -44,29 +41,28 @@ class Command(BaseCommand):
         repo = Repository()
         pidman = DjangoPidmanRestClient()
 
-        if options['pid_list']:
-            self.repair_arks_for_pid_list(options['pid_list'])
-            return
-
+        #populate collections list only of the object has the cmodel
+        collections = []
+        for pid in args:
+            try:
+                coll_object = repo.get_object(pid=pid, type=CollectionObject)
+                if coll_object.has_requisite_content_models():
+                    collections.append(coll_object)
+            except:
+                self.log(message="Could not find Collection: %s" % pid)
+        
         # get list of collections from the repository
         # limited to the COLLECTION_CONTENT_MODEL as well as returns a Keep specific collection object
-        collections = repo.get_objects_with_cmodel(CollectionObject.COLLECTION_CONTENT_MODEL, type=CollectionObject)
+        if not args:
+            collections = repo.get_objects_with_cmodel(CollectionObject.COLLECTION_CONTENT_MODEL, type=CollectionObject)
+        
+        if not collections:
+            self.log(message="No Collections were found.")
 
         for coll_obj in collections:
             self.repair_ark(collection_object=coll_obj)
 
         self.log(message="\n\n%s ARKs repaired\n%s ARKs were not repaired" % (self.repaired_count, self.unrepaired_count), no_label=True)
-
-
-    def repair_arks_for_pid_list(self, pid_list):
-        print "Repairing ARKs for PIDs: %s" % pid_list
-
-        repo = Repository()
-
-        for pid in pid_list.split(','):
-            coll_obj = repo.get_object(pid=pid, type=CollectionObject)
-
-            self.repair_ark(coll_obj)
 
     def repair_ark(self, collection_object):
         pidman = DjangoPidmanRestClient()
@@ -106,6 +102,11 @@ class Command(BaseCommand):
             self.log(message="An error occurred while saving %s" % (collection_object.pid))
 
     def log(self, level=INFO, message='', no_label=False):
+        '''
+        Convenience log function. WARNING level is only logged if the --verbosity flag is set to 2. 
+        INFO level is default and always logged. no_label can be set to True if a WARNING or INFO label
+        is not desired.
+        '''
         if level == WARNING and not int(self.options['verbosity']) == WARNING:
             return
         output_str = ''
