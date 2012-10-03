@@ -1,5 +1,5 @@
 table#mods_edit table.subform {
-  margin-left: 10px;  
+  margin-left: 10px;
  /* border-left: 1px solid #cccccc;*/
 }
 table#mods_edit table.subform th {
@@ -95,6 +95,7 @@ input.readonly {
 
 .extra {
   color: gray;
+  margin: 0 0 5px;
 }
 
 .dslist {
@@ -244,6 +245,8 @@ ul.messages li {
     list-style-image: url('../images/x.png');
     color: red;
 }
+.error { color: red;}
+.success { color: green;}
 /* NOTE: could use this selector to highlight form sections with errors
 .edit-form .error {}    */
 
