@@ -1226,28 +1226,53 @@ class AudioViewsTest(KeepTestCase):
         self.assertContains(response, reverse('audio:podcast-feed', args=[1]))
         self.assertContains(response, reverse('audio:podcast-feed', args=[2]))
 
-    def test_queue_generate_access_copy(self):
+    def test_tasks(self):
+        # test view method for queuing tasks (access copy conversion)
         self.client.login(**ADMIN_CREDENTIALS)
+        tasks_url = reverse('audio:tasks', args=[self.rushdie.pid])
 
-        # upload file to queue
-        with open(wav_filename) as wav:
-            response = self.client.post(reverse('audio:upload'), {'audio': wav,
-                                                     'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
-            result = response.context['ingest_results'][0]
-            pid = result['pid']
-            self.pids.append(pid)
+        # anything but a POST is currently invalid
+        response = self.client.get(tasks_url)
+        self.assertEqual(405, response.status_code)   # method not allowed
 
-        # make ajax request to quueue access copy generation
-        response = self.client.post(reverse('audio:queue-generate-access-copy', kwargs={'pid': pid}), HTTP_X_REQUESTED_WITH='XMLHttpRequest')
-        ret = json.loads(response.content)
-        self.assertEquals(ret['return'], 'queued')
+        # POST unsupported task type
+        bogus_task = 'stand on your head'
+        response = self.client.post(tasks_url, {'task': bogus_task})
+        self.assertContains(response, 'Task "%s" is not supported' % bogus_task,
+            status_code=500)
 
-        obj = self.repo.get_object(pid=pid, type=self.repo.infer_object_subtype)
-        conversions = TaskResult.objects.filter(object_id=pid).order_by('-created')
+        # supported task type
+        gen_access = 'generate access copy'
 
-        #There should be 2 in the queue one from the upload and one from ajax request
-        self.assertEqual(2, len(conversions))
+        # mock repo / object to simulate errors, success
+        with patch('keep.audio.views.Repository') as mockrepo:
+            mockobj = mockrepo.return_value.get_object.return_value
+            # non-existent object
+            mockobj.exists = False
+            response = self.client.post(tasks_url, {'task': gen_access})
+            self.assertEqual(404, response.status_code,
+                'view should 404 when object does not exist')
 
+            # exists but is not audio
+            mockobj.exists = True
+            mockobj.has_requisite_content_models = False
+            response = self.client.post(tasks_url, {'task': gen_access})
+            self.assertEqual(404, response.status_code,
+                'view should 404 when object is not an audio object')
+
+            # exists and is audio
+            mockobj.has_requisite_content_models = True
+            with patch('keep.audio.views.queue_access_copy') as mock_qac:
+                # success
+                response = self.client.post(tasks_url, {'task': gen_access})
+                self.assertContains(response, 'Successfully queued access copy conversion')
+                # queue method should be called
+                self.assertEqual(1, mock_qac.call_count)
+
+                # error message
+                mockobj = mockrepo.return_value.get_object.side_effect = Exception('timed out')
+                response = self.client.post(tasks_url, {'task': gen_access})
+                self.assertContains(response, 'Error queueing access copy conversion (timed out)')
 
 # TODO: mock out the fedora connection and find a way to verify that we
 # handle fedora outages appropriately

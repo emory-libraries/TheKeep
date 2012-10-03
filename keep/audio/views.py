@@ -1,4 +1,3 @@
-from datetime import date, timedelta
 import json
 import logging
 import magic
@@ -10,28 +9,26 @@ import traceback
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.core.paginator import Paginator, EmptyPage, InvalidPage
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden, \
-    HttpResponseBadRequest, HttpResponseServerError
+    HttpResponseBadRequest
 from django.shortcuts import render
-from django.template import RequestContext
 from django.utils import simplejson
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 
-from eulcm.xmlmap.boda import Rights
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, HttpResponseUnsupportedMediaType
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulfedora.util import RequestFailed, PermissionDenied
-from eulfedora.models import DigitalObjectSaveFailure
 
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject
 from keep.audio.feeds import feed_items
 from keep.audio.tasks import queue_access_copy
-from keep.collection.models import CollectionObject 
+from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository, history_view
 from keep.common.utils import md5sum
 
@@ -39,12 +36,13 @@ logger = logging.getLogger(__name__)
 
 allowed_audio_types = ['audio/x-wav', 'audio/wav']
 
+
 @permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.
-    
+
     There are two distinct ways to upload file. The first case is
     kicked off when "fileManualUpload" exists in the posted form. If
     it does, then this was not a HTML5 browser, and the file upload
@@ -63,17 +61,17 @@ def upload(request):
     }
 
     if request.method == 'POST':
-        content_type = request.META.get('CONTENT_TYPE', 'application/octet-stream')        
+        content_type = request.META.get('CONTENT_TYPE', 'application/octet-stream')
         media_type, sep, options = content_type.partition(';')
         # content type is technically case-insensitive; lower-case before comparing
         media_type = media_type.strip().lower()
 
         # if form has been posted, process & ingest files
-        if media_type  == 'multipart/form-data':
+        if media_type == 'multipart/form-data':
 
             # check for a single file upload
             form = audioforms.UploadForm(request.POST, request.FILES)
-            
+
             # If form is not valid (i.e., no collection specified, no
             # or mismatched files uploaded), bail out and redisplay
             # form with any error messages.
@@ -88,12 +86,11 @@ def upload(request):
             comment = form.cleaned_data['comment'] or 'ingesting audio'
             # get dictionary of file path -> filename, based on form data
             files_to_ingest = form.files_to_ingest()
-            
 
             results = []
             # results will be a list of dictionary to report per-file ingest success/failure
             # NOTE: using this structure for easy of display in django templates (e.g., regroup)
-            
+
             # process all files submitted for ingest (single or batch mode)
             if files_to_ingest:
                 # TODO: break this out into a separate function
@@ -103,7 +100,7 @@ def upload(request):
                         file_info = {'label': label}
 
                         # check if file is an allowed type
-                        
+
                         # NOTE: for single-file upload, browser-set type is
                         # available as UploadedFile.content_type - but since
                         # browser mimetypes are unreliable, calculate anyway
@@ -124,18 +121,17 @@ def upload(request):
                                     'message': '''Collection not selected'''})
                             continue
 
-
                         # if there is an MD5 file (i.e., file was uploaded via ajax),
                         # use the contents of that file as checksum
                         if os.path.exists(filename + '.md5'):
-                             with open(filename + '.md5') as md5file:
-                                 md5 = md5file.read()
+                            with open(filename + '.md5') as md5file:
+                                md5 = md5file.read()
                         # otherwise, calculate the MD5 (single-file upload)
                         else:
                             md5 = md5sum(filename)
                         # initialize a new audio object from the file
                         obj = AudioObject.init_from_file(filename,
-                                    initial_label=label, request=request,                                    
+                                    initial_label=label, request=request,
                                     checksum=md5)
 
                         #set collection on ingest
@@ -156,7 +152,7 @@ def upload(request):
                         logger.error('Error ingesting %s: %s' % (filename, e))
                         logger.debug("Error details:\n" + traceback.format_exc())
                         file_info['success'] = False
-                        
+
                         # check for Fedora-specific errors
                         if isinstance(e, RequestFailed):
                             if 'Checksum Mismatch' in e.detail:
@@ -168,7 +164,7 @@ def upload(request):
                         # non-fedora error
                         else:
                             file_info['message'] = 'Ingest failed: ' + unicode(e)
-                    
+
                     finally:
                         # no matter what happened, store results for reporting to user
                         results.append(file_info)
@@ -180,7 +176,7 @@ def upload(request):
         else:
             # POST but not form data - handle ajax file upload
             return ajax_file_upload(request)
-            
+
     # on GET or non-ajax POST, display the upload form
     ctx_dict['form'] = audioforms.UploadForm()
     # convert list of allowed types for passing to javascript
@@ -190,14 +186,15 @@ def upload(request):
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
 
+
 @permission_required_with_ajax('common.marbl_allowed')
 @csrf_exempt
 def ajax_file_upload(request):
-    """Process a file uploaded via AJAX and store it in a temporary staging 
+    """Process a file uploaded via AJAX and store it in a temporary staging
     directory for subsequent ingest into the repository.  The request must
     include the following headers:
 
-         * Content-Disposition: filename="original_name.wav"          
+         * Content-Disposition: filename="original_name.wav"
          * Content-MD5: MD5 checksum of the file calculated before upload
 
     If the file is successfully uploaded and passes checks on file type
@@ -262,10 +259,10 @@ def ajax_file_upload(request):
         # allows us to handle it a chunk at a time
         _dump_post_data(request.environ['wsgi.input'], upload, content_length)
         upload_file = upload.name
-        
+
     ingest_file = os.path.basename(upload_file)
     logger.debug('wrote ' + ingest_file)
-    
+
     try:
         # ignoring request mimetype since it is unreliable
         m = magic.Magic(mime=True)
@@ -278,7 +275,7 @@ def ajax_file_upload(request):
                         content_type='text/plain')
     except Exception as e:
         logger.debug(e)
-        
+
     # Calculate an MD5 for the uploaded file and compare with the client-calculated
     # MD5 to make sure that the entire file was uploaded correctly
     try:
@@ -291,8 +288,8 @@ def ajax_file_upload(request):
                         (calculated_md5, client_md5))
             return HttpResponseBadRequest('Checksum mismatch; uploaded data may be incomplete or corrupted',
                     content_type='text/plain')
-        
-        # if the MD5 check passes, store the MD5 so we don't have to calculate it again 
+
+        # if the MD5 check passes, store the MD5 so we don't have to calculate it again
         with open(os.path.join(staging_dir, ingest_file + '.md5'), 'w') as md5file:
             md5file.write(calculated_md5)
 
@@ -303,7 +300,10 @@ def ajax_file_upload(request):
     # success: return the name of the staging file to be used for ingest
     return HttpResponse(ingest_file, content_type='text/plain')
 
-_DUMP_BLOCK_SIZE = 16 * 1024 # mostly arbitrary. this size seems nice.
+
+_DUMP_BLOCK_SIZE = 16 * 1024  # mostly arbitrary. this size seems nice.
+
+
 def _dump_post_data(inf, outf, size=None):
     '''Copy data from `inf` to `outf` in chunks. If the caller happens to
     know the `size` in advance, read only that many bytes.
@@ -318,7 +318,7 @@ def _dump_post_data(inf, outf, size=None):
 
         # copy a single block of data.
         block = inf.read(read_length)
-        if not block: # EOF from client. that's all she wrote.
+        if not block:  # EOF from client. that's all she wrote.
             break
         outf.write(block)
 
@@ -328,6 +328,7 @@ def _dump_post_data(inf, outf, size=None):
             size -= len(block)
         if size == 0:
             break
+
 
 @permission_required("common.marbl_allowed")
 def view(request, pid):
@@ -340,12 +341,14 @@ def view(request, pid):
     return HttpResponseSeeOtherRedirect(reverse('audio:edit',
                 kwargs={'pid': pid}))
 
+
 @permission_required("common.marbl_allowed")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=AudioObject,
                           repo=Repository(request=request))
+
 
 @permission_required("common.marbl_allowed")
 def view_audit_trail(request, pid):
@@ -365,18 +368,19 @@ def edit(request, pid):
         # if this is not actually an AudioObject, then 404 (object is not available at this url)
         if not obj.has_requisite_content_models:
             raise Http404
-        
+
         if request.method == 'POST':
             # if data has been submitted, initialize form with request data and object mods
             form = audioforms.AudioObjectEditForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
                 # update foxml object with data from the form
                 form.update_instance()      # instance is reference to mods object
-                if form.comments.cleaned_data.has_key('comment') and form.comments.cleaned_data['comment']:
+                if 'comment' in form.comments.cleaned_data \
+                        and form.comments.cleaned_data['comment']:
                     comment = form.comments.cleaned_data['comment']
                 else:
                     comment = "update metadata"
-                    
+
                 obj.save(comment)
                 messages.success(request, 'Successfully updated <a href="%s">%s</a>' % \
                         (reverse('audio:edit', args=[pid]), pid))
@@ -397,14 +401,14 @@ def edit(request, pid):
             # GET - display the form for editing, pre-populated with content from the object
             form = audioforms.AudioObjectEditForm(instance=obj)
 
-        return render(request, 'audio/edit.html', {'obj' : obj, 'form': form })
+        return render(request, 'audio/edit.html', {'obj': obj, 'form': form})
 
     except PermissionDenied:
         # Fedora may return a PermissionDenied error when accessing a datastream
         # where the datastream does not exist, object does not exist, or user
         # does not have permission to access the datastream
 
-        # check that the object exists - if not, 404        
+        # check that the object exists - if not, 404
         if not obj.exists:
             raise Http404
         # for now, assuming that if object exists and has correct content models,
@@ -417,13 +421,12 @@ def edit(request, pid):
         # if fedora actually returned a 404, propagate it
         if rf.code == 404:
             raise Http404
-        
+
         msg = 'There was an error contacting the digital repository. ' + \
               'This prevented us from accessing audio data. If this ' + \
               'problem persists, please alert the repository ' + \
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
-        
 
 
 @permission_required("common.marbl_allowed")
@@ -437,7 +440,7 @@ def history(request, pid):
 def download_audio(request, pid, type, extension=None):
     '''Serve out an audio datastream for the fedora object specified by pid.
     Can be used to download original (WAV) audio file or the access copy (MP3).
-    
+
     :param pid: pid of the :class:`~keep.audio.models.AudioObject` instance
         from which the audio datastream should be returned
     :param type: which audio datastream to return - should be one of 'original'
@@ -476,6 +479,7 @@ def download_audio(request, pid, type, extension=None):
             repo=repo, headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling
 
+
 @permission_required("common.marbl_allowed")
 def feed_list(request):
     '''List and link to all current iTunes podcast feeds based on the
@@ -487,24 +491,55 @@ def feed_list(request):
         'pages': paginated_objects.page_range,
         })
 
+
 @permission_required("common.marbl_allowed")
-def queue_generate_access_copy(request, pid):
+@require_http_methods(['POST'])
+def tasks(request, pid):
     '''
-    Generates access copy for audio item for pid from AJAX request.
-    Returns 'queued' on success and 'error' on any error.
+    Manage tasks associated with an :class:`~keep.audio.models.AudioObject'.
+    Currently, the only supported functionality is to queue access
+    copy conversion; this should be done by POSTing the type of task to
+    be queued, i.e. **generate access copy**.
 
-    :param pid: The pid of the object to be generated.
-        from.
+    Supported tasks:
+        * **generate access copy** - queue access copy conversion for an audio
+        item by pid.  Returns a status message as the body of a plain/text response
+
+    :param pid: the pid of the object for which tasks should be queued
+
     '''
-    ret = "queued"
+    if request.method == 'POST':
+        status = "queued"
+        task_type = request.POST.get('task', None)
 
-    # TODO May want to prevent queuing of more than one at a time or within a time period.
-    # TODO For now javascript disables the link until the page is refreshed.
-    try:
-        repo = Repository(request=request)
-        obj = repo.get_object(pid, type=AudioObject)
-        queue_access_copy(obj)
-    except:
-        ret = "error"
+        # TODO May want to prevent queuing of more than one at a time or within a time period.
+        # TODO For now javascript disables the link until the page is refreshed.
 
-    return HttpResponse(simplejson.dumps({'return':ret}), content_type='application/json')
+        # currently the only supported task is
+        if task_type == 'generate access copy':
+            try:
+                repo = Repository(request=request)
+                obj = repo.get_object(pid, type=AudioObject)
+
+                # if object doesn't exist or isn't an audio item, 404
+                if not obj.exists or not obj.has_requisite_content_models:
+                    raise Http404
+
+                queue_access_copy(obj)
+                status = 'Successfully queued access copy conversion'
+
+            except Exception as err:
+                # re-raise any 404 error
+                if isinstance(err, Http404):
+                    raise
+
+                logger.error('Error queueing access copy conversion for %s : %s' % \
+                    (pid, err))
+                status = 'Error queueing access copy conversion (%s)' % err
+
+            return HttpResponse(status, content_type='text/plain')
+
+        # unsupported task
+        else:
+            return HttpResponse('Task "%s" is not supported' % task_type,
+                content_type='text/plain', status=500)

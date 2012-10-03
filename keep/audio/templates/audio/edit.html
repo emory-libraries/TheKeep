@@ -27,17 +27,30 @@
      /* trigger change once manually so initial display will reflect field starting value */
      $('.checkbox-warning').change();
 
-     $("#queue_generate_access_copy").click(function() {
+     $("#queue_access_conversion").click(function() {
+        var el = $(this).parent()
+        /* immediately replace link with text to avoid double-clicks and give user feedback */
+        el.html('Requesting access copy conversion ...');
         var token = $("#csrftoken input").attr("value");
         $.ajax({
             type:'POST',
-            url: "{% url audio:queue-generate-access-copy pid=obj.pid %}",
-            //headers: {'X-CSRF-TOKEN': token},
+            url: "{% url audio:tasks pid=obj.pid %}",
+            data: {'task': 'generate access copy'},
+            // headers: {'X-CSRFTOKEN': token},
+            /* can't use headers because genlib site is still on jquery 1.3.1; requires > 1.5 */
             beforeSend: function(xhr) {
               xhr.setRequestHeader('X-CSRFTOKEN', token);
             },
-            success: function() {
-                $("#queue_generate_access_copy_item").html('generate access copy');
+            success: function(data) {
+                el.html(data);
+            },
+            error: function(jqXHR, textstatus, error) {
+              // generic error message
+              var msg = 'Error queuing access copy conversion';
+              if (jqXHR.getResponseHeader('Content-Type') == 'text/plain') {
+                msg = 'Error: ' + jqXHR.responseText;
+              }
+              el.addClass('error').html(msg);
             }
         }); //end ajax
      }); //end of click
@@ -55,7 +68,7 @@
 <div id="csrftoken">{% csrf_token %}</div> {# embed csrf for use in ajax calls #}
 <h2>{{ obj.label }}</h2>
 <ul class='extra dslist horiz'>
-  {% with 'original audio' as original %}
+  {% with 'download original audio' as original %}
     {% if obj.audio.exists %}
       <li>
         <a href="{% url audio:download-audio obj.pid %}">{{ original }}</a>
@@ -65,14 +78,10 @@
       <li>{{ original }}</li>
     {% endif %}
   {% endwith %}
-  {% with 'access copy' as access %}
+  {% with 'download access copy' as access %}
     {% if obj.compressed_audio.exists %}
       <li><a href="{{ obj.get_access_url }}">{{ access }}</a></li>
     {% endif %}
-      
-    <li id='queue_generate_access_copy_item'>
-        <a href='#' id='queue_generate_access_copy'> generate access copy</a>
-    </li>
   {% endwith %}
   {% if obj.audit_trail %}
     <li><a href="{% url audio:history obj.pid %}">Event Log</a></li>
@@ -99,7 +108,7 @@
        completed {{ obj.conversion_result.task_end|timesince }} ago,
        took {{ obj.conversion_result.duration }}.
     {% endif %}
-    {{ conversion.task.status }}    
+    {{ conversion.task.status }}
     {{ conversion.task.result|default:'' }}
     {# NOTE: task result could potentially have full LAME output (hopefully unlikely);  truncate? #}
   </p>
@@ -111,6 +120,12 @@
 {% if obj.audio.exists %}
   <p class="extra">Original audio checksum: {{ obj.audio.checksum }}</p>
 {% endif %}
+
+<p class="extra">
+  <a href='#' id='queue_access_conversion'>
+    {% if obj.compressed_audio.exists %}re{% endif %}generate access copy</a>
+</p>
+
 
 <div class="instructions">
     <h2>Instructions for using this form</h2>
@@ -165,14 +180,14 @@
   {% endfor %}
  {# NOTE: currently we have no formsets, so not handling #}
 
-{# view-only content - output directly rather than trying to use form for display #} 
+{# view-only content - output directly rather than trying to use form for display #}
 {% if obj.mods.content.names %}
   <tr id="creator">
       <th>Creator{{ obj.mods.content.names|pluralize }}</th>
 {% comment %}names could be displayed in editable form using
 snippets/edit_mods_name.html, but it takes up a lot of page space,
 and they don't actually need to be editable for now.{% endcomment %}
-      <td class="multi-field">  
+      <td class="multi-field">
 	<table class="name-role-auth">
           <tr><th>Name</th><th>Role</th><th>Type</th><th>Authority</th></tr>
         {% for name in obj.mods.content.names %}
@@ -194,7 +209,7 @@ and they don't actually need to be editable for now.{% endcomment %}
 	{% for genre in obj.mods.content.genres %}
 	  <p>{{ genre.text }} {% if genre.authority %}[{{genre.authority }}]{% endif %}</p>
         {% endfor %}
-     </td> 
+     </td>
    </tr>
 {% endif %}
 {% if obj.mods.content.languages %}
@@ -219,7 +234,7 @@ and they don't actually need to be editable for now.{% endcomment %}
          {% if subject.name %}<b>Name:</b> {{ subject.name }}{% endif %}
          {% if subject.topic %}<b>Topic:</b> {{ subject.topic }}{% endif %}
          {% if subject.title %}<b>Title:</b> {{ subject.title }}{% endif %}
-         
+
          {% if subject.authority %}
            [{{ subject.authority }}]
          {% endif %}
