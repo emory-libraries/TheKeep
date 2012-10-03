@@ -189,8 +189,10 @@ def keyword_search(request):
                        mincount=1, limit=15, sort='count')
         # TODO: add support for missing=True for access_code
 
-        # if there are any search terms, sort by relevance and display score
-        if search_terms:
+        # if there are any *keyword* terms, sort by relevance and display score
+        # (for fielded search terms, items will either match or not, so relevance
+        # is not as useful)
+        if terms:
             q = q.sort_by('-score').field_limit(score=True)
             ctx['show_relevance'] = True
         # then sort by most recently created

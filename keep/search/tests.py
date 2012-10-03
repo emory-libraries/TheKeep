@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.test import TestCase
 import json
-from mock import patch, Mock, MagicMock, call
+from mock import patch, Mock, call
 from sunburnt import sunburnt
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
@@ -16,6 +16,7 @@ from keep.testutil import KeepTestCase
 from keep.audio.tests import ADMIN_CREDENTIALS
 
 logger = logging.getLogger(__name__)
+
 
 class SolrSearchFieldTest(TestCase):
 
@@ -34,7 +35,6 @@ class SolrSearchFieldTest(TestCase):
             self.assertRaises(forms.ValidationError,
                               self.field.to_python, 'one:two:three')
 
-
     def test_validate(self):
         # inherited validation - required field error
         self.assertRaises(forms.ValidationError,
@@ -44,7 +44,7 @@ class SolrSearchFieldTest(TestCase):
         not_req = SolrSearchField(required=False)
         not_req.validate([])
 
-        # no validation error should be raised 
+        # no validation error should be raised
         self.field.validate([(None, 'one'), (None, 'two')])
         self.field.validate([(None, 'one'), (None, 'two'),
                              (None, '"three four"')])
@@ -64,7 +64,7 @@ class SolrSearchFieldTest(TestCase):
 
 @patch('keep.search.views.solr_interface', spec=sunburnt.SolrInterface)
 class SearchViewsTest(KeepTestCase):
-    fixtures =  ['users']
+    fixtures = ['users']
 
     def setUp(self):
         #get user
@@ -77,7 +77,6 @@ class SearchViewsTest(KeepTestCase):
         self.user.user_permissions.clear()
         self.user.is_superuser = True
         self.user.save()
-
 
     @patch('keep.search.views.Paginator')
     def test_search(self, mockpaginator, mocksolr_interface):
@@ -93,7 +92,7 @@ class SearchViewsTest(KeepTestCase):
         # TODO: should redirect to local login, not django admin login
         #response = self.client.get(search_url, follow=False)
         #self.assertEqual(303, response.status_code)
-        
+
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
@@ -105,7 +104,7 @@ class SearchViewsTest(KeepTestCase):
         response = self.client.get(search_url)
         # check solr query args
         # - query should be called with no search terms (find all)
-        mocksolr.query.assert_called_with() 
+        mocksolr.query.assert_called_with()
         # - sort by created when no search terms for relevance to be meaningful
         mocksolr.query.sort_by.assert_called_with('-created')
         # check context params ?
@@ -116,8 +115,8 @@ class SearchViewsTest(KeepTestCase):
         # search with search terms
         response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
         # check solr query args
-        # - query should be called with tokenized search terms 
-        mocksolr.query.query.assert_called_with('fantabulous', 'expurgation') 
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_called_with('fantabulous', 'expurgation')
         # - sort by score then by date created when there are search terms
         sort_args = mocksolr.query.sort_by.call_args_list[-2:]
         self.assertEqual(call('-score'), sort_args[0])
@@ -146,8 +145,6 @@ class SearchViewsTest(KeepTestCase):
         response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
         mocksolr.query.exclude.assert_called_with(content_model=AudioObject.AUDIO_CONTENT_MODEL)
 
-
-
     @patch('keep.search.views.Paginator')
     def test_search_by_user(self, mockpaginator, mocksolr_interface):
         search_url = reverse('search:keyword')
@@ -161,32 +158,29 @@ class SearchViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # search by user
-        response = self.client.get(search_url, {'keyword': 'user:admin'})
+        self.client.get(search_url, {'keyword': 'user:admin'})
         # check solr query args
         # - query should be called with tokenized search terms
         mocksolr.query.query.assert_any_call(users='admin')
         # - sort by score then date when fielded search terms
         sort_args = mocksolr.query.sort_by.call_args_list[-2:]
-        self.assertEqual(call('-score'), sort_args[0])
-        self.assertEqual(call('-created'), sort_args[1])
-        # - include relevance score in return values
-        mocksolr.query.field_limit.assert_called_with(score=True)
+        self.assertEqual(call('-created'), sort_args[0])
 
         # search by creator/ingester
-        response = self.client.get(search_url, {'keyword': 'added_by:one'})
+        self.client.get(search_url, {'keyword': 'added_by:one'})
         mocksolr.query.query.assert_any_call(added_by='one')
 
         # multiple values for a single field
-        response = self.client.get(search_url, {'keyword': 'user:bob user:jane'})
+        self.client.get(search_url, {'keyword': 'user:bob user:jane'})
         mocksolr.query.query.assert_any_call(users='bob')
         mocksolr.query.query.assert_any_call(users='jane')
 
         # incomplete field
-        response = self.client.get(search_url, {'keyword': 'user:'})
+        self.client.get(search_url, {'keyword': 'user:'})
         mocksolr.query.query.assert_called_with('user:')
 
         # unknown field
-        response = self.client.get(search_url, {'keyword': 'foo:bar'})
+        self.client.get(search_url, {'keyword': 'foo:bar'})
         mocksolr.query.query.assert_called_with('foo:bar')
 
     @patch('keep.search.views.Paginator')
@@ -202,23 +196,31 @@ class SearchViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # search by coll (collection) label
-        response = self.client.get(search_url, {'keyword': 'coll:kittens'})
+        self.client.get(search_url, {'keyword': 'coll:kittens'})
         # check solr query args
         # - query should be called with tokenized search terms
         mocksolr.query.query.assert_any_call(collection_label='kittens')
-        # - sort by score then date when fielded search terms
+        # - sort by date created wheno only using fielded search terms
+        sort_args = mocksolr.query.sort_by.call_args_list[-2:]
+        self.assertEqual(call('-created'), sort_args[0])
+
+        # search by coll (collection) source_id
+        self.client.get(search_url, {'keyword': 'coll:200'})
+        # check solr query args
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_any_call(collection_source_id='200')
+
+        # search by collection with keyword
+        self.client.get(search_url, {'keyword': 'coll:kittens siamese'})
+        # check solr query args
+        # - query should be called with tokenized search terms
+        mocksolr.query.query.assert_any_call(collection_label='kittens')
+        # - sort by score, then date created
         sort_args = mocksolr.query.sort_by.call_args_list[-2:]
         self.assertEqual(call('-score'), sort_args[0])
         self.assertEqual(call('-created'), sort_args[1])
         # - include relevance score in return values
         mocksolr.query.field_limit.assert_called_with(score=True)
-
-        # search by coll (collection) source_id
-        response = self.client.get(search_url, {'keyword': 'coll:200'})
-        # check solr query args
-        # - query should be called with tokenized search terms
-        mocksolr.query.query.assert_any_call(collection_source_id='200')
-
 
     @patch('keep.search.views.Paginator')
     def test_search_facets(self, mockpaginator, mocksolr_interface):
@@ -237,7 +239,7 @@ class SearchViewsTest(KeepTestCase):
             'collection_label': [('My Stuff', 12)],
             'users_facet': [('login1', 22), ('login2', 11)],
             'added_by_facet': [('login2', 12), ('login1', 11)]
-        }  
+        }
         mockpage.object_list.facet_counts.facet_fields = mock_facets
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -249,7 +251,7 @@ class SearchViewsTest(KeepTestCase):
                                                    mincount=1, limit=15, sort='count')
         for solr_field in mock_facets.keys():
             self.assert_(solr_field not in response.context['facets'])
-            
+
         for display_name, field in KeywordSearch.facet_field_names.iteritems():
             if field in mock_facets:
                 self.assert_(display_name in response.context['facets'])
@@ -268,10 +270,10 @@ class SearchViewsTest(KeepTestCase):
         response = self.client.get(search_url, {'added by': 'usr1',
                                                 'modified by': 'usr2',
                                                 'access status': '10'})
-        active_filter_labels = [t for t,u in response.context['active_filters']]
+        active_filter_labels = [t for t, u in response.context['active_filters']]
         self.assert_('added by usr1' in active_filter_labels)
         self.assert_('modified by usr2' in active_filter_labels)
-        self.assert_('Undetermined' in active_filter_labels)         
+        self.assert_('Undetermined' in active_filter_labels)
 
     def test_search_suggest(self, mocksolr_interface):
         suggest_url = reverse('search:suggest')
@@ -290,7 +292,7 @@ class SearchViewsTest(KeepTestCase):
              'suggest view should return json content')
         # inspect result
         data = json.loads(response.content)
-        # should be based on keyword search form fields 
+        # should be based on keyword search form fields
         fields = [i['label'] for i in data]
         self.assertEqual(fields, KeywordSearch.field_descriptions.keys())
         # should have a category set
@@ -315,7 +317,7 @@ class SearchViewsTest(KeepTestCase):
         mocksolr.query.facet_by.assert_called_with('users_facet', prefix='',
                                              sort='count', limit=15)
         mocksolr.query.paginate.assert_called_with(rows=0)
-        
+
         data = json.loads(response.content)
         # inspect results
         self.assertEqual('Thing One (5)', data[0]['label'])
@@ -325,11 +327,10 @@ class SearchViewsTest(KeepTestCase):
         self.assertEqual('user:"Thing Two" ', data[1]['value'])
         self.assertEqual('Users', data[1]['category'])
 
-
         response = self.client.get(suggest_url, {'term': 'cat user:T'})
         mocksolr.query.facet_by.assert_called_with('users_facet', prefix='T',
                                              sort='count', limit=15)
-        data = json.loads(response.content) 
+        data = json.loads(response.content)
         # value should include preceding search string, if any
         self.assertEqual('cat user:"Thing One" ', data[0]['value'])
         self.assertEqual('cat user:"Thing Two" ', data[1]['value'])
@@ -337,7 +338,6 @@ class SearchViewsTest(KeepTestCase):
         # non-empty but invalid parse result should not error
         response = self.client.get(suggest_url, {'term': ':'})
         self.assertEqual(200, response.status_code)  # was getting a 500 error before fix
-
 
     @patch('keep.search.views.Paginator')
     def test_search_by_created(self, mockpaginator, mocksolr_interface):
@@ -352,7 +352,7 @@ class SearchViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # search by user
-        response = self.client.get(search_url, {'keyword': 'created:2012-05'})
+        self.client.get(search_url, {'keyword': 'created:2012-05'})
         # check solr query args
         # - query should be called with tokenized search terms
         mocksolr.query.query.assert_any_call(created_date='2012-05*')
@@ -379,7 +379,7 @@ class SearchViewsTest(KeepTestCase):
         data = json.loads(response.content)
         self.assertEqual('created:2012', data[0]['value'])
         self.assertEqual('Date Added', data[0]['category'])
-        
+
         # between 4 and 7 digits should query by year-month
         mocksolr.query.execute.return_value.facet_counts.facet_fields = {
             'created_month': [('2012-01', 21)]
@@ -389,7 +389,7 @@ class SearchViewsTest(KeepTestCase):
                                              sort='index', limit=15)
         data = json.loads(response.content)
         self.assertEqual('created:2012-01', data[0]['value'])
-        
+
         # > 7 digits should query by year-month-day
         mocksolr.query.execute.return_value.facet_counts.facet_fields = {
             'created_date': [('2012-01-15', 9)]
@@ -404,7 +404,7 @@ class SearchViewsTest(KeepTestCase):
 class SearchTemplatesTest(TestCase):
 
     # define a minimal mock page object to test the template, since
-    # django templates don't deal with callable Mock objects well 
+    # django templates don't deal with callable Mock objects well
     class MockPage(object):
         def __init__(self, content=[]):
             self.object_list = content
@@ -415,12 +415,12 @@ class SearchTemplatesTest(TestCase):
     content = [
         {'pid': 'audio:1', 'object_type': 'audio', 'title': 'recording'},
         {'pid': 'coll:1', 'object_type': 'collection', 'title': 'mss 123',
-         'dsids': ['MODS'],},
+         'dsids': ['MODS'], },
         {'pid': 'scoll:1', 'object_type': 'collection', 'title': 'process batch',
          'content_model': SimpleCollection.COLLECTION_CONTENT_MODEL},
         {'pid': 'boda:1', 'object_type': 'born-digital', 'title': 'email'}
     ]
-            
+
     def setUp(self):
         self.rqst = Mock()
 
@@ -434,11 +434,10 @@ class SearchTemplatesTest(TestCase):
             'search_opts': {},
             'facets': [],
         }
-        
+
     def test_results_item_display(self):
         # test search result item display
-        template = 'search/results.html'
-        
+
         # no results
         response = render(self.rqst, self.search_results, self.context)
         self.assertContains(response, 'No matching items found')
@@ -446,7 +445,7 @@ class SearchTemplatesTest(TestCase):
         ctx = self.context.copy()
         ctx['page'] = self.MockPage(self.content)
         response = render(self.rqst, self.search_results, ctx)
-        
+
         self.assertContains(response,
                             'sorted by most recently created/uploaded')
         self.assertNotContains(response, 'sorted by relevance')
@@ -495,7 +494,7 @@ class SearchTemplatesTest(TestCase):
             'user': 'admin',
             'added_by': 'one'
         }
-        response = render(self.rqst, self.search_results, ctx) 
+        response = render(self.rqst, self.search_results, ctx)
         self.assertContains(response, 'user: ',
             msg_prefix='search term field should be displayed on results page')
         self.assertContains(response, 'admin',
@@ -511,7 +510,7 @@ class SearchTemplatesTest(TestCase):
         ctx['search_info'] = {
             'user': ['bob', 'jane'],
         }
-        response = render(self.rqst, self.search_results, ctx) 
+        response = render(self.rqst, self.search_results, ctx)
         self.assertContains(response, 'user: ', count=1,
             msg_prefix='search term field should be displayed once on results page')
         self.assertContains(response, 'bob',
@@ -524,14 +523,14 @@ class SearchTemplatesTest(TestCase):
 
         response = render(self.rqst, self.search_results, self.context)
         self.assertNotContains(response, 'Filter your results')
-        
+
         mock_facets = {
             'type': [('audio', 3), ('born-digital', 2)],
             'access status': [('11', 5)],
             'collection': [('My Stuff', 15)],
             'modified by': [('login1', 32), ('login2', 31)],
             'added by': [('login2', 12), ('login1', 10)]
-        }  
+        }
         ctx = self.context.copy()
         ctx['facets'] = mock_facets
         ctx['url_params'] = 'keyword=interesting stuff'
@@ -550,7 +549,7 @@ class SearchTemplatesTest(TestCase):
                 else:
                     self.assertContains(response, '>%s<' % term,
                         msg_prefix='facet value should be listed')
-                    
+
                 self.assertContains(response, '(%s)' % count,
                     msg_prefix='facet count should be listed')
                 self.assertContains(response, '?%s&amp;%s=%s' % (ctx['url_params'],
