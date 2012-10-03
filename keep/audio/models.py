@@ -467,8 +467,8 @@ class AudioObject(DigitalObject):
         data['object_type'] = 'audio'
         if self.collection and self.collection.exists:
 
-            # collection_source_id
-            if self.collection.mods.content.source_id:
+            # collection_source_id  (0 is an allowable id, so check not None)
+            if self.collection.mods.content.source_id is not None:
                 data['collection_source_id'] = self.collection.mods.content.source_id
 
             data['collection_id'] = self.collection.uri

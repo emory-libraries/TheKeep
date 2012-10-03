@@ -1843,32 +1843,38 @@ class TestAudioObject(KeepTestCase):
         # collection belongs to.
         mockcollobj.side_effect = get_coll
 
-        # create test object and populate with minimal data
-        coll = self.repo.get_object(type=CollectionObject)
+        # create mock collection object with minimal data
+        coll = Mock(CollectionObject)
         coll.pid = 'parent:1'
-        coll.mods.content.source_id = '12345'
+        coll.exists = True
+        # should work with any id value including 0
+        coll.mods.content.source_id = 0
+
         obj = self.repo.get_object(type=audiomodels.AudioObject)
         obj.pid = 'foo:1'
-        obj.collection = coll
         obj.dc.content.title = 'audio item'
-        desc_data = obj.index_data()
-        self.assertEqual(obj.collection.uri, desc_data['collection_id'],
-                         'parent collection object id should be set in index data')
-        self.assertEqual(mockmss.label, desc_data['collection_label'],
+
+        # collection is an eulfedora.models.Relation, so patch on the AudioObject class
+        with patch('keep.audio.models.AudioObject.collection', new=coll):
+            desc_data = obj.index_data()
+
+            self.assertEqual(obj.collection.uri, desc_data['collection_id'],
+                             'parent collection object id should be set in index data')
+            self.assertEqual(mockmss.label, desc_data['collection_label'],
                           'parent collection object label should be set in index data')
-        # NB: as of 2011-08-23, eulindexer doesn't support automatic
-        # reindexing of audio objects when their collection changes. as a
-        # result, archive_id and archive_label may be stale. disable
-        # indexing them until eulindexer supports those chained updates.
-        # check CollectionObject use
-        # get all args for collection object initializations
-        args, kwargs = mockcollobj.call_args
-        self.assert_(obj.collection.uri in args,
-                     'object.collection.uri %s should be used to initialize a CollectionObject for collection info' \
-                     % obj.collection.uri)
-        self.assertEquals(obj.collection.mods.content.source_id, desc_data['collection_source_id'],
-                          'collection_source_id should be %s but is is %s' %
-                          (obj.collection.mods.content.source_id, desc_data['collection_source_id']))
+            # NB: as of 2011-08-23, eulindexer doesn't support automatic
+            # reindexing of audio objects when their collection changes. as a
+            # result, archive_id and archive_label may be stale. disable
+            # indexing them until eulindexer supports those chained updates.
+            # check CollectionObject use
+            # get all args for collection object initializations
+            args, kwargs = mockcollobj.call_args
+            self.assert_(obj.collection.uri in args,
+                         'object.collection.uri %s should be used to initialize a CollectionObject for collection info' \
+                         % obj.collection.uri)
+            self.assertEquals(obj.collection.mods.content.source_id, desc_data['collection_source_id'],
+                              'collection_source_id should be %s but is is %s' %
+                              (obj.collection.mods.content.source_id, desc_data['collection_source_id']))
 
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                          'default index data fields should be present in data (title)')
