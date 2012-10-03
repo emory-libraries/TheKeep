@@ -1,12 +1,9 @@
 import logging
-from django.db import models
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from rdflib import URIRef
 
-from eulfedora.models import FileDatastream, XmlDatastream, Relation
+from eulfedora.models import Relation
 from eulfedora.util import RequestFailed
-from eulxml import xmlmap
-from eulxml.xmlmap import mods
 from eulfedora.rdfns import relsext, model as modelns
 from eulcm.models import boda
 
@@ -16,7 +13,6 @@ from keep.common.utils import solr_interface
 from keep.collection.models import CollectionObject
 
 logger = logging.getLogger(__name__)
-
 
 # content models currently used for xacml access / restriction
 ACCESS_ALLOWED_CMODEL = "info:fedora/emory-control:ArrangementAccessAllowed-1.0"
@@ -39,26 +35,26 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
     }
 
-    status_codes = {'processed': 'A', 'accessioned' : 'I'}
+    status_codes = {'processed': 'A', 'accessioned': 'I'}
     # map arrangement status to fedora object state
 
     def _get_arrangement_status(self):
         for status, code in self.status_codes.iteritems():
             if self.state == code:
                 return status
-            
+
     def _set_arrangement_status(self, status):
         if status not in self.status_codes:
             raise ValueError('%s is not a recognized arrangement status' % status)
         self.state = self.status_codes[status]
-        
+
     arrangement_status = property(_get_arrangement_status, _set_arrangement_status)
     'arrangement status, i.e., whether this item is processed or accessioned'
 
     _deprecated_collection = Relation(relsext.isMemberOf, type=CollectionObject)
     ''':class:`~keep.collection.models.collection.v1_1.Collection` that this
     object is a member of, via `isMemberOf` relation.
-    
+
     **deprecated** because these objects should be using **isMemberOfCollection**
     '''
 
@@ -67,7 +63,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     via `isMemberOfCollection` relation.
     '''
 
-    
     def save(self, logMessage=None):
         '''Save the object.  If the content of the rights datastream
         has changed, update content models used to control access to
@@ -80,18 +75,17 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
         return super(ArrangementObject, self).save(logMessage)
 
-
     def _update_access_cmodel(self):
         # update access/restriction content models based on rights access code
-        
-        # FIXME: is there not a better way to add/remove cmodels ? 
+
+        # FIXME: is there not a better way to add/remove cmodels ?
         _allowed_triple = (self.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
         _restricted_triple = (self.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
-        
+
         if self.rights.content.access_status and \
            self.rights.content.access_status.code == '2':
             # FIXME: sholudn't have to hard code this number;
-            # can we use researcher_access check instead ? 
+            # can we use researcher_access check instead ?
 
             # allow access.
             # remove restricted if present, add allowed if not present
@@ -108,7 +102,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             if _restricted_triple not in self.rels_ext.content:
                 self.rels_ext.content.add(_restricted_triple)
 
-
     def index_data(self):
         '''Extend the default
         :meth:`eulfedora.models.DigitalObject.index_data` method to
@@ -117,7 +110,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         with arrangement id and access status.'''
         # NOTE: we don't want to rely on other objects being indexed in Solr,
         # so index data should not use Solr to find any related object info
-        
+
         repo = Repository()   # FIXME: use relation from current object instead
 
         # FIXME: is it worth splitting out descriptive index data here?
@@ -125,7 +118,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
         data['object_type'] = 'born-digital'  # ??
 
-        
         # Collection Info
         if self._deprecated_collection:
             collection = self._deprecated_collection
@@ -135,9 +127,9 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             collection = None
 
         if collection and collection.exists:
-            
+
             # collection_source_id
-            if collection.mods.content.source_id:
+            if collection.mods.content.source_id is not None:  # allowed to be 0
                 data['collection_source_id'] = collection.mods.content.source_id
             data['collection_id'] = collection.uri
             try:
@@ -150,7 +142,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
-            
 
         # Arrangement unique id
         try:
@@ -171,14 +162,13 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             if self.rights.content.access_status.text:
                 data['rights'] = self.rights.content.access_status.text
 
-
         # get simple collections that have an association with this object
         try:
             simple_collections = repo.risearch.get_subjects(relsext.hasMember, self.uriref)
-            simple_collections =list(simple_collections)
+            simple_collections = list(simple_collections)
 
-            sc_ids =[]
-            sc_labels =[]
+            sc_ids = []
+            sc_labels = []
 
             for sc in simple_collections:
                 obj = repo.get_object(pid=sc, type=repo.infer_object_subtype)
@@ -193,12 +183,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         if sc_labels:
             data["simpleCollection_label"] = sc_labels
 
-            
-
-
         return data
-        
-
 
     @staticmethod
     def by_arrangement_id(id, repo=None):
@@ -215,13 +200,13 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         matches are found in the Solr index.
 
         :param id: arrangement id or local id
-        
+
         :param repo: optional :class:`eulfedora.server.Repository`
             to use an existing connection with specific credentials
-            
-        :returns: :class:`ArrangementObject` 
-    
-        
+
+        :returns: :class:`ArrangementObject`
+
+
         '''
         solr = solr_interface()
         q = solr.query(arrangement_id=id,
@@ -240,19 +225,18 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
         if repo is None:
             repo = Repository()
-            
+
         return repo.get_object(q[0]['pid'], type=ArrangementObject)
 
 
-
 class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
-    CONTENT_MODELS = [ boda.RushdieFile.RUSHDIE_FILE_CMODEL,
-                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ] 
+    CONTENT_MODELS = [boda.RushdieFile.RUSHDIE_FILE_CMODEL,
+                      boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
 
 class EmailMessage(boda.EmailMessage, ArrangementObject):
-    CONTENT_MODELS = [ boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
-                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
+    CONTENT_MODELS = [boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
+                      boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
     NEW_OBJECT_VIEW = 'arrangement:email'
 
@@ -281,19 +265,18 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         to = self.cerp.content.to_list[0]
         if len(self.cerp.content.to_list) > 1:
             to = '%s et al.' % to
-                
+
         label = 'Email from %s to %s' % (sender, to)
 
         if self.cerp.content.subject_list:
             subject = self.cerp.content.subject_list[0]
             label += ' %s' % subject
-            
+
         date = self.headers.get('Date', None)
         if date is not None:
             label += ' on %s' % date
 
         return label
-
 
     def index_data(self):
         '''Extend the :meth:`keep.arrangement.models.ArrangementObject.index_data` method to
@@ -305,7 +288,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         # email does not have filetech or content; use mime data checksum
         # for content md5
         if self.mime_data.exists:
-             data['content_md5'] = self.mime_data.checksum
+            data['content_md5'] = self.mime_data.checksum
 
         return data
 
@@ -351,8 +334,9 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
 
         return repo.get_object(q[0]['pid'], type=EmailMessage)
 
+
 class Mailbox(boda.Mailbox, ArrangementObject):
     CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
                        boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
-    
+
     NEW_OBJECT_VIEW = 'arrangement:mailbox'
