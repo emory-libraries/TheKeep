@@ -21,6 +21,7 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 # FIXME: should this be @permission_required("common.marbl_allowed") ?
 # sets ?next=/audio/ but does not return back here
 
+
 @login_required
 def site_index(request):
     '''Simple site index page, with links to main functionality and
@@ -49,8 +50,8 @@ def site_index(request):
     recent_dates.reverse()
     # limit to just the 10 most recent dates
     for day, count in recent_dates[:10]:
-        y,m,d = day.split('-')
-        recent_items.append((date(int(y),int(m),int(d)), count))
+        y, m, d = day.split('-')
+        recent_items.append((date(int(y), int(m), int(d)), count))
 
     recent_collections = facets['collection_label_facet']
 
@@ -59,12 +60,12 @@ def site_index(request):
     facetq = solr.query().filter(created_date__range=(three_months, today))  \
                 .facet_by('created_month', sort='index',
                           mincount=1) \
-                .paginate(rows=0)                
+                .paginate(rows=0)
     recent_month_facet = facetq.execute().facet_counts.facet_fields['created_month']
     recent_month_facet.reverse()
     recent_months = []
     for month, count in recent_month_facet:
-        y,m = month.split('-')
+        y, m = month.split('-')
         recent_months.append((date(int(y), int(m), 1), count))
 
     return render(request, 'search/site_index.html',
@@ -86,7 +87,7 @@ def keyword_search(request):
         solr = solr_interface()
         # start with a default query to add filters & search terms
         q = solr.query()
-        
+
         # separate out normal and fielded search terms in keyword search string
         # TODO: should this logic be shifted to form validation/cleaning?
         search_info = MultiValueDict()
@@ -96,7 +97,7 @@ def keyword_search(request):
             field, val = t
             # add non-field terms to list of terms
             # - no field name
-            if field is None:  
+            if field is None:
                 terms.append(val)
             # - unrecognized field name or incomplete term
             elif val is None or field not in searchform.allowed_fields:
@@ -104,7 +105,7 @@ def keyword_search(request):
                 if val is None:
                     term = '%s:' % field
                 else:
-                    if ' ' in val: # assume exact phrase if quoted
+                    if ' ' in val:  # assume exact phrase if quoted
                         val = "%s" % val
                     term = '%s:%s' % (field, val)
                 terms.append(term)
@@ -123,11 +124,11 @@ def keyword_search(request):
                 # add field/value search to the solr query
                 q = q.query(**{solr_field: search_val})
                 # add to search info for display to user
-                field = 'collection' if field== 'coll' else field
+                field = 'collection' if field == 'coll' else field
                 search_info.update({field: val})
 
         # search on all collected search terms
-        q = q.query(*terms)         
+        q = q.query(*terms)
 
         # get a copy of current url options for pagination
         # and to generate links to remove active filters
@@ -140,7 +141,7 @@ def keyword_search(request):
                               searchform.facet_field_names.iterkeys())
         # - dictionary of filters in use, for exclusion from displayed
         # facets
-        
+
         # filter the solr search based on any facets in the request
         for filter, facet_field in searchform.facet_field_names.iteritems():
             # For multi-valued fields (author, subject), we could have multiple
@@ -150,7 +151,7 @@ def keyword_search(request):
                 # ignore any facet if the value is not set
                 if not val:
                     continue
-                
+
                 # filter the current solr query
                 q = q.filter(**{facet_field: val})
 
@@ -158,7 +159,7 @@ def keyword_search(request):
                 active_filters[filter].append(val)
 
                 # add to list for user display & removal
-                # - copy the urlopts and remove only the current value 
+                # - copy the urlopts and remove only the current value
                 unfacet_urlopts = urlopts.copy()
                 val_list = unfacet_urlopts.getlist(filter)
                 val_list.remove(val)
@@ -172,7 +173,7 @@ def keyword_search(request):
                     label = rights_access_terms_dict[val].abbreviation
                 else:
                     label = val
-                    
+
                 display_filters.append((label,
                                         unfacet_urlopts.urlencode()))
         #Exclude results if user does not have correct perm
@@ -181,7 +182,6 @@ def keyword_search(request):
         if not request.user.has_perm('common.arrangement_allowed'):
             q = q.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
             q = q.exclude(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL)
-
 
         # Update solr query to return values & counts for the
         # configured facet fields
@@ -240,8 +240,9 @@ def keyword_search(request):
             'facets': facets,
             'active_filters': display_filters,
         })
-            
+
     return render(request, 'search/results.html', ctx)
+
 
 @login_required
 def keyword_search_suggest(request):
@@ -258,7 +259,7 @@ def keyword_search_suggest(request):
         Due to the current implementation and the limitations of facet
         querying in Solr, the search term is case-sensitive and only
         matches at the beginning of the string.
-    
+
     Return format is suitable for use with `JQuery UI Autocomplete`_
     widget.
 
@@ -268,7 +269,7 @@ def keyword_search_suggest(request):
         method (used to retrieve the search term)
     '''
     term = request.GET.get('term', '')
-    
+
     suggestions = []
 
     # if term is empty or ends in a space, suggest available search fields
@@ -286,7 +287,7 @@ def keyword_search_suggest(request):
 
         term_prefix, sep, term_suffix = term.rpartition(' ')
         value_prefix = term_prefix + sep
-        # parse the last search term 
+        # parse the last search term
         try:
             # parse could error in some cases
             parsed_terms = parse_search_terms(term_suffix)
@@ -315,7 +316,7 @@ def keyword_search_suggest(request):
                 # suggest full dates
                 else:
                     result_fmt = '%s '
-            elif field in ['added_by', 'user']: # added_by or user
+            elif field in ['added_by', 'user']:  # added_by or user
                 sort = 'count'
                 category = 'Users'
                 result_fmt = '"%s" '
@@ -336,12 +337,12 @@ def keyword_search_suggest(request):
             # + count), and actual value to use
             suggestions = [{'label': '%s (%d)' % (facet, count),
                             'value': '%s%s:' % (value_prefix, field) + \
-	                                        result_fmt % facet,
+                                            result_fmt % facet,
                             'category': category}
                            for facet, count in facets[facet_field]
                            ]
-    
-    return  HttpResponse(json_serializer.encode(suggestions),
+
+    return HttpResponse(json_serializer.encode(suggestions),
                          mimetype='application/json')
-            
+
 
