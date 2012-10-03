@@ -1,5 +1,3 @@
-from collections import namedtuple
-from datetime import date
 import os
 import wave
 import logging
@@ -7,7 +5,6 @@ import mutagen
 import math
 import tempfile
 
-from rdflib import URIRef
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db.models import permalink
@@ -26,6 +23,7 @@ from keep.common.fedora import DigitalObject, Repository, LocalMODS
 from keep.common.models import allow_researcher_access
 
 logger = logging.getLogger(__name__)
+
 
 ##
 ## MODS
@@ -47,6 +45,7 @@ class AudioMods(LocalMODS):
     dm1_other_id = xmlmap.StringField('mods:identifier[@type="dm1_other"]',
             required=False, verbose_name='Other ID')
 
+
 ##
 ## Source technical metadata
 ##
@@ -54,7 +53,8 @@ class AudioMods(LocalMODS):
 class _BaseSourceTech(xmlmap.XmlObject):
     'Base class for Source Technical Metadata objects'
     ROOT_NS = 'http://pid.emory.edu/ns/2010/sourcetech'
-    ROOT_NAMESPACES = {'st': ROOT_NS }
+    ROOT_NAMESPACES = {'st': ROOT_NS}
+
 
 class SourceTechMeasure(_BaseSourceTech):
     ''':class:`~eulxml.xmlmap.XmlObject` for :class:`SourceTech` measurement
@@ -74,6 +74,7 @@ class SourceTechMeasure(_BaseSourceTech):
         are only meaningful in reference to an actual measurement value.'''
         return not self.node.text
 
+
 class SourceTech(_BaseSourceTech):
     ':class:`~eulxml.xmlmap.XmlObject` for Source Technical Metadata.'
     ROOT_NAME = 'sourcetech'
@@ -88,7 +89,7 @@ class SourceTech(_BaseSourceTech):
     housing_options = ('', 'jewel case', 'plastic container', 'paper sleeve',
         'cardboard sleeve', 'cardboard box', 'other', 'none')
     'controlled vocabulary for :class:`SourceTech.housing`'
-    reel_sizes = ('3', '4', '5', '7', '10', '12', '14') # also Other -> empty field
+    reel_sizes = ('3', '4', '5', '7', '10', '12', '14')  # also Other -> empty field
     'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
     reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
     reel_size_options.append(('Other', 'Other'))
@@ -174,7 +175,7 @@ class SourceTech(_BaseSourceTech):
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
         required=False, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
-    reel_size =  xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
+    reel_size = xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
             SourceTechMeasure, required=False)
     ':class:`SourceTechMeasure`'
     # tech_note is migrate/view only
@@ -189,7 +190,8 @@ class SourceTech(_BaseSourceTech):
 class _BaseDigitalTech(xmlmap.XmlObject):
     'Base class for Digital Technical Metadata objects'
     ROOT_NS = 'http://pid.emory.edu/ns/2010/digitaltech'
-    ROOT_NAMESPACES = {'dt': ROOT_NS }
+    ROOT_NAMESPACES = {'dt': ROOT_NS}
+
 
 class TransferEngineer(_BaseDigitalTech):
     ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` transfer engineer'''
@@ -204,28 +206,29 @@ class TransferEngineer(_BaseDigitalTech):
     LDAP_ID_TYPE = 'ldap'
     DM_ID_TYPE = 'dm1'
     LOCAL_ID_TYPE = 'local'
-    
+
     local_engineers = {
         'vendor1': 'Vendor',
         'other1': 'Other',
     }
+
 
 class CodecCreator(_BaseDigitalTech):
     ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` codec creator'''
     ROOT_NAME = 'codecCreator'
     configurations = {
         # current format is     id :  hardware, software, software version
-        '1': ( ('Mac G4',), 'DigiDesign ProTools LE',  '5.2'),
-        '2': ( ('Mac G5',), 'DigiDesign ProTools LE',  '6.7'),
-        '3': (('Dell Optiplex 755', 'Apogee Rosetta 200'), 'Sound Forge',  '9.0'),
-        '4': (('Dell Optiplex 755',), 'iTunes',  None),
+        '1': (('Mac G4',), 'DigiDesign ProTools LE', '5.2'),
+        '2': (('Mac G5',), 'DigiDesign ProTools LE', '6.7'),
+        '3': (('Dell Optiplex 755', 'Apogee Rosetta 200'), 'Sound Forge', '9.0'),
+        '4': (('Dell Optiplex 755',), 'iTunes', None),
         '5': (('Unknown',), 'Unknown',  None),
         '6': (('iMac', 'Benchmark ADC1'), 'Adobe Audition CS6', '5.0'),
     }
     'controlled vocabulary for codec creator configurations'
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
                     for id, c in configurations.iteritems()]
-    options.insert(0, ('', '')) # empty value at beginning of list (initial default)
+    options.insert(0, ('', ''))  # empty value at beginning of list (initial default)
 
     id = xmlmap.StringField('dt:codecCreatorID')
     'codec creator id - `dt:codecCreatorId`'
@@ -237,6 +240,7 @@ class CodecCreator(_BaseDigitalTech):
     'software  - `dt:software` (first software only, even if there are multiple)'
     software_version = xmlmap.StringField('dt:softwareVersion')
     'list of all software'
+
 
 class DigitalTech(_BaseDigitalTech):
     ":class:`~eulxml.xmlmap.XmlObject` for Digital Technical Metadata."
@@ -268,7 +272,6 @@ class DigitalTech(_BaseDigitalTech):
     ':class:`CodecCreator` - hardware & software used to digitize the item'
 
 
-
 ##
 ## Fedora AudioObject
 ##
@@ -276,7 +279,7 @@ class DigitalTech(_BaseDigitalTech):
 class AudioObject(DigitalObject):
     '''Fedora Audio Object.  Extends :class:`~eulfedora.models.DigitalObject`.'''
     AUDIO_CONTENT_MODEL = 'info:fedora/emory-control:EuterpeAudio-1.0'
-    CONTENT_MODELS = [ AUDIO_CONTENT_MODEL ]
+    CONTENT_MODELS = [AUDIO_CONTENT_MODEL]
     NEW_OBJECT_VIEW = 'audio:view'
 
     mods = XmlDatastream("MODS", "MODS Metadata", AudioMods, defaults={
@@ -345,7 +348,6 @@ class AudioObject(DigitalObject):
         'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
     }
 
-
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
     ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
     via `isMemberOfCollection` relation.
@@ -359,7 +361,7 @@ class AudioObject(DigitalObject):
         :param logMessage: optional log message
         '''
         if not self.exists or self.mods.isModified() or self.rels_ext.isModified() or \
-            self.digitaltech.isModified():
+            self.digitaltech.isModified() or self.rights.isModified():
             # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
             # If this is a new item (does not yet exist in Fedora)
             # OR if any of the relevant datastreams have changed, update DC
@@ -415,7 +417,7 @@ class AudioObject(DigitalObject):
          '''
         # identifiers
         del(self.dc.content.identifier_list)        # clear out any existing names
-        
+
         # title
         if self.mods.content.title:
             self.label = self.mods.content.title
@@ -430,7 +432,7 @@ class AudioObject(DigitalObject):
             self.dc.content.creator_list.append(unicode(name))
 
         # clear out any dates previously in DC
-        del(self.dc.content.date_list)        
+        del(self.dc.content.date_list)
         if self.mods.content.origin_info and \
            len(self.mods.content.origin_info.created) and \
            self.mods.content.origin_info.created[0].date:
@@ -451,7 +453,6 @@ class AudioObject(DigitalObject):
         if self.rights.content.access_status:
             # access code no longer needs to be included, since we will not be searching
             self.dc.content.rights_list.append(self.rights.content.access_status.text)
-
 
     def index_data(self):
         '''Extend the default
@@ -488,8 +489,8 @@ class AudioObject(DigitalObject):
 
         # include resolvable ARK if available
         if self.mods.content.ark_uri:
-            data['ark_uri'] =  self.mods.content.ark_uri
-            
+            data['ark_uri'] = self.mods.content.ark_uri
+
         # old identifiers from previous digital masters
         dm1_ids = []
         if self.mods.content.dm1_id:
@@ -508,7 +509,7 @@ class AudioObject(DigitalObject):
         if self.sourcetech.content.related_files_list:
             data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
 
-        # part note 
+        # part note
         if self.mods.content.part_note and self.mods.content.part_note.text:
             data['part'] = self.mods.content.part_note.text
 
@@ -525,7 +526,7 @@ class AudioObject(DigitalObject):
         # ip note from rights metadata
         if self.rights.content.ip_note:
             data['ip_note'] = self.rights.content.ip_note
-            
+
         # boolean values that should always be available
         data.update({
             # should this item be accessible to researchers?
@@ -539,19 +540,18 @@ class AudioObject(DigitalObject):
             data.update({
                 'access_copy_size': self.compressed_audio.info.size,
                 'access_copy_mimetype': self.compressed_audio.mimetype,
-	    })
+        })
         if self.digitaltech.content.duration:
             data['duration'] = self.digitaltech.content.duration
-            
+
         if self.mods.content.origin_info and \
            self.mods.content.origin_info.issued:
             data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
 
         if self.audio.exists:
             data['content_md5'] = self.audio.checksum
-            
-        return data
 
+        return data
 
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None, checksum=None):
@@ -559,7 +559,7 @@ class AudioObject(DigitalObject):
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Calculates and stores the duration
         based on the file. Also sets the following default metadata values:
-        
+
             * mods:typeOfResource = "sound recording"
             * dt:codecQuality = "lossless"
 
@@ -581,12 +581,12 @@ class AudioObject(DigitalObject):
         obj.dc.content.title = obj.mods.content.title = obj.label
         obj.audio.content = open(filename)  # FIXME: at what point does/should this get closed?
         #Set the file checksum, if set.
-        obj.audio.checksum=checksum
+        obj.audio.checksum = checksum
         #Get the label, minus the ".wav" (mimetype indicates that)
         obj.audio.label = initial_label[:-4]
         # set initial mods:typeOfResource - all AudioObjects default to sound recording
         obj.mods.content.resource_type = 'sound recording'
-        # set codec quality to lossless in digital tech metadata 
+        # set codec quality to lossless in digital tech metadata
         # - default for AudioObjects, should only accept lossless audio for master file
         obj.digitaltech.content.codec_quality = 'lossless'
         # get wav duration and store in digital tech metadata
@@ -621,31 +621,32 @@ def wav_duration(filename):
         # FIXME: is there a better/more specific exception that can be used here?
         raise StandardError('Failed to open file %s as a WAV due to: %s' % (filename, werr))
     # any other file errors will be propagated as IOError
-    
+
     # duration in seconds = number of samples / sampling frequency
-    duration = float(wav_file.getnframes())/float(wav_file.getframerate())
+    duration = float(wav_file.getnframes()) / float(wav_file.getframerate())
     return duration
 
-def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
+
+def check_wav_mp3_duration(obj_pid=None, wav_file_path=None, mp3_file_path=None):
     '''Compare the durations of a wav file with an mp3 file (presumably an mp3
     generated from the wav via :meth:`keep.audio.tasks.convert_wav_to_mp3` )
     to check that they are roughly the same length.
 
     :param obj_pid: The pid of a fedora object (expected to be an
-	AudioObject) to get the wav and/or mp3 files from if they are
+    AudioObject) to get the wav and/or mp3 files from if they are
         not specified by path.
 
     :param wav_file_path: Path to the wav_file to use for comparison;
-    	if not specified, it will be downloaded from the object in
+        if not specified, it will be downloaded from the object in
         Fedora.
-      
+
     :param mp3_file_path: Path to the mp3_file to use for comparison;
-    	if not specified, it will be downloaded from the object in
-    	Fedora.  Note that this file must end in .mp3 for the duration
+        if not specified, it will be downloaded from the object in
+        Fedora.  Note that this file must end in .mp3 for the duration
         to be calculated.
-                          
+
     :returns: True if the two files have the same duration, or close
-	enough duration (no more than 1 second difference)
+    enough duration (no more than 1 second difference)
     '''
     try:
         #Initialize temporary files to None.
@@ -666,17 +667,17 @@ def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
             obj = repo.get_object(obj_pid, type=AudioObject)
             # download the compressed audio file from the object in fedora
             # mkstemp returns file descriptor and full path to the temp file
-            tmp_fd_wav, tmp_wav_path = tempfile.mkstemp(dir=tempdir,suffix=".mp3")       
+            tmp_fd_wav, tmp_wav_path = tempfile.mkstemp(dir=tempdir, suffix=".mp3")
             try:
                 destination = os.fdopen(tmp_fd_wav, 'wb+')
-            except Exception as e:
+            except Exception:
                 os.close(tmp_fd_wav)
                 raise
-            
+
             try:
-                 destination.write(obj.audio.content.read())
-            except Exception as e:                
-                 raise
+                destination.write(obj.audio.content.read())
+            except Exception:
+                raise
             finally:
                 # NOTE: This automatically closes the open tmpfd via Python magic;
                 # calling os.close(tmpfd) at this point will error.
@@ -695,13 +696,13 @@ def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
 
             # download the master audio file from the object in fedora
             # mkstemp returns file descriptor and full path to the temp file
-            tmp_fd_mp3, tmp_mp3_path = tempfile.mkstemp(dir=tempdir,suffix=".mp3")
+            tmp_fd_mp3, tmp_mp3_path = tempfile.mkstemp(dir=tempdir, suffix=".mp3")
             try:
                 destination = os.fdopen(tmp_fd_mp3, 'wb+')
             except Exception:
                 os.close(tmp_fd_mp3)
                 raise
-            
+
             try:
                 destination.write(obj.compressed_audio.content.read())
             # just pass any exceptions up the chain
@@ -717,7 +718,7 @@ def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
         mp3_tags = mutagen.File(tmp_mp3_path)
         if mp3_tags is None:
             raise Exception('Could not get MP3 tag information for MP3 file %s' % tmp_mp3_path)
-            
+
         mp3_length = mp3_tags.info.length
         wav_length = wav_duration(tmp_wav_path)
 

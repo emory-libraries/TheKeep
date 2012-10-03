@@ -1,8 +1,8 @@
 import cStringIO
-from datetime import date, datetime
+from datetime import datetime
 import json
 import logging
-from mock import Mock, MagicMock, patch
+from mock import Mock, patch
 import os
 from shutil import copyfile
 import stat
@@ -22,7 +22,7 @@ from django.utils import simplejson
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
 from eulfedora.util import RequestFailed, ChecksumMismatch
-from eulxml.xmlmap  import load_xmlobject_from_string
+from eulxml.xmlmap import load_xmlobject_from_string
 from eulxml.xmlmap import mods
 
 from keep.audio import forms as audioforms, models as audiomodels
@@ -50,14 +50,15 @@ mp3_md5 = 'b56b59c5004212b7be53fb5742823bd2'
 wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
+
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class AudioViewsTest(KeepTestCase):
-    fixtures =  ['users']
+    fixtures = ['users']
 
     client = Client()
-    
+
     # set up a mock solr object for use in solr-based find methods
     mocksolr = Mock(sunburnt.SolrInterface)
     mocksolr.return_value = mocksolr
@@ -68,7 +69,7 @@ class AudioViewsTest(KeepTestCase):
     mocksolr.query.paginate.return_value = mocksolr.query
     mocksolr.query.exclude.return_value = mocksolr.query
 
-    def setUp(self):        
+    def setUp(self):
         super(AudioViewsTest, self).setUp()
         self.pids = []
         # store settings that may be changed when testing podcast feed pagination
@@ -103,10 +104,10 @@ class AudioViewsTest(KeepTestCase):
             settings.TEMPLATE_CONTEXT_PROCESSORS = self._template_context_processors
         else:
             del settings.TEMPLATE_CONTEXT_PROCESSORS
- 
+
         # TODO: remove any test files created in staging dir
         # FIXME: should we create & remove a tmpdir instead of using actual staging dir?
-        
+
         self.repo.purge_object(self.rushdie.pid)
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
@@ -133,7 +134,6 @@ class AudioViewsTest(KeepTestCase):
         self.assertContains(response, 'You must choose a collection',
             msg_prefix='When form is posted without a collection, the error is displayed')
 
-
     def test_ajax_file_upload(self):
         # test uploading files via ajax
         upload_url = reverse('audio:upload')
@@ -152,12 +152,12 @@ class AudioViewsTest(KeepTestCase):
             opts = post_options.copy()
             opts['HTTP_CONTENT_DISPOSITION'] = 'attachment; filename="example.mp3"'
             response = self.client.post(data=mp3.read(), HTTP_CONTENT_MD5=mp3_md5, **opts)
-            self.assertEqual('File type audio/mpeg is not allowed',response.content)
+            self.assertEqual('File type audio/mpeg is not allowed', response.content)
             code = response.status_code
             expected = 415  # unsupported media type
             self.assertEqual(code, expected, 'Expected %s but returned %s for %s'
                                  % (expected, code, upload_url))
-        
+
         # POST wav file to AJAX Upload view with incorrect checksum should fail
         with open(wav_filename, 'rb') as wav:
             # using mp3 checksum but uploading wav file
@@ -170,7 +170,7 @@ class AudioViewsTest(KeepTestCase):
             self.assertEqual(code, expected,
                 'Expected %s but returned %s for %s with invalid MD5'
                      % (expected, code, upload_url))
-                
+
         # POST wav file to AJAX Upload view with missing header arguments should fail
         with open(wav_filename, 'rb') as wav:
             # post without checksum
@@ -204,9 +204,9 @@ class AudioViewsTest(KeepTestCase):
             self.assertEqual(code, expected,
                 'Expected %s but returned %s for %s with invalid Content-Disposition header'
                          % (expected, code, upload_url))
-        
+
         # POST wav file to AJAX Upload view should work
-        with open(wav_filename) as wav:            
+        with open(wav_filename) as wav:
             response = self.client.post(data=wav.read(),
                                         HTTP_CONTENT_MD5=wav_md5, **post_options)
             # on success, response content is temporary filename
@@ -219,13 +219,13 @@ class AudioViewsTest(KeepTestCase):
             self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], upload_url))
-            
+
             # temp files should exist in staging dir
             upload_filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
                                                          uploaded_filename)
             self.assertTrue(os.path.exists(upload_filepath),
                 'temp file returned in should exist in staging directory')
-            self.assertTrue(os.path.exists(upload_filepath +  '.md5'),
+            self.assertTrue(os.path.exists(upload_filepath + '.md5'),
                 'MD5 file for temp file should exist in staging directory')
             with open(upload_filepath + '.md5') as md5file:
                 self.assertEqual(wav_md5, md5file.read())
@@ -245,8 +245,8 @@ class AudioViewsTest(KeepTestCase):
         upload_opts = {
             'filenames': 'example.wav',
             'uploaded_files': 'example-01.wav',
-            'collection_0' : self.rushdie.pid,
-            'collection_1' : self.rushdie.label,
+            'collection_0': self.rushdie.pid,
+            'collection_1': self.rushdie.label,
             'comment': "This is a very interesting comment",
         }
         # POST wav file with correct checksum - should succeed
@@ -278,7 +278,7 @@ class AudioViewsTest(KeepTestCase):
         # task result should have been created to track mp3 conversion
         self.assert_(isinstance(new_obj.conversion_result, TaskResult),
             'ingested object should have a conversion result to track mp3 generation')
-            
+
         # POST wav file with an incorrect checksum should fail
         copyfile(wav_filename, upload_filepath)     # re-copy file, now that is removed after ingest
         with open(upload_filepath + '.md5', 'w') as md5file:
@@ -292,7 +292,7 @@ class AudioViewsTest(KeepTestCase):
             'result should include explanatory message on failure')
 
     def test_upload_fallback(self):
-        # test single-file upload 
+        # test single-file upload
         upload_url = reverse('audio:upload')
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -304,7 +304,7 @@ class AudioViewsTest(KeepTestCase):
             self.assertFalse(result['success'], 'success should be false on non-allowed type')
             self.assertEqual('''File type 'audio/mpeg' is not allowed''',
                             result['message'])
-        
+
         # POST a wav file - should result in a new object
         with open(wav_filename) as wav:
             response = self.client.post(upload_url, {'audio': wav,
@@ -388,18 +388,18 @@ class AudioViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         download_url = reverse('audio:download-audio', args=[obj.pid])
-        
+
         response = self.client.get(download_url)
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, download_url))
-                             
+
         expected = 'audio/x-wav'
         self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
-                        
+
         expected = 'attachment; filename=%s.wav' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
@@ -426,26 +426,26 @@ class AudioViewsTest(KeepTestCase):
                          'Expected %s but returned %s for %s as admin for non-existent audio file'
                          % (expected, code, download_url))
 
-        #Set a compressed audio stream.
+        # Set a compressed audio stream.
         result = convert_wav_to_mp3(obj.pid)
         self.assertEqual(result, "Successfully converted file")
-        
+
         response = self.client.get(download_url)
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, download_url))
-                             
+
         expected = 'audio/mpeg'
         self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
-                        
+
         expected = 'attachment; filename=%s.mp3' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
-        
+
         # attempt to download mp3 as m4a - should 404
         m4a_download_url = reverse('audio:download-compressed-audio', args=[obj.pid, 'm4a'])
         response = self.client.get(m4a_download_url)
@@ -473,7 +473,7 @@ class AudioViewsTest(KeepTestCase):
         expected = 404
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A datastream as MP3)'
                              % (expected, code, download_url))
-        
+
     @patch('keep.common.utils.solr_interface')  # for index page redirect
     def test_edit(self, mocksolr):
         # create a test audio object to edit
@@ -557,16 +557,16 @@ class AudioViewsTest(KeepTestCase):
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
-        
+
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
-        
+
         edit_url = reverse('audio:edit', args=[obj.pid])
 
         # mock collection item_collections so test collection will be based on fixture collections
         collection_choices = list(
             {'pid': coll.pid, 'source_id': coll.mods.content.source_id, 'title': coll.label}
-            for coll in [self.rushdie, self.esterbrook, self.englishdocs] )
+            for coll in [self.rushdie, self.esterbrook, self.englishdocs])
         with patch('keep.audio.forms.CollectionObject.item_collections',
                    new=Mock(return_value=collection_choices)):
             response = self.client.get(edit_url)
@@ -580,7 +580,7 @@ class AudioViewsTest(KeepTestCase):
             # edit form no longer contains collection pids (auto-complete instead of drop-down)
 
             # audio datastream links
-            self.assertContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
+            self.assertContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid}),
                                 msg_prefix='edit page should link to audio datastream when available')
             self.assertContains(response, 'original audio',
                                 msg_prefix='edit page should link to original audio datastream when available')
@@ -590,7 +590,7 @@ class AudioViewsTest(KeepTestCase):
             # purge audio datastream to simulate a metadata migration object with no master audio
             purged = obj.api.purgeDatastream(obj.pid, audiomodels.AudioObject.audio.id)
             response = self.client.get(edit_url)
-            self.assertNotContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid }),
+            self.assertNotContains(response, reverse('audio:download-audio', kwargs={'pid': obj.pid}),
                                 msg_prefix='edit page should not link to non-existent audio datastream')
             self.assertContains(response, 'original audio',
                                 msg_prefix='edit page should display original audio as unavailable')
@@ -603,7 +603,7 @@ class AudioViewsTest(KeepTestCase):
                 'object MODS general note is pre-populated in form initial data')
             self.assertEqual(item_mods.part_note.text, initial_data['part_note-text'],
                 'object MODS part note is pre-populated in form initial data')
-            self.assertEqual(item_mods.origin_info.created[0].date, 
+            self.assertEqual(item_mods.origin_info.created[0].date,
                 initial_data['origin_info-created-0-date'],
                 'object MODS date created is pre-populated in form initial data')
             self.assertEqual(item_mods.origin_info.issued[0].date,
@@ -690,7 +690,7 @@ class AudioViewsTest(KeepTestCase):
             audio_data = {'collection_0': self.rushdie.uri,
                           'collection_1': self.rushdie.label,
                         'mods-title': u'new title \u2026',
-                        'mods-note-label' : 'a general note',
+                        'mods-note-label': 'a general note',
                         #'mods-general_note-text': u'remember to ... with some unicode \u1f05',
                         'mods-general_note-text': u'remember to',
                         'mods-part_note-text': 'side A',
@@ -732,7 +732,7 @@ class AudioViewsTest(KeepTestCase):
             }
 
             response = self.client.post(edit_url, audio_data, follow=True)
-            messages = [ str(msg) for msg in response.context['messages'] ]
+            messages = [str(msg) for msg in response.context['messages']]
             self.assert_(messages[0].startswith("Successfully updated"),
                 "successful save message set in response context")
             # currently redirects to audio index
@@ -741,14 +741,14 @@ class AudioViewsTest(KeepTestCase):
                 "successful save redirects to audio index page")
             expected = 303      # redirect
             self.assertEqual(code, expected,
-                'Expected %s but returned %s for %s (successfully saved)'  % \
+                'Expected %s but returned %s for %s (successfully saved)' % \
                 (expected, code, edit_url))
 
             # retrieve the modified object from Fedora to check for updates
             repo = Repository()
             updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
             self.assertEqual(audio_data['mods-title'], updated_obj.mods.content.title,
-                'mods title in fedora matches posted title')        
+                'mods title in fedora matches posted title')
             self.assertEqual(audio_data['mods-general_note-text'], updated_obj.mods.content.general_note.text,
                 'mods general note text in fedora matches posted note text')
             self.assertEqual(audio_data['mods-part_note-text'], updated_obj.mods.content.part_note.text,
@@ -804,7 +804,7 @@ class AudioViewsTest(KeepTestCase):
             #add comment to metadata and check the response
             data = audio_data.copy()
             data['comments-comment'] = 'This is a very interesting comment'
-            data['dt-hardware'] = '4' # make a change so the obj will save
+            data['dt-hardware'] = '4'  # make a change so the obj will save
             response = self.client.post(edit_url, data)
 
             # get the latest copy of the object
@@ -814,16 +814,16 @@ class AudioViewsTest(KeepTestCase):
 
             # change data and confirm codec creator is updated correctly
             data = audio_data.copy()
-            data['dt-hardware'] = '4' # only one hardware, no software version
+            data['dt-hardware'] = '4'  # only one hardware, no software version
             response = self.client.post(edit_url, data)
-            # get the latest copy of the object 
+            # get the latest copy of the object
             updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
             dt = updated_obj.digitaltech.content
             # codec creator - id 4 only has one two hardware and no software version
             hardware, software, version = audiomodels.CodecCreator.configurations[data['dt-hardware']]
             self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
             self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
-            self.assertEqual(1, len(dt.codec_creator.hardware_list)) # should only be one now
+            self.assertEqual(1, len(dt.codec_creator.hardware_list))  # should only be one now
             self.assertEqual(software, dt.codec_creator.software)
             self.assertEqual(None, dt.codec_creator.software_version)
 
@@ -840,7 +840,7 @@ class AudioViewsTest(KeepTestCase):
             data = audio_data.copy()
             data['_save_continue'] = True   # simulate submit via 'save and continue' button
             response = self.client.post(edit_url, data)
-            messages = [ str(msg) for msg in response.context['messages'] ]
+            messages = [str(msg) for msg in response.context['messages']]
             self.assert_(messages[0].startswith("Successfully updated"),
                 'successful audio update message displayed to user on save and continue editing')
             self.assert_(isinstance(response.context['form'], audioforms.AudioObjectEditForm),
@@ -869,10 +869,10 @@ class AudioViewsTest(KeepTestCase):
             data = audio_data.copy()
             data.update({
                 'mods-title': '',       # title is required
-                'mods-origin_info-issued-0-date_year': 'abcf',  # not a year 
+                'mods-origin_info-issued-0-date_year': 'abcf',  # not a year
             })
             response = self.client.post(edit_url, data)
-            messages = [ str(msg) for msg in response.context['messages'] ]
+            messages = [str(msg) for msg in response.context['messages']]
             self.assert_(messages[0].startswith("Your changes were not saved due to a validation error"),
                 "form validation error message set in response context")
             self.assertContains(response, 'This field is required',
@@ -937,7 +937,6 @@ class AudioViewsTest(KeepTestCase):
                              updated_obj.digitaltech.content.transfer_engineer.id_type)
             self.assertEqual('vendor1', updated_obj.digitaltech.content.transfer_engineer.id)
             self.assertEqual('Vendor', updated_obj.digitaltech.content.transfer_engineer.name)
-
 
             # force a schema-validation error (shouldn't happen normally)
             # NOTE: invalid mods test should happen after all other tests that modify this object
@@ -1015,7 +1014,7 @@ class AudioViewsTest(KeepTestCase):
             self.assert_(reverse('site-index') in redirect_url,
                          "successful save redirects to audio index page")
 
-            messages = [ str(msg) for msg in response.context['messages'] ]
+            messages = [str(msg) for msg in response.context['messages']]
             self.assert_(messages[0].startswith("Successfully updated"),
                          "successful save message set in response context")
 
@@ -1071,7 +1070,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'Expected %s but returned %s for mimetype on %s (SourceTech datastream)' \
                 % (expected, got, ds_url))
-        content = response.content # response.content is a generator here. only read it once
+        content = response.content  # response.content is a generator here. only read it once
         self.assertTrue('<st:sourcetech' in content)
         self.assertTrue(obj.sourcetech.content.note in content)
         # Digital Tech
@@ -1085,7 +1084,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'Expected %s but returned %s for mimetype on %s (DigitalTech datastream)' \
                 % (expected, got, ds_url))
-        content = response.content # response.content is a generator here. only read it once
+        content = response.content  # response.content is a generator here. only read it once
         self.assertTrue('<dt:digitaltech' in content)
         self.assertTrue(obj.digitaltech.content.date_captured in content)
 
@@ -1110,7 +1109,6 @@ class AudioViewsTest(KeepTestCase):
             'Expected %s but returned %s for %s (datastream non-audio object)' \
                 % (expected, got, ds_url))
 
-
     def test_audit_trail(self):
         # create a test audio object with ingest message
         obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
@@ -1129,7 +1127,6 @@ class AudioViewsTest(KeepTestCase):
                 % (expected, got, audit_url))
         self.assertContains(response, 'justification>audit trail test</audit')
 
-
     @patch('keep.audio.feeds.feed_items')
     @patch('keep.audio.feeds.PodcastFeed._get_collection_data', new=Mock(return_value={}))
     def test_podcast_feed(self, mockfeeditems):
@@ -1141,15 +1138,15 @@ class AudioViewsTest(KeepTestCase):
             {'pid': '%s:1' % settings.FEDORA_PIDSPACE,
              'title': 'Dylan Thomas reads anthology',
              'part': 'Side A',
-             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
-             'date_issued': ['1976-05'] },
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3,
+             'date_issued': ['1976-05']},
             {'pid': '%s:2' % settings.FEDORA_PIDSPACE,
              'title': 'Patti Smith Live in New York',
-             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
-             'collection_id': self.esterbrook.uri },
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3,
+             'collection_id': self.esterbrook.uri},
             {'pid': '%s:3' % settings.FEDORA_PIDSPACE,
              'title': 'Odysseus recites The Iliad',
-             'dm1_id': ['124578', '000875421'] }
+             'dm1_id': ['124578', '000875421']}
             ]
         mockfeeditems.return_value = data
         response = self.client.get(feed_url)
@@ -1200,18 +1197,18 @@ class AudioViewsTest(KeepTestCase):
             {'pid': '%s:1' % settings.FEDORA_PIDSPACE,
              'title': 'Dylan Thomas reads anthology',
              'part': 'Side A',
-             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
-             'date_issued': ['1976-05'] },
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3,
+             'date_issued': ['1976-05']},
             {'pid': '%s:2' % settings.FEDORA_PIDSPACE,
              'title': 'Patti Smith Live in New York',
-             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3, 
-             'collection_id': self.esterbrook.uri },
+             'access_copy_size': 53499, 'access_copy_mimetype': 'audio/mpeg', 'duration': 3,
+             'collection_id': self.esterbrook.uri},
             {'pid': '%s:3' % settings.FEDORA_PIDSPACE,
              'title': 'Odysseus recites The Iliad',
-             'dm1_id': ['124578', '000875421'] }
+             'dm1_id': ['124578', '000875421']}
             ]
         mockfeeditems.return_value = data
-        
+
         # must be logged in as staff to view
         self.client.login(**ADMIN_CREDENTIALS)
 
@@ -1249,7 +1246,7 @@ class AudioViewsTest(KeepTestCase):
         conversions = TaskResult.objects.filter(object_id=pid).order_by('-created')
 
         #There should be 2 in the queue one from the upload and one from ajax request
-        self.assertEqual(2,len(conversions))
+        self.assertEqual(2, len(conversions))
 
 
 # TODO: mock out the fedora connection and find a way to verify that we
@@ -1366,7 +1363,7 @@ class TestMods(KeepTestCase):
         mymods.access_conditions.extend([mods.AccessCondition(type='restriction', text='unavailable'),
                                        mods.AccessCondition(type='use', text='Tuesdays only')])
         mymods.related_items.extend([mods.RelatedItem(type='host', title='EU Archives'),
-                                   mods.RelatedItem(type='isReferencedBy', title='Finding Aid'),])
+                                   mods.RelatedItem(type='isReferencedBy', title='Finding Aid')])
         xml = mymods.serialize(pretty=True)
         self.assert_('<mods:mods ' in xml)
         self.assert_('xmlns:mods="http://www.loc.gov/mods/v3"' in xml)
@@ -1377,9 +1374,10 @@ class TestMods(KeepTestCase):
         # if additions to MODS test fixture cause validation errors, uncomment the next 2 lines to debug
         #self.mods.is_valid()
         #print self.mods.validation_errors()
-        self.assertTrue(self.mods.is_valid())        
+        self.assertTrue(self.mods.is_valid())
         invalid_mods = load_xmlobject_from_string(self.invalid_xml, mods.MODS)
         self.assertFalse(invalid_mods.is_valid())
+
 
 class TestModsTypedNote(KeepTestCase):
     # node fields tested in main mods test case; testing custom is_empty logic here
@@ -1395,7 +1393,7 @@ class TestModsTypedNote(KeepTestCase):
 
     def test_is_empty__extra_attribute(self):
         # set an attribute besides type
-        self.note.label = "Note"        
+        self.note.label = "Note"
         self.assertFalse(self.note.is_empty())
 
     def test_is_empty_text(self):
@@ -1403,12 +1401,13 @@ class TestModsTypedNote(KeepTestCase):
         self.note.text = 'here is some general info'
         self.assertFalse(self.note.is_empty())
 
+
 class TestModsDate(KeepTestCase):
     # node fields tested in main mods test case; testing custom is_empty logic here
 
     def setUp(self):
         super(TestModsDate, self).setUp()
-        self.date = mods.DateCreated() 
+        self.date = mods.DateCreated()
 
     def test_is_empty(self):
         # starting fixture should be considered empty (no date)
@@ -1423,6 +1422,7 @@ class TestModsDate(KeepTestCase):
         # set date value
         self.date.date = '1066'
         self.assertFalse(self.date.is_empty())
+
 
 class TestModsOriginInfo(KeepTestCase):
     # node fields tested in main mods test case; testing custom is_empty logic here
@@ -1446,7 +1446,6 @@ class TestModsOriginInfo(KeepTestCase):
         self.assertFalse(self.origin_info.is_empty())
         self.origin_info.issued.append(mods.DateIssued(date='450'))
         self.assertFalse(self.origin_info.is_empty())
-
 
 
 class SourceTechTest(KeepTestCase):
@@ -1522,6 +1521,7 @@ class SourceTechTest(KeepTestCase):
         self.assert_('<st:sourcetech' in st.serialize())
 
         # TODO: validate against schema when we have one
+
 
 class DigitalTechTest(KeepTestCase):
     FIXTURE = '''<?xml version="1.0" encoding="UTF-8"?>
@@ -1638,7 +1638,7 @@ class DigitalTechTest(KeepTestCase):
 
 # tests for Audio DigitalObject
 class TestAudioObject(KeepTestCase):
-    fixtures =  ['users']
+    fixtures = ['users']
     repo = Repository()
 
     def setUp(self):
@@ -1652,7 +1652,7 @@ class TestAudioObject(KeepTestCase):
             self.obj.audio.content = wav
             self.obj.save()
             self.pids.append(self.obj.pid)
-            
+
         # collection fixture
         self.rushdie = FedoraFixtures.rushdie_collection()
         self.rushdie.save()
@@ -1701,9 +1701,43 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual(settings.FEDORA_OBJECT_OWNERID, self.obj.info.owner)
 
         # test saving with a title longer than 255 characters
-        self.obj.mods.content.title = ' '.join(['this is the song that never ends' for i in range(0,10)])
+        self.obj.mods.content.title = ' '.join(['this is the song that never ends' for i in range(0, 10)])
         # save will cause an exception if the object label is not truncated correctly
         self.obj.save()
+
+    def test_save_and_update_dc(self):
+        # check that update_dc is only called when it ought to be
+
+        with patch.object(self.obj, '_update_dc') as mock_update_dc:
+            # nothing modified - update_dc should not be called
+            self.obj.save()
+            self.assertEqual(0, mock_update_dc.call_count)
+
+            # if any one of these datastreams is modified, update_dc should
+            # be called on save
+
+            # mods
+            with patch.object(self.obj.mods, 'isModified', new=Mock(return_value=True)):
+                self.obj.save()
+                self.assertEqual(1, mock_update_dc.call_count)
+            mock_update_dc.reset_mock()
+
+            # rels-ext
+            with patch.object(self.obj.rels_ext, 'isModified', new=Mock(return_value=True)):
+                self.obj.save()
+                self.assertEqual(1, mock_update_dc.call_count)
+            mock_update_dc.reset_mock()
+
+            # digital tech
+            with patch.object(self.obj.digitaltech, 'isModified', new=Mock(return_value=True)):
+                self.obj.save()
+                self.assertEqual(1, mock_update_dc.call_count)
+            mock_update_dc.reset_mock()
+
+            # rights
+            with patch.object(self.obj.rights, 'isModified', new=Mock(return_value=True)):
+                self.obj.save()
+                self.assertEqual(1, mock_update_dc.call_count)
 
     def test_update_dc(self):
         # set values in MODS, RELS-EXT, digitaltech
@@ -1743,7 +1777,7 @@ class TestAudioObject(KeepTestCase):
         self.obj.rights.content.access_status.text = 'Material is in public domain'
         self.obj.collection = self.obj.get_object(self.rushdie.uri)
         self.obj._update_dc()
-        
+
         self.assertEqual(title, self.obj.dc.content.title)
         # dm1 ids no longer need to be in dc:identifier (indexed & searched via solr)
         self.assert_(self.obj.mods.content.dm1_id not in self.obj.dc.content.identifier_list)
@@ -1764,7 +1798,7 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual(1, len(self.obj.dc.content.rights_list))
         access = self.obj.rights.content.access_status
         self.assert_(access.code not in self.obj.dc.content.rights)
-        self.assertEqual(access.text, self.obj.dc.content.rights)    
+        self.assertEqual(access.text, self.obj.dc.content.rights)
 
         # clear out data and confirm DC gets cleared out appropriately
         del(self.obj.mods.content.origin_info.created)
@@ -1801,17 +1835,18 @@ class TestAudioObject(KeepTestCase):
         mockarchive.label = 'MARBL'
 
         colls = [mockmss, mockarchive]
+
         def get_coll(*args, **kwargs):
-            return  colls.pop(0)
+            return colls.pop(0)
         # collection object will be initialized twice - once for
         # collection this item belongs to, once for repository the
         # collection belongs to.
         mockcollobj.side_effect = get_coll
-        
+
         # create test object and populate with minimal data
         coll = self.repo.get_object(type=CollectionObject)
-        coll.pid='parent:1'
-        coll.mods.content.source_id='12345'
+        coll.pid = 'parent:1'
+        coll.mods.content.source_id = '12345'
         obj = self.repo.get_object(type=audiomodels.AudioObject)
         obj.pid = 'foo:1'
         obj.collection = coll
@@ -1820,7 +1855,7 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual(obj.collection.uri, desc_data['collection_id'],
                          'parent collection object id should be set in index data')
         self.assertEqual(mockmss.label, desc_data['collection_label'],
-                          'parent collection object label should be set in index data' )
+                          'parent collection object label should be set in index data')
         # NB: as of 2011-08-23, eulindexer doesn't support automatic
         # reindexing of audio objects when their collection changes. as a
         # result, archive_id and archive_label may be stale. disable
@@ -1834,15 +1869,15 @@ class TestAudioObject(KeepTestCase):
         self.assertEquals(obj.collection.mods.content.source_id, desc_data['collection_source_id'],
                           'collection_source_id should be %s but is is %s' %
                           (obj.collection.mods.content.source_id, desc_data['collection_source_id']))
-        
+
         self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                          'default index data fields should be present in data (title)')
         self.assertEqual(obj.pid, desc_data['pid'],
                          'default index data fields should be present in data (pid)')
         self.assert_('dm1_id' not in desc_data,
-                     'dm1_id should not be included in index data when list is empty')  
+                     'dm1_id should not be included in index data when list is empty')
         self.assert_('digitization_purpose' not in desc_data,
-                     'digitization_purpose should not be included in index data when it is empty')  
+                     'digitization_purpose should not be included in index data when it is empty')
         self.assert_('part' not in desc_data,
                      'part should not be included in index data when it is empty')
         self.assertEqual(False, desc_data['researcher_access'],
@@ -1912,10 +1947,8 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual(obj.sourcetech.content.sublocation, desc_data['sublocation'],
                          'sublocation should be set when present in sourcetech')
 
-        
         # error if data is not serializable as json
-        self.assert_(simplejson.dumps(desc_data))        
-
+        self.assert_(simplejson.dumps(desc_data))
 
         colls = [mockmss, mockarchive]
         # pretend access copy exists in fedora
@@ -1931,7 +1964,7 @@ class TestAudioObject(KeepTestCase):
                          'duration should match digitaltech duration value')
             self.assert_(unicode(obj.mods.content.origin_info.issued[0]) in desc_data['date_issued'],
                          'date_issued should not be set based on mods origin_info.issued')
-            self.assert_(simplejson.dumps(desc_data))        
+            self.assert_(simplejson.dumps(desc_data))
 
         colls = [mockmss, mockarchive]
         # pretend original exists in fedora
@@ -1942,11 +1975,7 @@ class TestAudioObject(KeepTestCase):
             self.assertEqual(True, desc_data['has_original'],
                              'has_original should be true when object has original audio datastream')
             self.assertEqual(mockaudio.checksum, desc_data['content_md5'])
-            
 
-        
-
-               
     def test_file_checksum(self):
         #This is just a sanity check that eulfedora is working as expected with checksums.
         filename = 'example.wav'
@@ -1954,7 +1983,7 @@ class TestAudioObject(KeepTestCase):
         #specify an incorrect checksum
         bad_md5 = 'aaa'
         obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=bad_md5)
-        expected_error=None
+        expected_error = None
         try:
             obj.save()
             #Purge if it somehow did not error on the save.
@@ -1964,7 +1993,7 @@ class TestAudioObject(KeepTestCase):
 
         self.assert_(isinstance(expected_error, ChecksumMismatch),
             'attempting to save with invalid checksum should raise a ChecksumMismatch exception')
-        
+
         # specify a correct checksum
         obj = audiomodels.AudioObject.init_from_file(wav_filename, label, checksum=wav_md5)
         return_result = obj.save()
@@ -1995,7 +2024,7 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual(label, new_obj.label)
         self.assertEqual(label, new_obj.mods.content.title)
         self.assertEqual(label, new_obj.dc.content.title)
-        
+
         # use request to pass logged-in user credentials for fedora access
         rqst = HttpRequest()
         user = ADMIN_CREDENTIALS['username']
@@ -2040,7 +2069,7 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual('mp3', self.obj.access_file_extension())
         self.obj.compressed_audio.mimetype = 'audio/mp4'
         self.assertEqual('m4a', self.obj.access_file_extension())
-        
+
 
 class TestWavDuration(KeepTestCase):
 
@@ -2055,7 +2084,9 @@ class TestWavDuration(KeepTestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
+
 class TestWavMP3DurationCheck(KeepTestCase):
+
     def setUp(self):
         super(TestWavMP3DurationCheck, self).setUp()
         # create an audio object to test conversion with
@@ -2087,7 +2118,6 @@ class TestWavMP3DurationCheck(KeepTestCase):
         self.assertRaises(Exception, audiomodels.check_wav_mp3_duration, None,
                           '/tmp/my/very/bogus/file.wav', '/tmp/my/very/bogus/file.mp3')
 
-        
     def test_compare_object_datastreams(self):
         # initially has no mp3
         self.assertFalse(audiomodels.check_wav_mp3_duration(self.obj.pid),
@@ -2104,21 +2134,17 @@ class TestWavMP3DurationCheck(KeepTestCase):
             self.obj.save('adding compressed audio to test audio duration check')
 
             self.assertTrue(audiomodels.check_wav_mp3_duration(self.obj.pid),
-            	'wav/mp3 duration check should pass for matching wav/mp3 datastreams on object')
+                'wav/mp3 duration check should pass for matching wav/mp3 datastreams on object')
 
             # compare mp3 on object to local wav files
             self.assertTrue(audiomodels.check_wav_mp3_duration(self.obj.pid, wav_file_path=wav_filename),
                 'duration should match for mp3 datastream on object and matching local wav file')
-            
+
             self.assertFalse(audiomodels.check_wav_mp3_duration(self.obj.pid,
                                                                 wav_file_path=alternate_wav_filename),
                 'duration should not match for mp3 datastream on object and non-matching local wav file')
 
-                            
 
-        
-        
-        
 #def check_wav_mp3_duration(obj_pid=None,wav_file_path=None,mp3_file_path=None):
 
 
@@ -2184,6 +2210,7 @@ class TestModsEditForm(KeepTestCase):
         form.is_valid()
         inst = form.update_instance()
         self.assertEqual(None, inst.origin_info)
+
 
 class SourceAudioConversions(KeepTestCase):
     def setUp(self):
@@ -2264,14 +2291,14 @@ class SourceAudioConversions(KeepTestCase):
             comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid,
                 wav_file_path=wav_filename)
             self.assertFalse(comparison_result,
-            	"MP3 generated from alternate WAV should not match duration of original WAV")
+                "MP3 generated from alternate WAV should not match duration of original WAV")
 
             #Verify the new wav and mp3 durations match.
             comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid,
                 wav_file_path=alternate_wav_filename)
             self.assertTrue(comparison_result,
                  "MP3 should match duration of the WAV file it was generated from.")
-        
+
 
     # TODO: test failures, error handling, etc.
     # - trigger tempfile error - make temp dir non-writable
@@ -2292,6 +2319,7 @@ class TestIngestCleanupCommand(ingest_cleanup.Command):
         run_args.extend(args)
         return self.run_from_argv(run_args)
 
+
 class IngestCleanupTest(KeepTestCase):
     def setUp(self):
         super(IngestCleanupTest, self).setUp()
@@ -2306,11 +2334,11 @@ class IngestCleanupTest(KeepTestCase):
         # remove any files created in temporary test staging dir
         for file in os.listdir(self.tmpdir):
             os.unlink(os.path.join(self.tmpdir, file))
-        
+
         #Possible timing conflict.... can still occur if an anti-virus is running or something else accesses the file: http://bugs.python.org/issue1425127
         sleep(1)
         #See: http://stackoverflow.com/questions/1213706/what-user-do-python-scripts-run-as-in-windows
-        os.chmod(self.tmpdir,stat.S_IWUSR)
+        os.chmod(self.tmpdir, stat.S_IWUSR)
         # remove temporary test staging dir
         os.rmdir(self.tmpdir)
         settings.INGEST_STAGING_TEMP_DIR = self._real_temp_dir
@@ -2319,7 +2347,7 @@ class IngestCleanupTest(KeepTestCase):
     def test_missing_age_setting(self):
         del(settings.INGEST_STAGING_KEEP_AGE)
         self.assertRaises(CommandError, self.command.handle, verbosity=0)
-        
+
     def test_missing_dir_setting(self):
         del(settings.INGEST_STAGING_TEMP_DIR)
         self.assertRaises(CommandError, self.command.handle, verbosity=0)
@@ -2330,7 +2358,7 @@ class IngestCleanupTest(KeepTestCase):
         # should get a command error when directory does not exist or is not readable
         # - calling handle directly because base command run_from_argv handles/presents the command error
         self.assertRaises(CommandError, self.command.handle, verbosity=0)
-        
+
         # restore existing test tmp dir
         settings.INGEST_STAGING_TEMP_DIR = self.tmpdir
 
@@ -2381,10 +2409,9 @@ class IngestCleanupTest(KeepTestCase):
             'file past keep age is not deleted in dry-run mode')
 
 
-
 class PodcastFeedTest(KeepTestCase):
 
-    # full item 
+    # full item
     item = {
         'pid': '%s:1' % settings.FEDORA_PIDSPACE,    'noid': '1',  # testing convenience
         'title': 'Dylan Thomas reads anthology',
@@ -2393,16 +2420,16 @@ class PodcastFeedTest(KeepTestCase):
         'access_copy_size': 53499,
         'access_copy_mimetype':
         'audio/mpeg',
-        'duration': 3, 
+        'duration': 3,
         'date_issued': ['1976-05'],
-        'dm1_id': ['124578', '000875421'] 
+        'dm1_id': ['124578', '000875421']
     }
     # min item - missing fields should not generate errors
     min_item = {
         'pid': '%s:2' % settings.FEDORA_PIDSPACE,     'noid': '2',  # testing convenience
         'title': 'Patti Smith Live in New York'
     }
-    
+
     def setUp(self):
         super(PodcastFeedTest, self).setUp()
         self.feed = PodcastFeed()
@@ -2427,7 +2454,7 @@ class PodcastFeedTest(KeepTestCase):
 
     def test_author_name(self):
         coll = {'title': 'archival collection', 'source_id': '1'}
-        self.feed._collection_data = { self.item['collection_id']: coll}
+        self.feed._collection_data = {self.item['collection_id']: coll}
 
         val = self.feed.item_author_name(self.item)
         self.assert_(val.startswith(coll['source_id']))
@@ -2437,7 +2464,7 @@ class PodcastFeedTest(KeepTestCase):
 
     def test_categories(self):
         coll = {'archive_label': 'MARBL'}
-        self.feed._collection_data = { self.item['collection_id']: coll}
+        self.feed._collection_data = {self.item['collection_id']: coll}
 
         self.assert_(coll['archive_label'] in self.feed.item_categories(self.item))
         self.assertEqual([], self.feed.item_categories(self.min_item))
@@ -2445,7 +2472,7 @@ class PodcastFeedTest(KeepTestCase):
     def test_enclosure_length(self):
         self.assertEqual(self.item['access_copy_size'], self.feed.item_enclosure_length(self.item))
         self.assertEqual(None, self.feed.item_enclosure_length(self.min_item))
-        
+
     def test_enclosure_mime_type(self):
         self.assertEqual(self.item['access_copy_mimetype'], self.feed.item_enclosure_mime_type(self.item))
         self.assertEqual(None, self.feed.item_enclosure_mime_type(self.min_item))
@@ -2455,13 +2482,13 @@ class PodcastFeedTest(KeepTestCase):
         self.assertEqual(self.item['duration'], info['duration'])
         for dm1_id in self.item['dm1_id']:
             self.assert_(dm1_id in info['keywords'])
-            
+
         self.assert_(self.item['noid'] in info['keywords'])
 
         min_info = self.feed.item_extra_kwargs(self.min_item)
         self.assert_(self.min_item['noid'] in min_info['keywords'])
         self.assert_('duration' not in min_info)
-        
+
 
 class FeedItemsTest(KeepTestCase):
 
@@ -2469,19 +2496,18 @@ class FeedItemsTest(KeepTestCase):
     def test_feed_items(self, mocksolr):
 
         feed_items()
-        
-        args, kwargs =  mocksolr.return_value.query.call_args
+
+        args, kwargs = mocksolr.return_value.query.call_args
         self.assertEqual(True, kwargs['researcher_access'],
                          'kiosk feed solr search should filter on researcher_access=True')
         self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
                          'kiosk feed solr search should filter on audio content model')
         self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
                          'kiosk feed solr search should filter on configured pidspace')
-        
 
 
 class UploadFormTest(TestCase):
-    
+
     def test_validation(self):
         # no files (single or batch) - should be invalid
         form = audioforms.UploadForm({'collection_0': 'some:pid',
@@ -2525,6 +2551,7 @@ class UploadFormTest(TestCase):
         self.assertEqual(files[form.cleaned_data['uploaded_files'][1]],
                          form.cleaned_data['filenames'][1])
 
+
 class TestAudioExtrasTemplateTags(TestCase):
 
     def test_seconds_duration(self):
@@ -2535,8 +2562,8 @@ class TestAudioExtrasTemplateTags(TestCase):
         self.assertEqual('0:01:05',
                          audio_extras.seconds_duration(65))
         self.assertEqual('3:22:17',
-                         audio_extras.seconds_duration(3*60*60 + 22*60 + 17))
+                         audio_extras.seconds_duration((3 * 60 * 60) + (22 * 60) + 17))
         self.assertEqual('16:21:13',
-                         audio_extras.seconds_duration(16*60*60 + 21*60 + 13))
+                         audio_extras.seconds_duration((16 * 60 * 60) + (21 * 60) + 13))
         self.assertEqual('',
                          audio_extras.seconds_duration(''))
