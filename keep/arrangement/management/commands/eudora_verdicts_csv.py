@@ -86,7 +86,9 @@ class Command(BaseCommand):
         'Out': 2,
         'OLD "IN"': 2,
         'OLD "OUT"': 2,
-        # TODO: add verdicts for  "list of individuals", "exhibitC_1", "publishers"
+        "list of individuals": 4,
+        "exhibitC_1": 4,
+        "publishers": 4,
     }
     'mappings from folder name to numeric Keep verdict code'
 
