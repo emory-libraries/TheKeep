@@ -23,17 +23,7 @@ from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
 from keep.collection.models import SimpleCollection as ProcessingBatch
 from keep.common.fedora import Repository, ArkPidDigitalObject
 from keep.common.models import rights_access_terms_dict
-from keep.common.utils import md5sum, solr_interface, absolutize_url
-
-
-# NOTE: this is *not* in svn because it contains sensitive info
-# to be redacted email messages
-from email_redactions import redactions
-# content should look something like this:
-# redactions = {
-#    r'[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}': 'IP address',
-# }
-#    regex to replace : label to display (i.e., [REDACTED: IP address])
+from keep.common.utils import md5sum, solr_interface, absolutize_url, redact_email
 
 
 UNUSED_PID_NAME = 'rushdie 5300c email message (unused)'
@@ -42,6 +32,7 @@ UNUSED_PID_URL = 'http://rushdie.5300c.email.message/unused'
 # bogus place-holder target url for deactivated pids; this is a
 # bit of a cheat so we can find the pids easily, because pidman
 # REST API currently does not support searching by name
+
 
 def get_password_opt(option, opt, value, parser):
     '''Use :meth:`getpass.getpass` to prompt for a password for a
@@ -53,7 +44,7 @@ def get_password_opt(option, opt, value, parser):
 
     # store the value
     parser.values.password = value
-    
+
 
 
 class Command(BaseCommand):
@@ -79,7 +70,7 @@ Eudora files. (One-time import for 5300c content)
                     ingest email messages (e.g., if purge has already been completed)'''),
 
         make_option('--purge-only', action='store_true', default=False,
-                    help='''Only purge old metadata email records; do not 
+                    help='''Only purge old metadata email records; do not
                     ingest email messages'''),
 
         # optional fedora credentials
@@ -122,7 +113,7 @@ Eudora files. (One-time import for 5300c content)
         if not os.path.isdir(folder_path):
             raise CommandError('Eudora folder path "%s" is not a directory' % folder_path)
         self.noact = noact
-        
+
         # check for any specified fedora credentials
         fedora_opts = {}
         if 'user' in options:
@@ -159,10 +150,10 @@ Eudora files. (One-time import for 5300c content)
         items = list(batch.rels_ext.content.objects(batch.uriref,
                                                     relsext.hasMember))
         for i in items:
-            # for now, init as arrangement objects 
+            # for now, init as arrangement objects
             obj = self.repo.get_object(str(i), type=ArrangementObject)
             # NOTE: in dev/test, collection currently references all items
-            # but only a handful actually exist in dev/test repo; just skip 
+            # but only a handful actually exist in dev/test repo; just skip
             if not obj.exists:
                 continue
 
@@ -202,11 +193,11 @@ Eudora files. (One-time import for 5300c content)
                 self.stats['pids'] +=1
                 if self.verbosity > self.v_normal:
                     print 'Updated ARK for %s' % obj.noid
-                    
+
             except Exception as e:
                 print 'Error updating ARK for %s: %s' % \
                       (obj.noid, e)
-                        
+
             # purge record
             try:
                 self.repo.purge_object(obj.pid,
@@ -214,11 +205,11 @@ Eudora files. (One-time import for 5300c content)
                 self.stats['purged'] += 1
                 if self.verbosity > self.v_normal:
                     print 'Purged %s' % obj.pid
-                            
+
             except RequestFailed as e:
                 self.stats['purge_error'] += 1
                 print 'Error purging %s: %s' % (obj.pid, e)
-                        
+
         # summary
         if self.verbosity >= self.v_normal:
             print '''\nChecked %(count)d records, found %(email)d emails''' % self.stats
@@ -241,7 +232,7 @@ Eudora files. (One-time import for 5300c content)
                 print 'Error: folder files %s not found at base path "%s"' % \
                       (folder_file, folder_base)
                 continue
-            
+
             # find the index/data file objects for this folder in fedora
             # by checksums from the originals;
             # check if they are associated with an existing mailbox object
@@ -253,7 +244,7 @@ Eudora files. (One-time import for 5300c content)
                 print 'Warning: record not found for folder data file "%s"' % folder_file
             elif mbox_obj.mailbox:
                 mailbox = mbox_obj.mailbox
-                    
+
             toc_obj = self.find_file_object(folder_toc)
             if toc_obj is None:
                 print 'Warning: record not found for folder index file "%s.toc"' % folder_file
@@ -264,10 +255,10 @@ Eudora files. (One-time import for 5300c content)
             if mailbox is None:
                 if self.verbosity > self.v_normal:
                     print 'Mailbox object for %s not found; creating one' % folder_name
-                    
+
                 mailbox = self.repo.get_object(type=MailboxPidReuse)
                 desc = 'Rushdie\'s email from his PowerBook 5300c: "%s" folder' % \
-                       folder_name 
+                       folder_name
                 mailbox.label = desc
                 mailbox.dc.content.title = desc
                 # mailbox should belong to same collection mailbox files do
@@ -275,7 +266,7 @@ Eudora files. (One-time import for 5300c content)
                     mailbox.collection = mbox_obj.collection
                 elif mbox_obj._deprecated_collection:
                     mailbox.collection = mbox_obj._deprecated_collection
-                
+
                 # save to get a pid, add mailbox rel to file objects
                 if not self.noact:
                     # TODO: fedora error handling
@@ -289,7 +280,7 @@ Eudora files. (One-time import for 5300c content)
                         self.stats['ingest_error'] += 1
                         print 'Failed to create folder object for %s in Fedora: %s' % \
                               (folder_name, rf)
-                        
+
                     if mbox_obj:
                         mbox_obj.mailbox = mailbox
                         mbox_obj.save('associating with mailbox object')
@@ -307,8 +298,6 @@ Eudora files. (One-time import for 5300c content)
                 # arrangement mailbox; re-init as local mailbox
                 # for access to parent collection
                 mailbox = self.repo.get_object(mailbox.pid, type=MailboxPidReuse)
-                
-                
 
             with open(folder_toc) as tocdata:
                 with open(folder_path) as mbox:
@@ -319,12 +308,12 @@ Eudora files. (One-time import for 5300c content)
                     folder_order = 0
                     for msg in toc.messages:
                         self.stats['message'] += 1
-                        
+
                         # get data from mbox file based on msg offset/size
                         mbox.seek(msg.offset)
                         # read message content from mailbox data file
                         msg_data = mbox.read(msg.size)
-                        
+
                         self.ingest_message(msg_data, mailbox, folder_order)
                         folder_order += 1
                         # max to ingest for testing
@@ -334,22 +323,19 @@ Eudora files. (One-time import for 5300c content)
         # summary
 
         if self.verbosity >= self.v_normal:
-            print '''\nProcessed %(folder)d mail folders and %(message)d messages; %(previously_ingested)d messages previously ingested'''  % self.stats
+            print '''\nProcessed %(folder)d mail folders and %(message)d messages; %(previously_ingested)d messages previously ingested''' % self.stats
             if not self.noact:
                 print '''\nCreated %(ingested)d records, updated %(updated)d''' % self.stats
                 if self.stats['ingest_error']:
                     print '''Error ingesting %(ingest_error)d records''' % self.stats
 
-
-
-
     def find_file_object(self, file_path):
         '''Find a file object by checksum in fedora based on a file
         path.  Returns a file object if one matches the checksum for
-        the file specified, or else None if no match is found. 
+        the file specified, or else None if no match is found.
 
         :returns:  :class:`keep.arrangement.models.RushdieArrangementFile` or
-		None
+        None
         '''
         file_md5 = md5sum(file_path)
         solr = solr_interface()
@@ -357,24 +343,11 @@ Eudora files. (One-time import for 5300c content)
         if len(q):
             return self.repo.get_object(q[0]['pid'], type=RushdieArrangementFile)
 
-
-    def redact_email(self, content):
-        '''Replace any sensitive information in the email message with
-        a redacted text label.
-        '''
-        for regex, label in redactions.iteritems():
-            # NOTE: flags argument to re.sub not supported until python 2.7;
-            # compile the regex to flags before substituting
-            reg = re.compile(regex, flags=re.MULTILINE | re.IGNORECASE)
-            content = re.sub(regex, '[REDACTED: %s]' % label, content)
-        return content
-
-
     def ingest_message(self, msg_data, mailbox, folder_order):
 
         # read content and redact IP addresses / email addresses
-        msg_data = self.redact_email(msg_data)
-                                        
+        msg_data = redact_email(msg_data)
+
         # generate email object from data
         email_msg = email.message_from_string(msg_data,
                                               _class=MacEncodedMessage)
@@ -384,7 +357,7 @@ Eudora files. (One-time import for 5300c content)
         if attachments:
             print 'Warning! Email has attachments (not yet handled): %s' % \
                   ','.join(attachments)
-        
+
         # get current content type to preserve the original value,
         # and also to determine how to decode
         content_type = email_msg.get('Content-Type', '')
@@ -406,13 +379,13 @@ Eudora files. (One-time import for 5300c content)
             # decode headers from mac roman charset
             # (some messages contain improperly formatted
             # accented characters in a from/to header)
-            email_msg.decode_headers() 
+            email_msg.decode_headers()
 
         # create a new object to populate with data
         msg_obj = self.repo.get_object(type=EmailMessagePidReuse)
 
         # generate cerp from mime message
-        # - store folder order as message local id 
+        # - store folder order as message local id
         msg_obj.cerp.content = cerp.Message.from_email_message(email_msg,
                                                                local_id=folder_order)
 
@@ -455,7 +428,7 @@ Eudora files. (One-time import for 5300c content)
         if email_msg.get('Date', None):
             label += u' on %s' % email_msg['Date']
         if email_msg.get('Subject', None):
-            label += u' %s' % email_msg['Subject']            
+            label += u' %s' % email_msg['Subject']
 
         # set as object label and dc:title
         msg_obj.label = label
@@ -486,7 +459,7 @@ Eudora files. (One-time import for 5300c content)
                       % q[0]['pid']
             self.stats['previously_ingested'] += 1
             return
-            
+
 
         # associate with current mailbox object
         msg_obj.mailbox = mailbox
@@ -499,7 +472,7 @@ Eudora files. (One-time import for 5300c content)
         msg_obj.rights.content.create_access_status()
         msg_obj.rights.content.access_status.code = "10"
         msg_obj.rights.content.access_status.text = rights_access_terms_dict["10"].text
-        
+
         if not self.noact:
             try:
                 msg_obj.save('ingesting email message from rushdie 5300c')
@@ -511,7 +484,6 @@ Eudora files. (One-time import for 5300c content)
                 self.stats['ingest_error'] += 1
                 print 'Error ingesting email message %s: %s' % \
                       (msg_obj.label, rf)
-
 
     def email_attachments(self, msg):
         attachments = []
@@ -526,22 +498,18 @@ Eudora files. (One-time import for 5300c content)
         return attachments
 
 
-        
-
 class MacEncodedMessage(email.message.Message):
 
     charset_decoder = codecs.getdecoder('macroman')
 
     def decode_headers(self):
         new_headers = []
-        
+
         for key, val in self._headers:
             val, length = self.charset_decoder(val)
             new_headers.append((key, val))
 
         self._headers = new_headers
-
-
 
 
 class PidReuseDigitalObject(ArkPidDigitalObject):
@@ -575,7 +543,7 @@ class PidReuseDigitalObject(ArkPidDigitalObject):
             pidman.update_ark(noid, name=self.label)
             # update default ark target for new object url
             pidman.update_ark_target(noid, target_uri=target, active=True)
-            
+
             # if we have a mods datastream, store the ARK as mods:identifier
             if hasattr(self, 'mods'):
                 # store full uri and short-form ark
@@ -586,10 +554,10 @@ class PidReuseDigitalObject(ArkPidDigitalObject):
 
             # always add full uri ARK to dc:identifier
             self.dc.content.identifier_list.append(ark)
-            
+
             # use the noid to construct a pid in the configured pidspace
             return '%s:%s' % (self.default_pidspace, noid)
-        
+
         else:
             # if we run out of pids re-use, fall back to default behavior
             return super(PidReuseDigitalObject, self).get_default_pid()
