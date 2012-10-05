@@ -149,8 +149,8 @@ class Command(BaseCommand):
                     email_msg = email.message_from_string(message_data,
                                               _class=MacEncodedMessage)
 
-                    # get fields
-                    formatted_date, raw_date = self.get_date(email_msg)
+                    # get any fields that require calculation or extraction
+                    raw_date, formatted_date = self.get_date(email_msg)
                     # md5sum
                     md5sum = hashlib.md5()
                     md5sum.update(str(email_msg))
