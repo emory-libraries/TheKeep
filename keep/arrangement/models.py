@@ -257,8 +257,10 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         if self.label:
             return self.label
 
-        # TODO: we probably should have better error handling
-        # (cerp not present? expected fields not set?)
+        # if cerp is not present or has no data, return a generic label
+        if not self.cerp or not self.cerp.content or \
+            not self.cerp.content.from_list and not self.cerp.content.to_list:
+            return 'Email message'
 
         # sender & to should always be present
         sender = self.cerp.content.from_list[0]
