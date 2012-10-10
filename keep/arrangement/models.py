@@ -262,11 +262,18 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
             not self.cerp.content.from_list and not self.cerp.content.to_list:
             return 'Email message'
 
-        # sender & to should always be present
-        sender = self.cerp.content.from_list[0]
-        to = self.cerp.content.to_list[0]
-        if len(self.cerp.content.to_list) > 1:
-            to = '%s et al.' % to
+        # sender & to should generally be present
+        if self.cerp.content.from_list:
+            sender = self.cerp.content.from_list[0]
+        else:
+            sender = 'unknown sender'
+
+        if self.cerp.content.to_list:
+            to = self.cerp.content.to_list[0]
+            if len(self.cerp.content.to_list) > 1:
+                to = '%s et al.' % to
+        else:
+            to = 'unknown recipient'
 
         label = 'Email from %s to %s' % (sender, to)
 
