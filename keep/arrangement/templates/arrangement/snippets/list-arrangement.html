@@ -16,14 +16,12 @@
   {# NOTE: could only display edit link for email content; displaying for all arrangement items for consistency #}
 
   <a href="{% firstof view_url edit_url %}"> {# link to view if available, otherwise to edit form #}
-   {% if obj.arrangement_id %}{{ obj.arrangement_id|default:''}} : {% endif %}
-    {% comment %} Show both title and label if they are different.
-    Show '(no title)' if both are blank {% endcomment %}
+    {# Show both title and label if they are different. Show '(no title)' if both are blank. #}
     {% firstof obj.title obj.label '(no title)' %}
     {% if obj.title and obj.title|slugify != obj.label|slugify %} {{ obj.label }}{% endif %}
     {% if obj.part %} ({{ obj.part }}){% endif %}</a>
   {% if obj.collection_id or obj.simpleCollection_id %}
-    (part of 
+    (part of
      {% if obj.collection_id %}
        {% if 'info:fedora' in obj.collection_id %}  {# convert to pid if id is in URI format #}
          {% url collection:edit obj.collection_id|slice:'12:' as collection_url %}
@@ -33,12 +31,12 @@
       <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
       {% if obj.simpleCollection_label %} {# FIXME: should probably link here, but simple collection is multiple #}
        {{ obj.simpleCollection_label|join:"; " }}{% endif %})
-  {% endif %} 
+  {% endif %}
 
 </p>
 {% endblock %}
 
-{% block item_info %} 
+{% block item_info %}
   <ul class='horiz'>
     {% if obj.rights %}<li>{{ obj.rights|join:', ' }}</li>{% endif %}
     {# display processed/unprocessed status (currently based on object state)  #}
