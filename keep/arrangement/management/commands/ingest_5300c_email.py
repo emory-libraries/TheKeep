@@ -74,7 +74,7 @@ Eudora files. (One-time import for 5300c content)
                     ingest email messages'''),
 
         # optional fedora credentials
-        make_option('--user', metavar='FEDORA_USER', dest='username',
+        make_option('--user', metavar='FEDORA_USER', dest='user',
             help='''Connect to Fedora as the specified user'''),
         make_option('--password', metavar='FEDORA_PASSWORD', dest='password',
             help='''Connect to Fedora with the specified password (leave blank for prompt)''',
