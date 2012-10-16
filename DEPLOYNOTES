@@ -28,12 +28,12 @@ source is in /home/thekeep/src, consider creating an environment in
 /home/thekeep/env. To create such an environment, su into apache's user
 and::
 
-  $ virtualenv --no-site-packages /home/thekeep/env
+  virtualenv --no-site-packages /home/thekeep/env
 
 This creates a new virtual environment in that directory. Source the activation
 file to invoke the virtual environment (requires that you use the bash shell)::
 
-  $ . /home/thekeep/env/bin/activate
+  . /home/thekeep/env/bin/activate
 
 Once the environment has been activated inside a shell, Python programs
 spawned from that shell will read their environment only from this
@@ -53,13 +53,13 @@ are any errors, pip should announce them very loudly.
 
 To install python dependencies, cd into the repository checkout and::
 
-  $ pip install -r pip-dependencies
+  pip install -r pip-dependencies
 
 If you are a developer or are installing to a continuous ingration server
 where you plan to run unit tests, code coverage reports, or build sphinx
 documentation, you probably will also want to::
 
-  $ pip install -r build-dependencies
+  pip install -r build-dependencies
 
 After this step, your virtual environment should contain all of the
 dependencies for The Keep.
@@ -67,8 +67,8 @@ dependencies for The Keep.
 Alternatively, you can use the fabric deploy/build script to install
 dependencies for you::
 
-  $ pip install fabric
-  $ fab install_deps
+  pip install fabric
+  fab install_deps
 
 Known Issues
 """"""""""""
@@ -78,7 +78,7 @@ Known Issues
   or a problem with the PyPi ctypes package that causes it to be uninstallable.
   As a work-around, python-magic can be manually installed without dependencies::
 
-    $ pip install --no-deps python-magic
+    pip install --no-deps python-magic
 
   You may need to comment out python-magic in the pip-dependencies file to allow
   the other packages to install correctly.
@@ -88,8 +88,8 @@ Known Issues
   manually create a symbolic link from the root of your virtualenv to the
   eullocal theme directory::
 
-    $ cd /home/thekeep/env
-    $ ln -s src/eullocal/themes/
+    cd /home/thekeep/env
+    ln -s src/eullocal/themes/
 
 
 Install/Configure System Dependencies
@@ -167,7 +167,7 @@ eulindexer ``localsettings.py``, e.g.::
 To populate the index initially, or to reindex all content, run the
 ``reindex`` script that is available in EULindexer::
 
-    $ python manage.py reindex -s keep
+    python manage.py reindex -s keep
 
 
 Misc
@@ -194,7 +194,7 @@ files should be IP restricted at the Apache level to allow only those
 machines that are permitted access to the content.  The url patterns
 that should be restricted are::
 
-    /audio/feeds/[0-9]+/             
+    /audio/feeds/[0-9]+/
     /audio/*/access.mp3         * is the fedora object pid
 
 
@@ -219,7 +219,7 @@ PID Manager
 
 Commenting out or removing any of the PIDMAN_* configuration options will
 raise an error if the ``DEV_ENV`` setting is ``False`` (as is normal for a
-production install). 
+production install).
 
 The configured PIDMAN_USER must have permission inside the pid
 manager to add pids and targets.
@@ -229,22 +229,22 @@ manager to add pids and targets.
 After configuring all settings, initialize the db with all needed
 tables and initial data using::
 
-    $ python manage.py syncdb
+    python manage.py syncdb
 
 Load Fedora fixtures and control objects to the configured repository
 using::
 
-     $ python manage.py syncrepo
+    python manage.py syncrepo
 
 Ingest clean-up cron job
 ^^^^^^^^^^^^^^^^^^^^^^^^
 Configure the ingest cleanup script to run as a cron job.  This is a custom
 manage.py script that cleans up the ingest staging temp directory so that
-any uploaded files that are not successfully ingested into Fedora will 
-be cleaned up.  The script cleans up files older than the age specified in 
+any uploaded files that are not successfully ingested into Fedora will
+be cleaned up.  The script cleans up files older than the age specified in
 localsettings.py.  When run with verbosity 0, only errors will be reported::
 
-     $ python manage.py  ingest_cleanup -v 0
+     python manage.py  ingest_cleanup -v 0
 
 .. NOTE::
   This script will delete all files older than a specified age
@@ -256,7 +256,7 @@ Celery Daemon
 The celery worker needs to be running for asynchronous tasks.  To run through
 django do::
 
-    $ python manage.py celeryd -Q keep
+    python manage.py celeryd -Q keep
 
 Note that we are using a different default queue so that keep-specific tasks
 are not sent to a non-keep celery daemon.
@@ -311,7 +311,7 @@ Release 1.5 (preliminary)
   the Rushdie collection incorrectly (using the isMemberOf relation instead of
   isMemberOfCollection).  This can be corrected in the Django console as follows::
 
-  $ python manage.py shell
+  python manage.py shell
 
   .. code-block:: python
 
@@ -331,45 +331,46 @@ Release 1.5 (preliminary)
               # remove deprecated collection
               del obj._deprecated_collection
               # save changes
-              obj.save('converting incorrect collection membership from isMemberOf to isMemberOfCollection')
+              if obj.rels_ext.isModified():
+                obj.save('converting incorrect collection membership from isMemberOf to isMemberOfCollection')
 
 .. Note::
 
    In a development or staging environment where a collection is incorrectly referenced but does not
    exist, you may want to check the deprecated collection by pid.  In particular, it is important
-   not to remove all ``isMemberOf`` relations, because Rushdie Mailbox objects are associated with 
-   their corresponding Email account objects via ``isMemberOf``.        
+   not to remove all ``isMemberOf`` relations, because Rushdie Mailbox objects are associated with
+   their corresponding Email account objects via ``isMemberOf``.
 
 * This release includes several one-time scripts to import content and verdict
-  for Rushdie's 5300c computer.  These should be run by a developer or someone familiar with 
+  for Rushdie's 5300c computer.  These should be run by a developer or someone familiar with
   both the site and the content as follows, in this order:
 
-  1. Import series and verdict information for non-email content based on a CSV file, which will be 
+  1. Import series and verdict information for non-email content based on a CSV file, which will be
      provided by born-digital archivist or project manager::
 
-      $ python manage.py import_verdict --csv=/path/to/csvfile
+     python manage.py import_verdict --csv=/path/to/csvfile
 
-     Note that this step may identify duplicate records, which will require manual clean up; any 
+     Note that this step may identify duplicate records, which will require manual clean up; any
      clean up should be completed **before** running the next script (import_content).
 
   2. Import file content for non-email objects.  This will require the 5300c disk
      image be mounted on the local file system, using a command something like this::
 
-     $ sudo mount 5300c.img -o loop -t hfs /mnt/rushdie_5300c
+     sudo mount 5300c.img -o loop -t hfs /mnt/rushdie_5300c
 
      Then run the script to import file content from the disk image, providing it the pid
      for the 5300c processing batch (aka "simple collection")::
 
-     $ python manage.py import_content /mnt/rushdie_5300c emory:bm4pr 
+     python manage.py import_content /mnt/rushdie_5300c emory:bm4pr
 
   3. Import email messages from the 5300c disk image; pid should be the processing batch (aka "simple collection")
      id; file path should be the location of Eudora email content::
 
-     $ python manage.py ingest_5300c_email emory:bm4pr /path/to/Eudora\ Folder/ --user=<user> --password=
+     python manage.py ingest_5300c_email emory:bm4pr /path/to/Eudora\ Folder/ --user=<user> --password=
 
   4. Import series and verdict information for email content based on a CSV file::
 
-     $ python manage.py import_verdicts --email --csv=/path/to/5300c_email_verdicts.csv
+     python manage.py import_verdicts --email --csv=/path/to/5300c_email_verdicts.csv
 
   The output from each of these scripts should be collected and sent to project managers and/or
   born-digital archivists for review.
@@ -395,7 +396,7 @@ Release 1.4 - search and ingest enhancements
   Fedora with the latest polices and and reload them.
 * Run syncdb to load the Born Digital group using the following command::
 
-    $ python manage.py syncdb
+    python manage.py syncdb
 
 * When the code is deployed to staging the ENABLE_BETA_WARNING
   variable should be set in localsettings.py::
@@ -421,16 +422,16 @@ Release 1.3 - Search-based Report generation
   an existing database, you will need a few extra steps.  First, run
   ``syncdb`` to create the database tables for :mod:`south`. Then, to
   update emory_ldap, you will need to fake the initial migration, run
-  migrations 0002 and 0003 normally, and then fake step 0004:: 
- 
-    $ python manage.py migrate --fake emory_ldap 0001
-    $ python manage.py migrate emory_ldap 0003
-    $ python manage.py migrate --fake emory_ldap 0004
+  migrations 0002 and 0003 normally, and then fake step 0004::
+
+    python manage.py migrate --fake emory_ldap 0001
+    python manage.py migrate emory_ldap 0003
+    python manage.py migrate --fake emory_ldap 0004
 
    For :mod:`djcelery`, all djcelery_ and celery_ tables should be
    dropped from the database and recreated via migrate::
 
-    $ python manage.py migrate djcelery
+    python manage.py migrate djcelery
 
 
 Release 1.2 - Verdict App
@@ -444,14 +445,14 @@ Release 1.2 - Verdict App
     - On the local workstation, copy settings.json.dist to settings.json and configure
     - run::
 
-        $ fab load_config:settings.json deploy
+        fab load_config:settings.json deploy
 
-*  TheKeep XACML policies should be updated to the appropriate branch or tag:
-    - Staging:: https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.9
-    - Production:: https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.9
+* TheKeep XACML policies should be updated to the appropriate branch or tag:
 
-   - reload policies on fedora
-    
+  * Staging: https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.9
+  * Production: https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.9
+  * reload policies on fedora
+
 
 * The solr schema should be updated:
     - Copy <project base>/solr/schema.xml to the appropriate solr core
@@ -460,8 +461,8 @@ Release 1.2 - Verdict App
 * The following manage commands shouldbe run:
     NOTE: when running these command you must be in the keep virtual environment::
 
-    $ python ./manage.py syncdb
-    $ python ./manage.py syncrepo
+    python ./manage.py syncdb
+    python ./manage.py syncrepo
 
 * The paths in the http config file should be verified since some have changed or may be different from enviroment to enviroment..
 
@@ -473,8 +474,8 @@ Release 1.2 - Verdict App
     - Assign appropriate permissions for each user in the database
     - Load  P5300c objects to fedora using the command::
 
-        $ python ./manage.py load_arrangement <CSV file> <master collection pid> <new simple collection name> -u <user> --password
-      
+        python ./manage.py load_arrangement <CSV file> <master collection pid> <new simple collection name> -u <user> --password
+
 
 * Reindex the site:
     - Make sure that eulindexer has an entry for "keep" in localsettings.py > INDEXER_SITE_URLS .
@@ -489,7 +490,7 @@ Release 1.2 - Verdict App
 
     - Run the command::
 
-        $ python ./manage.py reindex -s keep  
+        python ./manage.py reindex -s keep
 
     - After the above commad finishes make sure the indxer is runnng so new items can be indexed
 
@@ -506,7 +507,7 @@ Release 1.1 - Metadata Migration
 * This release relies on new Fedora content model objects. Execute the
   following command to load them::
 
-    $ python manage.py syncrepo
+    python manage.py syncrepo
 
 * The Keep now uses Solr for searching and eulindexer for indexing
   items.  Follow the directions in `Solr/EULindexer`_ to set up a new
@@ -514,7 +515,7 @@ Release 1.1 - Metadata Migration
   content, run a one-time clean-up script to update existing objects
   in Fedora::
 
-    $ python manage.py cleanup_metadata
+    python manage.py cleanup_metadata
 
   After this script completes, configure EULindexer and run its reindex
   script as described in `Solr/EULindexer`_ to populate the Solr index for
@@ -526,7 +527,7 @@ Release 1.1 - Metadata Migration
   verified to work correctly, prepare to migrate legacy metadata. First
   dry-run the migration script::
 
-    $ python manage.py migrate_metadata -n -v2 -c migrate.csv > migrate.out
+    python manage.py migrate_metadata -n -v2 -c migrate.csv > migrate.out
 
   Developers and project stakeholders will review migration output
   (``migrate.csv`` and ``migrate.out``). This review process will probably
@@ -534,7 +535,7 @@ Release 1.1 - Metadata Migration
   below. Once the review and any additional configuration are complete, run
   the final metadata migration::
 
-    $ python manage.py migrate_metadata -c migrate.csv > migrate.out
+    python manage.py migrate_metadata -c migrate.csv > migrate.out
 
   The application does not use the CSV or output files. After the migration
   is complete, these files may be archived and/or deleted.
@@ -545,7 +546,7 @@ Release 1.0.3
 * This release depends on a newer version of python-eulcore. Activate
   the virtualenv and update::
 
-    $ pip install -r pip-dependencies
+    pip install -r pip-dependencies
 
 * Previously, the code did not add a name to PID records when
   generating ARKs for new objects.  To update the PID records with
@@ -580,8 +581,8 @@ Release 1.0 - Min Items, part IV
 
 * We are using a newer version of python-eulcore. To update::
 
-    $ . /home/keep/env/bin/activate
-    $ pip install -r pip-dependencies
+    . /home/keep/env/bin/activate
+    pip install -r pip-dependencies
 
 * Django Session default configuration has been modified in ``settings.py``.  By default,
   the application will now store session data in the django cache (already in use by the application and configured via
@@ -606,12 +607,12 @@ Release 0.9 - Min Items, part III
   New database tables in the relational database are required for the
   celery functionality.  To initialize them, run::
 
-    $ python manage.py syncdb
+    python manage.py syncdb
 
 * The application now provides an RSS podcast feed intended for iTunes on the
   MARBL reading room kiosk.  Due to limitations in the amount of data that iTunes
   can harvest in a single feed, the podcast feed generation logic expects a setting
-  for MAX_ITEMS_PER_PODCAST_FEED.  See localsettings.py.sample for example 
+  for MAX_ITEMS_PER_PODCAST_FEED.  See localsettings.py.sample for example
   configuration and recommended value.
 
   When deployed in production, Apache should be configured to restrict access to
@@ -621,20 +622,20 @@ Release 0.9 - Min Items, part III
 * Dependencies have been addded for celery tasks and MP3 error checking.
   To install the new dependencies::
 
-    $ . /home/keep/env/bin/activate
-    $ pip install -r pip-dependencies
+    . /home/keep/env/bin/activate
+    pip install -r pip-dependencies
 
 * The application now uses an eulcore task result module to report on celery tasks,
   which requires additional tables in the relational database. To initialize them,
   sync the db::
 
-    $ python manage.py syncdb
+    python manage.py syncdb
 
 * New datastreams have been added to the Fedora Audio object.  Any audio objects
   loaded in the staging environment should be removed when this update is deployed.
   This can be done in the django console as follows. Start the console::
 
-    $ python manage.py shell
+    python manage.py shell
 
   And then run:
 
@@ -656,7 +657,7 @@ Release 0.9 - Min Items, part III
   with the new owner ID.  Updating existing objects can be done in the django
   console.  Start the console::
 
-    $ python manage.py shell
+    python manage.py shell
 
   Then run the following:
 
@@ -669,7 +670,7 @@ Release 0.9 - Min Items, part III
     for o in objs:
         o.owner = settings.FEDORA_OBJECT_OWNERID
         o.save()
-    
+
 * As part of branding this project as "The Keep", the main source directory
   is now ``src/keep`` instead of ``src/digitalmasters`` .
 
@@ -679,7 +680,7 @@ Release 0.8 - Min Items, part II
 * The app now depends on the standard django ``sites`` module. This module
   stores some data in the relational database. To initialize it, sync the db::
 
-    $ python manage.py syncdb
+    python manage.py syncdb
 
   After restarting the web app, configure the default site by replacing the
   ``example.com`` domain with the domain of the live webapp.
@@ -690,7 +691,7 @@ Release 0.8 - Min Items, part II
   deployed.  This can be done in the django console as follows. Start
   the console::
 
-    $ python manage.py shell
+    python manage.py shell
 
   And then run:
 
@@ -727,23 +728,23 @@ Release 0.7 - Min Items, part I
   version of :mod:`eulcore`, and we swapped our python-magic dependency for better
   Windows support. Remove the old dependencies and refresh them::
 
-    $ . /home/keep/env/bin/activate
-    $ pip uninstall eulcore python-magic
-    $ pip install -r pip-dependencies
+    . /home/keep/env/bin/activate
+    pip uninstall eulcore python-magic:
+    pip install -r pip-dependencies
 
 * After installation and configuration, ensure required numbering scheme
   objects are defined in fedora::
 
-    $ python manage.py syncrepo
+    python manage.py syncrepo
 
 * After defining numbering schemes, admins may want to load collections from
   Finding Aids::
 
-    $ python manage.py load_ead marbl 10 59 265 494 539 558 572 579 612 \
+    python manage.py load_ead marbl 10 59 265 494 539 558 572 579 612 \
         616 618 622 629 644 653 663 673 682 685 687 689 741 745 771 797 \
         800 807 832 840 845 853 855 856 869 890 892 923 926 927 932 937 \
         960 966 968 981 1000 1002 1025 1032 1054 1056 1061
-    $ python manage.py load_ead eua 8 11 26 60 113 1002
+    python manage.py load_ead eua 8 11 26 60 113 1002
 
 
 Release 0.6
@@ -755,6 +756,6 @@ Release 0.6
 * After django application and Fedora are both configured, run
   syncrepo to load Fedora fixtures and control objects::
 
-    $ python manage.py syncrepo
+    python manage.py syncrepo
 
 
