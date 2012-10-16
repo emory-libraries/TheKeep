@@ -348,7 +348,7 @@ Release 1.5 (preliminary)
   1. Import series and verdict information for non-email content based on a CSV file, which will be
      provided by born-digital archivist or project manager::
 
-     python manage.py import_verdict --csv=/path/to/csvfile
+        python manage.py import_verdict --csv=/path/to/csvfile
 
      Note that this step may identify duplicate records, which will require manual clean up; any
      clean up should be completed **before** running the next script (import_content).
@@ -356,24 +356,24 @@ Release 1.5 (preliminary)
   2. Import file content for non-email objects.  This will require the 5300c disk
      image be mounted on the local file system, using a command something like this::
 
-     sudo mount 5300c.img -o loop -t hfs /mnt/rushdie_5300c
+        sudo mount 5300c.img -o loop -t hfs /mnt/rushdie_5300c
 
      Then run the script to import file content from the disk image, providing it the pid
      for the 5300c processing batch (aka "simple collection")::
 
-     python manage.py import_content /mnt/rushdie_5300c emory:bm4pr
+        python manage.py import_content /mnt/rushdie_5300c emory:bm4pr
 
   3. Import email messages from the 5300c disk image; pid should be the processing batch (aka "simple collection")
      id; file path should be the location of Eudora email content::
 
-     python manage.py ingest_5300c_email emory:bm4pr /path/to/Eudora\ Folder/ --user=<user> --password=
+        python manage.py ingest_5300c_email emory:bm4pr /path/to/Eudora\ Folder/ --user=<user> --password=
 
   4. Import series and verdict information for email content based on a CSV file::
 
-     python manage.py import_verdicts --email --csv=/path/to/5300c_email_verdicts.csv
+        python manage.py import_verdicts --email --csv=/path/to/5300c_email_verdicts.csv
 
-  The output from each of these scripts should be collected and sent to project managers and/or
-  born-digital archivists for review.
+The output from each of these scripts should be collected and sent to project managers and/or
+born-digital archivists for review.
 
 
 Release 1.4 - search and ingest enhancements
