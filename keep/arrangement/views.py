@@ -1,16 +1,11 @@
 # Create your views here.
 import logging
-import urllib2
-from rdflib import URIRef
 
-from django.conf import settings
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, Http404, HttpResponseForbidden, \
-    HttpResponseBadRequest, HttpResponseServerError
+from django.http import HttpResponse, Http404
 from django.shortcuts import render
-from django.template import RequestContext
 from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
@@ -18,7 +13,6 @@ from django.contrib import messages
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulcommon.searchutil import pages_to_show
 from eulcm.models import boda
-from eulfedora.rdfns import model
 from eulfedora.util import RequestFailed
 from eulfedora.views import raw_datastream, raw_audit_trail
 
@@ -38,6 +32,7 @@ logger = logging.getLogger(__name__)
 finding_aids_url = 'https://findingaids.library.emory.edu/documents/'
 finding_aid_id = 'rushdie1000'
 
+
 @permission_required("common.arrangement_allowed")
 def index(request):
     # FIXME/TODO: there is no arrangement index; not sure why this
@@ -45,6 +40,7 @@ def index(request):
     # leaving at is for now.  Simply redirect to the main site index
     # for now.
     return HttpResponseSeeOtherRedirect(reverse('site-index'))
+
 
 @permission_required("common.arrangement_allowed")
 def edit(request, pid):
@@ -71,7 +67,7 @@ def edit(request, pid):
                 obj.save(comment)
                 messages.success(request, 'Successfully updated arrangement <a href="%s">%s</a>' % \
                             (reverse('arrangement:edit', args=[obj.pid]), obj.pid))
-            
+
                 # form submitted via normal save button - redirect to arrangement index (currently site index)
                 if '_save_continue' not in request.POST:
                     return HttpResponseSeeOtherRedirect(reverse('arrangement:index'))
@@ -82,7 +78,7 @@ def edit(request, pid):
                     # "save & continue editing" re-init the form so that formsets
                     # will display correctly
                     form = arrangementforms.ArrangementObjectEditForm(instance=obj)
-    
+
         else:
             form = arrangementforms.ArrangementObjectEditForm(instance=obj)
 
@@ -98,8 +94,8 @@ def edit(request, pid):
 
     # Query for the finding aid information.
     return_fields = ['eadid']
-    only_fields = ['id','did__unittitle','subseries', 'eadid']
-    search_fields = {'eadid' : finding_aid_id }
+    only_fields = ['id', 'did__unittitle', 'subseries', 'eadid']
+    search_fields = {'eadid': finding_aid_id}
     queryset = Series.objects.also(*return_fields).only(*only_fields).filter(**search_fields)
 
     # Builds an id and value dictionary for the jQuery autocomplete.
@@ -114,7 +110,8 @@ def edit(request, pid):
     series_data = simplejson.dumps(series_data)
 
     return render(request, 'arrangement/edit.html',
-                  {'obj' : obj, 'form': form, 'series_data': series_data})
+                  {'obj': obj, 'form': form, 'series_data': series_data})
+
 
 @permission_required("common.arrangement_allowed")
 def view_datastream(request, pid, dsid):
@@ -130,12 +127,14 @@ def view_datastream(request, pid, dsid):
         response['Content-Type'] = 'text/plain'
     return response
 
+
 @permission_required("common.arrangement_allowed")
 def view_audit_trail(request, pid):
     'Access XML audit trail'
     # initialize local repo with logged-in user credentials & call eulfedora view
     return raw_audit_trail(request, pid, type=ArrangementObject,
                            repo=Repository(request=request))
+
 
 @permission_required("common.arrangement_allowed")
 def history(request, pid):
@@ -158,11 +157,10 @@ def get_selected_series_data(request, id):
 
     # Query for the finding aid information.
     return_fields = ['eadid']
-    only_fields = ['id','did__unittitle','subseries', 'eadid']
-    search_fields = {'eadid' : finding_aid_id}
-    series_match_fields = {'id' : id, 'subseries__id': id, 'subseries__subseries__id': id}
+    only_fields = ['id', 'did__unittitle', 'subseries', 'eadid']
+    search_fields = {'eadid': finding_aid_id}
+    series_match_fields = {'id': id, 'subseries__id': id, 'subseries__subseries__id': id}
     queryset = Series.objects.also(*return_fields).only(*only_fields).or_filter(**series_match_fields).filter(**search_fields)
-    series_obj = queryset.get()
 
     # Builds a JSON response of further data. A bit ugly currently.
     series_data = {}
