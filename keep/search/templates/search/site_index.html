@@ -18,7 +18,7 @@
 	<ul>
 		{% for month, count in recent_months %}
 		<li><a href="{% url search:keyword %}?keyword=created:{{ month|date:'Y-m' }}"
-			title="search for items added in {{ month|date:'F Y' }}">{{ month|date:'F Y' }}</a> ({{ count }})</li>
+			title="search for items added in {{ month|date:'F Y' }}">{{ month|date:'F Y' }}</a> ({{ count|intcomma }})</li>
 		{% endfor %}
 	</ul>
 	{% endif %}
@@ -27,7 +27,7 @@
 	<ul>
 		{% for day, count in recent_items %}
 		<li><a href="{% url search:keyword %}?keyword=created:{{ day|date:'Y-m-d' }}"
-			title="search for all items added on {{ day }}">{{ day|naturalday }}</a> ({{ count }})</li>
+			title="search for all items added on {{ day }}">{{ day|naturalday }}</a> ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>
 		{% endfor %}
@@ -40,7 +40,7 @@
 	<ul>
 		{% for collection, count in recent_collections %}
 		<li><a href="{% url search:keyword %}?collection={{ collection }}"
-			title="search for all items in {{ collection }} sorted by date added">{{ collection }}</a> ({{ count }})</li>
+			title="search for all items in {{ collection }} sorted by date added">{{ collection }}</a> ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>
 		{% endfor %}
