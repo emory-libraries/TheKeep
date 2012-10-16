@@ -24,7 +24,7 @@ def absolutize_url(local_url):
 
     # add scheme and server (i.e., the http://example.com) based
     # on the django Sites infrastructure.
-    root = Site.objects.get_current().domain
+    root = Site.objects.acurrent().domain
     # but also add the http:// if necessary, since most sites docs
     # suggest using just the domain name
     if not root.startswith('http'):
@@ -106,6 +106,6 @@ def redact_email(content):
     #    regex to replace : label to display (i.e., [REDACTED: IP address])
 
     for regex, label in redactions.iteritems():
-        content = re.sub(regex, '[REDACTED: %s]' % label, content,
-                     flags=re.MULTILINE | re.IGNORECASE)
+        compiled_re = re.compile(regex, flags=re.MULTILINE | re.IGNORECASE)
+        content = compiled_re.sub('[REDACTED: %s]' % label, content)
     return content
