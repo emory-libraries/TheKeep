@@ -238,7 +238,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
     CONTENT_MODELS = [boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
-    NEW_OBJECT_VIEW = 'arrangement:email'
+    NEW_OBJECT_VIEW = 'arrangement:view'
 
     @property
     def headers(self):
@@ -348,4 +348,4 @@ class Mailbox(boda.Mailbox, ArrangementObject):
     CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
                        boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
 
-    NEW_OBJECT_VIEW = 'arrangement:mailbox'
+    NEW_OBJECT_VIEW = 'arrangement:view'
