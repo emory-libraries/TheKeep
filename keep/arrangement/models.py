@@ -298,7 +298,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         # for content md5
         if self.mime_data.exists:
             data['content_md5'] = self.mime_data.checksum
-            data['source_id'] = self.mime_data.content.get('message-id')
+            data['arrangement_id'] = self.mime_data.content.get('message-id')
 
         return data
 
@@ -367,7 +367,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         
         :param id: message id to search for
         '''
-        return EmailMessage.find_by_field('source_id', id, repo=repo)
+        return EmailMessage.find_by_field('arrangement_id', id, repo=repo)
 
 
 class Mailbox(boda.Mailbox, ArrangementObject):

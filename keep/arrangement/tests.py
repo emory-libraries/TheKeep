@@ -705,7 +705,7 @@ class EmailMessageTest(KeepTestCase):
         self.assertRaises(ObjectDoesNotExist, EmailMessage.by_message_id,
                           '<12345@message.com>')
         solr = mocksolr.return_value
-        solr.query.assert_called_with(source_id='<12345@message.com>',
+        solr.query.assert_called_with(arrangement_id='<12345@message.com>',
                                       content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
         solr.query.return_value.field_limit.assert_called_with('pid')
         
