@@ -699,6 +699,17 @@ class EmailMessageTest(KeepTestCase):
         em = EmailMessage.by_checksum(42, mockrepo)
         mockrepo.get_object.assert_called_with('pid:1', type=EmailMessage)
 
+    @patch('keep.arrangement.models.solr_interface', spec=sunburnt.SolrInterface)
+    def test_by_message_id(self, mocksolr):
+        # no match
+        self.assertRaises(ObjectDoesNotExist, EmailMessage.by_message_id,
+                          '<12345@message.com>')
+        solr = mocksolr.return_value
+        solr.query.assert_called_with(source_id='<12345@message.com>',
+                                      content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
+        solr.query.return_value.field_limit.assert_called_with('pid')
+        
+
 
 #arrangementforms.ArrangementObjectEditForm))
 #class ArrangementObjectEditFormTest(KeepTestCase):

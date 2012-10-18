@@ -303,20 +303,21 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         return data
 
     @staticmethod
-    def by_checksum(md5sum, repo=None):
+    def find_by_field(field, value, repo=None):
         '''
-        Static method to find an :class:`EmailMessage` by its
-        md5sum.  Looks for the item in Solr and
+        Static method to find a single :class:`EmailMessage` by an indexed
+        value.  Looks for the item in Solr and
         returns an :class:`EmailMessage` instance initialized
         from the repository if a single match is found for the
-        requested checksum.
+        requested field and value.
 
         Raises :class:`django.core.exceptions.MultipleObjectsReturned`
         if more than one match is found; raises
         :class:`django.core.exceptions.ObjectDoesNotExist` if no
         matches are found in the Solr index.
 
-        :param md5: md5sum of the object
+        :param field: solr field to search
+        :param value: value to search on in the specified field
 
         :param repo: optional :class:`eulfedora.server.Repository`
             to use an existing connection with specific credentials
@@ -326,23 +327,47 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
 
         '''
         solr = solr_interface()
-        q = solr.query(content_md5=md5sum, content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
-                                       .field_limit('pid')
+        search_terms = {
+            field: value,
+            'content_model': ArrangementObject.ARRANGEMENT_CONTENT_MODEL
+        }
+        q = solr.query(**search_terms).field_limit('pid')
 
         # check that we found one and only one
         found = len(q)
         # borrowing custom django exceptions for not found / too many
         # matches
         if found > 1:
-            raise MultipleObjectsReturned('Found %d records with checksum %s' % \
-                                          (found, md5sum))
+            raise MultipleObjectsReturned('Found %d records with %s %s' % \
+                                          (found, field, value))
         if not found:
-            raise ObjectDoesNotExist('No record found with checksum %s' % md5sum)
+            raise ObjectDoesNotExist('No record found with %s %s' % (field, value))
 
         if repo is None:
             repo = Repository()
 
         return repo.get_object(q[0]['pid'], type=EmailMessage)
+
+
+    @staticmethod
+    def by_checksum(md5sum, repo=None):
+        '''
+        Static method to find an :class:`EmailMessage` by the content
+        md5 checksum.  Wrapper around :meth:`EmailMessage.find_by_field`.
+
+        :param md5sum: MD5 checksum to search for
+        '''
+        return EmailMessage.find_by_field('content_md5', md5sum, repo=repo)
+
+    @staticmethod
+    def by_message_id(id, repo=None):
+        '''
+        Static method to find an :class:`EmailMessage` by its
+        message id. Wrapper around :meth:`EmailMessage.find_by_field`.
+        
+        :param id: message id to search for
+        '''
+        return EmailMessage.find_by_field('source_id', id, repo=repo)
 
 
 class Mailbox(boda.Mailbox, ArrangementObject):
