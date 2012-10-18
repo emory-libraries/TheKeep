@@ -24,7 +24,7 @@ def absolutize_url(local_url):
 
     # add scheme and server (i.e., the http://example.com) based
     # on the django Sites infrastructure.
-    root = Site.objects.acurrent().domain
+    root = Site.objects.get_current().domain
     # but also add the http:// if necessary, since most sites docs
     # suggest using just the domain name
     if not root.startswith('http'):
