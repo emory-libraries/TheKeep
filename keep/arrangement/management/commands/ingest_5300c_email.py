@@ -116,8 +116,8 @@ Eudora files. (One-time import for 5300c content)
 
         # check for any specified fedora credentials
         fedora_opts = {}
-        if 'user' in options:
-            fedora_opts['username'] = options['user']
+        if 'username' in options:
+            fedora_opts['username'] = options['username']
         if 'password' in options:
             fedora_opts['password'] = options['password']
         self.repo = Repository(**fedora_opts)
