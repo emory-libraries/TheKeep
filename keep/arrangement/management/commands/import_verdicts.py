@@ -106,7 +106,7 @@ class Command(BaseCommand):
                     else:
                         path = row['path']
 
-                    self.procss_email(checksum, path, noact)
+                    self.process_email(checksum, path, row['id'], noact)
                 else:
                     # check if there is a duplicate checksum
                     if row['checksum']:
@@ -379,7 +379,7 @@ class Command(BaseCommand):
         url_parts.append(series_info['short_id'])
         mods_series.uri = '/'.join(url_parts)
 
-    def procss_email(self, checksum, path, noact):
+    def process_email(self, checksum, path, message_id, noact):
         '''Process verdicts for email content.
 
         :param checksum: checksum from the CSV file to search on
@@ -390,7 +390,15 @@ class Command(BaseCommand):
         :param noact: specifies noact mode
 
         '''
-        obj = EmailMessage.by_checksum(checksum)
+        try:
+            obj = EmailMessage.by_checksum(checksum)
+        except ObjectDoesNotExist as err:
+            # if search on checksum fails, try message id
+            if self.verbosity > self.v_normal:
+                print 'Warning: %s - attempting to find by message id' % err
+            obj = EmailMessage.by_message_id(message_id)
+            # let any not found exceptions rise to outer loop
+            
         self.stats['found'] += 1
 
         # FIXME: why are we not pulling numeric verdict from the verdict column?
