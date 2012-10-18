@@ -51,6 +51,19 @@ class Command(BaseCommand):
         'old-in': '2',
         'old-out': '2',
         'Undetermined': unknown_access_status,
+        # ?? seem to be getting variant names in email csv, not sure why
+        # FIXME: why are we using names, doesn't email.csv include numeric verdicts?
+        'rushdie restrict' : '4',
+        'family corr' : '4',
+        'rushdie approve': '2',
+        'In': '2',
+        'Out': '2',
+        'OLD "OUT"': '2',
+        'OLD "IN"': '2',
+        'needs review' : '4',
+        "list of individuals": '4',
+        "exhibitC_1": '4',
+        "publishers": '4',
     }
 
 
@@ -380,6 +393,7 @@ class Command(BaseCommand):
         obj = EmailMessage.by_checksum(checksum)
         self.stats['found'] += 1
 
+        # FIXME: why are we not pulling numeric verdict from the verdict column?
         verdict = path.split('/')[0]
         verdict_assigned = self.set_access_status(obj, verdict, {'verdict': verdict, 'id': checksum})
         self.verdict_stats[verdict_assigned] += 1
