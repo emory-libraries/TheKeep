@@ -135,6 +135,7 @@ see:
     
     <!-- ArrangementObject -->
     <field name="arrangement_id" type="string" indexed="true" stored="true" multiValued="false"/>
+    <!-- NOTE: now also used for email message id -->
     
     <!-- * both audio and collection objects -->
     <field name="ark_uri" type="string" indexed="false" stored="true" multiValued="false"/>
