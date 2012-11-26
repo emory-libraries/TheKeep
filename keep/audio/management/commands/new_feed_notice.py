@@ -27,6 +27,14 @@ podcast feeds has changed.'''
         )
 
     def handle(self, *args, **options):
+
+        # check that feed admins is configured, otherwise bail out
+        if not hasattr(settings, 'FEED_ADMINS'):
+            raise CommandError('You must configure FEED_ADMINS in Django settings' \
+                + ' before running this script.')
+        if not getattr(settings, 'FEED_ADMINS'):
+            raise CommandError('No FEED_ADMINS are configured (no one to notify).')
+
         dry_run = options['dry_run']
         verbosity = int(options['verbosity'])    # 1 = normal, 0 = minimal, 2 = all
         v_normal = 1
