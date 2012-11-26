@@ -13,10 +13,13 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 DEV_ENV = True
 
-#if True the beta warning banner is displayed on the site
+SERVER_EMAIL = ''       # email where default messages come from; django default is root@localhost
+EMAIL_SUBJECT_PREFIX = '[Keep] ' # prefix for email subjects
+
+# if True the beta warning banner is displayed on the site
 ENABLE_BETA_WARNING = False
 
-# IP addresses that should be allowed to see DEBUG info 
+# IP addresses that should be allowed to see DEBUG info
 INTERNAL_IPS = ('127.0.0.1', '127.0.1.1', )
 
 ADMINS = (
@@ -79,7 +82,11 @@ CACHE_BACKEND = 'file:///tmp/euterpe_cache'
 #SESSION_COOKIE_SECURE = False
 
 # maximum number of items to include in a single iTunes podcast feed
-MAX_ITEMS_PER_PODCAST_FEED = 2000 
+MAX_ITEMS_PER_PODCAST_FEED = 2000
+# list of email addresses for feed admins who should be notified of new feeds
+# e.g.  FEED_ADMINS = ['someone@somewhere.com', 'nobody@nowhere.net']
+FEED_ADMINS = []
+
 
 
 # configure which IP addresses are allowed to access the index data service

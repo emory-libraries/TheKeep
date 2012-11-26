@@ -8,37 +8,39 @@ Release 1.5 (preliminary)
 
 * A logged in user can see a checksum for binary file content on the record
   detail page (currently edit page), in order to verify file authenticity.
-* A logged in user can search file content by checksum, in order to match 
+* A logged in user can search file content by checksum, in order to match
   ingested content with original metadata.
-* A logged in user can identify email records and see high-level email 
-  information in Keep search results, so that email can be distinguished 
+* A logged in user can identify email records and see high-level email
+  information in Keep search results, so that email can be distinguished
   from other types of files.
-* When a user clicks on an email record in the search results, they are 
-  taken to a brief view page so that they can see information about the 
-  email instead of loading the default arrangement edit form which does 
+* When a user clicks on an email record in the search results, they are
+  taken to a brief view page so that they can see information about the
+  email instead of loading the default arrangement edit form which does
   not entirely apply to email.
 * A system administrator or developer can run a script to import verdict
   and series information (in a CSV file) for the processed 5300c files into
-  the repository, so that verdict and series decisions do not have to be 
+  the repository, so that verdict and series decisions do not have to be
   entered one at a time.
 * A system administrator or developer can run a script to ingest 5300c email
-  messages into the repository, so that email verdicts can be imported and 
+  messages into the repository, so that email verdicts can be imported and
   email content can eventually be made accessible to researchers.
-* A system administrator or developer can run a script to add item level 
-  content for non-email files to 5300c metadata-only records in the repository, 
+* A system administrator or developer can run a script to add item level
+  content for non-email files to 5300c metadata-only records in the repository,
   so that processed file content can be made accessible to users for research
   purposes.
-* A system administrator or developer can run a script to import verdict 
-  information from a CSV file for 5300c email messages, so that verdicts from 
+* A system administrator or developer can run a script to import verdict
+  information from a CSV file for 5300c email messages, so that verdicts from
   messages sorted in the emulation can be applied to repository items.
 * Recently added items on site home page now includes a list of collections
   with items added in the past 30 days.
+* Administrative users receive notification when the number of available
+  iTunes feeds changes, so that they can update the researcher kiosk.
 
 Bug fixes:
  * Corrected item level search results link to parent collection
  * Search audio/arrangement items (old search) by collection (broken after change
    to auto-complete collection input)
- * Corrected sorting for recently added items by day (on site home page) 
+ * Corrected sorting for recently added items by day (on site home page)
 
 
 
@@ -50,7 +52,7 @@ Release 1.4.2
   Archive.
 
 
-Release 1.4.1 
+Release 1.4.1
 -------------
 
 * Correct a bug in the access link URL for downloading MP4/M4A version
@@ -69,7 +71,7 @@ Release 1.4 - search, audit trail, and collection enhancements
 * A logged in user can search for records by the user who uploaded
   them, in order to easily find records they created or items uploaded
   by a specific user.
-* A logged in user can search for records by creation date, in order to 
+* A logged in user can search for records by creation date, in order to
   easily find recent items or items uploaded on a specific date.
 * A user can filter keyword search results by type
   (collection/audio/born-digital), collection, rights status, or
@@ -94,7 +96,7 @@ Release 1.4 - search, audit trail, and collection enhancements
   files without setting a required field.
 * Only authorized users, within the born-digital archives group, can
   access born-digital archival objects and metadata via the combined
-  search. 
+  search.
 * Updated to use Django staticfiles app to manage static site content.
 * Added support for a beta warning to be displayend in test/staging
   sites; turn on via **ENABLE_BETA_WARNING** setting.
@@ -118,7 +120,7 @@ Release 1.2.2
 * Update to the MD5 javascript implementation: now correctly
   calculates checksums for files >2GB.
 
-Release  1.2.1 
+Release  1.2.1
 --------------
  * Require eulfedora 0.18.1 to avoid missing checksums on XML and RDF
    datastreams.
@@ -180,7 +182,7 @@ metadata.
   not be reposited in the new system, by including the word "delete"
   (not case sensitive) in the title field. The migration script will
   not create an object to migrate metadata to, and the transaction log
-  will record a special "delete" error condition. 
+  will record a special "delete" error condition.
 * Users will see legacy system filename identifiers on the audio item
   edit page for migrated records (where audio files stored in the
   repository would normally be available for listening), so that they
@@ -188,30 +190,30 @@ metadata.
   the repository. (Note that future milestones will migrate this audio
   into the repository.)
 * Archivists can use the web interface to search for migrated metadata
-  using newly migrated critical file metadata. 
+  using newly migrated critical file metadata.
 * Researchers at the MARBL A/V kiosk see migrated records once (and
-  only once) in the kiosk interface. 
+  only once) in the kiosk interface.
 * A curator can select "Vendor" and "Unknown" (non-LDAP identities)
-  from the list of Transfer Engineer choices. 
+  from the list of Transfer Engineer choices.
 * A curator can record correct speed metadata for digitized
   microcassettes.
 * Librarians and preservation specialists can see in the legacy
   Digital Masters interface whether any particular record's metadata
   has been migrated to The Keep and into what PID for easy
-  verification. 
+  verification.
 
 Additionally, this milestone includes updates to take advantage of
 EULindexer functionality and use Solr for searching:
 
 * Users who browse or search for collections receive their results in
   under 1 second for a faster user experience and more efficient
-  workflow. 
+  workflow.
 * Users who browse or search for audio items receive their results in
   under 1 second for a faster user experience and more efficient
   workflow.
 * When MARBL Kiosk requests audio items feeds, it receives results in
   under 1 second, so that iTunes can harvest available items without
-  timing out.  
+  timing out.
 
 
 Release 1.0.4
@@ -310,7 +312,7 @@ access-copy audio file generation; support for batch upload of large files.
   views and search results.
 * A researcher can use the MARBL A/V kiosk to search metadata in the system and
   listen to the audio.
-* A curator can upload large files via drag & drop batch upload. 
+* A curator can upload large files via drag & drop batch upload.
 * Project rebranded as "The Keep".
 
 
@@ -385,7 +387,7 @@ contain digital master items.
   creator, and top-level collection to locate one for editing or to
   check if a particular collection exists before creating it.
 * An editor can view a hierarchical list of collections to locate one
-  for editing or to understand the organization of collections. 
+  for editing or to understand the organization of collections.
 * When any user creates or modifies a collection, the repository
   permanently associates that action with the user for preservation
   and auditing.
@@ -412,20 +414,20 @@ uses LDAP authentication for library staff.
 * Editors can upload and ingest a sound file in wave format so
   metadata can be created for the ingest item.
 * Editors can add or edit metadata to an ingested sound file from a
-  selected mods subset to describe the sound file. 
+  selected mods subset to describe the sound file.
 * Editors can search ingested content by PID or Title so they can find
-  an item to modify or create metadata. 
+  an item to modify or create metadata.
 * Editors can download ingested audio files for review to assist them
-  in creating metadata.  
+  in creating metadata.
 * Editors receive error messages pertaining to metadata validation
-  when editing records to ensure data quality and consistency. 
+  when editing records to ensure data quality and consistency.
 * The application logs and displays error messages related to
-  interaction with Fedora for troubleshooting and communication. 
+  interaction with Fedora for troubleshooting and communication.
 * Developers can create django forms related to XML objects to ease
   the development of editing interfaces.
 * Developers can link an XML Object with an XML schema so objects can
   be validated.
 
 
- 
+
 

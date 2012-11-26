@@ -7,7 +7,7 @@ import tempfile
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.db.models import permalink
+from django.db import models
 
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
@@ -373,7 +373,7 @@ class AudioObject(DigitalObject):
 
         return super(AudioObject, self).save(logMessage)
 
-    @permalink
+    @models.permalink
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return ('audio:view', [str(self.pid)])
@@ -737,3 +737,13 @@ def check_wav_mp3_duration(obj_pid=None, wav_file_path=None, mp3_file_path=None)
         if mp3_file_path is None and tmp_mp3_path is not None:
             if os.path.exists(tmp_mp3_path):
                 os.remove(tmp_mp3_path)
+
+
+class FeedCount(models.Model):
+    '''Simple model to keep track of the number of iTunes feeds available
+    by date, to support notification when the number changes.'''
+    count = models.IntegerField()
+    date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        get_latest_by = "date"

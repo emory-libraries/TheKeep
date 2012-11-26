@@ -311,7 +311,7 @@ Release 1.5 (preliminary)
   the Rushdie collection incorrectly (using the isMemberOf relation instead of
   isMemberOfCollection).  This can be corrected in the Django console as follows::
 
-  python manage.py shell
+    python manage.py shell
 
   .. code-block:: python
 
@@ -372,8 +372,29 @@ Release 1.5 (preliminary)
 
         python manage.py import_verdicts --email --csv=/path/to/5300c_email_verdicts.csv
 
-The output from each of these scripts should be collected and sent to project managers and/or
-born-digital archivists for review.
+  The output from each of these scripts should be collected and sent to project managers and/or
+  born-digital archivists for review.
+
+* This release includes a new manage.py script for sending notification when the number of available
+  iTunes podcast changes.  Update the database with the new table that will be used to keep track of
+  the number of feeds::
+
+    python manage.py syncdb
+
+  Update ``localsettings.py`` with configurations for sending emails, optionally including `SERVER_EMAIL`_,
+  `EMAIL_SUBJECT_PREFIX`_ (see ``localsettings.py.dist``), and set any necessary SMTP configuration (see
+  `Django email settings`_).  Add the email addresses for the users who should receive this
+  notification to the new **FEED_ADMINS** setting.
+
+.. _SERVER_EMAIL: https://docs.djangoproject.com/en/1.4/ref/settings/#server-email
+.. _EMAIL_SUBJECT_PREFIX: https://docs.djangoproject.com/en/1.4/ref/settings/#email-subject-prefix
+.. _Django email settings: https://docs.djangoproject.com/en/1.4/ref/settings/#email-host
+
+  Run the script once to populate the current count in the database::
+
+    python manage.py new_feed_notice
+
+  Configure this script to run as a nightly cron job.
 
 
 Release 1.4 - search and ingest enhancements
@@ -458,11 +479,10 @@ Release 1.2 - Verdict App
     - Copy <project base>/solr/schema.xml to the appropriate solr core
     - Solr should be restarted
 
-* The following manage commands shouldbe run:
-    NOTE: when running these command you must be in the keep virtual environment::
+* The following manage commands should be run::
 
-    python ./manage.py syncdb
-    python ./manage.py syncrepo
+      python ./manage.py syncdb
+      python ./manage.py syncrepo
 
 * The paths in the http config file should be verified since some have changed or may be different from enviroment to enviroment..
 

@@ -27,7 +27,7 @@ from eulxml.xmlmap import mods
 
 from keep.audio import forms as audioforms, models as audiomodels
 from keep.audio.feeds import PodcastFeed, feed_items
-from keep.audio.management.commands import ingest_cleanup
+from keep.audio.management.commands import ingest_cleanup, new_feed_notice
 from keep.audio.tasks import convert_wav_to_mp3
 from keep.audio.templatetags import audio_extras
 from keep.collection.fixtures import FedoraFixtures
@@ -2598,3 +2598,50 @@ class TestAudioExtrasTemplateTags(TestCase):
                          audio_extras.seconds_duration((16 * 60 * 60) + (21 * 60) + 13))
         self.assertEqual('',
                          audio_extras.seconds_duration(''))
+
+
+class TestNewFeedNoticeCommand(TestCase):
+
+    def setUp(self):
+        self.new_feed_notice = new_feed_notice.Command()
+
+    def test_generate_message(self):
+        last_count = audiomodels.FeedCount(count=1)
+        # no change
+        self.assertEqual(None, self.new_feed_notice.generate_message(
+            last_count, 1))
+
+        # one new feed
+        msg = self.new_feed_notice.generate_message(last_count, 2)
+        self.assert_('(1 new feed)' in msg,
+            'message text should indicate 1 new feed')
+        # test feed url included
+        self.assert_(reverse('audio:podcast-feed', args=[2]) in msg)
+
+        # more than one new feed
+        msg = self.new_feed_notice.generate_message(last_count, 4)
+        self.assert_('(3 new feeds)' in msg,
+            'message text should indicate 3 new feeds')
+        # test feed urls included
+        for i in range(2, 5):
+            self.assert_(reverse('audio:podcast-feed', args=[i]) in msg,
+                'url for feed %d should be listed in message' % i)
+
+        # one less feed
+        last_count.count = 3
+        msg = self.new_feed_notice.generate_message(last_count, 2)
+        self.assert_('(1 fewer feed)' in msg,
+            'message text should indicate 1 fewer feed')
+        # check that newly unavailable feed url is included
+        self.assert_(reverse('audio:podcast-feed', args=[3]) in msg)
+
+        # more than one less feed
+        msg = self.new_feed_notice.generate_message(last_count, 1)
+        self.assert_('(2 fewer feeds)' in msg,
+            'message text should indicate 2 fewer feeds')
+        # check that newly unavailable feed url is included
+        for i in range(2, 4):
+            self.assert_(reverse('audio:podcast-feed', args=[i]) in msg,
+                'url for feed %d should be listed in message' % i)
+
+
