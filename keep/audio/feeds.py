@@ -50,7 +50,7 @@ def feed_items():
     solr = solr_interface()
     search_opts = {
         # restrict to objects in the configured pidspace
-        'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+        #'pid': '%s:*' % settings.FEDORA_PIDSPACE,
         # restrict to audio items by content model
         'content_model': AudioObject.AUDIO_CONTENT_MODEL,
         # restrict to items that have an access copy available
@@ -58,10 +58,10 @@ def feed_items():
         # restrict to items that are allowed to be accessed
         'researcher_access': True,
         }
-    
+
     # sort by date created (newest items at the end of the feed)
     solrquery = solr.query(**search_opts).sort_by('created')
-    return solrquery    
+    return solrquery
 
 
 class PodcastFeed(Feed):
@@ -71,10 +71,10 @@ class PodcastFeed(Feed):
     this PodcastFeed is designed to paginated content into chunks using the configured
     MAX_ITEMS_PER_PODCAST_FEED setting, and expects to be initialized with a page
     number, e.g.::
-    
+
         url(r'^feeds/(?P<page>[0-9]+)/$', PodcastFeed())
     '''
-    
+
     # set information about this feed
     title = 'Digitized Audio Recordings (EUL Keep)'
     description = 'Digitized audio resources from the collections'
@@ -112,12 +112,12 @@ class PodcastFeed(Feed):
         # and then filter out any without compressed audio
         # or with rights that do not allow them to be included
 
-        # NOTE: for simplicity & efficiency (to reduce the number of Fedora API 
+        # NOTE: for simplicity & efficiency (to reduce the number of Fedora API
         # calls), items are being paginated *before* excluding objects based on
         # rights & compressed audio available - this means that many feeds may have
         # fewer than the configured max items.
         items_per_feed = getattr(settings, 'MAX_ITEMS_PER_PODCAST_FEED', 2000)
-        
+
         solrquery = feed_items()
         paginated_objects = Paginator(solrquery, per_page=items_per_feed)
         current_chunk = paginated_objects.page(page)
