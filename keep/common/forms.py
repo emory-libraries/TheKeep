@@ -47,7 +47,7 @@ class ItemSearch(forms.Form):
     '''Form for searching for :class:`~keep.audio.models.AudioObject`
     instances.'''
 
-    # format_options used in search form 
+    # format_options used in search form
     format_options = (
        ("", ""), # FIXME: use from cmodels from models?
        ('info:fedora/emory-control:Arrangement-1.0', "Born-Digital"),
@@ -104,7 +104,7 @@ class ItemSearch(forms.Form):
          If none are selected, uses default search results format.  (Use the shift or control key to select multiple fields.)'''))
     # NOTE: consider using checkbox for multiselect widget here
     # - would require some styling, possibly additional logic to select all
-    
+
     output = forms.ChoiceField([('html', 'html'), ('csv', 'csv')], initial='html', required=False,
          help_text=mark_safe('''Output format.  If csv is selected, all matching rows will be
          selected and output as a downloadable CSV file.  CSV output is only valid when display
@@ -120,11 +120,11 @@ class ItemSearch(forms.Form):
         cleaned_data = super(ItemSearch, self).clean()
         output_mode = cleaned_data.get('output')
         display_fields = cleaned_data.get('display_fields')
-        
+
         if output_mode == 'csv' and not display_fields:
             raise forms.ValidationError('You must select display fields for ' +
                                         'CSV output.')
-        
+
         return cleaned_data
 
 
@@ -139,7 +139,7 @@ class ItemSearch(forms.Form):
         # don't do anything if the form isn't valid
         if not self.is_valid():
             return
-        
+
         search_opts = {
             # restrict to objects in the configured pidspace
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
@@ -152,7 +152,7 @@ class ItemSearch(forms.Form):
                 continue
             if val is None:
                 val = ''
-                
+
             # Solr does not allow wildcards at the beginning of a field search
             # TODO: could this be handled as form field validation/cleaning?
             cleaned_val = val.lstrip('*?')
@@ -213,7 +213,7 @@ class ItemSearch(forms.Form):
             if field in self.display_output_fields:
                 # do not show display-formatting field values with search terms
                 continue
-                            
+
             key = self.fields[field].label  # use form display label when available
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field
@@ -235,4 +235,5 @@ class ItemSearch(forms.Form):
 
 class CommentForm(forms.Form):
     comment = forms.CharField(max_length=255, label="Comment",  required=False,
-                              help_text="Enter a description of changes made")
+                              help_text="Enter a description of changes made",
+                              widget=forms.TextInput(attrs={'class': 'long'}))
