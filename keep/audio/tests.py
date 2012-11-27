@@ -2533,8 +2533,9 @@ class FeedItemsTest(KeepTestCase):
                          'kiosk feed solr search should filter on researcher_access=True')
         self.assertEqual(audiomodels.AudioObject.AUDIO_CONTENT_MODEL, kwargs['content_model'],
                          'kiosk feed solr search should filter on audio content model')
-        self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
-                         'kiosk feed solr search should filter on configured pidspace')
+        # RSK 2012/11 - disabled pidspace filter
+        # self.assertEqual('%s:*' % settings.FEDORA_PIDSPACE, kwargs['pid'],
+        #                  'kiosk feed solr search should filter on configured pidspace')
 
 
 class UploadFormTest(TestCase):
