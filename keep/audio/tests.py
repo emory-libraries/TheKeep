@@ -2633,6 +2633,8 @@ class TestNewFeedNoticeCommand(TestCase):
         msg = self.new_feed_notice.generate_message(last_count, 2)
         self.assert_('(1 fewer feed)' in msg,
             'message text should indicate 1 fewer feed')
+        self.assert_('is no longer active' in msg,
+            'message text should be grammatical for 1 feed')
         # check that newly unavailable feed url is included
         self.assert_(reverse('audio:podcast-feed', args=[3]) in msg)
 
@@ -2640,6 +2642,8 @@ class TestNewFeedNoticeCommand(TestCase):
         msg = self.new_feed_notice.generate_message(last_count, 1)
         self.assert_('(2 fewer feeds)' in msg,
             'message text should indicate 2 fewer feeds')
+        self.assert_('are no longer active' in msg,
+            'message text should be grammatical for multiple feeds')
         # check that newly unavailable feed url is included
         for i in range(2, 4):
             self.assert_(reverse('audio:podcast-feed', args=[i]) in msg,

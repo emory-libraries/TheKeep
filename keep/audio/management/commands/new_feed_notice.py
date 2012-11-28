@@ -123,8 +123,8 @@ podcast feeds has changed.'''
             diff = (last_feedcount.count - current_count)
             plural = pluralize(diff)
             message += ' (%d fewer feed%s).\n' % (diff, plural)
-            message += '\nThe following feed%s (first available %s) are no longer active:\n\n' \
-                % (plural, last_feedcount.date)
+            message += '\nThe following feed%s (first available %s) %s no longer active:\n\n' \
+                % (plural, last_feedcount.date, "are" if plural else "is")
             for i in range(current_count + 1, last_feedcount.count + 1):
                 message += '  %s\n\n' % absolutize_url(reverse('audio:podcast-feed',
                     args=[i]))
