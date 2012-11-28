@@ -743,7 +743,7 @@ class FeedCount(models.Model):
     '''Simple model to keep track of the number of iTunes feeds available
     by date, to support notification when the number changes.'''
     count = models.IntegerField()
-    date = models.DateField(auto_now_add=True)
+    date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         get_latest_by = "date"
