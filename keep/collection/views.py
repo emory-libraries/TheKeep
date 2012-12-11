@@ -108,7 +108,7 @@ def edit(request, pid=None):
             # FIXME: special fields not getting set!
             form = CollectionForm(instance=obj)
 
-    except RequestFailed as e: 
+    except RequestFailed as e:
         # if there was an error accessing the object raise http404
         # or the object does not exist, raise a 404
         # NOTE: this will 404 for any object where current credentials
@@ -157,7 +157,7 @@ def search(request):
         for field, val in form.cleaned_data.iteritems():
             key = form.fields[field].label  # use form display label
             if key is None:     # if field label is not set, use field name as a fall-back
-                key = field 
+                key = field
 
             if val is not None and val != '':     # if search value is not empty, selectively add it
                 if hasattr(val, 'lstrip'): # solr strings can't start with wildcards
@@ -293,15 +293,14 @@ def _objects_by_type(type_uri, type=None):
         yield repo.get_object(pid=pid, type=type)
 
 
-
 @permission_required("common.arrangement_allowed")
 def simple_browse(request):
-
     response_code = None
+    context = {}
     try:
         objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
         objs = sorted(objs, key=lambda s: s.label)
-        context = {'objs' : objs}
+        context['objs'] = objs
     except RequestFailed:
         response_code = 500
         # FIXME: this is duplicate logic from generic search view
@@ -311,13 +310,10 @@ def simple_browse(request):
             'this problem persists, please alert the ' + \
             'repository administrator.'
 
-
-
-    response =  render(request, 'collection/simple_browse.html', context)
+    response = render(request, 'collection/simple_browse.html', context)
     if response_code is not None:
         response.status_code = response_code
     return response
-
 
 
 @permission_required("common.marbl_allowed")
@@ -335,24 +331,24 @@ def collection_suggest(request):
     term = request.GET.get('term', '')
 
     suggestions = []
-    
+
     if term:
         # If the search term doesn't end in space, add a wildcard to
         # the last word to allow for partial word matching.
         if term[-1] != ' ':
             term += '*'
         terms = search_terms(term)
-            
+
         solr = solr_interface()
         # common query parameters and options
         base_query = solr.query() \
                     .filter(content_model=CollectionObject.COLLECTION_CONTENT_MODEL) \
                     .field_limit(['pid', 'source_id', 'title', 'archive_short_name',
                                   'creator']) \
-                    .sort_by('-score') 
-        
+                    .sort_by('-score')
+
         q = base_query.query(terms)
-        
+
         # NOTE: there seems to be a Lucene/Solr bug/quirk where adding
         # a wildcard at the end of a word causes Solr not to match the
         # exact word (even though docs indicate this should work).
@@ -360,14 +356,14 @@ def collection_suggest(request):
         # try the search again without the wildcard.
         if term[-1] == '*' and q.count() == 0:
             q = base_query.query(search_terms(term[:-1]))
-        
+
         suggestions = [{'label': '%s %s' % (c.get('source_id', ''),
                                             c.get('title', '(no title')),
                         'value': c['pid'],  # FIXME: do we need URI here?
                         'category':c.get('archive_short_name', ''),
                         'desc': c.get('creator', '') }
                        for c in q[:15] ]
-    
+
     return  HttpResponse(json_serializer.encode(suggestions),
                          mimetype='application/json')
-            
+
