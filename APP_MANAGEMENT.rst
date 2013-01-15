@@ -48,3 +48,21 @@ they can also be regenerated from the command line::
 
    $ python manage.py generate_access_copy <pid> <pid>
 
+
+Creating a new top-level collection AKA Archive AKA Repository
+==============================================================
+
+There is no user interface for creating or managing the top-level collections (including the MARBL, EUA, or Pitts collection objects), so when a new one is needed it will need to be created manually.
+
+  1. Get the full name and a short-hand name for the archive to be created.
+  2. Use the PID manager to create a new ARK for the object (no targets are necessary).
+  3. Copy one of the existing initial object fixtures (``keep/collection/fixtures/initial_objects``)
+     and update the pid, full name, and short name everywhere they appear and add the new
+     fixture to version control.
+
+     3a. You may want to ingest the object in a development or staging Fedora Repository
+        as a sanity check before committing to version control or creating in production.
+
+  4. Add the new pid to the **PID_ALIASES** in :mod:`keep.settings`.
+  5. Ingest the new object using ``syncrepo`` or the Fedora Admin interface.
+
