@@ -150,6 +150,7 @@ PID_ALIASES = {
     'eua': 'emory:93zd2',
     'oxford': 'emory:b2mx2',
     'pitts': 'emory:93z9n',
+    'musicmedia': 'emory:cwtgk',
 }
 
 SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
