@@ -307,6 +307,10 @@ Release 1.5 (preliminary)
 * This update includes Solr index changes; update Solr with the latest
   ``schema.xml`` and reindex site content.
 
+* The allowed difference between original audio and generated access copies
+  must now be configured via **AUDIO_ALLOWED_DURATION_DISCREPANCY** in
+  ``localsettings.py``.
+
 * Update site and database to work with celery 3.0.
 
   * Update the database for the newest version of :mod:`celery`::

@@ -722,8 +722,9 @@ def check_wav_mp3_duration(obj_pid=None, wav_file_path=None, mp3_file_path=None)
         mp3_length = mp3_tags.info.length
         wav_length = wav_duration(tmp_wav_path)
 
-        #Verify the wav file and the mp3 file are the same length to within 1.0 seconds.
-        return (math.fabs(mp3_length - wav_length) < 1.0)
+        # Verify the wav file and the mp3 file have the same duration,
+        # within the configured allowed discrepancy
+        return (math.fabs(mp3_length - wav_length) < settings.AUDIO_ALLOWED_DURATION_DISCREPANCY)
     except Exception:
         raise
     #Cleanup for everything.
