@@ -92,7 +92,7 @@ if 'VIRTUAL_ENV' in os.environ:
         os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib')
     ])
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -115,7 +115,7 @@ INSTALLED_APPS = (
     'keep.common',
     'keep.search',
     'djcelery',
-)
+]
 
 
 AUTHENTICATION_BACKENDS = (
@@ -172,21 +172,43 @@ except ImportError:
         'localsettings.py and setting appropriately for your environment.'
     pass
 
-import sys
-try:
-    sys.path.extend(EXTENSION_DIRS)
-except NameError:
-    pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
-del sys
+# import sys
+# try:
+#     sys.path.extend(EXTENSION_DIRS)
+# except NameError:
+#     pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
+# del sys
 
-TEST_RUNNER='keep.testutil.KeepTextTestSuiteRunner'
+# TEST_RUNNER='keep.testutil.KeepTextTestSuiteRunner'
+# try:
+#     # use xmlrunner if it's installed; default runner otherwise. download
+#     # it from http://github.com/danielfm/unittest-xml-reporting/ to output
+#     # test results in JUnit-compatible XML.
+#     import xmlrunner
+#     TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
+#     TEST_OUTPUT_DIR='test-results'
+# except ImportError:
+#     pass
+
+# django_nose configurations
+
+django_nose = None
 try:
-    # use xmlrunner if it's installed; default runner otherwise. download
-    # it from http://github.com/danielfm/unittest-xml-reporting/ to output
-    # test results in JUnit-compatible XML.
-    import xmlrunner
-    TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
-    TEST_OUTPUT_DIR='test-results'
+    # NOTE: errors if DATABASES is not configured (in some cases),
+    # so this must be done after importing localsettings
+    import django_nose
 except ImportError:
     pass
+
+# - only if django_nose is installed, so it is only required for development
+if django_nose is not None:
+    INSTALLED_APPS.append('django_nose')
+    TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+    NOSE_PLUGINS = [
+        'eulexistdb.testutil.ExistDBSetUp',
+        'eulfedora.testutil.EulfedoraSetUp',
+        # ...
+    ]
+    NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup']
+
 
