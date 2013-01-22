@@ -64,7 +64,7 @@ class CacheTestWrapper(object):
     def restore_cache(self):
         if self.stored_cache_backend:
             cache_backend = settings.CACHE_BACKEND
-            # if the cache was used, remove directory & all cache files 
+            # if the cache was used, remove directory & all cache files
             cache_dir = cache_backend[len('file://'):]
             if os.path.exists(cache_dir):
                 rmtree(cache_dir)
@@ -76,8 +76,8 @@ alternate_test_cache = CacheTestWrapper
 class KeepTextTestRunner(unittest.TextTestRunner):
     def run(self, test):
         def wrapped_test(result):
-            with nested(fedora_testutil.alternate_test_fedora(), 
-                    existdb_testutil.alternate_test_existdb(), 
+            with nested(fedora_testutil.alternate_test_fedora(),
+                    existdb_testutil.alternate_test_existdb(),
                     alternate_test_cache()):
                 return test(result)
         return super(KeepTextTestRunner, self).run(wrapped_test)
@@ -101,7 +101,8 @@ try:
             output = getattr(settings, 'TEST_OUTPUT_DIR', 'test-results')
 
             super_init = super(KeepXmlTestRunner, self).__init__
-            super_init(verbose=verbose, descriptions=descriptions, output=output)
+            #super_init(verbose=verbose, descriptions=descriptions, output=output)
+            super_init(descriptions=descriptions, output=output)
 
         def run(self, test):
             def wrapped_test(result):

@@ -158,9 +158,12 @@ SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
 # Celery Config - standard stuff that will not change from project to project
 import djcelery
 djcelery.setup_loader()
-# use a differently-named default queue to keep separate from other projects using celery
-CELERY_DEFAULT_QUEUE = 'keep'
 
+# explicitly assign a differently-named default queue to prevent
+# collisions with other projects using celery (allow celery to create queue for us)
+CELERY_ROUTES = {
+    'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'}
+}
 
 try:
     from localsettings import *

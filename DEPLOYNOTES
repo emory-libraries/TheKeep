@@ -307,6 +307,29 @@ Release 1.5 (preliminary)
 * This update includes Solr index changes; update Solr with the latest
   ``schema.xml`` and reindex site content.
 
+* Update site and database to work with celery 3.0.
+
+  * Update the database for the newest version of :mod:`celery`::
+
+       ``python manage.py migrate djcelery``
+
+  * Celery broker should now be configured using **BROKER_URL** instead of
+    individual **BROKER_** settings; see ``localsettings.py.dist`` for
+    an example.
+
+  * The celery worker should now be started via::
+
+      ``python manage.py celery worker -Q keep``
+
+    Be sure to update any cron jobs or init scripts that use the old
+    ``celeryd`` syntax.
+
+  * If you are not using the WSGI script included with the source code, add the
+    following to your wsgi script::
+
+      import djcelery
+      djcelery.setup_loader()
+
 * Previously ingested and migrated Arrangement objects were associated with
   the Rushdie collection incorrectly (using the isMemberOf relation instead of
   isMemberOfCollection).  This can be corrected in the Django console as follows::
