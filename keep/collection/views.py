@@ -15,7 +15,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
-from django.template import RequestContext
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
@@ -33,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
+
 @permission_required("common.marbl_allowed")
 def view(request, pid):
     '''View a single :class:`~keep.collection.models.CollectionObject`.
@@ -43,6 +43,7 @@ def view(request, pid):
     # page for now.
     return HttpResponseSeeOtherRedirect(reverse('collection:edit',
                 kwargs={'pid': pid}))
+
 
 @permission_required("common.marbl_allowed")
 def edit(request, pid=None):
@@ -61,7 +62,7 @@ def edit(request, pid=None):
             # if data has been submitted, initialize form with request data and object mods
             form = CollectionForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
-                form.update_instance() # update instance MODS & RELS-EXT (possibly redundant)
+                form.update_instance()  # update instance MODS & RELS-EXT (possibly redundant)
                 if pid is None:
                     # new object
                     action = 'created'
@@ -69,7 +70,10 @@ def edit(request, pid=None):
                     # existing object
                     action = 'updated'
 
-                comment = form.cleaned_data['comment'] if form.cleaned_data.has_key('comment') and  form.cleaned_data['comment'] else 'updating metadata'
+                if 'comment' in form.cleaned_data and form.cleaned_data['comment']:
+                    comment = form.cleaned_data['comment']
+                else:
+                    comment = 'updating metadata'
 
                 # NOTE: by sending a log message, we force Fedora to store an
                 # audit trail entry for object creation, which doesn't happen otherwise
@@ -132,20 +136,18 @@ def history(request, pid):
                         template_name='collection/history.html')
 
 
-
 @staff_member_required
 def search(request):
     '''Search for :class:`~keep.collection.models.CollectionObject`
     instances.
     '''
-    response_code = None
     form = CollectionSearch(request.GET, prefix='collection')
     context = {'search': form}
     if form.is_valid():
         # include all non-blank fields from the form as search terms
-        search_opts = dict((key,val)
-                           for key,val in form.cleaned_data.iteritems()
-                           if val is not None and val != '') # but need to search by 0
+        search_opts = dict((key, val)
+                           for key, val in form.cleaned_data.iteritems()
+                           if val is not None and val != '')  # but need to search by 0
         # restrict to currently configured pidspace and collection content model
         search_opts.update({
             'pid': '%s:*' % settings.FEDORA_PIDSPACE,
@@ -160,7 +162,7 @@ def search(request):
                 key = field
 
             if val is not None and val != '':     # if search value is not empty, selectively add it
-                if hasattr(val, 'lstrip'): # solr strings can't start with wildcards
+                if hasattr(val, 'lstrip'):  # solr strings can't start with wildcards
                     extra_solr_cleaned = val.lstrip('*?')
                     if val != extra_solr_cleaned:
                         if not extra_solr_cleaned:
@@ -192,15 +194,17 @@ def search(request):
     # render search results page; if there was an error, results will be displayed as empty
     return render(request, 'collection/search.html', context)
 
+
 @permission_required("common.marbl_allowed")
 def browse(request):
     '''Browse :class:`~keep.collection.models.CollectionObject` by
     hierarchy, grouped by archive.
     '''
-    search_opts = {
-        'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-        'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
-    }
+    ## search opts unused?!
+    # search_opts = {
+    #     'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+    #     'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+    # }
     collections = CollectionObject.item_collections()
     # sort by archive, then by source id (collection number)
     display_colls = sorted(collections,
@@ -213,6 +217,7 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
+
 
 @permission_required("common.marbl_allowed")
 def view_audit_trail(request, pid):
@@ -240,22 +245,19 @@ def simple_edit(request, pid=None):
             form = SimpleCollectionEditForm(instance=obj)
             (success_count, fail_count) = form.update_objects(status)
 
-            if success_count >= 1 and fail_count == 0: # if all objects were  updated correctly
+            if success_count >= 1 and fail_count == 0:  # if all objects were  updated correctly
                 messages.success(request, "Successfully Updated %s Item(s)" % (success_count))
 
                 #Now Update the SimpleCollection itself
                 if obj.mods.content.restrictions_on_access.text is None:
                     obj.mods.content.create_restrictions_on_access()
-                obj.mods.content.restrictions_on_access.text = status # Change collection status
+                obj.mods.content.restrictions_on_access.text = status  # Change collection status
                 saved = obj.save()
                 if not saved:
                     messages.error(request, "Failed To Updated Simple Collection Object")
                     logger.error("Failed to update SimpleCollection %s:%s" % (obj.pid, obj.label))
             else:
                 messages.error(request, "Successfully Updated %s Item(s) Failed To Update %s Item(s)" % (success_count, fail_count))
-
-
-
 
         else:
             #Just Display the form
@@ -276,6 +278,7 @@ def simple_edit(request, pid=None):
         context['obj'] = obj
 
     return render(request, 'collection/simple_edit.html', context)
+
 
 #find objects with a particular type specified  in the rels-ext and return them as
 def _objects_by_type(type_uri, type=None):
@@ -361,9 +364,8 @@ def collection_suggest(request):
                                             c.get('title', '(no title')),
                         'value': c['pid'],  # FIXME: do we need URI here?
                         'category':c.get('archive_short_name', ''),
-                        'desc': c.get('creator', '') }
-                       for c in q[:15] ]
+                        'desc': c.get('creator', '')}
+                       for c in q[:15]]
 
-    return  HttpResponse(json_serializer.encode(suggestions),
+    return HttpResponse(json_serializer.encode(suggestions),
                          mimetype='application/json')
-

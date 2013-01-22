@@ -58,19 +58,18 @@ TEMPLATE_LOADERS = (
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     # django default context processors
-    "django.core.context_processors.auth",
+    "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.contrib.messages.context_processors.messages",
     # additional context processors
-    "django.core.context_processors.request", # always include request in render context
+    "django.core.context_processors.request",  # always include request in render context
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
-    "keep.version_context", # include app version
-    "keep.search.context_processors.search",  #  search form on every page
-    "keep.common.context_processors.common_settings", # include selected settings in every page
-
+    "keep.version_context",  # include app version
+    "keep.search.context_processors.search",   # search form on every page
+    "keep.common.context_processors.common_settings",  # include selected settings in every page
 )
 
 MIDDLEWARE_CLASSES = (
@@ -93,14 +92,13 @@ if 'VIRTUAL_ENV' in os.environ:
         os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib')
     ])
 
-
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'south',

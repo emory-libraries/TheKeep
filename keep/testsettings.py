@@ -5,12 +5,11 @@ from settings import *
 # NOTE: this setting must be set before other things happen or it doesn't work
 CELERY_ALWAYS_EAGER = True
 
-
 # remove PIDMAN settings - no need to generate PIDs when testing
-PIDMAN_HOST = None 
-PIDMAN_USER = None 
-PIDMAN_PASSWORD = None 
-PIDMAN_DOMAIN = None 
+PIDMAN_HOST = None
+PIDMAN_USER = None
+PIDMAN_PASSWORD = None
+PIDMAN_DOMAIN = None
 
 # for tests, remove search form context processors
 # (otherwise, this adds a solr dependency to every page load)
@@ -21,5 +20,5 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     "django.contrib.messages.context_processors.messages",
     "django.core.context_processors.request",
-    "keep.version_context", 
+    "keep.version_context",
 )

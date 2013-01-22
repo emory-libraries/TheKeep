@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 {% load humanize %}
 {% load fedora %}
-{% load search_utils %} 
+{% load search_utils %}
 
 {% block page-subtitle %}: Audio : Search Results{% endblock %}
 {% block content-title %}Search Results{% endblock %}
@@ -19,25 +19,27 @@ of {{ page.paginator.count|intcomma }}.</p>
 <div class="search-results">
 
 <table>
+  <tr>
   {% if display_labels %} {# custom labels for selected fields #}
     {% for d in display_labels %}<th>{{ d }}</th>{% endfor %}
   {% else %} {# default columns #}
-    <th>PID</th><th>Title</th><th>Created</th><th>Last Modified</th></tr>
+    <th>PID</th><th>Title</th><th>Created</th><th>Last Modified</th>
   {% endif %}
+</tr>
   {% for obj in results %}
     <tr>
       {% fedora_access %}
       {# only display data available from object profile to limit API calls per object #}
 
       {# generate appropriate object url if possible, for either display mode #}
-      {% if obj.pid %} 
+      {% if obj.pid %}
         {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
           {% url audio:edit obj.pid as obj_url %}
         {% else %}
           {% url arrangement:edit obj.pid as obj_url %}
         {% endif %}
       {% endif %}
-      
+
       {# when display fields are requested, object is a list of values to be displayed in order #}
       {% if display_fields %}
         {% for val in obj %}
@@ -49,7 +51,7 @@ of {{ page.paginator.count|intcomma }}.</p>
           {% endif %}
         </td>
       {% endfor %}
-        
+
       {% else %} {# no display fields requested; use default search results display #}
         <td><a href="{{ obj_url }}">{{ obj.pid }}</a></td>
         <td>{% spaceless %}
@@ -91,7 +93,7 @@ of {{ page.paginator.count|intcomma }}.</p>
 
 </div>
 
-{% pagination_links page show_pages search_opts %} 
+{% pagination_links page show_pages search_opts %}
 
 {% else %}
   <p>No matching objects found.</p>

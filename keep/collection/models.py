@@ -1,14 +1,11 @@
 import logging
-import re
-from rdflib import RDF, URIRef
+from rdflib import RDF
 
 from django.conf import settings
 
 from eulexistdb.manager import Manager
 from eulexistdb.models import XmlModel
 from eulfedora.models import XmlDatastream, Relation
-from eulfedora.rdfns import relsext, model as modelns
-from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 from eulcm.models.collection.v1_1 import Collection
 from eulcm.models.collection.v1_0 import Collection as Collectionv1_0
@@ -17,7 +14,7 @@ from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eulxml.xmlmap.eadmap import EAD_NAMESPACE, EncodedArchivalDescription
 
-from keep.common.fedora import ArkPidDigitalObject, Repository, LocalMODS
+from keep.common.fedora import ArkPidDigitalObject, Repository
 from keep.common.rdfns import REPO
 from keep.common.utils import solr_interface
 
@@ -30,7 +27,7 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
 
     NEW_OBJECT_VIEW = 'collection:simple_edit'
 
-    # FIXME: why do we have mods on a dc-only collection ? 
+    # FIXME: why do we have mods on a dc-only collection ?
     mods = XmlDatastream('MODS', 'Descriptive Metadata (MODS)', MODS, defaults={
             'control_group': 'M',
             'format': mods.MODS_NAMESPACE,
@@ -40,8 +37,7 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
     :class:`eulxml.xmlmap.mods.MODS`; versionable, datastream ID
     ``MODS``'''
 
-    type = Relation(RDF.type)  
-
+    type = Relation(RDF.type)
 
     # override this function and add additional functionality
     def __init__(self, *args, **kwargs):
@@ -63,13 +59,12 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(SimpleCollection, self).index_data()
         data['object_type'] = 'collection'
-        # FIXME: do we need to differentiate collection vs. simple collection ? 
+        # FIXME: do we need to differentiate collection vs. simple collection ?
 
         if self.type:
             data['type'] = self.type
 
         return data
-
 
     @staticmethod
     def find_by_pid(pid):
@@ -79,8 +74,8 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
         # throughout the site (audio app, etc.)  It should probably be
         # consolidated with other find methods...
 
-        if pid.startswith('info:fedora/'): # allow passing in uri
-             pid = pid[len('info:fedora/'):]
+        if pid.startswith('info:fedora/'):  # allow passing in uri
+            pid = pid[len('info:fedora/'):]
         solr = solr_interface()
         solrquery = solr.query(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL,
                                pid=pid)
@@ -108,11 +103,11 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
         return solrquery.paginate(start=0, rows=1000).execute()
 
 
-
 class CollectionObject(Collection, ArkPidDigitalObject):
     '''Fedora Collection Object.  Extends :class:`~eulfedora.models.DigitalObject`.
     This really represents an archival collection
     '''
+
     NEW_OBJECT_VIEW = 'collection:view'
 
     _archives = None
@@ -143,7 +138,6 @@ class CollectionObject(Collection, ArkPidDigitalObject):
                             self.mods.content.origin_info.created[1].date)
             # FIXME: should this be dc:coverage ?
 
-
     def save(self, logMessage=None):
         '''Save the object.  If the content of the MODS or RELS-EXT datastreams
         have been changed, the DC will be updated and saved as well.
@@ -160,7 +154,7 @@ class CollectionObject(Collection, ArkPidDigitalObject):
     @staticmethod
     def archives(format=None):
         """Find Archives objects, to which CollectionObjects belong.
-        
+
         :returns: list of :class:`CollectionObject`
         :rtype: list
         """
@@ -186,12 +180,11 @@ class CollectionObject(Collection, ArkPidDigitalObject):
 
         if format == dict:
             return CollectionObject._archives
-        
+
         # otherwise, initialize as instances of CollectionObject
         repo = Repository()
         return [repo.get_object(arch['pid'], type=CollectionObject)
                                                        for arch in CollectionObject._archives]
-
 
     @staticmethod
     def find_by_pid(pid):
@@ -200,9 +193,9 @@ class CollectionObject(Collection, ArkPidDigitalObject):
         # get_cached_collection_dict that was used elsewhere
         # throughout the site (audio app, etc.)  It should probably be
         # consolidated with other find methods...
-        
-        if pid.startswith('info:fedora/'): # allow passing in uri
-             pid = pid[len('info:fedora/'):]      
+
+        if pid.startswith('info:fedora/'):  # allow passing in uri
+            pid = pid[len('info:fedora/'):]
         solr = solr_interface()
         solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                pid=pid)
@@ -211,13 +204,12 @@ class CollectionObject(Collection, ArkPidDigitalObject):
             return result[0]
         # otherwise - exception? not found / too many
 
-
     @staticmethod
     def item_collections():
         """Find all collection objects in the configured Fedora
         pidspace that can contain items. Today this includes all
         collections that belong to arn archive.
-        
+
         :returns: list of dict
         :rtype: list
         """
@@ -284,13 +276,13 @@ class CollectionObject(Collection, ArkPidDigitalObject):
         data['object_type'] = 'collection'
         if self.collection:
             data.update(self._index_data_archive())
-                
+
         # if source id is set, include it
         if self.mods.content.source_id is not None:
             data['source_id'] = self.mods.content.source_id
 
         if self.mods.content.ark_uri:
-            data['ark_uri'] =  self.mods.content.ark_uri
+            data['ark_uri'] = self.mods.content.ark_uri
 
         return data
 
@@ -318,7 +310,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         'e': EAD_NAMESPACE,
     }
     # redeclaring namespace from eulxml to ensure prefix is correct for xpaths
-    
+
     coverage = xmlmap.StringField('e:archdesc/e:did/e:unittitle/e:unitdate[@type="inclusive"]/@normal')
     # local repository *subarea* - e.g., MARBL, University Archives, Pitts
     repository = xmlmap.StringField('normalize-space(.//e:subarea)')
@@ -361,7 +353,7 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
             if name_type is not None:
                 coll.mods.content.create_name()
                 coll.mods.content.name.type = name_type
-                
+
             authority = self.archdesc.did.node.xpath('string(e:origination/*/@source)',
                 namespaces=self.ROOT_NAMESPACES)
             # lcnaf in the EAD is equivalent to naf in MODS
@@ -392,13 +384,13 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         # access restriction
         if self.archdesc.access_restriction:
             coll.mods.content.create_restrictions_on_access()
-            coll.mods.content.restrictions_on_access.text =  "\n".join([
+            coll.mods.content.restrictions_on_access.text = "\n".join([
                     unicode(c) for c in self.archdesc.access_restriction.content])
 
         # use & reproduction
         if self.archdesc.use_restriction:
             coll.mods.content.create_use_and_reproduction()
-            coll.mods.content.use_and_reproduction.text =  "\n".join([
+            coll.mods.content.use_and_reproduction.text = "\n".join([
                     unicode(c) for c in self.archdesc.use_restriction.content])
 
         # EAD url - where does this go?
@@ -406,14 +398,13 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
 
         return coll
 
-
     @staticmethod
     def find_by_unitid(id, archive_name):
         '''Retrieve a single Finding Aid by archive unitid and repository name.
         This method assumes a single Finding Aid should be found, so uses the
         :meth:`eulexistdb.query.QuerySet.get` method, which raises the following
         exceptions if anything other than a single match is found:
-        
+
           * :class:`eulexistdb.exceptions.DoesNotExist` when no matches
             are found
           * :class:`eulexistdb.exceptions.ReturnedMultiple` if more than
@@ -426,4 +417,3 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         return FindingAid.objects.filter(archdesc__did__unitid__identifier=id,
                 repository=archive_name).get()
 
-    
