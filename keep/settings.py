@@ -58,19 +58,18 @@ TEMPLATE_LOADERS = (
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     # django default context processors
-    "django.core.context_processors.auth",
+    "django.contrib.auth.context_processors.auth",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     "django.contrib.messages.context_processors.messages",
     # additional context processors
-    "django.core.context_processors.request", # always include request in render context
+    "django.core.context_processors.request",  # always include request in render context
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
-    "keep.version_context", # include app version
-    "keep.search.context_processors.search",  #  search form on every page
-    "keep.common.context_processors.common_settings", # include selected settings in every page
-
+    "keep.version_context",  # include app version
+    "keep.search.context_processors.search",   # search form on every page
+    "keep.common.context_processors.common_settings",  # include selected settings in every page
 )
 
 MIDDLEWARE_CLASSES = (
@@ -93,14 +92,13 @@ if 'VIRTUAL_ENV' in os.environ:
         os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib')
     ])
 
-
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.messages',
     'django.contrib.sessions',
     'django.contrib.sites',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'south',
@@ -117,7 +115,7 @@ INSTALLED_APPS = (
     'keep.common',
     'keep.search',
     'djcelery',
-)
+]
 
 
 AUTHENTICATION_BACKENDS = (
@@ -166,29 +164,64 @@ CELERY_ROUTES = {
 }
 
 try:
-    from localsettings import *
+    from keep.localsettings import *
 except ImportError:
     import sys
-    print >>sys.stderr, 'No local settings. Trying to start, but if ' + \
-        'stuff blows up, try copying localsettings.py.sample to ' + \
+    print >> sys.stderr, 'No local settings. Trying to start, but if ' + \
+        'stuff blows up, try copying localsettings.py.dist to ' + \
         'localsettings.py and setting appropriately for your environment.'
     pass
 
-import sys
-try:
-    sys.path.extend(EXTENSION_DIRS)
-except NameError:
-    pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
-del sys
+# django_nose configurations
 
-TEST_RUNNER='keep.testutil.KeepTextTestSuiteRunner'
+django_nose = None
 try:
-    # use xmlrunner if it's installed; default runner otherwise. download
-    # it from http://github.com/danielfm/unittest-xml-reporting/ to output
-    # test results in JUnit-compatible XML.
-    import xmlrunner
-    TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
-    TEST_OUTPUT_DIR='test-results'
+    # NOTE: errors if DATABASES is not configured (in some cases),
+    # so this must be done after importing localsettings
+    import django_nose
 except ImportError:
     pass
+
+# - only if django_nose is installed, so it is only required for development
+if django_nose is not None:
+    INSTALLED_APPS.append('django_nose')
+    TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
+    NOSE_PLUGINS = [
+        'eulexistdb.testutil.ExistDBSetUp',
+        'eulfedora.testutil.EulfedoraSetUp',
+        # ...
+    ]
+    NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup']
+
+# disable south migrations in unit tests
+SOUTH_TESTS_MIGRATE = False
+
+# override certain settings when running unit tests
+if 'DJANGO_TEST_MODE' in os.environ:
+
+    # Context processors to be used for testing
+    # - remove search form context processors
+    # (otherwise, this adds a solr dependency to every page load)
+    TEMPLATE_CONTEXT_PROCESSORS = (
+        # django default context processors
+        "django.contrib.auth.context_processors.auth",
+        "django.core.context_processors.debug",
+        "django.core.context_processors.i18n",
+        "django.core.context_processors.media",
+        "django.contrib.messages.context_processors.messages",
+        "django.core.context_processors.request",
+        "keep.version_context"
+    )
+    # FIXME: maybe better to use original list and remove problematic ones?
+
+    # this setting is needed for unit tests involving celery tasks
+    # so the test doesn't hang
+    # NOTE: this setting must be set before other things happen or it doesn't work
+    CELERY_ALWAYS_EAGER = True
+
+    # remove PIDMAN settings - no need to generate PIDs when testing
+    PIDMAN_HOST = None
+    PIDMAN_USER = None
+    PIDMAN_PASSWORD = None
+    PIDMAN_DOMAIN = None
 

@@ -3,7 +3,7 @@ import json
 import logging
 from mock import Mock, patch
 from os import path
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth.models import User
 from rdflib import URIRef
 from rdflib.namespace import RDF
 from sunburnt import sunburnt
@@ -33,16 +33,17 @@ logger = logging.getLogger(__name__)
 # NOTE: this user must be defined as a fedora user for certain tests to work
 ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 
+
 class CollectionObjectTest(KeepTestCase):
     # tests for Collection DigitalObject
 
     def setUp(self):
-        super(CollectionObjectTest, self).setUp() 
+        super(CollectionObjectTest, self).setUp()
         # get rid of any pre-cached archives
         CollectionObject._archives = None
 
     def tearDown(self):
-        super(CollectionObjectTest, self).tearDown() 
+        super(CollectionObjectTest, self).tearDown()
         # remove any archives cached by the tests
         CollectionObject._archives = None
 
@@ -62,7 +63,7 @@ class CollectionObjectTest(KeepTestCase):
         for pid in [coll['pid'] for coll in solr_exec.return_value]:
             self.assert_(pid in found_pids,
                          'pid %s from mock solr return should be in returned objects' % pid)
-        
+
         self.assertEqual(len(solr_exec.return_value), len(collections),
              "number of items returned should match solr result")
         self.assert_(isinstance(collections[0], CollectionObject),
@@ -145,7 +146,7 @@ class CollectionObjectTest(KeepTestCase):
         self.engdocs = FedoraFixtures.englishdocs_collection()
         self.engdocs.save()
 
-        pids = [ self.rushdie.pid, self.esterbrook.pid, self.engdocs.pid ]
+        pids = [self.rushdie.pid, self.esterbrook.pid, self.engdocs.pid]
         yield pids
 
         for p in pids:
@@ -230,7 +231,7 @@ class CollectionObjectTest(KeepTestCase):
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr query should filter on collection content model')
         # test pagination?
-        
+
         # search by number and parent collection
         search_coll = 1000
         parent_collection = 'parent:1'
@@ -259,7 +260,7 @@ class CollectionObjectTest(KeepTestCase):
         mockarchive.uri = 'info:fedora/parent:1'
         mockarchive.label = 'Manuscript, Archive, and Rare Book Library'
         mockarchive.mods.content.short_name = 'MARBL'
-        
+
         # create test object and populate with data
         obj = self.repo.get_object(type=CollectionObject)
         obj.dc.content.title = 'test collection'
@@ -283,10 +284,10 @@ class CollectionObjectTest(KeepTestCase):
         with patch.object(obj, '_index_data_archive', Mock(return_value={})):
             desc_data = obj.index_data_descriptive()
             self.assert_('source_id' not in desc_data,
-                         'source_id should not be included in index data when it is not set')  
+                         'source_id should not be included in index data when it is not set')
             self.assertEqual(obj.dc.content.title, desc_data['title'][0],
                              'default index data fields should be present in data')
-        
+
             obj.mods.content.source_id = 100
             desc_data = obj.index_data_descriptive()
             self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
@@ -311,7 +312,7 @@ COLLECTION_DATA = {
     'name-name_parts-INITIAL_FORMS': '0',
     'name-name_parts-TOTAL_FORMS': '1',
     'name-name_parts-MAX_NUM_FORMS': '',
-    'name-name_parts-0-text':'Mr. So and So',
+    'name-name_parts-0-text': 'Mr. So and So',
     'name-roles-TOTAL_FORMS': '1',
     'name-roles-INITIAL_FORMS': '0',
     'name-roles-MAX_NUM_FORMS': '',
@@ -319,6 +320,7 @@ COLLECTION_DATA = {
     'name-roles-0-type': 'text',
     'name-roles-0-text': 'curator',
 }
+
 
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
@@ -334,7 +336,6 @@ class TestCollectionForm(KeepTestCase):
         self.archives = FedoraFixtures.archives()
         # store initial collection object from fixture
         self.collection = self.obj.collection
-
 
     def test_subform_classes(self):
         # test that subforms are initialized with the correct classes
@@ -420,11 +421,12 @@ class TestCollectionForm(KeepTestCase):
             'date end is set correctly in form initial data from instance; expected %s, got %s' \
             % (expected, got))
 
+
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class CollectionViewsTest(KeepTestCase):
-    fixtures =  ['users']
+    fixtures = ['users']
 
     def setUp(self):
         super(CollectionViewsTest, self).setUp()
@@ -462,7 +464,6 @@ class CollectionViewsTest(KeepTestCase):
         self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
                 "MODS CollectionForm is set in response context")
 
-
         # test submitting incomplete/invalid data - should redisplay form with errors
         bad_data = COLLECTION_DATA.copy()
         del(bad_data['source_id'])
@@ -492,11 +493,11 @@ class CollectionViewsTest(KeepTestCase):
         solr_response.result.numFound = 0
         response = self.client.post(new_coll_url, data, follow=True)
         # do we need to test actual response, redirect ?
-        messages = [ str(msg) for msg in response.context['messages'] ]
+        messages = [str(msg) for msg in response.context['messages']]
         self.assert_('Successfully created collection' in messages[0],
             'successful collection creation message displayed to user')
         # inspect newly created object and in fedora
-        
+
         repo = Repository()
         new_coll = repo.get_object(response.context['collection'].pid, type=CollectionObject)
         # check object creation and init-specific logic handled by view (isMemberOf)
@@ -514,7 +515,6 @@ class CollectionViewsTest(KeepTestCase):
         # confirm that current site user appears in fedora audit trail
         xml, uri = new_coll.api.getObjectXML(new_coll.pid)
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
-
 
 #    @patch('keep.search.views.solr_interface')  # site-index on redirect - do we need this too?
     @patch('keep.collection.forms.solr_interface')
@@ -563,10 +563,9 @@ class CollectionViewsTest(KeepTestCase):
         self.assertNotContains(response, 'name="name-roles-0-DELETE"',
                 msg_prefix='name role delete option is not available (no initial role data)')
 
-
         # POST and update existing object, verify in fedora
         response = self.client.post(edit_url, COLLECTION_DATA, follow=True)
-        messages = [ str(msg) for msg in response.context['messages'] ]
+        messages = [str(msg) for msg in response.context['messages']]
         self.assert_(messages[0].startswith('Successfully updated collection'),
             'successful collection update message displayed to user')
         self.assert_(obj.pid in messages[0],
@@ -587,7 +586,7 @@ class CollectionViewsTest(KeepTestCase):
         #test with comment
         data = COLLECTION_DATA.copy()
         data['comment'] = 'This is a comment'
-        data['date_end'] = '2000' # change something to trigger save
+        data['date_end'] = '2000'  # change something to trigger save
         response = self.client.post(edit_url, data, follow=True)
         obj = repo.get_object(pid=obj.pid, type=CollectionObject)
         audit_trail = [a.message for a in obj.audit_trail.records]
@@ -597,7 +596,7 @@ class CollectionViewsTest(KeepTestCase):
         data = COLLECTION_DATA.copy()
         data['_save_continue'] = True   # simulate submit via 'save and continue' button
         response = self.client.post(edit_url, data)
-        messages = [ str(msg) for msg in response.context['messages'] ]
+        messages = [str(msg) for msg in response.context['messages']]
         self.assert_(messages[0].startswith('Successfully updated collection'),
             'successful collection update message displayed to user on save and continue editing')
         self.assert_(isinstance(response.context['form'], cforms.CollectionForm),
@@ -609,7 +608,7 @@ class CollectionViewsTest(KeepTestCase):
             'title': '',       # title is required
         })
         response = self.client.post(edit_url, data)
-        messages = [ str(msg) for msg in response.context['messages'] ]
+        messages = [str(msg) for msg in response.context['messages']]
         self.assert_(messages[0].startswith("Your changes were not saved due to a validation error"),
             "form validation error message set in response context")
 
@@ -633,7 +632,7 @@ class CollectionViewsTest(KeepTestCase):
             'redirect url %s should resolve to edit_collection view' % redirect_url)
         self.assert_('pid' in kwargs, 'object pid is set in resolved url keyword args')
 
-        messages = [ str(msg) for msg in response.context['messages'] ]
+        messages = [str(msg) for msg in response.context['messages']]
         self.assert_('Successfully created collection' in messages[0],
             'successful collection creation message displayed to user on save and continue editing')
 
@@ -664,10 +663,11 @@ class CollectionViewsTest(KeepTestCase):
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
-        default_search_args = {
-            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-            'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
-        }
+        # unused ?!
+        # default_search_args = {
+        #     'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+        #     'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+        # }
 
         # search all collections (no user-entered search terms)
         response = self.client.get(search_url)
@@ -701,7 +701,7 @@ class CollectionViewsTest(KeepTestCase):
                          'title search term should be included in solr query terms')
         self.assert_('source_id' not in kwargs)
         self.assertEqual(search_title, response.context['search_info']['title'],
-                         'title search term should be included in search info for display to user')        
+                         'title search term should be included in search info for display to user')
 
         # search by creator
         creator = 'esterbrook'
@@ -710,34 +710,34 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(creator, kwargs['creator'],
                          'creator search term should be included in solr query terms')
         self.assertEqual(creator, response.context['search_info']['creator'],
-                         'creator search term should be included in search info for display to user')        
+                         'creator search term should be included in search info for display to user')
 
         # search by numbering scheme
         collection = FedoraFixtures.archives()[1]
         with patch('keep.collection.models.CollectionObject.find_by_pid',
                    new=Mock(return_value={'title': collection.label, 'pid': collection.pid})):
-            response = self.client.get(search_url, {'collection-archive_id': collection.uri })
+            response = self.client.get(search_url, {'collection-archive_id': collection.uri})
             args, kwargs = mock_solr_interface.return_value.query.call_args
             self.assertEqual(collection.uri, kwargs['archive_id'],
                 'selected archive_id should be included in solr query terms')
             self.assertEqual(collection.pid, response.context['search_info']['Archive']['pid'],
-                'archive label should be included in search info for display to user')        
+                'archive label should be included in search info for display to user')
 
         # shortcut to set the solr return value
         # NOTE: call order here has to match the way methods are called in view
-        solrquery =  mock_solr_interface.return_value.query.return_value.sort_by.return_value
+        solrquery = mock_solr_interface.return_value.query.return_value.sort_by.return_value
         solr_exec = solrquery.paginate.return_value.execute
-        
+
         # no match
         # - set mock solr to return an empty result list
-	solr_exec.return_value = []
+        solr_exec.return_value = []
         response = self.client.get(search_url, {'collection-title': 'not-a-collection'})
         self.assertContains(response, 'no results',
                 msg_prefix='Message should be displayed to user when search finds no matches')
 
         # when a result has  no title, default text should be displayed
         # sunburnt solr queries return a list of dictionaries; return one with an empty title
-	solr_exec.return_value = [
+        solr_exec.return_value = [
             {'pid': 'foo', 'creator': 'so and so', 'title': ''}
         ]
         response = self.client.get(search_url,)
@@ -755,31 +755,37 @@ class CollectionViewsTest(KeepTestCase):
         # FIXME: call order here currently has to match the way methods are # called in view. ew.
         solrquery = mock_solr_interface.return_value.query.return_value
         solr_exec = solrquery.paginate.return_value.execute
-        
+
         # no match
         # - set mock solr to return an empty result list
-	solr_exec.return_value = [
-            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10, 'archive_id': 'pid:42', 'archive_label': 'marbl-coll'},
-            {'pid': 'pid:2', 'title': 'bar', 'source_id': 11, 'archive_id': 'pid:42', 'archive_label': 'marbl-coll'},
-            {'pid': 'pid:3', 'title': 'baz', 'source_id': 12, 'archive_id': 'pid:43', 'archive_label': 'pitts-coll'},
-            {'pid': 'pid:4', 'title': '', 'source_id': 13, 'archive_id': 'pid:43', 'archive_label': 'archives-coll'},
+        solr_exec.return_value = [
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,
+             'archive_id': 'pid:42', 'archive_label': 'marbl-coll', 'label': 'foo'},
+            {'pid': 'pid:2', 'title': 'bar', 'source_id': 11,
+             'archive_id': 'pid:42', 'archive_label': 'marbl-coll', 'label': 'bar'},
+            {'pid': 'pid:3', 'title': 'baz', 'source_id': 12,
+             'archive_id': 'pid:43', 'archive_label': 'pitts-coll', 'label': 'baz'},
+            {'pid': 'pid:4', 'title': '', 'source_id': 13,
+             'archive_id': 'pid:43', 'archive_label': 'archives-coll', 'label': ''},
         ]
 
-        default_search_args = {
-            'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-            'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
-        }
+        # unused?
+        # default_search_args = {
+        #     'pid': '%s:*' % settings.FEDORA_PIDSPACE,
+        #     'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
+        # }
         response = self.client.get(browse_url)
         self.assertEqual(solr_exec.return_value, response.context['collections'],
             'solr result should be set as collections set in response context')
         args, kwargs = mock_solr_interface.return_value.query.call_args
+        #self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
         self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
                          'solr collection browse should be filtered by collection content model in solr query')
         self.assertTrue(kwargs['archive_id__any'],
                          'solr collection browse should be filtered by collections with archive_id in solr query')
 
         # basic display checking
-        
+
         # top-level collection object labels should display once for
         # each group, no matter how many items in the group
         self.assertContains(response, 'marbl-coll', 1,
@@ -796,7 +802,7 @@ class CollectionViewsTest(KeepTestCase):
             msg_prefix='result pid should be included in the browse page')
         self.assertContains(response, solr_exec.return_value[0]['source_id'],
             msg_prefix='result source id should be included in the browse page')
-        
+
         # no title - default text
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
@@ -811,7 +817,7 @@ class CollectionViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
 
         # NOTE: not testing strenuously here because this view is basically a
-        # wrapper around a generic eulfedora view 
+        # wrapper around a generic eulfedora view
 
         # MODS
         ds_url = reverse('collection:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'MODS'})
@@ -852,8 +858,6 @@ class CollectionViewsTest(KeepTestCase):
                 % (expected, got, audit_url))
         self.assertContains(response, 'justification>audit trail test</audit')
 
-
-
     @patch('keep.collection.views.solr_interface')
     def test_suggest(self, mock_solr_interface):
         solrquery = mock_solr_interface.return_value
@@ -861,7 +865,7 @@ class CollectionViewsTest(KeepTestCase):
         solrquery.filter.return_value = solrquery
         solrquery.field_limit.return_value = solrquery
         solrquery.sort_by.return_value = solrquery
-        
+
         self.client.login(**ADMIN_CREDENTIALS)
         suggest_url = reverse('collection:suggest')
 
@@ -908,14 +912,13 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual('', data[0]['category'])
         self.assertEqual(result[1]['archive_short_name'], data[1]['category'])
 
-
         # if wildcard returns no results, should try again without wildcard
         solrquery.count.return_value = 0
         response = self.client.get(suggest_url, {'term': '1000 rushd'})
         # should query with the wildcard, then without when count is 0
         solrquery.query.assert_any_call(['1000', 'rushd*'])
         solrquery.query.assert_any_call(['1000', 'rushd'])
-        
+
 
 class FindingAidTest(KeepTestCase):
     exist_fixtures = {'directory':  path.join(path.dirname(path.abspath(__file__)), 'fixtures')}
@@ -945,7 +948,7 @@ class FindingAidTest(KeepTestCase):
         self.assertEqual('Abbey Theatre.', coll.mods.content.name.name_parts[0].text)
         self.assertEqual('corporate', coll.mods.content.name.type)
         self.assertEqual('naf', coll.mods.content.name.authority)
-        
+
         # coverage / dates - abbey244 fixture has 1921/1995
         self.assertEqual('1921', coll.mods.content.origin_info.created[0].date)
         self.assertEqual('start', coll.mods.content.origin_info.created[0].point)
@@ -968,7 +971,7 @@ class FindingAidTest(KeepTestCase):
              coll.mods.content.use_and_reproduction.text)
         self.assert_('limitations noted in departmental policies' in
              coll.mods.content.use_and_reproduction.text)
-        
+
         # generated MODS should be schema-valid
         self.assert_(coll.mods.content.is_valid())
 
@@ -1010,25 +1013,27 @@ class FindingAidTest(KeepTestCase):
             in coll.mods.content.use_and_reproduction.text)
 
 
-class SimpleCollectionTest( KeepTestCase):
+class SimpleCollectionTest(KeepTestCase):
     def setUp(self):
         self.repo = Repository()
         self.pids = []
 
-        #Create fixtures and add to pid list
-        self.simple_collection_1  = FedoraFixtures.simple_collection(label='Test Simple Collection 1', status='Processed')
+        # Create fixtures and add to pid list
+        self.simple_collection_1 = FedoraFixtures.simple_collection(label='Test Simple Collection 1',
+            status='Processed')
         self.simple_collection_1.save()
         self.pids.append(self. simple_collection_1.pid)
 
-        self.simple_collection_2  = FedoraFixtures.simple_collection(label='Test Simple Collection 2', status='Accessioned')
+        self.simple_collection_2 = FedoraFixtures.simple_collection(label='Test Simple Collection 2',
+            status='Accessioned')
         self. simple_collection_2.save()
         self.pids.append(self.simple_collection_2.pid)
 
-        #Create user for tests
+        # Create user for tests
         user = User(username="euterpe")
         user.set_password("digitaldelight")
-        user.is_active=True
-        user.is_superuser=True
+        user.is_active = True
+        user.is_superuser = True
         user.save()
 
     def tearDown(self):
@@ -1037,8 +1042,6 @@ class SimpleCollectionTest( KeepTestCase):
                 self.repo.purge_object(pid)
             except RequestFailed:
                 logger.warning('Failed to purge %s in tearDown' % pid)
-
-            
 
     def test_creation(self):
         obj = self.repo.get_object(type=SimpleCollection)
@@ -1050,7 +1053,7 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertTrue(saved)
         self.assertEqual(obj. COLLECTION_CONTENT_MODEL, 'info:fedora/emory-control:Collection-1.0')
         self.assertEqual(obj.mods.content.restrictions_on_access.text, 'processed')
-        
+
         self.assertTrue((obj.uriref, RDF.type, REPO.SimpleCollection) in obj.rels_ext.content,
                         'The collection is of type SimpleCollection')
 
@@ -1062,7 +1065,7 @@ class SimpleCollectionTest( KeepTestCase):
         # run an RIsearch query with flush changes so test does not fail
         # when syncUpdates is turned off
         self.repo.risearch.count_statements('* * *', flush=True)
-        
+
         # Test Simple collection
         objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
         obj_list = list(objs)
@@ -1070,21 +1073,21 @@ class SimpleCollectionTest( KeepTestCase):
         self.assertTrue(isinstance(obj_list[0], SimpleCollection),
                         "object is of type SimpleCollection")
 
-        #Test Simple collection wtith no obj type
+        # Test Simple collection wtith no obj type
         objs = _objects_by_type(REPO.SimpleCollection)
         obj_list = list(objs)
         self.assertTrue(len(obj_list) == 2)
         self.assertTrue(isinstance(obj_list[0], DigitalObject), "object is of type DigitalObject")
 
-        #Test invalid type
+        # Test invalid type
         objs = _objects_by_type(REPO.FakeType)
         obj_list = list(objs)
         self.assertTrue(len(obj_list) == 0)
 
-        
     def test_edit(self):
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
-        edit_url = reverse('collection:simple_edit', kwargs={'pid' : self.simple_collection_2.pid})
+        edit_url = reverse('collection:simple_edit',
+            kwargs={'pid': self.simple_collection_2.pid})
         response = self.client.get(edit_url)
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s' % (expected, code))
@@ -1096,7 +1099,7 @@ class SimpleCollectionTest( KeepTestCase):
         # run an RIsearch query with flush changes so test does not fail
         # when syncUpdates is turned off
         self.repo.risearch.count_statements('* * *', flush=True)
-        
+
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         browse_url = reverse('collection:simple_browse')
         response = self.client.get(browse_url)
@@ -1116,30 +1119,31 @@ class TestSimpleCollectionForm(KeepTestCase):
 
         #create ArrengementObject and associate to a collection
         #TODO Shold this be in arrangement app tests??
-        self.arrangement_1 = self.repo.get_object(type= ArrangementObject)
+        self.arrangement_1 = self.repo.get_object(type=ArrangementObject)
         self.arrangement_1.label = "Test Arrangement Object 1"
-        self.arrangement_1.state='I'
+        self.arrangement_1.state = 'I'
         self.arrangement_1.save()
         self.pids.append(self.arrangement_1.pid)
 
-        self.arrangement_2 = self.repo.get_object(type= ArrangementObject)
+        self.arrangement_2 = self.repo.get_object(type=ArrangementObject)
         self.arrangement_2.label = "Test Arrangement Object 2"
-        self.arrangement_2.state='I'
+        self.arrangement_2.state = 'I'
         self.arrangement_2.save()
         self.pids.append(self.arrangement_2.pid)
 
         #Create fixtures and add to pid list
-        self.simple_collection_1  = FedoraFixtures.simple_collection(label='Test Simple Collection 1', status='Processed')
+        self.simple_collection_1 = FedoraFixtures.simple_collection(label='Test Simple Collection 1',
+            status='Processed')
         self.simple_collection_1.save()
         self.pids.append(self.simple_collection_1.pid)
 
-        self.simple_collection_2  = FedoraFixtures.simple_collection(label='Test Simple Collection 2', status='Accessioned')
+        self.simple_collection_2 = FedoraFixtures.simple_collection(label='Test Simple Collection 2',
+            status='Accessioned')
         #add arrangements to collection
         self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_1.uriref))
         self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_2.uriref))
         self. simple_collection_2.save()
         self.pids.append(self.simple_collection_2.pid)
-
 
     def tearDown(self):
         for pid in self.pids:
@@ -1171,14 +1175,9 @@ class TestSimpleCollectionForm(KeepTestCase):
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
 
-
-        #when bad status is given, nothing should change
+        # when bad status is given, nothing should change
         (success, fail) = form.update_objects('badstatus')
         self.assertEqual(success, 0)
         self.assertEqual(fail, 0)
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
-
-
-
-

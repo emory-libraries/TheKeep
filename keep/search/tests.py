@@ -1,5 +1,6 @@
 import logging
 from django import forms
+from django.http import HttpRequest
 from django.contrib.auth.models import User, Permission
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
@@ -422,7 +423,7 @@ class SearchTemplatesTest(TestCase):
     ]
 
     def setUp(self):
-        self.rqst = Mock()
+        self.rqst = HttpRequest()
 
         # basic template context for rendering search results
         form = KeywordSearch({'keyword': 'foo'})

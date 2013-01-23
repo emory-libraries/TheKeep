@@ -77,14 +77,14 @@ class TestSolrInterface(TestCase):
             delattr(settings, 'SOLR_SERVER_URL')
         else:
             settings.SOLR_SERVER_URL = self._solr_url
-        
+
         if self._solr_ca_cert_path is None and hasattr(settings, 'SOLR_CA_CERT_PATH'):
             delattr(settings, 'SOLR_CA_CERT_PATH')
         else:
             settings.SOLR_CA_CERT_PATH = self._solr_ca_cert_path
 
         os.putenv('HTTP_PROXY', self._http_proxy)
-        
+
 
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
@@ -93,7 +93,7 @@ class TestSolrInterface(TestCase):
         solr_interface()
         mockhttplib.Http.assert_called_once()
         # httplib2.Http should be initialized with defaults (no args)
-        mockhttplib.Http.assert_called_with() 
+        mockhttplib.Http.assert_called_with()
         mocksunburnt.SolrInterface.assert_called_with(settings.SOLR_SERVER_URL,
                                                       http_connection=mockhttplib.Http.return_value)
 
@@ -126,8 +126,8 @@ class TestSolrInterface(TestCase):
         mockhttplib.ProxyInfo.assert_not_called()
         mockhttplib.Http.assert_called_with() # no args
 
-        
-        
+
+
 
 # FIXME: why is this in keep.common instead of arrangement ?
 
@@ -190,7 +190,7 @@ class DigitalObjectTest(TestCase):
     @patch('keep.common.fedora.pidman')
     def test_get_default_pid(self, mockpidman):
         mockpidman.create_ark.return_value = self.testark
-        
+
         digobj = DcDigitalObject(Mock())
         digobj.label = 'my test object'
         pid = digobj.get_default_pid()
@@ -200,12 +200,12 @@ class DigitalObjectTest(TestCase):
         # generated ARK should be stored in dc:identifier
         self.assert_(self.testark in digobj.dc.content.identifier_list)
 
-        
+
     @patch('keep.common.fedora.pidman')
     def test_get_default_pid__mods(self, mockpidman):
         # mods variant
         mockpidman.create_ark.return_value = self.testark
-        
+
         digobj = ModsDigitalObject(Mock())
         pid = digobj.get_default_pid()
 
@@ -243,7 +243,7 @@ class DigitalObjectTest(TestCase):
             mods.Identifier(type='uri', text=self.testark)
             ])
         self.assertEqual(self.testark, modsobj.ark_access_uri)
-        
+
     def test_history_events(self):
         obj = DcDigitalObject(Mock())
         with patch.object(DcDigitalObject, 'audit_trail') as mockaudit:
@@ -277,7 +277,7 @@ class DigitalObjectTest(TestCase):
             ]
             # two different events
             self.assertEqual(2, len(obj.history_events()))
-            
+
             # two api calls with same user + message but repeated component
             mockaudit.records = [
                 AuditTrailRecord(date=now, user='me', message='update',
@@ -287,7 +287,7 @@ class DigitalObjectTest(TestCase):
             ]
             # two different events
             self.assertEqual(2, len(obj.history_events()))
-        
+
 
             # two api calls with same user + message, different components,
             # but far enough in time they probably don't belong together
@@ -349,7 +349,7 @@ class SearchTest(KeepTestCase):
             response.templates[0].name,
             'when no request parameters are given, advanced search page should be displayed')
 
-        # no user-entered search terms - find all items 
+        # no user-entered search terms - find all items
         response = self.client.get(search_url, {'audio-title': ''})
         args, kwargs = self.mocksolr.query.call_args
         # default search args that should be included on every collection search
@@ -434,7 +434,7 @@ class SearchTest(KeepTestCase):
 
         # search for format
         content_model = audiomodels.AudioObject.AUDIO_CONTENT_MODEL
-        response = self.client.get(search_url, {'audio-content_model' : content_model})
+        response = self.client.get(search_url, {'audio-content_model': content_model})
         args, kwargs = self.mocksolr.query.call_args
         self.assertEqual(content_model, kwargs['content_model'])
 
@@ -452,12 +452,16 @@ class SearchTest(KeepTestCase):
             args, kwargs = self.mocksolr.query.call_args
             self.assertEqual(colluri, kwargs['collection_id'],
                 'collection search should filter on collection_id field')
-            self.assertPattern('collection:.*%s' % coll_info['title'], response.content,
+            self.assertContains(response,
+                '<p>Results for collection: <b><a href="%s">%s</a></b></p>' % \
+                    (reverse('collection:edit', kwargs={'pid': collpid}),
+                        coll_info['title']),
+                html=True,
                 msg_prefix='search results page should include search term (collection by name)')
 
         # multiple fields
         # mock collection find by pid in the view for collection label look-up
-        with patch('keep.audio.views.CollectionObject.find_by_pid',
+        with patch('keep.common.forms.CollectionObject.find_by_pid',
                    new=Mock(return_value=coll_info)):
             searchtitle = 'Moldy papers'
             searchdate = '1492*'
@@ -468,13 +472,14 @@ class SearchTest(KeepTestCase):
             self.assertEqual(colluri, kwargs['collection_id'])
             self.assertEqual(searchtitle, kwargs['title'])
             self.assertEqual(searchdate, kwargs['date'])
-            # all fields should display to user
-            self.assertPattern('collection:.*%s' % coll_info['title'], response.content,
-                msg_prefix='search results page should include all search terms used (collection)')
-            self.assertPattern('date:.*%s' % searchdate, response.content,
-                msg_prefix='search results page should include all search terms used (date)')
-            self.assertPattern('title:.*%s' % searchtitle, response.content,
-                msg_prefix='search results page should include all search terms used (title)')
+
+            # all search terms should display to user
+            self.assertContains(response,
+                '<p>Results for date: <b>%s</b>, collection: <b><a href="%s">%s</a></b>, title: <b>%s</b></p>' % \
+                    (searchdate, reverse('collection:edit', kwargs={'pid': collpid}),
+                        coll_info['title'], searchtitle),
+                html=True,
+                msg_prefix='search results page should include all search terms')
 
     @patch('keep.search.views.solr_interface', mocksolr)  # redirect to home page
     @patch('keep.common.views.solr_interface', mocksolr)
@@ -483,7 +488,7 @@ class SearchTest(KeepTestCase):
         search_url = reverse('common:search')
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
-        
+
         response = self.client.get(search_url, {'audio-display_fields': ['pid', 'title', 'description'],
                                                 'audio-output': 'csv'})
         self.assertEqual('text/csv', response['Content-Type'],
@@ -504,7 +509,7 @@ class SearchTest(KeepTestCase):
         # test validation - csv only valid with display fields
         response = self.client.get(search_url, {'audio-output': 'csv'})
         self.assertContains(response, 'You must select display fields for CSV output',
-                            msg_prefix='validation error is displayed when CSV is selected without display fields')    
+                            msg_prefix='validation error is displayed when CSV is selected without display fields')
 
 
 class ItemSearchTest(TestCase):
@@ -545,7 +550,7 @@ class ItemSearchTest(TestCase):
                          'numeric pid value should search dm1_id field')
         self.assertNotEqual(form_data['pid'], search_opts['pid'],
                      'numeric pid value should not search pid field')
-        
+
     @patch('keep.common.forms.CollectionObject')
     def test_search_info(self, mockcollection):
         mockcollection.item_collections.return_value = [
@@ -570,7 +575,7 @@ class ItemSearchTest(TestCase):
         self.assert_('output' not in search_info,
                      'output formatting fields should not be included in search info')
 
-        
+
 
 
 class TestRightsExtrasTemplateTags(TestCase):
@@ -617,11 +622,11 @@ class TestAuditTrailEvent(TestCase):
         self.assertEqual(self.modify.date, event.date)
         self.assert_(self.modify.component in event.components)
         self.assert_(self.modify.action in event.actions)
-        
+
     def test_component_names(self):
         event = AuditTrailEvent(self.modify, {'DC': 'dublin core'})
         self.assertEqual(set(['dublin core']), event.component_names())
-    
+
     def action(self):
         ingest_event = AuditTrailEvent(self.ingest)
         self.assertEqual('ingest', ingest_event.action)

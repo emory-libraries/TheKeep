@@ -1,9 +1,8 @@
 import os
-import re
 import shutil
 from fabric.api import abort, env, lcd, local, prefix, put, puts, require, \
                        run, sudo, task
-from fabric.colors import green, red, cyan, yellow
+from fabric.colors import green, red, yellow
 from fabric.context_managers import cd, hide, settings
 from fabric.contrib import files
 from fabric.contrib.console import confirm
@@ -48,10 +47,11 @@ env.system_packages = ['imagemagick']
 
 # omit these from the test coverage report
 env.omit_coverage = ','.join([
-    '%(project)s/manage.py' % env, 
+    'manage.py',
     '%(project)s/settings.py' % env,
     '%(project)s/localsettings.py' % env,
     ])
+
 
 @task
 def install_deps():
@@ -60,20 +60,23 @@ def install_deps():
     if os.path.exists('pip-local-req.txt'):
         local('pip install -r pip-local-req.txt')
 
+
 @task
 def test():
     '''Run all tests locally.'''
     if os.path.exists('test-results'):
         shutil.rmtree('test-results')
 
-    local('coverage run --branch %(project)s/manage.py test --noinput' % env)
-    local('coverage xml --include=%(project)s**/*.py --omit=%(omit_coverage)s' % env)
+    local('python manage.py test --noinput --with-coverage --cover-package=%(project)s --cover-xml --with-xunit' \
+        % env)
+
 
 @task
 def doc():
     '''Build documentation locally.'''
     with lcd('doc'):
         local('make clean html')
+
 
 @task
 def build():
@@ -108,6 +111,7 @@ def configure(path=None, user=None, url_prefix=None, check_svn_head=True,
         env.remote_proxy = remote_proxy
         puts('Setting remote proxy to %(remote_proxy)s' % env)
 
+
 def config_from_svn(check_svn_head=True):
     """Infer subversion location & revision from local svn checkout."""
     with hide('stdout'):
@@ -126,6 +130,7 @@ def config_from_svn(check_svn_head=True):
         if not confirm('Are you sure you want to deploy checked out svn revision %s (HEAD is %s)?' \
                        % (env.svn_rev, head_rev)):
             abort('Quitting')
+
 
 def prep_source():
     'Checkout the code from svn and do local prep.'
@@ -153,16 +158,19 @@ def prep_source():
     local('rm -rf build/solr/%(project)s/conf' % env)
     local('cp -a build/%(build_dir)s/solr build/solr/%(project)s/conf' % env)
 
+
 def package_source():
     'Create a tarball of the source tree.'
     local('mkdir -p dist')
     local('tar cjf dist/%(tarball)s -C build %(build_dir)s' % env)
     local('tar cjf dist/%(solr_tarball)s -C build/solr %(project)s' % env)
 
+
 def upload_source():
     'Copy the source tarball to the target server.'
     put('dist/%(tarball)s' % env,
         '/tmp/%(tarball)s' % env)
+
 
 def extract_source():
     'Extract the remote source tarball under the configured remote directory.'
@@ -171,6 +179,7 @@ def extract_source():
         # if the untar succeeded, remove the tarball
         run('rm /tmp/%(tarball)s' % env)
         # update apache.conf if necessary
+
 
 @task
 def check_sysdeps():
@@ -181,7 +190,7 @@ def check_sysdeps():
     '''
     not_installed = []
     with settings(hide('stdout'),       # suppress full dpkg output
-                  warn_only=True):	# don't abort on dpkg not-installed error code 
+                  warn_only=True):      # don't abort on dpkg not-installed error code
         for pkg in env.system_packages:
             if 'ii' not in run('dpkg -l %s' % pkg):
                 not_installed.append(pkg)
@@ -191,11 +200,11 @@ def check_sysdeps():
                     ', '.join(not_installed)))
         puts('To install missing packages on Ubuntu/Debian:\nsudo apt-get install %s' % \
                   ' '.join(not_installed))
-        
+
 
 def setup_virtualenv(python=None):
     'Create a virtualenv and install required packages on the remote server.'
-    python_opt = '--python=' + python if python else ''
+    # python_opt = '--python=' + python if python else ''  ## FIXME: unused?
     with cd('%(remote_path)s/%(build_dir)s' % env):
         sudo('virtualenv --no-site-packages --prompt="[%(build_dir)s]" env ' % env,
              user=env.remote_acct)
@@ -212,7 +221,8 @@ def setup_virtualenv(python=None):
                 if env.remote_proxy:
                     pip_cmd += ' --proxy=%(remote_proxy)s' % env
                 sudo(pip_cmd, user=env.remote_acct)
- 
+
+
 def configure_site():
     'Copy configuration files into the remote source tree.'
     with cd(env.remote_path):
@@ -224,11 +234,12 @@ def configure_site():
     # collect static files
     with cd('%(remote_path)s/%(build_dir)s' % env):
         with prefix('source env/bin/activate'):
-            sudo('python %(project)s/manage.py collectstatic --noinput' % env,
+            sudo('python manage.py collectstatic --noinput',
                  user=env.remote_acct)
             # make static files world-readable
             sudo('chmod -R a+r `env DJANGO_SETTINGS_MODULE="%(project)s.settings" python -c "from django.conf import settings; print settings.STATIC_ROOT"`' % env,
                  user=env.remote_acct)
+
 
 def update_links():
     'Update current/previous symlinks on the remote server.'
@@ -237,15 +248,17 @@ def update_links():
             sudo('rm -f previous; mv current previous', user=env.remote_acct)
         sudo('ln -sf %(build_dir)s current' % env, user=env.remote_acct)
 
+
 @task
 def syncdb():
     '''Remotely run syncdb and migrate after deploy and configuration.'''
     with cd('%(remote_path)s/%(build_dir)s' % env):
         with prefix('source env/bin/activate'):
-            sudo('python %(project)s/manage.py syncdb --noinput' % env,
+            sudo('python manage.py syncdb --noinput',
                  user=env.remote_acct)
-            sudo('python %(project)s/manage.py migrate --noinput' % env,
+            sudo('python manage.py migrate --noinput',
                  user=env.remote_acct)
+
 
 @task
 def build_source_package(path=None, user=None, url_prefix='',
@@ -260,6 +273,7 @@ def build_source_package(path=None, user=None, url_prefix='',
     configure(path, user, url_prefix, check_svn_head, remote_proxy)
     prep_source()
     package_source()
+
 
 @task
 def deploy(path=None, user=None, url_prefix='', check_svn_head=True, python=None,
@@ -279,7 +293,7 @@ def deploy(path=None, user=None, url_prefix='', check_svn_head=True, python=None
             ask the user to confirm the deploy
             (Use any of: no,n, false,f, or 0 to turn off)
        remote_proxy: HTTP proxy that can be used for pip/virtualenv
-	    installation on the remote server (server:port)
+       installation on the remote server (server:port)
 
     Example usage:
       fab deploy:/home/keep/,keep -H servername
@@ -298,6 +312,7 @@ def deploy(path=None, user=None, url_prefix='', check_svn_head=True, python=None
     update_links()
     compare_localsettings()
 
+
 @task
 def revert(path=None, user=None):
     """Update remote symlinks to retore the previous version as current"""
@@ -310,12 +325,14 @@ def revert(path=None, user=None):
             # make previous link current
             sudo('mv previous current', user=env.remote_acct)
             sudo('readlink current', user=env.remote_acct)
-    
+
+
 @task
 def clean():
     '''Remove local build/dist artifacts generated by deploy task'''
     local('rm -rf build dist')
     # should we do any remote cleaning?
+
 
 @task
 def compare_localsettings(path=None, user=None):
@@ -333,5 +350,3 @@ def compare_localsettings(path=None, user=None):
                     puts(output)
                 else:
                     puts(green('No differences between current and previous localsettings.py'))
-
-
