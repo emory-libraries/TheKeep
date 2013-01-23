@@ -20,6 +20,7 @@ from django.test import Client, TestCase
 from django.utils import simplejson
 
 from eulfedora.server import Repository
+from eulfedora.models import DigitalObjectSaveFailure
 from eullocal.django.taskresult.models import TaskResult
 from eulfedora.util import RequestFailed, ChecksumMismatch
 from eulxml.xmlmap import load_xmlobject_from_string
@@ -1743,7 +1744,11 @@ class TestAudioObject(KeepTestCase):
 
             # mods
             with patch.object(self.obj.mods, 'isModified', new=Mock(return_value=True)):
-                self.obj.save()
+                try:
+                    self.obj.save()
+                except DigitalObjectSaveFailure:
+                    # generating a digitalobject save failure - ignore
+                    pass
                 self.assertEqual(1, mock_update_dc.call_count)
             mock_update_dc.reset_mock()
 
@@ -1755,13 +1760,19 @@ class TestAudioObject(KeepTestCase):
 
             # digital tech
             with patch.object(self.obj.digitaltech, 'isModified', new=Mock(return_value=True)):
-                self.obj.save()
+                try:
+                    self.obj.save()
+                except DigitalObjectSaveFailure:
+                    pass
                 self.assertEqual(1, mock_update_dc.call_count)
             mock_update_dc.reset_mock()
 
             # rights
             with patch.object(self.obj.rights, 'isModified', new=Mock(return_value=True)):
-                self.obj.save()
+                try:
+                    self.obj.save()
+                except DigitalObjectSaveFailure:
+                    pass
                 self.assertEqual(1, mock_update_dc.call_count)
 
     def test_update_dc(self):
