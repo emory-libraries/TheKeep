@@ -18,7 +18,7 @@ from keep.common.fedora import Repository
 logger = logging.getLogger(__name__)
 
 #All Rushdie Content Modles
-CONTENT_MODELS =[
+CONTENT_MODELS = [
     'info:fedora/emory-control:Rushdie-CerpAccount-1.0',
     'info:fedora/emory-control:Rushdie-CerpMailbox-1.0',
     'info:fedora/emory-control:Rushdie-Fax-1.0',
@@ -40,28 +40,28 @@ class Command(BaseCommand):
         make_option('--noact', '-n',
             action='store_true',
             dest='no-act',
-            default = False,
+            default=False,
             help='Do not do anything'),
         make_option('--simple-collection-step', '-S',
             action='store_true',
             dest='simple-collection-step',
-            default = False,
+            default=False,
             help='Only run the step to collect objects into a SimpleCollection.  \
             If Simple Collection exists it will use  the existing one'),
         make_option('--datastreams', '-D',
             action='store_true',
             dest='datastreams-step',
-            default = False,
+            default=False,
             help='Only run the step to convert datastreams'),
         make_option('--master-collection-pid', '-m',
             action='store',
             dest='master-collection-pid',
-            default = "",
+            default="",
             help='Pid of the Master Collection'),
         make_option('--simple-collection', '-s',
             action='store',
             dest='simple-collection',
-            default = "",
+            default="",
             help='Label of the SimpleCollection'),
         make_option('--username', '-u',
             dest='username',
@@ -81,12 +81,12 @@ class Command(BaseCommand):
 
         #exist query params
         return_fields = ['eadid']
-        search_fields = {'eadid' : 'rushdie1000'}
+        search_fields = {'eadid': 'rushdie1000'}
 
         queryset = Series.objects.also(*return_fields).filter(**search_fields)
         for s in queryset:
             #series info
-            series[s.title]= {}
+            series[s.title] = {}
             series[s.title]['series_info'] = {}
             series[s.title]['series_info']['id'] = s.id
             series[s.title]['series_info']['short_id'] = s.short_id
@@ -112,7 +112,7 @@ class Command(BaseCommand):
             pids = set(args)
             for pid in pids:
                 try:
-                    obj = self.repo.get_object(pid = pid, type=ArrangementObject)
+                    obj = self.repo.get_object(pid=pid, type=ArrangementObject)
                     if obj.exists:
                         all_objs.append(obj)
                     else:
@@ -161,8 +161,8 @@ class Command(BaseCommand):
         if mm:
             if self.verbosity > self.v_none:
                 self.stdout.write("Converting MARBL-MACTECH\n")
-            etree=ElementTree.fromstring(mm.content)
-            ns='info:fedora/emory-control:Rushdie-MacFsData-1.0'
+            etree = ElementTree.fromstring(mm.content)
+            ns = 'info:fedora/emory-control:Rushdie-MacFsData-1.0'
 
             md5 = etree.find('.//{%s}md5' % ns)
             files = etree.findall('.//{%s}file' % ns)
@@ -206,25 +206,24 @@ class Command(BaseCommand):
         if ma:
             if self.verbosity > self.v_none:
                 self.stdout.write("Converting MARBL-ANALYSIS\n")
-            etree=ElementTree.fromstring(ma.content)
-            ns='info:fedora/emory-control:Rushdie-MarblAnalysis-1.0'
-            series=etree.find('.//{%s}series' % ns)
+            etree = ElementTree.fromstring(ma.content)
+            ns = 'info:fedora/emory-control:Rushdie-MarblAnalysis-1.0'
+            series = etree.find('.//{%s}series' % ns)
             series = series.text if series is not None else ""
-            subseries=etree.find('.//{%s}subseries' % ns)
+            subseries = etree.find('.//{%s}subseries' % ns)
             subseries = subseries.text if subseries is not None else ""
-            verdict=etree.find('.//{%s}verdict' % ns)
+            verdict = etree.find('.//{%s}verdict' % ns)
             verdict = verdict.text if verdict is not None else ""
 
             #Translate verdict to code to store in Rights
             status_code_map = {
-                "META" : "13",
-                "VIRTUAL" : "2",
-                "EMULATION ONLY" : "2",
-                "EMULATION" : "2",
-                "AS IS" : "2",
-                "RESTRICTED" : "4",
-                "REDACTED" : "12"
-
+                "META": "13",
+                "VIRTUAL": "2",
+                "EMULATION ONLY": "2",
+                "EMULATION": "2",
+                "AS IS": "2",
+                "RESTRICTED": "4",
+                "REDACTED": "12"
             }
             try:
                 code = status_code_map.get(verdict.upper(), "") if verdict else ""
@@ -232,7 +231,6 @@ class Command(BaseCommand):
                 obj.rights.content.access_status.code = code
             except KeyError:
                 pass
-
 
             #Map series and sub series
 
@@ -255,9 +253,10 @@ class Command(BaseCommand):
             if "Journal" in series or "Journal" in subseries:
                 series = "Journals, appointment books, and notebooks"
 
+            if series in series_lookup and \
+                "subseries_info" in series_lookup[series] and \
+                subseries in series_lookup[series]["subseries_info"]:
 
-
-            if series in series_lookup  and "subseries_info" in series_lookup[series] and subseries in series_lookup[series]["subseries_info"]:
                 obj.mods.content.create_series()
                 obj.mods.content.series.create_series()
 
@@ -276,7 +275,7 @@ class Command(BaseCommand):
             elif series in series_lookup and subseries:
                 obj.mods.content.create_series()
                 obj.mods.content.series.create_series()
-                  
+
                 obj.mods.content.series.title = subseries
 
                 obj.mods.content.series.series.title = series
@@ -298,7 +297,7 @@ class Command(BaseCommand):
                 if series and subseries:
                     obj.mods.content.create_series()
                     obj.mods.content.series.create_series()
-                         
+
                     obj.mods.content.series.title = subseries
 
                     obj.mods.content.series.series.title = series
@@ -317,7 +316,8 @@ class Command(BaseCommand):
                     self.stdout.write("TEST Removed MARBL-ANALYSIS\n")
 
 #        Add  Arrangement Relation
-        relation = (obj.uriref, model.hasModel, "info:fedora/emory-control:Arrangement-1.0")
+        relation = (obj.uriref, model.hasModel,
+            URIRef("info:fedora/emory-control:Arrangement-1.0"))
         obj.rels_ext.content.add(relation)
 
         #Add  relation to master collection
@@ -325,8 +325,10 @@ class Command(BaseCommand):
         obj.rels_ext.content.add(relation)
 
         #Add Content Model based on Rights
-        allowed = (obj.uriref, model.hasModel, URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
-        restricted = (obj.uriref, model.hasModel,URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
+        allowed = (obj.uriref, model.hasModel,
+            URIRef("info:fedora/emory-control:ArrangementAccessAllowed-1.0"))
+        restricted = (obj.uriref, model.hasModel,
+            URIRef("info:fedora/emory-control:ArrangementAccessRestricted-1.0"))
 
         if getattr(obj.rights.content.access_status, "code", None) == "2":
             obj.rels_ext.content.add(allowed)
@@ -334,7 +336,6 @@ class Command(BaseCommand):
             obj.rels_ext.content.add(restricted)
 
         return obj
-
 
     def handle(self, *args, **options):
         #setup verbosity
@@ -349,7 +350,7 @@ class Command(BaseCommand):
 
         #Create the repo
         repo_args = {}
-        if  options.get('username') is not None:
+        if options.get('username') is not None:
             repo_args['username'] = options.get('username')
         if options.get('password') is not None:
             repo_args['password'] = options.get('password')
@@ -370,11 +371,11 @@ class Command(BaseCommand):
                 #lookup Simplecollection
                 try:
                     sc_list = list(self.repo.find_objects(label__exact=options["simple-collection"], type=SimpleCollection))
-                    if len(sc_list) > 1: # something is wrong need to investigate
+                    if len(sc_list) > 1:  # something is wrong need to investigate
                         raise CommandError("More than one SimpleCollection with Label %s exists" % options["simple-collection"])
-                    elif len(sc_list) == 1: # use this as the simple collection
+                    elif len(sc_list) == 1:  # use this as the simple collection
                         self.simple_collection = sc_list[0]
-                    elif len(sc_list) == 0: #create new simple collection
+                    elif len(sc_list) == 0:  # create new simple collection
                         self.simple_collection = self.repo.get_object(type=SimpleCollection)
                         self.simple_collection.label = options["simple-collection"]
                         self.simple_collection.dc.content.title = options["simple-collection"]
@@ -391,13 +392,14 @@ class Command(BaseCommand):
                 raise CommandError("When running Datastream step Master collection pid is required")
             else:
                 try:
-                    self.master_collection = self.repo.get_object(pid = options["master-collection-pid"], type=CollectionObject)
+                    self.master_collection = self.repo.get_object(pid=options["master-collection-pid"],
+                        type=CollectionObject)
                     if not self.master_collection.exists:
-                        raise CommandError("Master Collection %s does not exist" % options["master-collection-pid"])
+                        raise CommandError("Master Collection %s does not exist" \
+                            % options["master-collection-pid"])
                 except Exception as e:
-                    raise CommandError("Could not obtain requested Master Collection %s : %s" % (options["master-collection-pid"], e))
-
-
+                    raise CommandError("Could not obtain requested Master Collection %s : %s" \
+                        % (options["master-collection-pid"], e))
 
         #Create lookup for series
         series_lookup = self._create_series_lookup()
@@ -408,7 +410,7 @@ class Command(BaseCommand):
         #Process each object
         for obj in self.all_objs:
             if self.verbosity > self.v_none:
-                self.stdout.write( "Processing %s\n" % (obj.pid))
+                self.stdout.write("Processing %s\n" % (obj.pid))
 
             if options["simple-collection-step"]:
                 self._add_to_simple_collection(obj)
@@ -426,7 +428,6 @@ class Command(BaseCommand):
                     self.stdout.write("===Mods===\n")
                     self.stdout.write("%s\n" % (obj.mods.content.serialize()))
 
-
             #Save object
             obj.owner = "thekeep-project"
             if self.verbosity > self.v_normal:
@@ -434,10 +435,10 @@ class Command(BaseCommand):
             if not options["no-act"]:
                 obj.save()
                 if self.verbosity > self.v_none:
-                    self.stdout.write( "Saving %s\n" % obj.pid)
+                    self.stdout.write("Saving %s\n" % obj.pid)
             else:
                 if self.verbosity > self.v_none:
-                    self.stdout.write( "TEST Saving Object\n")
+                    self.stdout.write("TEST Saving Object\n")
 
         #Print RELS-EXT forSimple Collection
         if options["simple-collection-step"]:
@@ -454,7 +455,9 @@ class Command(BaseCommand):
             if not options["no-act"]:
                 self.simple_collection.save()
                 if self.verbosity > self.v_none:
-                    self.stdout.write("Saved %s(%s)\n" % (self.simple_collection.label, self.simple_collection.pid) )
+                    self.stdout.write("Saved %s(%s)\n" % \
+                        (self.simple_collection.label, self.simple_collection.pid))
             else:
                 if self.verbosity > self.v_none:
-                    self.stdout.write("Test saving %s(%s)\n" % (self.simple_collection.label, self.simple_collection.pid) )
+                    self.stdout.write("Test saving %s(%s)\n" %
+                        (self.simple_collection.label, self.simple_collection.pid))
