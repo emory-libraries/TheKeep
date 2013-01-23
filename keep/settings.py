@@ -164,31 +164,13 @@ CELERY_ROUTES = {
 }
 
 try:
-    from localsettings import *
+    from keep.localsettings import *
 except ImportError:
     import sys
-    print >>sys.stderr, 'No local settings. Trying to start, but if ' + \
-        'stuff blows up, try copying localsettings.py.sample to ' + \
+    print >> sys.stderr, 'No local settings. Trying to start, but if ' + \
+        'stuff blows up, try copying localsettings.py.dist to ' + \
         'localsettings.py and setting appropriately for your environment.'
     pass
-
-# import sys
-# try:
-#     sys.path.extend(EXTENSION_DIRS)
-# except NameError:
-#     pass # EXTENSION_DIRS not defined. This is OK; we just won't use it.
-# del sys
-
-# TEST_RUNNER='keep.testutil.KeepTextTestSuiteRunner'
-# try:
-#     # use xmlrunner if it's installed; default runner otherwise. download
-#     # it from http://github.com/danielfm/unittest-xml-reporting/ to output
-#     # test results in JUnit-compatible XML.
-#     import xmlrunner
-#     TEST_RUNNER='keep.testutil.KeepXmlTestSuiteRunner'
-#     TEST_OUTPUT_DIR='test-results'
-# except ImportError:
-#     pass
 
 # django_nose configurations
 
@@ -211,4 +193,35 @@ if django_nose is not None:
     ]
     NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup']
 
+# disable south migrations in unit tests
+SOUTH_TESTS_MIGRATE = False
+
+# override certain settings when running unit tests
+if 'DJANGO_TEST_MODE' in os.environ:
+
+    # Context processors to be used for testing
+    # - remove search form context processors
+    # (otherwise, this adds a solr dependency to every page load)
+    TEMPLATE_CONTEXT_PROCESSORS = (
+        # django default context processors
+        "django.contrib.auth.context_processors.auth",
+        "django.core.context_processors.debug",
+        "django.core.context_processors.i18n",
+        "django.core.context_processors.media",
+        "django.contrib.messages.context_processors.messages",
+        "django.core.context_processors.request",
+        "keep.version_context"
+    )
+    # FIXME: maybe better to use original list and remove problematic ones?
+
+    # this setting is needed for unit tests involving celery tasks
+    # so the test doesn't hang
+    # NOTE: this setting must be set before other things happen or it doesn't work
+    CELERY_ALWAYS_EAGER = True
+
+    # remove PIDMAN settings - no need to generate PIDs when testing
+    PIDMAN_HOST = None
+    PIDMAN_USER = None
+    PIDMAN_PASSWORD = None
+    PIDMAN_DOMAIN = None
 
