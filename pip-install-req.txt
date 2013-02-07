@@ -1,21 +1,13 @@
 Django>=1.4
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.17.0-dev.tar.gz
-#eulxml>=0.18.0
-# need unreleased eulxml for cerp improvements
--e git://github.com/emory-libraries/eulxml.git@develop#egg=eulxml
-#eulfedora>=0.19.0
-# TEMPORARY: depend on dev for nose plugin
-git+git://github.com/emory-libraries/eulfedora.git@develop#egg=eulfedora
-#eulexistdb>=0.15.2
-# TEMPORARY: depend on release branch for testing
-git+git://github.com/emory-libraries/eulexistdb.git@release/0.17#egg=eulexistdb
+eulxml>=0.19.0
+eulfedora>=0.20.0
+eulexistdb>=0.17.0
 eulcommon>=0.17.0
 http://waterhouse.library.emory.edu:8080/hudson/job/pidman-rest-client-1.1.x/11/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
 python-magic
 pycrypto
 django-celery>=3.0
-#django-celery==2.5.5
-#celery==2.5.1
 mutagen
 poster
 #sunburnt>=0.6
@@ -27,7 +19,5 @@ south
 python-dateutil
 pytz
 # dev eulcm content model objects (until initial eulcm release)
--e git://github.com/emory-libraries/eulcm.git@develop#egg=eulcm
-# dev bodatools for email objects
-#bodatools
--e git://github.com/emory-libraries/bodatools.git@develop#egg=bodatools
+-e git://github.com/emory-libraries/eulcm.git@4c97a98c79#egg=eulcm
+bodatools
