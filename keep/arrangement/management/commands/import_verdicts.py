@@ -418,5 +418,6 @@ class Command(BaseCommand):
                 print 'Error saving %s' % obj.pid
                 self.stats['save_error'] += 1
 
+            # FIXME: this prints *every row in email mode; should only print once at the end
             print 'Updated %(updated)d record(s); error saving %(save_error)d records' \
                       % self.stats
