@@ -8,7 +8,7 @@
  <script type="text/javascript">
     $(document).ready(function() {
       // move to the first non-hidden form element for user convenience
-       $('#collection-edit :input[type!="hidden"]:first').focus();       
+       $('#collection-edit :input[type!="hidden"]:first').focus();
     });
   </script>
 {% endblock %}
@@ -28,13 +28,13 @@
 {% if collection.pid %} {# when editing existing objects, link to raw datastreams #}
     <ul class='extra horiz'>
       {% if collection.audit_trail %}
-        <li><a href="{% url collection:history collection.pid %}">Event Log</a></li>
+        <li><a href="{% url 'collection:history' collection.pid %}">Event Log</a></li>
       {% endif %}
-        <li><a href="{% url collection:raw-ds collection.pid 'MODS' %}">MODS</a></li>
-        <li><a href="{% url collection:raw-ds collection.pid 'DC' %}">DC</a></li>
-        <li><a href="{% url collection:raw-ds collection.pid 'RELS-EXT' %}">RELS-EXT</a></li>
+        <li><a href="{% url 'collection:raw-ds' collection.pid 'MODS' %}">MODS</a></li>
+        <li><a href="{% url 'collection:raw-ds' collection.pid 'DC' %}">DC</a></li>
+        <li><a href="{% url 'collection:raw-ds' collection.pid 'RELS-EXT' %}">RELS-EXT</a></li>
       {% if collection.audit_trail %}
-        <li><a href="{% url collection:audit-trail collection.pid %}">XML Audit Trail</a></li>
+        <li><a href="{% url 'collection:audit-trail' collection.pid %}">XML Audit Trail</a></li>
       {% endif %}
     </ul>
 {% endif %}

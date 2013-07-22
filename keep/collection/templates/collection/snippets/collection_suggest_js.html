@@ -2,7 +2,7 @@
 {# Include this in a jquery ready block wherever CollectionSuggestionField is used #}
 {# NOTE: currently does not handle two suggestion fields on the same page #}
 $("input.collection-suggest").categorycomplete({
-  source: "{% url collection:suggest %}",
+  source: "{% url 'collection:suggest' %}",
   minLength: 1,  {# at least one required; setting low for short numeric ids #}
   focus: function(event, ui) {
     $("input.collection-suggest").val(ui.item.label);
@@ -12,8 +12,8 @@ $("input.collection-suggest").categorycomplete({
     // set the selected item value in the hidden input
     $(this).prev("input.collection-suggest-id").val(ui.item.value);
     console.log('setting id to ' + ui.item.value);
-        
-    // display selected item label in the autocomplete text input 
+
+    // display selected item label in the autocomplete text input
     $(this).val(ui.item.label);
     return false;
   },

@@ -11,7 +11,7 @@
             <ul>
             {% for subcoll in collection.list %}
             <li>{{ subcoll.source_id }}
-                <a href="{% url collection:edit subcoll.pid %}">
+                <a href="{% url 'collection:edit' subcoll.pid %}">
                     {{ subcoll.title|default:'(no title present)' }}</a>
                     {{ subcoll.name }}
                 </li>

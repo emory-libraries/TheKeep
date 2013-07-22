@@ -6,7 +6,7 @@
 {% block content-body %}
   {{ block.super }}
 <div id="advanced-search">
-<form method="get" action="{% url common:search %}">
+<form method="get" action="{% url 'common:search' %}">
   <table>
   {{ searchform.as_table}}
   </table>

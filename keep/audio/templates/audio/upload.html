@@ -5,8 +5,8 @@
 
 {% block scripts %}
   {{ block.super }} {# includes jquery  #}
-  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/md5.js"></script>
-  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery.md5dropuploader.js"></script>
+  <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}/js/md5.js"></script>
+  <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}/js/jquery.md5dropuploader.js"></script>
   <script type="text/javascript" charset="utf-8">
      $(document).ready(function () {
         // client-side form validation before submitting files
@@ -18,21 +18,21 @@
               // add an error message if invalid (but only add once)
               var error_list  = $('ul.errorlist');
               if (! error_list.find('#collection-err').length) {
-                var err = $('<li id="collection-err">Collection is required.  ' + 
+                var err = $('<li id="collection-err">Collection is required.  ' +
                   'Type to search and select a collection from the suggested values.</li>');
                 error_list.append(err);
                }
            }
            // store valid/invalid on form so md5 uploader can check
-           $(this).data('valid', valid); 
+           $(this).data('valid', valid);
            return valid;
         });
 
         $("#drop_target").md5DropUploader({
-            url : "{% url audio:upload %}",
+            url : "{% url 'audio:upload' %}",
            allowed_types : {{ js_allowed_types }},
         });
-        
+
      });
 
      {# collection autocomplete #}
@@ -42,7 +42,7 @@
 
 {% block style %}
     {{ block.super }}
-   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/audio-upload.css" />
+   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/audio-upload.css" />
 {% endblock %}
 
 {% block content-body %}
@@ -57,7 +57,7 @@
          <ul>
              {% for file in status.list %}
                 <li><b>{{ file.label }}</b>
-                    {% if file.pid %}<a href="{% url audio:edit file.pid %}">{{ file.pid }}</a>{% endif %}
+                    {% if file.pid %}<a href="{% url 'audio:edit' file.pid %}">{{ file.pid }}</a>{% endif %}
                     {% if file.message %}{{ file.message }} {% endif %}
                 </li>
              {% endfor %}
@@ -67,7 +67,7 @@
 <hr style="clear:none;"/>
 {% endif %} {# end displaying ingest results #}
 
-{% if form %} 
+{% if form %}
 {# by default, show not-supported instructions; md5uploader will toggle if supported #}
 <p class="instructions md5upload-not-supported">
   Your browser does <b>not</b> meet the requirements needed for batch upload with client-side
@@ -85,7 +85,7 @@
   </p>
 
 
-<form id="upload" enctype="multipart/form-data" method="post" action="{% url audio:upload %}">{% csrf_token %}
+<form id="upload" enctype="multipart/form-data" method="post" action="{% url 'audio:upload' %}">{% csrf_token %}
 
 <ul class='errorlist'></ul>
 
@@ -95,13 +95,13 @@
 {% endwith %}
 
  <div id="drop_target">
-   <p class='extra instructions'>Drag files here 
+   <p class='extra instructions'>Drag files here
 	OR upload a single file with the file input below.</p>
   {% with form.audio as field %} {# single-file upload (non HTML5 fall-back) #}
     {% include "snippets/form_field.html" %}
   {% endwith %}
 {#   {{ form.as_p }}  single-file upload (non HTML5 fall-back) #}
- </div> 
+ </div>
 
 {% with form.comment as field %}
   {% include "snippets/form_field.html" %}

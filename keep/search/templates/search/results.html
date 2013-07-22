@@ -1,11 +1,11 @@
 {% extends "site_base.html" %}
-{% load search_utils %} 
-{% load rights_extras %} 
-{% load humanize %} 
+{% load search_utils %}
+{% load rights_extras %}
+{% load humanize %}
 
 {% block style %}
     {{ block.super }}
-   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/search.css" />
+   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/search.css" />
 {% endblock %}
 
 {% block page-subtitle %}: Search Results{% endblock %}
@@ -67,7 +67,7 @@
         <div class="score" style="width:{% widthratio obj.score  1 100 %}px">&nbsp;</div>
         {# display numerical score in debug mode (e.g. to test index configuration) #}
         {% if debug %}{{ obj.score }}{% endif %}
-      </div>	
+      </div>
     {% endif %}
 
     {# render the appropriate list template based on object type #}
@@ -88,7 +88,7 @@
   </div>
   {% endfor %}
 
-  {% pagination_links page show_pages search_opts %} 
+  {% pagination_links page show_pages search_opts %}
 
   {% else %}
     <p>No matching items found.</p>

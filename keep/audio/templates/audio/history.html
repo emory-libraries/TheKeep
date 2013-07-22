@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 
 {% block page-subtitle %}: Audio : {{ obj.label }} : History{% endblock %}
-{% block content-title %}<a href="{% url audio:edit obj.pid %}">{{ obj.label }}</a>{% endblock %}
+{% block content-title %}<a href="{% url 'audio:edit' obj.pid %}">{{ obj.label }}</a>{% endblock %}
 
 {% block content-body %}
 {{ block.super }}

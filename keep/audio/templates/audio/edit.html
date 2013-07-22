@@ -34,7 +34,7 @@
         var token = $("#csrftoken input").attr("value");
         $.ajax({
             type:'POST',
-            url: "{% url audio:tasks pid=obj.pid %}",
+            url: "{% url 'audio:tasks' pid=obj.pid %}",
             data: {'task': 'generate access copy'},
             // headers: {'X-CSRFTOKEN': token},
             /* can't use headers because genlib site is still on jquery 1.3.1; requires > 1.5 */
@@ -71,7 +71,7 @@
   {% with 'download original audio' as original %}
     {% if obj.audio.exists %}
       <li>
-        <a href="{% url audio:download-audio obj.pid %}">{{ original }}</a>
+        <a href="{% url 'audio:download-audio' obj.pid %}">{{ original }}</a>
         {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
       </li>
     {% else %}
@@ -84,20 +84,20 @@
     {% endif %}
   {% endwith %}
   {% if obj.audit_trail %}
-    <li><a href="{% url audio:history obj.pid %}">Event Log</a></li>
+    <li><a href="{% url 'audio:history' obj.pid %}">Event Log</a></li>
   {% endif %}
-    <li><a href="{% url audio:raw-ds obj.pid 'MODS' %}">MODS</a></li>
-    <li><a href="{% url audio:raw-ds obj.pid 'DC' %}">DC</a></li>
-    <li><a href="{% url audio:raw-ds obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
-    <li><a href="{% url audio:raw-ds obj.pid 'SourceTech' %}">SourceTech</a></li>
-    <li><a href="{% url audio:raw-ds obj.pid 'DigitalTech' %}">DigitalTech</a></li>
-    <li><a href="{% url audio:raw-ds obj.pid 'Rights' %}">Rights</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'DC' %}">DC</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'SourceTech' %}">SourceTech</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
   {# not all objects will have JHOVE, but go ahead and provide access for those that do #}
   {% if obj.jhove.exists %}
-    <li><a href="{% url audio:raw-ds obj.pid 'JHOVE' %}">JHOVE</a></li>
+    <li><a href="{% url 'audio:raw-ds' obj.pid 'JHOVE' %}">JHOVE</a></li>
   {% endif %}
   {% if obj.audit_trail %}
-    <li><a href="{% url audio:audit-trail obj.pid %}">XML Audit Trail</a></li>
+    <li><a href="{% url 'audio:audit-trail' obj.pid %}">XML Audit Trail</a></li>
   {% endif %}
 </ul>
 {% with obj.conversion_result as conversion %}

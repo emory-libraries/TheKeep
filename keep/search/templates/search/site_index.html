@@ -4,10 +4,10 @@
 {% block content-title %}Welcome to the Keep.{% endblock %}
 
 {% block content-body %}
-<p><a href="{% url audio:upload %}">upload an audio file</a></p>
-<p><a href="{% url collection:new %}">create a new collection</a></p>
-<p><a href="{% url tasks:recent %}">status of recent audio conversions</a></p>
-<p><a href="{% url audio:feed-list %}">iTunes podcast feeds</a></p>
+<p><a href="{% url 'audio:upload' %}">upload an audio file</a></p>
+<p><a href="{% url 'collection:new' %}">create a new collection</a></p>
+{# <p><a href="{% url 'tasks:recent' %}">status of recent audio conversions</a></p> #}
+<p><a href="{% url 'audio:feed-list' %}">iTunes podcast feeds</a></p>
 
 
 <h3>View recently added items</h3>
@@ -17,7 +17,7 @@
 	<h4>By month</h4>
 	<ul>
 		{% for month, count in recent_months %}
-		<li><a href="{% url search:keyword %}?keyword=created:{{ month|date:'Y-m' }}"
+		<li><a href="{% url 'search:keyword' %}?keyword=created:{{ month|date:'Y-m' }}"
 			title="search for items added in {{ month|date:'F Y' }}">{{ month|date:'F Y' }}</a> ({{ count|intcomma }})</li>
 		{% endfor %}
 	</ul>
@@ -26,7 +26,7 @@
 	<h4>By day</h4>
 	<ul>
 		{% for day, count in recent_items %}
-		<li><a href="{% url search:keyword %}?keyword=created:{{ day|date:'Y-m-d' }}"
+		<li><a href="{% url 'search:keyword' %}?keyword=created:{{ day|date:'Y-m-d' }}"
 			title="search for all items added on {{ day }}">{{ day|naturalday }}</a> ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>
@@ -39,7 +39,7 @@
 	<h4>By collection</h4>
 	<ul>
 		{% for collection, count in recent_collections %}
-		<li><a href="{% url search:keyword %}?collection={{ collection }}"
+		<li><a href="{% url 'search:keyword' %}?collection={{ collection }}"
 			title="search for all items in {{ collection }} sorted by date added">{{ collection }}</a> ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>

@@ -3,13 +3,13 @@
 {% load audio_extras %}
 
 {% block item_title %}
-<p><a href="{% url audio:edit obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
+<p><a href="{% url 'audio:edit' obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
   {% if obj.part %} ({{ obj.part }}){% endif %}
   {% if obj.collection_id %}
     {% if 'info:fedora' in obj.collection_id %}
-      {% url collection:edit obj.collection_id|slice:'12:' as collection_url %}
+      {% url 'collection:edit' obj.collection_id|slice:'12:' as collection_url %}
     {% else %}
-      {% url collection:edit obj.collection_id as collection_url %}
+      {% url 'collection:edit' obj.collection_id as collection_url %}
     {% endif %}
     (part of <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>)
   {% endif %} </p>
@@ -19,15 +19,15 @@
 <ul class="horiz">
  {% if obj.duration %}<li>{{ obj.duration|seconds_duration }}</li>{% endif %}
   {% if obj.has_original %}
-     <li><a href="{% url audio:download-audio obj.pid %}">original audio</a></li>
+     <li><a href="{% url 'audio:download-audio' obj.pid %}">original audio</a></li>
   {% endif %}
   {% if obj.has_access_copy %}
     {% if obj.access_copy_mimetype == "audio/mp4" %}
-      {% url audio:download-compressed-audio obj.pid 'm4a' as access_url %}
+      {% url 'audio:download-compressed-audio' obj.pid 'm4a' as access_url %}
     {% else %} {# default to mp3 otherwise #}
-      {% url audio:download-compressed-audio obj.pid 'mp3' as access_url %}
+      {% url 'audio:download-compressed-audio' obj.pid 'mp3' as access_url %}
     {% endif %}
-    <li> 
+    <li>
       <a href="{{ access_url }}">access copy</a>
       {% if obj.access_copy_size %}({{ obj.access_copy_size|filesizeformat }}){% endif %}
       {# TODO: mimetype icon ? #}

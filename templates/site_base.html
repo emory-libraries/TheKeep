@@ -5,19 +5,19 @@
 {% block style %}
     {{ block.super }}
     {% comment %}Place Local changes, modifications and overrisdes in your local.css file.{% endcomment %}
-   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/local.css" />
-   <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}/style/smoothness/jquery-ui-1.8.19.custom.css" />
+   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/local.css" />
+   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/smoothness/jquery-ui-1.8.19.custom.css" />
 {% endblock %}
 
 {% block scripts %}
     {{ block.super }}
-    <script type="text/javascript" src="{{ MEDIA_URL }}/js/jquery-ui-1.8.19.custom.min.js"></script>
-    <script type="text/javascript" src="{{ MEDIA_URL }}/js/jquery.tooltips.js"></script>
-    <script type="text/javascript" src="{{ MEDIA_URL }}/js/local.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}/js/jquery-ui-1.8.19.custom.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}/js/jquery.tooltips.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}/js/local.js"></script>
     <script type ="text/javascript">
       $(document).ready(function () {
         $("#keyword-search input[name=keyword]").categorycomplete({
-          source: "{% url search:suggest %}",
+          source: "{% url 'search:suggest' %}",
           minLength: 0,
           });
         {# remove this when old search is removed from sidebar #}
@@ -46,7 +46,7 @@
 {% endblock %}
 
 {% block site-name %}
-<img id="keep-logo" src="{{ MEDIA_URL }}/images/keep.png" />
+<img id="keep-logo" src="{{ STATIC_URL }}/images/keep.png" />
 The Keep
 
 {% endblock %}
@@ -55,9 +55,9 @@ The Keep
 {% load eulcore_tags %}
 
 {% block navbar-items %}
-    <li><a href="{% url collection:browse %}">Collections</a></li>
+    <li><a href="{% url 'collection:browse' %}">Collections</a></li>
     {% if perms.common.arrangement_allowed %}
-         <li><a href="{% url collection:simple_browse %}">Simple Collections</a></li>
+         <li><a href="{% url 'collection:simple_browse' %}">Simple Collections</a></li>
     {% endif  %}
 {% endblock %}
 
@@ -65,7 +65,7 @@ The Keep
  {% if user.is_authenticated %}
    <div id="logged-in">
      <p>Welcome, {% firstof user.first_name user.username %}.
-        <a href="{% url accounts:logout %}">Logout</a></p>
+        <a href="{% url 'accounts:logout' %}">Logout</a></p>
    </div>
  {% endif %}
 
@@ -73,7 +73,7 @@ The Keep
  {% if user.is_authenticated and keyword_search %}
   <div id="keyword-search" class="search">
     <h2>Search</h2>
-    <form method="get" action="{% url search:keyword %}">
+    <form method="get" action="{% url 'search:keyword' %}">
       {{ keyword_search.keyword }}
       <input class="form-submit" type="submit" value="Go" />
       </form>
@@ -87,7 +87,7 @@ The Keep
 {% block sidebar-left %}
  {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
    <div class="note">
-     <h2>Note</h2> 
+     <h2>Note</h2>
 
      <p>The old item and collection search are being replaced by the
      new, combined search to the right.</p>

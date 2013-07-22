@@ -4,10 +4,10 @@
 <p>
   {# generate view url for email or mailbox objects #}
   {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
-    {% url arrangement:view obj.pid as view_url %}
+    {% url 'arrangement:view' obj.pid as view_url %}
   {% endif %}
   {# other objects do not yet have a view url; all arrangement objects use the same edit url #}
-  {% url arrangement:edit obj.pid as edit_url %}
+  {% url 'arrangement:edit' obj.pid as edit_url %}
 
   {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' not in obj.content_model %}
   {# do NOT display edit link for mailbox objects (not currently editable) #}
@@ -24,9 +24,9 @@
     (part of
      {% if obj.collection_id %}
        {% if 'info:fedora' in obj.collection_id %}  {# convert to pid if id is in URI format #}
-         {% url collection:edit obj.collection_id|slice:'12:' as collection_url %}
+         {% url 'collection:edit' obj.collection_id|slice:'12:' as collection_url %}
        {% else %}
-          {% url collection:edit obj.collection_id as collection_url %}
+          {% url 'collection:edit' obj.collection_id as collection_url %}
        {% endif %}
       <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>{% endif %}{% if obj.collection_id and obj.simpleCollection_id %}; {% endif %}
       {% if obj.simpleCollection_label %} {# FIXME: should probably link here, but simple collection is multiple #}

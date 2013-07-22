@@ -7,7 +7,7 @@
 <ul>
     {% for collection in objs %}
         <li>
-            <a href="{% url collection:simple_edit collection.pid %}">{{ collection.label|default:'(no title present)' }}</a>
+            <a href="{% url 'collection:simple_edit' collection.pid %}">{{ collection.label|default:'(no title present)' }}</a>
         </li>
     {% endfor %}
 

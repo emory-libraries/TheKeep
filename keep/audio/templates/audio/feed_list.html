@@ -8,7 +8,7 @@
 per feed.</p>
 <ul>
 {% for page in pages %}
-  <li><a href="{% url audio:podcast-feed page %}">{% url audio:podcast-feed page %}</a></li>
+  <li><a href="{% url 'audio:podcast-feed' page %}">{% url 'audio:podcast-feed' page %}</a></li>
 {% endfor %}
 </ul>
 {% endblock %}

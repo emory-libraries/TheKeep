@@ -1,6 +1,6 @@
 <div id="collection-search" class="search">
   <h2>Search Collections</h2>
-  <form action="{% url collection:search %}" method="get">
+  <form action="{% url 'collection:search' %}" method="get">
       {% with collection_search as form %}
         {% for field in collection_search %}
           {% include "snippets/form_field_with_tooltip.html" %}

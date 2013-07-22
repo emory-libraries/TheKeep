@@ -34,9 +34,9 @@ of {{ page.paginator.count|intcomma }}.</p>
       {# generate appropriate object url if possible, for either display mode #}
       {% if obj.pid %}
         {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
-          {% url audio:edit obj.pid as obj_url %}
+          {% url 'audio:edit' obj.pid as obj_url %}
         {% else %}
-          {% url arrangement:edit obj.pid as obj_url %}
+          {% url 'arrangement:edit' obj.pid as obj_url %}
         {% endif %}
       {% endif %}
 
@@ -61,15 +61,15 @@ of {{ page.paginator.count|intcomma }}.</p>
           {# # Show download links if it is an audio item  #}
           {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model  %}
               {% if obj.has_original %}
-                  <a href="{% url audio:download-audio obj.pid %}">original audio</a>
+                  <a href="{% url 'audio:download-audio' obj.pid %}">original audio</a>
               {% else %}
                   original audio
               {% endif %}
             |
               {% if obj.access_copy_mimetype == "audio/mp4" %}
-                <a href="{% url audio:download-compressed-audio obj.pid "m4a" %}">access copy</a>
+                <a href="{% url 'audio:download-compressed-audio' obj.pid "m4a" %}">access copy</a>
               {% else %}{% if obj.has_access_copy %}{# default to mp3 otherwise #}
-                <a href="{% url audio:download-compressed-audio obj.pid "mp3" %}">access copy</a>
+                <a href="{% url 'audio:download-compressed-audio' obj.pid "mp3" %}">access copy</a>
               {% else %}
                 access copy
               {% endif %}{% endif %}
@@ -104,7 +104,7 @@ of {{ page.paginator.count|intcomma }}.</p>
 {# re-display bound form so current search can be altered #}
 <h3><a id="search-toggle">Revise your search ></a></h3>
 <div id="advanced-search" {% if results %}style="display:none"{% endif %}>
-<form method="get" action="{% url common:search %}">
+<form method="get" action="{% url 'common:search' %}">
   <table>
   {{ searchform.as_table}}
   </table>

@@ -8,8 +8,8 @@
   {{ block.super }}
   {# includes jquery  #}
 
-  <link href="{{ MEDIA_URL }}/style/jquery-ui.css" rel="stylesheet" type="text/css"/>
-  <script type="text/javascript" charset="utf-8" src="{{ MEDIA_URL }}/js/jquery-ui.min.js"></script>
+  <link href="{{ STATIC_URL }}/style/jquery-ui.css" rel="stylesheet" type="text/css"/>
+  <script type="text/javascript" charset="utf-8" src="{{ STATIC_URL }}/js/jquery-ui.min.js"></script>
 
   <style>
 	.ui-autocomplete {
@@ -75,7 +75,7 @@
         else {
             series_value = $( "input.series1_storedtitle" ).val()
         }
-        
+
         if(series_value != ": ") {
             var matchFound = false;
             for(i=0;i<series_data.length;i++) {
@@ -147,7 +147,7 @@ function clearSeriesFields() {
           {% endwith %}
           </td>
           </tr>
-    <tr>    
+    <tr>
     </table>
 </div>
 
@@ -190,7 +190,7 @@ function clearSeriesFields() {
       <td></td>
       <td>
         {% if obj.pdf.exists %}
-          <a href="{% url arrangement:raw-ds obj.pid obj.pdf.id %}">{% firstof obj.pdf.label 'PDF' %}</a> 
+          <a href="{% url 'arrangement:raw-ds' obj.pid obj.pdf.id %}">{% firstof obj.pdf.label 'PDF' %}</a>
           ({{ obj.pdf.size|filesizeformat }}) added {{ obj.pdf.created }}
         {% else %}
           (no PDF)
