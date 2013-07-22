@@ -6,14 +6,8 @@ import os
 # Django sets too many absolute paths.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Absol
-# Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = os.path.join(BASE_DIR, '..', 'sitemedia')
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash if there is a path component (optional in other cases).
-# Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = '/static'
+# NOTE: user media unused in this site,
+# so MEDIA_ROOT and MEDIA_URL are not set
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -24,11 +18,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
-
-# URL prefix for admin static files -- CSS, JavaScript and images.
-# Make sure to use a trailing slash.
-# Examples: "http://foo.com/static/admin/", "/static/admin/".
-ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = [
@@ -65,6 +54,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.messages.context_processors.messages",
     # additional context processors
     "django.core.context_processors.request",  # always include request in render context
+    "django.core.context_processors.static",
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
