@@ -1139,9 +1139,11 @@ class TestSimpleCollectionForm(KeepTestCase):
 
         self.simple_collection_2 = FedoraFixtures.simple_collection(label='Test Simple Collection 2',
             status='Accessioned')
-        #add arrangements to collection
-        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_1.uriref))
-        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref, relsext.hasMember, self.arrangement_2.uriref))
+        # add arrangements to collection
+        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref,
+                                                       relsext.hasMember, self.arrangement_1.uriref))
+        self.simple_collection_2.rels_ext.content.add((self.simple_collection_2.uriref,
+                                                       relsext.hasMember, self.arrangement_2.uriref))
         self. simple_collection_2.save()
         self.pids.append(self.simple_collection_2.pid)
 
@@ -1163,21 +1165,26 @@ class TestSimpleCollectionForm(KeepTestCase):
         #Change all the associated object statuses to 'A'
         form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
 
-        (success, fail) = form.update_objects('Processed')
-        self.assertEqual(success, 2)
-        self.assertEqual(fail, 0)
+        status = 'Processed'
+        totals = form.update_objects(status)
+        self.assertEqual(2, totals['success'])
+        self.assertEqual(0, totals['error'])
+        arr1 = self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject)
+        self.assertEqual('Marking as %s via SimpleCollection %s' % (status, self.simple_collection_2.pid),
+                         arr1.audit_trail.records[-1].message,
+                         'audit trail message should indicate why status was changed')
+        self.assertEqual(arr1.state, 'A')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'A')
-        self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'A')
 
-        (success, fail) = form.update_objects('Accessioned')
-        self.assertEqual(success, 2)
-        self.assertEqual(fail, 0)
+        totals = form.update_objects('Accessioned')
+        self.assertEqual(2, totals['success'])
+        self.assertEqual(0, totals['error'])
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
 
         # when bad status is given, nothing should change
-        (success, fail) = form.update_objects('badstatus')
-        self.assertEqual(success, 0)
-        self.assertEqual(fail, 0)
+        totals = form.update_objects('badstatus')
+        self.assertEqual(0, totals['success'])
+        self.assertEqual(0, totals['error'])
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
