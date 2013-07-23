@@ -301,8 +301,15 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
-Release 1.5 (preliminary)
--------------------------
+Release 1.6
+-----------
+
+* Django settings have been updated to follow Django 1.5 conventions.
+  In particular, check ``localsettings.py.dist`` for changes to
+  **CACHES** and **LOGGING**.
+
+Release 1.5
+-----------
 
 * This update includes Solr index changes; update Solr with the latest
   ``schema.xml`` and reindex site content.

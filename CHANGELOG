@@ -3,8 +3,18 @@
 CHANGELOG
 =========
 
-Release 1.5 (preliminary)
--------------------------
+Release 1.6
+-----------
+
+* Updated to Django 1.5
+
+Release 1.5.1
+-------------
+
+* Added a new Codec Creator entry for audio
+
+Release 1.5
+-----------
 
 * A logged in user can see a checksum for binary file content on the record
   detail page (currently edit page), in order to verify file authenticity.
