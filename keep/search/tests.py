@@ -496,13 +496,13 @@ class SearchTemplatesTest(TestCase):
             'added_by': 'one'
         }
         response = render(self.rqst, self.search_results, ctx)
-        self.assertContains(response, 'user: ',
+        self.assertContains(response, 'user:',
             msg_prefix='search term field should be displayed on results page')
         self.assertContains(response, 'admin',
             msg_prefix='search term value should be displayed on results page')
         self.assertContains(response, 'sorted by relevance')
 
-        self.assertContains(response, 'added_by: ',
+        self.assertContains(response, 'added_by:',
             msg_prefix='search term field should be displayed on results page')
         self.assertContains(response, 'one',
             msg_prefix='search term value should be displayed on results page')
@@ -512,7 +512,7 @@ class SearchTemplatesTest(TestCase):
             'user': ['bob', 'jane'],
         }
         response = render(self.rqst, self.search_results, ctx)
-        self.assertContains(response, 'user: ', count=1,
+        self.assertContains(response, 'user:', count=1,
             msg_prefix='search term field should be displayed once on results page')
         self.assertContains(response, 'bob',
             msg_prefix='first search term value should be displayed on results page')

@@ -124,7 +124,7 @@ class TestMigrateRushdie(TestCase):
         self.cmd.stdout = sys.stdout
         self.cmd.CONTENT_MODELS = CONTENT_MODELS
         self.cmd.repo = self.repo
-        
+
     def tearDown(self):
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -194,9 +194,9 @@ class ArrangementViewsTest(KeepTestCase):
     fixtures =  ['users']
 
     client = Client()
-    
+
     def setUp(self):
-        super(ArrangementViewsTest, self).setUp()        
+        super(ArrangementViewsTest, self).setUp()
         self.pids = []
         # collection fixtures are not modified, but there is no clean way
         # to only load & purge once
@@ -240,8 +240,8 @@ class ArrangementViewsTest(KeepTestCase):
         filetech_2.modified = ''
         filetech_2.type = 'PDF'
         filetech_2.creator = 'pdf'
-        # FIXME: is filetech used in these tests at all? 
-      
+        # FIXME: is filetech used in these tests at all?
+
         self.rushdie_obj.filetech.content.file.append(filetech_1)
         self.rushdie_obj.filetech.content.file.append(filetech_2)
 
@@ -278,7 +278,7 @@ class ArrangementViewsTest(KeepTestCase):
         # purge any objects created by individual tests
         for pid in self.pids:
             self.repo.purge_object(pid)
-        
+
         self.repo.purge_object(self.rushdie.pid)
         self.repo.purge_object(self.esterbrook.pid)
         self.repo.purge_object(self.englishdocs.pid)
@@ -341,7 +341,7 @@ class ArrangementViewsTest(KeepTestCase):
                              % (expected, code, edit_url))
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], arrangementforms.ArrangementObjectEditForm))
-        
+
         # Check for filetech fields
         self.assertContains(response, self.rushdie_obj.filetech.content.file[0].md5)
         self.assertContains(response, self.rushdie_obj.filetech.content.file[0].local_id)
@@ -365,8 +365,9 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertContains(response, self.rushdie_obj.mods.content.series.series.title)
 
         # should display pdf file input for file object
-        self.assertContains(response, '<input type="file" name="pdf"',
-            msg_prefix='edit form should display PDF file input for file object')
+        self.assertContains(response, '<input id="id_pdf" type="file" name="pdf" />',
+            msg_prefix='edit form should display PDF file input for file object',
+            html=True)
         # should display info about current pdf
         self.assertContains(response, '(no PDF)',
             msg_prefix='edit form should indicate object does not currently have a PDF')
@@ -394,7 +395,7 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertEqual(data['comment'], obj.audit_trail.records[-1].message)
 
         # test uploading a PDF file
-        with open(pdf_filename) as pdf:            
+        with open(pdf_filename) as pdf:
             data = arrangement_data.copy()
             data['pdf'] = pdf
             response = self.client.post(edit_url, data)
@@ -419,18 +420,18 @@ class ArrangementViewsTest(KeepTestCase):
     def test_view(self, mockget_obj):
         # test generic view functionality (perms)
         mockget_obj.return_value = self.email
-        
+
         # non-authenticated user
         view_url = reverse('arrangement:view', kwargs={'pid': 'test:pid'})
 
         response = self.client.get(view_url)
-        self.assertEqual(302, response.status_code, 
+        self.assertEqual(302, response.status_code,
             'non-authenticated user should not have acccess to view arrangement items')
 
         # authenticated user (WITH arrangement perms)
         self.client.login(**ADMIN_CREDENTIALS)
         response = self.client.get(view_url)
-        self.assertEqual(200, response.status_code, 
+        self.assertEqual(200, response.status_code,
             'authenticated admin user can view arrangement item')
 
         # unsupported object type should 404
@@ -439,7 +440,7 @@ class ArrangementViewsTest(KeepTestCase):
         response = self.client.get(view_url)
         self.assertEqual(404, response.status_code,
             'unsupported object types should 404')
-        
+
 
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     def test_view_email(self, mockget_obj):
@@ -447,7 +448,7 @@ class ArrangementViewsTest(KeepTestCase):
         mockget_obj.return_value = self.email
 
         email_view_url = reverse('arrangement:view', kwargs={'pid': 'test:pid'})
-        
+
         # authenticated user
         self.client.login(**ADMIN_CREDENTIALS)
 
@@ -455,7 +456,7 @@ class ArrangementViewsTest(KeepTestCase):
         template_names = [t.name for t in response.templates]
         self.assert_('arrangement/email_view.html' in template_names,
             'email_view.html template should be used to render email message objects')
-        
+
         # check for email content values
         self.assertContains(response, 'Interesting Subject',
             msg_prefix='email view should include message subject')
@@ -491,7 +492,7 @@ class ArrangementViewsTest(KeepTestCase):
 
         self.assertNotContains(response, reverse('arrangement:edit', kwargs={'pid': 'mailbox:pid'}),
             msg_prefix='mailbox detail page should NOT link to arrangement edit page')
-        
+
 
 class ArrangementObjectTest(KeepTestCase):
 
@@ -545,7 +546,7 @@ class ArrangementObjectTest(KeepTestCase):
         obj.arrangement_status = 'processed'
         self.assertEqual('A', obj.state)
         self.assertEqual('processed', obj.arrangement_status)
-        
+
         obj.arrangement_status = 'accessioned'
         self.assertEqual('I', obj.state)
         self.assertEqual('accessioned', obj.arrangement_status)
@@ -563,7 +564,7 @@ class ArrangementObjectTest(KeepTestCase):
         obj = ArrangementObject(Mock())
         # no status set - should be set to restricted
         obj._update_access_cmodel()
-        
+
         self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
                      in obj.rels_ext.content)
         self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
@@ -572,9 +573,9 @@ class ArrangementObjectTest(KeepTestCase):
         # set to status code 2 = access allowed
         obj.rights.content.create_access_status()
         obj.rights.content.access_status.code = '2'
-        
+
         obj._update_access_cmodel()
-        
+
         self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_RESTRICTED_CMODEL))
                      not in obj.rels_ext.content)
         self.assert_((obj.uriref, modelns.hasModel, URIRef(ACCESS_ALLOWED_CMODEL))
@@ -646,13 +647,13 @@ class EmailMessageTest(KeepTestCase):
         self.assertEqual('Email from sender@sendmail.com to otherguy@friend.com et al. on Friday 13 200 13:00',
                          label,
                          'only show first to email address when there are more than one')
-        
+
         # object label already exists
         self.email.label = "label we want to keep"
         label = self.email.email_label()
         self.assertEqual(self.email.label, label, 'label should be preserved when it exists')
 
-        
+
 
     def test_index_data(self):
         # NOTE: logic for creating the label is in the label test
@@ -708,7 +709,7 @@ class EmailMessageTest(KeepTestCase):
         solr.query.assert_called_with(arrangement_id='<12345@message.com>',
                                       content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
         solr.query.return_value.field_limit.assert_called_with('pid')
-        
+
 
 
 #arrangementforms.ArrangementObjectEditForm))
@@ -737,4 +738,4 @@ class ArrangementObjectEditFormTest(TestCase):
         self.assertEqual(mock_upload.name, fileobj.pdf.label)
         self.assertEqual(mock_upload.content_type, fileobj.pdf.mimetype)
         self.assertEqual(mock_upload, fileobj.pdf.content)
-        
+
