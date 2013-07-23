@@ -76,7 +76,13 @@ PIDMAN_PASSWORD = 'examplepass'
 PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
 
 # django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
-CACHE_BACKEND = 'file:///tmp/euterpe_cache'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/var/tmp/keep_cache',
+    }
+}
+
 
 # for Developers only: to use sessions in runserver, uncomment this line (override configuration in settings.py)
 #SESSION_COOKIE_SECURE = False
