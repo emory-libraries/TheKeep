@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'keep.collection',
     'keep.common',
     'keep.search',
+    'keep.file',
     'djcelery',
 ]
 
