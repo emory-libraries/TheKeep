@@ -7,6 +7,11 @@ Release 1.6
 -----------
 
 * Updated to Django 1.5
+* Archivist can view status of process after changing the status of a
+  "simple collection" in the Keep, so they can tell whether or not all
+  items in the collection were updated.
+* bugfix: marking an object as processed via "simple collection" Keep
+  edit form will now leave an audit trail message
 
 Release 1.5.1
 -------------

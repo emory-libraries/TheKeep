@@ -308,6 +308,9 @@ Release 1.6
   In particular, check ``localsettings.py.dist`` for changes to
   **CACHES** and **LOGGING**.
 
+* Make sure to restart the celery daemon so that it will picks up the
+  new batch status update task.
+
 Release 1.5
 -----------
 
