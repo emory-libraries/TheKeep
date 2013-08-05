@@ -2,11 +2,13 @@ import logging
 from rdflib import RDF
 
 from django.conf import settings
+from django.db import models
 
 from eulexistdb.manager import Manager
 from eulexistdb.models import XmlModel
-from eulfedora.models import XmlDatastream, Relation
+from eulfedora.models import XmlDatastream, Relation, DigitalObject
 from eulfedora.util import RequestFailed
+from eulfedora.rdfns import relsext
 from eulcm.models.collection.v1_1 import Collection
 from eulcm.models.collection.v1_0 import Collection as Collectionv1_0
 from eulcm.xmlmap.mods import MODS
@@ -38,6 +40,7 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
     ``MODS``'''
 
     type = Relation(RDF.type)
+
 
     # override this function and add additional functionality
     def __init__(self, *args, **kwargs):
@@ -101,6 +104,25 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
         # - solr response is a list of dictionary with collection info
         # use dictsort and regroup in templates for sorting where appropriate
         return solrquery.paginate(start=0, rows=1000).execute()
+
+
+    @property
+    def total_members(self):
+           return len(self.member_pids)
+
+    @property
+    def member_pids(self):
+        return list(self.rels_ext.content.objects(self.uriref,
+                                                  relsext.hasMember))
+    @property
+    def members(self):
+        return [DigitalObject(self.api, pid=p) for p in self.member_pids]
+
+    @models.permalink
+    def get_absolute_url(self):
+        'Absolute url to view this object within the site'
+        return (self.NEW_OBJECT_VIEW, [str(self.pid)])
+
 
 
 class CollectionObject(Collection, ArkPidDigitalObject):
