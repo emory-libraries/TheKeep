@@ -23,6 +23,7 @@ from eulfedora.util import RequestFailed
 
 from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
 from keep.collection.models import CollectionObject, SimpleCollection
+from keep.collection.tasks import queue_batch_status_update
 from keep.common.fedora import Repository, history_view
 from keep.common.rdfns import REPO
 from keep.common.utils import solr_interface
@@ -240,41 +241,28 @@ def simple_edit(request, pid=None):
         obj = repo.get_object(pid=pid, type=SimpleCollection)
 
         if request.method == 'POST':
-            # Update SimpleCollection and associated arrangement objects
-            status = request.POST['mods-restrictions_on_access']
-            form = SimpleCollectionEditForm(instance=obj)
-            # pass in current repo connection to use logged-in user credentials
-            totals = form.update_objects(status, repo=repo)
+            form = SimpleCollectionEditForm(request.POST)
+            if form.is_valid():
+                status = form.cleaned_data['status']
 
-            # info dict for fedora log message & web messages
-            info = totals.copy()
-            info.update({
-                'success_plural': '' if info['success'] == 1 else 's',
-                'error_plural': '' if info['error'] == 1 else 's',
-                'status': status
-            })
 
-            # if all objects were  updated correctly, update collection
-            if totals['success'] >= 1 and totals['error'] == 0:
-                messages.success(request, "Successfully updated %(success)s item%(success_plural)s"
-                                 % info)
+                if status == obj.mods.content.restrictions_on_access.text:
+                    # don't queue job if there is no change
+                    messages.info(request, 'Status is unchanged')
 
-                # Update the SimpleCollection itself
-                obj.mods.content.create_restrictions_on_access()
-                obj.mods.content.restrictions_on_access.text = status  # Change collection status
-                saved = obj.save('Marking as %(status)s; updated %(success)s member item%(success_plural)s'
-                                 % info)
-                if not saved:
-                    err_msg = "Error updating SimpleCollection %s" % obj.pid
-                    messages.error(request, err_msg)
-                    logger.error(err_msg)
-            else:
-                messages.error(request, "Successfully updated %(success)s item%(success_plural)s; error updating %(error)s"
-                               % info)
+                else:
+                    # queue celery task to update items in this batch
+                    queue_batch_status_update(obj, status)
+                    messages.info(
+                        request,
+                        'Batch status update has been queued; ' +
+                        'please check later via <a href="%s">recent tasks</a> page' %
+                        reverse('tasks:recent')
+                    )
 
         else:
             #Just Display the form
-            form = SimpleCollectionEditForm(instance=obj)
+            form = SimpleCollectionEditForm(initial={'status': obj.mods.content.restrictions_on_access.text})
 
     except RequestFailed, e:
         # if there was a 404 accessing objects, raise http404
