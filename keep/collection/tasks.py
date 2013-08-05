@@ -25,8 +25,9 @@ def batch_set_status(pid, status):
 
     # target state for every object in the collection
     if status not in codes:
-        logger.error('status %s unknown' % status)
-        return 0
+        err_msg = 'Status %s unknown' % status
+        logger.error(err_msg)
+        raise Exception(err_msg)
     else:
         state = codes[status]
 
@@ -55,8 +56,8 @@ def batch_set_status(pid, status):
 
     summary_msg = "Successfully updated %(success)s item%(success_plural)s; error updating %(error)s" % info
 
-    # if not all objects were updated correctly, error
-    if not success >= 1 or error >= 0:
+    # if not all objects were updated correctly, exit with error
+    if error > 0:
         raise Exception(summary_msg)
 
     # FIXME: this is based on the current form logic, but could leave
