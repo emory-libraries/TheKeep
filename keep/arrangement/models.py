@@ -2,7 +2,7 @@ import logging
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from rdflib import URIRef
 
-from eulfedora.models import Relation
+from eulfedora.models import Relation, ReverseRelation
 from eulfedora.util import RequestFailed
 from eulfedora.rdfns import relsext, model as modelns
 from eulcm.models import boda
@@ -62,6 +62,10 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
     via `isMemberOfCollection` relation.
     '''
+
+    process_batch = ReverseRelation(relsext.hasMember, type=SimpleCollection)
+    # access to the processing batch aka simple collection this object
+    # is associated with; reverse because rel is stored on the simplecollection
 
     def save(self, logMessage=None):
         '''Save the object.  If the content of the rights datastream
@@ -364,7 +368,7 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         '''
         Static method to find an :class:`EmailMessage` by its
         message id. Wrapper around :meth:`EmailMessage.find_by_field`.
-        
+
         :param id: message id to search for
         '''
         return EmailMessage.find_by_field('arrangement_id', id, repo=repo)
