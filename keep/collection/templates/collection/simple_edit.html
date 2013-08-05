@@ -1,4 +1,5 @@
 {% extends "site_base.html" %}
+{% load humanize %}
 
 {% block page-subtitle %}: Simple Collection : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Simple Collection{% endblock %}
@@ -7,6 +8,10 @@
 {% block content-body %}
 {{ block.super }}
 <h2>{{ obj.label }}</h2>
+
+{% with obj.total_members as total %}
+<p>{{ total|intcomma }} item{{ total|pluralize }} in this collection</p>
+{% endwith %}
 
 <div class="instructions">
     <h2>Instructions for using this form</h2>
@@ -19,11 +24,10 @@
 <form method="post" name="edit_form">{% csrf_token %}
 
 
-
 <div id="status">
-    {{ form.mods.non_field_errors }}
+    {{ form.non_field_errors }}
     <table class="edit-form">
-        {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+        {% for field in form %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
     </table>
 
 </div>
@@ -31,4 +35,5 @@
 <input class="form-submit" type="submit" name="_save" value="Save"/>
 </form>
 </div>
+
 {% endblock %}
