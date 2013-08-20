@@ -4,7 +4,7 @@
 {% block content-title %}Welcome to the Keep.{% endblock %}
 
 {% block content-body %}
-<p><a href="{% url 'audio:upload' %}">upload an audio file</a></p>
+<p><a href="{% url 'file:upload' %}">upload a file</a></p>
 <p><a href="{% url 'collection:new' %}">create a new collection</a></p>
 <p><a href="{% url 'tasks:recent' %}">status of recent tasks (audio conversions, batch status update)</a></p>
 <p><a href="{% url 'audio:feed-list' %}">iTunes podcast feeds</a></p>

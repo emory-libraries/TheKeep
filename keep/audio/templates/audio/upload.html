@@ -29,7 +29,7 @@
         });
 
         $("#drop_target").md5DropUploader({
-            url : "{% url 'audio:upload' %}",
+            url : "{% url 'file:upload' %}",
            allowed_types : {{ js_allowed_types }},
         });
 
@@ -85,7 +85,7 @@
   </p>
 
 
-<form id="upload" enctype="multipart/form-data" method="post" action="{% url 'audio:upload' %}">{% csrf_token %}
+<form id="upload" enctype="multipart/form-data" method="post" action="{% url 'file:upload' %}">{% csrf_token %}
 
 <ul class='errorlist'></ul>
 

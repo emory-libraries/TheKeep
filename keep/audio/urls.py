@@ -4,7 +4,6 @@ from keep.audio import views
 
 urlpatterns = patterns('',
     url(r'^(?P<pid>[^/]+)/tasks/$', views.tasks, name='tasks'),
-    url(r'^upload/$', views.upload, name='upload'),
     url(r'^feeds/$', views.feed_list, name='feed-list'),
     url(r'^feeds/(?P<page>[0-9]+)/$', PodcastFeed(), name='podcast-feed'),
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),
