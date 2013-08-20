@@ -33,7 +33,6 @@ logger = logging.getLogger(__name__)
 allowed_upload_types = ['audio/x-wav', 'audio/wav', '']
 
 @permission_required_with_ajax('common.marbl_allowed')
-@csrf_exempt
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.
@@ -184,7 +183,6 @@ def upload(request):
 
 
 @permission_required_with_ajax('common.marbl_allowed')
-@csrf_exempt  # TODO: should pass CSRF token instead
 def ajax_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging
     directory for subsequent ingest into the repository.  The request must

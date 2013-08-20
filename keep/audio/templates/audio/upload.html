@@ -31,6 +31,7 @@
         $("#drop_target").md5DropUploader({
             url : "{% url 'file:upload' %}",
            allowed_types : {{ js_allowed_types }},
+           csrf_token: $('input[name="csrfmiddlewaretoken"]').val(),
         });
 
      });
