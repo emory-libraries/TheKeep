@@ -3,7 +3,7 @@ from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.rdfns import relsext
 from eulxml.xmlmap import mods
 
-from keep.common.fedora import DigitalObject, Repository, LocalMODS
+from keep.common.fedora import DigitalObject, LocalMODS
 from keep.collection.models import CollectionObject
 
 
