@@ -1,7 +1,7 @@
 {% extends "site_base.html" %}
 
-{% block page-subtitle %}: Audio : Upload{% endblock %}
-{% block content-title %}Upload audio files.{% endblock %}
+{% block page-subtitle %}: File : Upload{% endblock %}
+{% block content-title %}Upload files for ingest into the repository.{% endblock %}
 
 {% block scripts %}
   {{ block.super }} {# includes jquery  #}
@@ -98,10 +98,9 @@
  <div id="drop_target">
    <p class='extra instructions'>Drag files here
 	OR upload a single file with the file input below.</p>
-  {% with form.audio as field %} {# single-file upload (non HTML5 fall-back) #}
+  {% with form.file as field %} {# single-file upload (non HTML5 fall-back) #}
     {% include "snippets/form_field.html" %}
   {% endwith %}
-{#   {{ form.as_p }}  single-file upload (non HTML5 fall-back) #}
  </div>
 
 {% with form.comment as field %}
