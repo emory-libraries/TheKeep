@@ -99,7 +99,7 @@ def upload(request):
     ctx_dict['form'] = UploadForm()
     # convert list of allowed types for passing to javascript
 
-    return render(request, 'audio/upload.html', ctx_dict)
+    return render(request, 'file/upload.html', ctx_dict)
     # NOTE: previously, this view set the response status code to the
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
