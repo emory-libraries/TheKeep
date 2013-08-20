@@ -192,8 +192,10 @@ def ingest_files(files, collection, comment, request):
                               'url': obj.get_absolute_url(),
                               'checksum': md5})
 
-            # Start asynchronous task to convert audio for access
-            queue_access_copy(obj, use_wav=filename, remove_wav=True)
+            # if audio, needs an additional step:
+            if objtype == AudioObject:
+                # Start asynchronous task to convert audio for access
+                queue_access_copy(obj, use_wav=filename, remove_wav=True)
 
             # NOTE: could remove MD5 file (if any) here, but MD5 files
             # should be small and will get cleaned up by the cron script

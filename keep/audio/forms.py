@@ -11,6 +11,7 @@ from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
+from keep.collection.models import CollectionObject
 from keep.collection.forms import NameForm, CollectionSuggestionField
 from keep.common.models import rights_access_terms_dict
 from keep.common.forms import ReadonlyTextInput, rights_access_options, \
