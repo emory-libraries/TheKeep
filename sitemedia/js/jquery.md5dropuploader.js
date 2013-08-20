@@ -16,6 +16,9 @@ To avoid having to make your upload views csrf exempt, you
 should specify a csrf token.  E.g., include the token on the template using
 {% csrf_token %} and then pass via $('input[name="csrfmiddlewaretoken"]').val().
 
+NOTE: according to Django docs it would be better to use the csrf cookie here;
+see https://docs.djangoproject.com/en/1.5/ref/contrib/csrf/#ajax
+
 When files are dropped on the specified element, files will be checked to
 see if they are in the list of allowed types (when specified), an MD5 checksum
 will be calculated on the client side, and then the file will be posted
