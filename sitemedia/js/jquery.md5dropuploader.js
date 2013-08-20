@@ -344,7 +344,6 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         xhr.open('POST', $this.data('md5DropUploader').url, true);
         if ($this.data('md5DropUploader').csrf_token !== null) {
             xhr.setRequestHeader('X-CSRFToken', $this.data('md5DropUploader').csrf_token);
-            console.log('using csrf token' + $this.data('md5DropUploader').csrf_token);
         }
 
         // set header so django will recognize as ajax, and can optionally
