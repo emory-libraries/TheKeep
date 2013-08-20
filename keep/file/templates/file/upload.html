@@ -60,6 +60,9 @@
                 <li><b>{{ file.label }}</b>
                     {% if file.pid and file.url %}<a href="{{ file.url }}">{{ file.pid }}</a>{% endif %}
                     {% if file.message %}{{ file.message }} {% endif %}
+                    {% if file.checksum %}
+                    <br/>MD5: {{ file.checksum }}
+                    {% endif %}
                 </li>
              {% endfor %}
          </ul>

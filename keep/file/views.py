@@ -189,7 +189,8 @@ def ingest_files(files, collection, comment, request):
             # audit trail entry for object creation, which doesn't happen otherwise
             obj.save(comment)
             file_info.update({'success': True, 'pid': obj.pid,
-                              'url': obj.get_absolute_url()})
+                              'url': obj.get_absolute_url(),
+                              'checksum': md5})
 
             # Start asynchronous task to convert audio for access
             queue_access_copy(obj, use_wav=filename, remove_wav=True)
