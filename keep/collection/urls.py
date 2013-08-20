@@ -1,11 +1,11 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url
 from keep.collection import views
 
 urlpatterns = patterns('',
     url(r'^$', views.browse, name='browse'),
     url(r'^new/$', views.edit, name='new'),
     url(r'^search/$', views.search, name='search'),
-    url(r'^suggest/$', views.collection_suggest, name='suggest'),                       
+    url(r'^suggest/$', views.collection_suggest, name='suggest'),
     url(r'^simple/$', views.simple_browse, name='simple_browse'),
     url(r'^simple/(?P<pid>[^/]+)/edit/$', views.simple_edit, name='simple_edit'),
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),

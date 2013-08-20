@@ -1,5 +1,4 @@
-from django.conf import settings
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url, include
 from django.contrib import admin
 
 #Importing this object is a work-around because eulfedora

@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url
 
 urlpatterns = patterns('keep.search.views',
     url(r'^$', 'keyword_search', name='keyword'),
