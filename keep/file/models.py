@@ -1,9 +1,12 @@
+import os
+
+from django.db import models
 from eulcm.xmlmap.boda import Rights
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.rdfns import relsext
 from eulxml.xmlmap import mods
 
-from keep.common.fedora import DigitalObject, LocalMODS
+from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.collection.models import CollectionObject
 
 
@@ -26,8 +29,14 @@ class DiskImage(DigitalObject):
 
     DISKIMAGE_CONTENT_MODEL = 'info:fedora/emory-control:DiskImage-1.0'
     CONTENT_MODELS = [DISKIMAGE_CONTENT_MODEL]
-    # TODO:
-    # NEW_OBJECT_VIEW = 'audio:view'
+    NEW_OBJECT_VIEW = 'file:view'
+
+    allowed_mimetypes = ['', 'application/octet-stream']
+    # once magic files are fixed, should be:
+    # application/x-aff, application/x-ad1
+    # NOTE: '' required for javascript, because browser does not detect
+    # any mimetype at all
+
 
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
     ''':class:`~keep.collection.models.CollectionObject that this object belongs to,
@@ -66,4 +75,44 @@ class DiskImage(DigitalObject):
     #     'Rights': 'rights metadata',
     #     'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
     # }
+
+    @staticmethod
+    def init_from_file(filename, initial_label=None, request=None, checksum=None):
+        '''Static method to create a new :class:`DiskImage` instance from
+        a file.  Sets the object label and metadata title based on the initial
+        label specified, or file basename.
+
+        :param filename: full path to the disk image file, as a string
+        :param initial_label: optional initial label to use; if not specified,
+            the base name of the specified file will be used
+        :param request: :class:`django.http.HttpRequest` passed into a view method;
+            must be passed in order to connect to Fedora as the currently-logged
+            in user
+        :param checksum: the checksum of the file being sent to fedora.
+        :returns: :class:`DiskImage` initialized from the file
+        '''
+        if initial_label is None:
+            initial_label, ext = os.path.splitext(os.path.basename(filename))
+
+        repo = Repository(request=request)
+        obj = repo.get_object(type=DiskImage)
+        # set initial object label from the base filename
+        obj.label = initial_label
+        obj.dc.content.title = obj.label
+        obj.content.content = open(filename)  # FIXME: at what point does/should this get closed?
+        # Set the file checksum
+        obj.content.checksum = checksum
+        # Set disk image datastream label to filename
+        obj.content.label = initial_label
+
+        # descriptive/technical metadata todo
+
+        return obj
+
+    @models.permalink
+    def get_absolute_url(self):
+        'Absolute url to view this object within the site'
+        return (DiskImage.NEW_OBJECT_VIEW, [str(self.pid)])
+
+
 

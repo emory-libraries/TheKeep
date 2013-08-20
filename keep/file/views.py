@@ -7,31 +7,42 @@ import time
 import traceback
 
 from django.conf import settings
-from django.http import HttpResponse, Http404, HttpResponseForbidden, \
-    HttpResponseBadRequest
+from django.contrib.auth.decorators import permission_required
+from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
 from django.utils.safestring import mark_safe
 
-from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect, \
-    HttpResponseUnsupportedMediaType
+
+from eulcommon.djangoextras.http import HttpResponseUnsupportedMediaType
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
-from eulfedora.util import RequestFailed, PermissionDenied
+from eulfedora.util import RequestFailed
+from eulfedora.views import raw_datastream, raw_audit_trail
 
 
 from keep.audio.models import AudioObject
 from keep.audio.tasks import queue_access_copy
 from keep.collection.models import CollectionObject
-from keep.common.fedora import Repository
+from keep.common.fedora import Repository, TypeInferringRepository, history_view
 from keep.file.forms import UploadForm
+from keep.file.models import DiskImage
 from keep.file.utils import md5sum, dump_post_data
 
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: generate list from supported upload objects
-allowed_upload_types = ['audio/x-wav', 'audio/wav', '']
+uploadable_objects = [AudioObject, DiskImage]
+# TODO: document requirements for repo objects to be included here
+# - list of allowed mimetypes
+# - static class method to init from file
+
+
+# generate list of allowed upload mimetypes based on objects we support
+allowed_upload_types = []
+for a in uploadable_objects:
+    allowed_upload_types.extend(a.allowed_mimetypes)
+
+
 
 @permission_required_with_ajax('common.marbl_allowed')
 def upload(request):
@@ -49,6 +60,7 @@ def upload(request):
     javascript code.
     '''
     repo = Repository()
+
 
     ctx_dict = {
         # list of allowed file types, in a format suited for passing to javascript
@@ -72,13 +84,13 @@ def upload(request):
             # form with any error messages.
             if not form.is_valid():
                 ctx_dict['form'] = form
-                return render(request, 'audio/upload.html', ctx_dict)
+                return render(request, 'file/upload.html', ctx_dict)
 
             # Form is valid. Get collection & check for optional comment
             collection = repo.get_object(pid=form.cleaned_data['collection'],
                                          type=CollectionObject)
             # get user comment if any; default to a generic ingest comment
-            comment = form.cleaned_data['comment'] or 'ingesting audio'
+            comment = form.cleaned_data['comment'] or 'initial repository ingest'
             # get dictionary of file path -> filename, based on form data
             files_to_ingest = form.files_to_ingest()
 
@@ -158,10 +170,16 @@ def ingest_files(files, collection, comment, request):
         else:
             md5 = md5sum(filename)
 
-        # initialize a new audio object from the file
-        obj = AudioObject.init_from_file(filename,
-                                         initial_label=label, request=request,
-                                         checksum=md5)
+        # determine what type of object to initialize based on mimetype
+        objtype = None
+        for t in uploadable_objects:
+            if type in t.allowed_mimetypes:
+                objtype = t
+                break
+
+        # initialize a new object from the file
+        obj = objtype.init_from_file(filename, initial_label=label,
+                                     request=request, checksum=md5)
 
         # set collection on ingest
         obj.collection = collection
@@ -170,7 +188,9 @@ def ingest_files(files, collection, comment, request):
             # NOTE: by sending a log message, we force Fedora to store an
             # audit trail entry for object creation, which doesn't happen otherwise
             obj.save(comment)
-            file_info.update({'success': True, 'pid': obj.pid})
+            file_info.update({'success': True, 'pid': obj.pid,
+                              'url': obj.get_absolute_url()})
+
             # Start asynchronous task to convert audio for access
             queue_access_copy(obj, use_wav=filename, remove_wav=True)
 
@@ -199,8 +219,6 @@ def ingest_files(files, collection, comment, request):
             results.append(file_info)
 
     return results
-
-
 
 
 
@@ -316,5 +334,56 @@ def ajax_upload(request):
 
     # success: return the name of the staging file to be used for ingest
     return HttpResponse(ingest_file, content_type='text/plain')
+
+
+@permission_required("common.marbl_allowed")
+def view(request, pid):
+    '''View a single repository item.
+
+    Currently has bare minimum implementation to support ingesting
+    :class:`~keep.file.models.DiskImage` content (new object url is required).
+    '''
+    # repo = TypeInferringRepository(request=request)
+    repo = Repository(request=request)
+    obj = repo.get_object(pid)
+    if not obj.exists:
+        raise Http404
+
+    # this view isn't implemented yet, but we want to be able to use the
+    # uri. so if someone requests the uri, send them straight to the edit
+    # page for now.
+    return render(request, 'file/view.html', {'obj': obj})
+
+
+### FIXME: these views are currently redundant; consolidate all and make the
+# file versions the common ones?
+
+@permission_required("common.arrangement_allowed")
+def view_datastream(request, pid, dsid):
+    'Access raw object datastreams'
+    # initialize local repo with logged-in user credentials & call generic view
+    # use type-inferring repo to pick up rushdie file or generic arrangement
+    response = raw_datastream(request, pid, dsid,
+                          repo=TypeInferringRepository(request=request))
+
+    # work-around for email MIME data : display as plain text so it
+    # can be viewed in the browser
+    if response['Content-Type'] == 'message/rfc822':
+        response['Content-Type'] = 'text/plain'
+    return response
+
+
+@permission_required("common.arrangement_allowed")
+def view_audit_trail(request, pid):
+    'Access XML audit trail'
+    # initialize local repo with logged-in user credentials & call eulfedora view
+    # type shouldn't matter for audit trail
+    return raw_audit_trail(request, pid, repo=Repository(request=request))
+
+
+@permission_required("common.arrangement_allowed")
+def history(request, pid):
+    'Display human-readable audit trail information.'
+    return history_view(request, pid, template_name='arrangement/history.html')
 
 

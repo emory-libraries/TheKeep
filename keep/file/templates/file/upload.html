@@ -58,7 +58,7 @@
          <ul>
              {% for file in status.list %}
                 <li><b>{{ file.label }}</b>
-                    {% if file.pid %}<a href="{% url 'audio:edit' file.pid %}">{{ file.pid }}</a>{% endif %}
+                    {% if file.pid and file.url %}<a href="{{ file.url }}">{{ file.pid }}</a>{% endif %}
                     {% if file.message %}{{ file.message }} {% endif %}
                 </li>
              {% endfor %}

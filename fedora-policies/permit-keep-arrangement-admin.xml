@@ -49,6 +49,20 @@
               DataType="&xsd;string" MustBePresent="false"/>
         </ResourceMatch>
       </Resource>
+
+      <Resource>
+        <ResourceMatch MatchId="&function;string-equal">
+          <AttributeValue DataType="&xsd;string">&control;DiskImage-1.0</AttributeValue>
+          <ResourceAttributeDesignator AttributeId="&model;hasModel"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+        <ResourceMatch MatchId="&function;string-equal">
+            <AttributeValue DataType="&xsd;string">thekeep-project</AttributeValue>
+            <ResourceAttributeDesignator AttributeId="&object;owner"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+      </Resource>
+
     </Resources>
 
     <Actions>
@@ -58,7 +72,7 @@
 
   <Rule RuleId="arrangement-admins" Effect="Permit">
     <Condition FunctionId="&function;and">
-      
+
       <!-- only api-a or limited api-m -->
       <Apply FunctionId="&function;or">
 

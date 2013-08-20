@@ -284,6 +284,8 @@ class AudioObject(DigitalObject):
     CONTENT_MODELS = [AUDIO_CONTENT_MODEL]
     NEW_OBJECT_VIEW = 'audio:view'
 
+    allowed_mimetypes = ['audio/x-wav', 'audio/wav']
+
     mods = XmlDatastream("MODS", "MODS Metadata", AudioMods, defaults={
             'control_group': 'M',
             'format': mods.MODS_NAMESPACE,

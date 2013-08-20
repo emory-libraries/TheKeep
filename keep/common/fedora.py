@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.encoding import iri_to_uri
@@ -49,9 +50,9 @@ class AuditTrailEvent(object):
 
     :param record: optional :class:`~eulfedora.xml.AuditTrailRecord`,
       used to initialize values
-      
+
     :param component_key: optional dictionary of human-readable names
-      keyed on datastream ID (or 
+      keyed on datastream ID (or
       :attr:`~eulfedora.xml.AuditTrailRecord.component` in the audit trail)
     '''
 
@@ -65,7 +66,7 @@ class AuditTrailEvent(object):
     'log message associated with all API calls in this event'
     actions = set()
     'uniqe set of all API actions included in this event'
-    
+
     def __init__(self, record=None, component_key=None):
         self.components = []
         self.actions = set()
@@ -76,12 +77,12 @@ class AuditTrailEvent(object):
             if record.component:
                 self.components = [record.component]
             self.actions = set([record.action])
-            
+
         self.component_key = component_key
 
     def add_record(self, record):
         '''Add another :class:`~eulfedora.xml.AuditTrailRecord` to
-        this events (updates actions and components as appropriate). 
+        this events (updates actions and components as appropriate).
 
         :param record: :class:`~eulfedora.xml.AuditTrailRecord`
         '''
@@ -90,7 +91,7 @@ class AuditTrailEvent(object):
         # component could be empty for non-datastream based actions
         if record.component:
             self.components.append(record.component)
-        
+
     def component_names(self):
         '''Return a list of human-readable names for the components
         modified by this event; requires component_key to be set when
@@ -99,7 +100,7 @@ class AuditTrailEvent(object):
         if self.component_key:
             return set([self.component_key[c] for c in self.components
                         if c in self.component_key])
-    
+
     def user_name(self):
         '''Return the full name for the user responsible for this
         event, via :meth:`user_full_name`.
@@ -115,7 +116,7 @@ class AuditTrailEvent(object):
             return 'edit'
         elif self.actions:
             return list(self.actions)[0]
-            
+
 
 class ArkPidDigitalObject(models.DigitalObject):
     """Extend the default fedora DigitalObject class. Objects derived from
@@ -161,7 +162,7 @@ class ArkPidDigitalObject(models.DigitalObject):
         if hasattr(self, 'mods') and \
             hasattr(self.mods.content, 'ark'):
             return self.mods.content.ark
-        
+
         # otherwise, calculate based on ark_access_uri
         if self.ark_access_uri is not None:
             idx = self.ark_access_uri.find('ark:')
@@ -216,7 +217,7 @@ class ArkPidDigitalObject(models.DigitalObject):
         metadata (if available) or Dublin Core, and use the noid
         portion of the ARK for a Fedora pid in the site-configured
         Fedora pidspace.'''
-        
+
         if pidman is not None:
             # pidman wants a target for the new pid
             '''Get a pidman-ready target for a named view.'''
@@ -248,7 +249,7 @@ class ArkPidDigitalObject(models.DigitalObject):
             else:
                 # otherwise, add full uri ARK to dc:identifier
                 self.dc.content.identifier_list.append(ark)
-            
+
             # use the noid to construct a pid in the configured pidspace
             return '%s:%s' % (self.default_pidspace, noid)
         else:
@@ -282,7 +283,7 @@ class ArkPidDigitalObject(models.DigitalObject):
 
         :returns: list of :class:`AuditTrailEvent`
         '''
-        
+
         events = []
         if self.audit_trail:
             current = None
@@ -298,7 +299,7 @@ class ArkPidDigitalObject(models.DigitalObject):
                        or r.component in current.components \
                        or (r.date - current.date) > timedelta(seconds=6):
                         # add the event to the list - complete;
-                        events.append(current) 
+                        events.append(current)
                         current = None  # trigger to start a new event
                     else:
                         # add to the current event
@@ -310,9 +311,9 @@ class ArkPidDigitalObject(models.DigitalObject):
 
             # add the last event to the list
             events.append(current)
-            
+
         return events
-    
+
 
 def user_full_name(username):
     # get full name if possible from username
@@ -321,16 +322,16 @@ def user_full_name(username):
         u = User.objects.get(username=username)
         try:
             name = u.get_profile().get_full_name()
-        except ObjectDoesNotExist:            
+        except ObjectDoesNotExist:
             name = u.get_full_name()
     except ObjectDoesNotExist:
         pass
 
     if not name:
         name = username
-        
+
     return name
-    
+
 
 class Repository(server.Repository):
     """Extend the Django-ized Fedora Repository object to take a request object
@@ -341,9 +342,9 @@ class Repository(server.Repository):
 
     default_object_type = ArkPidDigitalObject
 
-    def __init__(self, username=None, password=None, request=None):        
+    def __init__(self, username=None, password=None, request=None):
         if request is not None and request.user.is_authenticated() and \
-            'fedora_password' in request.session:            
+            'fedora_password' in request.session:
                 username = request.user.username
                 password = decrypt(request.session['fedora_password'])
         super(Repository, self).__init__(username=username, password=password)
@@ -373,7 +374,7 @@ def history_view(request, pid, type=ArkPidDigitalObject,
     :param template_name: optional template to use when rendering this
 	view
     '''
-    
+
     repo = Repository(request=request)
     obj = repo.get_object(pid, type=type)
     try:
@@ -388,7 +389,7 @@ def history_view(request, pid, type=ArkPidDigitalObject,
         # where the datastream does not exist, object does not exist, or user
         # does not have permission to access the datastream
 
-        # check that the object exists - if not, 404        
+        # check that the object exists - if not, 404
         if not obj.exists:
             raise Http404
         # for now, assuming that if object exists and has correct content models,
@@ -401,7 +402,7 @@ def history_view(request, pid, type=ArkPidDigitalObject,
         # if fedora actually returned a 404, propagate it
         if rf.code == 404:
             raise Http404
-        
+
         msg = 'There was an error contacting the digital repository. ' + \
               'This prevented us from accessing data. If this ' + \
               'problem persists, please alert the repository ' + \
