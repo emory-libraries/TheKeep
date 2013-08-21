@@ -1,0 +1,7 @@
+# Advanced Forensics Format (AFF)
+0       string          AFF10\x0d\x0a\x00       Advanced Forensics Format (AFF)
+!:mime  application/x-aff
+
+# AccessData proprietary forensics file format
+0       string          ADSEGMENTEDFILE\x00     AccessData Segmented File (AD1)
+!:mime  application/x-ad1
