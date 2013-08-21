@@ -98,6 +98,7 @@ def upload(request):
             # process all files submitted for ingest (single or batch mode)
             if files_to_ingest:
                 results = ingest_files(files_to_ingest, collection, comment, request)
+                print 'ingest results = ', results
 
                 # add per-file ingest result status to template context
                 ctx_dict['ingest_results'] = results
@@ -154,11 +155,13 @@ def ingest_files(files, collection, comment, request):
             file_info.update({'success': False,
                               'message': '''File type '%s' is not allowed''' % type})
             # if not an allowed type, no further processing
+            results.append(file_info)
             continue
 
         if collection is None:
             file_info.update({'success': False,
                               'message': '''Collection not selected'''})
+            results.append(file_info)
             continue
 
         # if there is an MD5 file (i.e., file was uploaded via ajax),
