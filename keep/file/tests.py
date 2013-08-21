@@ -196,6 +196,10 @@ class FileViewsTest(KeepTestCase):
             'success should be True in result for successful ingest')
         self.assertNotEqual(None, result['pid'],
             'pid should be set in result on success')
+        self.assertEqual(wav_md5, result['checksum'],
+                        'checksum should be included in result info')
+        self.assertContains(response, wav_md5,
+            msg_prefix='checksum should be reported on ingest results page')
         # add pid to be removed in tearDown
         self.pids.append(result['pid'])
 
@@ -223,6 +227,7 @@ class FileViewsTest(KeepTestCase):
         copyfile(wav_filename, upload_filepath)     # re-copy file, now that is removed after ingest
         with open(upload_filepath + '.md5', 'w') as md5file:
             md5file.write('bogus md5 checksum')
+
         response = self.client.post(upload_url, upload_opts)
         self.assert_('ingest_results' in response.context,
                      'response context should include a list of ingest results')
@@ -299,8 +304,9 @@ class FileViewsTest(KeepTestCase):
 
             #upload same file but add a comment
         with open(wav_filename) as wav:
-            response = self.client.post(upload_url, {'file': wav, 'comment': "This is comment for the audit trail",
-                                                     'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+            response = self.client.post(upload_url, {
+                'file': wav, 'comment': "This is comment for the audit trail",
+                'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
             result = response.context['ingest_results'][0]
             self.assertTrue(result['success'], 'success should be true for uploaded WAV')
             self.assertNotEqual(None, result['pid'],
@@ -314,7 +320,7 @@ class FileViewsTest(KeepTestCase):
             self.assertEqual(new_obj.collection.pid, self.rushdie.pid)
 
             self.assertIn('This is comment for the audit trail', audit_messages,
-                                'Should have comment in audit trail')
+                          'Should have comment in audit trail')
 
 
 

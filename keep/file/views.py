@@ -98,7 +98,6 @@ def upload(request):
             # process all files submitted for ingest (single or batch mode)
             if files_to_ingest:
                 results = ingest_files(files_to_ingest, collection, comment, request)
-                print 'ingest results = ', results
 
                 # add per-file ingest result status to template context
                 ctx_dict['ingest_results'] = results
