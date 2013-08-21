@@ -294,8 +294,8 @@ class FileViewsTest(KeepTestCase):
             self.assert_(isinstance(new_obj.conversion_result, TaskResult),
                 'ingested object should have a conversion result to track mp3 generation')
 
-            self.assertIn('ingesting audio', audit_messages,
-                                'Should have default message when no comment is present')
+            self.assertIn('initial repository ingest', audit_messages,
+                          'Should have default message when no comment is present')
 
             #upload same file but add a comment
         with open(wav_filename) as wav:
