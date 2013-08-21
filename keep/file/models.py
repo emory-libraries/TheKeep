@@ -31,12 +31,11 @@ class DiskImage(DigitalObject):
     CONTENT_MODELS = [DISKIMAGE_CONTENT_MODEL]
     NEW_OBJECT_VIEW = 'file:view'
 
-    allowed_mimetypes = ['', 'application/octet-stream']
-    # once magic files are fixed, should be:
-    # application/x-aff, application/x-ad1
-    # NOTE: '' required for javascript, because browser does not detect
-    # any mimetype at all
-
+    allowed_mimetypes = ['', 'application/x-aff', 'application/x-ad1']
+    # NOTE: '' is required for javascript, because browser does not detect
+    # any mimetype at all for AFF and AD1 files
+    # NOTE: These are custom mimetypes and must be configured in your local
+    # magic files.  See the deploy notes for more information.
 
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
     ''':class:`~keep.collection.models.CollectionObject that this object belongs to,
