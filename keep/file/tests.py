@@ -280,17 +280,9 @@ class FileViewsTest(KeepTestCase):
             orig_data = wav.read()
 
             fetched_data = new_obj.audio.content.getvalue()
-#           NB: fedora bug https://jira.duraspace.org/browse/FCREPO-774
-#           truncates datastreams fetched through the rest api, causing
-#           these next two checks to fail. we're temporarily replacing them
-#           with the two checks that follow them. the fedora developers
-#           expect a fix to that bug in fedora 3.4.2, to be released in jan
-#           2010. once that's installed in testing we should put back the
-#           original checks.
-
-#            self.assertEqual(len(orig_data), len(fetched_data))
-#            self.assertEqual(orig_data, new_obj.audio.content.getvalue(),
-#                "audio file content on new object corresponds to uploaded file data")
+            self.assertEqual(len(orig_data), len(fetched_data))
+            self.assertEqual(orig_data, new_obj.audio.content.getvalue(),
+                "audio file content on new object corresponds to uploaded file data")
             self.assertEqual(len(orig_data), new_obj.audio.info.size)
             # for now check only that the truncated fetched_data matches the
             # beginning of orig_data.
