@@ -320,6 +320,41 @@ class FileViewsTest(KeepTestCase):
             self.assertIn('This is comment for the audit trail', audit_messages,
                           'Should have comment in audit trail')
 
+    def test_upload_diskimage(self):
+        # test specifics for disk image upload
+
+        upload_url = reverse('file:upload')
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
+        md5 = '7a0c337b817442796e5816afb731209b'
+
+        with open(aff_file) as aff:
+            response = self.client.post(upload_url, {'file': aff, 'collection_0':
+                           self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+            result = response.context['ingest_results'][0]
+            self.assertTrue(result['success'], 'success should be true for uploaded AFF')
+            self.assertNotEqual(None, result['pid'],
+                'result should include pid of new object on successful ingest')
+            # Add pid to be removed.
+            self.pids.append(result['pid'])
+
+            repo = Repository()
+            new_obj = repo.get_object(result['pid'], type=DiskImage)
+            # audit_messages = [a.message for a in new_obj.audit_trail.records]
+            self.assertEqual(new_obj.collection.pid, self.rushdie.pid)
+            # check object was created with disk image cmodel
+            self.assertTrue(new_obj.has_model(DiskImage.DISKIMAGE_CONTENT_MODEL),
+                "disk image object was created with the correct content model")
+
+            # no audio access copy conversion task should have been queued
+            self.assertEqual(0, TaskResult.objects.filter(object_id=new_obj.pid).count())
+
+            # spot-check metadata init to confirm it ran
+            self.assertEqual('software, multimedia', new_obj.mods.content.resource_type)
+            self.assertEqual(md5, new_obj.provenance.content.object.checksums[0].digest)
+
+
 
 
 class UploadFormTest(TestCase):
