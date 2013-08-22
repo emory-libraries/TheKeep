@@ -14,22 +14,28 @@ from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
     mp3_md5, wav_md5
 from keep.collection.fixtures import FedoraFixtures
 from keep.file.forms import UploadForm
-from keep.file.utils import md5sum
+from keep.file.models import DiskImage
+from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase
 
 
-class TestMd5Sum(TestCase):
+class TestChecksum(TestCase):
+    # use mp3 file from audio test fixtures
+    mp3_file = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
 
     def test_md5sum(self):
-        # use mp3 file from audio test fixtures
-        mp3_file = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
         # md5 checksum
         md5 = 'b56b59c5004212b7be53fb5742823bd2'
-        self.assertEqual(md5, md5sum(mp3_file))
+        self.assertEqual(md5, md5sum(self.mp3_file))
 
         # test non-existent file
         # file errors are not caught by md5sum utility method but should be passed along
         self.assertRaises(IOError, md5sum, '/not/a/real/file.foo')
+
+    def test_sha1(self):
+        # sha1 checksum
+        sha1 = '2b0a217cc23a6ce99ec90b67aee4058edc9f1bba'
+        self.assertEqual(sha1, sha1sum(self.mp3_file))
 
 
 # mock archives used to generate archives choices for form field
@@ -369,4 +375,41 @@ class UploadFormTest(TestCase):
         self.assertEqual(files[form.cleaned_data['uploaded_files'][1]],
                          form.cleaned_data['filenames'][1])
 
+
+class DiskImageTest(KeepTestCase):
+    aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
+    md5 = '7a0c337b817442796e5816afb731209b'
+    sha1 = 'd7957b2845ad83df7de711cf8c6f418c22c67936'
+
+    def test_init_from_file(self):
+        label = 'My Disk Image'
+        img = DiskImage.init_from_file(self.aff_file, label)
+        # label set on obj and dc:title
+        self.assertEqual(label, img.label,
+            'specified label should be set on object')
+        self.assertEqual(label, img.dc.content.title,
+            'specified label should be set as dc:title')
+        # mods
+        self.assertEqual('software, multimedia', img.mods.content.resource_type,
+            'software, multimedia resource type should be preset in mods')
+        self.assertEqual('born digital', img.mods.content.genres[0].text,
+            'born digital should be set as mods genre')
+        self.assertEqual('aat', img.mods.content.genres[0].authority)
+        self.assert_(img.mods.content.schema_valid(),
+            'generated mods should be schema-valid')
+        # premis
+        self.assertEqual('ark', img.provenance.content.object.id_type)
+        self.assertEqual('', img.provenance.content.object.id)  # for now, since we don't yet have a pid
+        self.assertEqual(self.md5, img.provenance.content.object.checksums[0].digest)
+        self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
+        self.assertEqual(self.sha1, img.provenance.content.object.checksums[1].digest)
+        self.assertEqual('SHA-1', img.provenance.content.object.checksums[1].algorithm)
+        self.assertEqual('AFF', img.provenance.content.object.format.name)
+        # for debugging invalid premis
+        if not img.provenance.content.schema_valid():
+            print img.provenance.content.serialize(pretty=True)
+            print img.provenance.content.schema_validation_errors()
+
+        self.assert_(img.provenance.content.schema_valid(),
+            'generated premis should be schema-valid')
 

@@ -5,21 +5,39 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def checksum(filename, type):
+    '''Calculate and returns a checksum for the specified file.  Any file
+    errors (non-existent file, read error, etc.) are not handled here but should
+    be caught where this method is called.
+
+    :param filename: full path to the file for which a checksum should be calculated
+    :prarm type: any type of hashing algorithm supported by :mod:`hashlib`
+
+    :returns: hex-digest formatted checksum as a string
+    '''
+    # pythonic md5 calculation from Stack Overflow
+    # http://stackoverflow.com/questions/1131220/get-md5-hash-of-a-files-without-open-it-in-python
+    algorithm = getattr(hashlib, type)
+    ck = algorithm()
+    with open(filename,'rb') as f:
+        for chunk in iter(lambda: f.read(128 * ck.block_size), ''):
+             ck.update(chunk)
+    return ck.hexdigest()
+
+
 def md5sum(filename):
     '''Calculate and returns an MD5 checksum for the specified file.  Any file
     errors (non-existent file, read error, etc.) are not handled here but should
     be caught where this method is called.
 
-    :param filename: ful path to the file for which a checksum should be calculated
+    :param filename: full path to the file for which a checksum should be calculated
     :returns: hex-digest formatted MD5 checksum as a string
     '''
-    # pythonic md5 calculation from Stack Overflow
-    # http://stackoverflow.com/questions/1131220/get-md5-hash-of-a-files-without-open-it-in-python
-    md5 = hashlib.md5()
-    with open(filename,'rb') as f:
-        for chunk in iter(lambda: f.read(128*md5.block_size), ''):
-             md5.update(chunk)
-    return md5.hexdigest()
+    return checksum(filename, 'md5')
+
+def sha1sum(filename):
+    'Calculate and return a SHA-1 hash for a file.  Same usage as :meth:`md5sum`'
+    return checksum(filename, 'sha1')
 
 
 
