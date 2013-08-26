@@ -3,17 +3,23 @@
     margin-bottom: 5px;
     padding: 5x;
     background-repeat: no-repeat;
-    background-image: url('../images/file.png');
+/*    background-image: url('../images/file.png');*/
 }
 
 .search-result > * {
    margin-left: 20px;
 }
 
+.search-result > .result-icon {
+    margin-left: 0px;
+    float:left;
+}
+
 .search-result p {
     margin: 0px;
 }
 
+/*
 .search-result.audio {
     background-image: url('../images/sound.png');
 }
@@ -23,21 +29,21 @@
 .search-result.collection {
     background-image: url('../images/full-box.png');
 }
-
+*/
 #search-key {
     margin: auto;
     border: 2px solid #cccccc;
     margin-bottom: 8px;
     padding: 5px;
     padding-bottom: 3px;
-    width: 50%;
+    width: 65%;
     line-height: 18px;
 }
 #search-key .search-result {
     border-bottom: none;
     display: inline-block;
-    text-indent: 20px;
-    margin-left: 8px;
+/*    text-indent: 20px;*/
+/*    margin-left: 8px;*/
 }
 
 .relevance {

@@ -200,5 +200,48 @@ class DiskImage(DigitalObject):
         'Absolute url to view this object within the site'
         return (DiskImage.NEW_OBJECT_VIEW, [str(self.pid)])
 
+    def index_data(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data`
+        method to include additional fields specific to Keep and for
+        disk images.'''
+        # NOTE: we don't want to rely on other objects being indexed in Solr,
+        # so index data should not use Solr to find any related object info
+
+        data = super(DiskImage, self).index_data()
+        data['object_type'] = 'born-digital'
+        # set as born digital for now; eventually, we'll need to distinguish
+        # between kinds of born digital content
+
+        if self.collection and self.collection.exists:
+
+            # collection_source_id  (0 is an allowable id, so check not None)
+            if self.collection.mods.content.source_id is not None:
+                data['collection_source_id'] = self.collection.mods.content.source_id
+
+            data['collection_id'] = self.collection.uri
+            data['collection_label'] = self.collection.label
+
+        # include resolvable ARK if available
+        if self.mods.content.ark_uri:
+            data['ark_uri'] = self.mods.content.ark_uri
+
+        if self.content.checksum:
+            data['content_md5'] = self.content.checksum
+
+        # copied from audio; enable once we have rights editing
+        # # rights access status code
+        # if self.rights.content.access_status:
+        #     data['access_code'] = self.rights.content.access_status.code
+        # # copyright date from rights metadata
+        # if self.rights.content.copyright_date:
+        #     data['copyright_date'] = self.rights.content.copyright_date
+        # # ip note from rights metadata
+        # if self.rights.content.ip_note:
+        #     data['ip_note'] = self.rights.content.ip_note
+
+
+        return data
+
 
 

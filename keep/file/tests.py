@@ -8,6 +8,7 @@ from django.test import TestCase
 
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
+from eulxml.xmlmap import mods
 
 from keep.audio import models as audiomodels
 from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
@@ -440,3 +441,41 @@ class DiskImageTest(KeepTestCase):
         self.assert_(img.provenance.content.schema_valid(),
             'generated premis should be schema-valid')
 
+
+    def test_index_data(self):
+        # test custom data used for indexing objects in solr
+        obj = self.repo.get_object(type=DiskImage)
+        obj.pid = 'foo:1'
+        obj.dc.content.title = 'ComputerName'
+        # set an ark to confirm it is passed through to index data
+        obj.mods.content.identifiers.append(
+            mods.Identifier(type='uri', text='http://some.co/ark:/naan/1234')
+        )
+        obj.content.checksum = 'bogusmd5'
+
+        # collection is an eulfedora.models.Relation, so patch on the class
+        with patch('keep.file.models.DiskImage.collection') as mockcoll:
+            mockcoll.pid = 'parent:1'
+            mockcoll.uri = 'info:fedora/parent:1'
+            mockcoll.label = 'mss collection'
+            mockcoll.exists = True
+            # should work with any id value including 0
+            mockcoll.mods.content.source_id = 0
+
+            desc_data = obj.index_data()
+            self.assertEqual(obj.collection.uri, desc_data['collection_id'],
+                             'parent collection object id should be set in index data')
+            self.assertEqual(mockcoll.label, desc_data['collection_label'],
+                             'parent collection object label should be set in index data')
+            self.assertEquals(obj.collection.mods.content.source_id, desc_data['collection_source_id'],
+                              'collection_source_id should be %s but is is %s' %
+                              (obj.collection.mods.content.source_id, desc_data['collection_source_id']))
+
+        self.assertEqual(obj.dc.content.title, desc_data['title'][0],
+                         'default index data fields should be present in data (title)')
+        self.assertEqual(obj.pid, desc_data['pid'],
+                         'default index data fields should be present in data (pid)')
+        self.assertEqual(obj.mods.content.ark_uri, desc_data['ark_uri'],
+                         'ark uri should be present in index data')
+        self.assertEqual(obj.content.checksum, desc_data['content_md5'],
+                         'content datastream checksum should be included in index data')
