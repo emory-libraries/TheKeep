@@ -3,6 +3,17 @@
 CHANGELOG
 =========
 
+Release 1.5.2
+-------------
+
+* Archivist can view status of process after changing the status of a
+  "simple collection" in the Keep, so they can tell whether or not all
+  items in the collection were updated.  (correction to previous implementation)
+* bugfix: marking an object as processed via "simple collection" Keep edit
+  will now leave an audit trail message
+* Django 1.4 cleanup: settings & templates, cache configuration example
+  in ``localsettings.py.dist``
+
 Release 1.5.1
 -------------
 
