@@ -50,7 +50,7 @@ class CollectionSearch(forms.Form):
     archive_id = DynamicChoiceField(label="Archive",  choices=archive_choices,
                                     initial='', required=False)
 
-                                
+
 
 class AccessConditionForm(XmlObjectForm):
     '''Custom :class:`~eulxml.forms.XmlObjectForm` to edit MODS
@@ -211,7 +211,7 @@ class CollectionForm(XmlObjectForm):
                 source_id=source_id, archive_id=collection)
         response = query.execute()
 
-        # if there are no matches then this is definitely not a 
+        # if there are no matches then this is definitely not a
         if response.result.numFound == 0:
             return False
 
@@ -305,49 +305,57 @@ class SimpleCollectionEditForm(forms.Form):
             # passed-in initial values override ones calculated here
             initial.update(orig_initial)
 
-
         common_opts = {'data': data, 'initial': initial}
         self.mods = SimpleCollectionModsForm(instance=mods_instance, prefix='mods', **common_opts)
-
 
         self.mods.error_css_class = self.error_css_class
         self.mods.required_css_class = self.error_css_class
 
         super(SimpleCollectionEditForm, self).__init__(data=data, initial=initial)
 
-    #Update member ArrangementObjects to specified status
-    def update_objects(self, status):
-        success_count= 0
-        fail_count = 0
+    # Update member ArrangementObjects to specified status
+    def update_objects(self, status, repo=None):
+        # allow passing in a repository object to connect with user credentials
+        # returns a dict with totals for success and failure
+        totals = {
+            'success': 0,
+            'error': 0
+        }
 
-        #translate form status codes to fedora state code
+        # translate form status codes to fedora state code
         # TODO: shift this logic to arrangement object for re-use
-        codes = {'Processed': 'A', 'Accessioned' : 'I'}
+        codes = {'Processed': 'A', 'Accessioned': 'I'}
 
         #target state for every object in the collection
         if status not in codes:
-            return (0 ,0) # could not complete task due to bad status
+            return totals  # could not complete task due to bad status
         else:
-            state =  codes[status]
+            state = codes[status]
 
-        repo = Repository()
+        # use passed in repository when possible
+        if repo is None:
+            repo = Repository()
         pids = list(self.object_instance.rels_ext.content.objects(self.object_instance.uriref, relsextns.hasMember))
 
         for pid in pids:
+            saved = False
             try:
                 obj = repo.get_object(pid=pid, type=ArrangementObject)
-                obj.state=state
-                saved = obj.save()
-                if saved:
-                    success_count = success_count + 1  #add to success count if something goes right
-                else:
-                    fail_count = fail_count + 1  #add to fail count if something goes wrong
-                    logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
+                obj.state = state
+                saved = obj.save('Marking as %s via SimpleCollection %s'
+                                 % (status, self.object_instance.pid))
             except:
-                fail_count = fail_count + 1  #add to fail count if something goes wrong
-                logger.error("Failed to update ArrangementObject %s:%s" % (obj.pid, obj.label))
+                pass
 
-        return (success_count, fail_count) 
+            # tally success/error totals
+            if saved:
+                totals['success'] += 1
+            else:
+                totals['error'] += 1
+                # do *not* use obj.label here, since it could cause another fedora error
+                logger.error("Failed to update ArrangementObject %s" % obj.pid)
+
+        return totals
 
 
 class CollectionSuggestionWidget(forms.MultiWidget):
@@ -367,7 +375,7 @@ class CollectionSuggestionWidget(forms.MultiWidget):
     def decompress(self, pid):
         # break single field value (pid) into multi-value needed for
         # multi-value field
-        
+
         if pid:
             # main (hidden) value is collection id; if set, get collection
             # information to display as pre-set value in the visible field
@@ -383,9 +391,9 @@ class CollectionSuggestionWidget(forms.MultiWidget):
                 # indexed or pid is invalid
                 logger.error('No collection information found for %s' % pid)
                 label = '%s (title not found)' % pid
-                
+
             return [pid, label]
-        
+
         return [None, None]
 
 class CollectionSuggestionField(forms.MultiValueField):
@@ -395,16 +403,16 @@ class CollectionSuggestionField(forms.MultiValueField):
     the pid for the selected
     :class:`~keep.collection.models.CollectionObject`; and a text
     field used for display, which is expected to be used as an
-    auto-complete input and set the hidden id.  
+    auto-complete input and set the hidden id.
     '''
-    
+
     widget = CollectionSuggestionWidget
 
     default_error_messages = {
         'required': 'This field is required. You must choose a collection ' +
 	        'from the suggested values.'
     }
-    
+
     default_help_text = 'Collection this item belongs to. ' + \
     	'Begin typing collection number and/or title words and choose from the suggestions.'
 

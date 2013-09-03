@@ -240,24 +240,37 @@ def simple_edit(request, pid=None):
         obj = repo.get_object(pid=pid, type=SimpleCollection)
 
         if request.method == 'POST':
-            #Update SimpleCollection and associated arrangement objects
+            # Update SimpleCollection and associated arrangement objects
             status = request.POST['mods-restrictions_on_access']
             form = SimpleCollectionEditForm(instance=obj)
-            (success_count, fail_count) = form.update_objects(status)
+            # pass in current repo connection to use logged-in user credentials
+            totals = form.update_objects(status, repo=repo)
 
-            if success_count >= 1 and fail_count == 0:  # if all objects were  updated correctly
-                messages.success(request, "Successfully Updated %s Item(s)" % (success_count))
+            # info dict for fedora log message & web messages
+            info = totals.copy()
+            info.update({
+                'success_plural': '' if info['success'] == 1 else 's',
+                'error_plural': '' if info['error'] == 1 else 's',
+                'status': status
+            })
 
-                #Now Update the SimpleCollection itself
-                if obj.mods.content.restrictions_on_access.text is None:
-                    obj.mods.content.create_restrictions_on_access()
+            # if all objects were  updated correctly, update collection
+            if totals['success'] >= 1 and totals['error'] == 0:
+                messages.success(request, "Successfully updated %(success)s item%(success_plural)s"
+                                 % info)
+
+                # Update the SimpleCollection itself
+                obj.mods.content.create_restrictions_on_access()
                 obj.mods.content.restrictions_on_access.text = status  # Change collection status
-                saved = obj.save()
+                saved = obj.save('Marking as %(status)s; updated %(success)s member item%(success_plural)s'
+                                 % info)
                 if not saved:
-                    messages.error(request, "Failed To Updated Simple Collection Object")
-                    logger.error("Failed to update SimpleCollection %s:%s" % (obj.pid, obj.label))
+                    err_msg = "Error updating SimpleCollection %s" % obj.pid
+                    messages.error(request, err_msg)
+                    logger.error(err_msg)
             else:
-                messages.error(request, "Successfully Updated %s Item(s) Failed To Update %s Item(s)" % (success_count, fail_count))
+                messages.error(request, "Successfully updated %(success)s item%(success_plural)s; error updating %(error)s"
+                               % info)
 
         else:
             #Just Display the form
