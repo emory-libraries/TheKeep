@@ -3,7 +3,7 @@
 {% block item_title %}
 <p>
   {# other objects do not yet have a view url; all arrangement objects use the same edit url #}
-  {% url 'file:view' obj.pid as edit_url %}  {# edit url/view TODO #}
+  {% url 'file:edit' obj.pid as edit_url %}
   <a href="{{ edit_url }}">
     {# Show both title and label if they are different. Show '(no title)' if both are blank. #}
     {% firstof obj.title obj.label '(no title)' %}

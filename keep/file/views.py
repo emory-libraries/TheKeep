@@ -7,15 +7,18 @@ import time
 import traceback
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
-from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse, HttpResponseBadRequest, Http404, \
+    HttpResponseForbidden
 from django.shortcuts import render
 from django.utils.safestring import mark_safe
 
 
 from eulcommon.djangoextras.http import HttpResponseUnsupportedMediaType
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
-from eulfedora.util import RequestFailed
+from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.views import raw_datastream, raw_audit_trail
 
 
@@ -23,7 +26,7 @@ from keep.audio.models import AudioObject
 from keep.audio.tasks import queue_access_copy
 from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository, TypeInferringRepository, history_view
-from keep.file.forms import UploadForm
+from keep.file.forms import UploadForm, DiskImageEditForm
 from keep.file.models import DiskImage
 from keep.file.utils import md5sum, dump_post_data
 
@@ -358,6 +361,76 @@ def view(request, pid):
     # uri. so if someone requests the uri, send them straight to the edit
     # page for now.
     return render(request, 'file/view.html', {'obj': obj})
+
+@permission_required("common.marbl_allowed")
+def edit(request, pid):
+    '''Edit the metadata for a single :class:`~keep.file.models.DiskImage`.'''
+    # FIXME: should be generic file (?) or possibly one of several supported files
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=DiskImage)
+    try:
+        # if this is not actually a disk image, then 404 (object is not available at this url)
+        if not obj.has_requisite_content_models:
+            raise Http404
+
+        if request.method == 'POST':
+            # if data has been submitted, initialize form with request data and object mods
+            form = DiskImageEditForm(request.POST, instance=obj)
+            if form.is_valid():     # includes schema validation
+                # update foxml object with data from the form
+                form.update_instance()
+                # if 'comment' in form.comments.cleaned_data \
+                #         and form.comments.cleaned_data['comment']:
+                #     comment = form.comments.cleaned_data['comment']
+                # else:
+                comment = "update metadata"
+
+                obj.save(comment)
+                messages.success(request, 'Successfully updated <a href="%s">%s</a>' % \
+                        (reverse('audio:edit', args=[pid]), pid))
+                # save & continue functionality - same as collection edit
+                if '_save_continue' not in request.POST:
+                    return HttpResponseSeeOtherRedirect(reverse('site-index'))
+                # otherwise - fall through to display edit form again
+
+            # form was posted but not valid
+            else:
+                # if we attempted to save and failed, add a message since the error
+                # may not be obvious or visible in the first screenful of the form
+                messages.error(request,
+                    '''Your changes were not saved due to a validation error.
+                    Please correct any required or invalid fields indicated below and save again.''')
+
+        else:
+            # GET - display the form for editing, pre-populated with content from the object
+            form = DiskImageEditForm(instance=obj)
+
+        return render(request, 'file/edit.html', {'obj': obj, 'form': form})
+
+    except PermissionDenied:
+        # Fedora may return a PermissionDenied error when accessing a datastream
+        # where the datastream does not exist, object does not exist, or user
+        # does not have permission to access the datastream
+
+        # check that the object exists - if not, 404
+        if not obj.exists:
+            raise Http404
+        # for now, assuming that if object exists and has correct content models,
+        # it will have all the datastreams required for this view
+
+        return HttpResponseForbidden('Permission Denied to access %s' % pid,
+                                     mimetype='text/plain')
+
+    except RequestFailed as rf:
+        # if fedora actually returned a 404, propagate it
+        if rf.code == 404:
+            raise Http404
+
+        msg = 'There was an error contacting the digital repository. ' + \
+              'This prevented us from accessing audio data. If this ' + \
+              'problem persists, please alert the repository ' + \
+              'administrator.'
+        return HttpResponse(msg, mimetype='text/plain', status=500)
 
 
 ### FIXME: these views are currently redundant; consolidate all and make the

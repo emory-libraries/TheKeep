@@ -1,11 +1,17 @@
 import logging
 import os
 
+from eulxml.forms import XmlObjectForm, SubformField
+from eulxml.xmlmap import mods
+
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
+from keep.common.fedora import LocalMODS
+from keep.common.forms import ReadonlyTextInput
 from keep.collection.forms import CollectionSuggestionField
+from keep.audio.forms import RightsForm
 
 
 logger = logging.getLogger(__name__)
@@ -81,4 +87,117 @@ class UploadForm(forms.Form):
                 files[filepath] = filenames[i]
 
         return files
+
+class AbstractForm(XmlObjectForm):
+    """Custom :class:`~eulxml.forms.XmlObjectForm` to simplify editing
+    a MODS :class:`~eulxml.xmlmap.mods.Abstract`.  Displays text content input only,
+    as a :class:`~django.forms.Textarea` with no label; no other note attributes
+    are displayed.
+    """
+    text = forms.CharField(label='', widget=forms.Textarea, required=False)
+    class Meta:
+        model = mods.Abstract
+        fields = ['text']
+
+
+class ModsEditForm(XmlObjectForm):
+    """:class:`~eulxml.forms.XmlObjectForm` for editing
+    :class:`~keep.common.fedora.LocalMODS`.
+    """
+    # ARK value is set in form instance data by AudioObjectEditForm init
+    # read-only text input to display ARK (not editable)
+    identifier = forms.CharField(label="Identifier", required=False,
+        widget=ReadonlyTextInput)
+    resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
+    abstract = SubformField(formclass=AbstractForm)
+    # general_note = SubformField(formclass=SimpleNoteForm)
+    # part_note = SubformField(formclass=SimpleNoteForm)
+
+    # names = SubformField(formclass=NameForm)
+
+    class Meta:
+        model = LocalMODS
+        fields = (
+            'title', 'identifier', 'resource_type', 'abstract',
+        )
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'long'}),
+            'identifier': ReadonlyTextInput,
+        }
+
+
+class DiskImageEditForm(forms.Form):
+    """:class:`~django.forms.Form` for metadata on an
+    :class:`~keep.file.models.DiskImage`.
+
+    Takes an :class:`~keep.file.models.DiskImage` as form instance,
+    in contrast to a regular :class:`~eulxml.forms.XmlObjectForm`, which would
+    take an :class:`~eulxml.xmlmap.XmlObject`. This form edits a whole
+    :class:`~keep.file.models.DiskImage` by editing multiple XML
+    datastreams (whose contents are instances of :class:`~eulxml.xmlmap.XmlObject`),
+    with individual :class:`~eulxml.forms.XmlObjectForm` form instances
+    for each XML datastream.
+    """
+
+    collection = CollectionSuggestionField(required=True)
+
+    error_css_class = 'error'
+    required_css_class = 'required'
+
+    def __init__(self, data=None, instance=None, initial={}, **kwargs):
+        if instance is None:
+            mods_instance = None
+            # rights_instance = None
+        else:
+            mods_instance = instance.mods.content
+            rights_instance = instance.rights.content
+            self.object_instance = instance
+            orig_initial = initial
+            initial = {}
+
+            # populate fields not auto-generated & handled by XmlObjectForm
+            if self.object_instance.collection:
+                initial['collection'] = str(self.object_instance.collection.uri)
+
+            if self.object_instance.ark:
+                initial['identifier'] = self.object_instance.ark
+            else:
+                initial['identifier'] = self.object_instance.pid + ' (PID)'
+
+            # passed-in initial values override ones calculated here
+            initial.update(orig_initial)
+
+        common_opts = {'data': data, 'initial': initial}
+        self.mods = ModsEditForm(instance=mods_instance, prefix='mods', **common_opts)
+        self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
+ #       self.comments = CommentForm( prefix='comments',**common_opts)
+
+        for form in ( self.mods, ):
+            form.error_css_class = self.error_css_class
+            form.required_css_class = self.error_css_class
+
+        super(DiskImageEditForm, self).__init__(data=data, initial=initial)
+
+    def is_valid(self):
+        return all(form.is_valid() for form in \
+                    [ super(DiskImageEditForm, self),
+                      self.mods,
+                      self.rights,
+                    ])
+
+    def update_instance(self):
+        # override default update to handle extra fields
+        #super(AudioObjectEditForm, self).update_instance()
+        self.object_instance.mods.content = self.mods.update_instance()
+        self.object_instance.rights.content = self.rights.update_instance()
+
+        # cleaned data only available when the form is valid,
+        # but xmlobjectform is_valid calls update_instance
+        if hasattr(self, 'cleaned_data'):
+            # set collection if we have all the attributes we need
+            if hasattr(self, 'object_instance'):
+                self.object_instance.collection = self.object_instance.get_object(self.cleaned_data['collection'])
+
+        return self.object_instance
+
 

@@ -4,6 +4,7 @@ from keep.file import views
 urlpatterns = patterns('',
     url(r'^upload/$', views.upload, name='upload'),
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),
+    url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
     url(r'^(?P<pid>[^/]+)/history/$', views.history, name='history'),
     url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>[a-zA-Z-]+)/$',
         views.view_datastream, name='raw-ds'),
