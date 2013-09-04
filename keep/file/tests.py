@@ -407,7 +407,7 @@ class UploadFormTest(TestCase):
 
 class DiskImageTest(KeepTestCase):
     aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
-    md5 = '7a0c337b817442796e5816afb731209b'
+    md5 = '9d8daf0469a87dcfa65a29f5e107aac6'
     sha1 = 'd7957b2845ad83df7de711cf8c6f418c22c67936'
 
     def test_init_from_file(self):
