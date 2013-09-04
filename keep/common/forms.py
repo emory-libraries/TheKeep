@@ -234,6 +234,7 @@ class ItemSearch(forms.Form):
         return search_info
 
 class CommentForm(forms.Form):
-    comment = forms.CharField(max_length=255, label="Comment",  required=False,
-                              help_text="Enter a description of changes made",
-                              widget=forms.TextInput(attrs={'class': 'long'}))
+    comment = forms.CharField(
+        label="Comment", required=False,
+        help_text='Optional comment or log message for auditing purposes.',
+        widget=forms.TextInput(attrs={'class': 'long'}))

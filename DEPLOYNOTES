@@ -264,6 +264,19 @@ are not sent to a non-keep celery daemon.
 See http://ask.github.com/celery/cookbook/daemonizing.html for instructions
 on configuring celery to run as a daemon.
 
+.. _mimetype-config:
+
+Custom MIME Types
+^^^^^^^^^^^^^^^^^
+
+The AFF and AD1 disk image formats do not (yet) have official MIME types,
+so we have defined local mimetypes and you will need to update local magic files
+so these formats can be recognized.  The necessary definitions are included
+with the source code in a file called ``magic_extras.txt``.   On staging
+or production servers, a newly compiled magic file should be generated to
+replace the existing file (e.g., ``/usr/share/file/magic.mgc``).  For
+development systems, as a simpler solution, developers can instaed add
+the contents of ``magic_extras.txt`` to $HOME/.magic or /etc/magic.
 
 Notes for Developers
 --------------------
@@ -301,12 +314,22 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 1.7
+-----------
+
+* To support AFF and AD1 disk image files, custom mimetypes are required.
+  See :ref:`mimetype-config` for setup instructions.
+
+
 Release 1.6
 -----------
 
 * Django settings have been updated to follow Django 1.5 conventions.
   In particular, check ``localsettings.py.dist`` for changes to
   **CACHES** and **LOGGING**.
+
+* Make sure to restart the celery daemon so that it will pick up the
+  new batch status update task.
 
 Release 1.5
 -----------

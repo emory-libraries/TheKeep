@@ -10,7 +10,7 @@ from eullocal.django.taskresult.models import TaskResult
 
 from keep.audio.models import AudioObject, check_wav_mp3_duration
 from keep.common.fedora import Repository
-from keep.common.utils import md5sum
+from keep.file.utils import md5sum
 
 logger = logging.getLogger(__name__)
 

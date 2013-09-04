@@ -1,5 +1,4 @@
-from django.conf import settings
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url, include
 from django.contrib import admin
 
 #Importing this object is a work-around because eulfedora
@@ -18,16 +17,18 @@ urlpatterns = patterns('',
     url(r'^arrangement/', include('keep.arrangement.urls', namespace='arrangement')),
     url(r'^collections/', include('keep.collection.urls', namespace='collection')),
     url(r'^accounts/', include('keep.accounts.urls', namespace='accounts')),
+    url(r'^file/', include('keep.file.urls', namespace='file')),
     url(r'^tasks/', include('eullocal.django.taskresult.urls', namespace='tasks')),
 
-    # index data for solr                       
+
+    # index data for solr
     url(r'^indexdata/', include('eulfedora.indexdata.urls', namespace='indexdata')),
 
     url(r'^common/', include('keep.common.urls', namespace='common')),
 
     url(r'^search/', include('keep.search.urls', namespace='search')),
 
-    # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
+    # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
     # to INSTALLED_APPS to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 

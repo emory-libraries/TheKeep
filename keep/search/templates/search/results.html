@@ -51,17 +51,19 @@
   </p>
 
   <div id="search-key">
-    <div class="search-result audio">audio</div>
-    <div class="search-result email">email</div>
-    <div class="search-result collection">collection</div>
-    <div class="search-result">other</div>
+    <div class="search-result"><i class="icon-headphones"></i> audio</div>
+    <div class="search-result"><i class="icon-envelope"></i> email</div>
+    <div class="search-result"><i class="icon-folder-open"></i> collection</div>
+    <div class="search-result"><i class="icon-hdd"></i> disk image</div>
+    <div class="search-result"><i class="icon-file"></i> other</div>
   </div>
 
   {% for obj in page.object_list %}
       {% comment %} display correct icon and other info based on content model or obj_type.
       This should be cleaned up later by creating better obj_types
       {% endcomment %}
-      <div class="search-result {% if 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}email{% else %} {{ obj.object_type }} {% endif %}">
+      <div class="search-result">
+
     {% if show_relevance and obj.score %}
       <div class="relevance">
         <div class="score" style="width:{% widthratio obj.score  1 100 %}px">&nbsp;</div>
@@ -70,18 +72,33 @@
       </div>
     {% endif %}
 
+    <span class="result-icon">
+      {% if obj.object_type  == 'collection' %}
+      <i class="icon-folder-open"></i>
+      {% elif obj.object_type  == 'audio' %}
+      <i class="icon-headphones"></i>
+      {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+      <i class="icon-envelope"></i>
+      {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
+      <i class="icon-hdd"></i>
+      {% else %}
+      <i class="icon-file"></i>
+      {% endif %}
+    </span>
+
     {# render the appropriate list template based on object type #}
     {% if obj.object_type == 'collection' %}
       {% include "collection/snippets/list-collection.html" %}
-    {% endif %}
-    {% if obj.object_type == 'audio' %}
+    {% elif obj.object_type == 'audio' %}
       {% include "audio/snippets/list-audio.html" %}
-    {% endif %}
-    {% if obj.object_type == 'born-digital' %}
-      {% include "arrangement/snippets/list-arrangement.html" %}
-    {% endif %}
+    {% elif obj.object_type == 'born-digital' %}
+      {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
+          {% include "file/snippets/list-diskimage.html" %}
+      {% else %}
+         {% include "arrangement/snippets/list-arrangement.html" %}
+      {% endif %}
+    {% else %}
     {# fall-back display #}
-    {% if not obj.object_type or obj.object_type not in known_types %}
       <p>{{ obj.pid }} {{ obj.title }} {{ obj.source_id }} {{ obj.creator }} {{ obj.content_model }}</p>
     {% endif %}
 

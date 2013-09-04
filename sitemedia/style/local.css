@@ -13,7 +13,7 @@ table.name-role-auth th {
     width: inherit;
 }
 
-#audio-edit .section-head {
+.multi-edit .section-head {
     background-color:#efefef;
     border-bottom:3px double black;
     padding-left: 8px;
@@ -22,13 +22,13 @@ table.name-role-auth th {
 .edit-form td, .edit-form table {
     border: none;   /* suppress inherited borders */
 }
-#audio-edit .toggle {
+.multi-edit .toggle {
     background-image: url('../genlib_media/style/images/menu-expanded.png');
     background-position: 99% 50%;    /* nearly right edge */
     background-repeat: no-repeat;
     padding: 5px;
 }
-#audio-edit .collapsed {
+.multi-edit .collapsed {
     background-image: url('../genlib_media/style/images/menu-collapsed.png');
 }
 .required {

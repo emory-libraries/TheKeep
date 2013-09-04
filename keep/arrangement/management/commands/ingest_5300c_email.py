@@ -23,7 +23,8 @@ from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
 from keep.collection.models import SimpleCollection as ProcessingBatch
 from keep.common.fedora import Repository, ArkPidDigitalObject
 from keep.common.models import rights_access_terms_dict
-from keep.common.utils import md5sum, solr_interface, absolutize_url, redact_email
+from keep.common.utils import solr_interface, absolutize_url, redact_email
+from keep.file.utils import md5sum
 
 
 UNUSED_PID_NAME = 'rushdie 5300c email message (unused)'

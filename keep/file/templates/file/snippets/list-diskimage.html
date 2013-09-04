@@ -1,0 +1,29 @@
+{% extends 'search/snippets/list-item.html' %}
+
+{% block item_title %}
+<p>
+  {# other objects do not yet have a view url; all arrangement objects use the same edit url #}
+  {% url 'file:edit' obj.pid as edit_url %}
+  <a href="{{ edit_url }}">
+    {# Show both title and label if they are different. Show '(no title)' if both are blank. #}
+    {% firstof obj.title obj.label '(no title)' %}
+    {% if obj.title and obj.title|slugify != obj.label|slugify %} {{ obj.label }}{% endif %}
+    {% if obj.part %} ({{ obj.part }}){% endif %}</a>
+  {% if obj.collection_id %}
+    (part of
+       {% if 'info:fedora' in obj.collection_id %}  {# convert to pid if id is in URI format #}
+         {% url 'collection:edit' obj.collection_id|slice:'12:' as collection_url %}
+       {% else %}
+          {% url 'collection:edit' obj.collection_id as collection_url %}
+       {% endif %}
+      <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>)
+  {% endif %}
+
+</p>
+{% endblock %}
+
+{% block item_info %}
+  <ul class='horiz'>
+    {% if obj.rights %}<li>{{ obj.rights|join:', ' }}</li>{% endif %}
+  </ul>
+{% endblock %}

@@ -8,8 +8,16 @@ mimetypes.  For example:
    $("#drop_target").md5DropUploader({
       url : "{% url audio:upload %}",
       allowed_types : ['audio/wav', 'audio/mp3'],
+      csrf_token: "...."
    });
 </script>
+
+To avoid having to make your upload views csrf exempt, you
+should specify a csrf token.  E.g., include the token on the template using
+{% csrf_token %} and then pass via $('input[name="csrfmiddlewaretoken"]').val().
+
+NOTE: according to Django docs it would be better to use the csrf cookie here;
+see https://docs.djangoproject.com/en/1.5/ref/contrib/csrf/#ajax
 
 When files are dropped on the specified element, files will be checked to
 see if they are in the list of allowed types (when specified), an MD5 checksum
@@ -46,7 +54,8 @@ boolean value in the data for the form element with a key of 'valid', e.g.:
   $('form').data('valid', false);
 
 If the form 'valid' value is set to false, the drop-uploader submit
-handler will stop processing and not submit the form.  
+handler will stop processing and not submit the form.
+
 
 
 Adapted in part from https://github.com/texel/drag_drop_example/
@@ -75,7 +84,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     if ((typeof window.File == 'function' || typeof window.File == 'object') &&
         (typeof window.File.prototype.slice == 'function' ||
         // As of May 2011, the most recent versions of Google Chrome and Firefox 4
-        // provide namespaced versions of the slice method (new spec).  
+        // provide namespaced versions of the slice method (new spec).
          typeof window.File.prototype.webkitSlice == 'function' ||
          typeof window.File.prototype.mozSlice == 'function')) {
           blob_slicing = true;
@@ -96,7 +105,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
      * bind methods as event handlers.
      * If HTML5 File API is not available, does nothing.
      */
-    init : function(options) {  
+    init : function(options) {
 
     return this.each(function(){
        if ( ! browser_upload_support() ) {
@@ -108,10 +117,11 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 
        var $this = $(this);
        var data = {
-        'file_count': 0,
-        'files': new Array(),
-        'ingest_on_completion': false,
-        allowed_types: []
+         file_count: 0,
+         files: new Array(),
+         ingest_on_completion: false,
+         allowed_types: [],
+         csrf_token: null
        };
        $.extend(data, options);
        $this.addClass('md5uploader');
@@ -176,7 +186,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             if (allowed_types.length == 0 ||
                 $.inArray(file.type, allowed_types) != -1) {    // returns index or -1 if not found
                 // rudimentary list display
-                   
+
                 var p = $('<p><a class="remove">X</a> ' + file.name + ' ' +
                     '<span class="file-info">(' + filesize_format(file.size) +
 		    ', ' + file.type + ')</span></p>');
@@ -203,12 +213,12 @@ Adapted in part from https://github.com/texel/drag_drop_example/
           });
           alert(msg);
         }
-        
+
        // handle files added on the current drop
        // - calculate checksum and then upload
        $.each($this.data('md5DropUploader').files, function(i, file) {
             // only process files added on the current drop
-            if (i >= start_processing) { 
+            if (i >= start_processing) {
                 // update status
                 file.status.html('calculating checksum');
                 console.log(file.name + ' calculating checksum')
@@ -236,7 +246,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                   calculate_checksum(file, indicator, 0, md5, next_step);
                 };
                 setTimeout(kickoff_checksum, 0);
-               
+
             }
          });
       };
@@ -260,7 +270,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
      * Check if all files that have been dragged in have completed uploading.
      * Returns true when all files have completed uploading, false if any have not.
      */
-    allFilesUploaded: function() {    
+    allFilesUploaded: function() {
         // loop through all dropped files to check if upload has completed
         var $this = $(this);
         for (var x = 0; x < $this.data('md5DropUploader').files.length; x++) {
@@ -291,17 +301,17 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             // if all dropped files have not yet completed,
             // set a flag to submit the form when uploads complete
             uploader.data('md5DropUploader').submit_on_completion = true;
-            
+
             // display a message to the user
             $this.find('#submit-info').html('The form will submit when all uploads complete.')
-            
+
             // don't propagate the submit event
             event.stopPropagation();
             event.preventDefault();
-            return false;            
+            return false;
         }
 
-        // otherwise, all dropped files have completed upload - submit normally        
+        // otherwise, all dropped files have completed upload - submit normally
         $this.find('#submit-info').html('Submitting...')
         return true;
     },
@@ -315,7 +325,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
      */
     uploadFile: function(file) {
         var $this = $(this);
-        // use jQuery ajax method?        
+        // use jQuery ajax method?
         var xhr   = new XMLHttpRequest();
 
         // display upload progress bar
@@ -332,8 +342,14 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             }, false);
 
         xhr.open('POST', $this.data('md5DropUploader').url, true);
-        // set header so django will exempt the ajax request from CSRF checking
+        if ($this.data('md5DropUploader').csrf_token !== null) {
+            xhr.setRequestHeader('X-CSRFToken', $this.data('md5DropUploader').csrf_token);
+        }
+
+        // set header so django will recognize as ajax, and can optionally
+        // exempt from CSRF checking (if specified in the view)
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
         // set required headers for processing the file
         xhr.setRequestHeader('Content-Disposition', 'filename="' + file.name + '"');
         xhr.setRequestHeader('Content-Type', file.type);
@@ -377,7 +393,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         xhr.send(file);
     }  // end uploadFile method
   };
-  
+
 
   $.fn.md5DropUploader = function(method) {
     if ( methods[method] ) {
@@ -409,8 +425,8 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     // Due to changes in the HTML5 Blob/File spec for slice, Mozilla
     // and Webkit now have name-spaced slice functions that implement
     // the new version of the spec.  Use those first, if available.
-    if (typeof window.Blob.prototype.webkitSlice == 'function') { 
-        // Google Chrome -  http://trac.webkit.org/changeset/83873 
+    if (typeof window.Blob.prototype.webkitSlice == 'function') {
+        // Google Chrome -  http://trac.webkit.org/changeset/83873
         var slice = file.webkitSlice(start, start + size);
     } else if (typeof window.Blob.prototype.mozSlice == 'function') {
         // Mozilla Firefox -  https://developer.mozilla.org/en/DOM/Blob
@@ -469,7 +485,7 @@ function filesize_format(size) {
         return '0 bytes';
     } else if (size < 100) {
         return '' + size + ' bytes';
-    } else if (size < (1000 * 1000)) {        
+    } else if (size < (1000 * 1000)) {
         size = '' +  size/1000;
         if (size.indexOf('.') != -1) {
             vals = size.split('.');

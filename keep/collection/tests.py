@@ -24,6 +24,7 @@ from keep.collection import forms as cforms
 from keep.collection import views
 from keep.collection.models import CollectionObject, FindingAid, SimpleCollection
 from keep.collection.views import _objects_by_type
+from keep.collection.tasks import batch_set_status
 from keep.common.fedora import DigitalObject, Repository
 from keep.common.rdfns import REPO
 from keep.testutil import KeepTestCase
@@ -1112,13 +1113,13 @@ class SimpleCollectionTest(KeepTestCase):
         self.assertContains(response, self.simple_collection_2.pid)
 
 
-class TestSimpleCollectionForm(KeepTestCase):
+class TestBatchUpdateStatusTask(KeepTestCase):
+
     def setUp(self):
         self.repo = Repository()
         self.pids = []
 
         #create ArrengementObject and associate to a collection
-        #TODO Shold this be in arrangement app tests??
         self.arrangement_1 = self.repo.get_object(type=ArrangementObject)
         self.arrangement_1.label = "Test Arrangement Object 1"
         self.arrangement_1.state = 'I'
@@ -1151,24 +1152,11 @@ class TestSimpleCollectionForm(KeepTestCase):
         for pid in self.pids:
             self.repo.purge_object(pid)
 
-    def test_initial_data(self):
-        form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
 
-        #check label is set correctly
-        self.assertEqual(form.object_instance.label, self.simple_collection_2.label)
-
-        #check that restrictions_on_access_are set correctly
-        self.assertEqual(form.object_instance.mods.content.restrictions_on_access.text,
-                         self.simple_collection_2.mods.content.restrictions_on_access.text)
-
-    def test_update_objects(self):
-        #Change all the associated object statuses to 'A'
-        form = cforms.SimpleCollectionEditForm(instance=self.simple_collection_2)
-
+    def test_batch_update_objects(self):
         status = 'Processed'
-        totals = form.update_objects(status)
-        self.assertEqual(2, totals['success'])
-        self.assertEqual(0, totals['error'])
+        result = batch_set_status(self.simple_collection_2.pid, status)
+        self.assertEqual('Successfully updated 2 items', result)
         arr1 = self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject)
         self.assertEqual('Marking as %s via SimpleCollection %s' % (status, self.simple_collection_2.pid),
                          arr1.audit_trail.records[-1].message,
@@ -1176,15 +1164,14 @@ class TestSimpleCollectionForm(KeepTestCase):
         self.assertEqual(arr1.state, 'A')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'A')
 
-        totals = form.update_objects('Accessioned')
-        self.assertEqual(2, totals['success'])
-        self.assertEqual(0, totals['error'])
+        status = 'Accessioned'
+        result = batch_set_status(self.simple_collection_2.pid, status)
+        self.assertEqual('Successfully updated 2 items', result)
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')
 
         # when bad status is given, nothing should change
-        totals = form.update_objects('badstatus')
-        self.assertEqual(0, totals['success'])
-        self.assertEqual(0, totals['error'])
+        self.assertRaises(Exception, batch_set_status, self.simple_collection_2.pid, 'badstatus')
+        # item state unchanged
         self.assertEqual(self.repo.get_object(pid=self.arrangement_1.pid, type=ArrangementObject).state, 'I')
         self.assertEqual(self.repo.get_object(pid=self.arrangement_2.pid, type=ArrangementObject).state, 'I')

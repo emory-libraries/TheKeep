@@ -1,10 +1,7 @@
 import logging
-import os
 
 from django import forms
-from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
 from eulxml.xmlmap import mods
@@ -22,79 +19,6 @@ from keep.common.forms import ReadonlyTextInput, rights_access_options, \
 
 logger = logging.getLogger(__name__)
 
-class FormListField(forms.MultipleChoiceField):
-    '''Simplified version of :class:`django.forms.MultipleChoiceField`
-    that returns a list of values, but does not do any checking that
-    items are a member of any list.
-    '''
-    # NOTE: currently has no output/widget handling, since it is only
-    # used to read and validate values posted via javascript
-
-    def validate(self, value):
-        """
-        Validates that the input is a list or tuple.
-        """
-        if self.required and not value:
-            raise ValidationError(self.error_messages['required'])
-
-
-class UploadForm(forms.Form):
-    '''Single-file upload form; takes a required collection and an optional
-    file and comment; collection and comment are also used with batch upload.'''
-    collection = CollectionSuggestionField(required=True)
-    audio = forms.FileField(label="File", required=False)
-    comment = forms.CharField(widget=forms.TextInput(attrs={'class': 'long'}),
-        help_text='Optional comment or log message for auditing purposes.',
-        required=False)
-    # list fields used only for reading/validating values added to the
-    # form via javascript upload
-    uploaded_files = FormListField(required=False)
-    filenames = FormListField(required=False)
-
-    def clean(self):
-        cleaned_data = super(UploadForm, self).clean()
-        audio_file = cleaned_data.get('audio')
-        uploaded_files = cleaned_data.get('uploaded_files')
-        filenames = cleaned_data.get('filenames')
-        
-        # one of audio file or upload files is required
-        if not audio_file and not uploaded_files:
-            raise ValidationError('No files were uploaded.')
-
-        # list of uploaded files and filenames needs to match
-        if len(uploaded_files) != len(filenames):
-            raise ValidationError('Could not match uploaded files with original filenames')
-
-        return cleaned_data
-
-    def files_to_ingest(self):
-        '''Construct a dictionary of the files to be ingested, based
-        on posted data-- either single-file upload or ajax batch
-        upload.  Returns a dictionary; key is the full filepath to the
-        temporary upload file, value is the original filename.
-        '''
-        files = {}
-
-        audio_file = self.cleaned_data.get('audio')
-        uploaded_files = self.cleaned_data.get('uploaded_files')
-        filenames = self.cleaned_data.get('filenames')
-
-        # check for a single audio file uploaded via form post
-        if audio_file:
-            files[audio_file.temporary_file_path()] = audio_file.name
-
-        # check for any batch-uploaded files
-        if uploaded_files:
-            for i in range(len(uploaded_files)):
-                # calculate full path to ajax upload file and add to list
-                filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR,
-                                        uploaded_files[i])
-                files[filepath] = filenames[i]
-
-        return files
-            
-
-        
 
 class SimpleNoteForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to simplify editing
@@ -149,14 +73,14 @@ class ModsEditForm(XmlObjectForm):
     origin_info = SubformField(formclass=OriginInfoForm)
     general_note = SubformField(formclass=SimpleNoteForm)
     part_note = SubformField(formclass=SimpleNoteForm)
-    
+
     names = SubformField(formclass=NameForm)
 
     class Meta:
         model = AudioMods
         fields = (
             'identifier', 'dm1_id', 'dm1_other_id', 'title', 'origin_info',
-            'general_note', 'part_note', 'resource_type', 
+            'general_note', 'part_note', 'resource_type',
         )
         widgets = {
             'title': forms.Textarea,
@@ -190,7 +114,7 @@ class SourceTechForm(XmlObjectForm):
             'conservation_history': forms.TextInput(attrs={'class': 'long'}),
         }
 
-    def __init__(self, **kwargs):       
+    def __init__(self, **kwargs):
         super(SourceTechForm, self).__init__(**kwargs)
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
         # speed in xml maps to a single custom field
@@ -214,7 +138,7 @@ class SourceTechForm(XmlObjectForm):
     def update_instance(self):
         # override default update to handle extra fields
         super(SourceTechForm, self).update_instance()
-        
+
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
@@ -242,7 +166,7 @@ def _transfer_engineer_id(**kwargs):
     # this method is an attempt to ensure consistency in field order
     # TODO: could this method be part of the TransferEngineer object?
     return'%(type)s|%(id)s' % kwargs
-    
+
 
 class DigitalTechForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to edit
@@ -256,7 +180,7 @@ class DigitalTechForm(XmlObjectForm):
         conversion that produced the file.<br/>
         Search by typing first letters of the last name.
         (Users must log in to this site once to be listed.)'''))
-    
+
     def _transfer_engineer_options(self):
         '''Method to use to dynamically populate the engineer
         DymanicChoiceField.  Generates a list of all LDAP users in the
@@ -276,12 +200,12 @@ class DigitalTechForm(XmlObjectForm):
                     '%s (%s)' % (user.get_full_name(), user.username))
                    for user in User.objects.filter(emoryldapuserprofile__isnull=False).order_by('last_name')]
         options.insert(0, ('', EMPTY_LABEL_TEXT))
-        
+
         # add local transfer engineer options to the list
     	for id, label in TransferEngineer.local_engineers.iteritems():
             options.append((_transfer_engineer_id(type=TransferEngineer.LOCAL_ID_TYPE,
                                                   id=id), label))
-        
+
         # if there is an instance with a non-ldap id, add that to the options
         if self.instance:
             if self.instance.transfer_engineer and \
@@ -292,7 +216,7 @@ class DigitalTechForm(XmlObjectForm):
                                                 self.instance.transfer_engineer.id)
                 options.append((current_id, display_label))
         return options
-    
+
 
     hardware = forms.ChoiceField(sorted(CodecCreator.options), label='Codec Creator',
                     help_text='Hardware, software, and software version used to create the digital file',
@@ -309,9 +233,9 @@ class DigitalTechForm(XmlObjectForm):
         super(DigitalTechForm, self).__init__(**kwargs)
         # bind the dynamic field choices for transfer engineer
         self.fields['engineer'].choices = self._transfer_engineer_options
-        
+
         # populate initial data for fields not auto-generated & handled by XmlObjectForm
-        
+
         # set engineer value based on id and id type
         engineer = 'engineer'			# aliases for data keys in initial data
         engineer_id = 'transfer_engineer-id'
@@ -339,12 +263,12 @@ class DigitalTechForm(XmlObjectForm):
                 self.instance.create_transfer_engineer()
                 self.instance.transfer_engineer.id = userid
                 self.instance.transfer_engineer.id_type = usertype
-                
+
                 # if this an ldap user, look up by username to get full name
                 if usertype == TransferEngineer.LDAP_ID_TYPE:
                     user = User.objects.filter(username=userid).get()
                     self.instance.transfer_engineer.name = user.get_full_name()
-                    
+
                 elif usertype == TransferEngineer.DM_ID_TYPE:
                     # The only way an old-DM id can be set is if that is what was
                     # present in the record before editing.
@@ -370,7 +294,7 @@ class DigitalTechForm(XmlObjectForm):
                 self.instance.codec_creator.software = software
                 self.instance.codec_creator.software_version = version
 
-            
+
         # return object instance
         return self.instance
 
@@ -432,13 +356,13 @@ class AudioObjectEditForm(forms.Form):
     with individual :class:`~eulxml.forms.XmlObjectForm` form instances
     for each XML datastream.
     """
-    
+
     collection = CollectionSuggestionField(required=True)
 
     error_css_class = 'error'
     required_css_class = 'required'
 
-    def __init__(self, data=None, instance=None, initial={}, **kwargs):       
+    def __init__(self, data=None, instance=None, initial={}, **kwargs):
         if instance is None:
             mods_instance = None
             st_instance = None

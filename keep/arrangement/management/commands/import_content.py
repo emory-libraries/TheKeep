@@ -10,10 +10,10 @@ from eulfedora.rdfns import relsext, model as modelns
 from eulfedora.util import RequestFailed
 from eulcm.models.boda import RushdieFile
 
-from keep.arrangement.models import ArrangementObject
+# from keep.arrangement.models import ArrangementObject  ?? unused?
 from keep.collection.models import SimpleCollection as ProcessingBatch
 from keep.common.fedora import Repository
-from keep.common.utils import md5sum 
+from keep.file.utils import md5sum
 
 class Command(BaseCommand):
     help = '''Import content from a mounted disk image to arrangement objects in the
@@ -41,7 +41,7 @@ repository (one-time import for 5300c content)
     # Using this typemap and equivalent creator values.
     #
     # typemap = {
-    #      'CWWP': 'application/x-clarisworks',  
+    #      'CWWP': 'application/x-clarisworks',
     #      'MW2D': 'application/macwriteii',
     #      'MWPd': 'application/x-macwritepro',  (MWII)
     #      'TEXT': 'text/plain',		(MWPR)
@@ -66,7 +66,7 @@ repository (one-time import for 5300c content)
         if batch_id is None:
             raise CommandError('Processing batch id is required')
         self.verbosity = int(verbosity)  # ensure we compare int to int
-        
+
         repo = Repository()
         batch = repo.get_object(batch_id, type=ProcessingBatch)
         if not batch.exists:
@@ -77,16 +77,16 @@ repository (one-time import for 5300c content)
         items = list(batch.rels_ext.content.objects(batch.uriref, relsext.hasMember))
 
         mimemagic = magic.Magic(mime=True)
-        
+
         stats = defaultdict(int)
-        
+
         for i in items:
             # for now, init as file objects since we expect to add original file content
             # (still has arrangement metadata + filetech)
             # TODO: handle special file types, e.g. email
             obj = repo.get_object(str(i), type=RushdieFile)
             # NOTE: in dev/test, collection currently references all items
-            # but only a handful actually exist in dev/test repo; just skip 
+            # but only a handful actually exist in dev/test repo; just skip
             if not obj.exists:
                 continue
 
@@ -96,11 +96,11 @@ repository (one-time import for 5300c content)
             if obj.original.exists:
                 print '%s already has original datastream; skipping' % obj.pid
                 continue
-                
+
             if not obj.filetech.exists:
                 print 'Error: no file tech (path info) for %s; skipping' % obj.pid
                 continue
-                
+
             local_path = None
             filetech_md5 = None
             # There could potentially be multiple file paths; find
@@ -116,7 +116,7 @@ repository (one-time import for 5300c content)
                 print 'Failed to find local path for %s for computer %s' % \
                       (obj.pid, batch.label)
                 continue
-            
+
 
             # path to grab the original file
             # stored path is absolute; we need it relative to base path
@@ -127,7 +127,7 @@ repository (one-time import for 5300c content)
             if not os.path.isfile(disk_path):
                 print 'Error: computed disk image path \'%s\' is not a file' % disk_path
                 continue
-            
+
             local_md5 = md5sum(disk_path)
             if filetech_md5 is not None and local_md5 != filetech_md5:
                 print 'Error: Local MD5 checksum (%s) does not match checksum in filetech (%s)' \
@@ -138,22 +138,22 @@ repository (one-time import for 5300c content)
                 print 'Warning: no MD5 currently stored for %s' % obj.pid
             # TODO: if filetech_md5 (for this computer) is None, we need to set it
             # (other info also ?)
-            
+
 
             mimetype = mimemagic.from_file(disk_path)
             # if we get a generic mimetype, attempt to infer a better
-            # one based on known file creators in filetech metadata 
+            # one based on known file creators in filetech metadata
             if mimetype == 'application/octet-stream':
                 if obj.filetech.content.file[0].creator in self.filecreator_mimetype:
                     mimetype = self.filecreator_mimetype[obj.filetech.content.file[0].creator]
-                    
+
                 else:
                     print 'Warning: using generic mimetype %s for %s (file creator "%s")' % \
                           (mimetype, disk_path, obj.filetech.content.file[0].creator)
 
             # TODO: see rushdie-tools script mactype2mimetype
             # for possibly better mimetype handling
-            
+
             with open(disk_path) as original_file:
                 obj.original.content = original_file
                 obj.original.checksum = local_md5
@@ -163,17 +163,17 @@ repository (one-time import for 5300c content)
                 if not obj.has_requisite_content_models:
                     obj.rels_ext.content.add((obj.uriref, modelns.hasModel,
                                        URIRef(RushdieFile.RUSHDIE_FILE_CMODEL)))
-                    
+
                 if not noact:
                     try:
                         obj.save('adding original file content from disk image')
                         stats['updated'] += 1
-                        
+
                     except RequestFailed:
                         print 'Error saving %s' % obj.pid
                         stats['save_error'] += 1
 
-            
+
         # summary
         if self.verbosity >= self.v_normal:
             print '''\nProcessed %(count)d records''' % stats

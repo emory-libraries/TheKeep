@@ -260,102 +260,13 @@ class CollectionForm(XmlObjectForm):
         return self.instance
 
 #Simple Collection
-
-# Simple Collection status options - used in edit screen
-simple_collection_options = (
-                  ('Accessioned', 'Accessioned'),
-                  ('Processed', 'Processed'),
-
-    )
-
-class SimpleCollectionModsForm(XmlObjectForm):
-    """:class:`~eulxml.forms.XmlObjectForm` to edit
-    :class:`~keep.common.models.SimpleCollection` metadata.
-    """
-    restrictions_on_access = forms.ChoiceField(simple_collection_options, label='Status',
-           help_text='Indicates if collection members are visible')
-
-    class Meta:
-        model = MODS
-        fields = [ 'restrictions_on_access' ]
-
-
 class SimpleCollectionEditForm(forms.Form):
-    error_css_class = 'error'
-    required_css_class = 'required'
-
-    def __init__(self, data=None, instance=None, initial={}, **kwargs):
-
-        if instance is None:
-            mods_instance = None
-        else:
-            mods_instance = instance.mods.content
-            self.object_instance = instance
-            orig_initial = initial
-
-            # populate fields not auto-generated & handled by XmlObjectForm
-            #if self.object_instance.collection_uri:
-                #initial['collection'] = str(self.object_instance.collection_uri)
-
-            if self.object_instance.ark:
-                initial['identifier'] = self.object_instance.ark
-            else:
-                initial['identifier'] = self.object_instance.pid + ' (PID)'
-
-            # passed-in initial values override ones calculated here
-            initial.update(orig_initial)
-
-        common_opts = {'data': data, 'initial': initial}
-        self.mods = SimpleCollectionModsForm(instance=mods_instance, prefix='mods', **common_opts)
-
-        self.mods.error_css_class = self.error_css_class
-        self.mods.required_css_class = self.error_css_class
-
-        super(SimpleCollectionEditForm, self).__init__(data=data, initial=initial)
-
-    # Update member ArrangementObjects to specified status
-    def update_objects(self, status, repo=None):
-        # allow passing in a repository object to connect with user credentials
-        # returns a dict with totals for success and failure
-        totals = {
-            'success': 0,
-            'error': 0
-        }
-
-        # translate form status codes to fedora state code
-        # TODO: shift this logic to arrangement object for re-use
-        codes = {'Processed': 'A', 'Accessioned': 'I'}
-
-        #target state for every object in the collection
-        if status not in codes:
-            return totals  # could not complete task due to bad status
-        else:
-            state = codes[status]
-
-        # use passed in repository when possible
-        if repo is None:
-            repo = Repository()
-        pids = list(self.object_instance.rels_ext.content.objects(self.object_instance.uriref, relsextns.hasMember))
-
-        for pid in pids:
-            saved = False
-            try:
-                obj = repo.get_object(pid=pid, type=ArrangementObject)
-                obj.state = state
-                saved = obj.save('Marking as %s via SimpleCollection %s'
-                                 % (status, self.object_instance.pid))
-            except:
-                pass
-
-            # tally success/error totals
-            if saved:
-                totals['success'] += 1
-            else:
-                totals['error'] += 1
-                # do *not* use obj.label here, since it could cause another fedora error
-                logger.error("Failed to update ArrangementObject %s" % obj.pid)
-
-        return totals
+    status = forms.ChoiceField(
+        label='Status',
+        choices=[('Accessioned', 'Accessioned'),
+                 ('Processed', 'Processed')],
+        help_text='Indicates if collection members are visible'
+    )
 
 
 class CollectionSuggestionWidget(forms.MultiWidget):
