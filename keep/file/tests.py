@@ -15,8 +15,8 @@ from keep.audio import models as audiomodels
 from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
     mp3_md5, wav_md5
 from keep.collection.fixtures import FedoraFixtures
-from keep.file.forms import UploadForm
-from keep.file.models import DiskImage
+from keep.file.forms import UploadForm, PremisEditForm
+from keep.file.models import DiskImage, Application
 from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase
 
@@ -508,3 +508,46 @@ class DiskImageTest(KeepTestCase):
                          'ark uri should be present in index data')
         self.assertEqual(obj.content.checksum, desc_data['content_md5'],
                          'content datastream checksum should be included in index data')
+
+
+class PremisEditFormTest(TestCase):
+
+    fixtures = ['test-applications.json']
+
+    # use init from file as a convenient way to ensure working with valid premis
+    img = DiskImage.init_from_file(ad1_file)
+    instance = img.provenance.content
+    today = datetime.date.today()
+
+    def test_initial_data(self):
+        # date and creating application not yet set in xml
+        form = PremisEditForm(instance=self.instance)
+        self.assert_('date' not in form.initial)
+        self.assert_('application' not in form.initial)
+
+        # set the editable fields
+        app = Application.objects.get(name='bitcurator')
+        self.instance.object.create_creating_application()
+        self.instance.object.creating_application.name = app.name
+        self.instance.object.creating_application.version = app.version
+
+        self.instance.object.creating_application.date = self.today
+        # on init, xml fields should propagate to initial form data
+        form = PremisEditForm(instance=self.instance)
+        self.assertEqual(app.id, form.initial['application'])
+        self.assertEqual(self.today, form.initial['date'])
+
+    def test_update_instance(self):
+        form = PremisEditForm(instance=self.instance,
+            data={'application': 1, 'date': self.today})
+        self.assertTrue(form.is_valid())  # required before update instance will work
+
+        # inspect updated xml
+        updated = form.update_instance()
+        app = Application.objects.get(id=1)
+        self.assertEqual(app.name, updated.object.creating_application.name)
+        self.assertEqual(app.version, updated.object.creating_application.version)
+        self.assertEqual(self.today, updated.object.creating_application.date)
+
+
+
