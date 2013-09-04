@@ -1,6 +1,8 @@
 Django>=1.5
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.19.0-dev.tar.gz
-eulxml>=0.19.1
+#eulxml>=0.19.1
+# dev version of eulxml for datefield
+-e git://github.com/emory-libraries/eulxml.git@develop#egg=eulxml
 eulfedora>=0.20.0
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
