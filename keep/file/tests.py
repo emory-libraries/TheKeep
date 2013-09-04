@@ -21,6 +21,17 @@ from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase
 
 
+## Disk Image fixtures
+
+aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
+aff_md5 = '9d8daf0469a87dcfa65a29f5e107aac6'
+aff_sha1 = '98d027edf2246917b2aede948039fcea1811461b'
+
+ad1_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.ad1')
+ad1_md5 = 'e1ec1ac3a9e1f5a1c577a1de6e1e5c38'
+ad1_sha1 = '2d3065eb1b1ceeb618821e2cf776d36c9ba19e4a'
+
+
 class TestChecksum(TestCase):
     # use mp3 file from audio test fixtures
     mp3_file = os.path.join(settings.BASE_DIR, 'audio', 'fixtures', 'example.mp3')
@@ -328,9 +339,6 @@ class FileViewsTest(KeepTestCase):
         upload_url = reverse('file:upload')
         self.client.login(**ADMIN_CREDENTIALS)
 
-        aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
-        md5 = '7a0c337b817442796e5816afb731209b'
-
         with open(aff_file) as aff:
             response = self.client.post(upload_url, {'file': aff, 'collection_0':
                            self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
@@ -354,9 +362,24 @@ class FileViewsTest(KeepTestCase):
 
             # spot-check metadata init to confirm it ran
             self.assertEqual('software, multimedia', new_obj.mods.content.resource_type)
-            self.assertEqual(md5, new_obj.provenance.content.object.checksums[0].digest)
+            self.assertEqual(aff_md5, new_obj.provenance.content.object.checksums[0].digest)
 
+        # confirm AD1 also ingested as Disk Image
+        with open(ad1_file) as ad1:
+            response = self.client.post(upload_url, {'file': ad1, 'collection_0':
+                           self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+            result = response.context['ingest_results'][0]
+            self.assertTrue(result['success'], 'success should be true for uploaded AD1')
+            self.assertNotEqual(None, result['pid'],
+                'result should include pid of new object on successful ingest')
+            # Add pid to be removed.
+            self.pids.append(result['pid'])
 
+            repo = Repository()
+            new_obj = repo.get_object(result['pid'], type=DiskImage)
+            self.assertTrue(new_obj.has_model(DiskImage.DISKIMAGE_CONTENT_MODEL),
+                "AD1 ingested as disk image object")
+            self.assertEqual(ad1_md5, new_obj.provenance.content.object.checksums[0].digest)
 
 
 class UploadFormTest(TestCase):
@@ -406,13 +429,10 @@ class UploadFormTest(TestCase):
 
 
 class DiskImageTest(KeepTestCase):
-    aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
-    md5 = '9d8daf0469a87dcfa65a29f5e107aac6'
-    sha1 = 'd7957b2845ad83df7de711cf8c6f418c22c67936'
 
     def test_init_from_file(self):
         label = 'My Disk Image'
-        img = DiskImage.init_from_file(self.aff_file, label)
+        img = DiskImage.init_from_file(aff_file, label)
         # label set on obj and dc:title
         self.assertEqual(label, img.label,
             'specified label should be set on object')
@@ -429,9 +449,9 @@ class DiskImageTest(KeepTestCase):
         # premis
         self.assertEqual('ark', img.provenance.content.object.id_type)
         self.assertEqual('', img.provenance.content.object.id)  # for now, since we don't yet have a pid
-        self.assertEqual(self.md5, img.provenance.content.object.checksums[0].digest)
+        self.assertEqual(aff_md5, img.provenance.content.object.checksums[0].digest)
         self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
-        self.assertEqual(self.sha1, img.provenance.content.object.checksums[1].digest)
+        self.assertEqual(aff_sha1, img.provenance.content.object.checksums[1].digest)
         self.assertEqual('SHA-1', img.provenance.content.object.checksums[1].algorithm)
         self.assertEqual('AFF', img.provenance.content.object.format.name)
 
@@ -442,6 +462,13 @@ class DiskImageTest(KeepTestCase):
 
         self.assert_(img.provenance.content.schema_valid(),
             'generated premis should be schema-valid')
+
+        # AD1 - only difference should be format name & checksums
+        img = DiskImage.init_from_file(ad1_file)
+        self.assertEqual('AD1', img.provenance.content.object.format.name)
+        self.assertEqual(ad1_md5, img.provenance.content.object.checksums[0].digest)
+        self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
+        self.assertEqual(ad1_sha1, img.provenance.content.object.checksums[1].digest)
 
 
     def test_index_data(self):
