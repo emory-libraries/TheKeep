@@ -152,6 +152,61 @@ class DiskImage(DigitalObject):
     # will need to be updated anytime the master disk image datastream is updated
     # (will probably need to extend the save method for this)
 
+    def save(self, logMessage=None):
+        '''Save the object.  If the content of any :class:`~AudioObject.mods`,
+        :class:`AudioObject.rels_ext`, or :class:`AudioObject.digitaltech`
+        datastreams have been changed, the DC will be updated and saved as well.
+
+        :param logMessage: optional log message
+        '''
+        if not self.exists or self.mods.isModified() or \
+            self.rels_ext.isModified() or self.rights.isModified():
+            # DC is derivative metadata.
+            # If this is a new item (does not yet exist in Fedora)
+            # OR if any of the relevant datastreams have changed, update it.
+            self._update_dc()
+
+        return super(DiskImage, self).save(logMessage)
+
+    def _update_dc(self):
+        '''Update Dublin Core (derivative metadata) based on master metadata
+        from MODS, RELS-EXT, and rights metadata in order to keep data
+        synchronized and make fields that need to be searchable accessible to
+        Fedora findObjects API method.
+         '''
+        # NOTE: borrowed almost completely from audio, with minor modifications
+        # TODO: move to common code somewhere?
+
+        # identifiers
+        del(self.dc.content.identifier_list)        # clear out any existing names
+
+        # title
+        if self.mods.content.title:
+            # not strictly DC, but also keep object label in sync with MODS title
+            self.label = self.mods.content.title
+            self.dc.content.title = self.mods.content.title
+        if self.mods.content.resource_type:
+            self.dc.content.type = self.mods.content.resource_type
+
+        # clear out any dates previously in DC
+        del(self.dc.content.coverage_list)
+        if self.mods.content.dateissued_start and \
+           self.mods.content.dateissued_end:
+            # FIXME: not sure the best way to indicate date range here
+            self.dc.content.coverage_list.append('%s:%s' %
+                (self.mods.content.dateissued_start, self.mods.content.dateissued_end))
+
+        # clear out any descriptions previously in DC and set from MODS abstract
+        del(self.dc.content.description_list)
+        if self.mods.content.abstract and \
+           self.mods.content.abstract.text:
+            self.dc.content.description_list.append(self.mods.content.abstract.text)
+
+        # clear out any rights previously in DC and set contents from Rights accessStatus
+        del(self.dc.content.rights_list)
+        if self.rights.content.access_status:
+            # set dc:rights to text of access status
+            self.dc.content.rights_list.append(self.rights.content.access_status.text)
 
 
     @staticmethod

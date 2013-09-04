@@ -15,7 +15,7 @@ from keep.audio import models as audiomodels
 from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
     mp3_md5, wav_md5
 from keep.collection.fixtures import FedoraFixtures
-from keep.file.forms import UploadForm, PremisEditForm
+from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm
 from keep.file.models import DiskImage, Application
 from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase
@@ -55,7 +55,7 @@ class TestChecksum(TestCase):
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class FileViewsTest(KeepTestCase):
-    fixtures = ['users']
+    fixtures = ['users', 'test-applications.json']
 
     def setUp(self):
         super(FileViewsTest, self).setUp()
@@ -382,6 +382,62 @@ class FileViewsTest(KeepTestCase):
             self.assertEqual(ad1_md5, new_obj.provenance.content.object.checksums[0].digest)
 
 
+    def test_edit(self):
+        # ingest an object to test editing
+        img = DiskImage.init_from_file(ad1_file, 'Important Disk Image')
+        img.save()
+        self.pids.append(img.pid)
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        edit_url = reverse('file:edit', args=[img.pid])
+        # on GET, should display the form
+        response = self.client.get(edit_url)
+        # check response context
+        self.assert_(isinstance(response.context['form'], DiskImageEditForm))
+        self.assert_(isinstance(response.context['form'], DiskImageEditForm))
+        self.assertContains(response, reverse('admin:file_application_changelist'),
+            msg_prefix='edit form includes link to manage application list')
+
+        # minimal required fields
+        data = {
+            'mods-title': 'updated disk image',
+            'mods-abstract-text': 'longer description',
+            'mods-dateissued_start': '2002-05-02',
+            'mods-dateissued_end': '2004-03-05',
+            'collection_0': self.rushdie.pid,
+            'collection_1': self.rushdie.label,
+            'premis-application': '1',
+            'premis-date': '2003-05-06',
+            'rights-access': '10',
+            'comment': 'update metadata via edit form',
+        }
+
+        # on POST, validate and update
+        response = self.client.post(edit_url, data, follow=True)
+        # inspect updated object
+        updated_img = self.repo.get_object(img.pid, type=DiskImage)
+        # collection membership
+        self.assertEqual(self.rushdie.pid, updated_img.collection.pid)
+        # mods
+        modsxml = updated_img.mods.content
+        self.assertEqual(data['mods-title'], modsxml.title)
+        self.assertEqual(data['mods-abstract-text'], modsxml.abstract.text)
+        self.assertEqual(data['mods-dateissued_start'], unicode(modsxml.dateissued_start))
+        self.assertEqual(data['mods-dateissued_end'], unicode(modsxml.dateissued_end))
+        # premis
+        app = Application.objects.get(id=data['premis-application'])
+        premis = updated_img.provenance.content
+        self.assertEqual(data['premis-date'], unicode(premis.object.creating_application.date))
+        self.assertEqual(app.name, unicode(premis.object.creating_application.name))
+        self.assertEqual(app.version, unicode(premis.object.creating_application.version))
+        # rights logic re-used, but make sure it was updated
+        self.assertEqual(data['rights-access'], updated_img.rights.content.access_status.code)
+        self.assertEqual(data['comment'], updated_img.audit_trail.records[-1].message)
+
+        # TODO: test invalid post?
+
+
 class UploadFormTest(TestCase):
 
     def test_validation(self):
@@ -469,6 +525,25 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(ad1_md5, img.provenance.content.object.checksums[0].digest)
         self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
         self.assertEqual(ad1_sha1, img.provenance.content.object.checksums[1].digest)
+
+    def test_update_dc(self):
+        img = DiskImage.init_from_file(ad1_file)
+        img.mods.content.title = 'AD1 Disk Image'
+        img.mods.content.create_abstract()
+        img.mods.content.abstract.text = 'long description of the image'
+        img.mods.content.dateissued_start = datetime.date(2001, 1, 1)
+        img.mods.content.dateissued_end = datetime.date(2004, 12, 31)
+        img.rights.content.create_access_status()
+        img.rights.content.access_status.text = 'rights & restrictions'
+
+        img._update_dc()
+        self.assertEqual(img.mods.content.title, img.label)
+        self.assertEqual(img.mods.content.title, img.dc.content.title)
+        self.assertEqual(img.mods.content.abstract.text, img.dc.content.description)
+        self.assertEqual('%s:%s' % (img.mods.content.dateissued_start,
+                                    img.mods.content.dateissued_end),
+                         img.dc.content.coverage)
+        self.assertEqual(img.rights.content.access_status.text, img.dc.content.rights)
 
 
     def test_index_data(self):

@@ -374,6 +374,7 @@ def edit(request, pid):
             raise Http404
 
         if request.method == 'POST':
+
             # if data has been submitted, initialize form with request data and object mods
             form = DiskImageEditForm(request.POST, instance=obj)
             if form.is_valid():     # includes schema validation
