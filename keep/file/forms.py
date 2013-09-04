@@ -3,15 +3,17 @@ import os
 
 from eulxml.forms import XmlObjectForm, SubformField
 from eulxml.xmlmap import mods
+from eulcommon.djangoextras.formfields import DynamicChoiceField
 
 from django import forms
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
-from keep.common.fedora import LocalMODS
-from keep.common.forms import ReadonlyTextInput
+from keep.common.forms import ReadonlyTextInput, CommentForm, EMPTY_LABEL_TEXT
 from keep.collection.forms import CollectionSuggestionField
 from keep.audio.forms import RightsForm
+from keep.file.models import DiskImageMods, DiskImagePremis, \
+    Application
 
 
 logger = logging.getLogger(__name__)
@@ -32,15 +34,14 @@ class FormListField(forms.MultipleChoiceField):
             raise ValidationError(self.error_messages['required'])
 
 
-class UploadForm(forms.Form):
+class UploadForm(CommentForm):
     '''Single-file OR batch file upload form; takes a required collection and
     an optional comment and EITHER a single file via post or a list of
     filenames and uploaded files already uploaded via AJAX.'''
     collection = CollectionSuggestionField(required=True)
     file = forms.FileField(label="File", required=False)
-    comment = forms.CharField(widget=forms.TextInput(attrs={'class': 'long'}),
-        help_text='Optional comment or log message for auditing purposes.',
-        required=False)
+    # comment field inherited
+
     # list fields used only for reading/validating values added to the
     # form via javascript upload
     uploaded_files = FormListField(required=False)
@@ -110,15 +111,16 @@ class ModsEditForm(XmlObjectForm):
         widget=ReadonlyTextInput)
     resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
     abstract = SubformField(formclass=AbstractForm)
-    # general_note = SubformField(formclass=SimpleNoteForm)
-    # part_note = SubformField(formclass=SimpleNoteForm)
-
-    # names = SubformField(formclass=NameForm)
+    dateissued_start = forms.DateField(
+        label='Covering Dates', input_formats=['%Y-%m-%d', '%Y/%m/%d'],
+        help_text='start and end dates for disk content in YYYY-MM-DD or YYYY/MM/DD format')
+    dateissued_end = forms.DateField(label='', input_formats=['%Y-%m-%d', '%Y/%m/%d'])
 
     class Meta:
-        model = LocalMODS
+        model = DiskImageMods
         fields = (
-            'title', 'identifier', 'resource_type', 'abstract',
+            'title', 'identifier', 'resource_type',
+            'dateissued_start', 'dateissued_end', 'abstract'
         )
         widgets = {
             'title': forms.TextInput(attrs={'class': 'long'}),
@@ -126,7 +128,54 @@ class ModsEditForm(XmlObjectForm):
         }
 
 
-class DiskImageEditForm(forms.Form):
+def creating_applications():
+    options = [(app.id, unicode(app)) for app in Application.objects.all()]
+    options.insert(0, ('', EMPTY_LABEL_TEXT))
+    return options
+
+class PremisEditForm(XmlObjectForm):
+    # NOTE: extending xmlobjet form to make use of existing schema validation
+    # logic & integration to form validation.
+    # However, this form does not use any xmlobject form fields.
+
+    application = DynamicChoiceField(
+        label='Creating Application', choices=creating_applications)
+    date = forms.DateField(label='Date Created', input_formats=['%Y-%m-%d', '%Y/%m/%d'],
+                           help_text='Date created in YYYY-MM-DD or YYYY/MM/DD format')
+
+    class Meta:
+        model = DiskImagePremis
+        fields = []  # no xmlobject form fields
+
+    def __init__(self, data=None, instance=None, prefix=None, initial={}, **kwargs):
+        if instance is not None:
+            # set initial form data based on the xml
+            if instance.object.creating_application:
+                creating_app = instance.object.creating_application
+                initial['date'] = creating_app.date
+                try:
+                    app = Application.objects.get(name=creating_app.name,
+                      version=creating_app.version)
+                    initial['application'] = app.id
+                except ObjectDoesNotExist:
+                    pass
+
+        super(PremisEditForm, self).__init__(data=data, instance=instance,
+                                             prefix=prefix, initial=initial,
+                                             **kwargs)
+
+    def update_instance(self):
+        data = self.cleaned_data
+        # update premis fields based on form data
+        self.instance.object.create_creating_application()
+        app = Application.objects.get(id=data['application'])
+        self.instance.object.creating_application.name = app.name
+        self.instance.object.creating_application.version = app.version
+        self.instance.object.creating_application.date = data['date']
+        return self.instance
+
+
+class DiskImageEditForm(CommentForm):
     """:class:`~django.forms.Form` for metadata on an
     :class:`~keep.file.models.DiskImage`.
 
@@ -140,6 +189,7 @@ class DiskImageEditForm(forms.Form):
     """
 
     collection = CollectionSuggestionField(required=True)
+    # comment field inherited
 
     error_css_class = 'error'
     required_css_class = 'required'
@@ -151,6 +201,7 @@ class DiskImageEditForm(forms.Form):
         else:
             mods_instance = instance.mods.content
             rights_instance = instance.rights.content
+            premis_instance = instance.provenance.content
             self.object_instance = instance
             orig_initial = initial
             initial = {}
@@ -170,9 +221,9 @@ class DiskImageEditForm(forms.Form):
         common_opts = {'data': data, 'initial': initial}
         self.mods = ModsEditForm(instance=mods_instance, prefix='mods', **common_opts)
         self.rights = RightsForm(instance=rights_instance, prefix='rights', **common_opts)
- #       self.comments = CommentForm( prefix='comments',**common_opts)
+        self.premis = PremisEditForm(instance=premis_instance, prefix='premis', **common_opts)
 
-        for form in ( self.mods, ):
+        for form in (self.mods, self.rights, self.premis):
             form.error_css_class = self.error_css_class
             form.required_css_class = self.error_css_class
 
@@ -183,13 +234,14 @@ class DiskImageEditForm(forms.Form):
                     [ super(DiskImageEditForm, self),
                       self.mods,
                       self.rights,
+                      self.premis,
                     ])
 
     def update_instance(self):
         # override default update to handle extra fields
-        #super(AudioObjectEditForm, self).update_instance()
         self.object_instance.mods.content = self.mods.update_instance()
         self.object_instance.rights.content = self.rights.update_instance()
+        self.object_instance.provenance.content = self.premis.update_instance()
 
         # cleaned data only available when the form is valid,
         # but xmlobjectform is_valid calls update_instance

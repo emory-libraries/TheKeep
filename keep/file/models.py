@@ -12,9 +12,31 @@ from keep.collection.models import CollectionObject
 from keep.file.utils import md5sum, sha1sum
 
 
+## DB model for creating application
+
+class Application(models.Model):
+    name = models.CharField(max_length=255)
+    version = models.CharField(max_length=30)
+
+    def __unicode__(self):
+        return '%s %s' % (self.name, self.version)
+
+
 ##
 ## Fedora DiskImage
 ##
+
+class DiskImageMods(LocalMODS):
+    '''Customized MODS for :class:`DiskImage`, based on
+    :class:`~keep.common.fedora.LocalMODS`.'''
+    # FIXME: should really just be a date field and not datetime
+    dateissued_start = xmlmap.DateField('mods:originInfo/mods:dateIssued[@point="start"]',
+                                        format="%Y-%m-%d")
+    'coverage start date (dateIssued start, as :class:`~eulxml.xmlmap.DateField`)'
+    dateissued_end = xmlmap.DateField('mods:originInfo/mods:dateIssued[@point="end"]',
+                                      format="%Y-%m-%d")
+    'coverage end date (dateIssued start, as :class:`~eulxml.xmlmap.DateField`)'
+
 
 class PremisFixity(premis.BasePremis):
     ROOT_NAME = 'fixity'
@@ -26,12 +48,20 @@ class PremisObjectFormat(premis.BasePremis):
     name = xmlmap.StringField('p:formatDesignation/p:formatName')
     version = xmlmap.StringField('p:formatDesignation/p:formatVersion')
 
+class PremisCreatingApplication(premis.BasePremis):
+    ROOT_NAME = 'creatingApplication'
+    name = xmlmap.StringField('p:creatingApplicationName')
+    version = xmlmap.StringField('p:creatingApplicationVersion')
+    date = xmlmap.DateField('p:dateCreatedByApplication')
+
 class PremisObject(premis.Object):
     composition_level = xmlmap.IntegerField('p:objectCharacteristics/p:compositionLevel')
     checksums = xmlmap.NodeListField('p:objectCharacteristics/p:fixity',
                                      PremisFixity)
     format = xmlmap.NodeField('p:objectCharacteristics/p:format',
                               PremisObjectFormat)
+    creating_application = xmlmap.NodeField('p:objectCharacteristics/p:creatingApplication',
+                                            PremisCreatingApplication)
 
 class DiskImagePremis(premis.Premis):
 
@@ -66,7 +96,7 @@ class DiskImage(DigitalObject):
     via `isMemberOfCollection` relation.
     '''
 
-    mods = XmlDatastream("MODS", "MODS Metadata", LocalMODS, defaults={
+    mods = XmlDatastream("MODS", "MODS Metadata", DiskImageMods, defaults={
                          'control_group': 'M',
                          'format': mods.MODS_NAMESPACE,
                          'versionable': True,
@@ -98,13 +128,13 @@ class DiskImage(DigitalObject):
     XML content will be an instance of :class:`eulxml.xmlmap.premis.Premis`.'''
 
     # map datastream IDs to human-readable names for inherited history_events method
-    # TODO (probably/eventually)
-    # component_key = {
-    #     'MODS': 'descriptive metadata',
-    #     'DC': 'descriptive metadata',
-    #     'Rights': 'rights metadata',
-    #     'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
-    # }
+    component_key = {
+        'MODS': 'descriptive metadata',
+        'DC': 'descriptive metadata',
+        'Rights': 'rights metadata',
+        'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
+        'provenanceMetadata': 'provenance metadata',
+    }
 
     def get_default_pid(self):
         # extend common default pid logic in to also set ARK identifier

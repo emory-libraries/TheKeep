@@ -1,3 +1,4 @@
+import datetime
 from mock import Mock, patch
 import os
 from shutil import copyfile
@@ -433,6 +434,7 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(self.sha1, img.provenance.content.object.checksums[1].digest)
         self.assertEqual('SHA-1', img.provenance.content.object.checksums[1].algorithm)
         self.assertEqual('AFF', img.provenance.content.object.format.name)
+
         # for debugging invalid premis
         if not img.provenance.content.schema_valid():
             print img.provenance.content.serialize(pretty=True)
