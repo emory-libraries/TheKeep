@@ -314,15 +314,15 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
-Release 1.7
+Release 1.6
 -----------
 
 * To support AFF and AD1 disk image files, custom mimetypes are required.
   See :ref:`mimetype-config` for setup instructions.
 
 
-Release 1.6
------------
+Release 1.5.2
+-------------
 
 * Django settings have been updated to follow Django 1.5 conventions.
   In particular, check ``localsettings.py.dist`` for changes to
