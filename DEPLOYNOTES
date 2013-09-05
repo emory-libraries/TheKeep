@@ -321,6 +321,8 @@ Release 1.6
   See :ref:`mimetype-config` for setup instructions.
 * Run ``python manage.py syncdb`` to update the database schema for
   new models.
+* Restart the eulindexer service indexing the deployed site so it will
+  start picking up and indexing any new Disk Image content.
 
 Release 1.5.2
 -------------
