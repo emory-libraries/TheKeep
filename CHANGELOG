@@ -3,15 +3,29 @@
 CHANGELOG
 =========
 
-Release 1.6
------------
+Release 1.6 - support Disk Images ingest via web upload
+-------------------------------------------------------
 
 * Updated to Django 1.5
-* Archivist can view status of process after changing the status of a
-  "simple collection" in the Keep, so they can tell whether or not all
-  items in the collection were updated.
-* bugfix: marking an object as processed via "simple collection" Keep
-  edit form will now leave an audit trail message
+* An archivist can upload a disk image file via the Keep web interface
+  to ingest it into the repository, in order to secure and preserve the
+  data and to provide archival access for triage and processing.
+* After uploading a disk image file (or batch of disk image files), an
+  archivist should see a list of original file names and corresponding
+  checksums so that they can verify data authenticity.
+* When an archivist uploads a disk image file via the Keep, record
+  identifiers and other standardized fields will be automatically stored
+  in the metadata record, so that an archivist does not have to enter
+  them manually.
+* Archivist can search and discover metadata records for ingested disk
+  images so that they can view, download and/or edit disk images as part
+  of processing.
+* An archivist can enter minimal required metadata after upload when
+ ingesting a disk image file, in order to document custodial history.
+* An archivist can add and edit entries in the controlled list of
+  imaging software used for disk image metadata, so that new systems can
+  be added as needed.
+
 
 Release 1.5.2
 -------------
