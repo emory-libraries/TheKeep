@@ -319,7 +319,8 @@ Release 1.6
 
 * To support AFF and AD1 disk image files, custom mimetypes are required.
   See :ref:`mimetype-config` for setup instructions.
-
+* Run ``python manage.py syncdb`` to update the database schema for
+  new models.
 
 Release 1.5.2
 -------------
