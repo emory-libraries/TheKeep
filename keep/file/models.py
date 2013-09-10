@@ -229,15 +229,28 @@ class DiskImage(DigitalObject):
         if checksum is None:
             checksum = md5sum(filename)
 
-        # split filename to get basename and file extension
         basename, ext = os.path.splitext(os.path.basename(filename))
-        if initial_label is None:
+
+        # ajax upload passes original filename as initial label
+        if initial_label is not None:
+            # if initial label looks like a file, strip off the extension
+            # for the object name/title
+            if initial_label.lower().endswith('.aff') or \
+               initial_label.lower().endswith('.ad1'):
+                basename, ext = os.path.splitext(initial_label)
+                # NOTE: also using extension from original filename
+                # here because in some cases (under apache?) uploaded file
+                # names do not have the original extension
+                initial_label = basename
+
+        else:
             initial_label = basename
 
         repo = Repository(request=request)
         obj = repo.get_object(type=DiskImage)
         # set initial object label from the base filename
         obj.label = initial_label
+        obj.mods.content.title = obj.label
         obj.dc.content.title = obj.label
         # set initial mods:typeOfResource - same for all Disk Images
         obj.mods.content.resource_type = 'software, multimedia'

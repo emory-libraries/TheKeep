@@ -2,6 +2,7 @@ import datetime
 from mock import Mock, patch
 import os
 from shutil import copyfile
+import tempfile
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -525,6 +526,18 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(ad1_md5, img.provenance.content.object.checksums[0].digest)
         self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
         self.assertEqual(ad1_sha1, img.provenance.content.object.checksums[1].digest)
+
+        # simulate ajax upload: label is original filename, file has alternate extension
+        # create a temporary, actual file that ends with .upload
+        tmpfile = tempfile.NamedTemporaryFile(suffix='.upload')
+
+        img = DiskImage.init_from_file(tmpfile.name, 'DiskImage.aff')
+        # object label & title should be filename without extension
+        self.assertEqual('DiskImage', img.label)
+        self.assertEqual('DiskImage', img.dc.content.title)
+        self.assertEqual('DiskImage', img.mods.content.title)
+        # format type should be AFF, not UPLOAD
+        self.assertEqual('AFF', img.provenance.content.object.format.name)
 
     def test_update_dc(self):
         img = DiskImage.init_from_file(ad1_file)
