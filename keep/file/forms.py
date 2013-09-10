@@ -150,7 +150,7 @@ class PremisEditForm(XmlObjectForm):
     def __init__(self, data=None, instance=None, prefix=None, initial={}, **kwargs):
         if instance is not None:
             # set initial form data based on the xml
-            if instance.object.creating_application:
+            if instance.object and instance.object.creating_application:
                 creating_app = instance.object.creating_application
                 initial['date'] = creating_app.date
                 try:
