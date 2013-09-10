@@ -323,6 +323,8 @@ Release 1.6
   new models.
 * Restart the eulindexer service indexing the deployed site so it will
   start picking up and indexing any new Disk Image content.
+* Update XACML policies in Fedora with the latest version to allow
+  access to disk image content.
 
 Release 1.5.2
 -------------
@@ -333,6 +335,7 @@ Release 1.5.2
 
 * Make sure to restart the celery daemon so that it will pick up the
   new batch status update task.
+
 
 Release 1.5
 -----------
