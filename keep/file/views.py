@@ -348,19 +348,14 @@ def ajax_upload(request):
 def view(request, pid):
     '''View a single repository item.
 
-    Currently has bare minimum implementation to support ingesting
-    :class:`~keep.file.models.DiskImage` content (new object url is required).
+    Not yet implemented; for now, redirects to :meth:`edit` view.
     '''
-    # repo = TypeInferringRepository(request=request)
-    repo = Repository(request=request)
-    obj = repo.get_object(pid)
-    if not obj.exists:
-        raise Http404
-
     # this view isn't implemented yet, but we want to be able to use the
     # uri. so if someone requests the uri, send them straight to the edit
     # page for now.
-    return render(request, 'file/view.html', {'obj': obj})
+    return HttpResponseSeeOtherRedirect(reverse('file:edit',
+                kwargs={'pid': pid}))
+
 
 @permission_required("common.marbl_allowed")
 def edit(request, pid):
