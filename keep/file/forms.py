@@ -3,7 +3,7 @@ import os
 
 from eulxml.forms import XmlObjectForm, SubformField
 from eulxml.xmlmap import mods
-from eulcommon.djangoextras.formfields import DynamicChoiceField
+from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 from django import forms
 from django.conf import settings
@@ -111,16 +111,17 @@ class ModsEditForm(XmlObjectForm):
         widget=ReadonlyTextInput)
     resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
     abstract = SubformField(formclass=AbstractForm)
-    dateissued_start = forms.DateField(
-        label='Covering Dates', input_formats=['%Y-%m-%d', '%Y/%m/%d'],
-        help_text='start and end dates for disk content in YYYY-MM-DD or YYYY/MM/DD format')
-    dateissued_end = forms.DateField(label='', input_formats=['%Y-%m-%d', '%Y/%m/%d'])
+    coveringdate_start = W3CDateField(
+        label='Covering Dates',
+        help_text='start and end dates for disk content in YYYY, YYYY-MM, or YYYY-MM-DD',
+        required=False)
+    coveringdate_end = W3CDateField(label='', required=False)
 
     class Meta:
         model = DiskImageMods
         fields = (
             'title', 'identifier', 'resource_type',
-            'dateissued_start', 'dateissued_end', 'abstract'
+            'coveringdate_start', 'coveringdate_end', 'abstract'
         )
         widgets = {
             'title': forms.TextInput(attrs={'class': 'long'}),
@@ -140,7 +141,7 @@ class PremisEditForm(XmlObjectForm):
 
     application = DynamicChoiceField(
         label='Creating Application', choices=creating_applications)
-    date = forms.DateField(label='Date Created', input_formats=['%Y-%m-%d', '%Y/%m/%d'],
+    date = forms.DateField(label='Imaging Date', input_formats=['%Y-%m-%d', '%Y/%m/%d'],
                            help_text='Date created in YYYY-MM-DD or YYYY/MM/DD format')
 
     class Meta:

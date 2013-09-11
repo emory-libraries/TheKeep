@@ -3,6 +3,10 @@
 {% block page-subtitle %}: File : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Disk Image File{% endblock %}
 
+{% block scripts %}
+  {{ block.super }}
+  <script type="text/javascript" src="{{ STATIC_URL }}/js/edit.js"></script>
+{% endblock %}
 
 {% block content-body %}
 {{ block.super }}
@@ -36,13 +40,13 @@
   {% endif %}
   {% for field in form.mods %}
     {# date range is special case, don't handle it here #}
-    {% if field.name != 'dateissued_start' and field.name != 'dateissued_end' %}
+    {% if field.name != 'coveringdate_start' and field.name != 'coveringdate_end' %}
     {% include 'snippets/form_field_tr.html' %}
     {% endif %}
   {% endfor %}
 
   {# date range #}
-  {% with start=form.mods.dateissued_start end=form.mods.dateissued_end %}
+  {% with start=form.mods.coveringdate_start end=form.mods.coveringdate_end %}
   {# formatting here based on form_field_tr snippet #}
   <tr class="{% if start.field.required %}{{ form.required_css_class|default:'required'}}{% endif %}
     {% if start.errors %}{{ form.error_css.class|default:'error' }}{% endif %}">
@@ -78,6 +82,7 @@
   {% endfor %}
 
 </table>
+</div>
 
 <h3 id="premis-label" class="section-head toggle">Technical Metadata</h3>
 <div id="premis">

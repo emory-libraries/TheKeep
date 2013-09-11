@@ -30,12 +30,11 @@ class DiskImageMods(LocalMODS):
     '''Customized MODS for :class:`DiskImage`, based on
     :class:`~keep.common.fedora.LocalMODS`.'''
     # FIXME: should really just be a date field and not datetime
-    dateissued_start = xmlmap.DateField('mods:originInfo/mods:dateIssued[@point="start"]',
-                                        format="%Y-%m-%d")
-    'coverage start date (dateIssued start, as :class:`~eulxml.xmlmap.DateField`)'
-    dateissued_end = xmlmap.DateField('mods:originInfo/mods:dateIssued[@point="end"]',
-                                      format="%Y-%m-%d")
-    'coverage end date (dateIssued start, as :class:`~eulxml.xmlmap.DateField`)'
+    coveringdate_start = xmlmap.StringField('mods:originInfo/mods:dateCreated[@point="start"]')
+    '''coverage start date (dateCreated start, as :class:`~eulxml.xmlmap.StringField`
+    to allow any of YYYY, YYYY-MM, or YYYY-MM-DD date formats)'''
+    coveringdate_end = xmlmap.StringField('mods:originInfo/mods:dateCreated[@point="end"]')
+    'coverage end date (dateCreated start, as :class:`~eulxml.xmlmap.StringField`)'
 
 
 class PremisFixity(premis.BasePremis):
@@ -190,11 +189,11 @@ class DiskImage(DigitalObject):
 
         # clear out any dates previously in DC
         del(self.dc.content.coverage_list)
-        if self.mods.content.dateissued_start and \
-           self.mods.content.dateissued_end:
+        if self.mods.content.coveringdate_start and \
+           self.mods.content.coveringdate_end:
             # FIXME: not sure the best way to indicate date range here
             self.dc.content.coverage_list.append('%s:%s' %
-                (self.mods.content.dateissued_start, self.mods.content.dateissued_end))
+                (self.mods.content.coveringdate_start, self.mods.content.coveringdate_end))
 
         # clear out any descriptions previously in DC and set from MODS abstract
         del(self.dc.content.description_list)

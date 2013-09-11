@@ -33,7 +33,6 @@ from keep.audio.tasks import convert_wav_to_mp3
 from keep.audio.templatetags import audio_extras
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
-from keep.common import models as commonmodels
 from keep.testutil import KeepTestCase
 
 logger = logging.getLogger(__name__)

@@ -404,8 +404,13 @@ class FileViewsTest(KeepTestCase):
         data = {
             'mods-title': 'updated disk image',
             'mods-abstract-text': 'longer description',
-            'mods-dateissued_start': '2002-05-02',
-            'mods-dateissued_end': '2004-03-05',
+            # using W3C date field, so year/month/day submitted separately
+            'mods-coveringdate_start_year': '2002',
+            'mods-coveringdate_start_month': '05',
+            'mods-coveringdate_start_day': '02',
+            'mods-coveringdate_end_year': '2004',
+            'mods-coveringdate_end_month': '03',
+            'mods-coveringdate_end_day': '05',
             'collection_0': self.rushdie.pid,
             'collection_1': self.rushdie.label,
             'premis-application': '1',
@@ -424,8 +429,15 @@ class FileViewsTest(KeepTestCase):
         modsxml = updated_img.mods.content
         self.assertEqual(data['mods-title'], modsxml.title)
         self.assertEqual(data['mods-abstract-text'], modsxml.abstract.text)
-        self.assertEqual(data['mods-dateissued_start'], unicode(modsxml.dateissued_start))
-        self.assertEqual(data['mods-dateissued_end'], unicode(modsxml.dateissued_end))
+        print modsxml.serialize(pretty=True)
+        start = '-'.join([data['mods-coveringdate_start_year'],
+                          data['mods-coveringdate_start_month'],
+                          data['mods-coveringdate_start_day']])
+        self.assertEqual(start, modsxml.coveringdate_start)
+        end = '-'.join([data['mods-coveringdate_end_year'],
+                        data['mods-coveringdate_end_month'],
+                        data['mods-coveringdate_end_day']])
+        self.assertEqual(end, modsxml.coveringdate_end)
         # premis
         app = Application.objects.get(id=data['premis-application'])
         premis = updated_img.provenance.content
@@ -544,8 +556,8 @@ class DiskImageTest(KeepTestCase):
         img.mods.content.title = 'AD1 Disk Image'
         img.mods.content.create_abstract()
         img.mods.content.abstract.text = 'long description of the image'
-        img.mods.content.dateissued_start = datetime.date(2001, 1, 1)
-        img.mods.content.dateissued_end = datetime.date(2004, 12, 31)
+        img.mods.content.coveringdate_start = '2001-01-01'
+        img.mods.content.coveringdate_end = '2004-12-31'
         img.rights.content.create_access_status()
         img.rights.content.access_status.text = 'rights & restrictions'
 
@@ -553,8 +565,8 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(img.mods.content.title, img.label)
         self.assertEqual(img.mods.content.title, img.dc.content.title)
         self.assertEqual(img.mods.content.abstract.text, img.dc.content.description)
-        self.assertEqual('%s:%s' % (img.mods.content.dateissued_start,
-                                    img.mods.content.dateissued_end),
+        self.assertEqual('%s:%s' % (img.mods.content.coveringdate_start,
+                                    img.mods.content.coveringdate_end),
                          img.dc.content.coverage)
         self.assertEqual(img.rights.content.access_status.text, img.dc.content.rights)
 
