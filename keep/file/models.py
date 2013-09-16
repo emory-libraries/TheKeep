@@ -1,4 +1,5 @@
 import os
+import magic
 
 from django.db import models
 from eulcm.xmlmap.boda import Rights
@@ -208,7 +209,8 @@ class DiskImage(DigitalObject):
 
 
     @staticmethod
-    def init_from_file(filename, initial_label=None, request=None, checksum=None):
+    def init_from_file(filename, initial_label=None, request=None, checksum=None,
+        mimetype=None):
         '''Static method to create a new :class:`DiskImage` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.
@@ -220,6 +222,7 @@ class DiskImage(DigitalObject):
             must be passed in order to connect to Fedora as the currently-logged
             in user
         :param checksum: the checksum of the file being sent to fedora.
+        :param mimetype: the mimetype for the main disk image content.
         :returns: :class:`DiskImage` initialized from the file
         '''
 
@@ -278,12 +281,22 @@ class DiskImage(DigitalObject):
         obj.provenance.content.object.create_format()
         # for now, format name will be upper-cased version of file extension
         # (i.e., AFF or AD1)
+        # FIXME: should this be generated based on mimetype instead?
+        # (might be more reliable)
         obj.provenance.content.object.format.name = ext.upper().strip('.')
 
 
         obj.content.content = open(filename)  # FIXME: at what point does/should this get closed?
         # Set the file checksum
         obj.content.checksum = checksum
+        # set mimetype
+        if mimetype is None:
+            # if no mimetype was passed in, determine from file
+            m = magic.Magic(mime=True)
+            mtype = m.from_file(filename)
+            mimetype, separator, options = mtype.partition(';')
+        obj.content.mimetype = mimetype
+
         # Set disk image datastream label to filename
         obj.content.label = initial_label
 

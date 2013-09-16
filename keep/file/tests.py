@@ -501,7 +501,9 @@ class DiskImageTest(KeepTestCase):
 
     def test_init_from_file(self):
         label = 'My Disk Image'
-        img = DiskImage.init_from_file(aff_file, label)
+        mimetype = 'application/x-aff'
+        img = DiskImage.init_from_file(aff_file, label,
+                                       checksum=aff_md5, mimetype=mimetype)
         # label set on obj and dc:title
         self.assertEqual(label, img.label,
             'specified label should be set on object')
@@ -523,6 +525,9 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(aff_sha1, img.provenance.content.object.checksums[1].digest)
         self.assertEqual('SHA-1', img.provenance.content.object.checksums[1].algorithm)
         self.assertEqual('AFF', img.provenance.content.object.format.name)
+        # content datastream
+        self.assertEqual(aff_md5, img.content.checksum)
+        self.assertEqual(mimetype, img.content.mimetype)
 
         # for debugging invalid premis
         if not img.provenance.content.schema_valid():
@@ -538,6 +543,9 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(ad1_md5, img.provenance.content.object.checksums[0].digest)
         self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
         self.assertEqual(ad1_sha1, img.provenance.content.object.checksums[1].digest)
+        # checksum and mimetype should be calculated and set on datastream
+        self.assertEqual(ad1_md5, img.content.checksum)
+        self.assertEqual('application/x-ad1', img.content.mimetype)
 
         # simulate ajax upload: label is original filename, file has alternate extension
         # create a temporary, actual file that ends with .upload

@@ -558,7 +558,8 @@ class AudioObject(DigitalObject):
         return data
 
     @staticmethod
-    def init_from_file(filename, initial_label=None, request=None, checksum=None):
+    def init_from_file(filename, initial_label=None, request=None, checksum=None,
+        mimetype=None):
         '''Static method to create a new :class:`AudioObject` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Calculates and stores the duration
@@ -584,8 +585,11 @@ class AudioObject(DigitalObject):
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
         obj.audio.content = open(filename)  # FIXME: at what point does/should this get closed?
-        #Set the file checksum, if set.
+        # Set the file checksum, if set.
         obj.audio.checksum = checksum
+        # set content datastream mimetype if passed in
+        if mimetype is not None:
+            obj.audio.mimetype = mimetype
         #Get the label, minus the ".wav" (mimetype indicates that)
         obj.audio.label = initial_label[:-4]
         # set initial mods:typeOfResource - all AudioObjects default to sound recording

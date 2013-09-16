@@ -184,7 +184,8 @@ def ingest_files(files, collection, comment, request):
 
         # initialize a new object from the file
         obj = objtype.init_from_file(filename, initial_label=label,
-                                     request=request, checksum=md5)
+                                     request=request, checksum=md5,
+                                     mimetype=type)
 
         # set collection on ingest
         obj.collection = collection
