@@ -105,11 +105,10 @@ class DiskImage(DigitalObject):
     # note: using base local mods for now; may need to extend for disk images
 
     content = FileDatastream("content", "Master disk image file", defaults={
-                             #'mimetype': 'audio/x-wav',
-                             'versionable': True,  # ? (maybe)
+                             'versionable': False,
                              })
     'master disk image binary content as :class:`~eulfedora.models.FileDatastream`'
-    # TODO: coudl be one of several allowed mimetypes
+    # NOTE: could be one of a few allowed mimetypes
 
     rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
                            defaults={
