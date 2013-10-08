@@ -510,7 +510,7 @@ class StagingUploadBagsTest(TestCase):
 
     def test_options(self):
 
-        with self.settings(UPLOAD_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
             # nothing in folder
             opts = staging_upload_bags()
             self.assertEqual(1, len(opts),
@@ -626,8 +626,8 @@ class DiskImageTest(KeepTestCase):
         shutil.copy(ad1_file, bag_path)
         bagit.make_bag(bag_path)
 
-        with self.settings(UPLOAD_STAGING_DIR=self.tempdir):
-            with self.settings(UPLOAD_STAGING_FEDORA_BASE=None):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            with self.settings(LARGE_FILE_STAGING_FEDORA_DIR=None):
                 img = DiskImage.init_from_bagit(bag_path)
 
         # inspect resulting disk image object
@@ -645,8 +645,8 @@ class DiskImageTest(KeepTestCase):
 
         # fedora base path different than local
         fedora_staging_dir = '/fedora/server/path'
-        with self.settings(UPLOAD_STAGING_DIR=self.tempdir):
-            with self.settings(UPLOAD_STAGING_FEDORA_BASE=fedora_staging_dir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            with self.settings(LARGE_FILE_STAGING_FEDORA_DIR=fedora_staging_dir):
                 img = DiskImage.init_from_bagit(bag_path)
 
         # ds location should be file uri for disk image within BagIt

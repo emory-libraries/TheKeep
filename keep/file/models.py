@@ -321,7 +321,7 @@ class DiskImage(DigitalObject):
         (e.g. AFF or AD1) to use as the content datastream for the object.
         Content checksum is pulled from the BagIt metadata, and repository
         ingest will be done via file URIs based on configured
-        **UPLOAD_STAGING_DIR** and **UPLOAD_STAGING_FEDORA_BASE**
+        **LARGE_FILE_STAGING_DIR** and **LARGE_FILE_STAGING_FEDORA_DIR**
         to better support ingesting large files.
 
         Raises an exception if BagIt is not valid or if it does not
@@ -366,9 +366,9 @@ class DiskImage(DigitalObject):
         ingest_location = 'file://%s' % filename
         # if Fedora base path is different from locally mounted staging directory,
         # convert from local path to fedora server path
-        if getattr(settings, 'UPLOAD_STAGING_FEDORA_BASE', None) is not None:
-            ingest_location = ingest_location.replace(settings.UPLOAD_STAGING_DIR,
-                settings.UPLOAD_STAGING_FEDORA_BASE)
+        if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+            ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                settings.LARGE_FILE_STAGING_FEDORA_DIR)
 
         return DiskImage.init_from_file(filename, initial_label=initial_label,
             checksum=checksum, mimetype=mimetype, request=request,

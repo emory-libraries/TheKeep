@@ -132,6 +132,12 @@ INGEST_STAGING_TEMP_DIR = '/tmp/digitalmasters-ingest-staging'
 # time in seconds that files in the ingest staging directory should be kept
 INGEST_STAGING_KEEP_AGE = 60*60*24*3
 
+# Settings for staging area for large-file ingest workflow
+# - directory as mounted on the Django app server
+LARGE_FILE_STAGING_DIR = '/path/to/inbound/data'
+# - directory on Fedora server, if path is different
+# LARGE_FILE_STAGING_FEDORA_DIR = '/home/fedora/inbound'
+
 # Allowable discrepancy between duration of original file and converted access copy
 # Recommended: set to something around 1.0 - 1.5
 AUDIO_ALLOWED_DURATION_DISCREPANCY = 1.5

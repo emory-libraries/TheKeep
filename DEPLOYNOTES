@@ -314,6 +314,18 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 1.7
+-----------
+
+* Set up a shared network space where designated Keep users can upload
+  large disk image content for ingest.  This directory should be mounted
+  on the Django app server and made read/write accessible by the Keep
+  application user, and should be mounted on the Fedora server in a path
+  where security policies allow file ingest.  Configure the appropriate
+  paths in **LARGE_FILE_STAGING_DIR** and
+  **LARGE_FILE_STAGING_FEDORA_DIR** in ``localsettings.py``.
+
+
 Release 1.6
 -----------
 

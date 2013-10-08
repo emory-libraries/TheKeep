@@ -95,7 +95,7 @@ def staging_upload_bags():
     # form option list of available bagit files uploaded to large-file staging area
     options = [('', EMPTY_LABEL_TEXT)]
     # large file upload currently only supports BagIt SIPs, so ignore anythng else
-    upload_dir = getattr(settings, 'UPLOAD_STAGING_DIR')
+    upload_dir = getattr(settings, 'LARGE_FILE_STAGING_DIR')
     if upload_dir and os.path.isdir(upload_dir):
         bags = glob.glob('%s/*/bagit.txt' % upload_dir.rstrip('/'))
         options.extend([(os.path.dirname(b), os.path.basename(os.path.dirname(b))) for b in bags])
