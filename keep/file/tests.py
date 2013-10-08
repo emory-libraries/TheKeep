@@ -1,7 +1,7 @@
 import datetime
 from mock import Mock, patch
 import os
-from shutil import copyfile, rmtree
+import shutil
 import tempfile
 import bagit
 
@@ -200,7 +200,7 @@ class FileViewsTest(KeepTestCase):
         self.client.login(**ADMIN_CREDENTIALS)
         # create files in staging dir to mimic results of ajax upload
         upload_filepath = os.path.join(settings.INGEST_STAGING_TEMP_DIR, 'example-01.wav')
-        copyfile(wav_filename, upload_filepath)
+        shutil.copyfile(wav_filename, upload_filepath)
         with open(upload_filepath + '.md5', 'w') as md5file:
             md5file.write(wav_md5)
 
@@ -247,7 +247,7 @@ class FileViewsTest(KeepTestCase):
             'ingested object should have a conversion result to track mp3 generation')
 
         # POST wav file with an incorrect checksum should fail
-        copyfile(wav_filename, upload_filepath)     # re-copy file, now that is removed after ingest
+        shutil.copyfile(wav_filename, upload_filepath)     # re-copy file, now that is removed after ingest
         with open(upload_filepath + '.md5', 'w') as md5file:
             md5file.write('bogus md5 checksum')
 
@@ -506,7 +506,7 @@ class StagingUploadBagsTest(TestCase):
         self.tempdir = tempfile.mkdtemp(prefix='keep-test-')
 
     def tearDown(self):
-        rmtree(self.tempdir)
+        shutil.rmtree(self.tempdir)
 
     def test_options(self):
 
@@ -541,6 +541,13 @@ class StagingUploadBagsTest(TestCase):
 
 
 class DiskImageTest(KeepTestCase):
+
+    def setUp(self):
+        # temp dir for constructing BagIt SIPs
+        self.tempdir = tempfile.mkdtemp(prefix='keep-test-')
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
 
     def test_init_from_file(self):
         label = 'My Disk Image'
@@ -601,6 +608,63 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual('DiskImage', img.mods.content.title)
         # format type should be AFF, not UPLOAD
         self.assertEqual('AFF', img.provenance.content.object.format.name)
+
+        # content location
+        ds_location = 'file:///some/ingest/path/DiskImage.aff'
+        img = DiskImage.init_from_file(tmpfile.name, 'DiskImage.aff',
+            content_location=ds_location)
+        # content should not be set to open file
+        self.assertEqual(None, img.content.content)
+        # ds location should be set for fedora to ingest
+        self.assertEqual(ds_location, img.content.ds_location)
+
+    def test_init_from_bagit(self):
+
+        # create bag with fixture as payload
+        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        # copy in ad1 fixture as payload
+        shutil.copy(ad1_file, bag_path)
+        bagit.make_bag(bag_path)
+
+        with self.settings(UPLOAD_STAGING_DIR=self.tempdir):
+            with self.settings(UPLOAD_STAGING_FEDORA_BASE=None):
+                img = DiskImage.init_from_bagit(bag_path)
+
+        # inspect resulting disk image object
+        #  - initial label should be basename of BagIt
+        self.assertEqual(os.path.basename(bag_path), img.label)
+        mimetype = 'application/x-ad1'
+        self.assertEqual(mimetype, img.content.mimetype,
+            'content mimetype should be set based on disk image file in BagIt')
+        self.assertEqual(ad1_md5, img.content.checksum,
+            'content checksum should be set from BagIt data')
+        # ds location should be file uri for disk image within BagIt
+        ds_location = 'file://' + os.path.join(bag_path, 'data',
+                                               os.path.basename(ad1_file))
+        self.assertEqual(ds_location, img.content.ds_location)
+
+        # fedora base path different than local
+        fedora_staging_dir = '/fedora/server/path'
+        with self.settings(UPLOAD_STAGING_DIR=self.tempdir):
+            with self.settings(UPLOAD_STAGING_FEDORA_BASE=fedora_staging_dir):
+                img = DiskImage.init_from_bagit(bag_path)
+
+        # ds location should be file uri for disk image within BagIt
+        ds_location = 'file://' + os.path.join(fedora_staging_dir,
+            os.path.basename(bag_path), 'data',
+            os.path.basename(ad1_file))
+        self.assertEqual(ds_location, img.content.ds_location)
+
+        # test invalid bag
+        os.remove(os.path.join(bag_path, 'data', os.path.basename(ad1_file)))
+        self.assertRaises(bagit.BagValidationError, DiskImage.init_from_bagit,
+                          bag_path)
+
+        # test valid bag with no disk image content
+        nodata_bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        bagit.make_bag(nodata_bag_path)
+        self.assertRaises(Exception, DiskImage.init_from_bagit,
+                          nodata_bag_path)
 
     def test_update_dc(self):
         img = DiskImage.init_from_file(ad1_file)

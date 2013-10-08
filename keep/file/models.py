@@ -1,6 +1,8 @@
 import os
 import magic
+import bagit
 
+from django.conf import settings
 from django.db import models
 from eulcm.xmlmap.boda import Rights
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
@@ -210,7 +212,7 @@ class DiskImage(DigitalObject):
 
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None, checksum=None,
-        mimetype=None):
+        mimetype=None, content_location=None):
         '''Static method to create a new :class:`DiskImage` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.
@@ -285,8 +287,15 @@ class DiskImage(DigitalObject):
         # (might be more reliable)
         obj.provenance.content.object.format.name = ext.upper().strip('.')
 
+        # if a content URI is specified (e.g. for large files), use that
+        if content_location is not None:
+            obj.content.ds_location = content_location
 
-        obj.content.content = open(filename)  # FIXME: at what point does/should this get closed?
+        # otherwise set the file as content to be posted
+        else:
+            obj.content.content = open(filename)
+            # FIXME: at what point does/should this file get closed?
+
         # Set the file checksum
         obj.content.checksum = checksum
         # set mimetype
@@ -303,6 +312,67 @@ class DiskImage(DigitalObject):
         # descriptive/technical metadata todo
 
         return obj
+
+    @staticmethod
+    def init_from_bagit(path, request=None):
+        '''Static method to create a new :class:`DiskImage` instance from
+        a BagIt.  Sets the object label and metadata title based on the
+        name of the bag, and looks for a supported disk image file type
+        (e.g. AFF or AD1) to use as the content datastream for the object.
+        Content checksum is pulled from the BagIt metadata, and repository
+        ingest will be done via file URIs based on configured
+        **UPLOAD_STAGING_DIR** and **UPLOAD_STAGING_FEDORA_BASE**
+        to better support ingesting large files.
+
+        Raises an exception if BagIt is not valid or if it does not
+        contain a supported disk image data file.
+
+        :param path: full path to the BagIt directory that contains
+            a disk image file
+        :param request: :class:`django.http.HttpRequest` passed into a view method;
+            must be passed in order to connect to Fedora as the currently-logged
+            in user
+
+        :returns: :class:`DiskImage` initialized from the BagIt contents
+        '''
+
+        bag = bagit.Bag(path)
+        bag.validate()  # raises bagit.BagValidationError if not valid
+        # NOTE: may need to do fast validation for large files? (fast=True)
+        # raises an exception if not valid
+
+        # use the base name of the BagIt as initial object label
+        initial_label = os.path.basename(path)
+
+        # identify disk image content file within the bag
+        filename = None
+        m = magic.Magic(mime=True)
+        # loop through bag content until we find a supported disk image file
+        for data_path in bag.payload_files():
+            # path is relative to bag root dir
+            filename = os.path.join(path, data_path)
+            mtype = m.from_file(filename)
+            mimetype, separator, options = mtype.partition(';')
+            if mimetype and mimetype in DiskImage.allowed_mimetypes:
+                # FIXME: can we assumed md5 checksum is always present?
+                checksum = bag.entries[data_path]['md5']
+                # stop iterating: this is the file we want
+                break
+
+        # no disk image data found
+        if filename is None:
+            raise Exception('No disk image content found!')
+
+        ingest_location = 'file://%s' % filename
+        # if Fedora base path is different from locally mounted staging directory,
+        # convert from local path to fedora server path
+        if getattr(settings, 'UPLOAD_STAGING_FEDORA_BASE', None) is not None:
+            ingest_location = ingest_location.replace(settings.UPLOAD_STAGING_DIR,
+                settings.UPLOAD_STAGING_FEDORA_BASE)
+
+        return DiskImage.init_from_file(filename, initial_label=initial_label,
+            checksum=checksum, mimetype=mimetype, request=request,
+            content_location=ingest_location)
 
     @models.permalink
     def get_absolute_url(self):
