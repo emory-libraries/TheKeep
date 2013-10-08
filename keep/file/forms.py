@@ -10,7 +10,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
-from keep.common.forms import ReadonlyTextInput, CommentForm, comment_field, EMPTY_LABEL_TEXT
+from keep.common.forms import ReadonlyTextInput, comment_field, EMPTY_LABEL_TEXT
 from keep.collection.forms import CollectionSuggestionField
 from keep.audio.forms import RightsForm
 from keep.file.models import DiskImageMods, DiskImagePremis, \
@@ -35,13 +35,13 @@ class FormListField(forms.MultipleChoiceField):
             raise ValidationError(self.error_messages['required'])
 
 
-class UploadForm(CommentForm):
+class UploadForm(forms.Form):
     '''Single-file OR batch file upload form; takes a required collection and
     an optional comment and EITHER a single file via post or a list of
     filenames and uploaded files already uploaded via AJAX.'''
     collection = CollectionSuggestionField(required=True)
     file = forms.FileField(label="File", required=False)
-    # comment field inherited
+    comment = comment_field()
 
     # list fields used only for reading/validating values added to the
     # form via javascript upload
@@ -107,7 +107,7 @@ class StagingIngestForm(forms.Form):
     from the list of available bags.'''
     collection = CollectionSuggestionField(required=True)
     bag = DynamicChoiceField(label='File to ingest', choices=staging_upload_bags)
-    # TODO: possibly multiple?
+    # TODO: possibly support multiple bags?
     comment = comment_field()
 
 
@@ -198,7 +198,7 @@ class PremisEditForm(XmlObjectForm):
         return self.instance
 
 
-class DiskImageEditForm(CommentForm):
+class DiskImageEditForm(forms.Form):
     """:class:`~django.forms.Form` for metadata on an
     :class:`~keep.file.models.DiskImage`.
 
@@ -212,7 +212,7 @@ class DiskImageEditForm(CommentForm):
     """
 
     collection = CollectionSuggestionField(required=True)
-    # comment field inherited
+    comment = comment_field()
 
     error_css_class = 'error'
     required_css_class = 'required'

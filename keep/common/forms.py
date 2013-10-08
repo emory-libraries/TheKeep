@@ -233,8 +233,12 @@ class ItemSearch(forms.Form):
 
         return search_info
 
-class CommentForm(forms.Form):
-    comment = forms.CharField(
+def comment_field():
+    # define when requested as a simple way to preserve field order
+    return forms.CharField(
         label="Comment", required=False,
         help_text='Optional comment or log message for auditing purposes.',
         widget=forms.TextInput(attrs={'class': 'long'}))
+
+class CommentForm(forms.Form):
+    comment = comment_field()
