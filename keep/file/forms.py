@@ -1,5 +1,6 @@
 import logging
 import os
+import glob
 
 from eulxml.forms import XmlObjectForm, SubformField
 from eulxml.xmlmap import mods
@@ -9,7 +10,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
-from keep.common.forms import ReadonlyTextInput, CommentForm, EMPTY_LABEL_TEXT
+from keep.common.forms import ReadonlyTextInput, CommentForm, comment_field, EMPTY_LABEL_TEXT
 from keep.collection.forms import CollectionSuggestionField
 from keep.audio.forms import RightsForm
 from keep.file.models import DiskImageMods, DiskImagePremis, \
@@ -88,6 +89,27 @@ class UploadForm(CommentForm):
                 files[filepath] = filenames[i]
 
         return files
+
+
+def staging_upload_bags():
+    # form option list of available bagit files uploaded to large-file staging area
+    options = [('', EMPTY_LABEL_TEXT)]
+    # large file upload currently only supports BagIt SIPs, so ignore anythng else
+    upload_dir = getattr(settings, 'UPLOAD_STAGING_DIR')
+    if upload_dir and os.path.isdir(upload_dir):
+        bags = glob.glob('%s/*/bagit.txt' % upload_dir.rstrip('/'))
+        options.extend([(os.path.dirname(b), os.path.basename(os.path.dirname(b))) for b in bags])
+    return options
+
+class StagingIngestForm(forms.Form):
+    '''Ingest content from a BagIt uploaded to a large-file staging space.
+    Takes a required collection, an optional comment and, and a selection
+    from the list of available bags.'''
+    collection = CollectionSuggestionField(required=True)
+    bag = DynamicChoiceField(label='File to ingest', choices=staging_upload_bags)
+    # TODO: possibly multiple?
+    comment = comment_field()
+
 
 class AbstractForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to simplify editing

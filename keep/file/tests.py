@@ -1,12 +1,14 @@
 import datetime
 from mock import Mock, patch
 import os
-from shutil import copyfile
+from shutil import copyfile, rmtree
 import tempfile
+import bagit
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import TestCase
+from django.test.utils import override_settings
 
 from eulfedora.server import Repository
 from eullocal.django.taskresult.models import TaskResult
@@ -16,7 +18,8 @@ from keep.audio import models as audiomodels
 from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
     mp3_md5, wav_md5
 from keep.collection.fixtures import FedoraFixtures
-from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm
+from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm, \
+    staging_upload_bags
 from keep.file.models import DiskImage, Application
 from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase
@@ -495,6 +498,46 @@ class UploadFormTest(TestCase):
                          form.cleaned_data['filenames'][0])
         self.assertEqual(files[form.cleaned_data['uploaded_files'][1]],
                          form.cleaned_data['filenames'][1])
+
+
+class StagingUploadBagsTest(TestCase):
+
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp(prefix='keep-test-')
+
+    def tearDown(self):
+        rmtree(self.tempdir)
+
+    def test_options(self):
+
+        with self.settings(UPLOAD_STAGING_DIR=self.tempdir):
+            # nothing in folder
+            opts = staging_upload_bags()
+            self.assertEqual(1, len(opts),
+                'select option list should only have one option when no bagit files are available')
+
+            # create two bags
+            bag1_path = tempfile.mkdtemp(dir=self.tempdir)
+            bagit.make_bag(bag1_path)
+            bag2_path = tempfile.mkdtemp(dir=self.tempdir)
+            bagit.make_bag(bag2_path)
+            # create a directory that is not a bagit
+            nonbag_path = tempfile.mkdtemp(dir=self.tempdir)
+
+            opts = staging_upload_bags()
+            self.assertEqual(3, len(opts),
+                'option list should 3 entries when two bagit files are available')
+            # inspect actual paths and labels that will be displayed to users
+            paths = []
+            labels = []
+            for k, v in opts:
+                paths.append(k)
+                labels.append(v)
+            self.assert_(bag1_path in paths)
+            self.assert_(bag2_path in paths)
+            self.assert_(nonbag_path not in paths)
+            self.assert_(os.path.basename(bag1_path) in labels)
+            self.assert_(os.path.basename(bag2_path) in labels)
 
 
 class DiskImageTest(KeepTestCase):
