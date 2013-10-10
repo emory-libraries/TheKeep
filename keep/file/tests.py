@@ -801,6 +801,13 @@ class DiskImageTest(KeepTestCase):
             os.path.basename(ad1_file))
         self.assertEqual(ds_location, img.content.ds_location)
 
+        # disable file uri ingest
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            img = DiskImage.init_from_bagit(bag_path, file_uri=False)
+        # should be set as content file instead of ds location
+        self.assertEqual(None, img.content.ds_location)
+        self.assertNotEqual(None, img.content.content)
+
         # test invalid bag
         os.remove(os.path.join(bag_path, 'data', os.path.basename(ad1_file)))
         self.assertRaises(bagit.BagValidationError, DiskImage.init_from_bagit,
@@ -811,6 +818,72 @@ class DiskImageTest(KeepTestCase):
         bagit.make_bag(nodata_bag_path)
         self.assertRaises(Exception, DiskImage.init_from_bagit,
                           nodata_bag_path)
+
+    def test_init_from_bagit_supplement(self):
+        # test creating disk image from bag with supplemental files
+        baggy_path = tempfile.mkdtemp(dir=self.tempdir)
+        # copy in ad1 fixture and create supplemental files
+        text_content = 'some text about the disk image'
+        shutil.copy(ad1_file, baggy_path)
+        with open(os.path.join(baggy_path, 'info.txt'), 'w') as txtfile:
+            txtfile.write(text_content)
+        xml_content = '<xml/>'
+        with open(os.path.join(baggy_path, 'extra.xml'), 'w') as xmlfile:
+            xmlfile.write(xml_content)
+        baggy_bag = bagit.make_bag(baggy_path)
+        img = DiskImage.init_from_bagit(baggy_path, file_uri=False)
+
+        # actually save to fedora to test supplemental datastream
+        # handling, since it is not the usual way we do things
+        img.save('testing supplemental datastreams')
+
+        # get fresh copy to inspect
+        new_obj = self.repo.get_object(img.pid, type=DiskImage)
+        self.assert_('supplement0' in new_obj.ds_list)
+        self.assert_('supplement1' in new_obj.ds_list)
+
+        # no guarantees what order they are added so figure out by label
+        supplement0 = new_obj.getDatastreamObject('supplement0')
+        supplement1 = new_obj.getDatastreamObject('supplement1')
+        if supplement0.label == 'info.txt':
+            txt_supplement = supplement0
+            xml_supplement = supplement1
+        else:
+            txt_supplement = supplement1
+            xml_supplement = supplement0
+
+        # text file datastream
+        self.assertEqual('text/plain', txt_supplement.mimetype)
+        self.assertEqual(baggy_bag.entries['data/info.txt']['md5'],
+                         txt_supplement.checksum)
+        self.assertEqual(text_content, txt_supplement.content)
+        # xml file datastream
+        self.assertEqual('text/plain', xml_supplement.mimetype)
+        # NOTE: mimetype magic doesn't distinguish xml from text
+        self.assertEqual(baggy_bag.entries['data/extra.xml']['md5'],
+                         xml_supplement.checksum)
+        self.assertEqual(xml_content, xml_supplement.content)
+
+        # supplemental file uri ingest
+        img = DiskImage.init_from_bagit(baggy_path)
+        s0 = img.getDatastreamObject('supplement0')
+        s1 = img.getDatastreamObject('supplement1')
+        s_locations = [s0.ds_location, s1.ds_location]
+        self.assert_('file://%s/data/info.txt' % baggy_path in s_locations)
+        self.assert_('file://%s/data/extra.xml' % baggy_path in s_locations)
+
+        # fedora base path different than local
+        fedora_staging_dir = '/fedora/server/path'
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            with self.settings(LARGE_FILE_STAGING_FEDORA_DIR=fedora_staging_dir):
+                img = DiskImage.init_from_bagit(baggy_path)
+
+        s0 = img.getDatastreamObject('supplement0')
+        s1 = img.getDatastreamObject('supplement1')
+        s_locations = [s0.ds_location, s1.ds_location]
+        base_path = os.path.join(fedora_staging_dir, os.path.basename(baggy_path))
+        self.assert_('file://%s/data/info.txt' % base_path in s_locations)
+        self.assert_('file://%s/data/extra.xml' % base_path in s_locations)
 
     def test_update_dc(self):
         img = DiskImage.init_from_file(ad1_file)

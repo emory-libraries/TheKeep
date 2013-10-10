@@ -7,7 +7,8 @@ import bagit
 from django.conf import settings
 from django.db import models
 from eulcm.xmlmap.boda import Rights
-from eulfedora.models import FileDatastream, XmlDatastream, Relation
+from eulfedora.models import FileDatastream, XmlDatastream, Relation, \
+    FileDatastreamObject
 from eulfedora.rdfns import relsext
 from eulxml import xmlmap
 from eulxml.xmlmap import mods, premis
@@ -318,7 +319,7 @@ class DiskImage(DigitalObject):
         return obj
 
     @staticmethod
-    def init_from_bagit(path, request=None):
+    def init_from_bagit(path, request=None, file_uri=True):
         '''Static method to create a new :class:`DiskImage` instance from
         a BagIt.  Sets the object label and metadata title based on the
         name of the bag, and looks for a supported disk image file type
@@ -326,7 +327,8 @@ class DiskImage(DigitalObject):
         Content checksum is pulled from the BagIt metadata, and repository
         ingest will be done via file URIs based on configured
         **LARGE_FILE_STAGING_DIR** and **LARGE_FILE_STAGING_FEDORA_DIR**
-        to better support ingesting large files.
+        to better support ingesting large files (unless file_uri
+        is False).
 
         Raises an exception if BagIt is not valid or if it does not
         contain a supported disk image data file.
@@ -336,9 +338,19 @@ class DiskImage(DigitalObject):
         :param request: :class:`django.http.HttpRequest` passed into a view method;
             must be passed in order to connect to Fedora as the currently-logged
             in user
+        :param file_uri: ingest BagIt data via file uris based on
+            configured staging directories (default behavior)
+            instead of uploading the content to Fedora
 
         :returns: :class:`DiskImage` initialized from the BagIt contents
         '''
+
+        # TODO: add optional file uri ingest flag, default to false
+        # (mostly to allow testing)
+        # - for all data files other than disk image, add
+        # supplementN datastream with mimetype/filename as label/checksum
+        # see if eulfedora getDatastreamObject can be used to init
+        # a new/unmapped ds?
 
         bag = bagit.Bag(path)
         bag.validate()  # raises bagit.BagValidationError if not valid
@@ -349,34 +361,75 @@ class DiskImage(DigitalObject):
         initial_label = os.path.basename(path)
 
         # identify disk image content file within the bag
-        filename = None
+        content_file = None
         m = magic.Magic(mime=True)
+        supplemental_files = []
+        supplement_mimetypes = {}
         # loop through bag content until we find a supported disk image file
         for data_path in bag.payload_files():
             # path is relative to bag root dir
             filename = os.path.join(path, data_path)
             mtype = m.from_file(filename)
             mimetype, separator, options = mtype.partition(';')
-            if mimetype and mimetype in DiskImage.allowed_mimetypes:
-                # FIXME: can we assumed md5 checksum is always present?
+            if mimetype in DiskImage.allowed_mimetypes:
+                # FIXME: can we assume md5 checksum is always present?
                 checksum = bag.entries[data_path]['md5']
-                # stop iterating: this is the file we want
-                break
+                # this is the disk image content file
+                content_file = filename
+
+            # any data file that is not a disk image should be assumed
+            # to be a supplemental file
+            else:
+                supplemental_files.append(filename)
+                # store the mimetype so we don't have to recalculate
+                supplement_mimetypes[filename] = mimetype
 
         # no disk image data found
-        if filename is None:
-            raise Exception('No disk image content found')
+        if content_file is None:
+            raise Exception('No disk image content found in %s' % os.path.basename(path))
 
-        ingest_location = 'file://%s' % filename
-        # if Fedora base path is different from locally mounted staging directory,
-        # convert from local path to fedora server path
-        if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
-            ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
-                settings.LARGE_FILE_STAGING_FEDORA_DIR)
+        optional_args = {}
+        if file_uri:
+            ingest_location = 'file://%s' % content_file
+            # if Fedora base path is different from locally mounted staging directory,
+            # convert from local path to fedora server path
+            if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+                ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                    settings.LARGE_FILE_STAGING_FEDORA_DIR)
 
-        return DiskImage.init_from_file(filename, initial_label=initial_label,
+            optional_args['content_location'] = ingest_location
+
+        img = DiskImage.init_from_file(content_file, initial_label=initial_label,
             checksum=checksum, mimetype=mimetype, request=request,
-            content_location=ingest_location)
+            **optional_args)
+
+        i = 0
+        for i in range(len(supplemental_files)):
+            sfile = supplemental_files[i]
+            dsid = 'supplement%d' % i
+            dsobj = img.getDatastreamObject(dsid, dsobj_type=FileDatastreamObject)
+            dsobj.label = os.path.basename(sfile)
+            dsobj.mimetype = supplement_mimetypes[sfile]
+            # convert to relative path *within* the bag for BagIt metadata lookup
+            data_path = sfile.replace(path, '').lstrip('/')
+            dsobj.checksum = bag.entries[data_path]['md5']
+            logger.debug('Adding supplemental dastream %s label=%s mimetype=%s checksum=%s' % \
+                (dsid, dsobj.label, dsobj.mimetype, dsobj.checksum))
+
+
+            if file_uri:
+                ingest_location = 'file://%s' % sfile
+                # if Fedora base path is different from locally mounted staging directory,
+                # convert from local path to fedora server path
+                if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+                    ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                        settings.LARGE_FILE_STAGING_FEDORA_DIR)
+                    dsobj.ds_location = ingest_location
+            else:
+                # will probably only work for small/test content
+                dsobj.content = open(sfile).read()
+
+        return img
 
     @models.permalink
     def get_absolute_url(self):
