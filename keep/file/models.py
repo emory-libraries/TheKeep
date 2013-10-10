@@ -1,4 +1,6 @@
+import glob
 import os
+import logging
 import magic
 import bagit
 
@@ -14,6 +16,8 @@ from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.collection.models import CollectionObject
 from keep.file.utils import md5sum, sha1sum
 
+
+logger = logging.getLogger(__name__)
 
 ## DB model for creating application
 
@@ -423,4 +427,16 @@ class DiskImage(DigitalObject):
         return data
 
 
+def large_file_uploads():
+    '''Generate a list of BagIt uploaded to the configured large-file
+    staging space and available for ingest.  Returns a list of directory
+    names.'''
+    upload_dir = getattr(settings, 'LARGE_FILE_STAGING_DIR')
+    if upload_dir and os.path.isdir(upload_dir):
+        # large file upload currently only supports BagIt SIPs, so ignore anythng else
+        bags = glob.glob('%s/*/bagit.txt' % upload_dir.rstrip('/'))
+        return [os.path.dirname(b) for b in bags]
+    else:
+        logger.warning('LARGE_FILE_STAGING_DIR does not seem to be configured correctly')
+        return []
 

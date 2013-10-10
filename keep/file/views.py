@@ -29,7 +29,7 @@ from keep.audio.tasks import queue_access_copy
 from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository, TypeInferringRepository, history_view
 from keep.file.forms import UploadForm, DiskImageEditForm, LargeFileIngestForm
-from keep.file.models import DiskImage
+from keep.file.models import DiskImage, large_file_uploads
 from keep.file.utils import md5sum, dump_post_data
 
 
@@ -358,15 +358,18 @@ def largefile_ingest(request):
 
     context = {}
     template_name = 'file/largefile_ingest.html'
-    # on GET, display form to select item(s) for ingest
-    if request.method == 'GET':
-        context['form'] = LargeFileIngestForm()
+    form = None
 
+    # on POST, process the form and ingest if valid
     if request.method == 'POST':
         form = LargeFileIngestForm(request.POST)
-        context['form'] = form
-        if form.is_valid():
-            # process the form
+
+        # if form is not valid, add to context for redisplay with errors
+        if not form.is_valid():
+            context['form'] = form
+
+        # otherwise, process the form
+        else:
             repo = Repository(request=request)
 
             # Get collection & check for optional comment
@@ -397,8 +400,6 @@ def largefile_ingest(request):
                 checksum = obj.content.checksum
                 # clear it out so Fedora can ingest without erroring
                 obj.content.checksum = None
-                print '** obj ds location = ', obj.content.ds_location
-                print '** obj checksum = ', obj.content.checksum
                 obj.save(comment)
                 # if save succeded (no exceptions), set summary info for diplay
                 file_info.update({'success': True,
@@ -419,12 +420,21 @@ def largefile_ingest(request):
 
             except Exception as err:
                 logger.error('Error: %s' % err)
-                raise
-                print err.__class__
                 file_info.update({'success': False, 'message': '%s' % err})
 
             # report success/failure in the same format as web-upload ingest
             context['ingest_results'] = [file_info]
+
+    # on GET display form to select item(s) for ingest
+    # OR on completed valid form post
+    files = large_file_uploads()
+    if request.method == 'GET' or \
+      form is not None and form.is_valid():
+        if len(files):
+            context['form'] = LargeFileIngestForm()
+        else:
+            # indicator that no files are available for ingest
+            context['no_files'] = True
 
     return render(request, template_name, context)
 

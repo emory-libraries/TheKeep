@@ -14,7 +14,7 @@ from keep.common.forms import ReadonlyTextInput, comment_field, EMPTY_LABEL_TEXT
 from keep.collection.forms import CollectionSuggestionField
 from keep.audio.forms import RightsForm
 from keep.file.models import DiskImageMods, DiskImagePremis, \
-    Application
+    Application, large_file_uploads
 
 
 logger = logging.getLogger(__name__)
@@ -94,11 +94,7 @@ class UploadForm(forms.Form):
 def largefile_staging_bags():
     # form option list of available bagit files uploaded to large-file staging area
     options = [('', EMPTY_LABEL_TEXT)]
-    # large file upload currently only supports BagIt SIPs, so ignore anythng else
-    upload_dir = getattr(settings, 'LARGE_FILE_STAGING_DIR')
-    if upload_dir and os.path.isdir(upload_dir):
-        bags = glob.glob('%s/*/bagit.txt' % upload_dir.rstrip('/'))
-        options.extend([(os.path.dirname(b), os.path.basename(os.path.dirname(b))) for b in bags])
+    options.extend([(lf, os.path.basename(lf)) for lf in large_file_uploads()])
     return options
 
 class LargeFileIngestForm(forms.Form):

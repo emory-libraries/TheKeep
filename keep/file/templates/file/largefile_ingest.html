@@ -15,6 +15,11 @@
   <hr style="clear:none;"/>
 {% endif %}
 
+{% if no_files %}
+<p>No {% if ingest_results %}more {% endif %}files are currently available for ingest.</p>
+{% endif %}
+
+{% if form %}
 <form class="upload" method="post" action="{% url 'file:largefile-ingest' %}">{% csrf_token %}
 
 <table>
@@ -26,5 +31,7 @@
 
  <input class="form-submit" type="submit" value="Submit" id='submit-upload'/>
 </form>
+{% endif %}
+
 {% endblock %}
 

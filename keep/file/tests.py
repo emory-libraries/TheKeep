@@ -395,17 +395,31 @@ class FileViewsTest(KeepTestCase):
         # use custom login so user credentials will be stored for fedora access
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
 
-        # on GET, should display the form
+        # on GET with no uploaded files, should display message and no form
         response = self.client.get(ingest_url)
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, ingest_url))
+        self.assert_('form' not in response.context,
+            'form should not be set in response context when no files are available for ingest')
+        self.assertTrue(response.context['no_files'])
+        self.assertContains(response, '<p>No files are currently available for ingest.</p>',
+            msg_prefix='response should indicate when no files are available for ingest',
+            html=True)
+
+        # construct a BagIt to test form display
+        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        bagit.make_bag(bag_path)
+
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            response = self.client.get(ingest_url)
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], LargeFileIngestForm))
 
         # collection & file are required; posting without should re-display form with errors
-        response = self.client.post(ingest_url)
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            response = self.client.post(ingest_url)
         self.assertNotEqual(None, response.context['form'])
         self.assertFalse(response.context['form'].is_valid())
         self.assertContains(response, 'You must choose a collection',
@@ -466,6 +480,16 @@ class FileViewsTest(KeepTestCase):
         # bagit should be removed from large-file staging area
         self.assertFalse(os.path.isdir(bag_path),
             'BagIt should be removed on successful ingest')
+
+        # form should not redisplay if no more files are available for ingest
+        self.assert_('form' not in response.context,
+            'form should not redisplay after ingest if no files are available for ingest')
+        self.assertTrue(response.context['no_files'])
+        self.assertContains(response, '<p>No more files are currently available for ingest.</p>',
+            msg_prefix='response should indicate no more files are available for ingest',
+            html=True)
+
+
 
         # inspect object as initialized (since save is simulated)
         # - should be created by logged in user
