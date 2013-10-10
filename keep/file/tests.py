@@ -426,26 +426,33 @@ class FileViewsTest(KeepTestCase):
             msg_prefix='When form is posted without a collection, an error is displayed')
         self.assertContains(response, 'field is required',
             msg_prefix='When form is posted without a file selected, an error is displayed')
+        # clean up first test bag
+        shutil.rmtree(bag_path)
 
         # construct a BagIt and then post as selected file
-        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        emptybag_path = tempfile.mkdtemp(dir=self.tempdir)
         # empty bag - valid but no disk image data
-        bagit.make_bag(bag_path)
+        bagit.make_bag(emptybag_path)
 
         with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
-            response = self.client.post(ingest_url, {'bag': bag_path, 'collection_0':
+            response = self.client.post(ingest_url, {'bag': emptybag_path, 'collection_0':
                 self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
         # should error because bagit does not contain a disk image file
         result = response.context['ingest_results'][0]
         self.assertFalse(result['success'])
-        self.assertEqual(os.path.basename(bag_path), result['label'])
-        self.assertEqual('No disk image content found', result['message'])
+        basename = os.path.basename(emptybag_path)
+        self.assertEqual(basename, result['label'])
+        self.assertEqual('No disk image content found in %s' % basename,
+                         result['message'])
+
+        # clean up
+        shutil.rmtree(emptybag_path)
 
         # construct a BagIt and then post as selected file
-        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        ad1bag_path = tempfile.mkdtemp(dir=self.tempdir)
         # copy in ad1 fixture as payload
-        shutil.copy(ad1_file, bag_path)
-        bagit.make_bag(bag_path)
+        shutil.copy(ad1_file, ad1bag_path)
+        bagit.make_bag(ad1bag_path)
 
         # mock save method since we can't ingest test fixture via file uri
         self.saved_obj = None
@@ -457,12 +464,12 @@ class FileViewsTest(KeepTestCase):
             self.saved_obj = obj
 
         with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
-            with patch('keep.file.models.DiskImage.save', mock_save):
-                response = self.client.post(ingest_url, {'bag': bag_path, 'collection_0':
+            with patch('keep.file.models.DiskImage.save', new=mock_save):
+                response = self.client.post(ingest_url, {'bag': ad1bag_path, 'collection_0':
                     self.rushdie.pid, 'collection_1': 'Rushdie Collection',
                     'comment': 'ingest me!'})
 
-                self.assertEqual('ingest me!', self.save_comment)
+        self.assertEqual('ingest me!', self.save_comment)
 
         # should create new disk image object & ingest into fedora
         # - summary info on ingested item should be displayed to user
@@ -570,7 +577,7 @@ class FileViewsTest(KeepTestCase):
         modsxml = updated_img.mods.content
         self.assertEqual(data['mods-title'], modsxml.title)
         self.assertEqual(data['mods-abstract-text'], modsxml.abstract.text)
-        print modsxml.serialize(pretty=True)
+        # print modsxml.serialize(pretty=True)
         start = '-'.join([data['mods-coveringdate_start_year'],
                           data['mods-coveringdate_start_month'],
                           data['mods-coveringdate_start_day']])
