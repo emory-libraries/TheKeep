@@ -91,7 +91,7 @@ class UploadForm(forms.Form):
         return files
 
 
-def staging_upload_bags():
+def largefile_staging_bags():
     # form option list of available bagit files uploaded to large-file staging area
     options = [('', EMPTY_LABEL_TEXT)]
     # large file upload currently only supports BagIt SIPs, so ignore anythng else
@@ -101,12 +101,12 @@ def staging_upload_bags():
         options.extend([(os.path.dirname(b), os.path.basename(os.path.dirname(b))) for b in bags])
     return options
 
-class StagingIngestForm(forms.Form):
+class LargeFileIngestForm(forms.Form):
     '''Ingest content from a BagIt uploaded to a large-file staging space.
     Takes a required collection, an optional comment and, and a selection
     from the list of available bags.'''
     collection = CollectionSuggestionField(required=True)
-    bag = DynamicChoiceField(label='File to ingest', choices=staging_upload_bags)
+    bag = DynamicChoiceField(label='File to ingest', choices=largefile_staging_bags)
     # TODO: possibly support multiple bags?
     comment = comment_field()
 

@@ -64,7 +64,7 @@ tr.required {
   padding-right: 7px; /* overrides the default 7 20 7 0 */
 }
 
-.edit-form .help-text, form#upload .help-text {
+.edit-form .help-text, .upload .help-text {
     display:inline; /* keep on same line as input if the whole text fits */
     white-space:nowrap;
     color: gray;

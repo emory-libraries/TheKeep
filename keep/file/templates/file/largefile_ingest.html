@@ -1,0 +1,30 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: File : Ingest{% endblock %}
+{% block content-title %}Selected uploaded files for ingest into the repository.{% endblock %}
+
+{% block style %}
+    {{ block.super }}
+   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/audio-upload.css" />
+{% endblock %}
+
+{% block content-body %}
+
+{% if ingest_results %} {# If any files were processed for ingest, display results. #}
+  {% include "file/snippets/ingest_results.html" %}
+  <hr style="clear:none;"/>
+{% endif %}
+
+<form class="upload" method="post" action="{% url 'file:largefile-ingest' %}">{% csrf_token %}
+
+<table>
+ {{ form.non_field_errors }}
+ {% for field in form %}
+   {% include "snippets/form_field_tr.html" %}
+ {% endfor %}
+</table>
+
+ <input class="form-submit" type="submit" value="Submit" id='submit-upload'/>
+</form>
+{% endblock %}
+

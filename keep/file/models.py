@@ -361,7 +361,7 @@ class DiskImage(DigitalObject):
 
         # no disk image data found
         if filename is None:
-            raise Exception('No disk image content found!')
+            raise Exception('No disk image content found')
 
         ingest_location = 'file://%s' % filename
         # if Fedora base path is different from locally mounted staging directory,
