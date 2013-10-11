@@ -424,7 +424,8 @@ class DiskImage(DigitalObject):
                 if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
                     ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
                         settings.LARGE_FILE_STAGING_FEDORA_DIR)
-                    dsobj.ds_location = ingest_location
+
+                dsobj.ds_location = ingest_location
             else:
                 # will probably only work for small/test content
                 dsobj.content = open(sfile).read()

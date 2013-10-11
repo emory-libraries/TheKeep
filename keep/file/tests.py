@@ -396,7 +396,8 @@ class FileViewsTest(KeepTestCase):
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
 
         # on GET with no uploaded files, should display message and no form
-        response = self.client.get(ingest_url)
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            response = self.client.get(ingest_url)
         code = response.status_code
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
@@ -869,8 +870,12 @@ class DiskImageTest(KeepTestCase):
         s0 = img.getDatastreamObject('supplement0')
         s1 = img.getDatastreamObject('supplement1')
         s_locations = [s0.ds_location, s1.ds_location]
-        self.assert_('file://%s/data/info.txt' % baggy_path in s_locations)
-        self.assert_('file://%s/data/extra.xml' % baggy_path in s_locations)
+        path = 'file://%s/data/info.txt' % baggy_path
+        self.assert_(path in s_locations,
+            'file uri %s should be used for a supplemental datastream location' % path)
+        path = 'file://%s/data/extra.xml' % baggy_path
+        self.assert_(path in s_locations,
+            'file uri %s should be used for a supplemental datastream location' % path)
 
         # fedora base path different than local
         fedora_staging_dir = '/fedora/server/path'
