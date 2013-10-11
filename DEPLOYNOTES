@@ -324,7 +324,10 @@ Release 1.7
   where security policies allow file ingest.  Configure the appropriate
   paths in **LARGE_FILE_STAGING_DIR** and
   **LARGE_FILE_STAGING_FEDORA_DIR** in ``localsettings.py``.
-
+* The Fedora XACML policy ``deny-unallowed-file-resolution.xml`` must
+  be modified to allow File URI ingest from the directory that is set up
+  as the large-file staging directory on the fedora server by logged
+  in users.
 
 Release 1.6
 -----------
