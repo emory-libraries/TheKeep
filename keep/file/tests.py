@@ -464,11 +464,23 @@ class FileViewsTest(KeepTestCase):
             self.save_comment = msg
             self.saved_obj = obj
 
+        # because we are mocking save and the view requests
+        # a fresh copy of the object from fedora to compare checksums,
+        # we have to mock repo.get_object
+        def mockrepo_getobj(pid, **kwargs):
+            if pid == self.rushdie.pid:
+                return self.repo.get_object(self.rushdie.pid, **kwargs)
+            else:
+                return self.saved_obj
+
         with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
             with patch('keep.file.models.DiskImage.save', new=mock_save):
-                response = self.client.post(ingest_url, {'bag': ad1bag_path, 'collection_0':
-                    self.rushdie.pid, 'collection_1': 'Rushdie Collection',
-                    'comment': 'ingest me!'})
+                with patch('keep.file.views.Repository') as mockrepo:
+                    mockrepo.return_value.get_object = mockrepo_getobj
+
+                    response = self.client.post(ingest_url, {'bag': ad1bag_path, 'collection_0':
+                        self.rushdie.pid, 'collection_1': 'Rushdie Collection',
+                        'comment': 'ingest me!'})
 
         self.assertEqual('ingest me!', self.save_comment)
 
@@ -497,8 +509,6 @@ class FileViewsTest(KeepTestCase):
             msg_prefix='response should indicate no more files are available for ingest',
             html=True)
 
-
-
         # inspect object as initialized (since save is simulated)
         # - should be created by logged in user
         self.assertEqual(ADMIN_CREDENTIALS['username'],
@@ -518,15 +528,21 @@ class FileViewsTest(KeepTestCase):
         shutil.copy(ad1_file, bag_path)
         bagit.make_bag(bag_path)
 
+        self.saved_obj = None
+        self.save_comment = None
         def mock_save_badchecksum(obj, msg):
-            obj.pid = 'fakepid:2'
-            obj.content.checksum = 'bogus md5'
+            self.saved_obj = obj
+            self.saved_obj.pid = 'fakepid:2'
+            self.saved_obj.content.checksum = 'bogus md5'
 
         with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
             with patch('keep.file.models.DiskImage.save', mock_save_badchecksum):
-                response = self.client.post(ingest_url, {'bag': bag_path, 'collection_0':
-                    self.rushdie.pid, 'collection_1': 'Rushdie Collection',
-                    'comment': 'ingest me!'})
+                with patch('keep.file.views.Repository') as mockrepo:
+                    mockrepo.return_value.get_object = mockrepo_getobj
+
+                    response = self.client.post(ingest_url, {'bag': bag_path, 'collection_0':
+                        self.rushdie.pid, 'collection_1': 'Rushdie Collection',
+                        'comment': 'ingest me!'})
 
         result = response.context['ingest_results'][0]
         self.assert_('checksum mismatch detected' in result['message'].lower())
