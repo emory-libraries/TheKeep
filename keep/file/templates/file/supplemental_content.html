@@ -1,0 +1,40 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: File : {{ obj.label }} : Supplemental content {{ obj.label }}{% endblock %}
+{% block content-title %}<a href="{% url 'file:edit' obj.pid %}">{{ obj.label }}</a>{% endblock %}
+
+
+{% block content-body %}
+{{ block.super }}
+
+<h2>Manage Supplemental Content</h2>
+
+<form method="post" enctype="multipart/form-data">{% csrf_token %}
+    {{ formset.management_form }}
+    <table>
+        <tr>
+            <th>{{ formset.0.label.label }}</th>
+            <th>{{ formset.0.file.label }}</th>
+        <th>
+    {% if formset.0.file.help_tet or formset.0.label.help_text %}
+        <tr>
+            <td>{{ formset.0.label.help_text }}</td>
+            <td>{{ formset.0.file.help_text}}</td>
+        <th>
+    {% endif %}
+    {% for form in formset %}
+    <tr>
+        <td>{{ form.label }} {{ form.label.errors}}</td>
+        <td>{{ form.file }}
+            {{ form.file.errors }}
+            {# include any hidden fields #}
+            {% for field in form.hidden_fields %}
+               {{ field }}
+            {% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
+ <input class="form-submit" type="submit" value="Save"/>
+</form>
+{% endblock %}

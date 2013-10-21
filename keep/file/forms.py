@@ -1,12 +1,12 @@
 import logging
 import os
-import glob
 
 from eulxml.forms import XmlObjectForm, SubformField
 from eulxml.xmlmap import mods
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
 from django import forms
+from django.forms.formsets import formset_factory
 from django.conf import settings
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 
@@ -272,3 +272,28 @@ class DiskImageEditForm(forms.Form):
         return self.object_instance
 
 
+class SupplementalFileForm(forms.Form):
+    dsid = forms.CharField(required=False,
+        widget=forms.HiddenInput)
+    label = forms.CharField(required=False,
+        help_text='filename for display; will be set from uploaded file if not specified',
+        widget=forms.TextInput(attrs={'class': 'long'}),)
+    file = forms.FileField(label="File", required=True,
+        help_text='Supplemental files to be kept with this object',
+        widget=forms.widgets.ClearableFileInput)
+    # file (either existing datastream or new upload) should always be present
+
+    def clean(self):
+        cleaned_data = super(SupplementalFileForm, self).clean()
+        label = cleaned_data.get('label', '')
+        file = cleaned_data.get('file')
+
+        # if file is present and label is not, fill in label from file title
+        if file and not label:
+            cleaned_data['label'] = file.name
+
+        print cleaned_data
+        # Always return the full collection of cleaned data.
+        return cleaned_data
+
+SupplementalFileFormSet = formset_factory(SupplementalFileForm, extra=3)

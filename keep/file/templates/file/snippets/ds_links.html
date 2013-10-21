@@ -16,15 +16,14 @@
 </ul>
 
 {# supplemental files #}
-{% if obj.has_supplemental_content %}
+{# {% if obj.has_supplemental_content %} #}
+<b style="float:left;padding-right:1em">Supplemental content:</b>
 <ul class='horiz'>
-  <li><b>Supplemental content: </b>
   {% for s in obj.supplemental_content %}
-     {% if not forloop.first %}<li>{% endif %}
-     <a href="{% url 'file:raw-ds' obj.pid s.id %}">{{ s.label }}</a></li>
-    </li>
+     <li><a href="{% url 'file:raw-ds' obj.pid s.id %}">{{ s.label }}</a></li>
   {% endfor %}
+  <li><a href="{% url 'file:supplements' obj.pid %}">+ add/manage</a></li>
 </ul>
-{% endif %}
+{# {% endif %} #}
 
 

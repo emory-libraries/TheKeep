@@ -649,6 +649,42 @@ class FileViewsTest(KeepTestCase):
             self.assertContains(response, reverse('file:raw-ds', args=(img.pid, ds.id)),
                 msg_prefix='link to view/download supplemental datastream should be present')
 
+    def test_manage_supplements(self):
+        # ingest an object to test editing
+        img = DiskImage.init_from_file(ad1_file, 'Important Disk Image')
+        img.save()
+        self.pids.append(img.pid)
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        manage_supplements_url = reverse('file:supplements', args=[img.pid])
+        # on GET, should display the form
+        response = self.client.get(manage_supplements_url)
+        # no supplements; should display empty form (no initial data)
+        self.assert_('formset' in response.context)
+        self.assertEqual(0, len(response.context['formset'].initial_forms))
+
+        # POST with no changes
+        form_data = {
+            'form-TOTAL_FORMS': 3,
+            'form-INITIAL_FORMS': 0,
+        }
+
+        response = self.client.post(manage_supplements_url, form_data, follow=True)
+        url, code = response.redirect_chain[0]
+        self.assert_(url.endswith(reverse('file:edit', args=[img.pid])))
+        self.assertEqual(303, code, 'should redirect with 303 See Other')
+        messages = [str(msg) for msg in response.context['messages']]
+        self.assertEqual('No changes made to supplemental content',
+            messages[0])
+
+        # TODO: post to add datastreams
+
+        # GET with supplements, initial display
+
+        # test modifying existing datastream, new
+
+
 
 class UploadFormTest(TestCase):
 

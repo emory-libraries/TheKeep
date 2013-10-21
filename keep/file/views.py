@@ -11,6 +11,7 @@ import bagit
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.core.files.uploadedfile import UploadedFile
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponseForbidden
@@ -20,6 +21,7 @@ from django.utils.safestring import mark_safe
 from eulcommon.djangoextras.http import HttpResponseUnsupportedMediaType, \
     HttpResponseSeeOtherRedirect
 from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
+from eulfedora.models import FileDatastreamObject
 from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.views import raw_datastream, raw_audit_trail
 
@@ -28,7 +30,8 @@ from keep.audio.models import AudioObject
 from keep.audio.tasks import queue_access_copy
 from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository, TypeInferringRepository, history_view
-from keep.file.forms import UploadForm, DiskImageEditForm, LargeFileIngestForm
+from keep.file.forms import UploadForm, DiskImageEditForm, LargeFileIngestForm, \
+    SupplementalFileFormSet
 from keep.file.models import DiskImage, large_file_uploads
 from keep.file.utils import md5sum, dump_post_data
 
@@ -567,6 +570,96 @@ def edit(request, pid):
               'problem persists, please alert the repository ' + \
               'administrator.'
         return HttpResponse(msg, mimetype='text/plain', status=500)
+
+
+@permission_required("common.marbl_allowed")
+def manage_supplements(request, pid):
+    '''Manage supplemental file datastreams associated with a
+    :class:`~keep.file.models.DiskImage`.'''
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=DiskImage)
+    if not obj.exists or not obj.has_requisite_content_models:
+        raise Http404
+
+    initial_data = []
+    for s in obj.supplemental_content:
+        # FIXME: move outside view method at least
+        class FileObj(object):
+            def __init__(self, pid, dsid, label):
+                self.url = reverse('file:raw-ds', args=(pid, dsid))
+                self.label = label
+            def __unicode__(self):
+                return self.label
+        initial_data.append({'dsid': s.id, 'label': s.label,
+            'file':  FileObj(obj.pid, s.id, s.label)})
+
+
+    if request.method == 'GET':
+        formset = SupplementalFileFormSet(initial=initial_data)
+
+    if request.method == 'POST':
+        formset = SupplementalFileFormSet(request.POST, request.FILES,
+            initial=initial_data)
+
+        if formset.is_valid():
+            m = magic.Magic(mime=True)
+
+            # NOTE: because we currently don't support re-ordering
+            # or deletion, simply counting to keep track of datastream ids
+            s_id = 0
+            modified = 0
+            added = 0
+            for file_info in formset.cleaned_data:
+                # skip empty formset
+                if not file_info:
+                    continue
+
+                if file_info.get('dsid', None):
+                    ds = obj.getDatastreamObject(file_info['dsid'],
+                        dsobj_type=FileDatastreamObject)
+                    # ds = getattr(obj, file_info['dsid'])
+                else:
+                    added += 1
+                    ds = obj.getDatastreamObject('supplement%d' % s_id,
+                        dsobj_type=FileDatastreamObject)
+
+                if file_info['label'] != ds.label:
+                    ds.label = file_info['label']
+                print 'setting datastream label to %s' % ds.label
+                # TODO: if uploaded file, replace content and calculate mimetype, checksum
+                if isinstance(file_info['file'], UploadedFile):
+
+                    filename = file_info['file'].temporary_file_path()
+                    mimetype = m.from_file(filename)
+                    mimetype, separator, options = mimetype.partition(';')
+                    ds.mimetype = mimetype
+                    ds.checksum = md5sum(filename)
+                    ds.content = file_info['file']
+
+                if ds.exists and ds.isModified():
+                    print 'ds %s has been modified' % ds.id
+                    modified += 1
+
+                s_id += 1
+
+            obj.save('updating supplemental files')
+            # TODO: error handling
+
+            # summarize number of changes, if any
+            if added or modified:
+                msg_add = 'added %d' % added if added else ''
+                msg_update = 'updated %d' % modified if modified else ''
+                msg = 'Successfully %s %s %s supplemental files' %  \
+                (msg_add, ' and ' if added and modified else '', msg_update)
+                messages.success(request, msg)
+            else:
+                # possible for the form to be valid but not make any changes
+                messages.info(request, 'No changes made to supplemental content')
+
+            return HttpResponseSeeOtherRedirect(reverse('file:edit', args=[pid]))
+
+    return render(request, 'file/supplemental_content.html',
+        {'obj': obj, 'formset': formset})
 
 
 ### FIXME: these views are currently redundant; consolidate all and make the
