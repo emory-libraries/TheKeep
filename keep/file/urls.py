@@ -7,7 +7,7 @@ urlpatterns = patterns('',
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),
     url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
     url(r'^(?P<pid>[^/]+)/history/$', views.history, name='history'),
-    url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>[a-zA-Z-]+)/$',
+    url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>[a-zA-Z-0-9]+)/$',
         views.view_datastream, name='raw-ds'),
     url(r'^(?P<pid>[^/]+)/AUDIT/$', views.view_audit_trail, name='audit-trail'),
 )

@@ -153,6 +153,24 @@ class DiskImage(DigitalObject):
 
         return pid
 
+    @property
+    def has_supplemental_content(self):
+        '''Boolean to indicate if this disk image object has any supplemental
+        file datastreams.
+
+        .. Note:: only works on saved objects
+        '''
+        return any(dsid.startswith('supplement') for dsid in self.ds_list.keys())
+
+    @property
+    def supplemental_content(self):
+        '''Generator for supplemental content datastreams'''
+        for dsid in self.ds_list.keys():
+            if dsid.startswith('supplement'):
+                yield self.getDatastreamObject(dsid)
+
+
+
 
     # NOTE: auto-calculated information such as checksums stored in premis
     # will need to be updated anytime the master disk image datastream is updated

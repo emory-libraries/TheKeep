@@ -14,3 +14,17 @@
     <li><a href="{% url 'file:audit-trail' obj.pid %}">XML Audit Trail</a></li>
   {% endif %}
 </ul>
+
+{# supplemental files #}
+{% if obj.has_supplemental_content %}
+<ul class='horiz'>
+  <li><b>Supplemental content: </b>
+  {% for s in obj.supplemental_content %}
+     {% if not forloop.first %}<li>{% endif %}
+     <a href="{% url 'file:raw-ds' obj.pid s.id %}">{{ s.label }}</a></li>
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+

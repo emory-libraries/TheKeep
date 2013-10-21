@@ -564,6 +564,8 @@ class FileViewsTest(KeepTestCase):
         self.assert_(isinstance(response.context['form'], DiskImageEditForm))
         self.assertContains(response, reverse('admin:file_application_changelist'),
             msg_prefix='edit form includes link to manage application list')
+        self.assertNotContains(response, 'Supplemental content:',
+            msg_prefix='disk image with no supplemental datastreams should not list any')
 
         # minimal required fields
         data = {
@@ -614,6 +616,38 @@ class FileViewsTest(KeepTestCase):
         self.assertEqual(data['comment'], updated_img.audit_trail.records[-1].message)
 
         # TODO: test invalid post?
+
+        # supplemental content links
+        baggy_path = tempfile.mkdtemp(dir=self.tempdir)
+        # copy in ad1 fixture and create supplemental files
+        text_content = 'some text about the disk image'
+        shutil.copy(ad1_file, baggy_path)
+        with open(os.path.join(baggy_path, 'info.txt'), 'w') as txtfile:
+            txtfile.write(text_content)
+        xml_content = '<xml/>'
+        with open(os.path.join(baggy_path, 'extra.xml'), 'w') as xmlfile:
+            xmlfile.write(xml_content)
+        # convert to bagit
+        bagit.make_bag(baggy_path)
+        img = DiskImage.init_from_bagit(baggy_path, file_uri=False)
+        img.save()
+        self.pids.append(img.pid)
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+        edit_url = reverse('file:edit', args=[img.pid])
+        # on GET, should display the form
+        response = self.client.get(edit_url)
+        self.assertContains(response, 'Supplemental content:',
+            msg_prefix='disk image with supplemental datastreams should list them')
+
+        img = self.repo.get_object(img.pid, type=DiskImage)
+        for ds in img.supplemental_content:
+            self.assertContains(response, ds.label,
+                msg_prefix='supplemental datastream %s label %s should be displayed' %
+                (ds.id, ds.label))
+            self.assertContains(response, reverse('file:raw-ds', args=(img.pid, ds.id)),
+                msg_prefix='link to view/download supplemental datastream should be present')
 
 
 class UploadFormTest(TestCase):
@@ -963,6 +997,34 @@ class DiskImageTest(KeepTestCase):
                          'ark uri should be present in index data')
         self.assertEqual(obj.content.checksum, desc_data['content_md5'],
                          'content datastream checksum should be included in index data')
+
+    def test_supplemental_content(self):
+        # test properties for interacting with supplemental file datastreams
+
+        # image with no supplemental content
+        img = DiskImage.init_from_file(ad1_file)
+        img.save()
+        self.assertFalse(img.has_supplemental_content)
+        self.assertEqual([], list(img.supplemental_content))
+
+        # create disk image from bag with supplemental files
+        baggy_path = tempfile.mkdtemp(dir=self.tempdir)
+        # copy in ad1 fixture and create supplemental files
+        text_content = 'some text about the disk image'
+        shutil.copy(ad1_file, baggy_path)
+        with open(os.path.join(baggy_path, 'info.txt'), 'w') as txtfile:
+            txtfile.write(text_content)
+        xml_content = '<xml/>'
+        with open(os.path.join(baggy_path, 'extra.xml'), 'w') as xmlfile:
+            xmlfile.write(xml_content)
+        # convert to bagit
+        bagit.make_bag(baggy_path)
+        img = DiskImage.init_from_bagit(baggy_path, file_uri=False)
+        img.save()  # has to be saved to inspect datastreams
+        img = self.repo.get_object(img.pid, type=DiskImage)
+        self.assertTrue(img.has_supplemental_content)
+        supplements = list(img.supplemental_content)
+        self.assertEqual(2, len(supplements))
 
 
 class PremisEditFormTest(TestCase):
