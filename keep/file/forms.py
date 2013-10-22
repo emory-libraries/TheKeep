@@ -292,7 +292,6 @@ class SupplementalFileForm(forms.Form):
         if file and not label:
             cleaned_data['label'] = file.name
 
-        print cleaned_data
         # Always return the full collection of cleaned data.
         return cleaned_data
 

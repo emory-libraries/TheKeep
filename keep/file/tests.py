@@ -678,12 +678,128 @@ class FileViewsTest(KeepTestCase):
         self.assertEqual('No changes made to supplemental content',
             messages[0])
 
-        # TODO: post to add datastreams
+        # - test POST data to add new supplemental datastreams
+        tmpfile1 = tempfile.NamedTemporaryFile(delete=False)
+        txt1 = 'Here is some supplemental content about an archival disk image'
+        tmpfile1.write(txt1)
+        tmpfile1.close()  # close to write contents so not detected as empty when posted
+        tmpfile2 = tempfile.NamedTemporaryFile(delete=False)
+        txt2 = '<xml><img>disk</img><metadata>something</metadata></xml>'
+        tmpfile2.write(txt2)
+        tmpfile2.close()
+        data = form_data.copy()
+        data.update({
+            'form-0-label': 'some-file.txt',
+            'form-0-dsid': '',
+            'form-1-label': '',  # leaving blank to generate from filename
+            'form-1-dsid': '',
+        })
+        with open(tmpfile1.name) as tmpfile1_data:
+            with open(tmpfile2.name) as tmpfile2_data:
+                data['form-0-file'] = tmpfile1_data
+                data['form-1-file'] = tmpfile2_data
 
-        # GET with supplements, initial display
+                response = self.client.post(manage_supplements_url, data, follow=True)
 
-        # test modifying existing datastream, new
+        url, code = response.redirect_chain[0]
+        messages = [str(msg) for msg in response.context['messages']]
+        self.assertEqual('Successfully added 2 supplemental files',
+                         messages[0])
+        # get object from fedora and check for supplemental datastreams
+        updated_img = self.repo.get_object(img.pid, type=DiskImage)
+        # should have added two supplementN datastreams
+        self.assert_('supplement0' in updated_img.ds_list)
+        self.assert_('supplement1' in updated_img.ds_list)
+        supplements = list(updated_img.supplemental_content)
+        self.assertEqual(2, len(supplements))
+        self.assertEqual(data['form-0-label'], supplements[0].label,
+            'datastream label should be set from form data if specified')
+        self.assertEqual(txt1, supplements[0].content)
+        self.assertEqual('text/plain', supplements[0].mimetype,
+            'datastream mimetype is set based on detected content')
+        self.assertEqual(md5sum(tmpfile1.name), supplements[0].checksum)
+        self.assertEqual(os.path.basename(tmpfile2.name), supplements[1].label,
+            'datastream label should be set from filename if not specified')
+        self.assertEqual(txt2, supplements[1].content)
+        self.assertEqual(md5sum(tmpfile2.name), supplements[1].checksum)
 
+        os.unlink(tmpfile1.name)
+        os.unlink(tmpfile2.name)
+
+        # test initial form data for object with supplemental datastreams
+        response = self.client.get(manage_supplements_url, data, follow=True)
+        formset = response.context['formset']
+        self.assertEqual(2, len(formset.initial_forms),
+            'formset should have two initial forms when there are two supplemental datastreams')
+        self.assertEqual(supplements[0].label, formset.initial_forms[0].initial['label'])
+        self.assertEqual(supplements[0].id, formset.initial_forms[0].initial['dsid'])
+        self.assertEqual(supplements[1].label, formset.initial_forms[1].initial['label'])
+        self.assertEqual(supplements[1].id, formset.initial_forms[1].initial['dsid'])
+
+        # update existing supplemental datastreams and add a new one
+
+        tmpfile1_v2 = tempfile.NamedTemporaryFile(delete=False)
+        txt1_v2 = 'Here is some *updated* content about an archival disk image'
+        tmpfile1_v2.write(txt1_v2)
+        tmpfile1_v2.close()
+        tmpfile3 = tempfile.NamedTemporaryFile(delete=False)
+        txt3 = 'third piece of content'
+        tmpfile3.write(txt3)
+        tmpfile3.close()
+        data = form_data.copy()
+        data.update({
+            'form-INITIAL_FORMS': 2,
+            'form-0-label': 'new-label.foo',  # s1: update label but not file
+            'form-0-dsid': 'supplement0',
+            'form-1-label': supplements[1].label,  # s2: update file but not label
+            'form-1-dsid': 'supplement1',
+            'form-2-label': '',              # s3: new supplemental file
+            'form-2-dsid': '',
+        })
+
+        # test save error with valid post data
+        with open(tmpfile1_v2.name) as tmpfile1v2_data:
+            with open(tmpfile3.name) as tmpfile3_data:
+                data['form-1-file'] = tmpfile1v2_data
+                data['form-2-file'] = tmpfile3_data
+
+                # patching md5sum to simulate checksum mismatch and force fedora error
+                with patch('keep.file.views.md5sum') as mockmd5:
+                    mockmd5.return_value = 'not-a-real-md5-sum'
+
+                    response = self.client.post(manage_supplements_url, data)
+                    messages = [str(msg) for msg in response.context['messages']]
+                    self.assert_('Error saving' in messages[0])
+
+        # test actual updates + additions
+        with open(tmpfile1_v2.name) as tmpfile1v2_data:
+            with open(tmpfile3.name) as tmpfile3_data:
+                data['form-1-file'] = tmpfile1v2_data
+                data['form-2-file'] = tmpfile3_data
+
+                response = self.client.post(manage_supplements_url,
+                    data, follow=True)
+
+        messages = [str(msg) for msg in response.context['messages']]
+        self.assertEqual('Successfully added 1 and updated 2 supplemental files',
+                         messages[0])
+        # inspect updates/additions
+        updated_img = self.repo.get_object(img.pid, type=DiskImage)
+        # should now have three supplementN datastreams
+        self.assert_('supplement0' in updated_img.ds_list)
+        self.assert_('supplement1' in updated_img.ds_list)
+        supplements = list(updated_img.supplemental_content)
+        self.assertEqual(3, len(supplements))
+        self.assertEqual(data['form-0-label'], supplements[0].label,
+            'datastream label should be updated from form data')
+        self.assertEqual(txt1_v2, supplements[1].content,
+            'datastream content should be updated from form data')
+        # newly added datastream
+        self.assertEqual(os.path.basename(tmpfile3.name), supplements[2].label)
+        self.assertEqual(txt3, supplements[2].content)
+
+        os.unlink(tmpfile1_v2.name)
+        os.unlink(tmpfile3.name)
 
 
 class UploadFormTest(TestCase):

@@ -170,8 +170,6 @@ class DiskImage(DigitalObject):
                 yield self.getDatastreamObject(dsid)
 
 
-
-
     # NOTE: auto-calculated information such as checksums stored in premis
     # will need to be updated anytime the master disk image datastream is updated
     # (will probably need to extend the save method for this)

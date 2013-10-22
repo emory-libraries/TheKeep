@@ -572,6 +572,22 @@ def edit(request, pid):
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
 
+class DatastreamFile(object):
+    # object to make a datastream look enough like a file
+    # for use with clearable file input as current file contents
+    # (used in initial form data for manage_supplements view below)
+
+    def __init__(self, pid, dsid, label):
+        self.url = reverse('file:raw-ds', args=(pid, dsid))
+        self.label = label
+
+    def __unicode__(self):
+        return self.label
+
+    def name(self):
+        return self.label
+
+
 @permission_required("common.marbl_allowed")
 def manage_supplements(request, pid):
     '''Manage supplemental file datastreams associated with a
@@ -581,22 +597,17 @@ def manage_supplements(request, pid):
     if not obj.exists or not obj.has_requisite_content_models:
         raise Http404
 
+    # generate initial data from any existing supplemental datastreams
     initial_data = []
     for s in obj.supplemental_content:
-        # FIXME: move outside view method at least
-        class FileObj(object):
-            def __init__(self, pid, dsid, label):
-                self.url = reverse('file:raw-ds', args=(pid, dsid))
-                self.label = label
-            def __unicode__(self):
-                return self.label
         initial_data.append({'dsid': s.id, 'label': s.label,
-            'file':  FileObj(obj.pid, s.id, s.label)})
+            'file': DatastreamFile(obj.pid, s.id, s.label)})
 
-
+    # on get, just display the form
     if request.method == 'GET':
         formset = SupplementalFileFormSet(initial=initial_data)
 
+    # on post, process the form and any updates/additions
     if request.method == 'POST':
         formset = SupplementalFileFormSet(request.POST, request.FILES,
             initial=initial_data)
@@ -623,10 +634,11 @@ def manage_supplements(request, pid):
                     ds = obj.getDatastreamObject('supplement%d' % s_id,
                         dsobj_type=FileDatastreamObject)
 
+                # only set if changed so datastream isModified is accurate
                 if file_info['label'] != ds.label:
                     ds.label = file_info['label']
-                print 'setting datastream label to %s' % ds.label
-                # TODO: if uploaded file, replace content and calculate mimetype, checksum
+
+                # if this is an uploaded file, replace content and calculate mimetype, checksum
                 if isinstance(file_info['file'], UploadedFile):
 
                     filename = file_info['file'].temporary_file_path()
@@ -637,26 +649,33 @@ def manage_supplements(request, pid):
                     ds.content = file_info['file']
 
                 if ds.exists and ds.isModified():
-                    print 'ds %s has been modified' % ds.id
                     modified += 1
 
                 s_id += 1
 
-            obj.save('updating supplemental files')
-            # TODO: error handling
+            try:
+                obj.save('updating supplemental files')
 
-            # summarize number of changes, if any
-            if added or modified:
-                msg_add = 'added %d' % added if added else ''
-                msg_update = 'updated %d' % modified if modified else ''
-                msg = 'Successfully %s %s %s supplemental files' %  \
-                (msg_add, ' and ' if added and modified else '', msg_update)
-                messages.success(request, msg)
-            else:
-                # possible for the form to be valid but not make any changes
-                messages.info(request, 'No changes made to supplemental content')
+                # summarize number of changes, if any
+                if added or modified:
+                    msg_add = 'added %d' % added if added else ''
+                    msg_update = 'updated %d' % modified if modified else ''
+                    msg = 'Successfully %s%s%s supplemental file%s' %  \
+                        (msg_add, ' and ' if added and modified else '', msg_update,
+                        's' if (added + modified) != 1 else '')
+                    messages.success(request, msg)
+                else:
+                    # possible for the form to be valid but not make any changes
+                    messages.info(request, 'No changes made to supplemental content')
 
-            return HttpResponseSeeOtherRedirect(reverse('file:edit', args=[pid]))
+                return HttpResponseSeeOtherRedirect(reverse('file:edit', args=[pid]))
+
+            except Exception as e:
+                logger.error('Error on supplemental file update: %s' % e)
+                logger.debug("Error details:\n" + traceback.format_exc())
+
+                messages.error(request, unicode(e))
+                # for now, just redisplay the form with error message
 
     return render(request, 'file/supplemental_content.html',
         {'obj': obj, 'formset': formset})
