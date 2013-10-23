@@ -564,8 +564,6 @@ class FileViewsTest(KeepTestCase):
         self.assert_(isinstance(response.context['form'], DiskImageEditForm))
         self.assertContains(response, reverse('admin:file_application_changelist'),
             msg_prefix='edit form includes link to manage application list')
-        self.assertNotContains(response, 'Supplemental content:',
-            msg_prefix='disk image with no supplemental datastreams should not list any')
 
         # minimal required fields
         data = {
