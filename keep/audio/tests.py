@@ -33,7 +33,7 @@ from keep.audio.tasks import convert_wav_to_mp3
 from keep.audio.templatetags import audio_extras
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
-from keep.testutil import KeepTestCase
+from keep.testutil import KeepTestCase, mocksolr_nodupes
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +51,12 @@ wav_md5 = 'f725ce7eda38088ede8409254d6fe8c3'
 alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 
 
+
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class AudioViewsTest(KeepTestCase):
     fixtures = ['users']
 
@@ -1403,6 +1406,8 @@ class DigitalTechTest(KeepTestCase):
 
 
 # tests for Audio DigitalObject
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class TestAudioObject(KeepTestCase):
     fixtures = ['users']
     repo = Repository()
@@ -1866,16 +1871,22 @@ class TestWavDuration(KeepTestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+# @patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class TestWavMP3DurationCheck(KeepTestCase):
 
     def setUp(self):
         super(TestWavMP3DurationCheck, self).setUp()
-        # create an audio object to test conversion with
-        self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
+
+        # somehow setup seems to not be covered by class-level patch (?)
+        with patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes()):
+            # create an audio object to test conversion with
+            self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
                                          'test wav/mp3 duration checks',  checksum=wav_md5)
-        self.obj.save()
-        self.pids = [self.obj.pid]
+            self.obj.save()
+            self.pids = [self.obj.pid]
 
     def tearDown(self):
         super(TestWavMP3DurationCheck, self).tearDown()
@@ -1994,14 +2005,19 @@ class TestModsEditForm(KeepTestCase):
         self.assertEqual(None, inst.origin_info)
 
 
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class SourceAudioConversions(KeepTestCase):
     def setUp(self):
         super(SourceAudioConversions, self).setUp()
-        # create an audio object to test conversion with
-        self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
-                                         'test only',  checksum=wav_md5)
-        self.obj.save()
-        self.pids = [self.obj.pid]
+
+        # somehow setup seems to not be covered by class-level patch (?)
+        with patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes()):
+            # create an audio object to test conversion with
+            self.obj = audiomodels.AudioObject.init_from_file(wav_filename,
+               'test only',  checksum=wav_md5)
+            self.obj.save()
+            self.pids = [self.obj.pid]
 
     def tearDown(self):
         super(SourceAudioConversions, self).tearDown()

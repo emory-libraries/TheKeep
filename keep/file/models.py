@@ -169,6 +169,15 @@ class DiskImage(DigitalObject):
             if dsid.startswith('supplement'):
                 yield self.getDatastreamObject(dsid)
 
+    _content_checksum = None
+    '''Used as a workaround for Fedora 3.4 issue with file URIs and checksums
+    and to support duplicate detection based on checksums, store
+    content checksum without sending it to Fedora.'''
+
+    @property
+    def content_md5(self):
+        return self._content_checksum or self.content.checksum
+
 
     # NOTE: auto-calculated information such as checksums stored in premis
     # will need to be updated anytime the master disk image datastream is updated

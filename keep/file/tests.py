@@ -2,6 +2,7 @@ import datetime
 from mock import Mock, patch
 import os
 import shutil
+import sunburnt
 import tempfile
 import bagit
 
@@ -21,7 +22,7 @@ from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm, \
     largefile_staging_bags, LargeFileIngestForm
 from keep.file.models import DiskImage, Application
 from keep.file.utils import md5sum, sha1sum
-from keep.testutil import KeepTestCase
+from keep.testutil import KeepTestCase, mocksolr_nodupes
 
 
 ## Disk Image fixtures
@@ -57,6 +58,8 @@ class TestChecksum(TestCase):
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class FileViewsTest(KeepTestCase):
     fixtures = ['users', 'test-applications.json']
 
@@ -352,6 +355,7 @@ class FileViewsTest(KeepTestCase):
             response = self.client.post(upload_url, {'file': aff, 'collection_0':
                            self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
             result = response.context['ingest_results'][0]
+            print result
             self.assertTrue(result['success'], 'success should be true for uploaded AFF')
             self.assertNotEqual(None, result['pid'],
                 'result should include pid of new object on successful ingest')
@@ -546,7 +550,6 @@ class FileViewsTest(KeepTestCase):
 
         result = response.context['ingest_results'][0]
         self.assert_('checksum mismatch detected' in result['message'].lower())
-
 
     def test_edit(self):
         # ingest an object to test editing
@@ -886,6 +889,8 @@ class LargeFileStagingBagsTest(TestCase):
             self.assert_(os.path.basename(bag2_path) in labels)
 
 
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class DiskImageTest(KeepTestCase):
 
     def setUp(self):

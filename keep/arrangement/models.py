@@ -106,6 +106,12 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             if _restricted_triple not in self.rels_ext.content:
                 self.rels_ext.content.add(_restricted_triple)
 
+    @property
+    def content_md5(self):
+        if self.filetech.content.file and self.filetech.content.file[0].md5:
+            return self.filetech.content.file[0].md5
+
+
     def index_data(self):
         '''Extend the default
         :meth:`eulfedora.models.DigitalObject.index_data` method to
@@ -305,6 +311,10 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
             data['arrangement_id'] = self.mime_data.content.get('message-id')
 
         return data
+
+    @property
+    def content_md5(self):
+        return self.mime_data.checksum
 
     @staticmethod
     def find_by_field(field, value, repo=None):

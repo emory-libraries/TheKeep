@@ -123,6 +123,10 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
         'Absolute url to view this object within the site'
         return (self.NEW_OBJECT_VIEW, [str(self.pid)])
 
+    @property
+    def content_md5(self):
+        return None
+
 
 
 class CollectionObject(Collection, ArkPidDigitalObject):
@@ -159,6 +163,10 @@ class CollectionObject(Collection, ArkPidDigitalObject):
                 self.dc.content.date = "%s-%s" % (self.dc.content.date,
                             self.mods.content.origin_info.created[1].date)
             # FIXME: should this be dc:coverage ?
+
+    @property
+    def content_md5(self):
+        return None
 
     def save(self, logMessage=None):
         '''Save the object.  If the content of the MODS or RELS-EXT datastreams

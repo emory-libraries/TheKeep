@@ -357,6 +357,10 @@ class AudioObject(DigitalObject):
     via `isMemberOfCollection` relation.
     '''
 
+    @property
+    def content_md5(self):
+        return self.audio.checksum
+
     def save(self, logMessage=None):
         '''Save the object.  If the content of any :class:`~AudioObject.mods`,
         :class:`AudioObject.rels_ext`, or :class:`AudioObject.digitaltech`

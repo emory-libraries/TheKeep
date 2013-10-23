@@ -13,6 +13,8 @@ from contextlib import nested
 import os
 import unittest
 from shutil import rmtree
+import sunburnt
+from mock import Mock
 
 from django.conf import settings
 from django.test.simple import DjangoTestSuiteRunner
@@ -20,6 +22,23 @@ from django.test.simple import DjangoTestSuiteRunner
 from eulexistdb import testutil as existdb_testutil
 from eulfedora import testutil as fedora_testutil
 from eulfedora.server import Repository
+
+
+def mocksolr_nodupes():
+    # set up a mock mock solr query instance to return count of 0 for
+    # pre-ingest duplicate checking
+    # (NOTE: very nearly duplicate code in keep.file.tests)
+    mocksolr_interface = Mock(spec=sunburnt.SolrInterface)
+    # mock sunburnt's fluid interface
+    mocksolr = mocksolr_interface.return_value
+    mocksolr.query.return_value = mocksolr.query
+    for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+                   'exclude']:
+        getattr(mocksolr.query, method).return_value = mocksolr.query
+    # set mock solr to indicate no duplicate records
+    mocksolr.query.count.return_value = 0
+    return mocksolr_interface
+
 
 class KeepTestCase(existdb_testutil.TestCase):
     def setUp(self):

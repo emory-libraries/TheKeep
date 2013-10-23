@@ -22,10 +22,11 @@ from keep.arrangement.management.commands import migrate_rushdie
 from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
      ACCESS_ALLOWED_CMODEL, ACCESS_RESTRICTED_CMODEL, EmailMessage, Mailbox
 from keep.collection.models import SimpleCollection, CollectionObject
+from keep.collection.fixtures import FedoraFixtures
 from keep.common.fedora import Repository
 from keep.arrangement import forms as arrangementforms
-from keep.testutil import KeepTestCase
-from keep.collection.fixtures import FedoraFixtures
+from keep.testutil import KeepTestCase, mocksolr_nodupes
+
 
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,9 @@ class PermissionsCheckTest(TestCase):
         self.assertTrue(marbl_user.has_perm('common.marbl_allowed'))
         self.assertTrue(marbl_user.has_perm('common.arrangement_allowed'))
 
+
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class TestMigrateRushdie(TestCase):
     MM_FIXTURE ='''<macfs:document xmlns:macfs="info:fedora/emory-control:Rushdie-MacFsData-1.0">
   <macfs:md5>ffcf48e5df673fc7de985e1b859eeeec</macfs:md5>
@@ -190,6 +194,9 @@ class TestMigrateRushdie(TestCase):
         self.assertEqual(obj.mods.content.series.title, "Fiction")
         self.assertEqual(obj.mods.content.series.series.title, "Writings by Rushdie")
 
+
+# mock solr used to avoid ingest failure to do pre-ingest duplicate checking
+@patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class ArrangementViewsTest(KeepTestCase):
     fixtures =  ['users']
 
@@ -470,7 +477,6 @@ class ArrangementViewsTest(KeepTestCase):
         self.assertContains(response, reverse('arrangement:edit', kwargs={'pid': 'email:pid'}),
             msg_prefix='email detail page should link to arrangement edit page')
 
-
     @patch('keep.arrangement.views.TypeInferringRepository.get_object')
     @patch('keep.arrangement.views.solr_interface')
     def test_view_mailbox(self, mocksolr, mockget_obj):
@@ -502,8 +508,8 @@ class ArrangementObjectTest(KeepTestCase):
 
         # create test collection
         coll = self.repo.get_object(type=CollectionObject)
-        coll.pid='parent:1'
-        coll.mods.content.source_id='12345'
+        coll.pid = 'parent:1'
+        coll.mods.content.source_id = '12345'
 
         #create test arrangement object
         self.arr = self.repo.get_object(type=ArrangementObject)
@@ -653,8 +659,6 @@ class EmailMessageTest(KeepTestCase):
         label = self.email.email_label()
         self.assertEqual(self.email.label, label, 'label should be preserved when it exists')
 
-
-
     def test_index_data(self):
         # NOTE: logic for creating the label is in the label test
 
@@ -672,7 +676,6 @@ class EmailMessageTest(KeepTestCase):
 
             data = self.email.index_data()
             self.assertEqual(self.email.mime_data.checksum, data['content_md5'])
-
 
     @patch('keep.arrangement.models.solr_interface', spec=sunburnt.SolrInterface)
     def test_by_checksum(self, mocksolr):
@@ -709,7 +712,6 @@ class EmailMessageTest(KeepTestCase):
         solr.query.assert_called_with(arrangement_id='<12345@message.com>',
                                       content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
         solr.query.return_value.field_limit.assert_called_with('pid')
-
 
 
 #arrangementforms.ArrangementObjectEditForm))

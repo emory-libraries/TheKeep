@@ -29,7 +29,8 @@ from eulfedora.views import raw_datastream, raw_audit_trail
 from keep.audio.models import AudioObject
 from keep.audio.tasks import queue_access_copy
 from keep.collection.models import CollectionObject
-from keep.common.fedora import Repository, TypeInferringRepository, history_view
+from keep.common.fedora import Repository, TypeInferringRepository, history_view, \
+    DuplicateContent
 from keep.file.forms import UploadForm, DiskImageEditForm, LargeFileIngestForm, \
     SupplementalFileFormSet
 from keep.file.models import DiskImage, large_file_uploads
@@ -209,6 +210,27 @@ def ingest_files(files, collection, comment, request):
 
             # NOTE: could remove MD5 file (if any) here, but MD5 files
             # should be small and will get cleaned up by the cron script
+
+        # special case: detected as duplicate content
+        except DuplicateContent as e:
+            # mark as failed and generate message with links to records
+            links = []
+            repo = Repository(request=request)
+            for pid in e.pids:
+                # use fedora type-inferring logic with list of content models
+                # pulled from solr results
+                obj = repo.get_object(pid,
+                    type=repo.best_subtype_for_object(pid, e.pid_cmodels[pid]))
+                # use appropriate object class to get the object url
+                links.append('<a href="%s">%s</a>' % (
+                    obj.get_absolute_url(), pid)
+                )
+
+            msg = mark_safe('%s: %s' % (unicode(e), '; '.join(links)))
+            file_info.update({
+                'success': False,
+                'message': msg
+            })
 
         except Exception as e:
             logger.error('Error ingesting %s: %s' % (filename, e))
@@ -401,6 +423,7 @@ def largefile_ingest(request):
 
                 # store datastream checksum that would be sent to fedora
                 checksum = obj.content.checksum
+                obj._content_checksum = checksum
                 # clear it out so Fedora can ingest without erroring
                 obj.content.checksum = None
 
@@ -446,7 +469,7 @@ def largefile_ingest(request):
                         checksum_errors.append(dsid)
 
                 if checksum_errors:
-                    message = 'Checksum mismatch%s detected on ' +\
+                    message = 'Checksum mismatch%s detected on ' + \
                        '%s datastream%s; please contact a repository adminstrator.'''
                     file_info['message'] = message % (
                         'es' if len(checksum_errors) > 1 else '',
@@ -457,6 +480,26 @@ def largefile_ingest(request):
             except bagit.BagValidationError as err:
                 logger.error(err)
                 file_info.update({'success': False, 'message': 'BagIt error: %s' % err})
+
+            # special case: detected as duplicate content
+            except DuplicateContent as e:
+                # mark as failed and generate message with links to records
+                # NOTE: pid url is duplicated logic from web upload view...
+                links = []
+                for pid in e.pids:
+                    # use fedora type-inferring logic with list of content models
+                    # pulled from solr results
+                    obj = repo.get_object(pid,
+                        type=repo.best_subtype_for_object(pid, e.pid_cmodels[pid]))
+                    # use appropriate object class to get the object url
+                    links.append('<a href="%s">%s</a>' % (
+                        obj.get_absolute_url(), pid)
+                    )
+                msg = mark_safe('%s: %s' % (unicode(e), '; '.join(links)))
+                file_info.update({
+                    'success': False,
+                    'message': msg
+                })
 
             except Exception as err:
                 logger.error('Error: %s' % err)

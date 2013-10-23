@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.views.generic import TemplateView
 from django.shortcuts import render
 from django.utils.encoding import iri_to_uri
 
@@ -16,7 +15,7 @@ from pidservices.clients import parse_ark
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
 from keep.accounts.views import decrypt
-from keep.common.utils import absolutize_url
+from keep.common.utils import absolutize_url, solr_interface
 
 # TODO: write unit tests now that this code is an app and django knows how to run tests for it
 
@@ -118,18 +117,27 @@ class AuditTrailEvent(object):
             return list(self.actions)[0]
 
 
-class ArkPidDigitalObject(models.DigitalObject):
-    """Extend the default fedora DigitalObject class. Objects derived from
-    this one will automatically have their owner set to
-    ``settings.FEDORA_OBJECT_OWNERID``. This happens only when the fedora
-    object is ingested, so it won't happen to objects already in the
-    repository.
+class DuplicateContent(Exception):
+    '''Custom exception to prevent ingest when duplicate content is
+    detected.  The optional list of pids should be specified when possible,
+    to allow investigating the objects detected as duplicates; a pid to
+    content model mapping should also provided if possible, to allow
+    exception handling to detect the object type of the duplicate records.'''
+    def __init__(self, message, pids=[], pid_cmodels={}):
+        Exception.__init__(self, message)
+        self.pids = pids
+        self.pid_cmodels = pid_cmodels
 
-    As an implementation detail, we need this right now for security: Some
-    of our security policies use the owner to identify objects associated
-    with this project. We hope FeSL will enable us to get away from this
-    practice, at which point this class will probably no longer be
-    necessary."""
+
+class ArkPidDigitalObject(models.DigitalObject):
+    """Default base fedora DigitalObject class for all :mod:`keep` objects,
+    with functionalty shared across all Keep content.
+
+    Objects derived from this one will automatically have their owner set to
+    ``settings.FEDORA_OBJECT_OWNERID`` at ingest time (does not affect
+    objects already in the repository). [Note that owner id is currently used
+    for security purposes to identify Keep content in Fedora policies.]
+    """
 
     @property
     def default_owner(self):
@@ -256,15 +264,47 @@ class ArkPidDigitalObject(models.DigitalObject):
             # if pidmanager is not available, fall back to default pid behavior
             return super(DigitalObject, self).get_default_pid()
 
+    @property
+    def content_md5(self):
+        '''In order to support duplicate checking before ingest,
+        DigitalObject subclasses should implement this to return the MD5 checksum
+        for the primary content datastream of that object, or None for non-content
+        objects such as collections.'''
+        raise NotImplementedError('Extending classes should implement content_md5')
 
     def index_data(self):
         data = super(DigitalObject, self).index_data()
+
+        # index content checksum if available
+        # (possibly redundant, but ensure it gets indexed if we have one)
+        if self.content_md5 is not None:
+            data['content_md5'] = self.content_md5
+
         if self.ingest_user:
             data['ingest_user'] = self.ingest_user
             data['added_by'] = user_full_name(self.ingest_user)
         data['audit_trail_users'] = list(self.audit_trail_users)
         data['users'] = [user_full_name(u) for u in self.audit_trail_users]
         return data
+
+    def save(self, logMessage=None):
+        # check for duplicate content before initial ingest
+        if self._create and self.content_md5 is not None:
+            solr = solr_interface()
+            q = solr.query(content_md5=self.content_md5).field_limit(['pid', 'content_model'])
+            # if a duplicate is found, raise custom exception with info on the dupes
+            print 'query count == ', q.count()
+            if q.count():
+                msg = 'Detected %s duplicate record%s' % \
+                    (q.count(), 's' if q.count() != 1 else '')
+                pids = [result['pid'] for result in q]
+                # dictionary of pid : list of cmodels
+                pid_cmodels = dict([(r['pid'], r['content_model']) for r in q])
+
+                raise DuplicateContent(msg, pids, pid_cmodels)
+
+        return super(DigitalObject, self).save(logMessage)
+
 
     # map datastream IDs to human-readable names for inherited history_events method
     # (common datastream IDs only here)
