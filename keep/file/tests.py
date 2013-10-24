@@ -667,7 +667,7 @@ class FileViewsTest(KeepTestCase):
         }
 
         # on POST, validate and update
-        response = self.client.post(edit_url, data, follow=True)
+        response = self.client.post(edit_url, data)
         # inspect updated object
         updated_img = self.repo.get_object(img.pid, type=DiskImage)
         # collection membership
