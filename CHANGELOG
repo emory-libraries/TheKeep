@@ -3,6 +3,27 @@
 CHANGELOG
 =========
 
+Release 1.7 - large file ingest workflow, duplicate detection
+-------------------------------------------------------------
+
+* An archivist can upload a large file and its checksum into a staging
+  area, so it can be selected for ingest into the Repository without
+  having to upload large files in the web interface.
+* An archivist can select a file uploaded to the staging area for ingest,
+  so that content too large for web upload can be ingested into the repository.
+* When archivist selects an uploaded file for ingest, any supplemental
+  files in bagit will be ingested and associated with disk image object
+  in order to allow staff to assess and document contents of image.
+* Archivist can view the supplemental file name (as file title) in the
+  metadata record for the disk image and view or download the supplemental
+  file, in order to review the content in the file.
+* Archivist can add supplemental files (and edit file names) associated
+  with an ingested composite file in order to maintain security, chain
+  of custody, and appraisal information about the digital object.
+* When a data curator attempts to ingest content via the Keep, they will
+  receive an alert if the file is already present in the repository, so
+  that staff can avoid duplicating digital objects in the Keep.
+
 Release 1.6 - support Disk Images ingest via web upload
 -------------------------------------------------------
 
