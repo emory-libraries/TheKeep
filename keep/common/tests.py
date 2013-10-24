@@ -49,6 +49,7 @@ class TestSolrInterface(TestCase):
 
     def setUp(self):
         # save any solr settings and replace with test values
+        # TODO: update to use django.test.override_settings decorator
         self._solr_url = getattr(settings, 'SOLR_SERVER_URL', None)
         settings.SOLR_SERVER_URL = 'http://test.solr/'
         self._solr_ca_cert_path = getattr(settings, 'SOLR_CA_CERT_PATH', None)
@@ -56,7 +57,8 @@ class TestSolrInterface(TestCase):
             delattr(settings, 'SOLR_CA_CERT_PATH')
 
         self._http_proxy = os.getenv('HTTP_PROXY', None)
-        del os.environ['HTTP_PROXY']
+        if 'HTTP_PROXY' in os.environ:
+            del os.environ['HTTP_PROXY']
 
     def tearDown(self):
         # restore any solr settings
@@ -70,7 +72,8 @@ class TestSolrInterface(TestCase):
         else:
             settings.SOLR_CA_CERT_PATH = self._solr_ca_cert_path
 
-        os.putenv('HTTP_PROXY', self._http_proxy)
+        if self._http_proxy is not None:
+            os.putenv('HTTP_PROXY', self._http_proxy)
 
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
@@ -81,7 +84,8 @@ class TestSolrInterface(TestCase):
         # httplib2.Http should be initialized with defaults (no args)
         mockhttplib.Http.assert_called_with()
         mocksunburnt.SolrInterface.assert_called_with(settings.SOLR_SERVER_URL,
-                                                      http_connection=mockhttplib.Http.return_value)
+            schemadoc=settings.SOLR_SCHEMA,
+            http_connection=mockhttplib.Http.return_value)
 
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
