@@ -3,7 +3,6 @@ from dateutil.tz import tzutc
 import logging
 from mock import Mock, MagicMock, patch
 import os
-import pytz
 from sunburnt import sunburnt
 
 from django.conf import settings
@@ -17,8 +16,8 @@ from eulxml.xmlmap import mods
 
 from keep.audio import models as audiomodels
 from keep.collection.fixtures import FedoraFixtures
-from keep.common.fedora import DigitalObject, LocalMODS, Repository, \
-     AuditTrailEvent
+from keep.common.fedora import DigitalObject, LocalMODS, AuditTrailEvent, \
+    DuplicateContent
 from keep.common.forms import ItemSearch
 from keep.common.models import _DirPart #, FileMasterTech, FileMasterTech_Base
 from keep.common.utils import absolutize_url, solr_interface
@@ -73,7 +72,6 @@ class TestSolrInterface(TestCase):
 
         os.putenv('HTTP_PROXY', self._http_proxy)
 
-
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
     def test_solr_interface(self, mocksunburnt, mockhttplib):
@@ -85,20 +83,18 @@ class TestSolrInterface(TestCase):
         mocksunburnt.SolrInterface.assert_called_with(settings.SOLR_SERVER_URL,
                                                       http_connection=mockhttplib.Http.return_value)
 
-
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
-    def test_solr_interface(self, mocksunburnt, mockhttplib):
+    def test_solr_interface_cert(self, mocksunburnt, mockhttplib):
         # init with a ca cert
         settings.SOLR_CA_CERT_PATH = '/some/path/to/certs'
         solr_interface()
         # httplib should be initialized with ca_certs option
         mockhttplib.Http.assert_called_with(ca_certs=settings.SOLR_CA_CERT_PATH)
 
-
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
-    def test_solr_interface(self, mocksunburnt, mockhttplib):
+    def test_solr_interface_proxy(self, mocksunburnt, mockhttplib):
         # init with an http proxy set in env
         os.environ['HTTP_PROXY'] = 'http://localhost:3128/'
         solr_interface()
@@ -288,6 +284,48 @@ class DigitalObjectTest(TestCase):
             ]
             # should NOT be collapsed into one event
             self.assertEqual(2, len(obj.history_events()))
+
+    def test_save_detect_duplicates(self):
+        obj = DigitalObject(Mock())
+        # base class does not implement content_md5
+        self.assertRaises(NotImplementedError, obj.save)
+
+        # extend and implement content_md5 property
+        class DigitalObjectMd5(DigitalObject):
+            @property
+            def content_md5(self):
+                return 'stock-md5-checksum'
+
+        with patch('keep.common.fedora.solr_interface',
+                   spec=sunburnt.SolrInterface) as mocksolr_interface:
+            # mock sunburnt's fluid interface
+            mocksolr = mocksolr_interface.return_value
+            mocksolr.query = MagicMock()
+            mocksolr.query.return_value = mocksolr.query
+            for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+                           'exclude']:
+               getattr(mocksolr.query, method).return_value = mocksolr.query
+            # set mock solr to indicate duplicate records
+            mocksolr.query.count.return_value = 2
+
+            obj = DigitalObjectMd5(Mock())
+            # confirm exception is raised
+            self.assertRaises(DuplicateContent, obj.save)
+
+            # run again and inspect exception
+            solr_result = [
+                {'pid': 'test:1', 'content_model': ['cmodel:1']},
+                {'pid': 'test:2', 'content_model': ['cmodel:5']},
+            ]
+            mocksolr.query.__iter__.return_value = iter(solr_result)
+            try:
+                obj.save()
+            except Exception as e:
+                self.assertEqual('Detected 2 duplicate records', str(e))
+                # exception should include info for pids detected as dupes
+                for r in solr_result:
+                    self.assert_(r['pid'] in e.pids)
+                    self.assertEqual(r['content_model'], e.pid_cmodels[r['pid']])
 
 
 # mock archives used to generate archives choices for form field

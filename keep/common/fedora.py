@@ -293,13 +293,14 @@ class ArkPidDigitalObject(models.DigitalObject):
             solr = solr_interface()
             q = solr.query(content_md5=self.content_md5).field_limit(['pid', 'content_model'])
             # if a duplicate is found, raise custom exception with info on the dupes
-            print 'query count == ', q.count()
             if q.count():
                 msg = 'Detected %s duplicate record%s' % \
                     (q.count(), 's' if q.count() != 1 else '')
-                pids = [result['pid'] for result in q]
+
+                results = list(q)
+                pids = [r['pid'] for r in results]
                 # dictionary of pid : list of cmodels
-                pid_cmodels = dict([(r['pid'], r['content_model']) for r in q])
+                pid_cmodels = dict([(r['pid'], r['content_model']) for r in results])
 
                 raise DuplicateContent(msg, pids, pid_cmodels)
 
