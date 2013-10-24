@@ -311,6 +311,8 @@ class DigitalObjectTest(TestCase):
             obj = DigitalObjectMd5(Mock())
             # confirm exception is raised
             self.assertRaises(DuplicateContent, obj.save)
+            # check that solr was searched by checksum
+            mocksolr.query.assert_called_with(content_md5='stock-md5-checksum')
 
             # run again and inspect exception
             solr_result = [

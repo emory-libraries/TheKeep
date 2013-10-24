@@ -1,5 +1,5 @@
 import datetime
-from mock import Mock, patch
+from mock import Mock, patch, MagicMock
 import os
 import shutil
 import sunburnt
@@ -325,7 +325,7 @@ class FileViewsTest(KeepTestCase):
             self.assertIn('initial repository ingest', audit_messages,
                           'Should have default message when no comment is present')
 
-            #upload same file but add a comment
+        # upload same file but add a comment
         with open(wav_filename) as wav:
             response = self.client.post(upload_url, {
                 'file': wav, 'comment': "This is comment for the audit trail",
@@ -355,7 +355,6 @@ class FileViewsTest(KeepTestCase):
             response = self.client.post(upload_url, {'file': aff, 'collection_0':
                            self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
             result = response.context['ingest_results'][0]
-            print result
             self.assertTrue(result['success'], 'success should be true for uploaded AFF')
             self.assertNotEqual(None, result['pid'],
                 'result should include pid of new object on successful ingest')
@@ -550,6 +549,86 @@ class FileViewsTest(KeepTestCase):
 
         result = response.context['ingest_results'][0]
         self.assert_('checksum mismatch detected' in result['message'].lower())
+
+    def test_duplicate_detection(self):
+        # test that duplicate detected prevents ingest
+
+        upload_url = reverse('file:upload')
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # mock solr to detect duplicates
+        with patch('keep.common.fedora.solr_interface',
+                   spec=sunburnt.SolrInterface) as mocksolr_interface:
+            # mock sunburnt's fluid interface
+            mocksolr = mocksolr_interface.return_value
+            mocksolr.query = MagicMock()
+            mocksolr.query.return_value = mocksolr.query
+            for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+                           'exclude']:
+               getattr(mocksolr.query, method).return_value = mocksolr.query
+            # set mock solr to indicate duplicate records
+            mocksolr.query.count.return_value = 2
+
+            # run again and inspect exception
+            solr_result = [
+                {'pid': 'audio:1', 'content_model': audiomodels.AudioObject.CONTENT_MODELS},
+                {'pid': 'file:1', 'content_model': DiskImage.CONTENT_MODELS},
+            ]
+            mocksolr.query.__iter__.return_value = iter(solr_result)
+
+            # ** test web upload with a single file
+            with open(wav_filename) as wav:
+                response = self.client.post(upload_url, {'file': wav,
+                 'collection_0': self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+
+            result = response.context['ingest_results'][0]
+
+            self.assertEqual(False, result['success'],
+                'ingest should fail when duplicates are detected')
+            self.assert_('Detected 2 duplicate records' in result['message'],
+                'error message should indicate the number of duplicate records detected')
+            for res in solr_result:
+                self.assert_(res['pid'] in result['message'],
+                    'message should include pid of detected duplicate record')
+            # should link to object, based on content model / object type
+            self.assert_(reverse('audio:view', args=['audio:1']) in result['message'],
+                'error message should include link to object based on detected type')
+            self.assert_(reverse('file:view', args=['file:1']) in result['message'],
+                'error message should include link to object based on detected type')
+
+            # ** test duplicates also reported on large file / BagIt upload
+            ingest_url = reverse('file:largefile-ingest')
+
+            # construct test BagIt
+            ad1bag_path = tempfile.mkdtemp(dir=self.tempdir)
+            # copy in ad1 fixture as payload
+            shutil.copy(ad1_file, ad1bag_path)
+            bagit.make_bag(ad1bag_path)
+
+            mocksolr.query.count.return_value = 1
+
+            # run again and inspect exception
+            solr_result = [
+                {'pid': 'file:1', 'content_model': DiskImage.CONTENT_MODELS},
+            ]
+            mocksolr.query.__iter__.return_value = iter(solr_result)
+
+            with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+
+                response = self.client.post(ingest_url, {'bag': ad1bag_path, 'collection_0':
+                    self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+
+            result = response.context['ingest_results'][0]
+            self.assertEqual(False, result['success'],
+                'ingest should fail when a duplicate item is detected')
+            self.assert_('Detected 1 duplicate record: ' in result['message'],
+                'error message should indicate the number of duplicate records detected')
+            for res in solr_result:
+                self.assert_(res['pid'] in result['message'],
+                    'message should include pid of detected duplicate record')
+            # should link to object, based on content model / object type
+            self.assert_(reverse('file:view', args=['file:1']) in result['message'],
+                'error message should include link to object based on detected type')
 
     def test_edit(self):
         # ingest an object to test editing
