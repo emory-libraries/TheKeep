@@ -139,6 +139,10 @@ def prep_source():
     local('mkdir -p build')
     local('rm -rf build/%(build_dir)s' % env)
     local('svn export -r %(svn_rev)s %(svn_url)s build/%(build_dir)s' % env)
+
+    # disk image fixture files are somewhat large and don't need to be included in deploy
+    local('rm build/%(build_dir)s/keep/file/fixtures/*.a[df][1f]' % env)
+
     # local settings handled remotely
 
     if env.url_prefix:
