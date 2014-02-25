@@ -3,6 +3,14 @@
 CHANGELOG
 =========
 
+Release 1.7.1 - streamlined large file ingest
+---------------------------------------------
+
+* bugfix: streamline disk image ingest to avoid timeout errors
+  (now requires bagit input with both MD5 and SHA1 checksums; no checksums
+  are calculated by the Django app during disk image ingest)
+
+
 Release 1.7 - large file ingest workflow, duplicate detection
 -------------------------------------------------------------
 
