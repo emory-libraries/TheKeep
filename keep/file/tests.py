@@ -456,7 +456,7 @@ class FileViewsTest(KeepTestCase):
         ad1bag_path = tempfile.mkdtemp(dir=self.tempdir)
         # copy in ad1 fixture as payload
         shutil.copy(ad1_file, ad1bag_path)
-        bagit.make_bag(ad1bag_path)
+        bagit.make_bag(ad1bag_path, checksum=['md5', 'sha1'])
 
         # mock save method since we can't ingest test fixture via file uri
         self.saved_obj = None
@@ -529,7 +529,7 @@ class FileViewsTest(KeepTestCase):
         bag_path = tempfile.mkdtemp(dir=self.tempdir)
         # copy in ad1 fixture as payload
         shutil.copy(ad1_file, bag_path)
-        bagit.make_bag(bag_path)
+        bagit.make_bag(bag_path, checksum=['md5', 'sha1'])
 
         self.saved_obj = None
         self.save_comment = None
@@ -603,7 +603,7 @@ class FileViewsTest(KeepTestCase):
             ad1bag_path = tempfile.mkdtemp(dir=self.tempdir)
             # copy in ad1 fixture as payload
             shutil.copy(ad1_file, ad1bag_path)
-            bagit.make_bag(ad1bag_path)
+            bagit.make_bag(ad1bag_path, checksum=['md5', 'sha1'])
 
             mocksolr.query.count.return_value = 1
 
@@ -708,7 +708,7 @@ class FileViewsTest(KeepTestCase):
         with open(os.path.join(baggy_path, 'extra.xml'), 'w') as xmlfile:
             xmlfile.write(xml_content)
         # convert to bagit
-        bagit.make_bag(baggy_path)
+        bagit.make_bag(baggy_path, checksum=['md5', 'sha1'])
         img = DiskImage.init_from_bagit(baggy_path, file_uri=False)
         img.save()
         self.pids.append(img.pid)
@@ -983,8 +983,10 @@ class DiskImageTest(KeepTestCase):
     def test_init_from_file(self):
         label = 'My Disk Image'
         mimetype = 'application/x-aff'
+        test_sha1 = 'notreallyasha1checksum'
         img = DiskImage.init_from_file(aff_file, label,
-                                       checksum=aff_md5, mimetype=mimetype)
+                                       checksum=aff_md5, mimetype=mimetype,
+                                       sha1_checksum=test_sha1)
         # label set on obj and dc:title
         self.assertEqual(label, img.label,
             'specified label should be set on object')
@@ -1003,7 +1005,8 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual('', img.provenance.content.object.id)  # for now, since we don't yet have a pid
         self.assertEqual(aff_md5, img.provenance.content.object.checksums[0].digest)
         self.assertEqual('MD5', img.provenance.content.object.checksums[0].algorithm)
-        self.assertEqual(aff_sha1, img.provenance.content.object.checksums[1].digest)
+        self.assertEqual(test_sha1, img.provenance.content.object.checksums[1].digest,
+            'sha-1 checksum value used if passed in, without recalculating')
         self.assertEqual('SHA-1', img.provenance.content.object.checksums[1].algorithm)
         self.assertEqual('AFF', img.provenance.content.object.format.name)
         # content datastream
@@ -1055,7 +1058,8 @@ class DiskImageTest(KeepTestCase):
         bag_path = tempfile.mkdtemp(dir=self.tempdir)
         # copy in ad1 fixture as payload
         shutil.copy(ad1_file, bag_path)
-        bagit.make_bag(bag_path)
+        # bagit ingest now requires that *both* md5 and sha1 checksums are present
+        bagit.make_bag(bag_path, checksum=['md5', 'sha1'])
 
         with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
             with self.settings(LARGE_FILE_STAGING_FEDORA_DIR=None):
@@ -1104,6 +1108,46 @@ class DiskImageTest(KeepTestCase):
         self.assertRaises(Exception, DiskImage.init_from_bagit,
                           nodata_bag_path)
 
+    def test_init_from_bagit_no_md5(self):
+        # bagit without MD5 payload manifest is an error
+        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        shutil.copy(ad1_file, bag_path)
+        # bagit ingest now requires that *both* md5 and sha1 checksums are present;
+        # only sha1 should error
+        bagit.make_bag(bag_path, checksum=['sha1'])
+
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            with self.settings(LARGE_FILE_STAGING_FEDORA_DIR=None):
+                error = None
+                try:
+                    DiskImage.init_from_bagit(bag_path)
+                except Exception as e:
+                    error = e
+                self.assert_(isinstance(error, Exception))
+
+                self.assert_('MD5 checksum not found' in str(error),
+                    'error should indicate type of checksum that is missing')
+
+    def test_init_from_bagit_no_sha1(self):
+        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        # copy in ad1 fixture as payload
+        shutil.copy(ad1_file, bag_path)
+        # bagit ingest now requires that *both* md5 and sha1 checksums are present
+        # only md5 should error
+        bagit.make_bag(bag_path, checksum=['md5'])
+
+        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            with self.settings(LARGE_FILE_STAGING_FEDORA_DIR=None):
+                error = None
+                try:
+                    DiskImage.init_from_bagit(bag_path)
+                except Exception as e:
+                    error = e
+                self.assert_(isinstance(error, Exception))
+
+                self.assert_('SHA-1 checksum not found' in str(error),
+                    'error should indicate type of checksum that is missing')
+
     def test_init_from_bagit_supplement(self):
         # test creating disk image from bag with supplemental files
         baggy_path = tempfile.mkdtemp(dir=self.tempdir)
@@ -1115,7 +1159,7 @@ class DiskImageTest(KeepTestCase):
         xml_content = '<xml/>'
         with open(os.path.join(baggy_path, 'extra.xml'), 'w') as xmlfile:
             xmlfile.write(xml_content)
-        baggy_bag = bagit.make_bag(baggy_path)
+        baggy_bag = bagit.make_bag(baggy_path, checksum=['md5', 'sha1'])
         img = DiskImage.init_from_bagit(baggy_path, file_uri=False)
 
         # actually save to fedora to test supplemental datastream
@@ -1252,7 +1296,7 @@ class DiskImageTest(KeepTestCase):
         with open(os.path.join(baggy_path, 'extra.xml'), 'w') as xmlfile:
             xmlfile.write(xml_content)
         # convert to bagit
-        bagit.make_bag(baggy_path)
+        bagit.make_bag(baggy_path, checksum=['md5', 'sha1'])
         img = DiskImage.init_from_bagit(baggy_path, file_uri=False)
         img.save()  # has to be saved to inspect datastreams
         img = self.repo.get_object(img.pid, type=DiskImage)
