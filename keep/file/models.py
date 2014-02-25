@@ -356,7 +356,9 @@ class DiskImage(DigitalObject):
         is False).
 
         Raises an exception if BagIt is not valid or if it does not
-        contain a supported disk image data file.
+        contain a supported disk image data file.  (Note: using fast validation
+        without checksum calculation, to minimize the time required to ingest
+        large files.)
 
         :param path: full path to the BagIt directory that contains
             a disk image file
@@ -378,9 +380,9 @@ class DiskImage(DigitalObject):
         # a new/unmapped ds?
 
         bag = bagit.Bag(path)
-        bag.validate()  # raises bagit.BagValidationError if not valid
-        # NOTE: may need to do fast validation for large files? (fast=True)
-        # raises an exception if not valid
+        # NOTE: using fast validation here to avoid recalculating checksums
+        # for very large files; only checksum compare will be done by fedora
+        bag.validate(fast=True)  # raises bagit.BagValidationError if not valid
 
         # use the base name of the BagIt as initial object label
         initial_label = os.path.basename(path)
