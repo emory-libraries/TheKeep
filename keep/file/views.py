@@ -581,6 +581,8 @@ def edit(request, pid):
 
         class AdminOpts(object):
             app_label = 'file'
+            # NOTE: as of django 1.6, the admin url template tag requires
+            # model_name rather than (in addition to?) module_name
             module_name = 'application'
 
         # options for generating admin link to edit/add file application db info
