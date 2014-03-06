@@ -15,6 +15,7 @@ def checksum(filename, type):
 
     :returns: hex-digest formatted checksum as a string
     '''
+    logger.debug('Calculating %s checksum for %s' % (type, filename))
     # pythonic md5 calculation from Stack Overflow
     # http://stackoverflow.com/questions/1131220/get-md5-hash-of-a-files-without-open-it-in-python
     algorithm = getattr(hashlib, type)

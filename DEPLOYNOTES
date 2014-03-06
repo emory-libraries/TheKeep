@@ -314,6 +314,13 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 1.7.1
+-------------
+
+* To support ingesting disk image files around 80-100 GB, you should ensure
+  that the WSGI inactivity timeout configured in Apache is set fairly high,
+  probably at least 1 hour (3600).
+
 Release 1.7
 -----------
 

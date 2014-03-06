@@ -242,7 +242,7 @@ class DiskImage(DigitalObject):
 
     @staticmethod
     def init_from_file(filename, initial_label=None, request=None, checksum=None,
-        mimetype=None, content_location=None):
+        mimetype=None, content_location=None, sha1_checksum=None):
         '''Static method to create a new :class:`DiskImage` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.
@@ -253,8 +253,12 @@ class DiskImage(DigitalObject):
         :param request: :class:`django.http.HttpRequest` passed into a view method;
             must be passed in order to connect to Fedora as the currently-logged
             in user
-        :param checksum: the checksum of the file being sent to fedora.
+        :param checksum: the MD5 checksum of the file being sent to fedora.
         :param mimetype: the mimetype for the main disk image content.
+        :param content_location: optional file URI for file-based Fedora ingest
+        :param sha1_checksum: the SHA1 checksum of the file being sent to fedora,
+            for storage in the PREMIS technical metadata. Note that SHA-1 will
+            be calculated if not passed in (slow for large files).
         :returns: :class:`DiskImage` initialized from the file
         '''
 
@@ -307,8 +311,11 @@ class DiskImage(DigitalObject):
         # picky about order here too: force algorithm to be added first
         obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
         obj.provenance.content.object.checksums[0].digest = checksum
+        # add sha-1 to checksums in premis; calculate if not passed in
+        if sha1_checksum is None:
+            sha1_checksum = sha1sum(filename)
         obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
-        obj.provenance.content.object.checksums[1].digest = sha1sum(filename)
+        obj.provenance.content.object.checksums[1].digest = sha1_checksum
 
         obj.provenance.content.object.create_format()
         # for now, format name will be upper-cased version of file extension
@@ -356,7 +363,9 @@ class DiskImage(DigitalObject):
         is False).
 
         Raises an exception if BagIt is not valid or if it does not
-        contain a supported disk image data file.
+        contain a supported disk image data file.  (Note: using fast validation
+        without checksum calculation, to minimize the time required to ingest
+        large files.)
 
         :param path: full path to the BagIt directory that contains
             a disk image file
@@ -378,9 +387,9 @@ class DiskImage(DigitalObject):
         # a new/unmapped ds?
 
         bag = bagit.Bag(path)
-        bag.validate()  # raises bagit.BagValidationError if not valid
-        # NOTE: may need to do fast validation for large files? (fast=True)
-        # raises an exception if not valid
+        # NOTE: using fast validation here to avoid recalculating checksums
+        # for very large files; only checksum compare will be done by fedora
+        bag.validate(fast=True)  # raises bagit.BagValidationError if not valid
 
         # use the base name of the BagIt as initial object label
         initial_label = os.path.basename(path)
@@ -397,8 +406,18 @@ class DiskImage(DigitalObject):
             mtype = m.from_file(filename)
             mimetype, separator, options = mtype.partition(';')
             if mimetype in DiskImage.allowed_mimetypes:
-                # FIXME: can we assume md5 checksum is always present?
-                checksum = bag.entries[data_path]['md5']
+                checksum_err_msg = '%%s checksum not found for disk image %s' \
+                    % os.path.basename(data_path)
+                # require both MD5 and SHA-1 for disk image to ingest
+                try:
+                    md5_checksum = bag.entries[data_path]['md5']
+                except KeyError:
+                    raise Exception(checksum_err_msg % 'MD5')
+                try:
+                    sha1_checksum = bag.entries[data_path]['sha1']
+                except KeyError:
+                    raise Exception(checksum_err_msg % 'SHA-1')
+
                 # this is the disk image content file
                 content_file = filename
 
@@ -425,8 +444,8 @@ class DiskImage(DigitalObject):
             optional_args['content_location'] = ingest_location
 
         img = DiskImage.init_from_file(content_file, initial_label=initial_label,
-            checksum=checksum, mimetype=mimetype, request=request,
-            **optional_args)
+            checksum=md5_checksum, mimetype=mimetype, request=request,
+            sha1_checksum=sha1_checksum, **optional_args)
 
         i = 0
         for i in range(len(supplemental_files)):
