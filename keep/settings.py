@@ -55,11 +55,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     # additional context processors
     "django.core.context_processors.request",  # always include request in render context
     "django.core.context_processors.static",
+    "eultheme.context_processors.template_settings",
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
     "keep.search.context_processors.search",   # search form on every page
-    "keep.common.context_processors.common_settings",  # include selected settings in every page
 )
 
 MIDDLEWARE_CLASSES = (
