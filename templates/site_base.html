@@ -6,10 +6,7 @@ The Keep{% endblock %}
 {% block page-title %}The Keep{% block page-subtitle %}{% endblock %}{% endblock %}
 
 {% block navlinks %}
-    <li><a href="{% url 'collection:browse' %}">Collections</a></li>
-    {% if perms.common.arrangement_allowed %}
-      <li><a href="{% url 'collection:simple_browse' %}">Simple Collections</a></li>
-    {% endif  %}
+  {% include 'snippets/navlinks.html' %}
 {% endblock %}
 
 {% block navbar-extra %}

@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {% trans 'The Keep' %}{% endblock %}
+
+{% block branding %}
+<a class="navbar-brand" href="/">{% trans 'The Keep' %}</a>
+    <ul class="nav navbar-nav">
+      {% include 'snippets/navlinks.html' %}
+      <li><a href="{% block admin-url %}{% url 'admin:index' %}{% endblock %}">Admin</a></li>
+    </ul>
+{% endblock %}
+

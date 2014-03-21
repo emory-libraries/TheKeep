@@ -83,7 +83,6 @@ if 'VIRTUAL_ENV' in os.environ:
     ])
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -91,6 +90,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    # bootstrap django-admin - must be loaded before admin
+    'django_admin_bootstrapped.bootstrap3',
+    'django_admin_bootstrapped',
+    'django.contrib.admin',
     'south',
     'eulexistdb',
     'eulfedora',
