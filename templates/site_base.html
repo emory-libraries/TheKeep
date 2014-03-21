@@ -1,30 +1,46 @@
-{% extends "genlib_templates/bluegray_site_base.xhtml" %}
+{% extends "eultheme/site_base.html" %}
+{% load static %}
+{% block nav-title %}
+{# <img id="keep-logo" src="{{ STATIC_URL }}/images/keep.png" /> #}
+The Keep{% endblock %}
+{% block page-title %}The Keep{% block page-subtitle %}{% endblock %}{% endblock %}
 
-{% block page-title %}The Keep {% block page-subtitle %}: Home{% endblock %}{% endblock %}
-
-{% block style %}
-    {{ block.super }}
-    {% comment %}Place Local changes, modifications and overrisdes in your local.css file.{% endcomment %}
-   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/local.css" />
-   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/smoothness/jquery-ui-1.8.19.custom.css" />
-   <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/bootstrap/css/bootstrap-icons.css" />
+{% block navlinks %}
+    <li><a href="{% url 'collection:browse' %}">Collections</a></li>
+    {% if perms.common.arrangement_allowed %}
+      <li><a href="{% url 'collection:simple_browse' %}">Simple Collections</a></li>
+    {% endif  %}
 {% endblock %}
 
-{% block scripts %}
+{% block navbar-extra %}
+  {% if user.is_authenticated %}
+    <div class="navbar-right">
+      <p class="navbar-text">Welcome, {% firstof user.first_name user.username %}.
+        <a href="{% url 'accounts:logout' %}">Logout</a></p>
+    </div>
+  {% endif %}
+{% endblock %}
+
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/local.css" />
+  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/smoothness/jquery-ui-1.8.19.custom.css" />
+  {# <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/bootstrap/css/bootstrap-icons.css" /> #}
+{% endblock %}
+
+{% block javascript %}
     {{ block.super }}
     <script type="text/javascript" src="{{ STATIC_URL }}/js/jquery-ui-1.8.19.custom.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}/js/jquery.tooltips.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}/js/local.js"></script>
-    <script type ="text/javascript">
-      $(document).ready(function () {
-        $("#keyword-search input[name=keyword]").categorycomplete({
-          source: "{% url 'search:suggest' %}",
-          minLength: 0,
-          });
-        {# remove this when old search is removed from sidebar #}
-        {% include "collection/snippets/collection_suggest_js.html" %}
-      });
-    </script>
+{% endblock %}
+
+{% block footer-content %}
+  {# display eXist query times (when present) in debug mode only #}
+  {% if querytime and debug %}
+    <div class="query-time dev-note">quer{{ querytime|pluralize:"y,ies" }} took
+      {{ querytime|join:", " }} ms</div>
+  {% endif %}
 
 {% if not DEBUG %} {# google analytics tracking code #}
 <script type="text/javascript">
@@ -40,108 +56,4 @@
 {% endif %}
 </script>
 
-{% if ENABLE_BETA_WARNING %}
-    {% include 'common/snippets/beta_warning.html' %}
-{% endif %}
-
-{% endblock %}
-
-{% block site-name %}
-<img id="keep-logo" src="{{ STATIC_URL }}/images/keep.png" />
-The Keep
-
-{% endblock %}
-{% block site-slogan %}{# ??? #}{% endblock %}
-
-{% load eulcore_tags %}
-
-{% block navbar-items %}
-    <li><a href="{% url 'collection:browse' %}">Collections</a></li>
-    {% if perms.common.arrangement_allowed %}
-         <li><a href="{% url 'collection:simple_browse' %}">Simple Collections</a></li>
-    {% endif  %}
-{% endblock %}
-
-{% block content-header %}
- {% if user.is_authenticated %}
-   <div id="logged-in">
-     <p>Welcome, {% firstof user.first_name user.username %}.
-        <a href="{% url 'accounts:logout' %}">Logout</a></p>
-   </div>
- {% endif %}
-
- {# restrict search to logged-in users #}
- {% if user.is_authenticated and keyword_search %}
-  <div id="keyword-search" class="search">
-    <h2>Search</h2>
-    <form method="get" action="{% url 'search:keyword' %}">
-      {{ keyword_search.keyword }}
-      <input class="form-submit" type="submit" value="Go" />
-      </form>
-      <a class="tip" title="{{ keyword_search.keyword.help_text }}" >i</a>
-</div>
-  {% endif %}
-
- {{ block.super }}
-{% endblock %}
-
-{% block sidebar-left %}
- {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
-   <div class="note">
-     <h2>Note</h2>
-
-     <p>The old item and collection search are being replaced by the
-     new, combined search to the right.</p>
-     <p>The old search will be available for a transition period but
-     will eventually be removed.  If you find any functionality in the
-     old search that is not available in the new one, please report
-     it.</p>
-   </div>
-
-   <a id="use-old-search">Access the old search.</a>
-
-   <div id="old-search" style="display:none">
-  {% if item_search %}
-    {% include 'audio/snippets/search_form.html' %}
-  {% endif %}
-  {% if collection_search %}
-    {% include 'collection/snippets/search_form.html' %}
-  {% endif %}
-  <div class="help">
-    <a onMouseOver="jQuery('#search-help').show()"
-       onMouseOut="jQuery('#search-help').hide()">?</a>
-    <div id="search-help" class="search-tips">{{ collection_search.search_tips }}</div>
-   </div>
-   </div>
-   <script type="text/javascript">
-     $(document).ready(function () { {# show/hide advanced-search block #}
-       $("#use-old-search").click(function(){
-           $("#old-search").toggle();
-         });
-       });
-   </script>
-
-
- {% endif %}
-{% endblock %}
-
-{% block message %}
-    {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|safe }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    {% if server_error %}
-        <ul class='errorlist'>
-          <li class='error'>{{ server_error }}</li>
-        </ul>
-    {% endif %}
-{% endblock %}
-
-{% block content-outer-bottom %}
-  {% if SW_VERSION %}
-    <div class="sw-version dev-note">v{{ SW_VERSION }}</div>
-  {% endif %}
 {% endblock %}
