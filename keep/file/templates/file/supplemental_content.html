@@ -1,4 +1,4 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 
 {% block page-subtitle %}: File : {{ obj.label }} : Supplemental content {{ obj.label }}{% endblock %}
 {% block content-title %}<a href="{% url 'file:edit' obj.pid %}">{{ obj.label }}</a>{% endblock %}

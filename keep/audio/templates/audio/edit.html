@@ -1,10 +1,10 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 {% load audio_extras %}
 
 {% block page-subtitle %}: Audio : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Audio File{% endblock %}
 
-{% block scripts %}
+{% block javascript %}
   {{ block.super }}
   <script type="text/javascript" src="{{ STATIC_URL }}/js/edit.js"></script>
   <script type="text/javascript">
@@ -49,7 +49,7 @@
 {{ block.super }}
 <div id="csrftoken">{% csrf_token %}</div> {# embed csrf for use in ajax calls #}
 <h2>{{ obj.label }}</h2>
-<ul class='extra dslist horiz'>
+<ul class='extra dslist list-inline'>
   {% with 'download original audio' as original %}
     {% if obj.audio.exists %}
       <li>
@@ -104,7 +104,7 @@
 {% endif %}
 
 <p class="extra">
-  <a href='#' id='queue_access_conversion'>
+  <a href='#' id='queue_access_conversion' class="btn btn-default">
     {% if obj.compressed_audio.exists %}re{% endif %}generate access copy</a>
 </p>
 

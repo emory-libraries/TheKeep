@@ -11,7 +11,7 @@
 
   {% if 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' not in obj.content_model %}
   {# do NOT display edit link for mailbox objects (not currently editable) #}
-    <a class="edit-link" href="{{ edit_url }}">edit</a>
+    <a class="pull-right btn btn-primary" href="{{ edit_url }}">edit <span class="glyphicon glyphicon-edit"></span></a>
   {% endif %}
   {# NOTE: could only display edit link for email content; displaying for all arrangement items for consistency #}
 
@@ -37,7 +37,7 @@
 {% endblock %}
 
 {% block item_info %}
-  <ul class='horiz'>
+  <ul class='list-inline'>
     {% if obj.rights %}<li>{{ obj.rights|join:', ' }}</li>{% endif %}
     {# display processed/unprocessed status (currently based on object state)  #}
     <li>{% if obj.state == 'A' %}processed{% endif %}{% if obj.state == 'I'%}accessioned{% endif %}</li>

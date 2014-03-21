@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block item_info %}
-<ul class="horiz">
+<ul class="list-inline">
  {% if obj.duration %}<li>{{ obj.duration|seconds_duration }}</li>{% endif %}
   {% if obj.has_original %}
      <li><a href="{% url 'audio:download-audio' obj.pid %}">original audio</a></li>

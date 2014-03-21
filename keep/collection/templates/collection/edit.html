@@ -1,9 +1,9 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 
 {% block page-subtitle %}: Collections : {% if collection %}Edit{% else %}Create{% endif %} {{ collection.pid|default:'' }}{% endblock %}
 {% block content-title %}{% if collection %}Edit{% else %}Create{% endif %} Collection {{ collection.pid|default:'' }}{% endblock %}
 
-{% block scripts %}
+{% block javascript %}
   {{ block.super }}
  <script type="text/javascript">
     $(document).ready(function() {
@@ -26,7 +26,7 @@
   {% endif %}
 </p>
 {% if collection.pid %} {# when editing existing objects, link to raw datastreams #}
-    <ul class='extra horiz'>
+    <ul class='extra list-inline'>
       {% if collection.audit_trail %}
         <li><a href="{% url 'collection:history' collection.pid %}">Event Log</a></li>
       {% endif %}

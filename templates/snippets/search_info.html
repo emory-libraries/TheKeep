@@ -31,7 +31,7 @@
     {# display any filters currently in effect #}
     {% if active_filters %}
       {% for filter, urlopt in active_filters %}
-        <a class="remove" href="?{{ urlopt }}">{{ filter }}</a>
+        <a href="?{{ urlopt }}">{{ filter }} <span class="glyphicon glyphicon-remove"></span></a>
       {% endfor %}
     {% endif %}
 

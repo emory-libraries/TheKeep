@@ -1,9 +1,9 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 
 {% block page-subtitle %}: File : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Disk Image File{% endblock %}
 
-{% block scripts %}
+{% block javascript %}
   {{ block.super }}
   <script type="text/javascript" src="{{ STATIC_URL }}/js/edit.js"></script>
 {% endblock %}

@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
     'eullocal.django.util',
+    'eultheme',
     'keep.accounts',
     'keep.arrangement',
     'keep.audio',

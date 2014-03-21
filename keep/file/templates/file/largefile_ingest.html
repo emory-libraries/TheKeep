@@ -1,9 +1,9 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 
 {% block page-subtitle %}: File : Ingest{% endblock %}
 {% block content-title %}Selected uploaded files for ingest into the repository.{% endblock %}
 
-{% block style %}
+{% block css %}
     {{ block.super }}
    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/audio-upload.css" />
 {% endblock %}

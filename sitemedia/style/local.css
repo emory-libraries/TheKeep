@@ -102,30 +102,30 @@ input.readonly {
   margin: 2px;
 }
 
-div#sidebar-left-inner > div {
+/*.sidebar > div {
     border: 1px solid #D9D9D9;
     background-color: #f2f3f5;
     padding: 5px;
     margin-bottom: 10px;
     font-size: 90%;
-}
-div#sidebar-left div.search input {
+}*/
+.sidebar div.search input {
     margin: 0px;
 }
-div#sidebar-left div.search p {
+.sidebar div.search p {
     margin: 0px;
 }
-div#sidebar-left div.search label {
+.sidebar div.search label {
     display: block;
 }
-div#sidebar-left div.search select {
+.sidebar div.search select {
     width: 95%;
 }
 
-div#sidebar-left .note {
+.sidebar .note {
   background-color: #FFFB64;
 }
-div#sidebar-left .note h2 {
+.sidebar .note h2 {
   color: black;
   border-bottom: 3px double black;
 }
@@ -155,7 +155,7 @@ input.form-button:hover {
     color: #999
 }
 
-div.help {
+/*div.help {
     float:left;
     background-color:white !important;
     border:2px solid green !important;
@@ -163,14 +163,14 @@ div.help {
     padding:3px;
     font-size:medium;
 }
-
-div.help > a {
+*/
+/*div.help > a {
     display:block;
     margin:0px;
     font-size:large;
     font-weight:bold;
 }
-.search-tips {
+*/.search-tips {
     position:absolute;
     margin-left:5px;
     width:250px;
@@ -180,12 +180,12 @@ div.help > a {
     display:none;
 }
 
-div#logged-in {
+/*div#logged-in {
     float:right;
 }
 div#logged-in a {
     font-weight: bold;
-}
+}*/
 img#keep-logo {
     float:left;
     padding-right:5px;
@@ -279,13 +279,13 @@ ul.messages li {
     overflow-x: auto;
 }
 
-a.tip {
+/*a.tip {
   background-image: url('../images/icon-question.png');
   width: 13px;
   height: 13px;
   display: inline-block;
 }
-
+*/
 #keyword-search {
   width: 70%;
   border-bottom: 1px solid #D9D9D9;
@@ -314,6 +314,7 @@ a.tip {
     background-color:#ffffcc;
     text-align: left;
     width: 55%;
+    opacity: 1;
 }
 
 .tooltip li {

@@ -20,7 +20,7 @@
       <p>{{ obj.hasMember|length }} item{{ obj.hasMember|pluralize }}</p>
     {% endif %}
   {% else %}
-    <ul class="horiz">
+    <ul class="list-inline">
     {% if obj.creator %}<li>{{ obj.creator|join:'; ' }}</li>{% endif %}
      <li><a href="{% url 'search:keyword' %}?collection={{ obj.label }}">find items in this collection</a></li>
     </ul>

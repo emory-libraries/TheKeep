@@ -1,5 +1,5 @@
 {# datastream and audit trail links for file objects #}
-<ul class='extra horiz'>
+<ul class='extra list-inline'>
   {% if obj.audit_trail %}
     <li><a href="{% url 'file:history' obj.pid %}">Event Log</a></li>
   {% endif %}
@@ -18,7 +18,7 @@
 {# supplemental files #}
 {# {% if obj.has_supplemental_content %} #}
 <b style="float:left;padding-right:1em">Supplemental content:</b>
-<ul class='horiz'>
+<ul class='list-inline'>
   {% for s in obj.supplemental_content %}
      <li><a href="{% url 'file:raw-ds' obj.pid s.id %}">{{ s.label }}</a></li>
   {% endfor %}

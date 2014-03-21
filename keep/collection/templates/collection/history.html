@@ -1,4 +1,4 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 
 {% block page-subtitle %}: Collection : {{ obj.label }} : History{% endblock %}
 {% block content-title %}<a href="{% url 'collection:edit' obj.pid %}">{{ obj.label }}</a>{% endblock %}

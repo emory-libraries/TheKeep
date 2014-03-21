@@ -1,5 +1,5 @@
 {# datastream and audit trail links for arrangement objects #}
-<ul class='extra horiz'>
+<ul class='extra list-inline'>
   {% if obj.audit_trail %}
     <li><a href="{% url 'arrangement:history' obj.pid %}">Event Log</a></li>
   {% endif %}

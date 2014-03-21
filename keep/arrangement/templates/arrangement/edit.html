@@ -1,10 +1,10 @@
-{% extends "site_base.html" %}
+{% extends "page_base.html" %}
 {% load humanize %}
 
 {% block page-subtitle %}: Arrangment : Edit {{ obj.label }} {% if obj.filetech.content.local_id %}({{ obj.filetech.content.local_id }}){% endif %}{% endblock %}
 {% block content-title %}Edit Arrangment File {% endblock %}
 
-{% block scripts %}
+{% block javascript %}
   {{ block.super }}
   {# includes jquery  #}
 
