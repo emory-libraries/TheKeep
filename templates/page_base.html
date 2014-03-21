@@ -1,0 +1,90 @@
+{% extends "site_base.html" %}
+{# base template for content pages with left sidebar #}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+
+    <div class="col-xs-6 col-sm-3 sidebar panel">
+        <div class="panel-body small">
+      {% block sidebar-left %}
+  {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
+   <div class="note well">
+     <h3>Note</h3>
+
+     <p>The old item and collection search are being replaced by the
+     new, combined search to the right.</p>
+     <p>The old search will be available for a transition period but
+     will eventually be removed.  If you find any functionality in the
+     old search that is not available in the new one, please report
+     it.</p>
+   </div>
+
+   <a id="use-old-search">Access the old search.</a>
+
+   <div id="old-search" class="well" style="display:none">
+  {% if item_search %}
+    {% include 'audio/snippets/search_form.html' %}
+  {% endif %}
+  {% if collection_search %}
+    {% include 'collection/snippets/search_form.html' %}
+  {% endif %}
+  <div class="help">
+    <a onMouseOver="jQuery('#search-help').show()"
+       onMouseOut="jQuery('#search-help').hide()"><span class="glyphicon glyphicon-question-sign"></span></a>
+    <div id="search-help" class="search-tips">{{ collection_search.search_tips }}</div>
+   </div>
+   </div>
+   <script type="text/javascript">
+     $(document).ready(function () { {# show/hide advanced-search block #}
+       $("#use-old-search").click(function(){
+           $("#old-search").toggle();
+         });
+       });
+   </script>
+ {% endif %}
+
+      {% endblock %}
+      </div>
+    </div>
+
+    <div class="col-xs-18 col-md-9">
+        {# admin search - restricted to logged-in users #}
+        {% if user.is_authenticated and keyword_search %}
+          <div id="keyword-search" class="search form-group">
+            <h2>Search</h2>
+            <form method="get" action="{% url 'search:keyword' %}">
+              {{ keyword_search.keyword }}
+              <input class="form-submit" type="submit" value="Go" />
+
+              <a class="searchtip" title="{{ keyword_search.keyword.help_text }}"
+                data-toggle="tooltip" data-placement="bottom">
+                <span class="glyphicon glyphicon-question-sign"></span></a>
+            </form>
+
+          </div>
+        {% endif %}
+
+      <h1>{% block content-title %}{% endblock %}</h1>
+      {% block content-body %}{% endblock %}
+    </div>
+
+  </div>  {# row #}
+</div> {# container #}
+{% endblock %}
+
+{% block footer-content %}
+  {{ block.super }}
+  <script type ="text/javascript">
+      $(document).ready(function () {
+        $("#keyword-search input[name=keyword]").categorycomplete({
+          source: "{% url 'search:suggest' %}",
+          minLength: 0,
+          });
+        {# remove this when old search is removed from sidebar #}
+        {% include "collection/snippets/collection_suggest_js.html" %}
+      });
+
+     $('.searchtip').tooltip();
+   </script>
+{% endblock %}
