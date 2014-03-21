@@ -22,9 +22,14 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 # sets ?next=/audio/ but does not return back here
 
 
-@login_required
+# placeholder for new public-facing site index page
+# TODO: how to separate public search from backend search?
 def site_index(request):
-    '''Simple site index page, with links to main functionality and
+    return render(request, 'search/site_index.html')
+
+@login_required
+def site_dashboard(request):
+    '''Main page for staff users, with links to main functionality and
     date/month facets linking to searches for recently added items.
     '''
     today = date.today()
@@ -68,7 +73,7 @@ def site_index(request):
         y, m = month.split('-')
         recent_months.append((date(int(y), int(m), 1), count))
 
-    return render(request, 'search/site_index.html',
+    return render(request, 'search/site_dashboard.html',
                   {'recent_items': recent_items, 'recent_months': recent_months,
                   'recent_collections': recent_collections})
 

@@ -1,54 +1,13 @@
-{% extends "page_base.html" %}
+{% extends "site_base.html" %}
 {% load humanize %}
 
-{% block content-title %}Welcome to the Keep.{% endblock %}
+{% block body_class %}home{% endblock %}
 
-{% block content-body %}
-<p>Add content: <a href="{% url 'file:upload' %}">upload a file</a> |
-	<a href="{% url 'file:largefile-ingest' %}">ingest uploaded content</a></p>
-<p><a href="{% url 'collection:new' %}">create a new collection</a></p>
-<p><a href="{% url 'tasks:recent' %}">status of recent tasks (audio conversions, batch status update)</a></p>
-<p><a href="{% url 'audio:feed-list' %}">iTunes podcast feeds</a></p>
-
-
-<h3>View recently added items</h3>
-
-<div class="half-column">
-	{% if recent_months %}
-	<h4>By month</h4>
-	<ul>
-		{% for month, count in recent_months %}
-		<li><a href="{% url 'search:keyword' %}?keyword=created:{{ month|date:'Y-m' }}"
-			title="search for items added in {{ month|date:'F Y' }}">{{ month|date:'F Y' }}</a> ({{ count|intcomma }})</li>
-		{% endfor %}
-	</ul>
-	{% endif %}
-
-	<h4>By day</h4>
-	<ul>
-		{% for day, count in recent_items %}
-		<li><a href="{% url 'search:keyword' %}?keyword=created:{{ day|date:'Y-m-d' }}"
-			title="search for all items added on {{ day }}">{{ day|naturalday }}</a> ({{ count|intcomma }})</li>
-		{% empty %}
-		<li>No new items have been added in the last 30 days.</li>
-		{% endfor %}
-	</ul>
-</div>
-
-{% if recent_collections %}
-<div class="half-column">
-	<h4>By collection</h4>
-	<ul>
-		{% for collection, count in recent_collections %}
-		<li><a href="{% url 'search:keyword' %}?collection={{ collection }}"
-			title="search for all items in {{ collection }} sorted by date added">{{ collection }}</a> ({{ count|intcomma }})</li>
-		{% empty %}
-		<li>No new items have been added in the last 30 days.</li>
-		{% endfor %}
-	</ul>
-</div>
-{% endif %}
-
-
+{% block content %}
+<div class="container" id="search">
+    <h1>Search for resources here.</h1>
+    {# {% include 'ddi/snippets/search_form.html' %} #}
+</div><!-- /.container -->
+{# {% include 'ddi/snippets/loading.html' %} #}
 
 {% endblock %}
