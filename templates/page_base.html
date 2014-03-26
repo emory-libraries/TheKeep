@@ -48,8 +48,7 @@
       </div>
     </div>
 
-    <div class="col-xs-18 col-md-9">
-{# TODO!!  messages #}
+    <div class="col-xs-12 col-sm-6 col-md-9 col-lg-9">
 
         {# admin search - restricted to logged-in users #}
         {% if user.is_authenticated and keyword_search %}
@@ -57,7 +56,7 @@
             <h2>Search</h2>
             <form method="get" action="{% url 'search:keyword' %}">
               {{ keyword_search.keyword }}
-              <input class="form-submit" type="submit" value="Go" />
+              <input class="btn form-submit" type="submit" value="Go" />
 
               <a class="searchtip" title="{{ keyword_search.keyword.help_text }}"
                 data-toggle="tooltip" data-placement="bottom">
