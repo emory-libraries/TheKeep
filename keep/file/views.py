@@ -335,13 +335,13 @@ def ajax_upload(request):
     try:
         # ignoring request mimetype since it is unreliable
         m = magic.Magic(mime=True)
-        type = m.from_file(upload_file)
-        logger.debug('mimetype for %s detected as %s' % (ingest_file, type))
-        type, separator, options = type.partition(';')
-        if type not in allowed_upload_types:
+        mimetype = m.from_file(upload_file)
+        logger.debug('mimetype for %s detected as %s' % (ingest_file, mimetype))
+        mimetype, separator, options = mimetype.partition(';')
+        if mimetype not in allowed_upload_types:
             os.remove(upload_file)
             # send response with status 415 Unsupported Media Type
-            return HttpResponseUnsupportedMediaType('File type %s is not allowed' % type,
+            return HttpResponseUnsupportedMediaType('File type %s is not allowed' % mimetype,
                                                     content_type='text/plain')
     except Exception as e:
         logger.debug(e)
