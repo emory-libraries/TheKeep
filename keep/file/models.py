@@ -74,6 +74,11 @@ class DiskImagePremis(premis.Premis):
 
     object = xmlmap.NodeField('p:object', PremisObject)
 
+    fixity_checks = xmlmap.NodeListField('p:event[p:eventType="fixity check"]',
+        premis.Event)
+    '''list of PREMIS fixity check events (where event type is "fixity check"),
+     as instances of :class:`eulxml.xmlmap.premis.Event`'''
+
 
 class DiskImage(DigitalObject):
     '''Fedora object for Disk Images.  Extends :class:`~keep.common.fedora.DigitalObject`.
@@ -523,6 +528,10 @@ class DiskImage(DigitalObject):
         # if self.rights.content.ip_note:
         #     data['ip_note'] = self.rights.content.ip_note
 
+        if self.provenance.content.fixity_checks:
+            last_fixity_check = self.provenance.content.fixity_checks[-1]
+            data['last_fixity_check'] = last_fixity_check.date
+            data['last_fixity_result'] = last_fixity_check.outcome
 
         return data
 
