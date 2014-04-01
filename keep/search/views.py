@@ -24,6 +24,7 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
 # placeholder for new public-facing site index page
 # TODO: how to separate public search from backend search?
+# may need to rename common search and search forms to differentiate...
 def site_index(request):
     return render(request, 'search/site_index.html')
 

@@ -92,7 +92,8 @@ class DiskImage(DigitalObject):
     CONTENT_MODELS = [DISKIMAGE_CONTENT_MODEL]
     NEW_OBJECT_VIEW = 'file:view'
 
-    allowed_mimetypes = ['', 'application/x-aff', 'application/x-ad1']
+    allowed_mimetypes = ['', 'application/x-aff', 'application/x-ad1',
+                         'application/x-iso9660-image']
     # NOTE: '' is required for javascript, because browser does not detect
     # any mimetype at all for AFF and AD1 files
     # NOTE: These are custom mimetypes and must be configured in your local
@@ -273,7 +274,8 @@ class DiskImage(DigitalObject):
             # if initial label looks like a file, strip off the extension
             # for the object name/title
             if initial_label.lower().endswith('.aff') or \
-               initial_label.lower().endswith('.ad1'):
+               initial_label.lower().endswith('.ad1') or \
+               initial_label.lower().endswith('.iso'):
                 basename, ext = os.path.splitext(initial_label)
                 # NOTE: also using extension from original filename
                 # here because in some cases (under apache?) uploaded file
