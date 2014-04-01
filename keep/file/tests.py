@@ -35,6 +35,10 @@ ad1_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.ad1')
 ad1_md5 = 'e1ec1ac3a9e1f5a1c577a1de6e1e5c38'
 ad1_sha1 = '2d3065eb1b1ceeb618821e2cf776d36c9ba19e4a'
 
+iso_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.iso')
+iso_md5 = '9d68ab115aff59154aedc4c42c8267e9'
+iso_sha1 = 'd17d15b0d0fb85ba0f07322fa37584be8fadb30b'
+
 
 class TestChecksum(TestCase):
     # use mp3 file from audio test fixtures
@@ -392,6 +396,24 @@ class FileViewsTest(KeepTestCase):
             self.assertTrue(new_obj.has_model(DiskImage.DISKIMAGE_CONTENT_MODEL),
                 "AD1 ingested as disk image object")
             self.assertEqual(ad1_md5, new_obj.provenance.content.object.checksums[0].digest)
+
+        # test ISO Disk Image support
+        with open(iso_file) as iso:
+            response = self.client.post(upload_url, {'file': iso, 'collection_0':
+                           self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
+            result = response.context['ingest_results'][0]
+            self.assertTrue(result['success'], 'success should be true for uploaded ISO')
+            self.assertNotEqual(None, result['pid'],
+                'result should include pid of new object on successful ingest')
+            # Add pid to be removed.
+            self.pids.append(result['pid'])
+
+            repo = Repository()
+            new_obj = repo.get_object(result['pid'], type=DiskImage)
+            self.assertTrue(new_obj.has_model(DiskImage.DISKIMAGE_CONTENT_MODEL),
+                "ISO ingested as disk image object")
+            self.assertEqual(iso_md5, new_obj.provenance.content.object.checksums[0].digest)
+            self.assertEqual('ISO', new_obj.provenance.content.object.format.name)
 
     def test_largefile_ingest(self):
         ingest_url = reverse('file:largefile-ingest')
