@@ -30,8 +30,8 @@
 
     {# display any filters currently in effect #}
     {% if active_filters %}
-      {% for filter, urlopt in active_filters %}
-        <a href="?{{ urlopt }}">{{ filter }} <span class="glyphicon glyphicon-remove"></span></a>
+      {% for facet, urlopt in active_filters %}
+        <a href="?{{ urlopt }}">{{ facet }}<span class="glyphicon glyphicon-remove"></span></a>
       {% endfor %}
     {% endif %}
 
