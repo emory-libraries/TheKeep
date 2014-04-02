@@ -35,8 +35,9 @@
 	</ul>
 </div>
 
-{% if recent_collections %}
+{% if recent_collections or recent_fixity_checks %}
 <div class="half-column">
+	{% if recent_collections %}
 	<h4>By collection</h4>
 	<ul>
 		{% for collection, count in recent_collections %}
@@ -46,6 +47,20 @@
 		<li>No new items have been added in the last 30 days.</li>
 		{% endfor %}
 	</ul>
+	{% endif %}
+
+	{% if recent_fixity_checks %}
+	<h4>Fixity checks in the last 30 days</h4>
+	<ul>
+		{% for status, count in recent_fixity_checks %}
+		<li><a href="{% url 'search:keyword' %}?fixity_check={{ status }}&amp;fixity_check_mindate={{ month_ago|date:"Y-m-d" }}">{% if status == 'pass' %}valid{% elif status == 'fail' %}invalid{% endif %}</a>
+		    ({{ count|intcomma }})</li>
+		{% empty %}
+		<li>No new items have been added in the last 30 days.</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
 </div>
 {% endif %}
 

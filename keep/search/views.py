@@ -74,9 +74,18 @@ def site_dashboard(request):
         y, m = month.split('-')
         recent_months.append((date(int(y), int(m), 1), count))
 
+    # search for fixity checks in the last 30 days
+    facetq = solr.query().filter(last_fixity_check__range=(month_ago, today))  \
+                .facet_by('last_fixity_result', mincount=1) \
+                .paginate(rows=0)
+    facets = facetq.execute().facet_counts.facet_fields
+    recent_fixity_checks = facets['last_fixity_result']
+
     return render(request, 'search/site_dashboard.html',
                   {'recent_items': recent_items, 'recent_months': recent_months,
-                  'recent_collections': recent_collections})
+                  'recent_collections': recent_collections,
+                  'recent_fixity_checks': recent_fixity_checks,
+                  'month_ago': month_ago})
 
 
 @login_required
@@ -93,6 +102,13 @@ def keyword_search(request):
         solr = solr_interface()
         # start with a default query to add filters & search terms
         q = solr.query()
+
+        # optional date filter for fixity check
+        fixity_check_mindate = searchform.cleaned_data.get('fixity_check_mindate', None)
+        if fixity_check_mindate is not None:
+            today = date.today()
+            q = q.query(last_fixity_check__range=(fixity_check_mindate, today))
+
 
         # separate out normal and fielded search terms in keyword search string
         # TODO: should this logic be shifted to form validation/cleaning?
@@ -149,10 +165,10 @@ def keyword_search(request):
         # facets
 
         # filter the solr search based on any facets in the request
-        for filter, facet_field in searchform.facet_field_names.iteritems():
+        for filter_val, facet_field in searchform.facet_field_names.iteritems():
             # For multi-valued fields (author, subject), we could have multiple
             # filters on the same field; treat all facet fields as lists.
-            for val in request.GET.getlist(filter):
+            for val in request.GET.getlist(filter_val):
 
                 # ignore any facet if the value is not set
                 if not val:
@@ -162,19 +178,21 @@ def keyword_search(request):
                 q = q.filter(**{facet_field: val})
 
                 # add to list of active filters
-                active_filters[filter].append(val)
+                active_filters[filter_val].append(val)
 
                 # add to list for user display & removal
                 # - copy the urlopts and remove only the current value
                 unfacet_urlopts = urlopts.copy()
-                val_list = unfacet_urlopts.getlist(filter)
+                val_list = unfacet_urlopts.getlist(filter_val)
                 val_list.remove(val)
-                unfacet_urlopts.setlist(filter, val_list)
+                unfacet_urlopts.setlist(filter_val, val_list)
                 # tuple of filter display value, url to remove it
                 # - add details to label when the value doesn't make it obvious
-                if filter in ['added by', 'modified by']:
-                    label = '%s %s' % (filter, val)
-                elif filter == 'access status':
+                if filter_val in ['added by', 'modified by']:
+                    label = '%s %s' % (filter_val, val)
+                elif filter_val == 'fixity_check':
+                    label = 'fixity check: %s' % 'valid' if val == 'pass' else 'invalid'
+                elif filter_val == 'access status':
                     # use access status abbreviation instead of numeric code
                     label = rights_access_terms_dict[val].abbreviation
                 else:
@@ -226,7 +244,7 @@ def keyword_search(request):
         facet_fields = results.object_list.facet_counts.facet_fields
         for display_name, field in searchform.facet_field_names.iteritems():
             #do not display coll facet because it is redundant with the collection facet
-            if display_name == 'coll':
+            if display_name in ['coll', 'fixity_check']:
                 continue
             if field in facet_fields and facet_fields[field]:
                 show_facets = []

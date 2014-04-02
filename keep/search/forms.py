@@ -1,10 +1,7 @@
-import re
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
-from django.contrib.auth.models import User
 from django.utils.datastructures import SortedDict
 # NOTE: not using OrderedDict so as not to require Python 2.7
-from eulcommon.searchutil import search_terms, parse_search_terms
+from eulcommon.searchutil import parse_search_terms
 
 
 class SolrSearchField(forms.CharField):
@@ -18,7 +15,7 @@ class SolrSearchField(forms.CharField):
     '''
 
     invalid = 'Search terms may not begin with wildcards * or ?'
-    
+
     def to_python(self, value):
         if not value:
             return []
@@ -28,7 +25,7 @@ class SolrSearchField(forms.CharField):
             except Exception:
                  raise forms.ValidationError('There was an error parsing your search: %s' \
                                              % value)
-        
+
     def validate(self, value):
         strval = ' '.join([v[1] if v is None else '%s:%s' % v for v in value])
         super(forms.CharField, self).validate(strval)
@@ -60,10 +57,14 @@ class KeywordSearch(forms.Form):
         to find items that belong to a particular collection.</li>
     <li><b>Tip:</b> Use the down arrow in an empty search box to see a
         list of supported fields.</li>
-    </ul>        
+    </ul>
     '''
     keyword = SolrSearchField(required=False,
                               help_text=help_info)
+
+    #: hidden input to allow for specifying a fixity check mindate filter,
+    #: intended for use with fixity facet filter (linked from dashboard page)
+    fixity_check_mindate = forms.CharField(required=False, widget=forms.HiddenInput)
 
     # TODO see if there is a way to combine the logic / fields for allowed_fields,  field_descriptions, facet_fields, facet_field_names
     # fields that can be used in keyword search
@@ -108,6 +109,7 @@ class KeywordSearch(forms.Form):
         ('added by', 'added_by_facet'),
         ('modified by', 'users_facet'),
         ('year', 'created_year'),
+        ('fixity_check', 'last_fixity_result'),
 
     ])
     ''':class:`~django.utils.datastructures.SortedDict` of facet
