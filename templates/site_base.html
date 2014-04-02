@@ -13,7 +13,13 @@ The Keep{% endblock %}
   {% if user.is_authenticated %}
     <div class="navbar-right">
       <p class="navbar-text">Welcome, {% firstof user.first_name user.username %}.
-        <a href="{% url 'accounts:logout' %}">Logout</a></p>
+        <a href="{% url 'accounts:logout' %}">Logout
+         <span class="glyphicon glyphicon-log-out"></span></a></p>
+    </div>
+  {% else %}
+     <div class="navbar-right">
+        <p class="navbar-text"><a href="{% url 'accounts:login' %}">Login
+          <span class="glyphicon glyphicon-log-in"></span></a></p>
     </div>
   {% endif %}
 {% endblock %}
