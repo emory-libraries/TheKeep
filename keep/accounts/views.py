@@ -6,6 +6,8 @@ from django.conf import settings
 from django.contrib.auth import views as authviews
 from django.core.urlresolvers import reverse
 
+from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
+
 logger = logging.getLogger(__name__)
 
 def login(request):
@@ -17,6 +19,14 @@ def login(request):
     if request.method == "POST" and request.user.is_authenticated():
         # on successful login, encrypt and store user's password to use for fedora access
         request.session['fedora_password'] = encrypt(request.POST.get('password'))
+
+        next_url = request.POST.get('next', None)
+        if request.user.is_authenticated() and not next_url and \
+           request.user.is_staff:
+            # if the user is staff, redirect to admin dashboard
+            next_url = reverse('site-dashboard')
+            return HttpResponseSeeOtherRedirect(next_url)
+
     return response
 
 def logout(request):
