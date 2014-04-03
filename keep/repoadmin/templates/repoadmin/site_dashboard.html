@@ -18,7 +18,7 @@
 	<h4>By month</h4>
 	<ul>
 		{% for month, count in recent_months %}
-		<li><a href="{% url 'repo-admin:keyword' %}?keyword=created:{{ month|date:'Y-m' }}"
+		<li><a href="{% url 'repo-admin:search' %}?keyword=created:{{ month|date:'Y-m' }}"
 			title="search for items added in {{ month|date:'F Y' }}">{{ month|date:'F Y' }}</a> ({{ count|intcomma }})</li>
 		{% endfor %}
 	</ul>
@@ -27,7 +27,7 @@
 	<h4>By day</h4>
 	<ul>
 		{% for day, count in recent_items %}
-		<li><a href="{% url 'repo-admin:keyword' %}?keyword=created:{{ day|date:'Y-m-d' }}"
+		<li><a href="{% url 'repo-admin:search' %}?keyword=created:{{ day|date:'Y-m-d' }}"
 			title="search for all items added on {{ day }}">{{ day|naturalday }}</a> ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>
@@ -41,7 +41,7 @@
 	<h4>By collection</h4>
 	<ul>
 		{% for collection, count in recent_collections %}
-		<li><a href="{% url 'repo-admin:keyword' %}?collection={{ collection }}"
+		<li><a href="{% url 'repo-admin:search' %}?collection={{ collection }}"
 			title="search for all items in {{ collection }} sorted by date added">{{ collection }}</a> ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>
@@ -53,7 +53,7 @@
 	<h4>Fixity checks in the last 30 days</h4>
 	<ul>
 		{% for status, count in recent_fixity_checks %}
-		<li><a href="{% url 'repo-admin:keyword' %}?fixity_check={{ status }}&amp;fixity_check_mindate={{ month_ago|date:"Y-m-d" }}">{% if status == 'pass' %}valid{% elif status == 'fail' %}invalid{% endif %}</a>
+		<li><a href="{% url 'repo-admin:search' %}?fixity_check={{ status }}&amp;fixity_check_mindate={{ month_ago|date:"Y-m-d" }}">{% if status == 'pass' %}valid{% elif status == 'fail' %}invalid{% endif %}</a>
 		    ({{ count|intcomma }})</li>
 		{% empty %}
 		<li>No new items have been added in the last 30 days.</li>

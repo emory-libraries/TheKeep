@@ -1,6 +1,6 @@
 {# common navlinks for use in site base and admin site base #}
 {% if user.is_staff %}
-  <li><a href="{% url 'site-dashboard' %}">Dashboard</a></li>
+  <li><a href="{% url 'repo-admin:dashboard' %}">Dashboard</a></li>
 {% endif %}
 <li><a href="{% url 'collection:browse' %}">Collections</a></li>
 {% if perms.common.arrangement_allowed %}

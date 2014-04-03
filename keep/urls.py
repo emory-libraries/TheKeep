@@ -12,7 +12,6 @@ urlpatterns = patterns('',
 #    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
     (r'^db-admin/',  include(admin.site.urls)),
     url(r'^$', 'keep.repoadmin.views.site_index', name="site-index"),
-    url(r'^dashboard/$', 'keep.repoadmin.views.site_dashboard', name="site-dashboard"),
 
     url(r'^audio/', include('keep.audio.urls', namespace='audio')),
     url(r'^arrangement/', include('keep.arrangement.urls', namespace='arrangement')),

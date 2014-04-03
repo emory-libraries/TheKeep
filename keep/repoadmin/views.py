@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDict, SortedDict
 from eulcommon.searchutil import pages_to_show, parse_search_terms
+
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.collection.models import SimpleCollection
@@ -29,9 +30,10 @@ def site_index(request):
     return render(request, 'repoadmin/site_index.html')
 
 @login_required
-def site_dashboard(request):
-    '''Main page for staff users, with links to main functionality and
-    date/month facets linking to searches for recently added items.
+def dashboard(request):
+    '''Admin dashboard page for staff users, with links to main
+    functionality and date/month facets linking to searches for
+    recently added or checksummed items.
     '''
     today = date.today()
     month_ago = today - timedelta(days=30)

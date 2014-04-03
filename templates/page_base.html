@@ -54,7 +54,7 @@
         {% if user.is_authenticated and keyword_search %}
           <div id="keyword-search" class="search form-group">
             <h2>Search</h2>
-            <form method="get" action="{% url 'repo-admin:keyword' %}">
+            <form method="get" action="{% url 'repo-admin:search' %}">
               {{ keyword_search.keyword }}
               <input class="btn form-submit" type="submit" value="Go" />
 

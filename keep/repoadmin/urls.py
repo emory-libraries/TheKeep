@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url
 
 urlpatterns = patterns('keep.repoadmin.views',
-    url(r'^$', 'keyword_search', name='keyword'),
-    url(r'^suggest/$', 'keyword_search_suggest', name='suggest'),
+    url(r'^$', 'dashboard', name="dashboard"),
+    url(r'^search/$', 'keyword_search', name='search'),
+    url(r'^search/suggest/$', 'keyword_search_suggest', name='suggest'),
 )

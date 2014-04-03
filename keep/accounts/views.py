@@ -24,7 +24,7 @@ def login(request):
         if request.user.is_authenticated() and not next_url and \
            request.user.is_staff:
             # if the user is staff, redirect to admin dashboard
-            next_url = reverse('site-dashboard')
+            next_url = reverse('repo-admin:dashboard')
             return HttpResponseSeeOtherRedirect(next_url)
 
     return response
