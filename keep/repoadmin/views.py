@@ -12,7 +12,7 @@ from keep.audio.models import AudioObject
 from keep.collection.models import SimpleCollection
 from keep.common.models import rights_access_terms_dict
 from keep.common.utils import solr_interface
-from keep.search.forms import KeywordSearch
+from keep.repoadmin.forms import KeywordSearch
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 # TODO: how to separate public search from backend search?
 # may need to rename common search and search forms to differentiate...
 def site_index(request):
-    return render(request, 'search/site_index.html')
+    return render(request, 'repoadmin/site_index.html')
 
 @login_required
 def site_dashboard(request):
@@ -81,7 +81,7 @@ def site_dashboard(request):
     facets = facetq.execute().facet_counts.facet_fields
     recent_fixity_checks = facets['last_fixity_result']
 
-    return render(request, 'search/site_dashboard.html',
+    return render(request, 'repoadmin/site_dashboard.html',
                   {'recent_items': recent_items, 'recent_months': recent_months,
                   'recent_collections': recent_collections,
                   'recent_fixity_checks': recent_fixity_checks,
@@ -267,7 +267,7 @@ def keyword_search(request):
             'active_filters': display_filters,
         })
 
-    return render(request, 'search/results.html', ctx)
+    return render(request, 'repoadmin/results.html', ctx)
 
 
 @login_required

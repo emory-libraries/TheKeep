@@ -12,7 +12,7 @@ from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.collection.models import SimpleCollection
 
-from keep.search.forms import SolrSearchField, KeywordSearch
+from keep.repoadmin.forms import SolrSearchField, KeywordSearch
 from keep.testutil import KeepTestCase
 from keep.audio.tests import ADMIN_CREDENTIALS
 
@@ -31,7 +31,7 @@ class SolrSearchFieldTest(TestCase):
                      'to python should return a list')
 
         # validation error should be raised if parsing fails
-        with patch('keep.search.forms.parse_search_terms') as pst:
+        with patch('keep.repoadmin.forms.parse_search_terms') as pst:
             pst.side_effect = Exception
             self.assertRaises(forms.ValidationError,
                               self.field.to_python, 'one:two:three')
@@ -63,7 +63,7 @@ class SolrSearchFieldTest(TestCase):
                                                 (None, '*baz')])
 
 
-@patch('keep.search.views.solr_interface', spec=sunburnt.SolrInterface)
+@patch('keep.repoadmin.views.solr_interface', spec=sunburnt.SolrInterface)
 class SearchViewsTest(KeepTestCase):
     fixtures = ['users']
 
@@ -79,9 +79,9 @@ class SearchViewsTest(KeepTestCase):
         self.user.is_superuser = True
         self.user.save()
 
-    @patch('keep.search.views.Paginator')
+    @patch('keep.repoadmin.views.Paginator')
     def test_search(self, mockpaginator, mocksolr_interface):
-        search_url = reverse('search:keyword')
+        search_url = reverse('repoadminkeyword')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
@@ -146,9 +146,9 @@ class SearchViewsTest(KeepTestCase):
         response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
         mocksolr.query.exclude.assert_called_with(content_model=AudioObject.AUDIO_CONTENT_MODEL)
 
-    @patch('keep.search.views.Paginator')
+    @patch('keep.repoadmin.views.Paginator')
     def test_search_by_user(self, mockpaginator, mocksolr_interface):
-        search_url = reverse('search:keyword')
+        search_url = reverse('repoadmin:keyword')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
@@ -184,9 +184,9 @@ class SearchViewsTest(KeepTestCase):
         self.client.get(search_url, {'keyword': 'foo:bar'})
         mocksolr.query.query.assert_called_with('foo:bar')
 
-    @patch('keep.search.views.Paginator')
+    @patch('keep.repoadmin.views.Paginator')
     def test_search_by_coll(self, mockpaginator, mocksolr_interface):
-        search_url = reverse('search:keyword')
+        search_url = reverse('repoadmin:keyword')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
@@ -223,10 +223,10 @@ class SearchViewsTest(KeepTestCase):
         # - include relevance score in return values
         mocksolr.query.field_limit.assert_called_with(score=True)
 
-    @patch('keep.search.views.Paginator')
+    @patch('keep.repoadmin.views.Paginator')
     def test_search_facets(self, mockpaginator, mocksolr_interface):
         # test facet logic in the search
-        search_url = reverse('search:keyword')
+        search_url = reverse('repoadmin:keyword')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
@@ -277,7 +277,7 @@ class SearchViewsTest(KeepTestCase):
         self.assert_('Undetermined' in active_filter_labels)
 
     def test_search_suggest(self, mocksolr_interface):
-        suggest_url = reverse('search:suggest')
+        suggest_url = reverse('repoadmin:suggest')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
@@ -340,9 +340,9 @@ class SearchViewsTest(KeepTestCase):
         response = self.client.get(suggest_url, {'term': ':'})
         self.assertEqual(200, response.status_code)  # was getting a 500 error before fix
 
-    @patch('keep.search.views.Paginator')
+    @patch('keep.repoadmin.views.Paginator')
     def test_search_by_created(self, mockpaginator, mocksolr_interface):
-        search_url = reverse('search:keyword')
+        search_url = reverse('repoadmin:keyword')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
@@ -359,7 +359,7 @@ class SearchViewsTest(KeepTestCase):
         mocksolr.query.query.assert_any_call(created_date='2012-05*')
 
     def test_search_suggest_created(self, mocksolr_interface):
-        suggest_url = reverse('search:suggest')
+        suggest_url = reverse('repoadmin:suggest')
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query

@@ -1,4 +1,4 @@
-{% extends 'search/snippets/list-item.html' %}
+{% extends 'repoadmin/snippets/list-item.html' %}
 
 {% block item_title %}
   {% if 'info:fedora/emory-control:Collection-1.0' in obj.content_model %} {# collection 1.0 AKA "Simple" collection #}
@@ -22,7 +22,7 @@
   {% else %}
     <ul class="list-inline">
     {% if obj.creator %}<li>{{ obj.creator|join:'; ' }}</li>{% endif %}
-     <li><a href="{% url 'search:keyword' %}?collection={{ obj.label }}">find items in this collection</a></li>
+     <li><a href="{% url 'repoadmin:keyword' %}?collection={{ obj.label }}">find items in this collection</a></li>
     </ul>
   {% endif %}
 

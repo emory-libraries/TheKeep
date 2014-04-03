@@ -10,9 +10,9 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
 #    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
-    (r'^admin/',  include(admin.site.urls)),
-    url(r'^$', 'keep.search.views.site_index', name="site-index"),
-    url(r'^dashboard/$', 'keep.search.views.site_dashboard', name="site-dashboard"),
+    (r'^db-admin/',  include(admin.site.urls)),
+    url(r'^$', 'keep.repoadmin.views.site_index', name="site-index"),
+    url(r'^dashboard/$', 'keep.repoadmin.views.site_dashboard', name="site-dashboard"),
 
     url(r'^audio/', include('keep.audio.urls', namespace='audio')),
     url(r'^arrangement/', include('keep.arrangement.urls', namespace='arrangement')),
@@ -26,7 +26,7 @@ urlpatterns = patterns('',
 
     url(r'^common/', include('keep.common.urls', namespace='common')),
 
-    url(r'^search/', include('keep.search.urls', namespace='search')),
+    url(r'^admin/', include('keep.repoadmin.urls', namespace='repo-admin')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
     # to INSTALLED_APPS to enable admin documentation:

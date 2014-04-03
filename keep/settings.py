@@ -59,7 +59,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
-    "keep.search.context_processors.search",   # search form on every page
+    "keep.repoadmin.context_processors.search",   # search form on every page
 )
 
 MIDDLEWARE_CLASSES = (
@@ -107,7 +107,7 @@ INSTALLED_APPS = [
     'keep.audio',
     'keep.collection',
     'keep.common',
-    'keep.search',
+    'keep.repoadmin',
     'keep.file',
     'djcelery',
 ]
@@ -126,7 +126,7 @@ FILE_UPLOAD_HANDLERS = (
 # session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'    # use same cache in use elsewhere
 SESSION_COOKIE_AGE = 604800   # 1 week (Django default is 2 weeks)
-SESSION_COOKIE_SECURE = True  # mark cookie as secure, only transfer via HTTPS
+# SESSION_COOKIE_SECURE = True  # mark cookie as secure, only transfer via HTTPS
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # using default django login url

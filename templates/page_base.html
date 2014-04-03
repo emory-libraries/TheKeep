@@ -54,7 +54,7 @@
         {% if user.is_authenticated and keyword_search %}
           <div id="keyword-search" class="search form-group">
             <h2>Search</h2>
-            <form method="get" action="{% url 'search:keyword' %}">
+            <form method="get" action="{% url 'repo-admin:keyword' %}">
               {{ keyword_search.keyword }}
               <input class="btn form-submit" type="submit" value="Go" />
 
@@ -79,7 +79,7 @@
   <script type ="text/javascript">
       $(document).ready(function () {
         $("#keyword-search input[name=keyword]").categorycomplete({
-          source: "{% url 'search:suggest' %}",
+          source: "{% url 'repo-admin:suggest' %}",
           minLength: 0,
           });
         {# remove this when old search is removed from sidebar #}
