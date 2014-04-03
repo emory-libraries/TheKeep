@@ -3,15 +3,14 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from eulfedora.models import DigitalObjectSaveFailure
-from eulcm.models.collection.v1_1 import Collection
 from eulxml.xmlmap import mods
 
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from pidservices.clients import parse_ark
 
 from keep.collection.models import CollectionObject
+from keep.audio.models import AudioObject
 from keep.common.fedora import Repository
-from keep import localsettings
 
 LOG_LEVEL = ['QUIET', 'INFO', 'WARNING']
 
@@ -23,7 +22,9 @@ class Command(BaseCommand):
 
     '''
     args = '[PID [PID...]]'
-    help = 'Repair ARKs on Keep Collections. It optionally accepts a list of PIDs to be repaired.'
+    help = '''Repair ARKs on Keep Collections or Audio objects.
+    Optionally accepts a list of PIDs to be repaired.  If no pids are specified,
+    will find all collection objects and attempt to repair them.'''
 
     option_list = BaseCommand.option_list + (
         make_option('--dry-run',
@@ -39,40 +40,42 @@ class Command(BaseCommand):
         self.unrepaired_count = 0
 
         repo = Repository()
-        pidman = DjangoPidmanRestClient()
+        self.pidman = DjangoPidmanRestClient()
 
-        #populate collections list only of the object has the cmodel
-        collections = []
+        # populate list of objects to be processed
+        objects = []
         for pid in args:
             try:
-                coll_object = repo.get_object(pid=pid, type=CollectionObject)
-                if coll_object.has_requisite_content_models():
-                    collections.append(coll_object)
-            except:
-                self.log(message="Could not find Collection: %s" % pid)
-        
-        # get list of collections from the repository
+                obj = repo.get_object(pid=pid, type=CollectionObject)
+                if obj.has_requisite_content_models:
+                    objects.append(obj)
+                else:
+                    obj = repo.get_object(pid=pid, type=AudioObject)
+                    if obj.has_requisite_content_models:
+                        objects.append(obj)
+            except Exception:
+                self.log(message="Could not find Collection or Audio object for: %s" % pid)
+
+        # get list of all collections from the repository
         # limited to the COLLECTION_CONTENT_MODEL as well as returns a Keep specific collection object
         if not args:
-            collections = repo.get_objects_with_cmodel(CollectionObject.COLLECTION_CONTENT_MODEL, type=CollectionObject)
-        
-        if not collections:
+            objects = repo.get_objects_with_cmodel(CollectionObject.COLLECTION_CONTENT_MODEL, type=CollectionObject)
+
+        if not objects:
             self.log(message="No Collections were found.")
 
-        for coll_obj in collections:
-            self.repair_ark(collection_object=coll_obj)
+        for obj in objects:
+            self.repair_ark(obj)
 
         self.log(message="\n\n%s ARKs repaired\n%s ARKs were not repaired" % (self.repaired_count, self.unrepaired_count), no_label=True)
 
-    def repair_ark(self, collection_object):
-        pidman = DjangoPidmanRestClient()
-
+    def repair_ark(self, obj):
         ark_target = None
-        try: 
-            ark_target = pidman.get_ark_target(noid=collection_object.noid, qualifier='')
+        try:
+            ark_target = self.pidman.get_ark_target(noid=obj.noid, qualifier='')
         except:
             self.unrepaired_count += 1
-            self.log(level=WARNING, message="Failed to find ARK target for %s" % (collection_object.pid))
+            self.log(level=WARNING, message="Failed to find ARK target for %s" % (obj.pid))
             return
 
 
@@ -80,30 +83,30 @@ class Command(BaseCommand):
         naan = parsed_ark['naan']
         noid = parsed_ark['noid']
 
-        if hasattr(collection_object, 'mods'):
-            collection_object.mods.content.identifiers.extend([
+        if hasattr(obj, 'mods'):
+            obj.mods.content.identifiers.extend([
                 mods.Identifier(type='ark', text='ark:/%s/%s' % (naan, noid)),
                 mods.Identifier(type='uri', text=ark_target['access_uri'])
                 ])
         else:
-            collection_object.dc.content.identifier_list(ark_target['access_uri'])
+            obj.dc.content.identifier_list(ark_target['access_uri'])
 
         if self.options['dry_run']:
             self.unrepaired_count += 1
-            self.log(message='ARK target found for %s' % collection_object.pid)
+            self.log(message='ARK target found for %s' % obj.pid)
             return
 
         # save the collection object w/ updated ark
         try:
-            self.log(level=INFO, message="Attempting to save %s" % collection_object.pid)
-            collection_object.save(logMessage='Fixing missing ARK')
+            self.log(level=INFO, message="Attempting to save %s" % obj.pid)
+            obj.save(logMessage='Fixing missing ARK')
             self.repaired_count += 1
         except DigitalObjectSaveFailure:
-            self.log(message="An error occurred while saving %s" % (collection_object.pid))
+            self.log(message="An error occurred while saving %s" % (obj.pid))
 
     def log(self, level=INFO, message='', no_label=False):
         '''
-        Convenience log function. WARNING level is only logged if the --verbosity flag is set to 2. 
+        Convenience log function. WARNING level is only logged if the --verbosity flag is set to 2.
         INFO level is default and always logged. no_label can be set to True if a WARNING or INFO label
         is not desired.
         '''
