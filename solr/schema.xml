@@ -118,6 +118,7 @@ see:
     <field name="related_files" type="text" indexed="true" stored="true" multiValued="true"/>
     <field name="part" type="text" indexed="true" stored="true" multiValued="false"/>
     <field name="date_issued" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="date_created" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="access_code" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="collection_id" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="collection_label" type="text" indexed="true" stored="true" multiValued="false"/>
@@ -134,8 +135,8 @@ see:
     <field name="ip_note" type="text" indexed="true" stored="true" multiValued="true"/>
 
     <!--  * objects with premis (disk images only for now) -->
-    <field name="last_fixity_check" type="string" indexed="true" stored="false" multiValued="false"/>
-    <field name="last_fixity_result" type="string" indexed="true" stored="false" multiValued="true"/>
+    <field name="last_fixity_check" type="string" indexed="true" stored="false" required="false"/>
+    <field name="last_fixity_result" type="string" indexed="true" stored="false" required="false"/>
 
     <!-- ArrangementObject -->
     <field name="arrangement_id" type="string" indexed="true" stored="true" multiValued="false"/>

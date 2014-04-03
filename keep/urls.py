@@ -9,9 +9,8 @@ from keep.arrangement.models import ArrangementObject
 admin.autodiscover()
 
 urlpatterns = patterns('',
-#    (r'^$', 'django.views.generic.simple.redirect_to', {'url': 'audio/', 'permanent' : False}),
     (r'^db-admin/',  include(admin.site.urls)),
-    url(r'^$', 'keep.repoadmin.views.site_index', name="site-index"),
+    url(r'^$', 'keep.search.views.site_index', name="site-index"),
 
     url(r'^audio/', include('keep.audio.urls', namespace='audio')),
     url(r'^arrangement/', include('keep.arrangement.urls', namespace='arrangement')),
@@ -26,6 +25,9 @@ urlpatterns = patterns('',
     url(r'^common/', include('keep.common.urls', namespace='common')),
 
     url(r'^admin/', include('keep.repoadmin.urls', namespace='repo-admin')),
+
+    # possibly put at top-level url?
+    url(r'^search/', include('keep.search.urls', namespace='search')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
     # to INSTALLED_APPS to enable admin documentation:

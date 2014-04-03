@@ -23,12 +23,6 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 # sets ?next=/audio/ but does not return back here
 
 
-# placeholder for new public-facing site index page
-# TODO: how to separate public search from backend search?
-# may need to rename common search and search forms to differentiate...
-def site_index(request):
-    return render(request, 'repoadmin/site_index.html')
-
 @login_required
 def dashboard(request):
     '''Admin dashboard page for staff users, with links to main
@@ -107,7 +101,7 @@ def keyword_search(request):
 
         # optional date filter for fixity check
         fixity_check_mindate = searchform.cleaned_data.get('fixity_check_mindate', None)
-        if fixity_check_mindate is not None:
+        if fixity_check_mindate:
             today = date.today()
             q = q.query(last_fixity_check__range=(fixity_check_mindate, today))
 
@@ -204,8 +198,10 @@ def keyword_search(request):
                                         unfacet_urlopts.urlencode()))
         #Exclude results if user does not have correct perm
         if not request.user.has_perm('common.marbl_allowed'):
+            print 'excluding audio'
             q = q.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
         if not request.user.has_perm('common.arrangement_allowed'):
+            print 'excluding arrangement & simple collection'
             q = q.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
             q = q.exclude(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL)
 

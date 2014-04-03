@@ -1,0 +1,29 @@
+{% extends "site_base.html" %}
+{% load humanize %}
+
+{% block content %}
+<div class="container">
+    {# {% include 'eultheme/snippets/preview_aside.html' %} #}
+
+    <article class="results">
+        <header>
+            {% if results %}
+            <h2>Found <strong>{{ results.paginator.count|intcomma }}</strong> resource{{ results.paginator.count|pluralize }}</h2>
+            <p class="lead">
+                {% if results.has_other_pages and results.object_list|length > 1 %}
+             displaying {{ results.start_index|intcomma }} - {{ results.end_index|intcomma }}{% endif %}
+             {# if more than one item on this page, display range of results #}
+         </p>
+         {% else %}
+          <h2 id="no-results-found">No results found {{ resource_label|default:"for your criteria" }}.</h2>
+         {% endif %}
+        </header>
+
+        {% if results %}
+        <div class="row result-listing cards">
+            {% for r in results.object_list %}
+                {% include 'search/snippets/search_result_card.html' with preview_disabled=True %}
+            {% endfor %}
+        </div><!--/.cards-->
+        {% endif %}
+{% endblock %}

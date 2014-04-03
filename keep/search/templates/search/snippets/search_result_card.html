@@ -1,0 +1,49 @@
+{% extends 'eultheme/snippets/card_with_preview.html' %}
+{% load audio_extras %}
+
+{% block result-header %}
+    <h3><a href="#">{{ r.title }}</a>
+
+
+{#     {% if r.authors %} #}
+    {# <h4>Principal Investigator{{ r.authors|pluralize }}: <span>{{ r.authors|join:'; '}}</span></h4> #}
+    {# {% endif %} #}
+    {# <h4>Date{{ r.dates|pluralize }}:<span> {{ r.dates|join:'; '|default:'(not specified)' }}</span></h4> #}
+    <h4>{{ r.collection_source_id }}: {{ r.collection_label }}</h4>
+    {# TODO: use r.collection_id to link to collection page once we have one #}
+{% endblock %}
+
+{% block result-info %}
+    {% if r.score %}  {# 0 indicates no relevance score (no fulltext query) #}
+    {# display numerical score in debug mode #}
+    {% if debug %}<p>{{ r.score }}</p>{% endif %}
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="{{ r.score }}" aria-valuemin="0" aria-valuemax="1.5" style="width:{% widthratio r.score 1 90 %}%"> </div>
+
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block result-content %}
+    {# TODO: *only* if perms can edit audio #}
+    <div class="pull-right">
+        <a href="{% url 'audio:edit' r.pid %}"><span class="glyphicon glyphicon-edit"></span></a>
+    </div>
+
+    {% if r.date_issued or r.date_created %}
+      <p><b>Date{% if r.date_issued and r.date_created %}s{% endif %}:</b> {{ r.date_issued }}{% if r.date_issued and r.date_created %}, {% endif %}
+        {{ r.date_created }}</p>
+    {% endif %}
+
+     {% if r.duration %}<p>{{ r.duration|natural_seconds }}</p>{% endif %}
+     {% if r.ark_uri %}<p>{{ r.ark_uri }}</p>{% endif %}
+{% endblock %}
+
+{% block result-preview %}
+    <h3>{{ r.title }}</a></h3>
+    <p class="centered">
+        <a class="btn btn-primary" href="#" >Open Resource</a>
+    </p>
+{% endblock %}
+
