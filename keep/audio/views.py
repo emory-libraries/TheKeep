@@ -26,13 +26,10 @@ logger = logging.getLogger(__name__)
 @permission_required("common.marbl_allowed")
 def view(request, pid):
     '''View a single :class:`~keep.audio.models.AudioObject`.
-    Not yet implemented; for now, redirects to :meth:`edit` view.
     '''
-    # this view isn't implemented yet, but we want to be able to use the
-    # uri. so if someone requests the uri, send them straight to the edit
-    # page for now.
-    return HttpResponseSeeOtherRedirect(reverse('audio:edit',
-                kwargs={'pid': pid}))
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=AudioObject)
+    return render(request, 'audio/view.html', {'resource': obj,})
 
 
 @permission_required("common.marbl_allowed")

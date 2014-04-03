@@ -1,0 +1,48 @@
+{% extends "site_base.html" %}
+{% load audio_extras %} {% load search_tags %}
+
+{% block page-subtitle %}: Audio : {{ resource.label }}{% endblock %}
+
+
+{% block content %}
+<article>
+    <header>
+        <div class="container">
+            <h1>
+                <span class="resource-title">{{ resource.label }}</span>
+            </h1>
+
+            {# TODO: *only* if perms can edit audio #}
+            <div class="pull-right">
+                <a class="pull-right btn btn-primary" href="{% url 'audio:edit' resource.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        {# origin info - dates #}
+        {% with origin_info=resource.mods.content.origin_info %}
+            {% if origin_info.issued %}
+            <h4>Date Issued</h4>
+                <p>{{ origin_info.issued|join:'; ' }}</p>
+            {% endif %}
+            {% if origin_info.created %}
+                <h4>Date Created</h4>
+                <p>{{ origin_info.created|join:'; ' }}</p>
+            {% endif %}
+        {% endwith %}
+
+        {# display part note, if any #}
+        {% if resource.mods.content.part_note.text %}
+            <p>{{ resource.mods.content.part_note.text }}</p>
+        {% endif %}
+
+        {# display human-readable duration of audio #}
+        {% if resource.digitaltech.content.duration %}
+            <p>{{ resource.digitaltech.content.duration|natural_seconds }}</p>
+        {% endif %}
+
+        <p>{% firstof resource.mods.content.ark_uri|ark_id resource.pid %}</p>
+    </div>
+</article>
+{% endblock %}
