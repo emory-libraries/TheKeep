@@ -2322,6 +2322,27 @@ class TestAudioExtrasTemplateTags(TestCase):
         self.assertEqual('',
                          audio_extras.seconds_duration(''))
 
+    def test_natural_seconds(self):
+        self.assertEqual('1 second',
+                         audio_extras.natural_seconds(1))
+        self.assertEqual('1 second',
+                         audio_extras.natural_seconds('1'))
+        self.assertEqual('1 minute, 5 seconds',
+                         audio_extras.natural_seconds(65))
+        self.assertEqual('1 minute',
+                         audio_extras.natural_seconds(60))
+        self.assertEqual('1 hour',
+                         audio_extras.natural_seconds(60 * 60))
+        self.assertEqual('1 hour, 7 seconds',
+                         audio_extras.natural_seconds((60 * 60) + 7))
+        self.assertEqual('3 hours, 22 minutes, 17 seconds',
+                         audio_extras.natural_seconds((3 * 60 * 60) + (22 * 60) + 17))
+        self.assertEqual('16 hours, 21 minutes, 13 seconds',
+                         audio_extras.natural_seconds((16 * 60 * 60) + (21 * 60) + 13))
+        self.assertEqual('',
+                         audio_extras.natural_seconds(''))
+
+
 
 class TestNewFeedNoticeCommand(TestCase):
 
