@@ -51,14 +51,14 @@
     <div class="col-xs-12 col-sm-6 col-md-9 col-lg-9">
 
         {# admin search - restricted to logged-in users #}
-        {% if user.is_authenticated and keyword_search %}
+        {% if user.is_authenticated and admin_search %}
           <div id="keyword-search" class="search form-group">
             <h2>Search</h2>
             <form method="get" action="{% url 'repo-admin:search' %}">
-              {{ keyword_search.keyword }}
+              {{ admin_search.keyword }}
               <input class="btn form-submit" type="submit" value="Go" />
 
-              <a class="searchtip" title="{{ keyword_search.keyword.help_text }}"
+              <a class="searchtip" title="{{ admin_search.keyword.help_text }}"
                 data-toggle="tooltip" data-placement="bottom">
                 <span class="glyphicon glyphicon-question-sign"></span></a>
             </form>
