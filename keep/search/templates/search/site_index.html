@@ -9,7 +9,7 @@
     <form type="GET" id="search-form" action="{% url 'search:keyword' %}">
     {{ form.non_field_errors }}  {# display any form-wide validation errors #}
 
-    <label class="sr-only" for="id_keyword">{{ form.keyword }}</label>
+    <label class="sr-only" for="id_keyword">{{ form.keyword.label }}</label>
     <div class="search-bar">
         <div class="container">
             <div class="col-xs-12 col-sm-offset-1 col-sm-10 col-md-offset-2 col-md-8">
