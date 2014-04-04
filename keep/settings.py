@@ -95,6 +95,7 @@ INSTALLED_APPS = [
     'django_admin_bootstrapped',
     'django.contrib.admin',
     'south',
+    'widget_tweaks',
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',

@@ -46,6 +46,7 @@ def _simple_collection_options():
 class ItemSearch(forms.Form):
     '''Form for searching for :class:`~keep.audio.models.AudioObject`
     instances.'''
+    # FIXME: why is this in keep.common instead of keep.audio when it is audio-specific ?
 
     # format_options used in search form
     format_options = (

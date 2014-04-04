@@ -26,16 +26,16 @@ The Keep{% endblock %}
 
 {% block css %}
   {{ block.super }}
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/local.css" />
-  <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/smoothness/jquery-ui-1.8.19.custom.css" />
+  <link rel="stylesheet" type="text/css" href="{% static 'style/local.css' %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'style/smoothness/jquery-ui-1.8.19.custom.css' %}" />
   {# <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/bootstrap/css/bootstrap-icons.css" /> #}
 {% endblock %}
 
 {% block javascript %}
     {{ block.super }}
-    <script type="text/javascript" src="{{ STATIC_URL }}/js/jquery-ui-1.8.19.custom.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}/js/jquery.tooltips.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}/js/local.js"></script>
+    <script type="text/javascript" src="{% static 'js/jquery-ui-1.8.19.custom.min.js' %}"></script>
+     <script type="text/javascript" src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/local.js' %}"></script>
 {% endblock %}
 
 {% block footer-content %}
