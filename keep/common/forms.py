@@ -15,7 +15,7 @@ class ReadonlyTextInput(forms.TextInput):
     'Read-only variation on :class:`django.forms.TextInput`'
     readonly_attrs = {
         'readonly': 'readonly',
-        'class': 'readonly long',
+        'class': 'readonly form-control',
         'tabindex': '-1',
     }
     def __init__(self, attrs=None):
@@ -63,6 +63,7 @@ class ItemSearch(forms.Form):
     collection = CollectionSuggestionField(required=False)
     simpleCollection = DynamicChoiceField(choices=_simple_collection_options, label='Simple Collection', required=False,
                     help_text='Search for items with the specified SimpleCollection')
+
     content_model = forms.ChoiceField(label="Format",  choices=format_options,
                     help_text="Limit to items with given format.", required=False)
     pid = forms.CharField(required=False, help_text='Search by fedora pid, DM id or DM other id.',

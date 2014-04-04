@@ -26,7 +26,8 @@ class SimpleNoteForm(XmlObjectForm):
     as a :class:`~django.forms.Textarea` with no label; no other note attributes
     are displayed.
     """
-    text = forms.CharField(label='', widget=forms.Textarea, required=False)
+    text = forms.CharField(label='',
+        widget=forms.Textarea(attrs={'class': 'form-control'}), required=False)
     class Meta:
         model = mods.Note
         fields = ['text']
@@ -83,7 +84,7 @@ class ModsEditForm(XmlObjectForm):
             'general_note', 'part_note', 'resource_type',
         )
         widgets = {
-            'title': forms.Textarea,
+            'title': forms.Textarea(attrs={'class': 'form-control'}),
             'identifier': ReadonlyTextInput,
             'dm1_id': ReadonlyTextInput,
             'dm1_other_id': ReadonlyTextInput,
@@ -109,9 +110,11 @@ class SourceTechForm(XmlObjectForm):
             '_speed', 'sublocation', 'form', 'sound_characteristics', 'stock',
             'housing', 'reel']
         widgets = {
-            'note': forms.Textarea,
-            'related_files': forms.TextInput(attrs={'class': 'long'}),
-            'conservation_history': forms.TextInput(attrs={'class': 'long'}),
+            'note': forms.Textarea(attrs={'class': 'form-control'}),
+            'related_files': forms.TextInput(attrs={'class': 'form-control'}),
+            'conservation_history': forms.TextInput(attrs={'class': 'form-control'}),
+            'sublocation': forms.Textarea(attrs={'class': 'form-control'}),
+            'stock': forms.Textarea(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, **kwargs):
@@ -225,8 +228,8 @@ class DigitalTechForm(XmlObjectForm):
         model = DigitalTech
         fields = ['note', 'digitization_purpose', 'engineer', 'hardware']
         widgets = {
-            'note': forms.Textarea,
-            'digitization_purpose': forms.TextInput(attrs={'class': 'long'}),
+            'note': forms.Textarea(attrs={'class': 'form-control'}),
+            'digitization_purpose': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, **kwargs):
@@ -313,8 +316,8 @@ class RightsForm(XmlObjectForm):
         fields = [ 'access', 'copyright_holder_name', 'copyright_date',
                    'block_external_access', 'ip_note' ]
         widgets = {
-            'copyright_holder_name': forms.TextInput(attrs={'class': 'long'}),
-            'ip_note': forms.Textarea,
+            'copyright_holder_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'ip_note': forms.Textarea(attrs={'class': 'form-control'}),
             'block_external_access': forms.CheckboxInput(attrs={'class': 'checkbox-warning'}),
         }
 
@@ -359,7 +362,7 @@ class AudioObjectEditForm(forms.Form):
 
     collection = CollectionSuggestionField(required=True)
 
-    error_css_class = 'error'
+    error_css_class = 'has-error'
     required_css_class = 'required'
 
     def __init__(self, data=None, instance=None, initial={}, **kwargs):

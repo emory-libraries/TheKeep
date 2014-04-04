@@ -31,7 +31,7 @@ table.name-role-auth th {
 .multi-edit .collapsed {
     background-image: url('../genlib_media/style/images/menu-collapsed.png');
 }
-.required {
+span.required {
     font-weight: bold;
     color: red;
 }
@@ -287,7 +287,11 @@ ul.messages li {
 .popover {
     min-width: 450px ! important;
 }
-
+/*.ui-autocomplete {
+  position: fixed;
+  background: white;
+  z-index: 5;
+}*/
 ul.ui-autocomplete {
     text-align: left;
 }

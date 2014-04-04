@@ -70,10 +70,10 @@ class NamePartForm(XmlObjectForm):
     :class:`~eulcm.xmlmap.mods.NamePart`
 
         * suppress default label 'text'
-        * use :class:`~django.forms.TextInput` with class *long*
+        * use :class:`~django.forms.TextInput` with class *form-control*
     '''
     text = forms.CharField(label='Name Part',
-                            widget=forms.TextInput(attrs={'class': 'long'}))
+                            widget=forms.TextInput(attrs={'class': 'form-control'}))
     class Meta:
         model = mods.NamePart
 
@@ -85,7 +85,7 @@ class RoleForm(XmlObjectForm):
         * configure type with initial value 'text' and make read-only
     '''
     text = forms.CharField(label='Role',
-                            widget=forms.TextInput(attrs={'class': 'long'}))
+                            widget=forms.TextInput(attrs={'class': 'form-control'}))
     # for our purposes, all roles will be type='text': set as initial value & make read only
     type = forms.CharField(label='Type', initial='text', widget=forms.HiddenInput)
     class Meta:
@@ -101,7 +101,7 @@ class NameForm(XmlObjectForm):
         * suppress displayForm and affiliation fields
     '''
     id = forms.CharField(required=False, label='Identifier',
-                        widget=forms.TextInput(attrs={'class': 'long'}),
+                        widget=forms.TextInput(attrs={'class': 'form-control'}),
                         help_text="Optional; supply for NAF names.")
     name_parts = SubformField(formclass=NamePartForm)
     roles = SubformField(formclass=RoleForm)
@@ -132,7 +132,7 @@ class CollectionForm(XmlObjectForm):
     source_id = forms.IntegerField(label="Source Identifier",
                     help_text="Source archival collection number (enter 100 for MSS100 or Series 100)")
     title = forms.CharField(help_text="Title of the archival collection",
-                    widget=forms.TextInput(attrs={'class': 'long'}))
+                    widget=forms.TextInput(attrs={'class': 'form-control'}))
     # NOTE: handling date range with custom input forms and logic on update_instance
     # this could possibly be handled by a custom XmlObjectForm for originInfo
     date_created = forms.CharField(help_text="Date created, or start date for a date range.")
@@ -143,7 +143,7 @@ class CollectionForm(XmlObjectForm):
     use_and_reproduction = SubformField(formclass=AccessConditionForm)
     comment = forms.CharField(label="Comment",  required=False,
                     help_text="Optional description of changes made.",
-                    widget=forms.TextInput(attrs={'class': 'long'}))
+                    widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = MODS
@@ -275,7 +275,7 @@ class CollectionSuggestionWidget(forms.MultiWidget):
     '''
     def __init__(self, attrs=None):
         hidden_attrs = {'class': 'collection-suggest-id' }
-        text_attrs = {'class': 'long collection-suggest' }
+        text_attrs = {'class': 'collection-suggest form-control' }
         if attrs:
             text_attrs.update(attrs)
             hidden_attrs.update(attrs)
@@ -321,11 +321,11 @@ class CollectionSuggestionField(forms.MultiValueField):
 
     default_error_messages = {
         'required': 'This field is required. You must choose a collection ' +
-	        'from the suggested values.'
+        'from the suggested values.'
     }
 
     default_help_text = 'Collection this item belongs to. ' + \
-    	'Begin typing collection number and/or title words and choose from the suggestions.'
+       'Begin typing collection number and/or title words and choose from the suggestions.'
 
 
     def __init__(self, *args, **kwargs):

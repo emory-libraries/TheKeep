@@ -1,7 +1,6 @@
 {% extends "site_base.html" %}
 {# base template for content pages with left sidebar #}
 {% load widget_tweaks %}
-
 {% block content %}
 <div class="container">
   <div class="row">
@@ -32,10 +31,6 @@
   {% endif %}
   <div class="help">
     <a class="search-help" href="#" data-toggle="tooltip" title="{{ collection_search.search_tips }}"><span class="glyphicon glyphicon-question-sign"></span></a>
-
-    {# <a onMouseOver="jQuery('#search-help').show()" #}
-       {# onMouseOut="jQuery('#search-help').hide()"><span class="glyphicon glyphicon-question-sign"></span></a> #}
-    {# <div id="search-help" class="search-tips" style="display:relative">{{ collection_search.search_tips }}</div> #}
    </div>
    </div>
    <script type="text/javascript">
@@ -67,7 +62,6 @@
                 data-toggle="popover" data-placement="auto" data-container="body">
                 <span class="glyphicon glyphicon-question-sign"></span></a>
             </form>
-
           </div>
         {% endif %}
 
@@ -83,10 +77,10 @@
   {{ block.super }}
   <script type ="text/javascript">
       $(document).ready(function () {
-        // $("#keyword-search input[name=keyword]").categorycomplete({
-        //   source: "{% url 'repo-admin:suggest' %}",
-        //   minLength: 0,
-        //   });
+        $("#keyword-search input[name=keyword]").categorycomplete({
+          source: "{% url 'repo-admin:suggest' %}",
+          minLength: 0,
+          });
         {# remove this when old search is removed from sidebar #}
         {% include "collection/snippets/collection_suggest_js.html" %}
 

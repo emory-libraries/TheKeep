@@ -13,7 +13,7 @@ $(document).ready(function() {
        (Currently used by Rights block external access field).
     */
     $('.checkbox-warning').change(function() {
-       $(this).siblings('.help-text').toggleClass('warning', $(this).attr('checked'));
+       $(this).siblings('.help-block').find('span').toggleClass('text-danger', $(this).is(':checked'));
    });
     /* trigger change once manually so initial display will reflect field starting value */
     $('.checkbox-warning').change();
