@@ -1,3 +1,5 @@
+from urllib import urlencode
+
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
@@ -26,17 +28,14 @@ def search(request):
             # restrict to items that are allowed to be accessed
             'researcher_access': True,
         }
-        # FIXME: researcher access filter could be removed for staff
+        # TODO: adjust researcher access filter for logged in staff
+        # with additional permissions
 
         # start with a default query to add filters & search terms
         q = solr.query().filter(**base_search_opts)
         if search_terms:
             q = q.query(search_terms)
             q = q.sort_by('-score').field_limit(score=True)
-
-        # TODO: restrict to researcher-accessible only!
-        # (based on logged-in perms)
-        # q = q.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
 
         # paginate the solr result set
         paginator = Paginator(q, 30)
@@ -49,10 +48,16 @@ def search(request):
         except (EmptyPage, InvalidPage):
             results = paginator.page(paginator.num_pages)
 
+        # url parameters for pagination links
+        url_params = request.GET.copy()
+        if 'page' in url_params:
+            del url_params['page']
+
         ctx.update({
             'results': results,
             'search_opts': request.GET.urlencode(),
             'search_terms': search_terms,
+            'url_params': urlencode(url_params)
         })
 
     return render(request, 'search/results.html', ctx)
