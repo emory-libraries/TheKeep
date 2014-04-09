@@ -376,3 +376,8 @@ form#upload a.remove {
 }
 .email-text{white-space: pre-wrap;}
 
+/* frontend search results */
+.cards article {
+  height: 200px;  /* override eultheme card size because we have less content */
+}
+
