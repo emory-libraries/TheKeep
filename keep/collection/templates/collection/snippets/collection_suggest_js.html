@@ -10,8 +10,8 @@ $("input.collection-suggest").categorycomplete({
   },
   select: function(event, ui) {
     // set the selected item value in the hidden input
-    $(this).prev("input.collection-suggest-id").val(ui.item.value);
-    console.log('setting id to ' + ui.item.value);
+    $("input.collection-suggest-id").val(ui.item.value);
+//    console.log('setting id to ' + ui.item.value);
 
     // display selected item label in the autocomplete text input
     $(this).val(ui.item.label);
