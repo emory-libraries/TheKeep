@@ -3,7 +3,7 @@ https://wilson.library.emory.edu/jenkins/job/eullocal-0.19.x/lastSuccessfulBuild
 eulxml>=0.20.0
 #eulfedora>=0.21.0
 # feature branch of eulfedora until we can confirm it is stable
--e git://github.com/emory-libraries/django-eultheme@feature/range-request-support#egg=eulfedora
+-e git://github.com/emory-libraries/eulfedora@feature/range-request-support#egg=eulfedora
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
 https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
