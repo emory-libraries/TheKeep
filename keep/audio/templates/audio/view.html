@@ -44,6 +44,8 @@
             <h1>
                 <span class="resource-title">{{ resource.label }}</span>
             </h1>
+            {# TODO: link to collection page when we have one #}
+            <h3>{{ resource.collection.mods.content.source_id|default:'' }}: {{ resource.collection.label }}</h3>
 
             {# TODO: *only* if perms can edit audio #}
             <div class="pull-right">

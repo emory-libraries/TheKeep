@@ -849,6 +849,47 @@ class AudioViewsTest(KeepTestCase):
             'Expected %s but returned %s for %s (datastream non-audio object)' \
                 % (expected, got, ds_url))
 
+    def test_view(self):
+        # create a test audio object to display
+        obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
+        obj.mods.content.ark_uri = 'http://pid.co/ark:/12345/4sr46'
+        obj.mods.content.create_part_note()
+        obj.mods.content.part_note.text = 'Side 1'
+        obj.mods.content.create_origin_info()
+        obj.mods.content.origin_info.created.append(mods.DateCreated(date='1975-10-31'))
+        obj.mods.content.origin_info.issued.append(mods.DateIssued(date='1978-12-25'))
+        # pre-populate digital tech metadata
+        obj.digitaltech.content.duration = 75
+        obj.collection = self.esterbrook
+        obj.save()
+        # add pid to list for clean-up in tearDown
+        self.pids.append(obj.pid)
+
+        # TEMPORARY: requires login for now, until permissions are sorted
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        view_url = reverse('audio:view', args=[obj.pid])
+        response = self.client.get(view_url)
+        self.assertContains(response, obj.label,
+            msg_prefix='audio view page should include object label')
+        self.assertContains(response, obj.collection.label,
+            msg_prefix='audio view page should include object collection label')
+        self.assertContains(response, obj.collection.mods.content.source_id,
+            msg_prefix='audio view page should include object collection number')
+        # TODO: test edit link only displayed if user has perms
+        self.assertContains(response, obj.mods.content.origin_info.issued[0].date,
+            msg_prefix='date issued should be displayed when present in metadata')
+        self.assertContains(response, obj.mods.content.origin_info.created[0].date,
+            msg_prefix='date created should be displayed when present in metadata')
+        self.assertContains(response, obj.mods.content.part_note.text,
+            msg_prefix='part note should be displayed when present')
+        self.assertContains(response, '1 minute, 15 seconds',
+            msg_prefix='duration should be displayed in human-readable form')
+        self.assertContains(response, obj.mods.content.ark_uri.replace('http://pid.co/', ''),
+            msg_prefix='ARK URI (short form) should be displayed')
+        self.assertContains(response, obj.get_access_url(),
+            msg_prefix='access audio url should be present on view page for playback')
+
     def test_audit_trail(self):
         # create a test audio object with ingest message
         obj = audiomodels.AudioObject.init_from_file(wav_filename, "my audio test object")
