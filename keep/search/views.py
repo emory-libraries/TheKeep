@@ -18,6 +18,9 @@ def search(request):
     ctx = {'form': form}
     if form.is_valid():
         search_terms = form.cleaned_data['keyword']
+        # solr search field parses into list of tuples of field, search terms
+        # this search doesn't support any field: searching yet, so just assume all are keywords
+        search_terms = [v for k, v in search_terms]
 
         solr = solr_interface()
         base_search_opts = {
@@ -34,8 +37,11 @@ def search(request):
         # start with a default query to add filters & search terms
         q = solr.query().filter(**base_search_opts)
         if search_terms:
-            q = q.query(search_terms)
+            q = q.query(*search_terms)
             q = q.sort_by('-score').field_limit(score=True)
+            # NOTE: do we want a secondary sort after score?
+        else:
+            q = q.sort_by('title')
 
         # paginate the solr result set
         paginator = Paginator(q, 30)

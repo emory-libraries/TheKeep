@@ -1,0 +1,28 @@
+<form type="GET" id="search-form" action="{% url 'search:keyword' %}">
+{{ form.non_field_errors }}  {# display any form-wide validation errors #}
+
+<label class="sr-only" for="id_keyword">{{ form.keyword.label }}</label>
+<div class="search-bar">
+    <div class="container">
+        <div class="col-xs-12 col-sm-offset-1 col-sm-10 col-md-offset-2 col-md-8">
+            <div class="input-group">
+                {{ form.keyword }}
+                <span class="input-group-btn">
+                    <button id="submit" class="btn btn-primary" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+                </span>
+            </div><!-- /input-group -->
+        </div>
+
+        <div class="col-xs-12 col-sm-offset-1 col-sm-10 col-md-offset-2 col-md-8">
+            <p class="text-muted inverse">{{ form.keyword.help_text }}</p>
+
+            {% if form.keyword.errors %}
+                <div class="messages bg-warning">
+                    {% for err in form.keyword.errors %}
+                    <p>{{ err }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div><!--/.container-->
+</div>

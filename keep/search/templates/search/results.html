@@ -19,6 +19,8 @@
          {% endif %}
         </header>
 
+        {% include 'search/snippets/search_form.html' %}
+
         {% if results %}
         <div class="row result-listing cards">
             {% for r in results.object_list %}
