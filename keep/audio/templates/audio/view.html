@@ -83,12 +83,10 @@
             <p>{{ resource.digitaltech.content.duration|natural_seconds }}</p>
         {% endif %}
 
-        <form class="form-inline">
         <div class="input-group col-xs-2">
           <span class="input-group-addon">ID</span>
           <input type="text" readonly="readonly" class="item-id form-control" value=" {% firstof resource.mods.content.ark_uri|ark_noid resource.pid %}">
         </div>
-      </form>
 
         {% if resource.mods.content.ark_uri %}
         <p>Permanent URL:

@@ -4,8 +4,9 @@
 
 {% block result-header %}
     <h3><a href="{% url 'audio:view' r.pid %}">{{ r.title }}</a>
-    <h4>{{ r.collection_source_id }}: {{ r.collection_label }}</h4>
+    <h4 class="text-muted">{{ r.collection_source_id }}: {{ r.collection_label }}</h4>
     {# TODO: use r.collection_id to link to collection page once we have one #}
+
 {% endblock %}
 
 {% block result-info %}
@@ -18,25 +19,40 @@
     </div>
     {% endif %}
 
-    {# TODO: *only* if perms can edit audio #}
-    <div class="pull-right">
-        <a href="{% url 'audio:edit' r.pid %}"><span class="glyphicon glyphicon-edit"></span></a>
-    </div>
 {% endblock %}
 
 {% block result-content %}
-
-    {% if r.date_issued or r.date_created %}
-      <p><b>Date{% if r.date_issued and r.date_created %}s{% endif %}:</b> {{ r.date_issued }}{% if r.date_issued and r.date_created %}, {% endif %}
-        {{ r.date_created }}</p>
-    {% endif %}
+    <div class="row">
+        {% if r.date_issued %}
+        <div class="col-xs-5">
+            <h4>Issued</h4>
+            {{ r.date_issued|natural_date }}
+        </div>
+        {% endif %}
+        {% if r.date_created %}
+        <div class="col-xs-5">
+            <h4>Created</h4>
+            {{ r.date_created|natural_date }}
+        </div>
+        {% endif %}
+    </div>
 
     {# display part note if any (side A/B, etc) #}
     {% if r.part %}<p>{{ r.part }}</p>{% endif %}
 
     {% if r.duration %}<p>{{ r.duration|natural_seconds }}</p>{% endif %}
-    {# display short-form ARK if possible; fall-back to pid display #}
-    <p>{% firstof r.ark_uri|ark_id r.pid %}</p>
+
+    {# display ARK NOID if possible; fall-back to pid display #}
+    <div class="input-group">
+      <span class="input-group-addon">ID</span>
+      <input type="text" readonly="readonly" class="item-id form-control" value=" {% firstof r.ark_uri|ark_noid r.pid %}">
+    </div>
+
+    {# TODO: *only* if perms can edit audio #}
+    <div class="pull-right">
+        <a href="{% url 'audio:edit' r.pid %}"><span class="glyphicon glyphicon-edit"></span></a>
+    </div>
+
 {% endblock %}
 
 {% block result-preview %}
