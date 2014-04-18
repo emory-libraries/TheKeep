@@ -97,12 +97,15 @@ class DiskImage(DigitalObject):
     CONTENT_MODELS = [DISKIMAGE_CONTENT_MODEL]
     NEW_OBJECT_VIEW = 'file:view'
 
-    allowed_mimetypes = ['', 'application/x-aff', 'application/x-ad1',
+    diskimage_mimetypes = ['application/x-aff', 'application/x-ad1',
                          'application/x-iso9660-image']
-    # NOTE: '' is required for javascript, because browser does not detect
-    # any mimetype at all for AFF and AD1 files
-    # NOTE: These are custom mimetypes and must be configured in your local
-    # magic files.  See the deploy notes for more information.
+
+    allowed_mimetypes = ['', 'application/octet-stream'] + diskimage_mimetypes
+    # NOTE: empty type and application/octet-stream are required for javascript upload,
+    # because browser does not detect any mimetype at all for AFF and AD1 files
+    # and detects ISO as the generic application/octet-stream
+    # NOTE: Mimetypes for AD1 and AFF are custom mimetypes and must be configured
+    # in your local magic files.  See the deploy notes for more information.
 
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
     ''':class:`~keep.collection.models.CollectionObject that this object belongs to,
@@ -412,7 +415,7 @@ class DiskImage(DigitalObject):
             filename = os.path.join(path, data_path)
             mtype = m.from_file(filename)
             mimetype, separator, options = mtype.partition(';')
-            if mimetype in DiskImage.allowed_mimetypes:
+            if mimetype in DiskImage.diskimage_mimetypes:
                 checksum_err_msg = '%%s checksum not found for disk image %s' \
                     % os.path.basename(data_path)
                 # require both MD5 and SHA-1 for disk image to ingest
