@@ -3,9 +3,11 @@ from sunburnt import sunburnt
 
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator
+from django.test import TestCase
 
 from keep.testutil import KeepTestCase
 from keep.audio.models import AudioObject
+from keep.search.templatetags import search_tags
 
 
 @patch('keep.search.views.solr_interface', spec=sunburnt.SolrInterface)
@@ -94,3 +96,30 @@ class SearchViewsTest(KeepTestCase):
             msg_prefix='ARK URI (short-form) should be displayed when present')
 
         # TODO: test edit link is only present if user has permission to edit
+
+
+class TestSearchTagsTemplateTags(TestCase):
+
+    def test_ark_id(self):
+        self.assertEqual(u'ark:/2534/13j7s',
+                         search_tags.ark_id('http://pid.co/ark:/2534/13j7s'))
+
+    def test_ark_noid(self):
+        self.assertEqual(u'13j7s',
+                         search_tags.ark_noid('http://pid.co/ark:/2534/13j7s'))
+
+    def test_naturl_date(self):
+        # year only
+        self.assertEqual('1980',
+                         search_tags.natural_date('1980'))
+        self.assertEqual('1980',
+                         search_tags.natural_date('1980-00-00'))
+
+        self.assertEqual('May 1964',
+                         search_tags.natural_date('1964-05'))
+        self.assertEqual('May 1964',
+                         search_tags.natural_date('1964-05-00'))
+
+        self.assertEqual('Apr 01, 1973',
+                         search_tags.natural_date('1973-04-01'))
+
