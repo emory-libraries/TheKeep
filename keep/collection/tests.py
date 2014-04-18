@@ -745,7 +745,62 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, '(no title present)',
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
-    @patch('keep.collection.models.solr_interface')
+    @patch('keep.collection.views.solr_interface')
+    @patch('keep.collection.views.CollectionObject')
+    def test_list_archives(self, mockcollobj, mocksolr_interface):
+        archive_url = reverse('collection:list-archives')
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # setup solr mock
+        mocksolr = mocksolr_interface.return_value
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'field_limit', 'sort_by']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        solr_result = [
+            {'pid': settings.PID_ALIASES['marbl'],
+             'title': 'Manuscript, Archive, and Rare Book Library'},
+             {'pid': settings.PID_ALIASES['eua'],
+             'title': 'Emory University Archives'},
+        ]
+        mocksolr.query.__iter__.return_value = solr_result
+
+        # setup mock collection solr query
+        mockcollq = mockcollobj.item_collection_query.return_value
+        for method in ['query', 'facet_by', 'paginate']:
+            getattr(mockcollq, method).return_value = mockcollq
+
+        # mock facets for collection counts
+        mockcollq.execute.return_value.facet_counts.facet_fields = {
+            'archive_id': [
+                (settings.PID_ALIASES['marbl'], 37),
+                (settings.PID_ALIASES['eua'], 1),
+            ]
+        }
+        response = self.client.get(archive_url)
+        # inspect display
+        # - titles should be displayed
+        self.assertContains(response, solr_result[0]['title'],
+            msg_prefix='page should display archive label')
+        self.assertContains(response, solr_result[1]['title'],
+            msg_prefix='page should display archive label')
+        # - should link to archive browse page
+        self.assertContains(response, reverse('collection:browse-archive',
+            kwargs={'archive': 'marbl'}),
+            msg_prefix='should link to archive browse page for marbl')
+        self.assertContains(response, reverse('collection:browse-archive',
+            kwargs={'archive': 'eua'}),
+            msg_prefix='should link to archive browse page for eua')
+        # - should display number of collectiosn based on facet
+        self.assertContains(response, '37 collections',
+            msg_prefix='should display number of collections for marbl')
+        self.assertContains(response, '1 collection',
+            msg_prefix='should display number of collections for eua')
+
+
+    @patch('keep.collection.views.solr_interface')
     @patch('keep.collection.views.Paginator')
     def test_browse_archive(self, mockpaginator, mocksolr_interface):
         browse_url = reverse('collection:browse-archive', kwargs={'archive': 'marbl'})

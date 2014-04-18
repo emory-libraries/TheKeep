@@ -201,17 +201,22 @@ def search(request):
 def list_archives(request, archive=None):
     '''List all top-level archive collections, with the total count of
     :class:`~keep.collection.models.CollectionObject` in each archive.
+
+    .. Note::
+
+       Archives must be configured in **PID_ALIASES** in Django settings
+       in order to be listed here.
+
     '''
     q = CollectionObject.item_collection_query()
     q = q.facet_by('archive_id', sort='count', mincount=1) \
-         .facet_by('archive_short_name', sort='count', mincount=1) \
-         .facet_by('archive_label', sort='count', mincount=1) \
          .paginate(rows=0)
     facets = q.execute().facet_counts.facet_fields
 
     solr = solr_interface()
     archive_info = dict([(pid.replace('info:fedora/', ''), {'count': count})
                         for pid, count in facets['archive_id']])
+
     # construct a boolean pid query to match any archive pids
     # in order to lookup titles and match them to pids
     pid_q = solr.Q()
@@ -230,19 +235,17 @@ def list_archives(request, archive=None):
         # duplicate to make list of dict available to template for dictsort
         archive_info[pid]['pid'] = q['pid']
         archive_info[pid]['title'] = q['title']
-        archive_info[pid]['alias'] = pid_aliases_by_pid[pid]
+        archive_info[pid]['alias'] = pid_aliases_by_pid.get(pid, None)
 
     # prune any referenced archives that aren't actually indexed in solr
     # (should only happen in dev/qa)
     for pid in archive_info.keys():
-        if 'title' not in archive_info[pid]:
+        if 'title' not in archive_info[pid] or archive_info[pid].get('alias', None) is None:
             del archive_info[pid]
 
     # NOTE: sending list of values (dictionaries) to allow sorting in template
 
     return render(request, 'collection/archives.html', {'archives': archive_info.values()})
-
-    # return render(request, 'collection/browse.html', {'collections': display_colls})
 
 
 @permission_required("common.marbl_allowed")
