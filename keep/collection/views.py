@@ -3,14 +3,15 @@ View methods for creating, editing, searching, and browsing
 :class:`~keep.collection.models.CollectionObject` instances in Fedora.
 '''
 import logging
-
-from django.contrib.admin.views.decorators import staff_member_required
-
 from rdflib.namespace import RDF
+import re
+from urllib import urlencode
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
+from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
@@ -197,20 +198,103 @@ def search(request):
 
 
 @permission_required("common.marbl_allowed")
-def browse(request):
-    '''Browse :class:`~keep.collection.models.CollectionObject` by
-    hierarchy, grouped by archive.
+def list_archives(request, archive=None):
+    '''List all top-level archive collections, with the total count of
+    :class:`~keep.collection.models.CollectionObject` in each archive.
     '''
-    ## search opts unused?!
-    # search_opts = {
-    #     'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-    #     'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
-    # }
-    collections = CollectionObject.item_collections()
-    # sort by archive, then by source id (collection number)
-    display_colls = sorted(collections,
-                           key=lambda c: (c['archive_id'], c.get('source_id', None)))
-    return render(request, 'collection/browse.html', {'collections': display_colls})
+    q = CollectionObject.item_collection_query()
+    q = q.facet_by('archive_id', sort='count', mincount=1) \
+         .facet_by('archive_short_name', sort='count', mincount=1) \
+         .facet_by('archive_label', sort='count', mincount=1) \
+         .paginate(rows=0)
+    facets = q.execute().facet_counts.facet_fields
+
+    solr = solr_interface()
+    archive_info = dict([(pid.replace('info:fedora/', ''), {'count': count})
+                        for pid, count in facets['archive_id']])
+    # construct a boolean pid query to match any archive pids
+    # in order to lookup titles and match them to pids
+    pid_q = solr.Q()
+    for pid in archive_info.keys():
+        pid_q |= solr.Q(pid=pid)
+    query = solr.query(pid_q) \
+                .field_limit(['pid', 'title']) \
+                .sort_by('title')
+
+    # pid aliases are keyed on the alias, but we need to look up by pid
+    pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.iteritems()])
+
+    # add solr information and pid aliases to info dictionary
+    for q in query:
+        pid = q['pid']
+        # duplicate to make list of dict available to template for dictsort
+        archive_info[pid]['pid'] = q['pid']
+        archive_info[pid]['title'] = q['title']
+        archive_info[pid]['alias'] = pid_aliases_by_pid[pid]
+
+    # prune any referenced archives that aren't actually indexed in solr
+    # (should only happen in dev/qa)
+    for pid in archive_info.keys():
+        if 'title' not in archive_info[pid]:
+            del archive_info[pid]
+
+    # NOTE: sending list of values (dictionaries) to allow sorting in template
+
+    return render(request, 'collection/archives.html', {'archives': archive_info.values()})
+
+    # return render(request, 'collection/browse.html', {'collections': display_colls})
+
+
+@permission_required("common.marbl_allowed")
+def browse_archive(request, archive):
+    '''Browse a list of :class:`~keep.collection.models.CollectionObject`
+    that belong to a specific archive.
+    '''
+    # if archive is set, lookup pid in settings.PID_ALIASES
+    # then do a collection object query for all collections in that archive
+    archive_pid = settings.PID_ALIASES.get(archive, None)
+    # 404 for unknown archive pid alias
+    if archive_pid is None:
+        raise Http404
+    # get archive object from fedora
+    repo = Repository(request=request)
+    archive_obj = repo.get_object(pid=archive_pid, type=CollectionObject)
+    if not archive_obj.exists:
+        raise Http404
+
+    q = CollectionObject.item_collection_query()
+    # restrict to collections in this archive, sort by collection number
+    q = q.filter(archive_id='info:fedora/%s' % archive_pid).sort_by('source_id')
+
+
+    # paginate the solr result set
+    paginator = Paginator(q, 30)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        collections = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        collections = paginator.page(paginator.num_pages)
+
+    # url parameters for pagination links
+    url_params = request.GET.copy()
+    if 'page' in url_params:
+        del url_params['page']
+
+    # there are currently two dates in the index; for display,
+    # we want single date or date range only (not fedora timestamp)
+    date_re = re.compile('\d{4}(-\d{4})?$')
+    for c in collections.object_list:
+        c['collection_dates'] = []
+        for d in c['date']:
+            if date_re.match(d):
+                c['collection_dates'].append(d)
+
+    return render(request, 'collection/browse.html',
+        {'archive': archive_obj, 'collections': collections,
+         'url_params': urlencode(url_params)})
 
 
 @permission_required("common.marbl_allowed")

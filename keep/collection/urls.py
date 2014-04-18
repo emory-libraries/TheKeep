@@ -2,7 +2,8 @@ from django.conf.urls import patterns, url
 from keep.collection import views
 
 urlpatterns = patterns('',
-    url(r'^$', views.browse, name='browse'),
+    url(r'^$', views.list_archives, name='list-archives'),
+    url(r'^(?P<archive>[a-z]+)/$', views.browse_archive, name='browse-archive'),
     url(r'^new/$', views.edit, name='new'),
     url(r'^search/$', views.search, name='search'),
     url(r'^suggest/$', views.collection_suggest, name='suggest'),

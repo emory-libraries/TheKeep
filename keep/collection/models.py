@@ -235,10 +235,10 @@ class CollectionObject(Collection, ArkPidDigitalObject):
         # otherwise - exception? not found / too many
 
     @staticmethod
-    def item_collections():
-        """Find all collection objects in the configured Fedora
-        pidspace that can contain items. Today this includes all
-        collections that belong to arn archive.
+    def item_collection_query():
+        """Solr query to find all collection objects in the configured
+        Fedora pidspace that can contain items. Currently this includes
+        all collections that belong to an archive.
 
         :returns: list of dict
         :rtype: list
@@ -246,8 +246,21 @@ class CollectionObject(Collection, ArkPidDigitalObject):
 
         # search solr for collection objects with NO parent collection id
         solr = solr_interface()
-        solrquery = solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+        return solr.query(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
                                archive_id__any=True)
+
+
+    @staticmethod
+    def item_collections():
+        """Find all collection objects in the configured Fedora
+        pidspace that can contain items. Today this includes all
+        collections that belong to an archive.
+
+        :returns: list of dict
+        :rtype: list
+        """
+        # search solr for collection objects with NO parent collection id
+        solrquery = CollectionObject.item_collection_query()
         # by default, only returns 10; get everything
         # - solr response is a list of dictionary with collection info
         # use dictsort and regroup in templates for sorting where appropriate
@@ -327,6 +340,7 @@ class CollectionObject(Collection, ArkPidDigitalObject):
             except RequestFailed as rf:
                 logger.error('Error accessing archive object %s in Fedora: %s' % \
                              (self.collection.pid, rf))
+
         return data
 
 

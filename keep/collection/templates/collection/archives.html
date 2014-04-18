@@ -1,0 +1,15 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Archives{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Archives</h1>
+
+    {% for info in archives|dictsort:"title" %}  {# or possibly by count #}
+    <div><a href="{% url 'collection:browse-archive' info.alias %}"><h3>{{ info.title }}</h3></a>
+        {{ info.count }} collection{{ info.count|pluralize }}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
