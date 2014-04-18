@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import json
 import logging
-from mock import Mock, patch
+from mock import Mock, patch, NonCallableMock
 from os import path
 from django.contrib.auth.models import User
 from rdflib import URIRef
@@ -746,69 +746,96 @@ class CollectionViewsTest(KeepTestCase):
             msg_prefix='when a collection has no title, default no-title text is displayed')
 
     @patch('keep.collection.models.solr_interface')
-    def test_browse(self, mock_solr_interface):
-        browse_url = reverse('collection:browse')
+    @patch('keep.collection.views.Paginator')
+    def test_browse_archive(self, mockpaginator, mocksolr_interface):
+        browse_url = reverse('collection:browse-archive', kwargs={'archive': 'marbl'})
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
 
-        # shortcut to set the solr return value
-        # FIXME: call order here currently has to match the way methods are # called in view. ew.
-        solrquery = mock_solr_interface.return_value.query.return_value
-        solr_exec = solrquery.paginate.return_value.execute
+        archive_obj = self.repo.get_object(settings.PID_ALIASES['marbl'])
 
-        # no match
-        # - set mock solr to return an empty result list
-        solr_exec.return_value = [
-            {'pid': 'pid:1', 'title': 'foo', 'source_id': 10,
-             'archive_id': 'pid:42', 'archive_label': 'marbl-coll', 'label': 'foo'},
-            {'pid': 'pid:2', 'title': 'bar', 'source_id': 11,
-             'archive_id': 'pid:42', 'archive_label': 'marbl-coll', 'label': 'bar'},
-            {'pid': 'pid:3', 'title': 'baz', 'source_id': 12,
-             'archive_id': 'pid:43', 'archive_label': 'pitts-coll', 'label': 'baz'},
-            {'pid': 'pid:4', 'title': '', 'source_id': 13,
-             'archive_id': 'pid:43', 'archive_label': 'archives-coll', 'label': ''},
+        # setup solr mock
+        mocksolr = mocksolr_interface.return_value
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'filter', 'sort_by']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # set mock facet results via paginator
+        mockpage = NonCallableMock()
+        mockpaginator.return_value.page.return_value = mockpage
+        mockpage.paginator.page_range = [1]
+        mockpage.paginator.count = 4
+        mockpage.start_index = 1
+        mockpage.end_index = 4
+        mockpage.object_list = [
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 0, 'label': 'foo',
+            'date': ('2001-01-30T01:22:11z', '1980')},
+            {'pid': 'pid:2', 'title': 'bar', 'source_id': 11, 'label': 'bar',
+            'date': ('2011-04-26T20:44:56.421999Z', '1985-1990')},
+            {'pid': 'pid:3', 'title': 'baz', 'source_id': 12, 'label': 'baz',
+            'date': ('2001-01-30T01:22:12z', '1509-1805')},
+            {'pid': 'pid:4', 'title': '', 'source_id': 13, 'label': '',
+            'date': (u'1855-1861', u'2011-04-26T20:40:14.336000Z')},
         ]
 
-        # unused?
-        # default_search_args = {
-        #     'pid': '%s:*' % settings.FEDORA_PIDSPACE,
-        #     'content_model': CollectionObject.COLLECTION_CONTENT_MODEL,
-        # }
         response = self.client.get(browse_url)
-        self.assertEqual(solr_exec.return_value, response.context['collections'],
-            'solr result should be set as collections set in response context')
-        args, kwargs = mock_solr_interface.return_value.query.call_args
-        #self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
-        self.assertEqual(CollectionObject.COLLECTION_CONTENT_MODEL, kwargs['content_model'],
-                         'solr collection browse should be filtered by collection content model in solr query')
-        self.assertTrue(kwargs['archive_id__any'],
-                         'solr collection browse should be filtered by collections with archive_id in solr query')
+        # check solr query/filters
+        mocksolr.query.assert_called_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
+                               archive_id__any=True)
+        mocksolr.query.filter.assert_called_with(archive_id='info:fedora/%s' % settings.PID_ALIASES['marbl'])
+        mocksolr.query.sort_by.assert_called_with('source_id')
+
+        self.assertEqual(mockpage, response.context['collections'],
+            'paginated solr result should be set as collections in response context')
 
         # basic display checking
+        # - archive label, link to list
+        self.assertContains(response, archive_obj.label,
+            msg_prefix='collections by archive page should include archive name')
+        self.assertContains(response, reverse('collection:list-archives'),
+            msg_prefix='collections by archive page should link to full archive list')
 
-        # top-level collection object labels should display once for
-        # each group, no matter how many items in the group
-        self.assertContains(response, 'marbl-coll', 1,
-            msg_prefix='collection label should be displayed once for each group, no matter how many items')
-        self.assertContains(response, 'pitts-coll', 1,
-            msg_prefix='collection label should be displayed once for each group, no matter how many items')
-        self.assertContains(response, 'archives-coll', 1,
-            msg_prefix='collection label should be displayed once for each group, no matter how many items')
+        # - collection display
+        for item in mockpage.object_list:
+            coll_view_url = reverse('collection:view', kwargs={'pid': item['pid']})
+            self.assertContains(response, coll_view_url,
+                msg_prefix='collection view url should be included in the browse page')
+            # first result has source id 0, should not be displayed
+            if item['source_id'] == 0:
+                self.assertContains(response, '<a href="%s">%s</a>' % (coll_view_url, item['title']),
+                    html=True,
+                    msg_prefix='collection title should be displayed without source id when it is 0')
+            else:
+                self.assertContains(response,
+                    '<a href="%s">%s: %s</a>' % (coll_view_url, item['source_id'],
+                                                 item['title'] or '(no title present)'),
+                    html=True,
+                    msg_prefix='collection title should be displayed with source id when set')
 
-        # item display
-        self.assertContains(response, solr_exec.return_value[0]['title'],
-            msg_prefix='result title should be included in the browse page')
-        self.assertContains(response, solr_exec.return_value[0]['pid'],
-            msg_prefix='result pid should be included in the browse page')
-        self.assertContains(response, solr_exec.return_value[0]['source_id'],
-            msg_prefix='result source id should be included in the browse page')
+        # date or date range should be displayed no matter what order is returned
+        self.assertContains(response, mockpage.object_list[0]['date'][1])
+        self.assertContains(response, mockpage.object_list[1]['date'][1])
+        self.assertContains(response, mockpage.object_list[2]['date'][1])
+        self.assertContains(response, mockpage.object_list[3]['date'][0])
 
-        # no title - default text
-        self.assertContains(response, '(no title present)',
-            msg_prefix='when a collection has no title, default no-title text is displayed')
+        # errors
+        # - pid alias in config but not in fedora should 404
+        with patch('keep.collection.views.Repository') as mockrepo:
+            mockrepo.return_value.get_object.return_value.exists = False
+            response = self.client.get(browse_url)
+            expected, got = 404, response.status_code
+            self.assertEqual(expected, got,
+                'expected %s but got %s for browse archive with alias not in pid alias config' % \
+                (expected, got))
 
-        # test errors?
+        # - pid alias not in config should 404
+        browse_url = reverse('collection:browse-archive', kwargs={'archive': 'bogus'})
+        response = self.client.get(browse_url)
+        expected, got = 404, response.status_code
+        self.assertEqual(expected, got,
+            'expected %s but got %s for browse archive with alias not in pid alias config' % \
+            (expected, got))
 
     def test_raw_datastream(self):
         obj = FedoraFixtures.rushdie_collection()
