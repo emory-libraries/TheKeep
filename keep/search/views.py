@@ -18,6 +18,7 @@ def search(request):
     ctx = {'form': form}
     if form.is_valid():
         search_terms = form.cleaned_data['keyword']
+        collection = form.cleaned_data['collection']
         # solr search field parses into list of tuples of field, search terms
         # this search doesn't support any field: searching yet, so just assume all are keywords
         search_terms = [v for k, v in search_terms]
@@ -42,6 +43,11 @@ def search(request):
             # NOTE: do we want a secondary sort after score?
         else:
             q = q.sort_by('title')
+
+        # if a collection search term is specified
+        if collection:
+            # search on *either* collection name or collection number
+            q = q.query(solr.Q(collection_label=collection) | solr.Q(collection_source_id=collection))
 
         # paginate the solr result set
         paginator = Paginator(q, 30)
