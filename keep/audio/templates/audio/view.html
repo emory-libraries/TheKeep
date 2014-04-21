@@ -41,8 +41,8 @@
 <article>
     <header>
         <div class="container">
-            {# TODO: link to collection page when we have one #}
-            <h3>{{ resource.collection.mods.content.source_id|default:'' }}: {{ resource.collection.label }}</h3>
+            <h3><a href="{% url 'collection:view' resource.collection.pid %}">{{ resource.collection.mods.content.source_id|default:'' }}:
+              {{ resource.collection.label }}</a></h3>
 
             <h2>{{ resource.label }}</h2>
 
