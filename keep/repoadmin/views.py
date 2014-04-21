@@ -198,10 +198,8 @@ def keyword_search(request):
                                         unfacet_urlopts.urlencode()))
         #Exclude results if user does not have correct perm
         if not request.user.has_perm('common.marbl_allowed'):
-            print 'excluding audio'
             q = q.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
         if not request.user.has_perm('common.arrangement_allowed'):
-            print 'excluding arrangement & simple collection'
             q = q.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
             q = q.exclude(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL)
 
