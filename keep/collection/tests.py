@@ -18,6 +18,7 @@ from eulfedora.util import RequestFailed
 from eulxml.xmlmap import mods
 from eulcm.xmlmap.mods import MODS
 
+from keep.audio.models import AudioObject
 from keep.arrangement.models import ArrangementObject
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
@@ -1001,6 +1002,90 @@ class CollectionViewsTest(KeepTestCase):
         # should query with the wildcard, then without when count is 0
         solrquery.query.assert_any_call(['1000', 'rushd*'])
         solrquery.query.assert_any_call(['1000', 'rushd'])
+
+    @patch('keep.collection.views.solr_interface')
+    @patch('keep.collection.views.Paginator')
+    def test_view(self, mockpaginator, mock_solr_interface):
+        # configure solr response for collection item query
+        mocksolr = mock_solr_interface.return_value
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'field_limit', 'sort_by']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+        solr_response = mocksolr.query.execute.return_value
+        solr_response.result.numFound = 0
+        # set mock results via paginator
+        mockpage = NonCallableMock()
+        mockpage.paginator.page_range = [1]
+        mockpage.paginator.count = 0
+        # mockpage.start_index = 1
+        # mockpage.end_index = 1
+        mockpaginator.return_value.page.return_value = mockpage
+        mockpage.object_list = []
+
+        # log in as staff (TODO: support researcher access)
+        # NOTE: using admin view so user credentials will be used to access fedora
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
+
+        # load fixture collection for display
+        # repo = Repository()
+        obj = FedoraFixtures.rushdie_collection()
+        # store initial collection id from fixture
+        # collection_uri = obj.collection.uri
+        obj.save()  # save to fedora for editing
+        self.pids.append(obj.pid)
+
+        coll_view_url = reverse('collection:view', kwargs={'pid': obj.pid})
+        response = self.client.get(coll_view_url)
+        # inspect solr query
+        mocksolr.query.assert_called_with(collection_id=obj.uri)
+        mocksolr.query.sort_by.assert_called_with('title')
+        self.assertContains(response, obj.mods.content.title,
+            msg_prefix='collection view should include collection title')
+        self.assertContains(response, obj.mods.content.source_id,
+            msg_prefix='collection view should include collection number')
+        # TODO: edit link only present based on user perms
+        self.assertContains(response, reverse('collection:edit', kwargs={'pid': obj.pid}),
+            msg_prefix='collection view should include link to collection edit page')
+
+        self.assertContains(response, obj.collection.label.replace('&', '&amp;'),
+            msg_prefix='collection view should display parent archive label')
+        self.assertContains(response,
+            reverse('collection:browse-archive',
+                     kwargs={'archive': obj.collection.mods.content.short_name.lower()}),
+            msg_prefix='collection view should link to parent archive browse')
+        self.assertContains(response,
+            reverse('collection:list-archives'),
+            msg_prefix='collection view should link to top-level archive browse')
+        self.assertContains(response, 'No items in this collection',
+            msg_prefix='collection view indicate no items when solr returns no results')
+
+        # test with 1 simulated item in collection; setting mock results via paginator
+        solr_response.result.numFound = 1
+        mockpage.paginator.page_range = [1]
+        mockpage.paginator.count = 1
+        mockpage.start_index = 1
+        mockpage.end_index = 4
+
+        mockpage.object_list = [
+            {'pid': 'pid:1', 'title': 'foo', 'source_id': 0, 'label': 'foo',
+            'date': ('2001-01-30T01:22:11z', '1980'), 'object_type': 'audio',
+            'duration': 65,
+            'content_model': [AudioObject.AUDIO_CONTENT_MODEL,] },
+        ]
+        response = self.client.get(coll_view_url)
+        self.assertContains(response, '<h4><strong>1</strong> item in this collection</h4>',
+            html=True, msg_prefix='count of items in collection should be displayed')
+        self.assertContains(response, 'glyphicon-headphones',
+            msg_prefix='headphone glyph should be used for audio item')
+        self.assertContains(response, mockpage.object_list[0]['title'],
+            msg_prefix='item title should be displayed')
+        self.assertContains(response, '1 minute, 5 seconds',
+            msg_prefix='audio item duration should be diplayed in human readable format')
+        self.assertContains(response, reverse('audio:view', kwargs={'pid': mockpage.object_list[0]['pid']}),
+            msg_prefix='link to view page for audio item title should be present')
+        # TODO: only present if user has edit permissions
+        self.assertContains(response, reverse('audio:edit', kwargs={'pid': mockpage.object_list[0]['pid']}),
+            msg_prefix='link to edit page for audio item title should be present')
 
 
 class FindingAidTest(KeepTestCase):

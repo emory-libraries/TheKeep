@@ -1,0 +1,91 @@
+{% extends "site_base.html" %}
+{% load humanize %} {% load search_tags %} {% load audio_extras %}
+
+{% block page-subtitle %}: Collections : {{ collection.title }}{% endblock %}
+
+{% block content %}
+<article>
+    <header>
+        <div class="container">
+            <h3>{{ collection.mods.content.source_id|default:'' }}: {% firstof collection.mods.content.title collection.label %}</h3>
+
+            {# TODO: *only* if perms can edit audio #}
+            <div class="pull-right">
+                <a class="pull-right btn btn-primary" href="{% url 'collection:edit' collection.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+            </div>
+
+            {# breadcrumb with archive/collection hierarchy #}
+            <ol class="breadcrumb">
+                <li><a href="{% url 'collection:list-archives' %}">Archives</a></li>
+                {% with archive=collection.collection %}
+                  <li><a href="{% url 'collection:browse-archive' archive=archive.mods.content.short_name|lower %}">{{ archive.label }}</a></li>
+                {% endwith %}
+                <li class="active">{% firstof collection.mods.content.title collection.label %}</li>
+            </ol>
+
+        </div>
+    </header>
+
+    <div class="container">
+        {# TODO: collection metadata here ? #}
+
+        {% if collection.mods.content.ark_uri %}
+        <p>Permanent URL:
+          <a href="{{ collection.mods.content.ark_uri }}" rel="bookmark">{{ collection.mods.content.ark_uri }}</a></p>
+        {% endif %}
+
+    {% if items.paginator.count %}
+    <h4><strong>{{ items.paginator.count|intcomma }}</strong> item{{ items.paginator.count|pluralize }} in this collection</h4>
+    <p class="lead">
+        {% if items.has_other_pages and items.object_list|length > 1 %}
+        displaying {{ items.start_index|intcomma }} - {{ items.end_index|intcomma }}{% endif %}
+        {# if more than one item on this page, display range of results #}
+    </p>
+    {% else %}
+    <h2 id="no-results-found">No items in this collection.</h2>
+    {% endif %}
+
+    {% for obj in items.object_list %}
+    <div class="search-result clearfix">
+    {# TODO: only if user has permission to edit #}
+    {% with obj|edit_url as edit_url %}
+        {% if edit_url %}
+        <a class="pull-right btn btn-primary" href="{{ edit_url }}">edit <span class="glyphicon glyphicon-edit"></span></a>
+        {% endif %}
+
+    {% endwith %}
+
+   {# TODO: copied from repoadmin, convert to snippet? or revise for researcher use? #}
+    <span class="result-icon">
+      {% if obj.object_type  == 'collection' %}
+      <span class="glyphicon glyphicon-folder-open"></span>
+      {% elif obj.object_type  == 'audio' %}
+      <span class="glyphicon glyphicon-headphones"></span>
+      {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+      <span class="glyphicon glyphicon-envelope"></span>
+      {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
+      <span class="glyphicon glyphicon-hdd"></span>
+      {% else %}
+      <span class="glyphicon glyphicon-file"></span>
+      {% endif %}
+    </span>
+
+    {% with view_url=obj|view_url %}
+      {% if view_url %}  {# some items still do not have *view* pages #}
+      <a href="{{ view_url }}">{% firstof obj.title obj.label "(no title)" %}</a>
+      {% else %}{% firstof obj.title obj.label "(no title)" %}
+      {% endif %}
+    {% endwith %}
+    {% if obj.duration %}<span class="small">({{ obj.duration|natural_seconds }})</span>{% endif %}
+    </div>
+    {% endfor %}
+
+
+    {% if items.has_other_pages %}
+      {% include 'eultheme/snippets/pagination_all_pages.html' with results=items %}
+    {% endif %}
+</div>
+</article>
+
+{% endblock %}
+

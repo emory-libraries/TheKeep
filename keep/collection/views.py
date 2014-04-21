@@ -37,14 +37,42 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
 @permission_required("common.marbl_allowed")
 def view(request, pid):
-    '''View a single :class:`~keep.collection.models.CollectionObject`.
-    Not yet implemented; for now, redirects to :meth:`edit` view.
+    '''View a single :class:`~keep.collection.models.CollectionObject`,
+    with a paginated list of all items in that collection.
     '''
-    # this view isn't implemented yet, but we want to be able to use the
-    # uri. so if someone requests the uri, send them straight to the edit
-    # page for now.
-    return HttpResponseSeeOtherRedirect(reverse('collection:edit',
-                kwargs={'pid': pid}))
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=CollectionObject)
+    # if pid doesn't exist or isn't a collection, 404
+    if not obj.exists or not obj.has_requisite_content_models:
+        raise Http404
+
+    solr = solr_interface()
+    # search for all items that belong to this collection
+    q = solr.query(collection_id=obj.uri).sort_by('title')
+    # FIXME: more meaningful sort option?
+    # currently don't have location/series...
+    # TODO: filter search based on user permissions
+    # - type of object; researcher accessible
+
+    # paginate the solr result set
+    paginator = Paginator(q, 30)
+    try:
+        page = int(request.GET.get('page', '1'))
+    except ValueError:
+        page = 1
+    try:
+        results = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        results = paginator.page(paginator.num_pages)
+
+    # url parameters for pagination links
+    url_params = request.GET.copy()
+    if 'page' in url_params:
+        del url_params['page']
+
+    return render(request, 'collection/view.html',
+        {'collection': obj, 'items': results,
+         'url_params': urlencode(url_params)})
 
 
 @permission_required("common.marbl_allowed")

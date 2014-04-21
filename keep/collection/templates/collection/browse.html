@@ -13,7 +13,6 @@
     <li class="active">{{ archive.label }}</li>
 </ol>
 
-
 <p>{{ collections.paginator.count|intcomma }} collections{% if collections.has_other_pages and collections.object_list|length > 1 %}; displaying {{ collections.start_index|intcomma }} - {{ collections.end_index|intcomma }}{% endif %}
   {# if more than one item on this page, display range of results #}
 </p>
@@ -23,7 +22,9 @@
         <h2><a href="{% url 'collection:view' collection.pid %}">
             {% if collection.source_id != 0 %}{{ collection.source_id }}: {% endif %}
                 {{ collection.title|default:'(no title present)' }}</a>
-                ({{ collection.collection_dates|join:', ' }})
+                {% if collection.collection_dates %}
+                  ({{ collection.collection_dates|join:', ' }})
+                {% endif %}
             </h2>
 
         {# NOTE: would be nice to display number of items in the collection; probably not easy currently #}
