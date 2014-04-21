@@ -29,7 +29,9 @@
         </div><!--/.cards-->
         {% endif %}
 
+        {% if results %}
         {% include 'eultheme/snippets/pagination_all_pages.html' %}
+        {% endif %}
     </article>
 </div><!-- /.container -->
 {% endblock %}

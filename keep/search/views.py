@@ -18,7 +18,7 @@ def search(request):
     ctx = {'form': form}
     if form.is_valid():
         search_terms = form.cleaned_data['keyword']
-        collection = form.cleaned_data['collection']
+        search_opts = form.cleaned_data
         # solr search field parses into list of tuples of field, search terms
         # this search doesn't support any field: searching yet, so just assume all are keywords
         search_terms = [v for k, v in search_terms]
@@ -45,9 +45,32 @@ def search(request):
             q = q.sort_by('title')
 
         # if a collection search term is specified
-        if collection:
+        if 'collection' in search_opts and search_opts['collection']:
+            collection = search_opts['collection']
             # search on *either* collection name or collection number
             q = q.query(solr.Q(collection_label=collection) | solr.Q(collection_source_id=collection))
+
+        # date search
+        if 'start_date' in search_opts and 'end_date' in search_opts:
+            sdate = search_opts['start_date']
+            edate = search_opts['end_date']
+            # NOTE: needs to handle date format variation (YYYY, YYYY-MM, etc)
+
+            # single date search: start and end date should be the same;
+            # using same logic as range to match any dates within that year
+            # if only one of start or end is specified, results in an open range
+            # i.e. anything after start date or anything before end date
+            if sdate is not None:
+                # restrict by start date
+                # YYYY will be before any date in that year, e.g. "2001" >= "2001-11"
+                q = q.query(date__gte='%04d' % sdate)
+            if edate is not None:
+                # restrict by end date
+                # convert to end of year to catch any date variants within that year
+                # e.g. 2001-12-31 will always come after 2001-04, etc
+                edate = "%04d-12-31" % edate
+                q = q.query(date__lte=str(edate))
+
 
         # paginate the solr result set
         paginator = Paginator(q, 30)

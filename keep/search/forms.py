@@ -1,4 +1,5 @@
 from django import forms
+from eultheme.forms import TelephoneInput
 
 from keep.repoadmin.forms import SolrSearchField
 
@@ -11,6 +12,13 @@ class SearchForm(forms.Form):
         help_text='Search by collection number or words in collection name',
         widget=forms.TextInput(attrs={'placeholder':'Search by collection name or number',
                                       'class': 'form-control'}))
+
+    start_date = forms.IntegerField(required=False,
+        help_text=''''Search by start year;  use with end date to specify a range or single year''',
+        widget=TelephoneInput(attrs={'class': 'form-control', 'placeholder': 'Start year'}))
+    end_date = forms.IntegerField(required=False,
+        help_text='Search by end date; use with start date to specify a range or single year',
+        widget=TelephoneInput(attrs={'class': 'form-control', 'placeholder': 'End year'}))
 
     _adv_fields = ['collection']
 
