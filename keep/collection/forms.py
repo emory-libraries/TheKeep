@@ -124,13 +124,16 @@ class CollectionForm(XmlObjectForm):
     that mostly deals with the  MODS datastream.
     '''
 
+    error_css_class = 'has-error'
+
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
     collection = DynamicChoiceField(label="Archive",  choices=archive_choices,
                     required=False,
                     help_text="Owning repository for this collection of materials.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",
-                    help_text="Source archival collection number (enter 100 for MSS100 or Series 100)")
+                    help_text="Source archival collection number (enter 100 for MSS100 or Series 100)",
+                    widget=forms.TextInput(attrs={'class': 'form-control'}))
     title = forms.CharField(help_text="Title of the archival collection",
                     widget=forms.TextInput(attrs={'class': 'form-control'}))
     # NOTE: handling date range with custom input forms and logic on update_instance
@@ -151,6 +154,9 @@ class CollectionForm(XmlObjectForm):
             'collection', 'source_id', 'title', 'resource_type', 'name',
             'restrictions_on_access', 'use_and_reproduction',
             )
+        widgets = {
+            'resource_type': forms.Select(attrs={'class': 'form-control'}),
+        }
 
     def __init__(self, data=None, instance=None, **kwargs):
         # overriding init to accept a CollectionObject instead of CollectionMods

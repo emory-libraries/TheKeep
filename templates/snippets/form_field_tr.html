@@ -1,11 +1,17 @@
 {# display a single audio edit form field in a table row - expects form field named 'field' #}
 {# if template variable 'form' is available, required & error css classes will be used from the form #}
-<tr class="{% if field.field.required %}{{ form.required_css_class|default:'required'}}{% endif %}
-    {% if field.errors %}{{ form.error_css_class|default:'has_error' }}{% endif %}">
-  <th>{{ field.label }}
+<tr class="form-group {% if field.field.required %}{{ form.required_css_class|default:'required'}}{% endif %}
+    {% if field.errors %}{{ form.error_css_class|default:'has-error' }}{% endif %}">
+  <th>
+    <label class="control-label">{{ field.label }}
       {% if field.field.required %}<span title='required' class='required'>*</span>{% endif %}
+    </label>
   </th>
   <td>{# FIXME: should be able to use widget_tweaks to add form-control class here, but removes other classses #}
     {{ field }}
-    <div class="help-block"><span>{{ field.help_text }}</span></div></td>
+    {# NOTE: validation feedback icons do *not* work in current layout (maybe due to tables?) #}
+    <div class="help-block"><span>{{ field.help_text }}</span>
+        {{ field.errors }}
+    </div>
+  </td>
 </tr>
