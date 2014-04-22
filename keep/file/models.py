@@ -3,6 +3,7 @@ import os
 import logging
 import magic
 import bagit
+import urllib
 
 from django.conf import settings
 from django.db import models
@@ -444,7 +445,7 @@ class DiskImage(DigitalObject):
 
         optional_args = {}
         if file_uri:
-            ingest_location = 'file://%s' % content_file
+            ingest_location = 'file://%s' % urllib.quote(content_file)
             # if Fedora base path is different from locally mounted staging directory,
             # convert from local path to fedora server path
             if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
