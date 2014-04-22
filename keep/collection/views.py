@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("collection.view_collection")
 def view(request, pid):
     '''View a single :class:`~keep.collection.models.CollectionObject`,
     with a paginated list of all items in that collection.
@@ -75,7 +75,9 @@ def view(request, pid):
          'url_params': urlencode(url_params)})
 
 
-@permission_required("common.marbl_allowed")
+# NOTE: permission should actually be add or change depending on pid...
+
+@permission_required("collection.change_collection")
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
     :class:`~keep.collection.models.CollectionObject`.  If a pid is
@@ -161,12 +163,13 @@ def edit(request, pid=None):
     return render(request, 'collection/edit.html', context)
 
 
+@permission_required("collection.view_collection")
 def history(request, pid):
     return history_view(request, pid, type=CollectionObject,
                         template_name='collection/history.html')
 
 
-@staff_member_required
+@permission_required("collection.view_collection")
 def search(request):
     '''Search for :class:`~keep.collection.models.CollectionObject`
     instances.
@@ -225,7 +228,7 @@ def search(request):
     return render(request, 'collection/search.html', context)
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("collection.view_collection")
 def list_archives(request, archive=None):
     '''List all top-level archive collections, with the total count of
     :class:`~keep.collection.models.CollectionObject` in each archive.
@@ -280,7 +283,7 @@ def list_archives(request, archive=None):
     return render(request, 'collection/archives.html', {'archives': archive_info.values()})
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("collection.view_collection")
 def browse_archive(request, archive):
     '''Browse a list of :class:`~keep.collection.models.CollectionObject`
     that belong to a specific archive.
@@ -332,14 +335,14 @@ def browse_archive(request, archive):
          'url_params': urlencode(url_params)})
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("collection.view_collection")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("collection.view_collection")
 def view_audit_trail(request, pid):
     'Access XML audit trail for a collection object'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -439,7 +442,7 @@ def simple_browse(request):
     return response
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("collection.view_collection")
 def collection_suggest(request):
     '''Suggest view for collections, for use with use with `JQuery UI
     Autocomplete`_ widget.  Searches for collections on all of the

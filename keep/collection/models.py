@@ -9,7 +9,7 @@ from eulexistdb.models import XmlModel
 from eulfedora.models import XmlDatastream, Relation, DigitalObject
 from eulfedora.util import RequestFailed
 from eulfedora.rdfns import relsext
-from eulcm.models.collection.v1_1 import Collection
+from eulcm.models.collection.v1_1 import Collection as Collectionv1_1
 from eulcm.models.collection.v1_0 import Collection as Collectionv1_0
 from eulcm.xmlmap.mods import MODS
 from eulxml import xmlmap
@@ -128,8 +128,14 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
         return None
 
 
+class Collection(models.Model):
+    class Meta:
+        permissions = (
+            ("view_collection", "Can view, search, and browse collection objects"),
+        )
 
-class CollectionObject(Collection, ArkPidDigitalObject):
+
+class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
     '''Fedora Collection Object.  Extends :class:`~eulfedora.models.DigitalObject`.
     This really represents an archival collection
     '''

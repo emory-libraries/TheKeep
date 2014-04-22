@@ -9,10 +9,11 @@
         <div class="container">
             <h3>{{ collection.mods.content.source_id|default:'' }}: {% firstof collection.mods.content.title collection.label %}</h3>
 
-            {# TODO: *only* if perms can edit audio #}
+            {% if perms.collection.change_collection %}
             <div class="pull-right">
                 <a class="pull-right btn btn-primary" href="{% url 'collection:edit' collection.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
             </div>
+            {% endif %}
 
             {# breadcrumb with archive/collection hierarchy #}
             <ol class="breadcrumb">
