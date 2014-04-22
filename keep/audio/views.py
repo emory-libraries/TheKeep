@@ -23,16 +23,16 @@ logger = logging.getLogger(__name__)
 
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.view_audio")
 def view(request, pid):
     '''View a single :class:`~keep.audio.models.AudioObject`.
     '''
     repo = Repository(request=request)
     obj = repo.get_object(pid, type=AudioObject)
-    return render(request, 'audio/view.html', {'resource': obj,})
+    return render(request, 'audio/view.html', {'resource': obj})
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.view_audio")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
@@ -41,7 +41,7 @@ def view_datastream(request, pid, dsid):
                           repo=Repository(request=request))
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.view_audio")
 def view_audit_trail(request, pid):
     'Access XML audit trail for an audio object'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -50,7 +50,7 @@ def view_audit_trail(request, pid):
                            repo=Repository(request=request))
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.change_audio")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.audio.models.AudioObject`.'''
     repo = Repository(request=request)
@@ -120,7 +120,7 @@ def edit(request, pid):
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.view_audio")
 def history(request, pid):
     return history_view(request, pid, type=AudioObject,
                         template_name='audio/history.html')
@@ -128,6 +128,8 @@ def history(request, pid):
 
 # download audio must be accessed by iTunes kiosk - should be IP restricted at apache level
 # cannot be restricted to staff only here
+# FIXME: enable better controls once we can turn off itunes kiosk
+#@permission_required("audio.download_audio")
 def download_audio(request, pid, type, extension=None):
     '''Serve out an audio datastream for the fedora object specified by pid.
     Can be used to download original (WAV) audio file or the access copy (MP3).
@@ -171,7 +173,7 @@ def download_audio(request, pid, type, extension=None):
     # errors accessing Fedora will fall through to default 500 error handling
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.view_audio")
 def feed_list(request):
     '''List and link to all current iTunes podcast feeds based on the
     number of objects currently available for inclusion in the feeds.'''
@@ -183,7 +185,7 @@ def feed_list(request):
         })
 
 
-@permission_required("common.marbl_allowed")
+@permission_required("audio.generate_audio_access")
 @require_http_methods(['POST'])
 def tasks(request, pid):
     '''

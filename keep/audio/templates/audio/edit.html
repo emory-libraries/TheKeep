@@ -50,6 +50,8 @@
 <div id="csrftoken">{% csrf_token %}</div> {# embed csrf for use in ajax calls #}
 <h2>{{ obj.label }}</h2>
 <ul class='extra dslist list-inline'>
+
+  {% if perms.audio.download_audio %}
   {% with 'download original audio' as original %}
     {% if obj.audio.exists %}
       <li>
@@ -65,6 +67,8 @@
       <li><a href="{{ obj.get_access_url }}">{{ access }}</a></li>
     {% endif %}
   {% endwith %}
+  {% endif %}
+
   {% if obj.audit_trail %}
     <li><a href="{% url 'audio:history' obj.pid %}">Event Log</a></li>
   {% endif %}
@@ -103,11 +107,12 @@
   <p class="extra">Original audio checksum: {{ obj.audio.checksum }}</p>
 {% endif %}
 
+{% if perms.audio.generate_audio_access %}
 <p class="extra">
   <a href='#' id='queue_access_conversion' class="btn btn-default">
     {% if obj.compressed_audio.exists %}re{% endif %}generate access copy</a>
 </p>
-
+{% endif %}
 
 <div class="instructions">
     <h2>Instructions for using this form</h2>

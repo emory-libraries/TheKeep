@@ -47,13 +47,11 @@
             <h2>{{ resource.label }}</h2>
 
 
-            {# TODO: *only* if perms can edit audio #}
+            {% if perms.audio.change_audio %}
             <div class="pull-right">
-
-
-
                 <a class="pull-right btn btn-primary" href="{% url 'audio:edit' resource.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
             </div>
+            {% endif %}
         </div>
     </header>
 

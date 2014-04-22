@@ -25,6 +25,18 @@ from keep.common.models import allow_researcher_access
 logger = logging.getLogger(__name__)
 
 
+class Audio(models.Model):
+    'Place-holder DB model to define permissions for audio objects'
+    class Meta:
+        permissions = (
+            ("view_audio", "Can view, search, and browse audio objects"),
+            ("download_audio", "Can download original audio files (original and access copy)"),
+            # NOTE: current view structure does not make it easy to differentiate these
+            # ("download_audio_access", "Can download access copy audio file"),
+            # ("download_audio_original", "Can download original audio file"),
+        )
+
+
 ##
 ## MODS
 ##
