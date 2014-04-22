@@ -263,12 +263,16 @@ def list_archives(request, archive=None):
         # duplicate to make list of dict available to template for dictsort
         archive_info[pid]['pid'] = q['pid']
         archive_info[pid]['title'] = q['title']
-        archive_info[pid]['alias'] = pid_aliases_by_pid.get(pid, None)
+        alias = pid_aliases_by_pid.get(pid, None)
+        archive_info[pid]['alias'] = alias
+        if alias is None:
+            logger.warning('No pid alias found for archive %(pid)s (%(title0s)' \
+                           % q)
 
     # prune any referenced archives that aren't actually indexed in solr
     # (should only happen in dev/qa)
     for pid in archive_info.keys():
-        if 'title' not in archive_info[pid] or archive_info[pid].get('alias', None) is None:
+        if 'title' not in archive_info[pid] or archive_info[pid]['alias'] is None:
             del archive_info[pid]
 
     # NOTE: sending list of values (dictionaries) to allow sorting in template
