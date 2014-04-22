@@ -17,12 +17,14 @@
 
 {# supplemental files #}
 {# {% if obj.has_supplemental_content %} #}
+{% if perms.file.manage_disk_image_supplements %}
 <b style="float:left;padding-right:1em">Supplemental content:</b>
 <ul class='list-inline'>
   {% for s in obj.supplemental_content %}
      <li><a href="{% url 'file:raw-ds' obj.pid s.id %}">{{ s.label }}</a></li>
   {% endfor %}
   <li><a href="{% url 'file:supplements' obj.pid %}">+ add/manage</a></li>
+{% endif %}
 </ul>
 {# {% endif %} #}
 

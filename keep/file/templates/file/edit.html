@@ -93,14 +93,22 @@
   {% endif %}
   {% for field in form.premis.visible_fields %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
 
+
+  {% if perms.file.add_application or perms.file.change_application %}
   {% load admin_urls %}
   {# links for managing database list of creating applications #}
   <tr><td></td>
     <td>
-      <a href="{% url admin_fileapp|admin_urlname:'changelist' %}">Manage list of applications</a> |
+      {% if perms.file.change_application %}
+      <a href="{% url admin_fileapp|admin_urlname:'changelist' %}">Manage list of applications</a>
+      {% endif %}
+        {% if perms.file.add_application and perms.file.change_application %} | {% endif %}
+      {% if perms.file.add_application %}
       <a href="{% url admin_fileapp|admin_urlname:'add' %}">Add a new application</a>
+      {% endif %}
     </td>
   </tr>
+  {% endif %}
   </table>
 </div>
 

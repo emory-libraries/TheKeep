@@ -4,8 +4,13 @@
 {% block content-title %}Welcome to the Keep.{% endblock %}
 
 {% block content-body %}
-<p>Add content: <a href="{% url 'file:upload' %}">upload a file</a> |
-	<a href="{% url 'file:largefile-ingest' %}">ingest uploaded content</a></p>
+<p>Add content: <a href="{% url 'file:upload' %}">upload a file</a>
+
+{% if perms.file.add_disk_image %}
+    | <a href="{% url 'file:largefile-ingest' %}">ingest uploaded content</a></p>
+{% endif %}
+
+
 <p><a href="{% url 'collection:new' %}">create a new collection</a></p>
 <p><a href="{% url 'tasks:recent' %}">status of recent tasks (audio conversions, batch status update)</a></p>
 <p><a href="{% url 'audio:feed-list' %}">iTunes podcast feeds</a></p>

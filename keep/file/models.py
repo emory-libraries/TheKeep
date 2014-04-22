@@ -31,6 +31,15 @@ class Application(models.Model):
         return '%s %s' % (self.name, self.version)
 
 
+class Disk_Image(models.Model):
+    'Place-holder DB model to define permissions for disk image objects'
+    class Meta:
+        permissions = (
+            ("view_disk_image", "Can view, search, and browse disk images"),
+            ("manage_disk_image_supplements", "Can manage disk image supplemental files"),
+        )
+
+
 ##
 ## Fedora DiskImage
 ##
