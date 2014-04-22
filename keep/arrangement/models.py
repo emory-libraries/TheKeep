@@ -1,5 +1,6 @@
 import logging
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.db import models
 from rdflib import URIRef
 
 from eulfedora.models import Relation, ReverseRelation
@@ -19,6 +20,14 @@ ACCESS_ALLOWED_CMODEL = "info:fedora/emory-control:ArrangementAccessAllowed-1.0"
 ACCESS_RESTRICTED_CMODEL = "info:fedora/emory-control:ArrangementAccessRestricted-1.0"
 
 # FIXME: what about this one ? emory-control:RushdieResearcherAllowed-1.0
+
+
+class Arrangement(models.Model):
+    'Place-holder DB model to define permissions for "arrangement" objects'
+    class Meta:
+        permissions = (
+            ("view_arrangement", "Can view, search, and browse arrangement objects"),
+        )
 
 
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):

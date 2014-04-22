@@ -42,7 +42,7 @@ def index(request):
     return HttpResponseSeeOtherRedirect(reverse('site-index'))
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required("arrangement.change_arrangement")
 def edit(request, pid):
     '''
     Edit view for an arrangement object. Currently, create is not
@@ -113,7 +113,7 @@ def edit(request, pid):
                   {'obj': obj, 'form': form, 'series_data': series_data})
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required("arrangement.view_arrangement")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
@@ -128,7 +128,7 @@ def view_datastream(request, pid, dsid):
     return response
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required("arrangement.view_arrangement")
 def view_audit_trail(request, pid):
     'Access XML audit trail'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -143,7 +143,7 @@ def history(request, pid):
                         template_name='arrangement/history.html')
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required("arrangement.view_arrangement")
 @csrf_exempt
 def get_selected_series_data(request, id):
     '''
@@ -190,7 +190,7 @@ def get_selected_series_data(request, id):
     return HttpResponse(series_data, content_type='application/json')
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required("arrangement.view_arrangement")
 def view_item(request, pid):
     '''
     Display information about a single object.  Currently

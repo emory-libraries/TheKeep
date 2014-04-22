@@ -36,5 +36,7 @@
 
     {% include 'arrangement/snippets/ds_links.html' %}
 
+    {% if perms.arrangement.change_arrangement %}
     <p><a href="{% url 'arrangement:edit' obj.pid %}">Edit record</a> (assign series and rights information)</p>
+    {% endif %}
 {% endblock %}
