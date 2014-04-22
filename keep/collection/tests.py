@@ -835,10 +835,15 @@ class CollectionViewsTest(KeepTestCase):
             'date': (u'1855-1861', u'2011-04-26T20:40:14.336000Z')},
         ]
 
-        response = self.client.get(browse_url)
+
+        # initial solr query generated in collection objet class, so must be patched there
+        with patch('keep.collection.views.CollectionObject.item_collection_query') as \
+             mock_item_collection_query:
+             mock_item_collection_query.return_value = mocksolr.query
+
+             response = self.client.get(browse_url)
+
         # check solr query/filters
-        mocksolr.query.assert_called_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL,
-                               archive_id__any=True)
         mocksolr.query.filter.assert_called_with(archive_id='info:fedora/%s' % settings.PID_ALIASES['marbl'])
         mocksolr.query.sort_by.assert_called_with('source_id')
 
