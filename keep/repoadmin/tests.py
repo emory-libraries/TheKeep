@@ -410,7 +410,7 @@ class SearchTemplatesTest(TestCase):
         def __init__(self, content=[]):
             self.object_list = content
 
-    search_results = 'search/results.html'
+    search_results = 'repoadmin/results.html'
 
     # test search result content with one of each type
     content = [
