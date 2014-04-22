@@ -378,6 +378,6 @@ form#upload a.remove {
 
 /* frontend search results */
 .cards article {
-  height: 200px;  /* override eultheme card size because we have less content */
+  height: 250px;  /* override eultheme card size because we have less content */
 }
 
