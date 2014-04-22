@@ -877,10 +877,11 @@ class AudioViewsTest(KeepTestCase):
         self.assertContains(response, obj.collection.mods.content.source_id,
             msg_prefix='audio view page should include object collection number')
         # TODO: test edit link only displayed if user has perms
-        self.assertContains(response, obj.mods.content.origin_info.issued[0].date,
-            msg_prefix='date issued should be displayed when present in metadata')
-        self.assertContains(response, obj.mods.content.origin_info.created[0].date,
-            msg_prefix='date created should be displayed when present in metadata')
+        # NOTE: dates are converted to human-readable equivalent
+        self.assertContains(response, 'Dec 25, 1978',
+            msg_prefix='date issued should be displayed in human-readable form when present in metadata')
+        self.assertContains(response, 'Oct 31, 1975',
+            msg_prefix='date created should be displayed in human-readable form when present in metadata')
         self.assertContains(response, obj.mods.content.part_note.text,
             msg_prefix='part note should be displayed when present')
         self.assertContains(response, '1 minute, 15 seconds',
