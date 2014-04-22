@@ -266,7 +266,7 @@ def list_archives(request, archive=None):
         alias = pid_aliases_by_pid.get(pid, None)
         archive_info[pid]['alias'] = alias
         if alias is None:
-            logger.warning('No pid alias found for archive %(pid)s (%(title0s)' \
+            logger.warning('No pid alias found for archive %(pid)s (%(title)s)' \
                            % q)
 
     # prune any referenced archives that aren't actually indexed in solr
