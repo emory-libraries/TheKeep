@@ -30,10 +30,13 @@
     <div class="container">
         {# TODO: collection metadata here ? #}
 
+        {# suppress collection ARK for now #}
+        {% comment %}
         {% if collection.mods.content.ark_uri %}
         <p>Permanent URL:
           <a href="{{ collection.mods.content.ark_uri }}" rel="bookmark">{{ collection.mods.content.ark_uri }}</a></p>
         {% endif %}
+        {% endcomment %}
 
     {% if items.paginator.count %}
     <h4><strong>{{ items.paginator.count|intcomma }}</strong> item{{ items.paginator.count|pluralize }} in this collection</h4>
