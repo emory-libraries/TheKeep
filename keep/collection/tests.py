@@ -1140,7 +1140,10 @@ class CollectionViewsTest(KeepTestCase):
         response = self.client.get(coll_view_url)
         # inspect solr query
         mocksolr.query.assert_called_with(collection_id=obj.uri)
-        mocksolr.query.sort_by.assert_called_with('title')
+        # FIXME: worth testing order here?
+        mocksolr.query.sort_by.assert_any_call('date_created')
+        mocksolr.query.sort_by.assert_any_call('date_issued')
+        mocksolr.query.sort_by.assert_any_call('title_exact')
         self.assertContains(response, obj.mods.content.title,
             msg_prefix='collection view should include collection title')
         self.assertContains(response, obj.mods.content.source_id,

@@ -49,7 +49,10 @@ def view(request, pid):
 
     solr = solr_interface()
     # search for all items that belong to this collection
-    q = solr.query(collection_id=obj.uri).sort_by('title')
+    q = solr.query(collection_id=obj.uri) \
+            .sort_by('date_created') \
+            .sort_by('date_issued') \
+            .sort_by('title_exact')
     # FIXME: more meaningful sort option?
     # currently don't have location/series...
     # TODO: filter search based on user permissions

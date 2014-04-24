@@ -80,7 +80,11 @@
       {% else %}{% firstof obj.title obj.label "(no title)" %}
       {% endif %}
     {% endwith %}
-    {% if obj.duration %}<span class="small">({{ obj.duration|natural_seconds }})</span>{% endif %}
+    <p>
+      {% if obj.date_created %}{{ obj.date_created|natural_date }}{% if date_issued %}; {% endif %}{% endif %}
+      {% if obj.date_issued %}{{ obj.date_issued|natural_date }}{% endif %}
+      {% if obj.duration %}<span class="small">({{ obj.duration|natural_seconds }})</span>{% endif %}
+    </p>
     </div>
     {% endfor %}
 
