@@ -30,10 +30,11 @@ class Audio(models.Model):
     class Meta:
         permissions = (
             ("view_audio", "Can view, search, and browse audio objects"),
-            ("download_audio", "Can download original audio files (original and access copy)"),
+            ("download_audio", "Download audio files (original or access copy)"),
             # NOTE: current view structure does not make it easy to differentiate these
             # ("download_audio_access", "Can download access copy audio file"),
             # ("download_audio_original", "Can download original audio file"),
+            ("generate_audio_access", "Can (re-)generate audio access copy"),
         )
 
 
