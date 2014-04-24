@@ -379,7 +379,8 @@ def browse_archive(request, archive):
     return render(request, 'collection/browse.html',
         {'archive': archive_obj, 'collections': collections,
          'url_params': urlencode(url_params),
-         'collection_filter': collection_filter})
+         'collection_filter': collection_filter,
+         'find_collection': FindCollection()})
 
 
 @permission_required("collection.view_collection")

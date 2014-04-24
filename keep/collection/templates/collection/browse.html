@@ -5,6 +5,9 @@
 
 {% block content %}
 <div class="container">
+    <div class="pull-right">
+        {% include 'collection/snippets/find_collection_form.html' with form_label='Go to collection:' %}
+    </div>
 <h1>{{ archive.label }} Collections</h1>
 
 {# breadcrumb with archive/collection hierarchy #}
