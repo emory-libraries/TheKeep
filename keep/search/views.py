@@ -51,10 +51,14 @@ def search(request):
             q = q.query(solr.Q(collection_label=collection) | solr.Q(collection_source_id=collection))
 
         # date search
-        if 'start_date' in search_opts and 'end_date' in search_opts:
-            sdate = search_opts['start_date']
-            edate = search_opts['end_date']
+        if search_opts.get('start_date', None) or search_opts.get('end_date', None):
+            sdate = search_opts.get('start_date', None)
+            edate = search_opts.get('end_date', None)
             # NOTE: needs to handle date format variation (YYYY, YYYY-MM, etc)
+
+            if sdate is not None:
+                # ensure we search on 4-digit year
+                sdate = '%04d' % int(sdate)
 
             # convert end date to end of year in order to catch any date variants
             # within that year; e.g. 2001-12-31 will always come after 2001-04, etc
@@ -68,16 +72,24 @@ def search(request):
 
             # if both values are set, use sunburnt range query
             if sdate is not None and edate is not None:
-                q = q.query(date__range=(sdate, edate))
-
+                created_q = solr.Q(date_created__range=(sdate, edate))
+                issued_q = solr.Q(date_issued__range=(sdate, edate))
+                # q = q.query(date__range=(sdate, edate))
             elif sdate is not None:
                 # restrict by start date
                 # YYYY will be before any date in that year, e.g. "2001" >= "2001-11"
-                q = q.query(date__gte='%04d' % sdate)
+                # q = q.query(date__gte='%04d' % sdate)
+                created_q = solr.Q(date_created__gte=sdate)
+                issued_q = solr.Q(date_issued__gte=sdate)
             elif edate is not None:
                 # restrict by end date
-                q = q.query(date__lte=str(edate))
+                # q = q.query(date__lte=str(edate))
+                created_q = solr.Q(date_created__lte=sdate)
+                issued_q = solr.Q(date_issued__lte=sdate)
 
+            # NOTE: explicitly search on date created or date issued,
+            # to avoid complications with other values in the generic date field
+            q = q.query(created_q | issued_q)
 
         # paginate the solr result set
         paginator = Paginator(q, 30)
