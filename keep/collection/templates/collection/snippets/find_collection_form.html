@@ -1,0 +1,14 @@
+{% load widget_tweaks %}
+
+<form class="form-inline input-sm" role="form" method="GET" action="{% url 'collection:list-archives' %}">
+  {{ form_label|default:'' }}
+  <div class="form-group">
+    <label class="sr-only" for="{{ find_collection.archive.id_for_label }}">{{ find_collection.archive.label }}</label>
+    {{ find_collection.archive|add_class:"form-control" }}
+  </div>
+  <div class="form-group">
+    <label class="sr-only" for="{{ find_collection.collection.id_for_label }}">{{ find_collection.collection.label }}</label>
+    {{ find_collection.collection }}
+  </div>
+  <button id="submit" class="btn btn-primary" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+</form>

@@ -22,7 +22,8 @@ from eulfedora.views import raw_datastream, raw_audit_trail
 from eulcommon.searchutil import search_terms
 from eulfedora.util import RequestFailed
 
-from keep.collection.forms import CollectionForm, CollectionSearch, SimpleCollectionEditForm
+from keep.collection.forms import CollectionForm, CollectionSearch, \
+  SimpleCollectionEditForm, FindCollection
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.collection.tasks import queue_batch_status_update
 from keep.common.fedora import Repository, history_view
@@ -239,6 +240,45 @@ def list_archives(request, archive=None):
        in order to be listed here.
 
     '''
+
+    # if params are set, search for collection
+    if 'archive' in request.GET and 'collection' in request.GET:
+        form = FindCollection(request.GET)
+        if form.is_valid():
+            data = form.cleaned_data
+            q = CollectionObject.item_collection_query()
+            # submitted value is pid alias; lookup pid for solr query
+            archive_id = settings.PID_ALIASES[data['archive']]
+            q = q.query(archive_id='info:fedora/%s' % archive_id,
+                        source_id=data['collection'])
+            # if exactly one result is found, redirect to the collection view
+            if q.count() == 1:
+                # give user some context for the redirect
+                messages.info(request, 'One collection found for %s %s.' %
+                              (data['archive'].upper(), data['collection']))
+                return HttpResponseSeeOtherRedirect(reverse('collection:view',
+                    kwargs={'pid': q[0]['pid']}))
+
+            # otherwise, if multiple, redirect to a filtered view of the archive browse
+            elif q.count():
+                messages.info(request, '%d collections found for %s %s.' %
+                    (q.count(), data['archive'].upper(), data['collection']))
+                return HttpResponseSeeOtherRedirect('%s?%s' % \
+                    (reverse('collection:browse-archive',
+                             kwargs={'archive': data['archive']}),
+                    urlencode({'collection': data['collection']})))
+
+            # if no matches, warn and return to archive display
+            else:
+                messages.warning(request, 'No collections found for %s %s.' %
+                              (data['archive'].upper(), data['collection']))
+
+        # values submitted but form not valid
+        else:
+            # TODO: better error message?
+            messages.warning(request, 'Collection search input was not valid; please try again.')
+
+
     q = CollectionObject.item_collection_query()
     q = q.facet_by('archive_id', sort='count', mincount=1) \
          .paginate(rows=0)
@@ -280,7 +320,8 @@ def list_archives(request, archive=None):
 
     # NOTE: sending list of values (dictionaries) to allow sorting in template
 
-    return render(request, 'collection/archives.html', {'archives': archive_info.values()})
+    return render(request, 'collection/archives.html',
+        {'archives': archive_info.values(), 'find_collection': FindCollection()})
 
 
 @permission_required("collection.view_collection")
@@ -304,6 +345,11 @@ def browse_archive(request, archive):
     # restrict to collections in this archive, sort by collection number
     q = q.filter(archive_id='info:fedora/%s' % archive_pid).sort_by('source_id')
 
+    # if a collection number is specified in url params, filter query
+    collection_filter = None
+    if request.GET.get('collection', None):
+        collection_filter = request.GET['collection']
+        q = q.query(source_id=collection_filter)
 
     # paginate the solr result set
     paginator = Paginator(q, 30)
@@ -332,7 +378,8 @@ def browse_archive(request, archive):
 
     return render(request, 'collection/browse.html',
         {'archive': archive_obj, 'collections': collections,
-         'url_params': urlencode(url_params)})
+         'url_params': urlencode(url_params),
+         'collection_filter': collection_filter})
 
 
 @permission_required("collection.view_collection")

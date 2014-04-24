@@ -1,20 +1,18 @@
 import logging
 
 from django import forms
+from django.conf import settings
 from django.core import validators
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
-
-from eulfedora.rdfns import relsext as relsextns
 
 from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField
 from eulcm.xmlmap.mods import MODS
 from eulcommon.djangoextras.formfields import DynamicChoiceField
+from eultheme.forms import TelephoneInput
 
-from keep.arrangement.models import ArrangementObject
-from keep.collection.models import CollectionObject, SimpleCollection
-from keep.common.fedora import Repository
+from keep.collection.models import CollectionObject
 from keep.common.utils import solr_interface
 
 logger = logging.getLogger(__name__)
@@ -25,6 +23,17 @@ def archive_choices():
     choices.insert(0, ('', ''))   # blank option at the beginning (default)
     return choices
 
+def archive_alias_choices():
+    choices = []
+    # we need pid aliases keyed on pid for lookup
+    pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.iteritems()])
+    for a in CollectionObject.archives(format=dict):
+        if a['pid'] in pid_aliases_by_pid:
+            alias = pid_aliases_by_pid[a['pid']]
+            # use the alias for *both* display and submit value
+            choices.append((alias, alias.upper()))
+    choices.insert(0, ('', ''))   # blank option at the beginning (default)
+    return choices
 
 
 class CollectionSearch(forms.Form):
@@ -50,6 +59,16 @@ class CollectionSearch(forms.Form):
     archive_id = DynamicChoiceField(label="Archive",  choices=archive_choices,
                                     initial='', required=False)
 
+
+class FindCollection(forms.Form):
+    '''Shortcut to find a collection quickly by number and owning archive'''
+    collection = forms.IntegerField(required=True,
+        help_text='Search by collection number',
+        widget=TelephoneInput(attrs={'placeholder':'Collection number',
+                                     'class': 'form-control'}))
+
+    archive = DynamicChoiceField(label="Archive", choices=archive_alias_choices,
+         initial='', required=True, help_text='Filter by owning archive')
 
 
 class AccessConditionForm(XmlObjectForm):

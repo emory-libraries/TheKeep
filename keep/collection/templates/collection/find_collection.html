@@ -1,0 +1,22 @@
+{% extends "site_base.html" %}
+
+{% block page-subtitle %}: Collections {% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Collections</h1>
+
+    <p>More than one collection found.</p>
+    {% include 'collection/snippets/find_collection_form.html' %}
+
+    {% for collection in collections %} {# note: list format copied from collection/browse.html - snippet? #}
+    <h2><a href="{% url 'collection:view' collection.pid %}">
+        {% if collection.source_id != 0 %}{{ collection.source_id }}: {% endif %}
+        {{ collection.title|default:'(no title present)' }}</a>
+        {% if collection.collection_dates %}
+        ({{ collection.collection_dates|join:', ' }})
+        {% endif %}
+    </h2>
+    {% endfor %}
+</div>
+{% endblock %}

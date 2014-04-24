@@ -1,11 +1,15 @@
 {% extends "site_base.html" %}
+{% load widget_tweaks %}
 
 {% block page-subtitle %}: Archives{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1>Archives</h1>
+    <div class="pull-right">
+        {% include 'collection/snippets/find_collection_form.html' with form_label='Go to collection:' %}
+    </div>
 
+    <h1>Archives</h1>
     {% for info in archives|dictsort:"title" %}  {# or possibly by count #}
     <div><a href="{% url 'collection:browse-archive' info.alias %}"><h3>{{ info.title }}</h3></a>
         {{ info.count }} collection{{ info.count|pluralize }}

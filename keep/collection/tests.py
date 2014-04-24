@@ -802,6 +802,103 @@ class CollectionViewsTest(KeepTestCase):
 
 
     @patch('keep.collection.views.solr_interface')
+    @patch('keep.collection.views.CollectionObject')
+    def test_find_collection(self, mockcollobj, mocksolr_interface):
+        # test shortcut method to find a collection
+        archive_url = reverse('collection:list-archives')
+
+        # log in as staff
+        self.client.login(**ADMIN_CREDENTIALS)
+
+        # setup mock collection solr query
+        mockcollq = mockcollobj.item_collection_query.return_value
+        for method in ['query', 'facet_by', 'paginate']:
+            getattr(mockcollq, method).return_value = mockcollq
+        # mimic single result found
+        mockcollq.count.return_value = 1
+        solr_result = [
+            {'pid': 'test:1'},
+        ]
+        mockcollq.__getitem__.return_value = solr_result[0]
+
+        # search by archive & id
+        coll_data = {'archive': 'marbl', 'collection': '1000'}
+        response = self.client.get(archive_url, coll_data)
+
+        self.assert_(response['Location'].endswith(reverse('collection:view',
+                     kwargs={'pid': solr_result[0]['pid']})),
+            'should redirect to collection view when one result is found')
+        self.assertEqual(303, response.status_code,
+            'find collection should redirect with 303 when 1 match is found, got %s' \
+            % response.status_code)
+
+        # retrieve index page to test messages set
+        # NOTE: this is simpler than following the redirect (would require additional mocks)
+        response = self.client.get(reverse('site-index'))
+        msg = list(response.context['messages'])[0]
+        self.assertEqual('One collection found for MARBL 1000.', str(msg),
+            'user should see message indicating one collection was found')
+        self.assertEqual('info', msg.tags,
+            'message should be of type info')
+
+        # mimic multiple results found
+        mockcollq.count.return_value = 3
+        # search by archive & id
+        coll_data = {'archive': 'marbl', 'collection': '1000'}
+        response = self.client.get(archive_url, coll_data)
+
+        self.assert_(response['Location'].endswith('%s?collection=%s' % \
+            (reverse('collection:browse-archive', kwargs={'archive': coll_data['archive']}),
+            coll_data['collection'])),
+            'should redirect to archive browse with collection filter when multiple results are found')
+        self.assertEqual(303, response.status_code,
+            'find collection should redirect with 303 when multiple matches are found, got %s' \
+            % response.status_code)
+
+        # retrieve index page to test messages
+        response = self.client.get(reverse('site-index'))
+        msg = list(response.context['messages'])[0]
+        self.assertEqual('3 collections found for MARBL 1000.', str(msg),
+            'user should see message indicating more than one collection was found')
+        self.assertEqual('info', msg.tags,
+            'message should be of type info')
+
+        # mimic zero results found
+        mockcollq.count.return_value = 0
+        # search by archive & id
+        coll_data = {'archive': 'marbl', 'collection': '1000'}
+        response = self.client.get(archive_url, coll_data)
+
+        self.assertEqual(200, response.status_code,
+            'find collection should NOT redirect when no matches are found, got %s' \
+            % response.status_code)
+
+        # check for warning message
+        msg = list(response.context['messages'])[0]
+        self.assertEqual('No collections found for MARBL 1000.', str(msg),
+            'user should see message indicating more than one collection was found')
+        self.assertEqual('warning', msg.tags,
+            'message should be of type warning')
+
+
+        # mimic invalid form submission
+        response = self.client.get(archive_url, {'archive': '', 'collection': '1'})
+
+        self.assertEqual(200, response.status_code,
+            'find collection should NOT redirect when form is invalid are found, got %s' \
+            % response.status_code)
+
+        # check for warning message
+        msg = list(response.context['messages'])[0]
+        self.assertEqual('Collection search input was not valid; please try again.',
+            str(msg),
+            'user should see message indicating more than one collection was found')
+        self.assertEqual('warning', msg.tags,
+            'message should be of type warning')
+
+
+
+    @patch('keep.collection.views.solr_interface')
     @patch('keep.collection.views.Paginator')
     def test_browse_archive(self, mockpaginator, mocksolr_interface):
         browse_url = reverse('collection:browse-archive', kwargs={'archive': 'marbl'})

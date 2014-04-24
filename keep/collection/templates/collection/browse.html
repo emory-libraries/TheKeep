@@ -13,7 +13,7 @@
     <li class="active">{{ archive.label }}</li>
 </ol>
 
-<p>{{ collections.paginator.count|intcomma }} collections{% if collections.has_other_pages and collections.object_list|length > 1 %}; displaying {{ collections.start_index|intcomma }} - {{ collections.end_index|intcomma }}{% endif %}
+<p>{{ collections.paginator.count|intcomma }} collection{{ collections.paginator.count|pluralize }}{% if collection_filter %} with number {{ collection_filter }}{% endif %}{% if collections.has_other_pages and collections.object_list|length > 1 %}; displaying {{ collections.start_index|intcomma }} - {{ collections.end_index|intcomma }}{% endif %}
   {# if more than one item on this page, display range of results #}
 </p>
 
@@ -35,8 +35,8 @@
 {% endfor %}
 
 {# due to the way regroup works, top-level collections with no collections will not be listed #}
-{% with collections as results %}
-{% include 'eultheme/snippets/pagination_all_pages.html' %}
-{% endwith %}
+{% if collections.has_other_pages %}
+   {% include 'eultheme/snippets/pagination_all_pages.html' with results=collections %}
+{% endif %}
 </div>
 {% endblock %}
