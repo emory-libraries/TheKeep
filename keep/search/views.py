@@ -56,19 +56,26 @@ def search(request):
             edate = search_opts['end_date']
             # NOTE: needs to handle date format variation (YYYY, YYYY-MM, etc)
 
+            # convert end date to end of year in order to catch any date variants
+            # within that year; e.g. 2001-12-31 will always come after 2001-04, etc
+            if edate is not None:
+                edate = "%04d-12-31" % int(edate)
+
             # single date search: start and end date should be the same;
             # using same logic as range to match any dates within that year
             # if only one of start or end is specified, results in an open range
             # i.e. anything after start date or anything before end date
-            if sdate is not None:
+
+            # if both values are set, use sunburnt range query
+            if sdate is not None and edate is not None:
+                q = q.query(date__range=(sdate, edate))
+
+            elif sdate is not None:
                 # restrict by start date
                 # YYYY will be before any date in that year, e.g. "2001" >= "2001-11"
                 q = q.query(date__gte='%04d' % sdate)
-            if edate is not None:
+            elif edate is not None:
                 # restrict by end date
-                # convert to end of year to catch any date variants within that year
-                # e.g. 2001-12-31 will always come after 2001-04, etc
-                edate = "%04d-12-31" % edate
                 q = q.query(date__lte=str(edate))
 
 
