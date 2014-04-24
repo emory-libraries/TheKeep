@@ -4,7 +4,7 @@
     <span class="glyphicon glyphicon-stats"></span>
     Dashboard</a></li>
 {% endif %}
-<li><a href="{% url 'collection:list-archives' %}">Collections by Archive</a></li>
+<li><a href="{% url 'collection:list-archives' %}">Collections by Library</a></li>
 {% if perms.common.arrangement_allowed %}
   <li><a href="{% url 'collection:simple_browse' %}">Simple Collections</a></li>
 {% endif  %}

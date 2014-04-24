@@ -239,6 +239,11 @@ def list_archives(request, archive=None):
        Archives must be configured in **PID_ALIASES** in Django settings
        in order to be listed here.
 
+    .. Note::
+
+       Within the code, top-level collections are referred to as "archives",
+       but externally for users they should always be labeled as "Libraries."
+
     '''
 
     # if params are set, search for collection
