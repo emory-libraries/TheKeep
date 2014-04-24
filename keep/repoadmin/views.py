@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.utils.datastructures import MultiValueDict, SortedDict
 from eulcommon.searchutil import pages_to_show, parse_search_terms
 
+from keep.accounts.utils import filter_by_perms
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.collection.models import SimpleCollection
@@ -44,6 +45,8 @@ def dashboard(request):
                 .facet_by('collection_label_facet', sort='count',
                           limit=10, mincount=1) \
                 .paginate(rows=0)
+    # filter the facet query by user permissions
+    facetq = filter_by_perms(facetq, request.user)
     facets = facetq.execute().facet_counts.facet_fields
 
     # reverse order and convert to datetime.date for use with naturalday
@@ -63,6 +66,8 @@ def dashboard(request):
                 .facet_by('created_month', sort='index',
                           mincount=1) \
                 .paginate(rows=0)
+    # also filter this query by user perms
+    facetq = filter_by_perms(facetq, request.user)
     recent_month_facet = facetq.execute().facet_counts.facet_fields['created_month']
     recent_month_facet.reverse()
     recent_months = []
@@ -74,6 +79,7 @@ def dashboard(request):
     facetq = solr.query().filter(last_fixity_check__range=(month_ago, today))  \
                 .facet_by('last_fixity_result', mincount=1) \
                 .paginate(rows=0)
+    facetq = filter_by_perms(facetq, request.user)
     facets = facetq.execute().facet_counts.facet_fields
     recent_fixity_checks = facets['last_fixity_result']
 
@@ -97,7 +103,8 @@ def keyword_search(request):
 
         solr = solr_interface()
         # start with a default query to add filters & search terms
-        q = solr.query()
+        # *first* filter to restrict to content models user has permission to view
+        q = filter_by_perms(solr.query(), request.user)
 
         # optional date filter for fixity check
         fixity_check_mindate = searchform.cleaned_data.get('fixity_check_mindate', None)
@@ -196,12 +203,6 @@ def keyword_search(request):
 
                 display_filters.append((label,
                                         unfacet_urlopts.urlencode()))
-        #Exclude results if user does not have correct perm
-        if not request.user.has_perm('common.marbl_allowed'):
-            q = q.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
-        if not request.user.has_perm('common.arrangement_allowed'):
-            q = q.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
-            q = q.exclude(content_model=SimpleCollection.COLLECTION_CONTENT_MODEL)
 
         # Update solr query to return values & counts for the
         # configured facet fields
