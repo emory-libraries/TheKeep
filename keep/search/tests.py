@@ -144,7 +144,7 @@ class TestSearchTagsTemplateTags(TestCase):
         self.assertEqual(u'13j7s',
                          search_tags.ark_noid('http://pid.co/ark:/2534/13j7s'))
 
-    def test_naturl_date(self):
+    def test_natural_date(self):
         # year only
         self.assertEqual('1980',
                          search_tags.natural_date('1980'))
