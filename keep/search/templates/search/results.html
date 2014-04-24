@@ -29,7 +29,7 @@
         </div><!--/.cards-->
         {% endif %}
 
-        {% if results %}
+        {% if results.has_other_pages %}
         {% include 'eultheme/snippets/pagination_all_pages.html' %}
         {% endif %}
     </article>
