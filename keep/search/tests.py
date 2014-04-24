@@ -37,7 +37,7 @@ class SearchViewsTest(KeepTestCase):
         # - query should be called with no search terms (find all)
         mocksolr.query.assert_called_with()
         # - sort by title when no search terms for relevance to be meaningful
-        mocksolr.query.sort_by.assert_called_with('title')
+        mocksolr.query.sort_by.assert_called_with('title_exact')
         # check context params ?
 
         mocksolr.query.filter.assert_called_with(

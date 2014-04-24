@@ -42,7 +42,7 @@ def search(request):
             q = q.sort_by('-score').field_limit(score=True)
             # NOTE: do we want a secondary sort after score?
         else:
-            q = q.sort_by('title')
+            q = q.sort_by('title_exact')
 
         # if a collection search term is specified
         if 'collection' in search_opts and search_opts['collection']:
