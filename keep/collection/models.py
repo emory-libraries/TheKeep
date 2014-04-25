@@ -132,7 +132,7 @@ class Collection(models.Model):
     class Meta:
         permissions = (
             ("view_collection", "Can view, search, and browse collection objects"),
-            ("view_researcher_collection", "Search, view collections with researcher-accessible content"),
+            # ("view_researcher_collection", "Search, view collections with researcher-accessible content"),
         )
 
 

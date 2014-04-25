@@ -42,6 +42,22 @@ def filter_by_perms(solrq, user):
     '''
     # filter the query with Q(content_model=cm) ORed together for any
     # content models the user has permission to view
-    return solrq.filter(reduce(operator.or_,
-        [solrq.Q(content_model=cm) for cm in searchable_cmodels(user)]))
+    cmodels = searchable_cmodels(user)
+    if cmodels:
+        solrq = solrq.filter(reduce(operator.or_,
+                             [solrq.Q(content_model=cm) for cm in cmodels]))
+
+    # special case filters
+
+    # - only view researcher audio: restrict to audio with appropriate verdict
+    if not user.has_perm('audio.view_audio') and \
+           user.has_perm('audio.view_researcher_audio'):
+
+        # FIXME: this filter will only work for audio content
+        solrq = solrq.filter(content_model=AudioObject.AUDIO_CONTENT_MODEL,
+                             has_access_copy=True,
+                             researcher_access=True)
+
+
+    return solrq
 

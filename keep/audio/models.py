@@ -35,6 +35,9 @@ class Audio(models.Model):
             # ("download_audio_access", "Can download access copy audio file"),
             # ("download_audio_original", "Can download original audio file"),
             ("generate_audio_access", "Can (re-)generate audio access copy"),
+            # resercher-specific perms
+            ("view_researcher_audio", "Search and view researcher-accessible audio objects"),
+            ("download_researcher_audio", "Download researcher-accessible audio files"),
         )
 
 
