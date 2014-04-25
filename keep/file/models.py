@@ -482,7 +482,7 @@ class DiskImage(DigitalObject):
 
 
             if file_uri:
-                ingest_location = 'file://%s' % sfile
+                ingest_location = 'file://%s' % urllib.quote(sfile)
                 # if Fedora base path is different from locally mounted staging directory,
                 # convert from local path to fedora server path
                 if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
