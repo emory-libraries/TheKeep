@@ -2,13 +2,14 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
+from eulcommon.djangoextras.auth import permission_required_with_403, \
+    permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulfedora.util import RequestFailed, PermissionDenied
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 
-@permission_required("audio.view_audio")
+@permission_required_with_403("audio.view_audio")
 def view(request, pid):
     '''View a single :class:`~keep.audio.models.AudioObject`.
     '''
@@ -32,7 +33,7 @@ def view(request, pid):
     return render(request, 'audio/view.html', {'resource': obj})
 
 
-@permission_required("audio.view_audio")
+@permission_required_with_403("audio.view_audio")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
@@ -41,7 +42,7 @@ def view_datastream(request, pid, dsid):
                           repo=Repository(request=request))
 
 
-@permission_required("audio.view_audio")
+@permission_required_with_403("audio.view_audio")
 def view_audit_trail(request, pid):
     'Access XML audit trail for an audio object'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -50,7 +51,7 @@ def view_audit_trail(request, pid):
                            repo=Repository(request=request))
 
 
-@permission_required("audio.change_audio")
+@permission_required_with_403("audio.change_audio")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.audio.models.AudioObject`.'''
     repo = Repository(request=request)
@@ -120,7 +121,7 @@ def edit(request, pid):
         return HttpResponse(msg, mimetype='text/plain', status=500)
 
 
-@permission_required("audio.view_audio")
+@permission_required_with_403("audio.view_audio")
 def history(request, pid):
     return history_view(request, pid, type=AudioObject,
                         template_name='audio/history.html')
@@ -173,7 +174,7 @@ def download_audio(request, pid, type, extension=None):
     # errors accessing Fedora will fall through to default 500 error handling
 
 
-@permission_required("audio.view_audio")
+@permission_required_with_403("audio.view_audio")
 def feed_list(request):
     '''List and link to all current iTunes podcast feeds based on the
     number of objects currently available for inclusion in the feeds.'''
@@ -185,7 +186,7 @@ def feed_list(request):
         })
 
 
-@permission_required("audio.generate_audio_access")
+@permission_required_with_ajax("audio.generate_audio_access")
 @require_http_methods(['POST'])
 def tasks(request, pid):
     '''

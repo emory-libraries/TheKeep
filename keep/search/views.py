@@ -3,6 +3,7 @@ from urllib import urlencode
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
+from keep.accounts.utils import filter_by_perms
 from keep.audio.models import AudioObject
 from keep.search.forms import SearchForm
 from keep.common.utils import solr_interface
@@ -24,19 +25,20 @@ def search(request):
         search_terms = [v for k, v in search_terms]
 
         solr = solr_interface()
+        # restrict to audio for now since that is the only content type
+        # we support in the researcher Keep frontend search
         base_search_opts = {
             # restrict to audio items by content model
-            'content_model': AudioObject.AUDIO_CONTENT_MODEL,
-            # restrict to items that have an access copy available
-            'has_access_copy': True,
-            # restrict to items that are allowed to be accessed
-            'researcher_access': True,
+            'content_model': AudioObject.AUDIO_CONTENT_MODEL
         }
-        # TODO: adjust researcher access filter for logged in staff
-        # with additional permissions
 
         # start with a default query to add filters & search terms
         q = solr.query().filter(**base_search_opts)
+
+        # filter the query by logged-in user permissions
+        # includes restricting to researcher-accessible content when appropriate
+        q = filter_by_perms(q, request.user)
+
         if search_terms:
             q = q.query(*search_terms)
             q = q.sort_by('-score').field_limit(score=True)

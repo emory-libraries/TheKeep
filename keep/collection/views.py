@@ -9,14 +9,14 @@ from urllib import urlencode
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 
+from eulcommon.djangoextras.auth import permission_required_with_403, \
+    permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulcommon.searchutil import search_terms
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def view(request, pid):
     '''View a single :class:`~keep.collection.models.CollectionObject`,
     with a paginated list of all items in that collection.
@@ -81,7 +81,7 @@ def view(request, pid):
 
 # NOTE: permission should actually be add or change depending on pid...
 
-@permission_required("collection.change_collection")
+@permission_required_with_403("collection.change_collection")
 def edit(request, pid=None):
     '''Create a new or edit an existing Fedora
     :class:`~keep.collection.models.CollectionObject`.  If a pid is
@@ -167,13 +167,13 @@ def edit(request, pid=None):
     return render(request, 'collection/edit.html', context)
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def history(request, pid):
     return history_view(request, pid, type=CollectionObject,
                         template_name='collection/history.html')
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def search(request):
     '''Search for :class:`~keep.collection.models.CollectionObject`
     instances.
@@ -232,7 +232,7 @@ def search(request):
     return render(request, 'collection/search.html', context)
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def list_archives(request, archive=None):
     '''List all top-level archive collections, with the total count of
     :class:`~keep.collection.models.CollectionObject` in each archive.
@@ -290,6 +290,10 @@ def list_archives(request, archive=None):
     q = CollectionObject.item_collection_query()
     q = q.facet_by('archive_id', sort='count', mincount=1) \
          .paginate(rows=0)
+
+    # TODO: when possible (solr 4?), we should filter collections
+    # based on user permissions (i.e., restrict to researcher-only collections)
+
     facets = q.execute().facet_counts.facet_fields
 
     solr = solr_interface()
@@ -332,7 +336,7 @@ def list_archives(request, archive=None):
         {'archives': archive_info.values(), 'find_collection': FindCollection()})
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def browse_archive(request, archive):
     '''Browse a list of :class:`~keep.collection.models.CollectionObject`
     that belong to a specific archive.
@@ -391,14 +395,14 @@ def browse_archive(request, archive):
          'find_collection': FindCollection()})
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
     return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_403("collection.view_collection")
 def view_audit_trail(request, pid):
     'Access XML audit trail for a collection object'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -407,7 +411,7 @@ def view_audit_trail(request, pid):
                            repo=Repository(request=request))
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required_with_403("common.arrangement_allowed")
 def simple_edit(request, pid=None):
     ''' Edit an existing Fedora
     :class:`~keep.collection.models.SimpleCollection`.  If a pid is
@@ -475,7 +479,7 @@ def _objects_by_type(type_uri, type=None):
         yield repo.get_object(pid=pid, type=type)
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required_with_403("common.arrangement_allowed")
 def simple_browse(request):
     response_code = None
     context = {}
@@ -498,7 +502,7 @@ def simple_browse(request):
     return response
 
 
-@permission_required("collection.view_collection")
+@permission_required_with_ajax("collection.view_collection")
 def collection_suggest(request):
     '''Suggest view for collections, for use with use with `JQuery UI
     Autocomplete`_ widget.  Searches for collections on all of the

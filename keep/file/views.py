@@ -20,7 +20,8 @@ from django.utils.safestring import mark_safe
 
 from eulcommon.djangoextras.http import HttpResponseUnsupportedMediaType, \
     HttpResponseSeeOtherRedirect
-from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax
+from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax, \
+    permission_required_with_403
 from eulfedora.models import FileDatastreamObject
 from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.views import raw_datastream, raw_audit_trail
@@ -376,7 +377,7 @@ def ajax_upload(request):
     return HttpResponse(ingest_file, content_type='text/plain')
 
 
-@permission_required("file.add_disk_image")
+@permission_required_with_403("file.add_disk_image")
 def largefile_ingest(request):
     '''Large-file ingest.  On GET, displays a form allowing user to
     select a BagIt that has been uploaded to the configured large-file
@@ -527,7 +528,7 @@ def largefile_ingest(request):
     return render(request, template_name, context)
 
 
-@permission_required("file.view_disk_image")
+@permission_required_with_403("file.view_disk_image")
 def view(request, pid):
     '''View a single repository item.
 
@@ -540,7 +541,7 @@ def view(request, pid):
                 kwargs={'pid': pid}))
 
 
-@permission_required("file.change_disk_image")
+@permission_required_with_403("file.change_disk_image")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.file.models.DiskImage`.'''
     # FIXME: should be generic file (?) or possibly one of several supported files
@@ -636,7 +637,7 @@ class DatastreamFile(object):
         return self.label
 
 
-@permission_required("file.manage_disk_image_supplements")
+@permission_required_with_403("file.manage_disk_image_supplements")
 def manage_supplements(request, pid):
     '''Manage supplemental file datastreams associated with a
     :class:`~keep.file.models.DiskImage`.'''
@@ -732,7 +733,7 @@ def manage_supplements(request, pid):
 ### FIXME: these views are currently redundant; consolidate all and make the
 # file versions the common ones?
 
-@permission_required("file.view_disk_image")
+@permission_required_with_403("file.view_disk_image")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
@@ -747,7 +748,7 @@ def view_datastream(request, pid, dsid):
     return response
 
 
-@permission_required("file.view_disk_image")
+@permission_required_with_403("file.view_disk_image")
 def view_audit_trail(request, pid):
     'Access XML audit trail'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -755,7 +756,7 @@ def view_audit_trail(request, pid):
     return raw_audit_trail(request, pid, repo=Repository(request=request))
 
 
-@permission_required("file.view_disk_image")
+@permission_required_with_403("file.view_disk_image")
 def history(request, pid):
     'Display human-readable audit trail information.'
     return history_view(request, pid, type=DiskImage, template_name='file/history.html')

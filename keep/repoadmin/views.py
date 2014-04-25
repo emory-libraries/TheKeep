@@ -1,17 +1,16 @@
 import logging
 from datetime import date, timedelta
-from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDict, SortedDict
+
+from eulcommon.djangoextras.auth import login_required_with_ajax
 from eulcommon.searchutil import pages_to_show, parse_search_terms
 
 from keep.accounts.utils import filter_by_perms
-from keep.arrangement.models import ArrangementObject
-from keep.audio.models import AudioObject
-from keep.collection.models import SimpleCollection
 from keep.common.models import rights_access_terms_dict
 from keep.common.utils import solr_interface
 from keep.repoadmin.forms import KeywordSearch
@@ -24,7 +23,7 @@ json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 # sets ?next=/audio/ but does not return back here
 
 
-@login_required
+@staff_member_required
 def dashboard(request):
     '''Admin dashboard page for staff users, with links to main
     functionality and date/month facets linking to searches for
@@ -90,7 +89,7 @@ def dashboard(request):
                   'month_ago': month_ago})
 
 
-@login_required
+@staff_member_required
 def keyword_search(request):
     '''Combined keyword search across all :mod:`keep` repository
     items.
@@ -267,7 +266,7 @@ def keyword_search(request):
     return render(request, 'repoadmin/results.html', ctx)
 
 
-@login_required
+@login_required_with_ajax
 def keyword_search_suggest(request):
     '''Suggest helper for keyword search.  If the search string ends
     with a recognized field name with an optional value,
