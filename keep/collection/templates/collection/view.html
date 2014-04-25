@@ -17,7 +17,7 @@
 
             {# breadcrumb with archive/collection hierarchy #}
             <ol class="breadcrumb">
-                <li><a href="{% url 'collection:list-archives' %}">Archives</a></li>
+                <li><a href="{% url 'collection:list-archives' %}">Libraries</a></li>
                 {% with archive=collection.collection %}
                   <li><a href="{% url 'collection:browse-archive' archive=archive.mods.content.short_name|lower %}">{{ archive.label }}</a></li>
                 {% endwith %}
