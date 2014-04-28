@@ -569,7 +569,7 @@ def edit(request, pid):
                         (reverse('file:edit', args=[pid]), pid))
                 # save & continue functionality - same as collection edit
                 if '_save_continue' not in request.POST:
-                    return HttpResponseSeeOtherRedirect(reverse('site-index'))
+                    return HttpResponseSeeOtherRedirect(reverse('repo-admin:dashboard'))
                 # otherwise - fall through to display edit form again
 
             # form was posted but not valid

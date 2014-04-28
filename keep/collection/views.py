@@ -119,7 +119,7 @@ def edit(request, pid=None):
 
                 # form submitted via normal save button - redirect to main audio page
                 if '_save_continue' not in request.POST:
-                    return HttpResponseSeeOtherRedirect(reverse('site-index'))
+                    return HttpResponseSeeOtherRedirect(reverse('repo-admin:dashboard'))
 
                 # otherwise, form was submitted via "save and continue editing"
                 else:

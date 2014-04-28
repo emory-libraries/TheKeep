@@ -40,7 +40,7 @@ def index(request):
     # view even exists, but other arrangement views reference it, so
     # leaving at is for now.  Simply redirect to the main site index
     # for now.
-    return HttpResponseSeeOtherRedirect(reverse('site-index'))
+    return HttpResponseSeeOtherRedirect(reverse('repo-admin:dashboard'))
 
 
 @permission_required_with_403("arrangement.change_arrangement")
