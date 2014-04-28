@@ -11,7 +11,9 @@
 {% endif %}
 
 
+{% if perms.collection.add_collection %}
 <p><a href="{% url 'collection:new' %}">create a new collection</a></p>
+{% endif %}
 <p><a href="{% url 'tasks:recent' %}">status of recent tasks (audio conversions, batch status update)</a></p>
 <p><a href="{% url 'audio:feed-list' %}">iTunes podcast feeds</a></p>
 
