@@ -1,4 +1,12 @@
 import operator
+
+from django.conf import settings
+from django.contrib.auth import REDIRECT_FIELD_NAME
+from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.template import RequestContext
+from django.template.loader import get_template
+from django.utils.http import urlquote
+
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.audio.models import AudioObject
 from keep.arrangement.models import ArrangementObject
@@ -57,7 +65,15 @@ def filter_by_perms(solrq, user):
         solrq = solrq.filter(content_model=AudioObject.AUDIO_CONTENT_MODEL,
                              has_access_copy=True,
                              researcher_access=True)
-
-
     return solrq
+
+
+def prompt_login_or_403(request):
+    if not request.user.is_authenticated():
+        return HttpResponseRedirect('%s?%s=%s' % (settings.LOGIN_URL,
+            REDIRECT_FIELD_NAME, urlquote(request.get_full_path())))
+    else:
+        tpl = get_template('403.html')
+        return HttpResponseForbidden(tpl.render(RequestContext(request)))
+
 

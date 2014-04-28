@@ -3,17 +3,35 @@ from urllib import urlencode
 from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 
+from eulcommon.djangoextras.auth import user_passes_test_with_403
+
 from keep.accounts.utils import filter_by_perms
 from keep.audio.models import AudioObject
 from keep.search.forms import SearchForm
 from keep.common.utils import solr_interface
 
-# placeholder for new public-facing site index page
+# NOTE: minimum permission to access these researcher
+# search views is audio.view_researcher_audio
+
+# TODO: need to ensure staff also have that permission (?) or check that
+# they have general audio view permissions
+
+def audio_access(user):
+    '''Check that a user *either* has general view audio access or the
+    more limited access to view researcher audio.  Views that use this
+    permission decorator should handle the variation in permissions access
+    within the view logic.
+    '''
+    return user.has_perm('audio.view_audio') or \
+           user.has_perm('audio.view_researcher_audio')
+
+@user_passes_test_with_403(audio_access)
 def site_index(request):
     form = SearchForm()
     return render(request, 'search/site_index.html',
         {'form': form})
 
+@user_passes_test_with_403(audio_access)
 def search(request):
     form = SearchForm(request.GET)
     ctx = {'form': form}
@@ -25,8 +43,9 @@ def search(request):
         search_terms = [v for k, v in search_terms]
 
         solr = solr_interface()
-        # restrict to audio for now since that is the only content type
-        # we support in the researcher Keep frontend search
+
+        # NOTE: restrict to audio for now since that is the only
+        # content type currently supported for researcher access
         base_search_opts = {
             # restrict to audio items by content model
             'content_model': AudioObject.AUDIO_CONTENT_MODEL

@@ -14,6 +14,7 @@ from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulfedora.util import RequestFailed, PermissionDenied
 
+from keep.accounts.utils import prompt_login_or_403
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject
 from keep.audio.feeds import feed_items
@@ -24,12 +25,22 @@ logger = logging.getLogger(__name__)
 
 
 
-@permission_required_with_403("audio.view_audio")
 def view(request, pid):
     '''View a single :class:`~keep.audio.models.AudioObject`.
+    User must either have general view audio permissions, or if they have
+    view researcher audio, the object must be researcher accessible
+    (based on rights codes).
     '''
     repo = Repository(request=request)
     obj = repo.get_object(pid, type=AudioObject)
+
+    # user either needs view audio permissions OR
+    # if they can view researcher audio and object must be researcher-accessible
+    if not request.user.has_perm('audio.view_audio') and \
+       not (request.user.has_perm('audio.view_researcher_audio') and \
+       obj.researcher_access):
+        return prompt_login_or_403(request)
+
     return render(request, 'audio/view.html', {'resource': obj})
 
 
@@ -149,6 +160,15 @@ def download_audio(request, pid, type, extension=None):
     repo = Repository(request=request)
     # retrieve the object so we can use it to set the download filename
     obj = repo.get_object(pid, type=AudioObject)
+
+    # user either needs download audio permissions OR
+    # if they can download researcher audio and object must be researcher-accessible
+    if not request.user.has_perm('audio.download_audio') and \
+       not (request.user.has_perm('audio.download_researcher_audio') and \
+          obj.researcher_access):
+        return prompt_login_or_403(request)
+
+
     # determine which datastream is requsted & set datastream id & file extension
     if type == 'original':
         dsid = AudioObject.audio.id

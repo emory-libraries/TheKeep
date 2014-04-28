@@ -12,6 +12,10 @@
 
 {% block content-body %}
 
+{% if request.user.is_anonymous_researcher %}
+<p class="bg-warning messages">This content is not accessible to researchers</p>
+{% endif %}
+
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
 {% endif %}
