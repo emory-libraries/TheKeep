@@ -7,7 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDict, SortedDict
 
-from eulcommon.djangoextras.auth import login_required_with_ajax
+from eulcommon.djangoextras.auth import login_required_with_ajax, user_passes_test_with_403
 from eulcommon.searchutil import pages_to_show, parse_search_terms
 
 from keep.accounts.utils import filter_by_perms
@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
-# FIXME: should this be @permission_required("common.marbl_allowed") ?
-# sets ?next=/audio/ but does not return back here
+
+def is_staff(user):
+    return user.is_staff
 
 
-@staff_member_required
+@user_passes_test_with_403(is_staff)
 def dashboard(request):
     '''Admin dashboard page for staff users, with links to main
     functionality and date/month facets linking to searches for
@@ -89,7 +90,7 @@ def dashboard(request):
                   'month_ago': month_ago})
 
 
-@staff_member_required
+@user_passes_test_with_403(is_staff)
 def keyword_search(request):
     '''Combined keyword search across all :mod:`keep` repository
     items.

@@ -3,13 +3,14 @@ import logging
 
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
-from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, Http404
 from django.shortcuts import render
 from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 
+from eulcommon.djangoextras.auth import permission_required_with_403, \
+    permission_required_with_ajax
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulcommon.searchutil import pages_to_show
 from eulcm.models import boda
@@ -33,7 +34,7 @@ finding_aids_url = 'https://findingaids.library.emory.edu/documents/'
 finding_aid_id = 'rushdie1000'
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required_with_403("common.arrangement_allowed")
 def index(request):
     # FIXME/TODO: there is no arrangement index; not sure why this
     # view even exists, but other arrangement views reference it, so
@@ -42,7 +43,7 @@ def index(request):
     return HttpResponseSeeOtherRedirect(reverse('site-index'))
 
 
-@permission_required("arrangement.change_arrangement")
+@permission_required_with_403("arrangement.change_arrangement")
 def edit(request, pid):
     '''
     Edit view for an arrangement object. Currently, create is not
@@ -113,7 +114,7 @@ def edit(request, pid):
                   {'obj': obj, 'form': form, 'series_data': series_data})
 
 
-@permission_required("arrangement.view_arrangement")
+@permission_required_with_403("arrangement.view_arrangement")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
@@ -128,7 +129,7 @@ def view_datastream(request, pid, dsid):
     return response
 
 
-@permission_required("arrangement.view_arrangement")
+@permission_required_with_403("arrangement.view_arrangement")
 def view_audit_trail(request, pid):
     'Access XML audit trail'
     # initialize local repo with logged-in user credentials & call eulfedora view
@@ -136,14 +137,14 @@ def view_audit_trail(request, pid):
                            repo=Repository(request=request))
 
 
-@permission_required("common.arrangement_allowed")
+@permission_required_with_403("common.arrangement_allowed")
 def history(request, pid):
     'Display human-readable audit trail information.'
     return history_view(request, pid, type=ArrangementObject,
                         template_name='arrangement/history.html')
 
 
-@permission_required("arrangement.view_arrangement")
+@permission_required_with_ajax("arrangement.view_arrangement")
 @csrf_exempt
 def get_selected_series_data(request, id):
     '''
@@ -190,7 +191,7 @@ def get_selected_series_data(request, id):
     return HttpResponse(series_data, content_type='application/json')
 
 
-@permission_required("arrangement.view_arrangement")
+@permission_required_with_403("arrangement.view_arrangement")
 def view_item(request, pid):
     '''
     Display information about a single object.  Currently
