@@ -495,7 +495,10 @@ class AudioObject(DigitalObject):
             if self.collection.mods.content.source_id is not None:
                 data['collection_source_id'] = self.collection.mods.content.source_id
 
-            data['collection_id'] = self.collection.uri
+            # FIXME: previously indexing URI; is this needed for any reason or can we
+            # use pid?  (needs to match collection index pid field for solr join)
+            # data['collection_id'] = self.collection.uri
+            data['collection_id'] = self.collection.pid
             try:
                 # pull parent & archive collection objects directly from fedora
                 parent = CollectionObject(self.api, self.collection.uri)
