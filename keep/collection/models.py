@@ -132,7 +132,8 @@ class Collection(models.Model):
     class Meta:
         permissions = (
             ("view_collection", "Can view, search, and browse collection objects"),
-            # ("view_researcher_collection", "Search, view collections with researcher-accessible content"),
+            # NOTE: can't easily filter collections by items until solr 4+
+            ("view_researcher_collection", "Search, view collections with researcher-accessible content"),
         )
 
 
@@ -187,6 +188,12 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
             self._update_dc()
 
         return super(CollectionObject, self).save(logMessage)
+
+    def solr_items_query(self):
+        'Solr query for all items in this collection'
+        solr = solr_interface()
+        # search for all items that belong to this collection
+        return solr.query(collection_id=self.pid)
 
     @staticmethod
     def archives(format=None):

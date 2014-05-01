@@ -16,12 +16,13 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 
 from eulcommon.djangoextras.auth import permission_required_with_403, \
-    permission_required_with_ajax
+    permission_required_with_ajax, user_passes_test_with_403
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulcommon.searchutil import search_terms
 from eulfedora.util import RequestFailed
 
+from keep.accounts.utils import filter_by_perms, prompt_login_or_403
 from keep.collection.forms import CollectionForm, CollectionSearch, \
   SimpleCollectionEditForm, FindCollection
 from keep.collection.models import CollectionObject, SimpleCollection
@@ -36,7 +37,17 @@ logger = logging.getLogger(__name__)
 json_serializer = DjangoJSONEncoder(ensure_ascii=False, indent=2)
 
 
-@permission_required_with_403("collection.view_collection")
+def view_some_collections(user):
+    '''Check that a user *either* can view all collections or has the
+    more limited access to view collecions that contain researcher-accessible
+    content.  Views that use this test with permission decorator should handle
+    the variation in permissions access within the view logic.
+    '''
+    return user.has_perm('collection.view_collection') or \
+           user.has_perm('collection.view_researcher_collection')
+
+
+@user_passes_test_with_403(view_some_collections)
 def view(request, pid):
     '''View a single :class:`~keep.collection.models.CollectionObject`,
     with a paginated list of all items in that collection.
@@ -47,16 +58,21 @@ def view(request, pid):
     if not obj.exists or not obj.has_requisite_content_models:
         raise Http404
 
-    solr = solr_interface()
     # search for all items that belong to this collection
-    q = solr.query(collection_id=obj.uri) \
-            .sort_by('date_created') \
-            .sort_by('date_issued') \
-            .sort_by('title_exact')
-    # FIXME: more meaningful sort option?
-    # currently don't have location/series...
-    # TODO: filter search based on user permissions
-    # - type of object; researcher accessible
+    q = obj.solr_items_query()
+    q = q.sort_by('date_created') \
+         .sort_by('date_issued') \
+         .sort_by('title_exact')
+    # filter by logged-in user permissions
+    # (includes researcher-accessible content filter when appropriate)
+    q = filter_by_perms(q, request.user)
+
+    # if current user can only view researcher-accesible collections and
+    # no items were found, they don't have permission to view this collection
+    if not request.user.has_perm('collection.view_collection') and \
+           request.user.has_perm('collection.view_researcher_collection') and \
+           q.count() == 0:
+       return prompt_login_or_403(request)
 
     # paginate the solr result set
     paginator = Paginator(q, 30)
@@ -232,7 +248,7 @@ def search(request):
     return render(request, 'collection/search.html', context)
 
 
-@permission_required_with_403("collection.view_collection")
+@user_passes_test_with_403(view_some_collections)
 def list_archives(request, archive=None):
     '''List all top-level archive collections, with the total count of
     :class:`~keep.collection.models.CollectionObject` in each archive.
@@ -291,8 +307,11 @@ def list_archives(request, archive=None):
     q = q.facet_by('archive_id', sort='count', mincount=1) \
          .paginate(rows=0)
 
-    # TODO: when possible (solr 4?), we should filter collections
-    # based on user permissions (i.e., restrict to researcher-only collections)
+     # - depending on permissions, restrict to collections with researcher audio
+    if not request.user.has_perm('collection.view_collection') and \
+           request.user.has_perm('collection.view_researcher_collection'):
+        q = q.join('collection_id', 'pid', researcher_access=True)
+        q = q.join('collection_id', 'pid', has_access_copy=True)
 
     facets = q.execute().facet_counts.facet_fields
 
@@ -336,7 +355,7 @@ def list_archives(request, archive=None):
         {'archives': archive_info.values(), 'find_collection': FindCollection()})
 
 
-@permission_required_with_403("collection.view_collection")
+@user_passes_test_with_403(view_some_collections)
 def browse_archive(request, archive):
     '''Browse a list of :class:`~keep.collection.models.CollectionObject`
     that belong to a specific archive.
@@ -355,7 +374,22 @@ def browse_archive(request, archive):
 
     q = CollectionObject.item_collection_query()
     # restrict to collections in this archive, sort by collection number
-    q = q.filter(archive_id='info:fedora/%s' % archive_pid).sort_by('source_id')
+    q = q.query(archive_id='info:fedora/%s' % archive_pid).sort_by('source_id')
+
+     # - depending on permissions, restrict to collections with researcher audio
+    if not request.user.has_perm('collection.view_collection') and \
+           request.user.has_perm('collection.view_researcher_collection'):
+        q = q.join('collection_id', 'pid', researcher_access=True)
+        q = q.join('collection_id', 'pid', has_access_copy=True)
+
+    print unicode(q.query_obj)
+
+    # if no collections are found with current restraints and user
+    # only has view_researcher_collection, forbid access to this page
+    if not request.user.has_perm('collection.view_collection') and \
+           request.user.has_perm('collection.view_researcher_collection') and \
+           q.count() == 0:
+       return prompt_login_or_403(request)
 
     # if a collection number is specified in url params, filter query
     collection_filter = None
