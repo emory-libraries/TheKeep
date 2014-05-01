@@ -520,7 +520,7 @@ class DiskImage(DigitalObject):
             if self.collection.mods.content.source_id is not None:
                 data['collection_source_id'] = self.collection.mods.content.source_id
 
-            data['collection_id'] = self.collection.uri
+            data['collection_id'] = self.collection.pid
             data['collection_label'] = self.collection.label
 
         # include resolvable ARK if available

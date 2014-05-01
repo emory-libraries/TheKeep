@@ -150,7 +150,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             # collection_source_id
             if collection.mods.content.source_id is not None:  # allowed to be 0
                 data['collection_source_id'] = collection.mods.content.source_id
-            data['collection_id'] = collection.uri
+            data['collection_id'] = collection.pid
             try:
                 # pull parent & archive collection objects directly from fedora
                 data['collection_label'] = collection.label
