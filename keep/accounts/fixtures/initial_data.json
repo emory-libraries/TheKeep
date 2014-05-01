@@ -1,69 +1,93 @@
 [
 {
-  "pk": 2,
-  "model": "auth.group",
+  "pk": 2, 
+  "model": "auth.group", 
   "fields": {
-    "name": "Born Digital",
+    "name": "Born Digital", 
     "permissions": [
       [
-        "add_arrangement",
-        "arrangement",
+        "add_arrangement", 
+        "arrangement", 
         "arrangement"
-      ],
+      ], 
       [
-        "change_arrangement",
-        "arrangement",
+        "change_arrangement", 
+        "arrangement", 
         "arrangement"
-      ],
+      ], 
       [
-        "view_arrangement",
-        "arrangement",
+        "view_arrangement", 
+        "arrangement", 
         "arrangement"
-      ],
+      ], 
       [
-        "view_collection",
-        "collection",
+        "view_collection", 
+        "collection", 
         "collection"
-      ],
+      ], 
       [
-        "arrangement_allowed",
-        "common",
+        "arrangement_allowed", 
+        "common", 
         "permissions"
-      ],
+      ], 
       [
-        "add_application",
-        "file",
+        "add_application", 
+        "file", 
         "application"
-      ],
+      ], 
       [
-        "change_application",
-        "file",
+        "change_application", 
+        "file", 
         "application"
-      ],
+      ], 
       [
-        "add_disk_image",
-        "file",
+        "add_disk_image", 
+        "file", 
         "disk_image"
-      ],
+      ], 
       [
-        "change_disk_image",
-        "file",
+        "change_disk_image", 
+        "file", 
         "disk_image"
-      ],
+      ], 
       [
-        "delete_disk_image",
-        "file",
+        "delete_disk_image", 
+        "file", 
         "disk_image"
-      ],
+      ], 
       [
-        "manage_disk_image_supplements",
-        "file",
+        "manage_disk_image_supplements", 
+        "file", 
         "disk_image"
-      ],
+      ], 
       [
-        "view_disk_image",
-        "file",
+        "view_disk_image", 
+        "file", 
         "disk_image"
+      ]
+    ]
+  }
+},
+{
+  "pk": 3, 
+  "model": "auth.group", 
+  "fields": {
+    "name": "ResearcherAccess", 
+    "permissions": [
+      [
+        "download_researcher_audio", 
+        "audio", 
+        "audio"
+      ], 
+      [
+        "view_researcher_audio", 
+        "audio", 
+        "audio"
+      ], 
+      [
+        "view_researcher_collection", 
+        "collection", 
+        "collection"
       ]
     ]
   }
