@@ -65,11 +65,19 @@ def search(request):
         else:
             q = q.sort_by('title_exact')
 
-        # if a collection search term is specified
+        # if a collection search term is specified, filter
         if 'collection' in search_opts and search_opts['collection']:
             collection = search_opts['collection']
             # search on *either* collection name or collection number
             q = q.query(solr.Q(collection_label=collection) | solr.Q(collection_source_id=collection))
+
+        # if a library is specified, filter by archive id on related collection
+        if 'library' in search_opts and search_opts['library']:
+            library = search_opts['library']
+            # NOTE: requires a join query; items belong to collections, which belong
+            # to libraries; join on pid->collection id in order to filter on
+            # archive id property on the associated collection object
+            q = q.join('pid', 'collection_id', archive_id=library)
 
         # date search
         if search_opts.get('start_date', None) or search_opts.get('end_date', None):
