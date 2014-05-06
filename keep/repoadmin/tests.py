@@ -64,7 +64,7 @@ class SolrSearchFieldTest(TestCase):
 
 
 @patch('keep.repoadmin.views.solr_interface', spec=sunburnt.SolrInterface)
-class SearchViewsTest(KeepTestCase):
+class RepoAdminViewsTest(KeepTestCase):
     fixtures = ['users']
 
     def setUp(self):
