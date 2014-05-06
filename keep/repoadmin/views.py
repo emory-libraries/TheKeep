@@ -7,7 +7,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.datastructures import MultiValueDict, SortedDict
 
-from eulcommon.djangoextras.auth import login_required_with_ajax, user_passes_test_with_403
+from eulcommon.djangoextras.auth import user_passes_test_with_403, \
+    user_passes_test_with_ajax
 from eulcommon.searchutil import pages_to_show, parse_search_terms
 
 from keep.accounts.utils import filter_by_perms
@@ -267,7 +268,7 @@ def keyword_search(request):
     return render(request, 'repoadmin/results.html', ctx)
 
 
-@login_required_with_ajax
+@user_passes_test_with_ajax(is_staff)
 def keyword_search_suggest(request):
     '''Suggest helper for keyword search.  If the search string ends
     with a recognized field name with an optional value,
@@ -350,6 +351,8 @@ def keyword_search_suggest(request):
 
             solr = solr_interface()
             facetq = solr.query().paginate(rows=0)
+            # filter by current user permssions
+            facetq = filter_by_perms(facetq, request.user)
             # return the 15 most common terms in the requested facet field
             # with a specified prefix
             facetq = facetq.facet_by(facet_field, prefix=prefix,

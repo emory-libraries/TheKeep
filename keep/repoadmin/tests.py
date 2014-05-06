@@ -86,7 +86,7 @@ class RepoAdminViewsTest(KeepTestCase):
 
         mocksolr.query.return_value = mocksolr.query
         for method in ['query', 'facet_by', 'sort_by', 'field_limit',
-                       'exclude']:
+                       'filter', 'exclude']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # no guest access
@@ -125,26 +125,9 @@ class RepoAdminViewsTest(KeepTestCase):
         # - include relevance score in return values
         mocksolr.query.field_limit.assert_called_with(score=True)
 
-        #remove superuser from user and add perms
-        self.user.is_superuser = False
-
-        #exclude Born Digital content
-        self.user.user_permissions = [self.audio_perm]
-        self.user.save()
-
-        self.client.login(**ADMIN_CREDENTIALS)
-        response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
-        args = [c[1]['content_model'] for c in mocksolr.query.exclude.call_args_list]
-        self.assertIn(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, args)
-        self.assertIn(SimpleCollection.COLLECTION_CONTENT_MODEL, args)
-
-        #exclude Audio content
-        self.user.user_permissions = [self.bd_perm]
-        self.user.save()
-
-        self.client.login(**ADMIN_CREDENTIALS)
-        response = self.client.get(search_url, {'keyword': 'fantabulous expurgation'})
-        mocksolr.query.exclude.assert_called_with(content_model=AudioObject.AUDIO_CONTENT_MODEL)
+        # NOTE: no longer testing content filtering based on permissions,
+        # since that logic is now handled in accounts.utils.filter_by_perms
+        # and is not specific to this view
 
     @patch('keep.repoadmin.views.Paginator')
     def test_search_by_user(self, mockpaginator, mocksolr_interface):
@@ -152,7 +135,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -190,7 +173,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -230,7 +213,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
         # set mock facet results via paginator
         mockpage = mockpaginator.return_value.page.return_value
@@ -281,7 +264,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'paginate']:
+        for method in ['query', 'facet_by', 'paginate', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -346,7 +329,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -363,7 +346,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'paginate']:
+        for method in ['query', 'facet_by', 'paginate', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
