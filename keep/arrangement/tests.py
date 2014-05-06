@@ -592,7 +592,7 @@ class ArrangementObjectTest(KeepTestCase):
         self.assertEqual('born-digital', idx_data['object_type'])
         self.assertEqual(self.arr.pid, idx_data['pid'])
         self.assertIn(self.arr.owner, idx_data['owner'])
-        self.assertEquals(self.arr.collection.uri, idx_data['collection_id'])
+        self.assertEquals(self.arr.collection.pid, idx_data['collection_id'])
         self.assertEquals(self.arr.collection.mods.content.source_id, idx_data['collection_source_id'])
 
 class EmailMessageTest(KeepTestCase):

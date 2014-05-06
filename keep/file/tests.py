@@ -1281,7 +1281,7 @@ class DiskImageTest(KeepTestCase):
             mockcoll.mods.content.source_id = 0
 
             desc_data = obj.index_data()
-            self.assertEqual(obj.collection.uri, desc_data['collection_id'],
+            self.assertEqual(obj.collection.pid, desc_data['collection_id'],
                              'parent collection object id should be set in index data')
             self.assertEqual(mockcoll.label, desc_data['collection_label'],
                              'parent collection object label should be set in index data')
