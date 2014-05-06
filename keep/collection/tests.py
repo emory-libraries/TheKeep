@@ -935,14 +935,15 @@ class CollectionViewsTest(KeepTestCase):
 
         # initial solr query generated in collection objet class, so must be patched there
         with patch('keep.collection.views.CollectionObject.item_collection_query') as \
-             mock_item_collection_query:
-             mock_item_collection_query.return_value = mocksolr.query
+          mock_item_collection_query:
+            mock_item_collection_query.return_value = mocksolr.query
+            response = self.client.get(browse_url)
 
-             response = self.client.get(browse_url)
+            # check solr query/filters
+            mocksolr.query.query.assert_called_with(archive_id='info:fedora/%s' % settings.PID_ALIASES['marbl'])
+            mocksolr.query.sort_by.assert_called_with('source_id')
 
-        # check solr query/filters
-        mocksolr.query.filter.assert_called_with(archive_id='info:fedora/%s' % settings.PID_ALIASES['marbl'])
-        mocksolr.query.sort_by.assert_called_with('source_id')
+            # TODO: test join queries?
 
         self.assertEqual(mockpage, response.context['collections'],
             'paginated solr result should be set as collections in response context')
@@ -1105,15 +1106,15 @@ class CollectionViewsTest(KeepTestCase):
         solrquery.query.assert_any_call(['1000', 'rushd*'])
         solrquery.query.assert_any_call(['1000', 'rushd'])
 
-    @patch('keep.collection.views.solr_interface')
+    @patch('keep.collection.views.CollectionObject.solr_items_query')
     @patch('keep.collection.views.Paginator')
-    def test_view(self, mockpaginator, mock_solr_interface):
+    def test_view(self, mockpaginator, mocksolr_items):
         # configure solr response for collection item query
-        mocksolr = mock_solr_interface.return_value
-        mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'field_limit', 'sort_by']:
-            getattr(mocksolr.query, method).return_value = mocksolr.query
-        solr_response = mocksolr.query.execute.return_value
+        mockquery = mocksolr_items.return_value
+        mockquery.return_value = mockquery
+        for method in ['query', 'field_limit', 'sort_by', 'filter']:
+            getattr(mockquery, method).return_value = mockquery
+        solr_response = mockquery.execute.return_value
         solr_response.result.numFound = 0
         # set mock results via paginator
         mockpage = NonCallableMock()
@@ -1139,11 +1140,11 @@ class CollectionViewsTest(KeepTestCase):
         coll_view_url = reverse('collection:view', kwargs={'pid': obj.pid})
         response = self.client.get(coll_view_url)
         # inspect solr query
-        mocksolr.query.assert_called_with(collection_id=obj.uri)
+        # NOTE: not testing collection filter because that happens in model method
         # FIXME: worth testing order here?
-        mocksolr.query.sort_by.assert_any_call('date_created')
-        mocksolr.query.sort_by.assert_any_call('date_issued')
-        mocksolr.query.sort_by.assert_any_call('title_exact')
+        mockquery.sort_by.assert_any_call('date_created')
+        mockquery.sort_by.assert_any_call('date_issued')
+        mockquery.sort_by.assert_any_call('title_exact')
         self.assertContains(response, obj.mods.content.title,
             msg_prefix='collection view should include collection title')
         self.assertContains(response, obj.mods.content.source_id,
