@@ -133,7 +133,7 @@ class Collection(models.Model):
         permissions = (
             ("view_collection", "Can view, search, and browse collection objects"),
             # NOTE: can't easily filter collections by items until solr 4+
-            ("view_researcher_collection", "Search, view collections with researcher-accessible content"),
+            ("view_researcher_collection", "Search, view collections with researcher content"),
         )
 
 
