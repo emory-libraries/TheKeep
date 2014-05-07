@@ -1,6 +1,7 @@
 from mock import patch, NonCallableMock, MagicMock
 from sunburnt import sunburnt
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator
 from django.test import TestCase
@@ -155,7 +156,6 @@ class SearchViewsTest(KeepTestCase):
 
         researchip.delete()
 
-
     @patch('keep.search.views.Paginator', spec=Paginator)
     def test_search_bydate(self, mockpaginator, mocksolr_interface):
         solr = solr_interface()
@@ -209,6 +209,34 @@ class SearchViewsTest(KeepTestCase):
 
         researchip.delete()
 
+    @patch('keep.search.views.Paginator', spec=Paginator)
+    def test_search_bylibrary(self, mockpaginator, mocksolr_interface):
+        solr = solr_interface()
+        search_url = reverse('search:keyword')
+        mocksolr = mocksolr_interface.return_value
+        mocksolr.Q = MagicMock(solr.Q)
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+                       'exclude', 'filter', 'join']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+
+        # NOTE: currently uses info:fedora/ pid format for select, so use that here
+        libpid = 'info:fedora/%s' % settings.PID_ALIASES['marbl']
+        response = self.client.get(search_url, {'library': libpid})
+        # check solr query args
+        # - date should query dates created and issued explicitly
+        mocksolr.query.join.assert_called_with('pid', 'collection_id', archive_id=libpid)
+
+        self.assertContains(response,
+            '<option value="%s" selected="selected">Manuscript, Archives, and Rare Book Library</option>' % libpid,
+            html=True,
+            msg_prefix='library filter should be selected on result page form')
 
 
 class TestSearchTagsTemplateTags(TestCase):
