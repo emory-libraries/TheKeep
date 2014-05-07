@@ -156,6 +156,61 @@ class SearchViewsTest(KeepTestCase):
         researchip.delete()
 
 
+    @patch('keep.search.views.Paginator', spec=Paginator)
+    def test_search_bydate(self, mockpaginator, mocksolr_interface):
+        solr = solr_interface()
+        search_url = reverse('search:keyword')
+        mocksolr = mocksolr_interface.return_value
+        mocksolr.Q = MagicMock(solr.Q)
+
+        mocksolr.query.return_value = mocksolr.query
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+                       'exclude', 'filter']:
+            getattr(mocksolr.query, method).return_value = mocksolr.query
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+
+        # start date only
+        sdate = '1980'
+        response = self.client.get(search_url, {'start_date': sdate})
+        # check solr query args
+        # - date should query dates created and issued explicitly
+        mocksolr.Q.assert_any_call(date_created__gte=sdate)
+        mocksolr.Q.assert_any_call(date_issued__gte=sdate)
+
+        self.assertContains(response,
+            '<input class="form-control" id="id_start_date" name="start_date" placeholder="Start year" type="tel" value="%s">' % sdate,
+            html=True,
+            msg_prefix='start date search value should be displayed on result page via form')
+
+        # end date only
+        edate = '2001'
+        response = self.client.get(search_url, {'end_date': edate})
+        # check solr query args
+        # - date should query dates created and issued explicitly
+        search_edate = '%s-12-31' % edate
+        mocksolr.Q.assert_any_call(date_created__lte=search_edate)
+        mocksolr.Q.assert_any_call(date_issued__lte=search_edate)
+
+        self.assertContains(response,
+            '<input class="form-control" id="id_end_date" name="end_date" placeholder="End year" type="tel" value="%s">' % edate,
+            html=True,
+            msg_prefix='start date search value should be displayed on result page via form')
+
+        # start and end date together
+        response = self.client.get(search_url, {'start_date': sdate, 'end_date': edate})
+        # check solr query args
+        # - date should query dates created and issued explicitly
+        mocksolr.Q.assert_any_call(date_created__range=(sdate, search_edate))
+        mocksolr.Q.assert_any_call(date_issued__range=(sdate, search_edate))
+
+        researchip.delete()
+
+
+
 class TestSearchTagsTemplateTags(TestCase):
 
     def test_ark_id(self):

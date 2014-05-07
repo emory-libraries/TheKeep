@@ -113,8 +113,8 @@ def search(request):
             elif edate is not None:
                 # restrict by end date
                 # q = q.query(date__lte=str(edate))
-                created_q = solr.Q(date_created__lte=sdate)
-                issued_q = solr.Q(date_issued__lte=sdate)
+                created_q = solr.Q(date_created__lte=edate)
+                issued_q = solr.Q(date_issued__lte=edate)
 
             # NOTE: explicitly search on date created or date issued,
             # to avoid complications with other values in the generic date field
