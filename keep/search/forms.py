@@ -13,8 +13,7 @@ class SearchForm(forms.Form):
         help_text='One or more keywords; can include (but not start with) wildcards * and ?, and exact phrases in quotes.')
     collection = forms.CharField(required=False,
         help_text='Search by collection number or words in collection name',
-        widget=forms.TextInput(attrs={'placeholder':'Search by collection name or number',
-                                      'class': 'form-control'}))
+        widget=forms.TextInput(attrs={'placeholder':'Search by collection name or number'}))
     library = DynamicChoiceField(label="Library",  choices=archive_choices,
         initial='', required=False,
         help_text='Restrict search to materials owned by the specified library.')

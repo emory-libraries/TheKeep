@@ -61,7 +61,7 @@ def filter_by_perms(solrq, user):
     if not user.has_perm('audio.view_audio') and \
            user.has_perm('audio.view_researcher_audio'):
 
-        # FIXME: this filter will only work for audio content
+        # NOTE: this filter will only work for audio content
         solrq = solrq.filter(content_model=AudioObject.AUDIO_CONTENT_MODEL,
                              has_access_copy=True,
                              researcher_access=True)

@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.test import TestCase
 
 from keep.testutil import KeepTestCase
+from keep.accounts.models import ResearcherIP
 from keep.audio.models import AudioObject
 from keep.search.templatetags import search_tags
 from keep.common.utils import solr_interface
@@ -25,7 +26,20 @@ class SearchViewsTest(KeepTestCase):
                        'exclude', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
-        # testing guest access
+        # testing guest access - should be denied
+        response = self.client.get(search_url, {'keyword': '*invalid'})
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as guest, got %s' % \
+            (expected, got,search_url))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to search should redirect to login page')
 
         # invalid search term (leading wildcard)
         response = self.client.get(search_url, {'keyword': '*invalid'})
@@ -106,6 +120,8 @@ class SearchViewsTest(KeepTestCase):
 
         # TODO: test edit link is only present if user has permission to edit
 
+        researchip.delete()
+
     @patch('keep.search.views.Paginator', spec=Paginator)
     def test_search_collections(self, mockpaginator, mocksolr_interface):
         solr = solr_interface()
@@ -118,7 +134,11 @@ class SearchViewsTest(KeepTestCase):
                        'exclude', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
-        # assuming guest access for now
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+
 
         response = self.client.get(search_url, {'collection': '1000'})
         # check solr query args
@@ -132,6 +152,8 @@ class SearchViewsTest(KeepTestCase):
             '1000',
             html=True,
             msg_prefix='collection search value should be displayed on result page via form')
+
+        researchip.delete()
 
 
 class TestSearchTagsTemplateTags(TestCase):
