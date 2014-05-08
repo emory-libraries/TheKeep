@@ -21,9 +21,10 @@ def login(request):
         request.session['fedora_password'] = encrypt(request.POST.get('password'))
 
         next_url = request.POST.get('next', None)
-        if request.user.is_authenticated() and not next_url and \
-           request.user.is_staff:
-            # if the user is staff, redirect to admin dashboard
+        # for staff, if next url is not set OR if it is site home page,
+        # redirect to admin dashboard
+        if request.user.is_authenticated() and request.user.is_staff and \
+           (not next_url or next_url == '/'):
             next_url = reverse('repo-admin:dashboard')
             return HttpResponseSeeOtherRedirect(next_url)
 
