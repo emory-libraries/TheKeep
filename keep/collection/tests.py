@@ -19,6 +19,7 @@ from eulxml.xmlmap import mods
 from eulcm.xmlmap.mods import MODS
 
 from keep.audio.models import AudioObject
+from keep.accounts.models import ResearcherIP
 from keep.arrangement.models import ArrangementObject
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection import forms as cforms
@@ -770,7 +771,7 @@ class CollectionViewsTest(KeepTestCase):
 
         # setup mock collection solr query
         mockcollq = mockcollobj.item_collection_query.return_value
-        for method in ['query', 'facet_by', 'paginate']:
+        for method in ['query', 'facet_by', 'paginate', 'filter', 'join']:
             getattr(mockcollq, method).return_value = mockcollq
 
         # mock facets for collection counts
@@ -800,6 +801,25 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, '1 collection',
             msg_prefix='should display number of collections for eua')
 
+        # logout to test guest/researcher access
+        self.client.logout()
+        response = self.client.get(archive_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as guest, got %s' % \
+            (expected, got, archive_url))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to search should redirect to login page')
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+        response = self.client.get(archive_url)
+        # check that join query for researcher perms was called
+        mockcollq.join.assert_any_call('collection_id', 'pid', researcher_access=True)
+        mockcollq.join.assert_any_call('collection_id', 'pid', has_access_copy=True)
+        researchip.delete()
 
     @patch('keep.collection.views.solr_interface')
     @patch('keep.collection.views.CollectionObject')
@@ -911,7 +931,7 @@ class CollectionViewsTest(KeepTestCase):
         # setup solr mock
         mocksolr = mocksolr_interface.return_value
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'filter', 'sort_by']:
+        for method in ['query', 'filter', 'sort_by', 'join']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # set mock facet results via paginator
@@ -940,6 +960,7 @@ class CollectionViewsTest(KeepTestCase):
             response = self.client.get(browse_url)
 
             # check solr query/filters
+
             mocksolr.query.query.assert_called_with(archive_id='info:fedora/%s' % settings.PID_ALIASES['marbl'])
             mocksolr.query.sort_by.assert_called_with('source_id')
 
@@ -995,6 +1016,46 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'expected %s but got %s for browse archive with alias not in pid alias config' % \
             (expected, got))
+
+        # logout to test guest/researcher access
+        browse_url = reverse('collection:browse-archive', kwargs={'archive': 'marbl'})
+        self.client.logout()
+        response = self.client.get(browse_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as guest, got %s' % \
+            (expected, got, browse_url))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to search should redirect to login page')
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+        with patch('keep.collection.views.CollectionObject.item_collection_query') as \
+          mock_item_collection_query:
+            mock_item_collection_query.return_value = mocksolr.query
+            response = self.client.get(browse_url)
+
+            # check that join query for researcher perms was called
+            mocksolr.query.join.assert_any_call('collection_id', 'pid', researcher_access=True)
+            mocksolr.query.join.assert_any_call('collection_id', 'pid', has_access_copy=True)
+
+            # basic check that page renders (i.e., no permissions redirect)
+            self.assertContains(response, archive_obj.label,
+                msg_prefix='collections by archive page should include archive name')
+
+            # simulate no researcher accessible perms - should prompt login
+            mocksolr.query.count.return_value = 0
+            response = self.client.get(browse_url)
+            expected, got = 302, response.status_code
+            self.assertEqual(expected, got,
+                'Expected status code %s when accessing %s with no researcher-accessible content as researcher, got %s' % \
+                (expected, got, browse_url))
+            self.assert_(reverse('accounts:login') in response['Location'],
+                'non-researcher accessible archive should redirect to login page')
+
+        researchip.delete()
 
     def test_raw_datastream(self):
         obj = FedoraFixtures.rushdie_collection()
@@ -1165,6 +1226,14 @@ class CollectionViewsTest(KeepTestCase):
         self.assertContains(response, 'No items in this collection',
             msg_prefix='collection view indicate no items when solr returns no results')
 
+        # test 404
+        boguscoll_view_url = reverse('collection:view', kwargs={'pid': 'bogus:1234'})
+        response = self.client.get(boguscoll_view_url)
+        expected, got = 404, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s (non-existent pid), got %s' % \
+            (expected, boguscoll_view_url, got))
+
         # test with 1 simulated item in collection; setting mock results via paginator
         solr_response.result.numFound = 1
         mockpage.paginator.page_range = [1]
@@ -1192,6 +1261,38 @@ class CollectionViewsTest(KeepTestCase):
         # TODO: only present if user has edit permissions
         self.assertContains(response, reverse('audio:edit', kwargs={'pid': mockpage.object_list[0]['pid']}),
             msg_prefix='link to edit page for audio item title should be present')
+
+        # logout to test guest/researcher access
+        self.client.logout()
+        response = self.client.get(coll_view_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as guest, got %s' % \
+            (expected, coll_view_url, got))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to collection view should redirect to login page')
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+
+        response = self.client.get(coll_view_url)
+        # spot-check that response displays correctly
+        self.assertContains(response, '<h4><strong>1</strong> item in this collection</h4>',
+            html=True, msg_prefix='count of items in collection should be displayed')
+
+        # simulate no researcher-accessible content - should get pemrission error
+        mockquery.count.return_value = 0
+        response = self.client.get(coll_view_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing collection with no researcher-accessible items as researcher, got %s' % \
+            (expected, got))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to collection view should redirect to login page')
+
+        researchip.delete()
 
 
 class FindingAidTest(KeepTestCase):

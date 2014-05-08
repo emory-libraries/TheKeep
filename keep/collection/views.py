@@ -383,7 +383,8 @@ def browse_archive(request, archive):
         q = q.join('collection_id', 'pid', researcher_access=True)
         q = q.join('collection_id', 'pid', has_access_copy=True)
 
-    print unicode(q.query_obj)
+    logger.debug('Solr query for collections in %s: %s' % \
+                 (archive, unicode(q.query_obj)))
 
     # if no collections are found with current restraints and user
     # only has view_researcher_collection, forbid access to this page
