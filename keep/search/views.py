@@ -27,13 +27,14 @@ def audio_access(user):
 
 @user_passes_test_with_403(audio_access)
 def site_index(request):
-    form = SearchForm()
+    form = SearchForm(request.GET, user=request.user)
     return render(request, 'search/site_index.html',
         {'form': form})
 
 @user_passes_test_with_403(audio_access)
 def search(request):
-    form = SearchForm(request.GET)
+    form = SearchForm(request.GET, user=request.user)
+    # form.filter_libraries_by_user(request.user)
     ctx = {'form': form}
     if form.is_valid():
         search_terms = form.cleaned_data['keyword']
