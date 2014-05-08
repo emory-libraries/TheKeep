@@ -29,18 +29,17 @@ class SearchViewsTest(KeepTestCase):
 
         # testing guest access - should be denied
         response = self.client.get(search_url, {'keyword': '*invalid'})
-
-        # create researcher IP for localhost so anonymous access will be
-        # treated as anonymous researcher
-        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
-        researchip.save()
-
         expected, got = 302, response.status_code
         self.assertEqual(expected, got,
             'Expected status code %s when accessing %s as guest, got %s' % \
             (expected, got,search_url))
         self.assert_(reverse('accounts:login') in response['Location'],
             'guest access to search should redirect to login page')
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
 
         # invalid search term (leading wildcard)
         response = self.client.get(search_url, {'keyword': '*invalid'})
