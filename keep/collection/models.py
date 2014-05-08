@@ -347,7 +347,7 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
         data = {}
         archive = self.collection
         if archive is not None:
-            data['archive_id'] = archive.uri
+            data['archive_id'] = archive.pid
             try:
                 data['archive_label'] = archive.label
                 data['archive_short_name'] = archive.mods.content.short_name

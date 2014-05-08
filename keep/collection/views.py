@@ -267,7 +267,7 @@ def list_archives(request, archive=None):
 
     # if params are set, search for collection
     if 'archive' in request.GET and 'collection' in request.GET:
-        form = FindCollection(request.GET)
+        form = FindCollection(request.GET, user=request.user)
         if form.is_valid():
             data = form.cleaned_data
             q = CollectionObject.item_collection_query()
@@ -352,7 +352,7 @@ def list_archives(request, archive=None):
     # NOTE: sending list of values (dictionaries) to allow sorting in template
 
     return render(request, 'collection/archives.html',
-        {'archives': archive_info.values(), 'find_collection': FindCollection()})
+        {'archives': archive_info.values(), 'find_collection': FindCollection(user=request.user)})
 
 
 @user_passes_test_with_403(view_some_collections)
@@ -428,7 +428,7 @@ def browse_archive(request, archive):
         {'archive': archive_obj, 'collections': collections,
          'url_params': urlencode(url_params),
          'collection_filter': collection_filter,
-         'find_collection': FindCollection()})
+         'find_collection': FindCollection(user=request.user)})
 
 
 @permission_required_with_403("collection.view_collection")

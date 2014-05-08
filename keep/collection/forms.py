@@ -61,7 +61,17 @@ class CollectionSearch(forms.Form):
 
 
 class FindCollection(forms.Form):
-    '''Shortcut to find a collection quickly by number and owning archive'''
+    '''Shortcut to find a collection quickly by number and owning archive.
+
+    .. Note::
+
+       In order to display the appropriate list of libraries/archives based on
+       the current user permissions, you must pass the user at initialization
+       time, i.e.::
+
+            form = FindCollection(request.GET, user=request.user)
+
+    '''
     collection = forms.IntegerField(required=True,
         help_text='Search by collection number',
         widget=TelephoneInput(attrs={'placeholder':'Collection number',
@@ -69,6 +79,53 @@ class FindCollection(forms.Form):
 
     archive = DynamicChoiceField(label="Archive", choices=archive_alias_choices,
          initial='', required=True, help_text='Filter by owning archive')
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.get('user', None)
+        if 'user' in kwargs:
+            del kwargs['user']
+        super(FindCollection, self).__init__(*args, **kwargs)
+
+        # if user is defined, use class method to find libraries with content
+        # the user has permission to view
+        if self.user is not None:
+            self.fields['archive'].choices = self.archive_choices_by_user
+
+
+    def archive_choices_by_user(self):
+        # this method shouldn't be set if user isn't defined, but just in case
+        if not self.user:
+            return archive_alias_choices()
+
+        # NOTE: should be possible to query for archives directly,
+        # but filtering on audio items requires two levels of joins,
+        # and it's unclear how that actually works
+
+        # use collection facet query to get list of archives
+        q = CollectionObject.item_collection_query()
+        q = q.facet_by('archive_id', sort='count', mincount=1) \
+              .paginate(rows=0)
+
+        # - depending on permissions, restrict to collections with researcher audio
+        if not self.user.has_perm('collection.view_collection') and \
+               self.user.has_perm('collection.view_researcher_collection'):
+            q = q.join('collection_id', 'pid', researcher_access=True)
+            q = q.join('collection_id', 'pid', has_access_copy=True)
+
+        # make a list of user-viewable archive pids
+        archives = [pid for pid, count in q.execute().facet_counts.facet_fields['archive_id']]
+
+        choices = []
+        # we need pid aliases keyed on pid for lookup
+        pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.iteritems()])
+        for a in archives:
+            if a in pid_aliases_by_pid:
+                alias = pid_aliases_by_pid[a]
+                # use the alias for *both* display and submit value
+                choices.append((alias, alias.upper()))
+        choices.insert(0, ('', ''))   # blank option at the beginning (default)
+
+        return choices
 
 
 class AccessConditionForm(XmlObjectForm):
