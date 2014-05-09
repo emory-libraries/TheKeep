@@ -15,8 +15,10 @@
   {% endif %}
 </ul>
 
+{# display checksum and format of disk image #}
+<p class="extra">{{ obj.provenance.content.object.format.name }} disk image, checksum {{ obj.content.checksum }}</p>
+
 {# supplemental files #}
-{# {% if obj.has_supplemental_content %} #}
 {% if perms.file.manage_disk_image_supplements %}
 <b style="float:left;padding-right:1em">Supplemental content:</b>
 <ul class='list-inline'>
@@ -26,6 +28,3 @@
   <li><a href="{% url 'file:supplements' obj.pid %}">+ add/manage</a></li>
 {% endif %}
 </ul>
-{# {% endif %} #}
-
-
