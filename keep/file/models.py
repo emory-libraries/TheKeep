@@ -53,7 +53,8 @@ class DiskImageMods(LocalMODS):
     to allow any of YYYY, YYYY-MM, or YYYY-MM-DD date formats)'''
     coveringdate_end = xmlmap.StringField('mods:originInfo/mods:dateCreated[@point="end"]')
     'coverage end date (dateCreated start, as :class:`~eulxml.xmlmap.StringField`)'
-
+    genre = xmlmap.StringField('mods:genre[@authority="aat"]')
+    'convience mapping for genre, for easy display on disk image edit form'
 
 class PremisFixity(premis.BasePremis):
     ROOT_NAME = 'fixity'

@@ -127,7 +127,6 @@ class ModsEditForm(XmlObjectForm):
     # read-only text input to display ARK (not editable)
     identifier = forms.CharField(label="Identifier", required=False,
         widget=ReadonlyTextInput)
-    resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
     abstract = SubformField(formclass=AbstractForm)
     coveringdate_start = W3CDateField(
         label='Covering Dates',
@@ -138,12 +137,14 @@ class ModsEditForm(XmlObjectForm):
     class Meta:
         model = DiskImageMods
         fields = (
-            'title', 'identifier', 'resource_type',
+            'title', 'identifier', 'resource_type', 'genre',
             'coveringdate_start', 'coveringdate_end', 'abstract'
         )
         widgets = {
             'title': forms.TextInput(attrs={'class': 'long'}),
             'identifier': ReadonlyTextInput,
+            'resource_type': ReadonlyTextInput,
+            'genre': ReadonlyTextInput,
         }
 
 
