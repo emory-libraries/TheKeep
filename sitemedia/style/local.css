@@ -1,9 +1,12 @@
 table#mods_edit table.subform {
   margin-left: 10px;
  /* border-left: 1px solid #cccccc;*/
-} 
+}
 table#mods_edit table.subform th {
     padding-left: 5px;
+}
+table.edit-form {
+  width: 95%;
 }
 .edit-form th {
    width:125px;
@@ -408,7 +411,7 @@ form#upload a.remove {
     transition: color 0.2s;
 }
 
-.media-list .media>a:hover, 
+.media-list .media>a:hover,
 .media-list .media>a:focus{
     color: #5EBCE9;
 }
