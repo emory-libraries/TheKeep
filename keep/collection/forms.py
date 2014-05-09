@@ -32,7 +32,7 @@ def archive_alias_choices():
             alias = pid_aliases_by_pid[a['pid']]
             # use the alias for *both* display and submit value
             choices.append((alias, alias.upper()))
-    choices.insert(0, ('', ''))   # blank option at the beginning (default)
+    choices.insert(0, ('', '---'))   # blank option at the beginning (default)
     return choices
 
 
@@ -123,7 +123,7 @@ class FindCollection(forms.Form):
                 alias = pid_aliases_by_pid[a]
                 # use the alias for *both* display and submit value
                 choices.append((alias, alias.upper()))
-        choices.insert(0, ('', ''))   # blank option at the beginning (default)
+        choices.insert(0, ('', '---'))   # blank option at the beginning (default)
 
         return choices
 

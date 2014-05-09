@@ -94,7 +94,7 @@ class SearchForm(forms.Form):
                     .sort_by('title')
 
         choices = [('info:fedora/%s' % a['pid'], a['title']) for a in query]
-        choices.insert(0, ('', ''))   # blank option at the beginning (default)
+        choices.insert(0, ('', '---'))   # blank option at the beginning (default)
         return choices
 
 
