@@ -1,6 +1,7 @@
 {% load widget_tweaks %}
+{% comment %}
 
-<form class="form-inline input-sm" role="form" method="GET" action="{% url 'collection:list-archives' %}">
+<form class="form-inline" role="form" method="GET" action="{% url 'collection:list-archives' %}">
   {{ form_label|default:'' }}
   <div class="form-group">
     <label class="sr-only" for="{{ find_collection.archive.id_for_label }}">{{ find_collection.archive.label }}</label>
@@ -10,5 +11,24 @@
     <label class="sr-only" for="{{ find_collection.collection.id_for_label }}">{{ find_collection.collection.label }}</label>
     {{ find_collection.collection }}
   </div>
-  <button id="submit" class="btn btn-primary" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+  <button id="submit" class="btn btn-primary" type="submit"><span class="glyphicon glyphicon-search"></span> Search</button>
+</form>
+
+{% endcomment %}
+
+<form class="find-coll" role="form" method="GET" action="{% url 'collection:list-archives' %}">
+  <div class="input-group">
+    <div class="input-group-btn">
+      <label class="sr-only" for="{{ find_collection.archive.id_for_label }}">{{ find_collection.archive.label }}</label>
+      <span class="caret"></span>
+    {{ find_collection.archive|add_class:"form-control" }}
+    </div><!-- /btn-group -->
+
+    <label class="sr-only" for="{{ find_collection.collection.id_for_label }}">{{ find_collection.collection.label }}</label>
+    {{ find_collection.collection }}
+
+    <div class="input-group-btn">
+      <button id="submit" class="btn btn-primary" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+    </div><!-- /btn-group -->
+  </div><!-- /input-group -->
 </form>

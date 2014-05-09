@@ -4,16 +4,50 @@
 {% block page-subtitle %}: Libraries{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="pull-right">
-        {% include 'collection/snippets/find_collection_form.html' with form_label='Go to collection:' %}
-    </div>
 
-    <h1>Libraries</h1>
-    {% for info in archives|dictsort:"title" %}  {# or possibly by count #}
-    <div><a href="{% url 'collection:browse-archive' info.alias %}"><h3>{{ info.title }}</h3></a>
-        {{ info.count }} collection{{ info.count|pluralize }}
-        </div>
-    {% endfor %}
-</div>
+	<header class="page-header">
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12 col-sm-7 col-md-8">
+					<h1>Libraries</h1>
+				</div>
+				<div class="col-xs-12 col-sm-5 col-md-4">
+					<div class="nav">
+				        {% include 'collection/snippets/find_collection_form.html' with form_label='Go to collection:' %}
+				    </div>
+				</div>
+			</div>
+		</div>
+	</header>
+	<section>
+		<div class="container">
+			<div class="row">
+				<div class="col-xs-12 col-sm-8">
+					<div class="container">
+						<ul class="media-list archive-list">
+						    {% for info in archives|dictsort:"title" %}  {# or possibly by count #}
+						    <li class="media">
+						    	<a href="{% url 'collection:browse-archive' info.alias %}">
+						    		<div class="media-body">
+							    		<h2 class="media-heading">{{ info.title }}</h2>
+							    		<section class="media-info">
+							    			<p class="lead">{{ info.count }} collection{{ info.count|pluralize }}</p>
+							    		</section>
+							    	</div>
+						        </a>
+						    </li>
+						    {% endfor %}
+						</ul>
+					</div>
+				</div>
+				<div class="col-xs-12 col-sm-4">
+					<aside class="aside">
+						<div class="container">	
+							
+						</div>
+					</aside>
+				</div>
+			</div> <!-- /.row -->
+		</div><!-- /.container-->
+	</section>
 {% endblock %}

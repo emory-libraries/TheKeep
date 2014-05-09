@@ -10,6 +10,8 @@ The Keep{% endblock %}
   {% include 'snippets/navlinks.html' %}
 {% endblock %}
 
+{% block nav_class %}navbar-inverse navbar-fixed-top{% endblock %}
+
 {% block navbar-extra %}
   {% if user.is_authenticated %}
     <div class="navbar-right">
@@ -35,9 +37,7 @@ The Keep{% endblock %}
 {% block javascript %}
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/jquery-ui-1.10.4.custom.min.js' %}"></script>
-    <script type="text/javascript" src="{% static 'eultheme/js/bootstrap.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'eultheme/js/bootstrap-datepicker.js' %}"></script>
-    <script type="text/javascript" src="{% static 'eultheme/js/eultheme.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/local.js' %}"></script>
 {% endblock %}
 
