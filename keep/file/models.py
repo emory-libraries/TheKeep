@@ -72,6 +72,33 @@ class PremisCreatingApplication(premis.BasePremis):
     version = xmlmap.StringField('p:creatingApplicationVersion')
     date = xmlmap.DateField('p:dateCreatedByApplication')
 
+class PremisSoftwareEnvironment(premis.BasePremis):
+    ROOT_NAME = 'software'
+    name = xmlmap.StringField('p:swName',
+        help_text='Name of the software in original environment')
+    version = xmlmap.StringField('p:swVersion',
+        help_text='Software version')
+    type = xmlmap.StringField('p:swType', help_text='Type of software')
+
+hardware_types = ('personal computer', 'personal computer/laptop',
+    'external drive', 'removable media', 'word processor')
+
+class PremisHardwareEnvironment(premis.BasePremis):
+    ROOT_NAME = 'hardware'
+    name = xmlmap.StringField('p:hwName', help_text='Name of original hardware')
+    type = xmlmap.StringField('p:hwType', choices=hardware_types,
+        help_text='Type of hardware')
+    other_information = xmlmap.StringField('p:hwOtherInformation',
+        help_text='Other information about the original environment (e.g. original disk label)')
+
+class PremisEnvironment(premis.BasePremis):
+    ROOT_NAME = 'environment'
+    note = xmlmap.StringField('p:environmentNote')
+    # NOTE: both hardware and software could be repeated;
+    # for simplicity, onyl mapping one for disk images, for now
+    software = xmlmap.NodeField('p:software', PremisSoftwareEnvironment)
+    hardware = xmlmap.NodeField('p:hardware', PremisHardwareEnvironment)
+
 class PremisObject(premis.Object):
     composition_level = xmlmap.IntegerField('p:objectCharacteristics/p:compositionLevel')
     checksums = xmlmap.NodeListField('p:objectCharacteristics/p:fixity',
@@ -80,8 +107,11 @@ class PremisObject(premis.Object):
                               PremisObjectFormat)
     creating_application = xmlmap.NodeField('p:objectCharacteristics/p:creatingApplication',
                                             PremisCreatingApplication)
+    original_environment = xmlmap.NodeField('p:environment[p:environmentNote="Original environment"]',
+                                            PremisEnvironment)
 
 class DiskImagePremis(premis.Premis):
+    XSD_SCHEMA = premis.PREMIS_SCHEMA
 
     object = xmlmap.NodeField('p:object', PremisObject)
 
