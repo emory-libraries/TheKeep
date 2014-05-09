@@ -1,4 +1,5 @@
 {% extends "page_base.html" %}
+{% load widget_tweaks %}
 
 {% block page-subtitle %}: File : Edit {{ obj.label }}{% endblock %}
 {% block content-title %}Edit Disk Image File{% endblock %}
@@ -109,6 +110,32 @@
     </td>
   </tr>
   {% endif %}
+
+  {# original environment - subform of premis object #}
+
+ {% with orig_env=form.premis.subforms.object.subforms.original_environment %}
+      <tr>
+         <th>{% firstof orig_env.form_label name %}</th>
+       </tr>
+
+       {% for name, subform in orig_env.subforms.items %}
+       <tr>
+         <th>{% firstof subform.form_label name %}</th>
+         <td>
+            {# NOTE: using custom here display instead of template #}
+
+            {% for field in subform %}
+            <div class="form-group {{ divclass|default:''}}">
+              <label for="{{ field.name }}">{{ field.label }}
+                {% if field.field.required %}<span class="required" title='required'>*</span>{% endif %}</label>
+              {% render_field field class+="long form-control" %}
+              <div class="help-text">{{ field.help_text }}</div>
+              {{ field.errors }}
+            </div>
+            {% endfor %}
+     {% endfor %}
+{% endwith %} {# end original environment #}
+
   </table>
 </div>
 
@@ -127,8 +154,8 @@
     </table>
 </div>
 
-<input class="form-submit" type="submit" name="_save" value="Save"/>
-<input class="form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
+<input class="btn btn-primary form-submit" type="submit" name="_save" value="Save"/>
+<input class="btn form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
 </form>
 </div>
 {% endblock %}

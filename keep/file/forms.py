@@ -13,7 +13,8 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from keep.common.forms import ReadonlyTextInput, comment_field, EMPTY_LABEL_TEXT
 from keep.collection.forms import CollectionSuggestionField
 from keep.audio.forms import RightsForm
-from keep.file.models import DiskImageMods, DiskImagePremis, \
+from keep.file.models import DiskImageMods, DiskImagePremis, PremisObject, \
+    PremisEnvironment, PremisSoftwareEnvironment, PremisHardwareEnvironment, \
     Application, large_file_uploads
 
 
@@ -147,11 +148,41 @@ class ModsEditForm(XmlObjectForm):
             'genre': ReadonlyTextInput,
         }
 
+## technical metadata (premis)
+
+class SoftwareEnvironmentForm(XmlObjectForm):
+    class Meta:
+        model = PremisSoftwareEnvironment
+        fields = ('name', 'version', 'type')
+
+class HardwareEnvironmentForm(XmlObjectForm):
+    other_information = forms.CharField(required=False,
+        widget=forms.Textarea)
+
+    class Meta:
+        model = PremisHardwareEnvironment
+        fields = ('name', 'type', 'other_information')
+
+class EnvironmentForm(XmlObjectForm):
+    software = SubformField(formclass=SoftwareEnvironmentForm)
+    hardware = SubformField(formclass=HardwareEnvironmentForm)
+
+    class Meta:
+        model = PremisEnvironment
+        fields = ('software', 'hardware')
+
+class PremisObject(XmlObjectForm):
+    original_environment = SubformField(formclass=EnvironmentForm)
+    class Meta:
+        model = PremisObject
+        fields = ('original_environment', )
+
 
 def creating_applications():
     options = [(app.id, unicode(app)) for app in Application.objects.all()]
     options.insert(0, ('', EMPTY_LABEL_TEXT))
     return options
+
 
 class PremisEditForm(XmlObjectForm):
     # NOTE: extending xmlobjet form to make use of existing schema validation
@@ -162,10 +193,11 @@ class PremisEditForm(XmlObjectForm):
         label='Creating Application', choices=creating_applications)
     date = forms.DateField(label='Imaging Date', input_formats=['%Y-%m-%d', '%Y/%m/%d'],
                            help_text='Date created in YYYY-MM-DD or YYYY/MM/DD format')
+    object = SubformField(PremisObject)
 
     class Meta:
         model = DiskImagePremis
-        fields = []  # no xmlobject form fields
+        fields = ('object', )
 
     def __init__(self, data=None, instance=None, prefix=None, initial={}, **kwargs):
         if instance is not None:
@@ -185,6 +217,8 @@ class PremisEditForm(XmlObjectForm):
                                              **kwargs)
 
     def update_instance(self):
+        super(PremisEditForm, self).update_instance()
+
         data = self.cleaned_data
         # update premis fields based on form data
         self.instance.object.create_creating_application()
