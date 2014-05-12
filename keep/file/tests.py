@@ -668,11 +668,21 @@ class FileViewsTest(KeepTestCase):
         self.assert_(isinstance(response.context['form'], DiskImageEditForm))
         self.assertContains(response, reverse('admin:file_application_changelist'),
             msg_prefix='edit form includes link to manage application list')
+        # some metadata should be displayed on the form (read-only)
+        self.assertContains(response, img.content.checksum,
+            msg_prefix='disk image checksum should be displayed on edit form')
+        self.assertContains(response, img.mods.content.resource_type,
+            msg_prefix='disk image object recource type should be displayed on edit form')
+        self.assertContains(response, img.mods.content.genre,
+            msg_prefix='disk image object genre should be displayed on edit form')
 
         # minimal required fields
         data = {
             'mods-title': 'updated disk image',
             'mods-abstract-text': 'longer description',
+            # read-only, but form validation requires they be submitted
+            'mods-resource_type': 'software, multimedia',
+            'mods-genre': 'born digital',
             # using W3C date field, so year/month/day submitted separately
             'mods-coveringdate_start_year': '2002',
             'mods-coveringdate_start_month': '05',
@@ -684,6 +694,12 @@ class FileViewsTest(KeepTestCase):
             'collection_1': self.rushdie.label,
             'premis-application': '1',
             'premis-date': '2003-05-06',
+            'premis-object-original_environment-software-name': 'Microsoft Windows',
+            'premis-object-original_environment-software-version': 'XP',
+            'premis-object-original_environment-software-type': 'operating system',
+            'premis-object-original_environment-hardware-name': 'Macintosh PowerBook G4',
+            'premis-object-original_environment-hardware-type': 'personal computer/laptop',
+            'premis-object-original_environment-hardware-other_information': 'serial number, label, etc',
             'rights-access': '10',
             'comment': 'update metadata via edit form',
         }
@@ -710,9 +726,28 @@ class FileViewsTest(KeepTestCase):
         # premis
         app = Application.objects.get(id=data['premis-application'])
         premis = updated_img.provenance.content
+
+        # NOTE: use for debugging if schema errors occur
+        # if not premis.schema_valid():
+        #     print premis.validation_errors()
+        self.assertTrue(premis.schema_valid(), 'disk image edit form should result in valid PREMIS xml')
         self.assertEqual(data['premis-date'], unicode(premis.object.creating_application.date))
         self.assertEqual(app.name, unicode(premis.object.creating_application.name))
         self.assertEqual(app.version, unicode(premis.object.creating_application.version))
+        # - original environment
+        self.assertEqual(data['premis-object-original_environment-software-name'],
+            unicode(premis.object.original_environment.software.name))
+        self.assertEqual(data['premis-object-original_environment-software-version'],
+            unicode(premis.object.original_environment.software.version))
+        self.assertEqual(data['premis-object-original_environment-software-type'],
+            unicode(premis.object.original_environment.software.type))
+        self.assertEqual(data['premis-object-original_environment-hardware-name'],
+            unicode(premis.object.original_environment.hardware.name))
+        self.assertEqual(data['premis-object-original_environment-hardware-type'],
+            unicode(premis.object.original_environment.hardware.type))
+        self.assertEqual(data['premis-object-original_environment-hardware-other_information'],
+            unicode(premis.object.original_environment.hardware.other_information))
+
         # rights logic re-used, but make sure it was updated
         self.assertEqual(data['rights-access'], updated_img.rights.content.access_status.code)
         self.assertEqual(data['comment'], updated_img.audit_trail.records[-1].message)
