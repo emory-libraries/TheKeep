@@ -161,13 +161,31 @@ def download_audio(request, pid, type, extension=None):
     # retrieve the object so we can use it to set the download filename
     obj = repo.get_object(pid, type=AudioObject)
 
-    # user either needs download audio permissions OR
-    # if they can download researcher audio and object must be researcher-accessible
-    if not request.user.has_perm('audio.download_audio') and \
-       not (request.user.has_perm('audio.download_researcher_audio') and \
-          obj.researcher_access):
-        return prompt_login_or_403(request)
+    # user needs either *play* or *download* permissions
+    # - could be any audio or researcher-accessible only, which additionally
+    #   requires checking object is researcher-accessible
+    # for now, use presence of 'HTTP_RANGE' in request to differentiate
+    # jplayer requests from straight downloads
+    # NOTE: this would not be too difficult for a savvy user to circumvent
+    # (if they know what we are checking), but is intended mainly to prevent
+    # unwanted access by staff and researchers in the reading room
 
+    # if http range is present in request, check for play permissions
+    # (also requires that request is for access copy, not original)
+    if 'HTTP_RANGE' in request.META:
+        if not (request.user.has_perm('audio.play_audio') and type == 'access') and \
+               not (request.user.has_perm('audio.play_researcher_audio') and \
+                    obj.researcher_access and type == 'access'):
+            return prompt_login_or_403(request)
+
+    # otherwise, check for download permissions
+    else:
+        # user either needs download audio permissions OR
+        # if they can download researcher audio and object must be researcher-accessible
+        if not request.user.has_perm('audio.download_audio') and \
+               not (request.user.has_perm('audio.download_researcher_audio') and \
+                    obj.researcher_access):
+            return prompt_login_or_403(request)
 
     # determine which datastream is requsted & set datastream id & file extension
     if type == 'original':
