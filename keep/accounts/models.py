@@ -17,7 +17,7 @@ class ResearcherIP(models.Model):
 
 class AnonymousResearcher(AnonymousUser):
 
-    _groups = Group.objects.filter(name='ResearcherAccess').all()
+    _groups = Group.objects.filter(name='Patron').all()
 
     def is_anonymous_researcher(self):
         return True
