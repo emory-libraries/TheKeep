@@ -1,6 +1,5 @@
 import cStringIO
 from datetime import datetime
-import json
 import logging
 from mock import Mock, patch
 import os
@@ -26,6 +25,7 @@ from eulfedora.util import RequestFailed, ChecksumMismatch
 from eulxml.xmlmap import load_xmlobject_from_string
 from eulxml.xmlmap import mods
 
+from keep.accounts.models import ResearcherIP
 from keep.audio import forms as audioforms, models as audiomodels
 from keep.audio.feeds import PodcastFeed, feed_items
 from keep.audio.management.commands import ingest_cleanup, new_feed_notice
@@ -178,6 +178,53 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
+
+        # logout to test guest/researcher access
+        self.client.logout()
+        response = self.client.get(download_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as guest, got %s' % \
+            (expected, download_url, got))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to audio download view should redirect to login page')
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+        # object not researcher-accessible; should still not get access
+        response = self.client.get(download_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as researcher, got %s' % \
+            (expected, download_url, got))
+
+        # update object with researcher-accessible status code
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = 2
+        obj.save()
+
+        # request does not include http range header; should still not get access
+        response = self.client.get(download_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as researcher without http range, got %s' % \
+            (expected, download_url, got))
+
+        response = self.client.get(download_url, HTTP_RANGE='bytes=0-')
+        expected, got = 200, response.status_code
+        self.assertEqual(expected, got, 'Expected %s but returned %s for %s as patron with http range in request'
+                             % (expected, got, download_url))
+        # spot-check response object
+        expected = 'audio/mpeg'
+        self.assertEqual(response['Content-Type'], expected,
+                        "Expected '%s' but returned '%s' for %s mimetype" % \
+                        (expected, response['Content-Type'], download_url))
+        researchip.delete()
+
+        # log back in as admin to test errors
+        self.client.login(**ADMIN_CREDENTIALS)
 
         # attempt to download mp3 as m4a - should 404
         m4a_download_url = reverse('audio:download-compressed-audio', args=[obj.pid, 'm4a'])
@@ -890,6 +937,38 @@ class AudioViewsTest(KeepTestCase):
             msg_prefix='ARK URI (short form) should be displayed')
         self.assertContains(response, obj.get_access_url(),
             msg_prefix='access audio url should be present on view page for playback')
+
+        # logout to test guest/researcher access
+        self.client.logout()
+        response = self.client.get(view_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as guest, got %s' % \
+            (expected, view_url, got))
+        self.assert_(reverse('accounts:login') in response['Location'],
+            'guest access to audio view should redirect to login page')
+
+        # create researcher IP for localhost so anonymous access will be
+        # treated as anonymous researcher
+        researchip = ResearcherIP(name='test client', ip_address='127.0.0.1')
+        researchip.save()
+        response = self.client.get(view_url)
+        # should still redirect if object is not researcher-accessible
+        expected, got = 302, response.status_code
+        self.assertEqual(expected, got,
+            'Expected status code %s when accessing %s as researcher, got %s' % \
+            (expected, view_url, got))
+
+        # update object with researcher-accessible status code
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = 2
+        obj.save()
+        response = self.client.get(view_url)
+        # spot-check that page renders
+        self.assertContains(response, obj.label,
+            msg_prefix='researcher-accessible audio view page should display to patron')
+
+        researchip.delete()
 
     def test_audit_trail(self):
         # create a test audio object with ingest message
