@@ -31,13 +31,15 @@ class Audio(models.Model):
         permissions = (
             ("view_audio", "Can view, search, and browse audio objects"),
             ("download_audio", "Download audio files (original or access copy)"),
+            ("play_audio", "Play audio"),
             # NOTE: current view structure does not make it easy to differentiate these
             # ("download_audio_access", "Can download access copy audio file"),
             # ("download_audio_original", "Can download original audio file"),
-            ("generate_audio_access", "Can (re-)generate audio access copy"),
+            ("generate_audio_access", "Regenerate audio access copy"),
             # resercher-specific perms
-            ("view_researcher_audio", "Search, view researcher-accessible audio objects"),
-            ("download_researcher_audio", "Download researcher-accessible audio files"),
+            ("view_researcher_audio", "Researcher search and view"),
+            ("download_researcher_audio", "Researcher download"),
+            ("play_researcher_audio", "Researcher play audio"),
         )
 
 
