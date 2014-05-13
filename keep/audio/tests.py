@@ -213,7 +213,7 @@ class AudioViewsTest(KeepTestCase):
             (expected, download_url, got))
 
         response = self.client.get(download_url, HTTP_RANGE='bytes=0-')
-        expected, got = 200, response.status_code
+        expected, got = 206, response.status_code
         self.assertEqual(expected, got, 'Expected %s but returned %s for %s as patron with http range in request'
                              % (expected, got, download_url))
         # spot-check response object
