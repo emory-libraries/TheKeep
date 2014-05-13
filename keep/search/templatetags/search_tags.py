@@ -10,6 +10,7 @@ from eulcm.models.boda import Arrangement, Mailbox, EmailMessage, RushdieFile
 
 from keep.audio.models import AudioObject
 from keep.collection.models import CollectionObject
+from keep.common.fedora import user_full_name
 from keep.file.models import DiskImage
 
 register = template.Library()
@@ -55,6 +56,16 @@ def natural_date(date):
         d = datetime.date(*date_parts)
         # NOTE: Using 0-padded date because that is only option
         return d.strftime('%b %d, %Y')
+
+
+@register.filter
+@stringfilter
+def username_to_name(username):
+    '''Return the fullname of a Keep user if they are in the database;
+    if not, returns username.  Template tag wrapper around
+    :meth:`keep.common.fedora.user_full_name`.'''
+    return user_full_name(username)
+
 
 
 @register.filter

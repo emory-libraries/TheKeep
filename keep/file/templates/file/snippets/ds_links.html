@@ -1,3 +1,4 @@
+{% load search_tags %}
 {# datastream and audit trail links for file objects #}
 <ul class='extra list-inline'>
   {% if obj.audit_trail %}
@@ -17,6 +18,9 @@
 
 {# display checksum and format of disk image #}
 <p class="extra">{{ obj.provenance.content.object.format.name }} disk image, checksum {{ obj.content.checksum }}</p>
+{# display last modified date and user #}
+<p class="extra">Last modified {{ obj.modified }}
+  {% for entry in obj.audit_trail.records %}{% if forloop.last %}by {{ entry.user|username_to_name }}{% endif %}{% endfor %}</p>
 
 {# supplemental files #}
 {% if perms.file.manage_disk_image_supplements %}
