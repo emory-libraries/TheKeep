@@ -1,5 +1,5 @@
 from django import forms
-from eultheme.forms import TelephoneInput
+from eultheme.forms import DateFilterSearchForm
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 
 from keep.repoadmin.forms import SolrSearchField
@@ -8,9 +8,7 @@ from keep.collection.forms import archive_choices
 from keep.common.utils import solr_interface
 
 
-
-
-class SearchForm(forms.Form):
+class SearchForm(DateFilterSearchForm):
     '''Public-facing search form, with keyword search.
 
     .. Note::
@@ -22,7 +20,6 @@ class SearchForm(forms.Form):
             form = SearchForm(request.GET, user=request.user)
 
     '''
-
     keyword = SolrSearchField(required=False,
         widget=forms.TextInput(attrs={'class':'form-control'}),
         help_text='One or more keywords; can include (but not start with) wildcards * and ?, and exact phrases in quotes.')
@@ -33,19 +30,12 @@ class SearchForm(forms.Form):
         initial='', required=False,
         help_text='Restrict search to materials owned by the specified library.')
 
-    start_date = forms.IntegerField(required=False,
-        help_text=''''Search by start year;  use with end date to specify a range or single year''',
-        widget=TelephoneInput(attrs={'class': 'form-control', 'placeholder': 'Start year'}))
-    end_date = forms.IntegerField(required=False,
-        help_text='Search by end date; use with start date to specify a range or single year',
-        widget=TelephoneInput(attrs={'class': 'form-control', 'placeholder': 'End year'}))
+    # start and end date fields inherited from eultheme
 
     _adv_fields = ['collection', 'library']
 
-    @property
-    def advanced_fields(self):
-        'list fields that are considered part of the "advanced" search'
-        return [self[f] for f in self._adv_fields]
+    # advanced fields and advanced fields values properties needed
+    # for search filter display are inherited from eulthemen
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.get('user', None)
