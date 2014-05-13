@@ -908,6 +908,11 @@ class AudioViewsTest(KeepTestCase):
         # pre-populate digital tech metadata
         obj.digitaltech.content.duration = 75
         obj.collection = self.esterbrook
+        # set non-researcher accessible code
+        obj.rights.content.create_access_status()
+        obj.rights.content.access_status.code = 9
+        obj.rights.content.access_status.text = 'PD - Restricted by Donor or MARBL'
+        # NOTE: possibly also test override flag?
         obj.save()
         # add pid to list for clean-up in tearDown
         self.pids.append(obj.pid)
@@ -937,6 +942,13 @@ class AudioViewsTest(KeepTestCase):
             msg_prefix='ARK URI (short form) should be displayed')
         self.assertContains(response, obj.get_access_url(),
             msg_prefix='access audio url should be present on view page for playback')
+        # warning that item is not researcher-accessible
+        self.assertContains(response, 'This item is not accessible to researchers.',
+            msg_prefix='warning should be displayed for content that is not researcher-accessible')
+        self.assertContains(response, obj.rights.content.access_status.code,
+            msg_prefix='non-researcher-accessible content should show access status code')
+        self.assertContains(response, obj.rights.content.access_status.text,
+            msg_prefix='non-researcher-accessible content should show access status text')
 
         # logout to test guest/researcher access
         self.client.logout()
