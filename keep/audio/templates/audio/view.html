@@ -91,7 +91,21 @@
           <a href="{{ resource.mods.content.ark_uri }}" rel="bookmark">{{ resource.mods.content.ark_uri }}</a></p>
         {% endif %}
 
+        {% if resource.researcher_access|yesno:"yes,no" == "no" %}
+        <div class="messages">
+          <p class="bg-danger">This item is not accessible to researchers.
+            <br/>Access code {{ resource.rights.content.access_status.code }}: {{ resource.rights.content.access_status.text }}
+            {% if resource.rights.content.block_external_access %}
+            <br/>External access has been blocked.
+            {% endif %}
+          </p>
+
+
+        </div>
+        {% endif %}
+
     </div>
+
 
 </article>
 
