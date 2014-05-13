@@ -51,13 +51,18 @@
 
     {% for obj in items.object_list %}
     <div class="search-result clearfix">
-    {# TODO: only if user has permission to edit #}
-    {% with obj|edit_url as edit_url %}
-        {% if edit_url %}
-        <a class="pull-right btn btn-primary" href="{{ edit_url }}">edit <span class="glyphicon glyphicon-edit"></span></a>
+      {# generate appropriate edit link if user has permission #}
+      {# NOTE: could use obj|edit_url but need to split out to check permissions #}
+      {% if obj.object_type == 'audio' and perms.audio.change_audio %}
+        <a class="pull-right btn btn-primary" href="{% url 'audio:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+      {% endif %}
+      {% if obj.object_type == 'born-digital' %}
+        {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model and perms.file.change_disk_image %}
+          <a class="pull-right btn btn-primary" href="{% url 'file:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+        {% elif perms.arrangement.change_arrangement %}
+        <a class="pull-right btn btn-primary" href="{% url 'arrangement:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
         {% endif %}
-
-    {% endwith %}
+      {% endif %}
 
    {# TODO: copied from repoadmin, convert to snippet? or revise for researcher use? #}
     <span class="result-icon">
