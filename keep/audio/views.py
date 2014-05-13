@@ -33,12 +33,11 @@ def view(request, pid):
     '''
     repo = Repository(request=request)
     obj = repo.get_object(pid, type=AudioObject)
-
     # user either needs view audio permissions OR
     # if they can view researcher audio and object must be researcher-accessible
     if not request.user.has_perm('audio.view_audio') and \
        not (request.user.has_perm('audio.view_researcher_audio') and \
-       obj.researcher_access):
+       bool(obj.researcher_access)):
         return prompt_login_or_403(request)
 
     return render(request, 'audio/view.html', {'resource': obj})
@@ -86,7 +85,7 @@ def edit(request, pid):
 
                 obj.save(comment)
                 messages.success(request, 'Successfully updated <a href="%s">%s</a>' % \
-                        (reverse('audio:edit', args=[pid]), pid))
+                        (reverse('audio:view', args=[pid]), pid))
                 # save & continue functionality - same as collection edit
                 if '_save_continue' not in request.POST:
                     return HttpResponseSeeOtherRedirect(reverse('repo-admin:dashboard'))
@@ -175,7 +174,7 @@ def download_audio(request, pid, type, extension=None):
     if 'HTTP_RANGE' in request.META:
         if not (request.user.has_perm('audio.play_audio') and type == 'access') and \
                not (request.user.has_perm('audio.play_researcher_audio') and \
-                    obj.researcher_access and type == 'access'):
+                    bool(obj.researcher_access) and type == 'access'):
             return prompt_login_or_403(request)
 
     # otherwise, check for download permissions
@@ -184,8 +183,9 @@ def download_audio(request, pid, type, extension=None):
         # if they can download researcher audio and object must be researcher-accessible
         if not request.user.has_perm('audio.download_audio') and \
                not (request.user.has_perm('audio.download_researcher_audio') and \
-                    obj.researcher_access):
+                    bool(obj.researcher_access)):
             return prompt_login_or_403(request)
+
 
     # determine which datastream is requsted & set datastream id & file extension
     if type == 'original':
