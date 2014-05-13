@@ -3,13 +3,18 @@
 {% load audio_extras %}
 
 {% block item_title %}
-<p><a href="{% url 'audio:edit' obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
+{# display edit link if user has permission #}
+{% if perms.audio.change_audio %}
+ <a class="pull-right btn btn-primary" href="{% url 'audio:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+{% endif %}
+
+<p><a href="{% url 'audio:view' obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
   {% if obj.part %} ({{ obj.part }}){% endif %}
   {% if obj.collection_id %}
     {% if 'info:fedora' in obj.collection_id %}
-      {% url 'collection:edit' obj.collection_id|slice:'12:' as collection_url %}
+      {% url 'collection:view' obj.collection_id|slice:'12:' as collection_url %}
     {% else %}
-      {% url 'collection:edit' obj.collection_id as collection_url %}
+      {% url 'collection:view' obj.collection_id as collection_url %}
     {% endif %}
     (part of <a href="{{ collection_url }}">{% firstof obj.collection_label obj.collection_id %}</a>)
   {% endif %} </p>
