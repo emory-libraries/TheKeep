@@ -48,6 +48,11 @@
 {% block content-body %}
 {{ block.super }}
 <div id="csrftoken">{% csrf_token %}</div> {# embed csrf for use in ajax calls #}
+
+<div class="pull-right"> {# assuming user can view if they can edit #}
+    <a class="pull-right btn btn-primary" href="{% url 'audio:view' obj.pid %}">view</a>
+</div>
+
 <h2>{{ obj.label }}</h2>
 <ul class='extra dslist list-inline'>
 

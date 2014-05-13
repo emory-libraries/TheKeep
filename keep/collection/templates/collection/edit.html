@@ -14,6 +14,10 @@
 {% endblock %}
 
 {% block content-body %}
+  <div class="pull-right"> {# assuming user can view if they can edit #}
+      <a class="pull-right btn btn-primary" href="{% url 'collection:view' collection.pid %}">view</a>
+  </div>
+
 <p class='extra'>
   {% if collection %}
     {% if collection.ark %}
