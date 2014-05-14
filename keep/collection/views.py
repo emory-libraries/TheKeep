@@ -128,7 +128,7 @@ def playlist(request, pid):
         if result['object_type'] != 'audio' or not result['has_access_copy']:
             continue
         data = {
-            'title': '%s (%s)' % (result['title'], result['pid']),
+            'title': result['title'],
             'free': False  # explicitly mark as not downloadable
         }
         if result['access_copy_mimetype'] == 'audio/mp4':
