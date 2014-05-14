@@ -6,6 +6,7 @@ import logging
 from rdflib.namespace import RDF
 import re
 from urllib import urlencode
+import json
 
 from django.conf import settings
 from django.contrib import messages
@@ -93,6 +94,52 @@ def view(request, pid):
     return render(request, 'collection/view.html',
         {'collection': obj, 'items': results,
          'url_params': urlencode(url_params)})
+
+@user_passes_test_with_403(view_some_collections)
+def playlist(request, pid):
+    # FIXME: this needs last-modified so browser can cache!!!
+
+    # NOTE: preliminary logic duplicated from view above
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=CollectionObject)
+    # if pid doesn't exist or isn't a collection, 404
+    if not obj.exists or not obj.has_requisite_content_models:
+        raise Http404
+
+    # search for all items that belong to this collection
+    q = obj.solr_items_query()
+    q = q.sort_by('date_created') \
+         .sort_by('date_issued') \
+         .sort_by('title_exact')
+    # filter by logged-in user permissions
+    # (includes researcher-accessible content filter when appropriate)
+    q = filter_by_perms(q, request.user)
+
+    # if current user can only view researcher-accesible collections and
+    # no items were found, they don't have permission to view this collection
+    if not request.user.has_perm('collection.view_collection') and \
+           request.user.has_perm('collection.view_researcher_collection') and \
+           q.count() == 0:
+       return prompt_login_or_403(request)
+
+    playlist = []
+    for result in q:
+        # skip non-audio or audio without access copies
+        if result['object_type'] != 'audio' or not result['has_access_copy']:
+            continue
+        data = {
+            'title': '%s (%s)' % (result['title'], result['pid']),
+            'free': False  # explicitly mark as not downloadable
+        }
+        if result['access_copy_mimetype'] == 'audio/mp4':
+            audio_type = 'm4a'
+        else:
+            audio_type = 'mp3'
+        data[audio_type] = reverse('audio:download-compressed-audio',
+            kwargs={'pid': result['pid'], 'extension': audio_type})
+        playlist.append(data)
+
+    return HttpResponse(json.dumps(playlist), content_type='application/json')
 
 
 # NOTE: permission should actually be add or change depending on pid...

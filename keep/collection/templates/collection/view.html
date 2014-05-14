@@ -1,7 +1,54 @@
 {% extends "site_base.html" %}
-{% load humanize %} {% load search_tags %} {% load audio_extras %}
+{% load static %}{% load humanize %} {% load search_tags %} {% load audio_extras %}
 
 {% block page-subtitle %}: Collections : {{ collection.title }}{% endblock %}
+
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'style/jplayer-skin/jplayer.blue.monday.css' %}" />
+  <style type="text/css">
+  {# temporary placeholder styles for playlist #}
+  {# FIXME: demo site skin styles playlist fine, but doesn't seem to work here ?? #}
+  .jp-playlist-item-remove { float: right; }
+  .jp-playlist ul { max-height: 150px; overflow: scroll; }
+  div.jp-playlist li[.jp-playlist-current] { background-origin: white; }
+  </style>
+{% endblock %}
+
+{% block javascript %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/jquery.jplayer.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/jplayer.playlist.min.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+      var myPlaylist = new jPlayerPlaylist({
+        jPlayer: "#jquery_jplayer_1",
+        cssSelectorAncestor: "#jp_container_1"
+      }, [],  // start with empty playlist, then set via json
+      {
+        playlistOptions: {
+          enableRemoveControls: false
+        },
+      swfPath: "{% static 'js/' %}",
+      supplied: "mp3, m4a",
+      smoothPlayBar: true,
+      keyEnabled: true,
+      audioFullScreen: true, // Allows the audio poster to go full screen via keyboard
+      debug: true
+      });
+
+$.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
+  for (var i = 0; i < data.length; i ++) {
+     myPlaylist.add(data[i]);
+  }
+});
+
+}); // end ready
+
+  </script>
+
+{% endblock %}
+
 
 {% block content %}
 <article>
@@ -26,6 +73,11 @@
 
         </div>
     </header>
+
+    <div class="container">
+      {# jplayer audio player controls #}
+      {% include 'audio/snippets/audio_player.html' with playlist=1 %}
+    </div>
 
     <div class="container">
         {# TODO: collection metadata here ? #}

@@ -11,6 +11,7 @@ urlpatterns = patterns('',
     # NOTE: archive must come after so we don't match named views as archive aliases
     url(r'^(?P<archive>[a-z]+)/$', views.browse_archive, name='browse-archive'),
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),
+    url(r'^(?P<pid>[^/]+)/playlist.json$', views.playlist, name='playlist'),
     url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
     url(r'^(?P<pid>[^/]+)/history/$', views.history, name='history'),
     url(r'^(?P<pid>[^/]+)/(?P<dsid>(MODS|RELS-EXT|DC))/$',
