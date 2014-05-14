@@ -375,7 +375,7 @@ def browse_archive(request, archive):
     q = CollectionObject.item_collection_query()
     # restrict to collections in this archive, sort by collection number
     # FIXME: should this be pid instead of uri?
-    q = q.query(archive_id='info:fedora/%s' % archive_pid).sort_by('source_id')
+    q = q.query(archive_id=archive_pid).sort_by('source_id')
 
      # - depending on permissions, restrict to collections with researcher audio
     if not request.user.has_perm('collection.view_collection') and \
