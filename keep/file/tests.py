@@ -1391,7 +1391,18 @@ class PremisEditFormTest(TestCase):
 
     def test_update_instance(self):
         form = PremisEditForm(instance=self.instance,
-            data={'application': 1, 'date': self.today})
+            data={
+            'application': 1,
+            'date': self.today,
+            # original environent stuff required for form to validate
+            'object-original_environment-software-name': 'Microsoft Windows',
+            'object-original_environment-software-version': 'XP',
+            'object-original_environment-software-type': 'operating system',
+            'object-original_environment-hardware-name': 'Macintosh PowerBook G4',
+            'object-original_environment-hardware-type': 'personal computer/laptop',
+            'object-original_environment-hardware-other_information': 'serial number, label, etc',
+        })
+
         self.assertTrue(form.is_valid())  # required before update instance will work
 
         # inspect updated xml
