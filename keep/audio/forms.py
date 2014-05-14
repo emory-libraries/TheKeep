@@ -259,7 +259,10 @@ class DigitalTechForm(XmlObjectForm):
         # but xmlobjectform is_valid calls update_instance
         if hasattr(self, 'cleaned_data'):
             # set transfer engineer id and name based on User object
-            usertype, sep, userid  = self.cleaned_data['engineer'].partition('|')
+            if self.cleaned_data['engineer']:
+                usertype, sep, userid  = self.cleaned_data['engineer'].partition('|')
+            else:
+                usertype, userid = None, None
             # transfer engineer is optional - set in xml if present, otherwise remove
             if usertype and userid:
                 self.instance.create_transfer_engineer()

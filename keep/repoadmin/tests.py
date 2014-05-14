@@ -428,12 +428,17 @@ class SearchTemplatesTest(TestCase):
 
         ctx = self.context.copy()
         ctx['page'] = self.MockPage(self.content)
+        # use Mock to simulate superuser (any perms check will be non-zero and pass)
+        ctx['perms'] = Mock()
         response = render(self.rqst, self.search_results, ctx)
 
         self.assertContains(response,
                             'sorted by most recently created/uploaded')
         self.assertNotContains(response, 'sorted by relevance')
 
+        self.assertContains(response, reverse('audio:view',
+                                              kwargs={'pid': 'audio:1'}),
+             msg_prefix='search results should link to view page for audio item')
         self.assertContains(response, reverse('audio:edit',
                                               kwargs={'pid': 'audio:1'}),
              msg_prefix='search results should link to audio edit form for audio item')

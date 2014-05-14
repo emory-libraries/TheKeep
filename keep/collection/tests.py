@@ -274,7 +274,7 @@ class CollectionObjectTest(KeepTestCase):
         with patch('keep.collection.models.CollectionObject.collection',
                    mockarchive):
             arch_data = obj._index_data_archive()
-            self.assertEqual(obj.collection.uri, arch_data['archive_id'],
+            self.assertEqual(obj.collection.pid, arch_data['archive_id'],
                 'parent collection object (archive) id should be set in index data')
             self.assertEqual(mockarchive.label, arch_data['archive_label'],
                 'parent collection object (archive) label should be set in index data')

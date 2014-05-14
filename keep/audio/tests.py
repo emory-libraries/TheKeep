@@ -346,7 +346,7 @@ class AudioViewsTest(KeepTestCase):
         collection_choices = list(
             {'pid': coll.pid, 'source_id': coll.mods.content.source_id, 'title': coll.label}
             for coll in [self.rushdie, self.esterbrook, self.englishdocs])
-        with patch('keep.audio.forms.CollectionObject.item_collections',
+        with patch('keep.collection.forms.CollectionObject.item_collections',
                    new=Mock(return_value=collection_choices)):
             response = self.client.get(edit_url)
             expected, code = 200, response.status_code
@@ -785,7 +785,7 @@ class AudioViewsTest(KeepTestCase):
 
         coll_info = {'pid': self.rushdie.pid, 'source_id': '1000', 'title': self.rushdie.label}
         # mock collection item_collections so test collection will be in edit form choices
-        with patch('keep.audio.forms.CollectionObject.item_collections',
+        with patch('keep.collection.forms.CollectionObject.item_collections',
                    new=Mock(return_value=[coll_info])):
             response = self.client.post(edit_url, audio_data, follow=True)
             # currently redirects to audio index
