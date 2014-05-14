@@ -318,9 +318,19 @@ Release 1.8
 ------------
 
 * Run ``python manage.py syncdb`` to ensure that newly defined, more granular
-  permissions are loaded to the database.  Note that site admins may need
-  to defined and configure group permissions before users will be able to use
-  the site.
+  permissions and pre-defined groups are loaded to the database.  Note that
+  site admins may need to defined and configure group membership before
+  users will be able to use the site.
+* The iTunes podcast feed functionality has been removed.  This requires the
+  following changes:
+
+  * The cron job to run the new_feed_notice manage.py script should be
+    removed or disabled (the script no longer exists)
+  * Configurations in localsettings.py for **MAX_ITEMS_PER_PODCAST_FEED**
+    and **FEED_ADMINS** are no longer used and should be removed.
+  * All apache configurations restricting access to audio feeds and audio
+    download URLS by IP address and/or LDAP username should be *removed*;
+    access restriction is now managed within the django app.
 
 
 Release 1.7.1
