@@ -212,18 +212,6 @@ def download_audio(request, pid, type, extension=None):
     # errors accessing Fedora will fall through to default 500 error handling
 
 
-@permission_required_with_403("audio.view_audio")
-def feed_list(request):
-    '''List and link to all current iTunes podcast feeds based on the
-    number of objects currently available for inclusion in the feeds.'''
-    paginated_objects = Paginator(feed_items(),
-                                  settings.MAX_ITEMS_PER_PODCAST_FEED)
-    return render(request, 'audio/feed_list.html', {
-        'per_page': settings.MAX_ITEMS_PER_PODCAST_FEED,
-        'pages': paginated_objects.page_range,
-        })
-
-
 @permission_required_with_ajax("audio.generate_audio_access")
 @require_http_methods(['POST'])
 def tasks(request, pid):
