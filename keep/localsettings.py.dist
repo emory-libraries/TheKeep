@@ -87,14 +87,6 @@ CACHES = {
 # for Developers only: to use sessions in runserver, uncomment this line (override configuration in settings.py)
 #SESSION_COOKIE_SECURE = False
 
-# maximum number of items to include in a single iTunes podcast feed
-MAX_ITEMS_PER_PODCAST_FEED = 2000
-# list of email addresses for feed admins who should be notified of new feeds
-# e.g.  FEED_ADMINS = ['someone@somewhere.com', 'nobody@nowhere.net']
-FEED_ADMINS = []
-
-
-
 # configure which IP addresses are allowed to access the index data service
 EUL_INDEXER_ALLOWED_IPS = 'ANY'
 # Solr index that will be used for searching
