@@ -14,9 +14,11 @@
 {% endblock %}
 
 {% block content-body %}
+  {% if collection.pid %} {# display view link *unless* creating new collection (no pid yet) #}
   <div class="pull-right"> {# assuming user can view if they can edit #}
       <a class="pull-right btn btn-primary" href="{% url 'collection:view' collection.pid %}">view</a>
   </div>
+ {% endif %}
 
 <p class='extra'>
   {% if collection %}
