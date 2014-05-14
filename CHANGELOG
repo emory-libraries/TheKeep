@@ -3,6 +3,95 @@
 CHANGELOG
 =========
 
+Release 1.8 - Permissions overhaul, Researcher Access, and Disk image/fixity improvements
+-----------------------------------------------------------------------------------------
+
+Permissions overhaul:
+* As a Keep administrator, I can assign granular permissions to groups
+  and individuals so that I can manage what users can view and do within
+  the site.
+* As a logged in staff user, I will be redirected to the dashboard page
+  after saving a new or edited record, so that I can continue my work in
+  the Keep.
+* As a logged in archivist, I can see the item view page for items with
+  any permissions status in order to see everything that is in the Keep.
+* bugfix: permissions error redirects user to login page even if already
+  logged in
+* bugfix: dashboard facets should be filtered by user permissions
+* bugfix: disk image objects are listed in search results for audio
+  curation users
+
+Researcher access:
+* As a researcher, I want to access and search the metadata for digitized
+  audio recordings in The Keep in order to find materials relevant to my
+  research.
+* As a researcher viewing detailed metadata about an item, I want to be
+  able to listen to the associated audio recording in order to conduct
+  research.
+* As a researcher viewing a list of search results, I can choose any
+  item to view more detailed metadata about that item in order to find
+  materials relevant to my research.
+* As a researcher, I want to filter results based on collection name or
+  number in order to find research materials that most closely relate to
+  my research.
+* As a researcher, I want to browse a paginated list of collections by
+  owning repository in order to see groups of content.
+* As a researcher, I can search across the collections by repository and
+  collection number in order to quickly find a collection when I know
+  exactly what I'm looking for.
+* As a logged in archivist with edit permissions, I can move from the
+  view page to the edit page in order to make updates.
+* As a researcher, I want to browse a paginated list of materials by
+  collection from a given repository in order to access materials related
+  to my research.
+* As a researcher, I want to filter results based on origin date by a single
+  date, before or after a given date, or a specific date range in order to
+  restrict results to a specific time period.
+* As a researcher searching items, I will only find collections that include
+  items I am allowed to use in order to avoid wasting time browsing collections
+  for materials I'm unable to access.
+* As a researcher, I can only access materials when in the MARBL Reading Room
+  in order to protect MARBL copyright.
+* As a researcher, I want to filter results based on owning library in order
+  to find materials that most closely relate to my research.
+* As a researcher, when I search using the advanced search filters, the
+  filters will be displayed by default on the results page so I can see the
+  filters that are active.
+* As a researcher, I am unable to search or see digital objects that MARBL
+  administrators have not made available to me.
+* As a researcher when viewing search results, I can see the most up to date
+  list of materials available to me in order to view the most updated and
+  accurate materials.
+* As a staff user, I can see a message that indicates when a audio item is
+  inaccessible to patrons along with the rights code/override that governs
+  this in order to distinguish between objects available to researchers
+  and those available only to staff.
+
+Disk Image and fixity improvements:
+* A repository administrator can configure a script to periodically check
+  content checksums in order to identify integrity issues so that they can
+  be dealt with. (implemented in eulfedora)
+* A repository administrator will receive an email notification if the system
+  encounters bad or missing checksums so that they can then resolve any
+  integrity issues. (implemented in eulfedora)
+* A repository admin can view fixity check results for individual objects
+  in the premis data stream (for objects where premis exists) in order to
+  view a more detailed result and the history. (implemented in eulfedora)
+* As a Keep user, when I log in I want to see on the home page a count of
+  any objects that have failed a fixity check in the last 30 days and be
+  able to view metadata records for those objects so that I can follow up
+  and/or document as needed.
+* An archivist can ingest an .iso as a disk image for preservation,
+  storage, and data management when content can't be converted to AFF or AD1.
+* As an archivist, I can view and edit necessary metadata fields within
+  disk image Keep records so that I can manage digital assets.
+* Only processing archivists in digital archives and university archives
+  can view and edit metadata records to ensure the security of unprocessed
+  digital archives materials.
+* bugfix: disk image ingest returns a 500 error if bagit data filenames
+  contain whitespace
+
+
 Release 1.7.1 - streamlined large file ingest
 ---------------------------------------------
 
