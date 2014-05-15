@@ -321,6 +321,9 @@ Release 1.8
   permissions and pre-defined groups are loaded to the database.  Note that
   site admins may need to defined and configure group membership before
   users will be able to use the site.
+* The Keep now requires Solr 4.  A new Solr core should be created, the
+  **SOLR_SERVER_URL** configuration in ``localsettings.py`` should be updated,
+  and all site content should be reindexed using eulindexer.
 * The iTunes podcast feed functionality has been removed.  This requires the
   following changes:
 
