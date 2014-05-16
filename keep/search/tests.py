@@ -13,12 +13,13 @@ from keep.search.templatetags import search_tags
 from keep.common.utils import solr_interface
 
 
+@patch('keep.search.forms.SearchForm.library_choices_by_user')
 @patch('keep.search.views.solr_interface', spec=sunburnt.SolrInterface)
 class SearchViewsTest(KeepTestCase):
     # fixtures = ['users'] # TODO: eventually
 
     @patch('keep.search.views.Paginator', spec=Paginator)
-    def test_search(self, mockpaginator, mocksolr_interface):
+    def test_search(self, mockpaginator, mocksolr_interface, mocksearch_libs):
         search_url = reverse('search:keyword')
         mocksolr = mocksolr_interface.return_value
 
@@ -123,7 +124,7 @@ class SearchViewsTest(KeepTestCase):
         researchip.delete()
 
     @patch('keep.search.views.Paginator', spec=Paginator)
-    def test_search_collections(self, mockpaginator, mocksolr_interface):
+    def test_search_collections(self, mockpaginator, mocksolr_interface, mocksearch_libs):
         solr = solr_interface()
         search_url = reverse('search:keyword')
         mocksolr = mocksolr_interface.return_value
@@ -156,7 +157,7 @@ class SearchViewsTest(KeepTestCase):
         researchip.delete()
 
     @patch('keep.search.views.Paginator', spec=Paginator)
-    def test_search_bydate(self, mockpaginator, mocksolr_interface):
+    def test_search_bydate(self, mockpaginator, mocksolr_interface, mocksearch_libs):
         solr = solr_interface()
         search_url = reverse('search:keyword')
         mocksolr = mocksolr_interface.return_value
@@ -209,7 +210,7 @@ class SearchViewsTest(KeepTestCase):
         researchip.delete()
 
     @patch('keep.search.views.Paginator', spec=Paginator)
-    def test_search_bylibrary(self, mockpaginator, mocksolr_interface):
+    def test_search_bylibrary(self, mockpaginator, mocksolr_interface, mocksearch_libs):
         solr = solr_interface()
         search_url = reverse('search:keyword')
         mocksolr = mocksolr_interface.return_value
