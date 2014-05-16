@@ -83,7 +83,7 @@ class SearchForm(DateFilterSearchForm):
                     .field_limit(['pid', 'title']) \
                     .sort_by('title')
 
-        choices = [('info:fedora/%s' % a['pid'], a['title']) for a in query]
+        choices = [(a['pid'], a['title']) for a in query]
         choices.insert(0, ('', '---'))   # blank option at the beginning (default)
         return choices
 

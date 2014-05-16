@@ -18,7 +18,7 @@ from keep.common.utils import solr_interface
 logger = logging.getLogger(__name__)
 
 def archive_choices():
-    choices = [('info:fedora/%s' % a['pid'],
+    choices = [(a['pid'],
                 a['title']) for a in CollectionObject.archives(format=dict)]
     choices.insert(0, ('', ''))   # blank option at the beginning (default)
     return choices
