@@ -961,7 +961,7 @@ class CollectionViewsTest(KeepTestCase):
 
             # check solr query/filters
 
-            mocksolr.query.query.assert_called_with(archive_id='info:fedora/%s' % settings.PID_ALIASES['marbl'])
+            mocksolr.query.query.assert_called_with(archive_id=settings.PID_ALIASES['marbl'])
             mocksolr.query.sort_by.assert_called_with('source_id')
 
             # TODO: test join queries?
