@@ -1,5 +1,4 @@
 from django.conf.urls import *
-from keep.audio.feeds import PodcastFeed
 from keep.audio import views
 
 urlpatterns = patterns('',

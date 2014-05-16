@@ -1,8 +1,6 @@
 import logging
 
-from django.conf import settings
 from django.contrib import messages
-from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.shortcuts import render
@@ -17,7 +15,6 @@ from eulfedora.util import RequestFailed, PermissionDenied
 from keep.accounts.utils import prompt_login_or_403
 from keep.audio import forms as audioforms
 from keep.audio.models import AudioObject
-from keep.audio.feeds import feed_items
 from keep.audio.tasks import queue_access_copy
 from keep.common.fedora import Repository, history_view
 
