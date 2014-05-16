@@ -107,10 +107,10 @@ class SearchViewsTest(KeepTestCase):
             html=True,
             msg_prefix='collection number and label should both be displayed')
         self.assertContains(response,
-            '<div class="col-xs-5"><h4>Issued</h4>%(date_issued)s</div>' % testresult,
+            '<li><h4>Issued</h4><span>%(date_issued)s</span></li>' % testresult,
             html=True, msg_prefix='date issued and should be displayed when present')
         self.assertContains(response,
-            '<div class="col-xs-5"><h4>Created</h4>%(date_created)s</div>' % testresult,
+            '<li><h4>Created</h4><span>%(date_created)s</span></li>' % testresult,
             html=True, msg_prefix='date issued and should be displayed when present')
         self.assertContains(response, testresult['part'],
             msg_prefix='part note should be displayed when present')
@@ -134,6 +134,7 @@ class SearchViewsTest(KeepTestCase):
         for method in ['query', 'facet_by', 'sort_by', 'field_limit',
                        'exclude', 'filter']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
+
 
         # create researcher IP for localhost so anonymous access will be
         # treated as anonymous researcher
@@ -228,13 +229,16 @@ class SearchViewsTest(KeepTestCase):
 
         # NOTE: currently uses info:fedora/ pid format for select, so use that here
         libpid = 'info:fedora/%s' % settings.PID_ALIASES['marbl']
+        marbl_name = 'Manuscript, Archives, and Rare Book Library'
+        # set mock list of library choices to include our test value so form will be valid
+        mocksearch_libs.return_value = [(libpid, marbl_name)]
         response = self.client.get(search_url, {'library': libpid})
         # check solr query args
         # - date should query dates created and issued explicitly
         mocksolr.query.join.assert_called_with('pid', 'collection_id', archive_id=libpid)
 
         self.assertContains(response,
-            '<option value="%s" selected="selected">Manuscript, Archives, and Rare Book Library</option>' % libpid,
+            '<option value="%s" selected="selected">%s</option>' % (libpid, marbl_name),
             html=True,
             msg_prefix='library filter should be selected on result page form')
 
