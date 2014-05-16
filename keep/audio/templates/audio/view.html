@@ -94,7 +94,9 @@
         {% if resource.researcher_access|yesno:"yes,no" == "no" %}
         <div class="messages">
           <p class="bg-danger">This item is not accessible to researchers.
+            {% if resource.rights.content.access_status and resource.rights.content.access_status.code %}
             <br/>Access code {{ resource.rights.content.access_status.code }}: {{ resource.rights.content.access_status.text }}
+            {% endif %}
             {% if resource.rights.content.block_external_access %}
             <br/>External access has been blocked.
             {% endif %}
