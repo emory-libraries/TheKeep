@@ -17,7 +17,7 @@
 {% block result-info %}
     {% if r.score %}
     {# display numerical score in debug mode #}
-    {% if debug %}<p>{{ r.score }}</p>{% endif %}
+    {# {% if debug %}<p>{{ r.score }}</p>{% endif %} #}
     <div class="progress">
         <div class="progress-bar" role="progressbar" aria-valuenow="{{ r.score }}" aria-valuemin="0" aria-valuemax="1.5" style="width:{% widthratio r.score 1 90 %}%"> </div>
 
@@ -27,35 +27,65 @@
 {% endblock %}
 
 {% block result-content %}
+    <div clas="row">
+        {# display ARK NOID if possible; fall-back to pid display #}
+        <dl class="dl-horizontal">
+          <dt>ID:</dt>
+          <dd>{% firstof r.ark_uri|ark_noid r.pid %}</dd>
+        </dl>
+    </div>
+    
+    <div class="row"> 
+        <ul class="nav nav-pills nav-justified">
+            <li>
+                <h4>Issued</h4>
+                <span>
+                {% if r.date_issued %}
+                    {{ r.date_issued|natural_date }}
+                    {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            <li>
+                <h4>Created</h4>
+                <span>
+                {% if r.date_created %}
+                    {{ r.date_created|natural_date }}
+                    {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+
+            {# display part note if any (side A/B, etc) #}
+            <li>
+                <h4>Part</h4>
+                <span>
+                {% if r.part %}
+                    {{ r.part }}
+                    {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            <li>
+                <h4>Duration</h4>
+                <span>
+                {% if r.duration %}
+                    {{ r.duration|natural_seconds }}
+                    {% else %}
+                    ---
+                {% endif %}
+            </span>
+            </li>
+        </ul>
+    </div>
     <div class="row">
-        {% if r.date_issued %}
-        <div class="col-xs-5">
-            <h4>Issued</h4>
-            {{ r.date_issued|natural_date }}
-        </div>
-        {% endif %}
-        {% if r.date_created %}
-        <div class="col-xs-5">
-            <h4>Created</h4>
-            {{ r.date_created|natural_date }}
-        </div>
-        {% endif %}
-    </div>
-
-    {# display part note if any (side A/B, etc) #}
-    {% if r.part %}<p>{{ r.part }}</p>{% endif %}
-
-    {% if r.duration %}<p>{{ r.duration|natural_seconds }}</p>{% endif %}
-
-    {# display ARK NOID if possible; fall-back to pid display #}
-    <div class="input-group">
-      <span class="input-group-addon">ID</span>
-      <input type="text" readonly="readonly" class="item-id form-control" value=" {% firstof r.ark_uri|ark_noid r.pid %}">
-    </div>
-
     {% if perms.audio.change_audio %}
-    <div class="pull-right">
-        <a href="{% url 'audio:edit' r.pid %}"><span class="glyphicon glyphicon-edit"></span></a>
+        <div class="edit-option">
+            <a class="btn btn-default" href="{% url 'audio:edit' r.pid %}"><span class="glyphicon glyphicon-edit"></span> Edit</a>
+        </div>
     </div>
     {% endif %}
 

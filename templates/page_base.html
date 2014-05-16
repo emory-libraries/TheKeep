@@ -6,7 +6,7 @@
 <div class="container">
   <div class="row">
 
-    <div class="col-xs-6 col-sm-3 sidebar panel">
+    <div class="col-xs-6 col-sm-3 sidebar {% if user.is_authenticated %}panel{% endif %}">
         <div class="panel-body small">
       {% block sidebar-left %}
   {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
@@ -77,18 +77,26 @@
 {% block footer-content %}
   {{ block.super }}
   <script type ="text/javascript">
-      $(document).ready(function () {
-        $("#keyword-search input[name=keyword]").categorycomplete({
+    $(document).ready(function () {
+      var $keywordSerach = $("#keyword-search input[name=keyword]"),
+          $searchInfo = $('#search-info'),
+          $withTooltips = $('.with-tooltip');
+
+      if(typeof (categorycomplete) === 'function' && $keywordSerach.length>0){
+        $keywordSerach.categorycomplete({
           source: "{% url 'repo-admin:suggest' %}",
           minLength: 0,
-          });
+        });
+      
         {# remove this when old search is removed from sidebar #}
         {% include "collection/snippets/collection_suggest_js.html" %}
-
-        $('#search-info').popover({html: true, container: 'body'});
-        $('.with-tooltip').tooltip({html: true, container: 'body'});
-      });
-
-
+      }
+      if($searchInfo.length>0){
+        $searchInfo.popover({html: true, container: 'body'});
+      }
+      if($withTooltips.length>0){
+        $withTooltips.tooltip({html: true, container: 'body'});
+      }
+    });
    </script>
 {% endblock %}

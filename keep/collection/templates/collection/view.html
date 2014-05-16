@@ -52,6 +52,7 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
 
 {% block content %}
 <article>
+  {% comment %}
     <header>
         <div class="container">
             <h3>{{ collection.mods.content.source_id|default:'' }}: {% firstof collection.mods.content.title collection.label %}</h3>
@@ -73,7 +74,35 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
 
         </div>
     </header>
-
+    {% endcomment %}
+    <header>
+      <div class="page-header">
+        <div class="container">
+          <div class="row">
+            <div class="col-xs-12 col-sm-7 col-md-8">
+                <h1>{{ collection.mods.content.source_id|default:'' }}: {% firstof collection.mods.content.title collection.label %}{% if perms.collection.change_collection %}
+                      <a class="btn btn-edit btn-sm" href="{% url 'collection:edit' collection.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+                {% endif %}
+                </h1>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="page-breadcrumbs">
+        <div class="container">
+            <div class="row">
+                {# breadcrumb with archive/collection hierarchy #}
+                <ol class="breadcrumb">
+                  <li><a href="{% url 'collection:list-archives' %}">Libraries</a></li>
+                  {% with archive=collection.collection %}
+                    <li><a href="{% url 'collection:browse-archive' archive=archive.mods.content.short_name|lower %}">{{ archive.label }}</a></li>
+                  {% endwith %}
+                  <li class="active">{% firstof collection.mods.content.title collection.label %}</li>
+                </ol>
+            </div>
+        </div>
+      </div>
+    </header>
     <div class="container">
       {# jplayer audio player controls #}
       {% include 'audio/snippets/audio_player.html' with playlist=1 %}
@@ -91,7 +120,7 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
         {% endcomment %}
 
     {% if items.paginator.count %}
-    <h4><strong>{{ items.paginator.count|intcomma }}</strong> item{{ items.paginator.count|pluralize }} in this collection</h4>
+    <h2 class="section-heading">{{ items.paginator.count|intcomma }} item{{ items.paginator.count|pluralize }} in this collection</h2>
     <p class="lead">
         {% if items.has_other_pages and items.object_list|length > 1 %}
         displaying {{ items.start_index|intcomma }} - {{ items.end_index|intcomma }}{% endif %}
@@ -101,50 +130,56 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
     <h2 id="no-results-found">No items in this collection.</h2>
     {% endif %}
 
-    {% for obj in items.object_list %}
-    <div class="search-result clearfix">
-      {# generate appropriate edit link if user has permission #}
-      {# NOTE: could use obj|edit_url but need to split out to check permissions #}
-      {% if obj.object_type == 'audio' and perms.audio.change_audio %}
-        <a class="pull-right btn btn-primary" href="{% url 'audio:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
-      {% endif %}
-      {% if obj.object_type == 'born-digital' %}
-        {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model and perms.file.change_disk_image %}
-          <a class="pull-right btn btn-primary" href="{% url 'file:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
-        {% elif perms.arrangement.change_arrangement %}
-        <a class="pull-right btn btn-primary" href="{% url 'arrangement:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
-        {% endif %}
+    <ul class="media-list archive-list">
+      {% for obj in items.object_list %}
+      <li class="media {% with obj|edit_url as edit_url %}{% if edit_url %}with-edit{% endif %}{% endwith %}">
       {% endif %}
 
-   {# TODO: copied from repoadmin, convert to snippet? or revise for researcher use? #}
-    <span class="result-icon">
-      {% if obj.object_type  == 'collection' %}
-      <span class="glyphicon glyphicon-folder-open"></span>
-      {% elif obj.object_type  == 'audio' %}
-      <span class="glyphicon glyphicon-headphones"></span>
-      {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
-      <span class="glyphicon glyphicon-envelope"></span>
-      {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
-      <span class="glyphicon glyphicon-hdd"></span>
-      {% else %}
-      <span class="glyphicon glyphicon-file"></span>
-      {% endif %}
-    </span>
+        {% with view_url=obj|view_url %}
+          <a {% if view_url %}href="{{ view_url }}"{% else %} href="#" class="disabled"{% endif %}>
+              <div class="media-body-link-to">
 
-    {% with view_url=obj|view_url %}
-      {% if view_url %}  {# some items still do not have *view* pages #}
-      <a href="{{ view_url }}">{% firstof obj.title obj.label "(no title)" %}</a>
-      {% else %}{% firstof obj.title obj.label "(no title)" %}
-      {% endif %}
-    {% endwith %}
-    <p>
-      {% if obj.date_created %}{{ obj.date_created|natural_date }}{% if date_issued %}; {% endif %}{% endif %}
-      {% if obj.date_issued %}{{ obj.date_issued|natural_date }}{% endif %}
-      {% if obj.duration %}<span class="small">({{ obj.duration|natural_seconds }})</span>{% endif %}
-    </p>
-    </div>
-    {% endfor %}
+                {# TODO: copied from repoadmin, convert to snippet? or revise for researcher use? #}
+                  {% if obj.object_type  == 'collection' %}
+                  <span class="glyphicon glyphicon-folder-open"></span>
+                  {% elif obj.object_type  == 'audio' %}
+                  <span class="glyphicon glyphicon-headphones"></span>
+                  {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+                  <span class="glyphicon glyphicon-envelope"></span>
+                  {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
+                  <span class="glyphicon glyphicon-hdd"></span>
+                  {% else %}
+                  <span class="glyphicon glyphicon-file"></span>
+                  {% endif %}
 
+              </div>
+              <div class="media-body">
+                  <h2 class="media-heading">
+                      {% firstof obj.title obj.label "(no title)" %}
+                  </h2>
+                  <section class="media-info">
+                      <p class="lead">
+                        {% if obj.date_created %}{{ obj.date_created|natural_date }}{% if date_issued %}; {% endif %}{% endif %}
+                        {% if obj.date_issued %}{{ obj.date_issued|natural_date }}{% endif %}
+                        {% if obj.duration %}<span class="small">({{ obj.duration|natural_seconds }})</span>{% endif %}
+                      </p>
+                  </section>
+              </div>
+          </a>
+        {% endwith %}
+
+        {# TODO: only if user has permission to edit #}
+        {% with obj|edit_url as edit_url %}
+          {% if edit_url %}
+          <a class="aux-action"  href="{{ edit_url }}" title="Edit">
+            <span class="glyphicon glyphicon-edit"></span>
+          </a>
+          {% endif %}
+        {% endwith %}
+      </li>
+
+      {% endfor %}
+    </ul>
 
     {% if items.has_other_pages %}
       {% include 'eultheme/snippets/pagination_all_pages.html' with results=items %}

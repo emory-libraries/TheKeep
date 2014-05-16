@@ -28,6 +28,9 @@
 						    {% for info in archives|dictsort:"title" %}  {# or possibly by count #}
 						    <li class="media">
 						    	<a href="{% url 'collection:browse-archive' info.alias %}">
+						    		<div class="media-body-link-to">
+						    			<span class="glyphicon glyphicon-folder-close"></span>
+						    		</div>
 						    		<div class="media-body">
 							    		<h2 class="media-heading">{{ info.title }}</h2>
 							    		<section class="media-info">

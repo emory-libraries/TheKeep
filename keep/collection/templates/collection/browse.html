@@ -4,42 +4,88 @@
 {% block page-subtitle %}: {{ archive.label }} : Collections{% endblock %}
 
 {% block content %}
+<header>
+    <div class="page-header">
+        <div class="container">
+            <div class="row">
+                <div class="col-xs-12 col-sm-7 col-md-8">
+                    <h1>{{ archive.label }} Collections</h1>
+                </div>
+                <div class="col-xs-12 col-sm-5 col-md-4">
+                    <div class="nav">
+                        {% include 'collection/snippets/find_collection_form.html' with form_label='Go to collection:' %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-breadcrumbs">
+        <div class="container">
+            <div class="row">
+                {# breadcrumb with archive/collection hierarchy #}
+                <ol class="breadcrumb">
+                    <li><a href="{% url 'collection:list-archives' %}">Libraries</a></li>
+                    <li class="active">{{ archive.label }}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</header>
+
 <div class="container">
-    <div class="pull-right">
-        {% include 'collection/snippets/find_collection_form.html' with form_label='Go to collection:' %}
-    </div>
-<h1>{{ archive.label }} Collections</h1>
+    <h2 class="section-heading">{{ collections.paginator.count|intcomma }} collection{{ collections.paginator.count|pluralize }}{% if collection_filter %} with number {{ collection_filter }}{% endif %}{% if collections.has_other_pages and collections.object_list|length > 1 %}; displaying {{ collections.start_index|intcomma }} - {{ collections.end_index|intcomma }}{% endif %}
+      {# if more than one item on this page, display range of results #}
+    </h2>
 
-{# breadcrumb with archive/collection hierarchy #}
-<ol class="breadcrumb">
-    <li><a href="{% url 'collection:list-archives' %}">Libraries</a></li>
-    <li class="active">{{ archive.label }}</li>
-</ol>
+    {% comment %}
+     
+    {% for collection in collections.object_list %}
+        <div>
+            <h2><a href="{% url 'collection:view' collection.pid %}">
+                {% if collection.source_id != 0 %}{{ collection.source_id }}: {% endif %}
+                    {{ collection.title|default:'(no title present)' }}</a>
+                    {% if collection.collection_dates %}
+                      ({{ collection.collection_dates|join:', ' }})
+                    {% endif %}
+                </h2>
 
-<p>{{ collections.paginator.count|intcomma }} collection{{ collections.paginator.count|pluralize }}{% if collection_filter %} with number {{ collection_filter }}{% endif %}{% if collections.has_other_pages and collections.object_list|length > 1 %}; displaying {{ collections.start_index|intcomma }} - {{ collections.end_index|intcomma }}{% endif %}
-  {# if more than one item on this page, display range of results #}
-</p>
+            {# NOTE: would be nice to display number of items in the collection; probably not easy currently #}
 
-{% for collection in collections.object_list %}
-    <div>
-        <h2><a href="{% url 'collection:view' collection.pid %}">
-            {% if collection.source_id != 0 %}{{ collection.source_id }}: {% endif %}
-                {{ collection.title|default:'(no title present)' }}</a>
-                {% if collection.collection_dates %}
-                  ({{ collection.collection_dates|join:', ' }})
-                {% endif %}
-            </h2>
+            {# could display creator, but it seems redundant #}
+            {# {% if collection.creator %}<p>{{ collection.creator|join:'; ' }}</p>{% endif %} #}
+        </div>
+    {% endfor %}
 
-        {# NOTE: would be nice to display number of items in the collection; probably not easy currently #}
+    {% endcomment %}
 
-        {# could display creator, but it seems redundant #}
-        {# {% if collection.creator %}<p>{{ collection.creator|join:'; ' }}</p>{% endif %} #}
-    </div>
-{% endfor %}
+    <ul class="media-list archive-list">
+        {% for collection in collections.object_list %}
+        <li class="media">
+            <a href="{% url 'collection:view' collection.pid %}">
+                <div class="media-body-link-to">
+                    <span class="glyphicon glyphicon-folder-close"></span>
+                </div>
+                <div class="media-body">
+                    <h2 class="media-heading">
+                        {% if collection.source_id != 0 %}{{ collection.source_id }}: {% endif %}
+                        {{ collection.title|default:'(no title present)' }}
+                    </h2>
+                    <section class="media-info">
+                        <p class="lead">
+                            {% if collection.collection_dates %}
+                                ({{ collection.collection_dates|join:', ' }})
+                            {% endif %}
+                        </p>
+                    </section>
+                </div>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
 
-{# due to the way regroup works, top-level collections with no collections will not be listed #}
-{% if collections.has_other_pages %}
-   {% include 'eultheme/snippets/pagination_all_pages.html' with results=collections %}
-{% endif %}
-</div>
+    {# due to the way regroup works, top-level collections with no collections will not be listed #}
+    {% if collections.has_other_pages %}
+       {% include 'eultheme/snippets/pagination_all_pages.html' with results=collections %}
+    {% endif %}
+</div><!-- /.container-->
 {% endblock %}

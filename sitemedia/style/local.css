@@ -283,6 +283,83 @@ ul.messages li {
     overflow-x: auto;
 }
 
+.result .progress {
+  height: 10px;
+}
+
+div.row.result-listing.cards {
+  margin-top: 30px;
+}
+
+.adv.group {
+  padding-bottom: 30px;
+}
+
+
+.result dl.dl-horizontal {
+    margin-left: -15px;
+    margin-right: -15px;
+    margin-top: -0.5em;
+    margin-bottom: 0;
+    background-color: #EEE;
+}
+
+.result .dl-horizontal dd,
+.result .dl-horizontal dt {
+    color: #9C9C9C;
+    display: inline-block;
+}
+
+.result .dl-horizontal dd {
+    padding: 0 1em;
+    border-left: none;
+    margin: 0;
+}
+.result .dl-horizontal dt {
+    width: auto;
+    padding: 0 1em;
+    border-right: 2px solid #FFF;
+}
+
+.result .summary ul.nav.nav-pills.nav-justified{
+  border-bottom:1px solid #DEDEDE;
+}
+
+
+.result .summary ul.nav.nav-pills.nav-justified li{
+    border-color: #DEDEDE;
+    border-style:solid;
+    border-width: 1px 1px 0px 0;
+    padding: 0px 13px 5px;
+    color: #A0A0A0;
+}
+
+.result .summary ul.nav.nav-pills.nav-justified li:first-child{
+    border-top-width:0px;
+}
+
+@media(min-width:767px){
+  .result .summary ul.nav.nav-pills.nav-justified li:first-child{
+    border-top-width:1px;
+  }
+}
+
+.result .summary ul.nav.nav-pills.nav-justified li h4{
+    color: #727272;
+    margin-bottom:5px;
+}
+
+.result .summary ul.nav.nav-pills.nav-justified li span{
+  font-size:0.9em
+}
+
+.result .edit-option .btn {
+  width: 100%;
+  border-radius: 0;
+  border: 0;
+}
+
+
 #keyword-search input[type=text] {
   font-size: 1.5em;
   width: 85%;
@@ -390,11 +467,16 @@ form#upload a.remove {
 *******/
 
 .page-header {
-  margin: 30px 0 20px;
+  margin: 0px 0 20px;
+  padding-top: 30px;
 }
 
 .page-header h1 {
     margin-top: 0;
+}
+
+.section-heading {
+  margin: 25px 0 15px;
 }
 
 /*******
@@ -405,20 +487,104 @@ form#upload a.remove {
     font-size: 1.5em;
 }
 .media-list .media>a {
+    border: 1px solid #EEE;
     text-decoration: none;
     color: inherit;
-    float: left;
+    float: none;
     transition: color 0.2s;
+    width: 100%;     
+    display: table-cell;
 }
 
-.media-list .media>a:hover,
+.archive-list .media {
+    display: block;
+    max-width: 400px;
+    margin-top: 9px;
+    display: table;
+    width: 100%;
+}
+
+.media-list .media>a:hover, 
 .media-list .media>a:focus{
-    color: #5EBCE9;
+    color: #44C2FF;
+    border-color: #DFE9EE;
 }
 
 .archive-list .media-info{
   opacity: 0.8;
 }
+
+
+.archive-list .media-body, .archive-list .media-body-link-to {
+    display: table-cell;
+}
+
+.archive-list .media-body{
+    padding-top: 10px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
+    width: 100%;
+    font-size: 0.75em;
+}
+
+.archive-list .media-body-link-to {
+    display: table-cell;
+    vertical-align: middle;
+    background: #EEE;
+    padding-left: 15px;
+    padding-right: 15px;
+    color: #999;
+    transition: background-color 0.2s, color 0.1s;
+    font-size: 1.25em;
+}
+
+.archive-list .lead {
+    font-size: 1.5em;
+    margin-bottom: 0;
+}
+.archive-list a:hover .media-body-link-to,
+.archive-list a:focus .media-body-link-to{
+    color: #44C2FF;
+    background-color: #F2FBFD;
+}
+
+.archive-list a:hover .glyphicon-folder-close:before,
+.archive-list a:focus .glyphicon-folder-close:before{
+  content: "\e118";
+}
+
+
+li.media.with-edit>a {
+    width: 85%;
+    vertical-align: top;
+}
+
+li.media.with-edit>.aux-action{
+    width: 1%;
+    float: none;
+    position: relative;
+    display: table-cell;
+    padding-bottom: 0;
+    border: 1px solid #EEE;
+    border-left: 0px;
+    vertical-align: middle;
+    padding-left: 5px;
+    padding-right: 5px;
+    background-color: #F7F7F7;
+}
+li.media.with-edit>.aux-action:hover,  
+li.media.with-edit>.aux-action:focus {
+  background-color: #F2FBFD;
+}
+
+li.media.with-edit {
+    display: table;
+}
+
+
+
+/* Find Collection */
 
 .find-coll{
 }
@@ -454,3 +620,57 @@ form#upload a.remove {
 
 
 
+/*****
+  Login
+******/
+
+form#login-form .table>thead>tr>th, 
+form#login-form .table>tbody>tr>th, 
+form#login-form .table>tfoot>tr>th, 
+form#login-form .table>thead>tr>td, 
+form#login-form .table>tbody>tr>td, 
+form#login-form .table>tfoot>tr>td{
+  border:none;
+}
+
+#login-form .btn-submit {
+    margin: 0.5em 1em 0;
+}
+
+.form-heading {
+  margin-top: 0;
+}
+
+.login.panel {
+    border: 1px solid #EBEBEB;
+    padding: 1em;
+    border-radius: 0;
+}
+
+ul.errorlist {
+    padding: 0;
+    border: 1px solid #EEEEEE;
+    border-left: 3px solid #E23C3C;
+    box-shadow: 0px 1px 3px rgba(241, 241, 241, 0.28);
+}
+
+ul.errorlist li {
+    list-style: none;
+    padding: 1em;
+}
+
+.table ul.errorlist{
+    border:none;
+    display: none;
+}
+
+.page-breadcrumbs{
+    border: 1px solid #EEE;
+    margin-top: -1.5em;
+}
+
+.breadcrumb {
+    margin-bottom: 0px;
+    border-radius: 0px;
+    background: transparent;
+}

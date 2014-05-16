@@ -1,4 +1,4 @@
-{% extends "page_base.html" %}
+{% extends "page_base.html" %} 
 
 {% block javascript %}
   {{ block.super }}
@@ -10,6 +10,8 @@
   </script>
 {% endblock %}
 
+{% block content-title %}<span class="sr-only">Login</span>{% endblock %}
+
 {% block content-body %}
 
 {% if request.user.is_anonymous_researcher %}
@@ -17,14 +19,18 @@
 {% endif %}
 
 {% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
+<ul class="errorlist">
+	<li>Your username and password didn't match. Please try again.</li>
+</ul>
 {% endif %}
 
-<form id="login-form" method="post" action="{% url 'accounts:login' %}">{% csrf_token %}
-<table>
+<form id="login-form" class="login panel" method="post" action="{% url 'accounts:login' %}">{% csrf_token %}
+<table class="table">
     {{ form.as_table }}
 </table>
-<input type="submit" value="Login" />
+<div class="text-right">
+  <button type="submit" class="btn btn-default btn-submit">Login</button>
+</div>
 <input type="hidden" name="next" value="{{ next }}" />
 </form>
 

@@ -23,6 +23,7 @@
 
         {% if results %}
         <div class="row result-listing cards">
+
             {% for r in results.object_list %}
                 {% include 'search/snippets/search_result_card.html' with preview_disabled=True %}
             {% endfor %}
