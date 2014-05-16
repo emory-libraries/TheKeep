@@ -981,15 +981,18 @@ class CollectionViewsTest(KeepTestCase):
             coll_view_url = reverse('collection:view', kwargs={'pid': item['pid']})
             self.assertContains(response, coll_view_url,
                 msg_prefix='collection view url should be included in the browse page')
+
+            self.assertContains(response, coll_view_url,
+                    msg_prefix='collection view url should be included in browse page')
             # first result has source id 0, should not be displayed
             if item['source_id'] == 0:
-                self.assertContains(response, '<a href="%s">%s</a>' % (coll_view_url, item['title']),
+                self.assertContains(response, '<h2 class="media-heading">%s</h2>' % item['title'],
                     html=True,
                     msg_prefix='collection title should be displayed without source id when it is 0')
+
             else:
-                self.assertContains(response,
-                    '<a href="%s">%s: %s</a>' % (coll_view_url, item['source_id'],
-                                                 item['title'] or '(no title present)'),
+                self.assertContains(response, '<h2 class="media-heading">%s: %s</h2>' % \
+                        (item['source_id'], item['title'] or '(no title present)'),
                     html=True,
                     msg_prefix='collection title should be displayed with source id when set')
 
@@ -1248,7 +1251,7 @@ class CollectionViewsTest(KeepTestCase):
             'content_model': [AudioObject.AUDIO_CONTENT_MODEL,] },
         ]
         response = self.client.get(coll_view_url)
-        self.assertContains(response, '<h4><strong>1</strong> item in this collection</h4>',
+        self.assertContains(response, '<h2 class="section-heading">1 item in this collection</h2>',
             html=True, msg_prefix='count of items in collection should be displayed')
         self.assertContains(response, 'glyphicon-headphones',
             msg_prefix='headphone glyph should be used for audio item')
@@ -1279,10 +1282,10 @@ class CollectionViewsTest(KeepTestCase):
 
         response = self.client.get(coll_view_url)
         # spot-check that response displays correctly
-        self.assertContains(response, '<h4><strong>1</strong> item in this collection</h4>',
+        self.assertContains(response, '<h2 class="section-heading">1 item in this collection</h2>',
             html=True, msg_prefix='count of items in collection should be displayed')
 
-        # simulate no researcher-accessible content - should get pemrission error
+        # simulate no researcher-accessible content - should get permission error
         mockquery.count.return_value = 0
         response = self.client.get(coll_view_url)
         expected, got = 302, response.status_code

@@ -15,6 +15,7 @@
   </style>
 {% endblock %}
 
+{% comment %} {# disabling jplayer with playlist for now #}
 {% block javascript %}
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/jquery.jplayer.min.js' %}"></script>
@@ -48,7 +49,7 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
   </script>
 
 {% endblock %}
-
+{% endcomment %}
 
 {% block content %}
 <article>
@@ -80,7 +81,9 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
         <div class="container">
           <div class="row">
             <div class="col-xs-12 col-sm-7 col-md-8">
-                <h1>{{ collection.mods.content.source_id|default:'' }}: {% firstof collection.mods.content.title collection.label %}{% if perms.collection.change_collection %}
+                <h1>
+                  {% if collection.mods.content.source_id != 0 %}{{ collection.mods.content.source_id }}: {% endif %}
+                  {% firstof collection.mods.content.title collection.label %}{% if perms.collection.change_collection %}
                       <a class="btn btn-edit btn-sm" href="{% url 'collection:edit' collection.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
                 {% endif %}
                 </h1>
@@ -103,10 +106,12 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
         </div>
       </div>
     </header>
+    {% comment %} {# jplayer playlist disabled for now #}
     <div class="container">
       {# jplayer audio player controls #}
       {% include 'audio/snippets/audio_player.html' with playlist=1 %}
     </div>
+    {% endcomment %}
 
     <div class="container">
         {# TODO: collection metadata here ? #}
@@ -132,8 +137,8 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
 
     <ul class="media-list archive-list">
       {% for obj in items.object_list %}
-      <li class="media {% with obj|edit_url as edit_url %}{% if edit_url %}with-edit{% endif %}{% endwith %}">
-      {% endif %}
+      {% with obj|edit_url as edit_url %}
+      <li class="media {% if edit_url %}with-edit{% endif %}">
 
         {% with view_url=obj|view_url %}
           <a {% if view_url %}href="{{ view_url }}"{% else %} href="#" class="disabled"{% endif %}>
@@ -168,16 +173,30 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
           </a>
         {% endwith %}
 
-        {# TODO: only if user has permission to edit #}
-        {% with obj|edit_url as edit_url %}
-          {% if edit_url %}
+        {# generate appropriate edit link if user has permission #}
+        {# check permissions based on type of object #}
+        {% if edit_url %}
+          {% if obj.object_type == 'audio' and perms.audio.change_audio %}
           <a class="aux-action"  href="{{ edit_url }}" title="Edit">
             <span class="glyphicon glyphicon-edit"></span>
           </a>
-          {% endif %}
-        {% endwith %}
+          {% endif %} {# audio edit #}
+          {% if obj.object_type == 'born-digital' %}
+            {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model and perms.file.change_disk_image %}
+            <a class="aux-action"  href="{{ edit_url }}" title="Edit">
+              <span class="glyphicon glyphicon-edit"></span>
+            </a>
+            {% elif perms.arrangement.change_arrangement %}
+            <a class="aux-action"  href="{{ edit_url }}" title="Edit">
+              <span class="glyphicon glyphicon-edit"></span>
+            </a>
+            {% endif %}
+          {% endif %} {# born digital edit #}
+
+        {% endif %}  {# edit url #}
       </li>
 
+      {% endwith %} {# edit_url #}
       {% endfor %}
     </ul>
 
