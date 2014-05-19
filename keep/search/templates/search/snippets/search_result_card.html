@@ -3,13 +3,15 @@
 {# public-facing search result card; currently audio-only #}
 
 {% block result-header %}
-    <h3><a href="{% url 'audio:view' r.pid %}">{{ r.title }}</a>
+    <h3><a href="{% url 'audio:view' r.pid %}" title="{{r.title}}">{{ r.title|truncatechars:"60"}}</a></h3>
+
      {% if 'info:fedora' in r.collection_id %}  {# convert to pid if id is in URI format #}
         {% url 'collection:view' r.collection_id|slice:'12:' as collection_url %}
     {% else %}
         {% url 'collection:view' r.collection_id as collection_url %}
     {% endif %}
-    <h4><a class="text-muted" href="{{ collection_url }}">{{ r.collection_source_id }}: {{ r.collection_label }}</a></h4>
+
+    <h4><a class="text-muted" href="{{ collection_url }}">{{ r.collection_source_id }} {% if r.collection_source_id %}: {% endif %}{{ r.collection_label }}</a></h4>
     {# TODO: use r.collection_id to link to collection page once we have one #}
 
 {% endblock %}
