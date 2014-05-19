@@ -7,6 +7,12 @@
 {% block javascript %}
   {{ block.super }}
   <script type="text/javascript" src="{{ STATIC_URL }}/js/edit.js"></script>
+  <script type="text/javascript" charset="utf-8">
+     $(document).ready(function () {
+       {# collection autocomplete #}
+       {% include "collection/snippets/collection_suggest_js.html" %}
+    });
+  </script>
 {% endblock %}
 
 {% block content-body %}
