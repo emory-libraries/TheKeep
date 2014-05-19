@@ -324,6 +324,8 @@ Release 1.8
 * The Keep now requires Solr 4.  A new Solr core should be created, the
   **SOLR_SERVER_URL** configuration in ``localsettings.py`` should be updated,
   and all site content should be reindexed using eulindexer.
+* Be sure to restart the eulindexer service so that it picks up the new Solr
+  configuration and server connection information.
 * The iTunes podcast feed functionality has been removed.  This requires the
   following changes:
 
