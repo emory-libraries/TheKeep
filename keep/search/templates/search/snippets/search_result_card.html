@@ -63,13 +63,7 @@
             {# display part note if any (side A/B, etc) #}
             <li>
                 <h4>Part</h4>
-                <span>
-                {% if r.part %}
-                    {{ r.part }}
-                    {% else %}
-                    ---
-                {% endif %}
-                </span>
+                <span>{{ r.part|default:'---'}}</span>
             </li>
             <li>
                 <h4>Duration</h4>
