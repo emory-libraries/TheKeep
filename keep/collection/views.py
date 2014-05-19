@@ -320,7 +320,7 @@ def list_archives(request, archive=None):
             q = CollectionObject.item_collection_query()
             # submitted value is pid alias; lookup pid for solr query
             archive_id = settings.PID_ALIASES[data['archive']]
-            q = q.query(archive_id='info:fedora/%s' % archive_id,
+            q = q.query(archive_id=archive_id,
                         source_id=data['collection'])
             # if exactly one result is found, redirect to the collection view
             if q.count() == 1:
