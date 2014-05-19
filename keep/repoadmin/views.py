@@ -341,14 +341,15 @@ def keyword_search_suggest(request):
         # if field can be faceted, suggest terms
         if field in KeywordSearch.facet_fields.keys():
             facet_field = KeywordSearch.facet_fields[field]
-            # date created is a special caes
+
+            # date created is a special case
             if field == 'created':
                 sort = 'index'
                 category = 'Date Added'
                 # if less than 4 characters, suggest year
                 if len(prefix) < 4:
                     facet_field = 'created_year'
-                    result_fmt = '%s'
+
                 # between 4 and 7, suggest year-month
                 elif len(prefix) < 7:
                     facet_field = 'created_month'
@@ -361,9 +362,16 @@ def keyword_search_suggest(request):
                 category = 'Users'
                 result_fmt = '"%s" '
 
-                #if the term is numbric facet by source_id
+
+            # collection label
+            if field == 'coll':
+                sort = 'count'
+                category = 'Collection'
+                result_fmt = '%s'
+
+                # if the term is numeric facet by source_id
                 if prefix and prefix.isdigit():
-                    facet_field = 'collection_source_id_facet'
+                    facet_field = 'collection_source_id'
 
             solr = solr_interface()
             facetq = solr.query().paginate(rows=0)

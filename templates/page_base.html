@@ -78,22 +78,24 @@
   {{ block.super }}
   <script type ="text/javascript">
     $(document).ready(function () {
-      var $keywordSerach = $("#keyword-search input[name=keyword]"),
-          $searchInfo = $('#search-info'),
-          $withTooltips = $('.with-tooltip');
-
-      if(typeof (categorycomplete) === 'function' && $keywordSerach.length>0){
-        $keywordSerach.categorycomplete({
+      var $keywordSearch = $("#keyword-search input[name=keyword]");
+      // if(typeof (categorycomplete) === 'function' && $keywordSearch.length > 0){
+        $keywordSearch.categorycomplete({
           source: "{% url 'repo-admin:suggest' %}",
           minLength: 0,
         });
-      
-        {# remove this when old search is removed from sidebar #}
-        {% include "collection/snippets/collection_suggest_js.html" %}
-      }
-      if($searchInfo.length>0){
+      // }
+
+
+      {# remove this when old search is removed from sidebar #}
+      {% include "collection/snippets/collection_suggest_js.html" %}
+
+      var $searchInfo = $('#search-info');
+      if($searchInfo.length > 0){
         $searchInfo.popover({html: true, container: 'body'});
       }
+
+      var $withTooltips = $('.with-tooltip');
       if($withTooltips.length>0){
         $withTooltips.tooltip({html: true, container: 'body'});
       }
