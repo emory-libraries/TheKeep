@@ -1,6 +1,5 @@
 import logging
 from datetime import date, timedelta
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
