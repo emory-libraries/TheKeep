@@ -1,0 +1,24 @@
+{% extends "page_base.html" %}
+{# NOTE: eullocal template extends site base; copied here to extend page base #}
+{# this should probably be reworked at some point #}
+
+{% block page-subtitle %}: Tasks : Recently completed{% endblock %}
+{% block content-title %}Recently completed tasks{% endblock %}
+
+{% block style %}
+  {{ block.super }}
+   {% include 'taskresult/snippets/task_styles.html' %}
+{% endblock %}
+
+{% block content-body %}
+<div id="task-results">
+   <h3>Task Results</h3>
+   <ul>
+      {% for r in task_results %}
+        {% include 'taskresult/snippets/display_task.html' %}
+      {% empty %}
+        <li>No recent tasks.</li>
+      {% endfor %}
+   </ul>
+</div>
+{% endblock %}
