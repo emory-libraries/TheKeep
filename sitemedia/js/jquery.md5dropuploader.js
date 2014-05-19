@@ -82,11 +82,15 @@ Adapted in part from https://github.com/texel/drag_drop_example/
     }
     // if we have a File and it can slice, then we have blob slicing
     if ((typeof window.File == 'function' || typeof window.File == 'object') &&
-        (typeof window.File.prototype.slice == 'function' ||
-        // As of May 2011, the most recent versions of Google Chrome and Firefox 4
-        // provide namespaced versions of the slice method (new spec).
-         typeof window.File.prototype.webkitSlice == 'function' ||
-         typeof window.File.prototype.mozSlice == 'function')) {
+        (typeof window.File.prototype.slice == 'function')) {
+
+         // NOTE: Previously, as of May 2011, the most recent versions of
+         // Google Chrome and Firefox 4 provide namespaced versions of the
+         // slice method, which folled the new spec.
+         // As of May 2014, these should no longer be needed.
+         // typeof window.File.prototype.webkitSlice == 'function' ||
+         // typeof window.File.prototype.mozSlice == 'function'
+
           blob_slicing = true;
     }
     // otherwise, the browser doesn't have what we need.
@@ -118,7 +122,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
        var $this = $(this);
        var data = {
          file_count: 0,
-         files: new Array(),
+         files: [],
          ingest_on_completion: false,
          allowed_types: [],
          csrf_token: null
@@ -178,18 +182,18 @@ Adapted in part from https://github.com/texel/drag_drop_example/
       // store current file count - marker for where to start processing in full list of files
       var start_processing = $this.data('md5DropUploader').file_count;
       var allowed_types =  $this.data('md5DropUploader').allowed_types;
-      var not_allowed = new Array();
+      var not_allowed = [];
       // display files if they are allowed type, add to list of all files
       if (event.originalEvent.dataTransfer.files.length > 0) {
         $.each(event.originalEvent.dataTransfer.files, function ( i, file ) {
             // if allowed types have been specified, check that file is one of the specified types
-            if (allowed_types.length == 0 ||
+            if (allowed_types.length === 0 ||
                 $.inArray(file.type, allowed_types) != -1) {    // returns index or -1 if not found
                 // rudimentary list display
 
                 var p = $('<p><a class="remove">X</a> ' + file.name + ' ' +
                     '<span class="file-info">(' + filesize_format(file.size) +
-		    ', ' + file.type + ')</span></p>');
+                    ', ' + file.type + ')</span></p>');
                 $this.append(p);
                 // create status node and attach to file so it is easy to update
                 file.status = $('<span class="status">-</span>');
@@ -221,7 +225,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             if (i >= start_processing) {
                 // update status
                 file.status.html('calculating checksum');
-                console.log(file.name + ' calculating checksum')
+                console.log(file.name + ' calculating checksum');
                 var start_time = new Date();
                 var indicator = $('<p/>');
                 file.progress = $('<div class="progress-bar"/>');
@@ -249,7 +253,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
 
             }
          });
-      };
+      }
       return false;
     },  // end drop method
 
@@ -291,7 +295,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         // Support external validation: if a submit handler sets
         // 'valid' to false on the form, bail out.  Assumes the external
         // validation handles any errors/warnings.
-        if ($this.data('valid') == false) {
+        if ($this.data('valid') === false) {
             return false;
         }
         // retrieve the md5 upload element relative to the form
@@ -303,7 +307,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
             uploader.data('md5DropUploader').submit_on_completion = true;
 
             // display a message to the user
-            $this.find('#submit-info').html('The form will submit when all uploads complete.')
+            $this.find('#submit-info').html('The form will submit when all uploads complete.');
 
             // don't propagate the submit event
             event.stopPropagation();
@@ -312,7 +316,7 @@ Adapted in part from https://github.com/texel/drag_drop_example/
         }
 
         // otherwise, all dropped files have completed upload - submit normally
-        $this.find('#submit-info').html('Submitting...')
+        $this.find('#submit-info').html('Submitting...');
         return true;
     },
 
@@ -369,9 +373,9 @@ Adapted in part from https://github.com/texel/drag_drop_example/
                 file.status.parent().append('<input type="hidden" name="filenames" value="' + file.name + '"/>');
 
              } else {
-                console.log('response status is ' + xhr.status)
-                var err_msg = 'Upload error'
-                if (xhr.status == 0) {      // request aborted; could happen if not authorized/login session times out
+                console.log('response status is ' + xhr.status);
+                var err_msg = 'Upload error';
+                if (xhr.status === 0) {      // request aborted; could happen if not authorized/login session times out
                    file.status.html(err_msg + ': Request Aborted');
                 } else if (xhr.status >= 400 && xhr.getResponseHeader('Content-Type') == 'text/plain') {
                   // other upload errors should normally return a plain-text error message
@@ -422,22 +426,35 @@ Adapted in part from https://github.com/texel/drag_drop_example/
   function calculate_checksum(file, indicator, start, md5, next_step) {
     var size = 1024 * 1024; // 1MB chunks seem to work well, but might still want tweaking
 
-    // Due to changes in the HTML5 Blob/File spec for slice, Mozilla
-    // and Webkit now have name-spaced slice functions that implement
-    // the new version of the spec.  Use those first, if available.
-    if (typeof window.Blob.prototype.webkitSlice == 'function') {
-        // Google Chrome -  http://trac.webkit.org/changeset/83873
-        var slice = file.webkitSlice(start, start + size);
-    } else if (typeof window.Blob.prototype.mozSlice == 'function') {
-        // Mozilla Firefox -  https://developer.mozilla.org/en/DOM/Blob
-        var slice = file.mozSlice(start, start + size);
-    } else {
-        // Using the old-spec slice function for now:
-        //   http://www.w3.org/TR/2009/WD-FileAPI-20091117/#dfn-Blob
-        // Updated spec for Blob.slice (as implemented in mozSlice and webkitSlice):
-        //   http://www.w3.org/TR/2010/WD-FileAPI-20101026/#dfn-Blob
-    var slice = file.slice(start, size);
-    }
+    // Updated spec for Blob.slice (as implemented in mozSlice and webkitSlice):
+    //   http://www.w3.org/TR/2010/WD-FileAPI-20101026/#dfn-Blob
+    var slice = file.slice(start, start + size);
+
+    // NOTE: Previously, due to changes in the HTML5 Blob/File spec for slice,
+    // Mozilla and Firefox added name-spaced slice functions that implemented
+    // the new version of the spec.
+    // As of May 2014, both browsers implement the new spec
+    // in the non-namespaced slice function, so we can use that instead.
+
+    // // Due to changes in the HTML5 Blob/File spec for slice, Mozilla
+    // // and Webkit now have name-spaced slice functions that implement
+    // // the new version of the spec.  Use those first, if available.
+    // if (typeof window.Blob.prototype.webkitSlice == 'function') {
+    //     console.log('using webkitSlice');
+    //     // Google Chrome -  http://trac.webkit.org/changeset/83873
+    //     slice = file.webkitSlice(start, start + size);
+    // } else if (typeof window.Blob.prototype.mozSlice == 'function') {
+    //     // Mozilla Firefox -  https://developer.mozilla.org/en/DOM/Blob
+    //     console.log('using mozSlice');
+    //     slice = file.mozSlice(start, start + size);
+    // } else {
+    //     console.log('using file.Slice');
+    //     // Using the old-spec slice function for now:
+    //     //   http://www.w3.org/TR/2009/WD-FileAPI-20091117/#dfn-Blob
+    //     // Updated spec for Blob.slice (as implemented in mozSlice and webkitSlice):
+    //     //   http://www.w3.org/TR/2010/WD-FileAPI-20101026/#dfn-Blob
+    //     slice = file.slice(start, start + size);
+    // }
 
     // make a reader for handling the current slice.
     var reader = new FileReader();
