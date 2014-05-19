@@ -300,8 +300,8 @@ div.row.result-listing.cards {
     margin-left: -15px;
     margin-right: -15px;
     margin-top: -0.5em;
-    margin-bottom: 0;
-    background-color: #EEE;
+    margin-bottom: 0em;
+    background-color: #F0F0F0;
 }
 
 .result .dl-horizontal dd,
@@ -322,12 +322,12 @@ div.row.result-listing.cards {
 }
 
 .result .summary ul.nav.nav-pills.nav-justified{
-  border-bottom:1px solid #DEDEDE;
+  border-bottom: 1px solid #F0F0F0;
 }
 
 
 .result .summary ul.nav.nav-pills.nav-justified li{
-    border-color: #DEDEDE;
+    border-color: #F0F0F0;
     border-style:solid;
     border-width: 1px 1px 0px 0;
     padding: 0px 13px 5px;
@@ -458,7 +458,27 @@ form#upload a.remove {
 
 /* frontend search results */
 .cards article {
-  height: 250px;  /* override eultheme card size because we have less content */
+  height: auto;  /* override eultheme card size because we have less content */
+  min-height: 210px;
+  padding-bottom:0;
+}
+
+.cards .result:after{
+  display:none;
+}
+
+article.result h3 {
+    font-size: 1.25em;
+    font-weight: 300;
+}
+article.result .title h4 {
+    font-size: 0.9em;
+    font-weight: 400;
+    margin-top: 0;
+}
+
+header.row.title > div:first-child {
+  padding-right: 0;
 }
 
 
@@ -641,6 +661,11 @@ form#login-form .table>tfoot>tr>td{
   margin-top: 0;
 }
 
+div.login {
+  max-width: 400px;
+  margin: 2em auto;
+}
+
 .login.panel {
     border: 1px solid #EBEBEB;
     padding: 1em;
@@ -674,3 +699,27 @@ ul.errorlist li {
     border-radius: 0px;
     background: transparent;
 }
+
+.login .callout.callout-warning section {
+  max-width: 270px;
+  margin: auto;
+}
+
+.callout{
+  padding: 10px 15px;
+  margin-bottom: 10px;
+}
+
+.login .callout.callout-warning{
+  background-color: rgb(255, 248, 202);
+  color: rgb(124, 116, 115);
+  border-radius: 5px;
+}
+
+.result .title {
+    min-height: 5.5em;
+}
+
+
+
+

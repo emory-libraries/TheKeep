@@ -1,4 +1,4 @@
-{% extends "page_base.html" %} 
+{% extends "site_base.html" %} 
 
 {% block javascript %}
   {{ block.super }}
@@ -10,28 +10,39 @@
   </script>
 {% endblock %}
 
-{% block content-title %}<span class="sr-only">Login</span>{% endblock %}
 
-{% block content-body %}
+{% block content %}
+  <div class="container">
+    <div class="login">
+      <h1 class="sr-only">Login</h1>
 
-{% if request.user.is_anonymous_researcher %}
-<p class="bg-warning messages">This content is not accessible to researchers</p>
-{% endif %}
+      {% if next and request.user.is_anonymous_researcher %}
+      <div class="callout callout-warning text-center">
+        <p class="h2">
+          <span class="glyphicon glyphicon-warning-sign"></span>
+        </p>
+        <h4>Sorry, you need to login to access this content.</h4>
+        <section>
+          <p class="small">If you think you are getting this message in error, please contact our staff.</p>
+        </section>
+        </div>
+      {% endif %}
 
-{% if form.errors %}
-<ul class="errorlist">
-	<li>Your username and password didn't match. Please try again.</li>
-</ul>
-{% endif %}
+      {% if form.errors %}
+      <ul class="errorlist">
+      	<li>Your username and password didn't match. Please try again.</li>
+      </ul>
+      {% endif %}
 
-<form id="login-form" class="login panel" method="post" action="{% url 'accounts:login' %}">{% csrf_token %}
-<table class="table">
-    {{ form.as_table }}
-</table>
-<div class="text-right">
-  <button type="submit" class="btn btn-default btn-submit">Login</button>
-</div>
-<input type="hidden" name="next" value="{{ next }}" />
-</form>
-
+      <form id="login-form" class="login panel" method="post" action="{% url 'accounts:login' %}">{% csrf_token %}
+      <table class="table">
+          {{ form.as_table }}
+      </table>
+      <div class="text-right">
+        <button type="submit" class="btn btn-default btn-submit">Login</button>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}" />
+      </form>
+    </div>
+  </div>
 {% endblock %}

@@ -3,7 +3,8 @@
 {% block nav-title %}
 {# <img id="keep-logo" src="{{ STATIC_URL }}/images/keep.png" /> #}
 <span class="glyphicon glyphicon-tower"></span>
-The Keep{% endblock %}
+<span class="site-title">The Keep</span>
+  {% endblock %}
 {% block page-title %}The Keep{% block page-subtitle %}{% endblock %}{% endblock %}
 
 {% block navlinks %}
@@ -15,7 +16,7 @@ The Keep{% endblock %}
 {% block navbar-extra %}
   {% if user.is_authenticated %}
     <div class="navbar-right">
-      <p class="navbar-text">Welcome, {% firstof user.first_name user.username %}.
+      <p class="navbar-text"><span class="hidden-xs hidden-sm">Welcome, {% firstof user.first_name user.username %}.</span>
         <a href="{% url 'accounts:logout' %}">Logout
          <span class="glyphicon glyphicon-log-out"></span></a></p>
     </div>
