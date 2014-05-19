@@ -61,7 +61,12 @@ def search(request):
 
         if search_terms:
             q = q.query(*search_terms)
-            q = q.sort_by('-score').field_limit(score=True)
+            # NOTE: sunburnt now seems to require explicit list of fields
+            # needed when returning score
+            q = q.sort_by('-score').field_limit(['pid', 'title', 'collection_id',
+                'collection_source_id', 'collection_label', 'ark_uri',
+                'date_issued', 'date_created', 'part', 'duration'],
+                score=True)
             # NOTE: do we want a secondary sort after score?
         else:
             q = q.sort_by('title_exact')
