@@ -18,9 +18,9 @@
  *   md5.process_bytes("12345");
  *   md5.finish();
  *   var result = md5.toString();
- * 
+ *
  * This implementation should be able to correctly generate MD5
- * checksums for files up to 1 Petabyte (2^53 bits, 2^50 bytes). 
+ * checksums for files up to 1 Petabyte (2^53 bits, 2^50 bytes).
  */
 function MD5() {
   // magic numbers from the MD5 algorithm
@@ -50,8 +50,8 @@ MD5.prototype.asArray = function() {
     } else {
       // we have at least one block. construct the first block manually by
       // combining the buffered data and the new bytes.
-      var i = 64 - this.buffer.length
-      var block_str = this.buffer + bytes.substring(0, i)
+      var i = 64 - this.buffer.length;
+      var block_str = this.buffer + bytes.substring(0, i);
       var block = make_block(block_str);
       this.process_block(block, 0);
       this.buffer = "";
@@ -60,7 +60,7 @@ MD5.prototype.asArray = function() {
       for (/* i initialized above */;
            i + 64 < bytes.length;
            i += 64) {
-        var block = make_block(bytes.substring(i, i + 64));
+        block = make_block(bytes.substring(i, i + 64));
         this.process_block(block, 0);
       }
 
@@ -92,7 +92,7 @@ MD5.prototype.asArray = function() {
     var output = Array(input.length >> 2);
     for(var i = 0; i < output.length; i++)
       output[i] = 0;
-    for(var i = 0; i < input.length * 8; i += 8)
+    for( i = 0; i < input.length * 8; i += 8)
       output[i>>5] |= (input.charCodeAt(i / 8) & 0xFF) << (i%32);
     return output;
   }
@@ -117,7 +117,7 @@ MD5.prototype.asArray = function() {
      */
 
     /** there are 8 bits in a byte, so the total number of bits is
-     * total_bytes * 8. 
+     * total_bytes * 8.
      */
     var total_bits = total_bytes * 8;
     /* divide by 2^32 to get the high 32 bits */
@@ -228,7 +228,7 @@ MD5.prototype.asArray = function() {
    */
   MD5.prototype.bump_bytes = function(n) {
       this.offset += n;
-  }
+  };
 
   /* These next few functions are imported from the source MD5
    * implementation, where they're described as implementing the basic MD5
@@ -290,8 +290,7 @@ MD5.prototype.asArray = function() {
     for(var i = 0; i < input.length; i++)
     {
       x = input.charCodeAt(i);
-      output += hex_tab.charAt((x >>> 4) & 0x0F)
-             +  hex_tab.charAt( x        & 0x0F);
+      output += hex_tab.charAt((x >>> 4) & 0x0F) + hex_tab.charAt(x & 0x0F);
     }
     return output;
   }
