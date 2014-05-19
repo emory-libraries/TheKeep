@@ -19,8 +19,9 @@ from django.utils.safestring import mark_safe
 
 from eulcommon.djangoextras.http import HttpResponseUnsupportedMediaType, \
     HttpResponseSeeOtherRedirect
-from eulcommon.djangoextras.auth.decorators import permission_required_with_ajax, \
-    permission_required_with_403
+from eulcommon.djangoextras.auth.decorators import permission_required_with_403, \
+    user_passes_test_with_403, user_passes_test_with_ajax
+
 from eulfedora.models import FileDatastreamObject
 from eulfedora.util import RequestFailed, PermissionDenied
 from eulfedora.views import raw_datastream, raw_audit_trail
@@ -46,19 +47,30 @@ uploadable_objects = [AudioObject, DiskImage]
 # - static class method to init from file
 
 
-# generate list of allowed upload mimetypes based on objects we support
-allowed_upload_types = []
-for a in uploadable_objects:
-    allowed_upload_types.extend(a.allowed_mimetypes)
-
+def allowed_upload_types(user):
+    '''Generate list of allowed upload mimetypes based on the kind of
+    content the specified user is allowed to add.'''
+    allowed_types = []
+    if user.has_perm('file.add_disk_image'):
+        allowed_types.extend(DiskImage.allowed_mimetypes)
+    if user.has_perm('audio.add_audio'):
+        allowed_types.extend(AudioObject.allowed_mimetypes)
+    return allowed_types
 
 # TODO: *both* ingest views should check that user has either of these perms:
 #@permission_required("file.add_disk_image")
 #@permission_required("audio.add_audio")
 # and only let them upload the type they have permission to do
 
+def add_some_content(user):
+    '''Check that a user is allowed to add some content.
+    Views that use this test with permission decorator should handle
+    the variation in permissions access within the view logic.
+    '''
+    return user.has_perm('file.add_disk_image') or \
+           user.has_perm('audio.add_audio')
 
-@permission_required_with_ajax('common.marbl_allowed')
+@user_passes_test_with_403(add_some_content)
 def upload(request):
     '''Upload file(s) and create new fedora :class:`~keep.audio.models.AudioObject` (s).
     Only accepts audio/x-wav currently.
@@ -77,7 +89,7 @@ def upload(request):
 
     ctx_dict = {
         # list of allowed file types, in a format suited for passing to javascript
-        'js_allowed_types': mark_safe(json.dumps(allowed_upload_types))
+        'js_allowed_types': mark_safe(json.dumps(allowed_upload_types(request.user)))
     }
 
     if request.method == 'POST':
@@ -162,7 +174,7 @@ def ingest_files(files, collection, comment, request):
             raise Exception('Uploaded file is no longer available for ingest; please try again.')
 
         type, separator, options = type.partition(';')
-        if type not in allowed_upload_types:
+        if type not in allowed_upload_types(request.user):
             # store error for display on detailed result page
             file_info.update({'success': False,
                               'message': '''File type '%s' is not allowed''' % type})
@@ -262,7 +274,7 @@ def ingest_files(files, collection, comment, request):
 
 
 
-@permission_required_with_ajax('common.marbl_allowed')
+@user_passes_test_with_ajax(add_some_content)
 def ajax_upload(request):
     """Process a file uploaded via AJAX and store it in a temporary staging
     directory for subsequent ingest into the repository.  The request must
@@ -343,7 +355,7 @@ def ajax_upload(request):
         mimetype = m.from_file(upload_file)
         logger.debug('mimetype for %s detected as %s' % (ingest_file, mimetype))
         mimetype, separator, options = mimetype.partition(';')
-        if mimetype not in allowed_upload_types:
+        if mimetype not in allowed_upload_types(request.user):
             os.remove(upload_file)
             # send response with status 415 Unsupported Media Type
             return HttpResponseUnsupportedMediaType('File type %s is not allowed' % mimetype,
