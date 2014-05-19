@@ -36,8 +36,8 @@
           <dd>{% firstof r.ark_uri|ark_noid r.pid %}</dd>
         </dl>
     </div>
-    
-    <div class="row"> 
+
+    <div class="row">
         <ul class="nav nav-pills nav-justified">
             <li>
                 <h4>Issued</h4>
@@ -75,7 +75,7 @@
                 <h4>Duration</h4>
                 <span>
                 {% if r.duration %}
-                    {{ r.duration|natural_seconds }}
+                    {{ r.duration|natural_seconds_abbrev }}
                     {% else %}
                     ---
                 {% endif %}

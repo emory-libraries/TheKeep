@@ -19,7 +19,7 @@ def seconds_duration(seconds):
 
 
 @register.filter
-def natural_seconds(seconds):
+def natural_seconds(seconds, abbreviate=False):
     '''Custom template tag to display integer seconds as HH hours,
     MM minutes, SS seconds.
 
@@ -33,14 +33,23 @@ def natural_seconds(seconds):
     duration = datetime.timedelta(seconds=int(seconds))
     duration_time = datetime.datetime(1, 1, 1) + duration
     time_vals = []
+
+    fields = ['hour', 'minute', 'second']
+
     # only display values that are non-zero
-    for dur in ['hour', 'minute', 'second']:
+    if abbreviate:
+        labels = {'hour': 'hr', 'minute': 'min', 'second': 'sec'}
+    else:
+        labels = {'hour': 'hour', 'minute': 'minute', 'second': 'second'}
+
+    for dur in fields:
         val = getattr(duration_time, dur)
         if val:
-            time_vals.append('%d %s%s' % (val, dur, pluralize(val)))
+            time_vals.append('%d %s%s' % (val, labels[dur], pluralize(val)))
     return ', '.join(time_vals)
 
 
 
-
-
+@register.filter
+def natural_seconds_abbrev(seconds):
+    return natural_seconds(seconds, abbreviate=True)
