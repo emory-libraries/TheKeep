@@ -215,7 +215,24 @@ def keyword_search(request):
         # (for fielded search terms, items will either match or not, so relevance
         # is not as useful)
         if terms:
-            q = q.sort_by('-score').field_limit(score=True)
+            # NOTE: possibly a change in sunburnt?
+            # including score now requires specifying *all* fields that
+            # should be returned
+            q = q.sort_by('-score').field_limit([
+                # common item information
+                "object_type","content_model", "pid", "label", "title",
+                "creator", "created", "last_modified", "added_by",
+                # collection
+                "archive_short_name", "hasMember",
+                # item
+                "collection_id",
+                # audio
+                "part", "collection_label", "duration", "has_access_copy",
+                "access_copy_mimetype", "access_copy_size", "source_id",
+                # arrangement/disk image
+                "simpleCollection_label", "rights", "state"
+                ],
+                score=True)
             ctx['show_relevance'] = True
         # then sort by most recently created
         # (primary sort when no search terms, secondary otherwise)
