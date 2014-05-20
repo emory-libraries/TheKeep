@@ -76,12 +76,6 @@ ROOT_URLCONF = 'keep.urls'
 TEMPLATE_DIRS = [
     os.path.join(BASE_DIR, '..', 'templates'),
 ]
-# also look for templates in virtualenv
-if 'VIRTUAL_ENV' in os.environ:
-    TEMPLATE_DIRS.extend([
-        os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib'),
-        os.path.join(os.environ['VIRTUAL_ENV'], 'src', 'eullocal', 'themes', 'genlib')
-    ])
 
 INSTALLED_APPS = [
     'django.contrib.auth',
