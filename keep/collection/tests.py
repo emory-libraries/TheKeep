@@ -305,7 +305,7 @@ COLLECTION_DATA = {
     'source_id': '1000',
     'date_created': '1947',
     'date_end': '2008',
-    'collection': 'info:fedora/emory:93z53',
+    'collection': 'emory:93z53',
     'resource_type': 'mixed material',
     'use_and_reproduction-text': 'no photos',
     'restrictions_on_access-text': 'tuesdays only',
@@ -401,11 +401,11 @@ class TestCollectionForm(KeepTestCase):
 
         # change collection and confirm set in RELS-EXT
         data = self.data.copy()
-        data['collection'] = self.archives[2].uri
+        data['collection'] = self.archives[2].pid
         form = cforms.CollectionForm(data, instance=self.obj)
         self.assertTrue(form.is_valid(), "test form object with test data is valid")
         form.update_instance()
-        self.assertEqual(self.archives[2].uri, self.obj.collection.uri)
+        self.assertEqual(self.archives[2].pid, self.obj.collection.pid)
 
     def test_initial_data(self):
         form = cforms.CollectionForm(instance=self.obj)
@@ -511,7 +511,7 @@ class CollectionViewsTest(KeepTestCase):
         # collection membership
         self.assert_((URIRef(new_coll.uri),
                       relsext.isMemberOfCollection,
-                      URIRef(COLLECTION_DATA['collection'])) in
+                      URIRef('info:fedora/%s' % COLLECTION_DATA['collection'])) in
                       new_coll.rels_ext.content,
                       "collection object is member of requested top-level collection")
 
@@ -530,7 +530,7 @@ class CollectionViewsTest(KeepTestCase):
         repo = Repository()
         obj = FedoraFixtures.rushdie_collection()
         # store initial collection id from fixture
-        collection_uri = obj.collection.uri
+        collection_pid = obj.collection.pid
         obj.save()  # save to fedora for editing
         self.pids.append(obj.pid)
 
@@ -555,7 +555,7 @@ class CollectionViewsTest(KeepTestCase):
                 msg_prefix='Start date from existing object set as input value')
         self.assertContains(response, 'value="2008"',
                 msg_prefix='End date from existing object set as input value')
-        self.assertContains(response, 'value="%s" selected="selected"' % collection_uri,
+        self.assertContains(response, 'value="%s" selected="selected"' % collection_pid,
                 msg_prefix='Parent collection from existing object pre-selected')
         self.assertContains(response, 'Edit Collection',
                 msg_prefix='page title indicates user is editing an existing collection')

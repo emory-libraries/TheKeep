@@ -252,7 +252,7 @@ class CollectionForm(XmlObjectForm):
                     initial['date_end'] = mods_instance.origin_info.created[1].date
 
             if self.object_instance.collection:
-                initial['collection'] = self.object_instance.collection.uri
+                initial['collection'] = self.object_instance.collection.pid
 
             if 'initial' not in kwargs:
                 kwargs['initial'] = {}
