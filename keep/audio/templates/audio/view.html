@@ -41,7 +41,10 @@
 <article>
     <header>
         <div class="container">
-            <h3><a href="{% url 'collection:view' resource.collection.pid %}">{{ resource.collection.mods.content.source_id|default:'' }}:
+            <h3><a href="{% url 'collection:view' resource.collection.pid %}">
+              {% if resource.collection.mods.content.source_id != 0 %}
+                 {{ resource.collection.mods.content.source_id }}: {% endif %}
+              {% endif %}
               {{ resource.collection.label }}</a></h3>
 
             <h2>{{ resource.label }}</h2>
