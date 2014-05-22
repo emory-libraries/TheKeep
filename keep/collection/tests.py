@@ -411,9 +411,9 @@ class TestCollectionForm(KeepTestCase):
         form = cforms.CollectionForm(instance=self.obj)
         # custom fields that are not handled by XmlObjectForm have special logic
         # to ensure they get set when an instance is passed in
-        expected, got = self.collection.uri, form.initial['collection']
+        expected, got = self.collection.pid, form.initial['collection']
         self.assertEqual(expected, got,
-            'collection uri is set correctly in form initial data from instance; expected %s, got %s' \
+            'collection pid is set correctly in form initial data from instance; expected %s, got %s' \
             % (expected, got))
         expected, got = '1947', form.initial['date_created']
         self.assertEqual(expected, got,
