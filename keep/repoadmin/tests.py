@@ -123,7 +123,11 @@ class RepoAdminViewsTest(KeepTestCase):
         self.assertEqual(call('-score'), sort_args[0])
         self.assertEqual(call('-created'), sort_args[1])
         # - include relevance score in return values
-        mocksolr.query.field_limit.assert_called_with(score=True)
+        # NOTE: not testing via assert_called_with because now sunburnt
+        # seems to require a full list of all fields to return
+        args, kwargs = mocksolr.query.field_limit.call_args
+        self.assertTrue(kwargs['score'], 'relevance score should be returned from solr')
+        # mocksolr.query.field_limit.assert_called_with(score=True)
 
         # NOTE: no longer testing content filtering based on permissions,
         # since that logic is now handled in accounts.utils.filter_by_perms
@@ -204,7 +208,11 @@ class RepoAdminViewsTest(KeepTestCase):
         self.assertEqual(call('-score'), sort_args[0])
         self.assertEqual(call('-created'), sort_args[1])
         # - include relevance score in return values
-        mocksolr.query.field_limit.assert_called_with(score=True)
+        # NOTE: not testing via assert_called_with because now sunburnt
+        # seems to require a full list of all fields to return
+        # mocksolr.query.field_limit.assert_called_with(score=True)
+        args, kwargs = mocksolr.query.field_limit.call_args
+        self.assertTrue(kwargs['score'], 'relevance score should be returned from solr')
 
     @patch('keep.repoadmin.views.Paginator')
     def test_search_facets(self, mockpaginator, mocksolr_interface):

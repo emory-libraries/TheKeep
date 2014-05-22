@@ -92,7 +92,12 @@ class SearchViewsTest(KeepTestCase):
         # - sort by relevance score when there are search terms
         mocksolr.query.sort_by.assert_called_with('-score')
         # - include relevance score in return values
-        mocksolr.query.field_limit.assert_called_with(score=True)
+        # NOTE: not testing via assert_called_with because now sunburnt
+        # seems to require a full list of all fields to return
+        args, kwargs = mocksolr.query.field_limit.call_args
+        self.assertTrue(kwargs['score'], 'relevance score should be returned from solr')
+        # mocksolr.query.field_limit.assert_called_with(score=True)
+
 
         # test object info displayed on search result page from mock result
         self.assertContains(response, reverse('audio:view', args=[testresult['pid']]),
@@ -102,7 +107,7 @@ class SearchViewsTest(KeepTestCase):
         # add expected url to test result dict to simplify testing
         testresult['url'] =  reverse('collection:view', kwargs={'pid': testresult['collection_id']})
         self.assertContains(response,
-            '<h4><a class="text-muted" href="%(url)s">%(collection_source_id)s: %(collection_label)s</a></h4>' % \
+            '<h4><a class="text-muted" href="%(url)s">%(collection_source_id)s : %(collection_label)s</a></h4>' % \
             testresult,
             html=True,
             msg_prefix='collection number and label should both be displayed')
@@ -114,8 +119,8 @@ class SearchViewsTest(KeepTestCase):
             html=True, msg_prefix='date issued and should be displayed when present')
         self.assertContains(response, testresult['part'],
             msg_prefix='part note should be displayed when present')
-        self.assertContains(response, '1 minute, 5 seconds',
-            msg_prefix='duration should be displayed in human-readable form')
+        self.assertContains(response, '1 min, 5 secs',
+            msg_prefix='duration should be displayed in abbreviated human-readable form')
         self.assertContains(response, testresult['ark_uri'].split('/')[-1],
             msg_prefix='ARK NOID should be displayed when present')
 

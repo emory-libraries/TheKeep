@@ -346,10 +346,11 @@ def keyword_search_suggest(request):
             if field == 'created':
                 sort = 'index'
                 category = 'Date Added'
+
                 # if less than 4 characters, suggest year
                 if len(prefix) < 4:
                     facet_field = 'created_year'
-
+                    result_fmt = '%s'
                 # between 4 and 7, suggest year-month
                 elif len(prefix) < 7:
                     facet_field = 'created_month'
@@ -357,6 +358,7 @@ def keyword_search_suggest(request):
                 # suggest full dates
                 else:
                     result_fmt = '%s '
+
             elif field in ['added_by', 'user']:  # added_by or user
                 sort = 'count'
                 category = 'Users'
@@ -367,7 +369,7 @@ def keyword_search_suggest(request):
             if field == 'coll':
                 sort = 'count'
                 category = 'Collection'
-                result_fmt = '%s'
+                result_fmt = '%s '
 
                 # if the term is numeric facet by source_id
                 if prefix and prefix.isdigit():

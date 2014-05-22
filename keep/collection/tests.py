@@ -719,9 +719,9 @@ class CollectionViewsTest(KeepTestCase):
         collection = FedoraFixtures.archives()[1]
         with patch('keep.collection.models.CollectionObject.find_by_pid',
                    new=Mock(return_value={'title': collection.label, 'pid': collection.pid})):
-            response = self.client.get(search_url, {'collection-archive_id': collection.uri})
+            response = self.client.get(search_url, {'collection-archive_id': collection.pid})
             args, kwargs = mock_solr_interface.return_value.query.call_args
-            self.assertEqual(collection.uri, kwargs['archive_id'],
+            self.assertEqual(collection.pid, kwargs['archive_id'],
                 'selected archive_id should be included in solr query terms')
             self.assertEqual(collection.pid, response.context['search_info']['Archive']['pid'],
                 'archive label should be included in search info for display to user')
