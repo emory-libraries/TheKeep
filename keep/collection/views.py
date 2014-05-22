@@ -381,6 +381,8 @@ def list_archives(request, archive=None):
     # add solr information and pid aliases to info dictionary
     for q in query:
         pid = q['pid']
+        if pid not in archive_info:
+            continue
         # duplicate to make list of dict available to template for dictsort
         archive_info[pid]['pid'] = q['pid']
         archive_info[pid]['title'] = q['title']
