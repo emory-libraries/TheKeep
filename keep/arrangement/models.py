@@ -155,9 +155,12 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                 # pull parent & archive collection objects directly from fedora
                 data['collection_label'] = collection.label
                 # the parent collection of the collection this item belongs to is its archive
-                if collection.collection:
-                    data['archive_id'] = collection.collection.uri
-                    data['archive_label'] = collection.collection.label
+
+                # FIXME: this shouldn't be indexed here; are we actually
+                # using it anywhere?
+                # if collection.collection:
+                #     data['archive_id'] = collection.collection.uri
+                #     data['archive_label'] = collection.collection.label
 
             except RequestFailed as rf:
                 logger.error('Error accessing collection or archive object in Fedora: %s' % rf)

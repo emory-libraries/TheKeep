@@ -83,7 +83,9 @@ class SearchForm(DateFilterSearchForm):
                     .field_limit(['pid', 'title']) \
                     .sort_by('title')
 
-        choices = [(a['pid'], a['title']) for a in query]
+        # ignore any spurious results that don't have titles (bad data in prod?)
+        choices = [(a['pid'], a['title']) for a in query
+                    if 'title' in a]
         choices.insert(0, ('', '---'))   # blank option at the beginning (default)
         return choices
 
