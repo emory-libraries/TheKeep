@@ -21,7 +21,7 @@ south
 python-dateutil
 pytz
 # dev eulcm content model objects (until initial eulcm release)
--e git://github.com/emory-libraries/eulcm.git@4c97a98c79#egg=eulcm
+-e git://github.com/emory-libraries/eulcm.git@0.1#egg=eulcm
 bodatools
 bagit>=1.3.2
 # development version of eultheme
