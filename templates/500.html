@@ -11,6 +11,9 @@
 
 {% block body_class %}errorpage err500{% endblock %}
 
+{# suppress login information since 500 error does not include any session info #}
+{% block navbar-extra %}{% endblock %}
+
 {% block content %}
 <div class="container">
     <h1>System Error</h1>
