@@ -20,7 +20,7 @@ unicodecsv
 south
 python-dateutil
 pytz
-# dev eulcm content model objects (until initial eulcm release)
+# 0.1 release of eulcm content model objects
 -e git://github.com/emory-libraries/eulcm.git@0.1#egg=eulcm
 bodatools
 bagit>=1.3.2
