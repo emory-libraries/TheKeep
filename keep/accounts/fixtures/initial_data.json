@@ -112,6 +112,16 @@
         "play_audio",
         "audio",
         "audio"
+      ],
+       [
+        "view_arrangement",
+        "arrangement",
+        "arrangement"
+      ],
+       [
+        "view_disk_image",
+        "file",
+        "disk_image"
       ]
     ]
   }
