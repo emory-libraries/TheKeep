@@ -1,4 +1,4 @@
-{% extends "site_base.html" %} 
+{% extends "site_base.html" %}
 
 {% block javascript %}
   {{ block.super }}
@@ -16,7 +16,8 @@
     <div class="login">
       <h1 class="sr-only">Login</h1>
 
-      {% if next and request.user.is_anonymous_researcher %}
+      {# {% if next and request.user.is_anonymous_researcher %}  #}
+      {% if next  %}  {# show warning to anyone, not just researcher #}
       <div class="callout callout-warning text-center">
         <p class="h2">
           <span class="glyphicon glyphicon-warning-sign"></span>
