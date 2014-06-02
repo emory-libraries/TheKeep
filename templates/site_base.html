@@ -42,6 +42,18 @@
     <script type="text/javascript" src="{% static 'js/local.js' %}"></script>
 {% endblock %}
 
+{% block message %}
+  {% if unsupported_browser %}
+    <div class="messages">
+    <p class="bg-warning">You are using an unsupported browser.
+      Please use Google Chrome in order to ensure you can listen to all audio content.</p>
+  </div>
+  {% endif %}
+
+  {{ block.super }} {# default django message display from eultheme #}
+{% endblock %}
+
+
 {% block footer-content %}
   {# display eXist query times (when present) in debug mode only #}
   {% if querytime and debug %}
