@@ -1,7 +1,7 @@
 from urllib import urlencode
 
-from django.shortcuts import render
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
+from django.template.response import TemplateResponse
 
 from eulcommon.djangoextras.auth import user_passes_test_with_403
 
@@ -28,7 +28,7 @@ def audio_access(user):
 @user_passes_test_with_403(audio_access)
 def site_index(request):
     form = SearchForm(request.GET, user=request.user)
-    return render(request, 'search/site_index.html',
+    return TemplateResponse(request, 'search/site_index.html',
         {'form': form})
 
 @user_passes_test_with_403(audio_access)
@@ -149,6 +149,6 @@ def search(request):
             'url_params': urlencode(url_params)
         })
 
-    return render(request, 'search/results.html', ctx)
+    return TemplateResponse(request, 'search/results.html', ctx)
 
 

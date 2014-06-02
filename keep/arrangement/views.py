@@ -4,10 +4,10 @@ import logging
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
-from django.shortcuts import render
 from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
+from django.template.response import TemplateResponse
 
 from eulcommon.djangoextras.auth import permission_required_with_403, \
     permission_required_with_ajax
@@ -110,7 +110,7 @@ def edit(request, pid):
 
     series_data = simplejson.dumps(series_data)
 
-    return render(request, 'arrangement/edit.html',
+    return TemplateResponse(request, 'arrangement/edit.html',
                   {'obj': obj, 'form': form, 'series_data': series_data})
 
 
@@ -232,4 +232,4 @@ def view_item(request, pid):
     else:
         raise Http404
 
-    return render(request, template_name, context)
+    return TemplateResponse(request, template_name, context)

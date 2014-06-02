@@ -14,7 +14,7 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
-from django.shortcuts import render
+from django.template.response import TemplateResponse
 
 from eulcommon.djangoextras.auth import permission_required_with_403, \
     permission_required_with_ajax, user_passes_test_with_403
@@ -91,7 +91,7 @@ def view(request, pid):
     if 'page' in url_params:
         del url_params['page']
 
-    return render(request, 'collection/view.html',
+    return TemplateResponse(request, 'collection/view.html',
         {'collection': obj, 'items': results,
          'url_params': urlencode(url_params)})
 
@@ -227,7 +227,7 @@ def edit(request, pid=None):
     if pid is not None:
         context['collection'] = obj
 
-    return render(request, 'collection/edit.html', context)
+    return TemplateResponse(request, 'collection/edit.html', context)
 
 
 @permission_required_with_403("collection.view_collection")
@@ -292,7 +292,7 @@ def search(request):
         context['collection_search'] = form
 
     # render search results page; if there was an error, results will be displayed as empty
-    return render(request, 'collection/search.html', context)
+    return TemplateResponse(request, 'collection/search.html', context)
 
 
 @user_passes_test_with_403(view_some_collections)
@@ -400,7 +400,7 @@ def list_archives(request, archive=None):
 
     # NOTE: sending list of values (dictionaries) to allow sorting in template
 
-    return render(request, 'collection/archives.html',
+    return TemplateResponse(request, 'collection/archives.html',
         {'archives': archive_info.values(), 'find_collection': FindCollection(user=request.user)})
 
 
@@ -473,7 +473,7 @@ def browse_archive(request, archive):
             if date_re.match(d):
                 c['collection_dates'].append(d)
 
-    return render(request, 'collection/browse.html',
+    return TemplateResponse(request, 'collection/browse.html',
         {'archive': archive_obj, 'collections': collections,
          'url_params': urlencode(url_params),
          'collection_filter': collection_filter,
@@ -545,7 +545,7 @@ def simple_edit(request, pid=None):
     if pid is not None:
         context['obj'] = obj
 
-    return render(request, 'collection/simple_edit.html', context)
+    return TemplateResponse(request, 'collection/simple_edit.html', context)
 
 
 #find objects with a particular type specified  in the rels-ext and return them as
@@ -581,7 +581,7 @@ def simple_browse(request):
             'this problem persists, please alert the ' + \
             'repository administrator.'
 
-    response = render(request, 'collection/simple_browse.html', context)
+    response = TemplateResponse(request, 'collection/simple_browse.html', context)
     if response_code is not None:
         response.status_code = response_code
     return response

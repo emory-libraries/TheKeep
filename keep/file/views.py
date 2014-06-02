@@ -14,7 +14,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponseForbidden
-from django.shortcuts import render
+from django.template.response import TemplateResponse
 from django.utils.safestring import mark_safe
 
 from eulcommon.djangoextras.http import HttpResponseUnsupportedMediaType, \
@@ -136,7 +136,7 @@ def upload(request):
     ctx_dict['form'] = UploadForm()
     # convert list of allowed types for passing to javascript
 
-    return render(request, 'file/upload.html', ctx_dict)
+    return TemplateResponse(request, 'file/upload.html', ctx_dict)
     # NOTE: previously, this view set the response status code to the
     # Fedora error status code if there was one.  Since this view now processes
     # multiple files for ingest, simply returning 200 if processing ends normally.
@@ -536,7 +536,7 @@ def largefile_ingest(request):
             # indicator that no files are available for ingest
             context['no_files'] = True
 
-    return render(request, template_name, context)
+    return TemplateResponse(request, template_name, context)
 
 
 @permission_required_with_403("file.view_disk_image")
@@ -603,7 +603,7 @@ def edit(request, pid):
         # options for generating admin link to edit/add file application db info
         admin_fileapp = AdminOpts()
 
-        return render(request, 'file/edit.html', {'obj': obj, 'form': form,
+        return TemplateResponse(request, 'file/edit.html', {'obj': obj, 'form': form,
             'admin_fileapp': admin_fileapp})
 
     except PermissionDenied:
@@ -737,7 +737,7 @@ def manage_supplements(request, pid):
                 messages.error(request, unicode(e))
                 # for now, just redisplay the form with error message
 
-    return render(request, 'file/supplemental_content.html',
+    return TemplateResponse(request, 'file/supplemental_content.html',
         {'obj': obj, 'formset': formset})
 
 

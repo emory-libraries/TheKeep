@@ -3,8 +3,8 @@ import logging
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden
-from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
+from django.template.response import TemplateResponse
 
 from eulcommon.djangoextras.auth import permission_required_with_403, \
     permission_required_with_ajax
@@ -37,7 +37,7 @@ def view(request, pid):
        bool(obj.researcher_access)):
         return prompt_login_or_403(request)
 
-    return render(request, 'audio/view.html', {'resource': obj})
+    return TemplateResponse(request, 'audio/view.html', {'resource': obj})
 
 
 @permission_required_with_403("audio.view_audio")
@@ -100,7 +100,7 @@ def edit(request, pid):
             # GET - display the form for editing, pre-populated with content from the object
             form = audioforms.AudioObjectEditForm(instance=obj)
 
-        return render(request, 'audio/edit.html', {'obj': obj, 'form': form})
+        return TemplateResponse(request, 'audio/edit.html', {'obj': obj, 'form': form})
 
     except PermissionDenied:
         # Fedora may return a PermissionDenied error when accessing a datastream

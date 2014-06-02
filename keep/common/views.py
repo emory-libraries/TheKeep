@@ -1,18 +1,13 @@
 from datetime import date
-import logging
 from exceptions import ValueError
 from eulcommon.searchutil import pages_to_show
-from django.conf import settings
-from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import permission_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.http import HttpResponse
-from django.shortcuts import render
-from django.template import RequestContext
+from django.template.response import TemplateResponse
+
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
-from keep.collection.models import CollectionObject, SimpleCollection
 from keep.common import forms as commonforms
 #from keep.common.models import Rights
 from keep.common.utils import solr_interface
@@ -27,9 +22,9 @@ def search(request):
 
     # if NO search terms are specified, return an advanced search page
     if not request.GET:
-        return render(request, 'common/advanced-search.html',
+        return TemplateResponse(request, 'common/advanced-search.html',
                       {'searchform': commonforms.ItemSearch(prefix='audio')})
-    
+
     form = commonforms.ItemSearch(request.GET, prefix='audio')
 
     ctx_dict = {'searchform': form}
@@ -116,7 +111,7 @@ def search(request):
             results = paginator.page(paginator.num_pages)
 
         # calculate page links to show
-        show_pages = pages_to_show(paginator, page)            
+        show_pages = pages_to_show(paginator, page)
 
         ctx_dict.update({
             'results': results.object_list,
@@ -126,4 +121,4 @@ def search(request):
             'search_opts': request.GET.urlencode(),
         })
 
-    return render(request, 'common/search.html', ctx_dict)
+    return TemplateResponse(request, 'common/search.html', ctx_dict)

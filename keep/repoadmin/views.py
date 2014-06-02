@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.template.response import TemplateResponse
 from django.utils.datastructures import MultiValueDict, SortedDict
 
 from eulcommon.djangoextras.auth import user_passes_test_with_403, \
@@ -83,11 +83,11 @@ def dashboard(request):
     facets = facetq.execute().facet_counts.facet_fields
     recent_fixity_checks = facets['last_fixity_result']
 
-    return render(request, 'repoadmin/site_dashboard.html',
-                  {'recent_items': recent_items, 'recent_months': recent_months,
-                  'recent_collections': recent_collections,
-                  'recent_fixity_checks': recent_fixity_checks,
-                  'month_ago': month_ago})
+    return TemplateResponse(request, 'repoadmin/site_dashboard.html',
+        {'recent_items': recent_items, 'recent_months': recent_months,
+        'recent_collections': recent_collections,
+        'recent_fixity_checks': recent_fixity_checks,
+        'month_ago': month_ago})
 
 
 @user_passes_test_with_403(is_staff)
@@ -281,7 +281,7 @@ def keyword_search(request):
             'active_filters': display_filters,
         })
 
-    return render(request, 'repoadmin/results.html', ctx)
+    return TemplateResponse(request, 'repoadmin/results.html', ctx)
 
 
 @user_passes_test_with_ajax(is_staff)
