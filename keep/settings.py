@@ -68,7 +68,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'keep.accounts.middleware.ResearcherAccessMiddleware'
+    'keep.accounts.middleware.ResearcherAccessMiddleware',
+    'keep.search.middleware.UnsupportedBrowserMiddleware',
 )
 
 ROOT_URLCONF = 'keep.urls'
