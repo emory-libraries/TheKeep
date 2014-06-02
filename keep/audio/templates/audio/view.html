@@ -43,7 +43,7 @@
         <div class="container">
             <h3><a href="{% url 'collection:view' resource.collection.pid %}">
               {% if resource.collection.mods.content.source_id != 0 %}
-                 {{ resource.collection.mods.content.source_id }}: {% endif %}
+                 {{ resource.collection.mods.content.source_id }}:
               {% endif %}
               {{ resource.collection.label }}</a></h3>
 
