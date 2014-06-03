@@ -7,7 +7,7 @@ class UnsupportedBrowserMiddleware(object):
     '''
 
     def process_template_response(self, request, response):
-        if 'Chrome' not in request.META['HTTP_USER_AGENT']:
+        if 'Chrome' not in request.META.get('HTTP_USER_AGENT', ''):
             response.context_data['unsupported_browser'] = True
 
         return response
