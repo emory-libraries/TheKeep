@@ -109,7 +109,7 @@ def upload(request):
             # form with any error messages.
             if not form.is_valid():
                 ctx_dict['form'] = form
-                return render(request, 'file/upload.html', ctx_dict)
+                return TemplateResponse(request, 'file/upload.html', ctx_dict)
 
             # Form is valid. Get collection & check for optional comment
             collection = repo.get_object(pid=form.cleaned_data['collection'],
