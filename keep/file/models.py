@@ -188,7 +188,7 @@ class DiskImage(DigitalObject):
         'MODS': 'descriptive metadata',
         'DC': 'descriptive metadata',
         'Rights': 'rights metadata',
-        'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
+        'RELS-EXT': 'collection membership or last fixity check',  # TODO: revise as we add more relations
         'provenanceMetadata': 'provenance metadata',
     }
 
