@@ -32,6 +32,12 @@ class SimpleNoteForm(XmlObjectForm):
         fields = ['text']
 
 
+class SimpleShortNoteForm(SimpleNoteForm):
+    'Same as :class:`SimpleNoteForm` but with a text input instead of a textarea.'
+    text = forms.CharField(label='',
+        widget=forms.TextInput(attrs={'class': 'form-control'}), required=False)
+
+
 class SimpleDateForm(XmlObjectForm):
     """Custom :class:`~eulxml.forms.XmlObjectForm` to edit a MODS
     :class:`~eulxml.xmlmap.mods.Date`.  Currently only allows editing the date
@@ -72,7 +78,7 @@ class ModsEditForm(XmlObjectForm):
     resource_type = forms.CharField(required=False, widget=ReadonlyTextInput)
     origin_info = SubformField(formclass=OriginInfoForm)
     general_note = SubformField(formclass=SimpleNoteForm)
-    part_note = SubformField(formclass=SimpleNoteForm)
+    part_note = SubformField(formclass=SimpleShortNoteForm)
 
     names = SubformField(formclass=NameForm)
 
@@ -112,8 +118,8 @@ class SourceTechForm(XmlObjectForm):
             'note': forms.Textarea(attrs={'class': 'form-control'}),
             'related_files': forms.TextInput(attrs={'class': 'form-control'}),
             'conservation_history': forms.TextInput(attrs={'class': 'form-control'}),
-            'sublocation': forms.Textarea(attrs={'class': 'form-control'}),
-            'stock': forms.Textarea(attrs={'class': 'form-control'}),
+            'sublocation': forms.TextInput(attrs={'class': 'form-control'}),
+            'stock': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, **kwargs):
