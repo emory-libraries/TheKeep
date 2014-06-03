@@ -173,6 +173,14 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
           </a>
         {% endwith %}
 
+        {% if not obj.researcher_access %}
+        <span class="aux-action" title="not researcher accessible">
+          <p class="error">
+          <span class="glyphicon glyphicon-eye-close"></span>
+        </p>
+        </span>
+        {% endif %}
+
         {# generate appropriate edit link if user has permission #}
         {# check permissions based on type of object #}
         {% if edit_url %}

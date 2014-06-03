@@ -65,7 +65,8 @@ def search(request):
             # needed when returning score
             q = q.sort_by('-score').field_limit(['pid', 'title', 'collection_id',
                 'collection_source_id', 'collection_label', 'ark_uri',
-                'date_issued', 'date_created', 'part', 'duration'],
+                'date_issued', 'date_created', 'part', 'duration',
+                'researcher_access'],
                 score=True)
             # NOTE: do we want a secondary sort after score?
         else:

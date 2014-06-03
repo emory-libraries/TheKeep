@@ -25,6 +25,11 @@
 
     </div>
     {% endif %}
+    {% if not r.researcher_access %}
+    <span class="error" title="not researcher accessible">
+      <span class="glyphicon glyphicon-eye-close"></span>
+    </span>
+    {% endif %}
 
 {% endblock %}
 
