@@ -1,8 +1,10 @@
 from Crypto.Cipher import Blowfish as EncryptionAlgorithm
 import hashlib
 import logging
+import ldap
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import views as authviews
 from django.core.urlresolvers import reverse
 
@@ -15,7 +17,13 @@ def login(request):
     successful login, stores encrypted user credentials in order to allow
     accessing the Fedora repository as the currently logged in user.
     '''
-    response = authviews.login(request, 'accounts/login.html')
+    try:
+        response = authviews.login(request, 'accounts/login.html')
+    except ldap.SERVER_DOWN:
+        messages.error(request, '''LDAP is currently unavailable.
+            Please check campus IT system status or try logging in again later.''')
+        return HttpResponseSeeOtherRedirect(reverse('accounts:login'))
+
     if request.method == "POST" and request.user.is_authenticated():
         # on successful login, encrypt and store user's password to use for fedora access
         request.session['fedora_password'] = encrypt(request.POST.get('password'))

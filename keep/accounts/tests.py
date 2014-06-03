@@ -1,5 +1,7 @@
 from django.core.urlresolvers import reverse
 from django.test import Client
+from mock import patch
+import ldap
 
 from keep.accounts.views import encrypt, decrypt, to_blocksize
 # import encryption algorithm from views in case we ever want to change it
@@ -9,7 +11,7 @@ from keep.testutil import KeepTestCase
 
 class AccountViewsTest(KeepTestCase):
     fixtures =  ['users']
-    
+
     def setUp(self):
         super(AccountViewsTest, self).setUp()
         self.client = Client()
@@ -45,7 +47,7 @@ class AccountViewsTest(KeepTestCase):
         test_encrypt_decrypt('longish password-type text')
 
     def test_login(self):
-        login_url = reverse('accounts:login')        
+        login_url = reverse('accounts:login')
         # only testing custom logic, which happens on POST
         # everything else is handled by django.contrib.auth
 
@@ -61,6 +63,22 @@ class AccountViewsTest(KeepTestCase):
         self.assertEqual(ADMIN_CREDENTIALS['password'],
             decrypt(self.client.session['fedora_password']),
             'user password stored in session is encrypted')
+
+        # ldap unavailable
+        with patch('keep.accounts.views.authviews.login') as mocklogin:
+            mocklogin.side_effect = ldap.SERVER_DOWN
+            # don't follow redirect
+            self.client.post(login_url, ADMIN_CREDENTIALS)
+            # retrieve another page to test messages
+            response = self.client.get(reverse('site-index'))
+            msg = [msg for msg in response.context['messages']][0]
+            self.assert_('LDAP is currently unavailable' in unicode(msg),
+                'user should see an error message when LDAP is not available')
+            self.assertEqual('error', msg.tags,
+                'ldap unavailable message displayed to user should be an error')
+
+
+
 
     def test_logout(self):
         index_url = reverse('site-index')
