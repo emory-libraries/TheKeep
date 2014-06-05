@@ -1,13 +1,13 @@
 import logging
 
 from django import forms
-from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 
 from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcm.xmlmap.boda import Rights
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
+from eullocal.django.emory_ldap.models import EmoryLDAPUser
 
 from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
     CodecCreator, TransferEngineer
@@ -206,7 +206,7 @@ class DigitalTechForm(XmlObjectForm):
         options = [(_transfer_engineer_id(type=TransferEngineer.LDAP_ID_TYPE,
                                           id=user.username),
                     '%s (%s)' % (user.get_full_name(), user.username))
-                   for user in User.objects.filter(emoryldapuserprofile__isnull=False).order_by('last_name')]
+                   for user in EmoryLDAPUser.objects.filter(groups__name='Audio Curator').order_by('last_name')]
         options.insert(0, ('', EMPTY_LABEL_TEXT))
 
         # add local transfer engineer options to the list
