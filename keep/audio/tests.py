@@ -9,6 +9,7 @@ import sys
 from sunburnt import sunburnt
 import tempfile
 from time import sleep
+import wave
 
 from django.http import HttpRequest
 from django.conf import settings
@@ -1899,6 +1900,17 @@ class TestWavDuration(KeepTestCase):
 
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
+
+    def test_mediainfo(self):
+
+        # mock wav error to test mediainfo logic
+        with patch('keep.audio.models.wave.open') as mockwaveopen:
+            mockwaveopen.side_effect = wave.Error
+            duration = audiomodels.wav_duration(wav_filename)
+            # duration reported by MediaInfo is more exact than the one calculated
+            # from the wav framerate, so we can compare directly
+            self.assertAlmostEqual(3.299, duration)
+
 
 # mock solr used to avoid ingest failure to do pre-ingest duplicate checking
 # @patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())

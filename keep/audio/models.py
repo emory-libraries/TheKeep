@@ -4,6 +4,7 @@ import logging
 import mutagen
 import math
 import tempfile
+from pymediainfo import MediaInfo
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -655,14 +656,29 @@ def wav_duration(filename):
     """
     try:
         wav_file = wave.open(filename, 'rb')
+        # duration in seconds = number of samples / sampling frequency
+        duration = float(wav_file.getnframes()) / float(wav_file.getframerate())
+        return duration
+
     except wave.Error as werr:
-        # FIXME: is there a better/more specific exception that can be used here?
-        raise StandardError('Failed to open file %s as a WAV due to: %s' % (filename, werr))
+        # NOTE: Python built-in wave library does not support 32bit WAVs
+        logger.warn('Failed to open file %s as a WAV due to: %s' % (filename, werr))
+        # fall-back logic: use mediainfo for files that python wav can't handle
+        info = MediaInfo.parse(filename)
+        # for now, since this method is *only* intended to handle WAV files,
+        # (even though mediainfo can handle more), error if not detected as WAV
+        if info.tracks[0].format != 'Wave':
+            raise StandardError('File %s not detected as a WAV by MediaInfo (format: %s)' % \
+                (filename, info.tracks[0].format))
+
+        # media info sometimes contains multiple tracks, but with audio files
+        # tested the duration seems to be the same for both
+        duration = info.tracks[0].duration
+        # duration is returned in ms; convert to seconds as a float
+        return float(duration) / 1000
+
     # any other file errors will be propagated as IOError
 
-    # duration in seconds = number of samples / sampling frequency
-    duration = float(wav_file.getnframes()) / float(wav_file.getframerate())
-    return duration
 
 
 def check_wav_mp3_duration(obj_pid=None, wav_file_path=None, mp3_file_path=None):
