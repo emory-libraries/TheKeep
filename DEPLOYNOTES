@@ -319,6 +319,8 @@ Release 1.9
 
 * Now requires that **mediainfo** be installed on the server for use with
   :mod:`pymediainfo`, in order to support ingesting 32bit WAV files.
+* Run ``python manage.py migrate`` to update user profiles in the database
+  for latest version of :mod:`eullocal`.
 
 Release 1.8
 ------------

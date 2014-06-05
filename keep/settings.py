@@ -130,7 +130,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # using default django login url
 LOGIN_URL = '/accounts/login/'
 
-AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
+# AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
+AUTH_USER_MODEL = 'emory_ldap.EmoryLDAPUser'
 
 # the default owner of all fedora objects created by this app
 FEDORA_OBJECT_OWNERID = 'thekeep-project'
