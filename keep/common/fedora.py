@@ -1,6 +1,6 @@
 from datetime import timedelta
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -360,11 +360,8 @@ def user_full_name(username):
     # get full name if possible from username
     name = None
     try:
-        u = User.objects.get(username=username)
-        try:
-            name = u.get_profile().get_full_name()
-        except ObjectDoesNotExist:
-            name = u.get_full_name()
+        u = get_user_model().objects.get(username=username)
+        name = u.get_full_name()
     except ObjectDoesNotExist:
         pass
 
