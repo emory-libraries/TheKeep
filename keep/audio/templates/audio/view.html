@@ -5,7 +5,7 @@
 
 {% block css %}
   {{ block.super }}
-  <link rel="stylesheet" type="text/css" href="{% static 'style/jplayer-skin/jplayer.blue.monday.css' %}" />
+  <link rel="stylesheet" type="text/css" href="{% static 'style/jplayer-skin/jplayer.blue.monday-mod.css' %}" />
 {% endblock %}
 
 {% block javascript %}
@@ -38,17 +38,17 @@
 {% endblock %}
 
 {% block content %}
-<article>
+<article class="view-media">
     <header>
         <div class="container">
-            <h3><a href="{% url 'collection:view' resource.collection.pid %}">
+            <h2>{{ resource.label }}</h2>
+             <h3>
+              <a href="{% url 'collection:view' resource.collection.pid %}">
               {% if resource.collection.mods.content.source_id != 0 %}
                  {{ resource.collection.mods.content.source_id }}:
               {% endif %}
-              {{ resource.collection.label }}</a></h3>
-
-            <h2>{{ resource.label }}</h2>
-
+              {{ resource.collection.label }}</a>
+            </h3>
 
             {% if perms.audio.change_audio %}
             <div class="pull-right">
@@ -62,38 +62,69 @@
       {# jplayer audio player controls #}
       {% include 'audio/snippets/audio_player.html' %}
 
-      {# origin info - dates #}
-      {% with origin_info=resource.mods.content.origin_info %}
-          {% if origin_info.issued %}
-              <h4>Issued</h4>
-              <p>{% for i in origin_info.issued %}{{ i|natural_date }}{% if not forloop.last %}; {% endif %}{% endfor %}</p>
-          {% endif %}
-          {% if origin_info.created %}
-              <h4>Created</h4>
-              <p>{% for c in origin_info.created %}{{ c|natural_date }}{% if not forloop.last %}; {% endif %}{% endfor %}</p>
-          {% endif %}
-        {% endwith %}
-
-        {# display part note, if any #}
-        {% if resource.mods.content.part_note.text %}
-            <p>{{ resource.mods.content.part_note.text }}</p>
-        {% endif %}
-
-        {# display human-readable duration of audio #}
-        {% if resource.digitaltech.content.duration %}
-            <p>{{ resource.digitaltech.content.duration|natural_seconds }}</p>
-        {% endif %}
-
-        <div class="input-group col-xs-2">
-          <span class="input-group-addon">ID</span>
-          <input type="text" readonly="readonly" class="item-id form-control" value=" {% firstof resource.mods.content.ark_uri|ark_noid resource.pid %}">
-        </div>
-
-        {% if resource.mods.content.ark_uri %}
-        <p>Permanent URL:
-          <a href="{{ resource.mods.content.ark_uri }}" rel="bookmark">{{ resource.mods.content.ark_uri }}</a></p>
-        {% endif %}
-
+      <div class="row">
+        <header>
+          <ul class="nav nav-pills nav-justified">
+            <li class="id">
+              <h4>ID: <span>{% firstof resource.mods.content.ark_uri|ark_noid resource.pid %}</span></h4>
+            </li>
+              {% if resource.mods.content.ark_uri %}
+                <li>
+                  <h4>Permanent URL: <span><a href="{{ resource.mods.content.ark_uri }}" rel="bookmark">{{ resource.mods.content.ark_uri }}</a></span>
+                  </h4>
+                </li>
+              {% endif %}
+          </ul>
+        </header>
+      </div>
+      <div class="row">
+        <ul class="nav nav-pills nav-justified">
+          {% with origin_info=resource.mods.content.origin_info %}
+            <li>
+                <h4>Issued</h4>
+                <span>
+                {% if origin_info.issued %}
+                  {% for i in origin_info.issued %}{{ i|natural_date }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            <li>
+                <h4>Created</h4>
+                <span>
+                {% if origin_info.created %}
+                  {% for c in origin_info.created %}{{ c|natural_date }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            {% endwith %}
+            {# display part note if any (side A/B, etc) #}
+            <li>
+                <h4>Part</h4>
+                <span>
+                  {% if resource.mods.content.part_note.text %}
+                      {{ resource.mods.content.part_note.text }}
+                  {% else %}
+                      ---
+                  {% endif %}
+                </span>
+            </li>
+            <li>
+                <h4>Duration</h4>
+                <span>
+                {% if resource.digitaltech.content.duration %}
+                    {{ resource.digitaltech.content.duration|natural_seconds }}
+                    {% else %}
+                    ---
+                {% endif %}
+            </span>
+            </li>
+        </ul>
+    </div>
+    <div class="row">
         {% if resource.researcher_access|yesno:"yes,no" == "no" %}
         <div class="messages">
           <p class="bg-danger">This item is not accessible to researchers.
@@ -104,12 +135,10 @@
             <br/>External access has been blocked.
             {% endif %}
           </p>
-
-
         </div>
         {% endif %}
-
     </div>
+  </div>
 
 
 </article>

@@ -26,9 +26,13 @@
     </div>
     {% endif %}
     {% if not r.researcher_access %}
-    <span class="error" title="not researcher accessible">
-      <span class="glyphicon glyphicon-eye-close"></span>
-    </span>
+    <section class="access">
+      <ul class="list-inline">
+        <li class="no-researcher" data-toggle="tooltip" data-placement="bottom" title="Not accessible to researchers">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+        </li>
+      </ul>
+    </section>
     {% endif %}
 
 {% endblock %}

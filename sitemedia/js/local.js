@@ -21,3 +21,9 @@ $.widget("custom.categorycomplete", $.ui.autocomplete, {
 
     }
 });
+
+$(document).ready(function(){
+   $(".access li[data-toggle='tooltip']").tooltip();
+
+
+});

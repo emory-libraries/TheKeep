@@ -250,7 +250,13 @@ ul.messages li {
     color: red;
 }
 .error { color: red;}
+
 .success { color: green;}
+
+.aux-action.not-accessible{
+  color:rgb(255, 112, 0);
+}
+
 /* NOTE: could use this selector to highlight form sections with errors
 .edit-form .error {}    */
 
@@ -289,6 +295,27 @@ ul.messages li {
 
 div.row.result-listing.cards {
   margin-top: 30px;
+}
+
+@media (max-width:766px){
+/*  .result-listing .col-sm-6.col-lg-4{
+    width:50%;
+    float: left;
+  }*/
+}
+
+@media(min-width:767px){
+    .result-listing .col-sm-6.col-lg-4:nth-child(2n+1){
+        clear:left;
+    }
+}
+@media(min-width:1200px){
+    .result-listing .col-sm-6.col-lg-4:nth-child(2n+1){
+        clear:none;
+    }
+    .result-listing .col-sm-6.col-lg-4:nth-child(3n+1) {
+        clear:left;
+    }
 }
 
 .adv.group {
@@ -459,7 +486,6 @@ form#upload a.remove {
 /* frontend search results */
 .cards article {
   height: auto;  /* override eultheme card size because we have less content */
-  min-height: 210px;
   padding-bottom:0;
 }
 
@@ -639,6 +665,42 @@ li.media.with-edit {
 }
 
 
+article.view-media .row header {
+    float: left;
+    width:100%;
+    margin:15px -30px;
+}
+
+article.view-media .row header .nav>li {
+    padding: 5px 26px;
+}
+
+
+@media(min-width:768px){
+    article.view-media .row header {
+        margin: 25px -28px 15px;
+        background-color: whitesmoke;
+    
+        width: 107.8%;
+}
+    article.view-media .row header .nav>li {
+        border-left: 2px solid white;
+    }
+    article.view-media .row header .nav>li:first-child{
+        border:none;
+    }
+}
+
+article.view-media .row header .nav>li h4{
+    font-size:1.2em;
+}
+
+article.view-media .row header .nav>li h4 span{
+    font-weight:normal;
+    color:#666;
+}
+
+
 
 /*****
   Login
@@ -721,5 +783,103 @@ ul.errorlist li {
 }
 
 
+article.view-media{
+    margin: 1em auto;
+    border: 1px solid rgb(219, 217, 217);
+    max-width: 776px;
+    padding: 2em;
+    box-shadow: 1px 3px 7px rgb(228, 228, 228);
+    border-radius: 3px;
+}
+
+article.view-media header {
+    margin: 0px -15px 20px;
+}
+
+article.view-media .container {
+    width: 100%;
+}
+
+article.view-media h2 {
+    font-weight: 300;
+    color: #424242;
+    font-size: 2em;
+    margin-top: 0;
+}
+
+article.view-media h3 {
+    font-weight: 300;
+}
+
+article.view-media h2+h3 {
+    margin-top: 0;
+}
 
 
+.access ul>li {
+    margin-left: 5px;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    padding: 0px 7px;
+    font-size: 12px;
+    transition:opacity 0.2s;
+}
+
+.access ul>li.staff{
+    background-color: rgb(255, 215, 129);
+    color: rgb(37, 32, 28);
+}
+
+.access ul>li.no-researcher {
+  background-color: rgb(255, 227, 223);
+  color: rgb(255, 85, 77);
+  width: 100%;
+  text-align: center;
+  padding: 10px 0 8px;
+  font-size: 1.5em;
+  margin-left: 3px;
+}
+
+.access ul>li.no-researcher.small {
+    font-size: 12px;
+    text-align: left;
+    padding: 5px;
+    width: auto;
+}
+
+a:hover .access ul>li,
+a:focus .access ul>li{
+    opacity:0.5;
+}
+
+
+.ui-tooltip {
+    background: #666;
+    color: white;
+    border: none;
+    padding: 0;
+    opacity: 1;
+}
+.ui-tooltip-content {
+    position: relative;
+    padding: 1em;
+}
+.ui-tooltip,.ui-tooltip-content {
+    background: #333;
+    max-width:300px;
+    width:auto;
+    float:left;
+    color:#f4f4f4;
+}
+
+.ui-tooltip:before{
+    content:'';
+    position:absolute;
+    top:-10px;
+    left:10px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 10px 10px 10px;
+    border-color: transparent transparent #333 transparent;
+}

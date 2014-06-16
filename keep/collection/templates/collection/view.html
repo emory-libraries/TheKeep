@@ -159,6 +159,13 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
 
               </div>
               <div class="media-body">
+                  {% if not obj.researcher_access %}
+                    <section class="access">
+                      <ul class="list-inline">
+                        <li class="no-researcher small"><span class="glyphicon glyphicon-ban-circle"></span> Not accessible to researchers</li>
+                      </ul>
+                    </section>
+                  {% endif %}
                   <h2 class="media-heading">
                       {% firstof obj.title obj.label "(no title)" %}
                   </h2>
@@ -172,14 +179,6 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
               </div>
           </a>
         {% endwith %}
-
-        {% if not obj.researcher_access %}
-        <span class="aux-action" title="not researcher accessible">
-          <p class="error">
-          <span class="glyphicon glyphicon-eye-close"></span>
-        </p>
-        </span>
-        {% endif %}
 
         {# generate appropriate edit link if user has permission #}
         {# check permissions based on type of object #}
