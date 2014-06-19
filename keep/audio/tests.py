@@ -6,9 +6,11 @@ import os
 from shutil import copyfile
 import stat
 import sys
+from subprocess import call
 from sunburnt import sunburnt
 import tempfile
 from time import sleep
+from unittest import skipIf
 import wave
 
 from django.http import HttpRequest
@@ -727,7 +729,6 @@ class AudioViewsTest(KeepTestCase):
             obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
             obj.save("schema-invalid MODS")
             response = self.client.post(edit_url, audio_data)
-            print response
             self.assertContains(response, '<ul class="errorlist">')
 
             # edit non-existent record should 404
@@ -1893,6 +1894,10 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual('m4a', self.obj.access_file_extension())
 
 
+# check if mediainfo is installed on this system
+mediainfo_unavailable = (call(['which', 'mediainfo']) != 0)
+
+
 class TestWavDuration(KeepTestCase):
 
     def test_success(self):
@@ -1906,8 +1911,8 @@ class TestWavDuration(KeepTestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
+    @skipIf(mediainfo_unavailable, 'mediainfo is not installed')
     def test_mediainfo(self):
-
         # mock wav error to test mediainfo logic
         with patch('keep.audio.models.wave.open') as mockwaveopen:
             mockwaveopen.side_effect = wave.Error
