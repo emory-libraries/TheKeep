@@ -3,7 +3,7 @@ import json
 import logging
 from mock import Mock, patch, NonCallableMock
 from os import path
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from rdflib import URIRef
 from rdflib.namespace import RDF
 from sunburnt import sunburnt
@@ -1408,7 +1408,7 @@ class SimpleCollectionTest(KeepTestCase):
         self.pids.append(self.simple_collection_2.pid)
 
         # Create user for tests
-        user = User(username="euterpe")
+        user = get_user_model()(username="euterpe")
         user.set_password("digitaldelight")
         user.is_active = True
         user.is_superuser = True

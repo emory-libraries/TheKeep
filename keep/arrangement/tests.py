@@ -6,7 +6,8 @@ import os
 from sunburnt import sunburnt
 
 from django.conf import settings
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission
+from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
@@ -37,6 +38,8 @@ ADMIN_CREDENTIALS = {'username': 'euterpe', 'password': 'digitaldelight'}
 pdf_filename = os.path.join(settings.BASE_DIR, 'arrangement', 'fixtures', 'test.pdf')
 
 class PermissionsCheckTest(TestCase):
+    # FIXME: this test probably doesn't need to exist (testing built-in django functionality?)
+
     fixtures =  ['users']
 
     def test_permission_exists(self):
@@ -44,7 +47,7 @@ class PermissionsCheckTest(TestCase):
         arrangement_perm = Permission.objects.get(codename='arrangement_allowed')
 
         #Test for permission on a sample fixture user
-        marbl_user = User.objects.get(username__exact='marbl')
+        marbl_user = get_user_model().objects.get(username__exact='marbl')
         marbl_user.user_permissions.clear()
         marbl_user.save()
         marbl_user.user_permissions.add(marbl_perm)

@@ -1,7 +1,8 @@
 import logging
 from django import forms
 from django.http import HttpRequest
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission
+from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.test import TestCase
@@ -69,7 +70,7 @@ class RepoAdminViewsTest(KeepTestCase):
 
     def setUp(self):
         #get user
-        self.user = User.objects.get(username=ADMIN_CREDENTIALS['username'])
+        self.user = get_user_model().objects.get(username=ADMIN_CREDENTIALS['username'])
         self.audio_perm = Permission.objects.get(codename='marbl_allowed')
         self.bd_perm = Permission.objects.get(codename='arrangement_allowed')
 

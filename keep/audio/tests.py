@@ -6,14 +6,17 @@ import os
 from shutil import copyfile
 import stat
 import sys
+from subprocess import call
 from sunburnt import sunburnt
 import tempfile
 from time import sleep
+from unittest import skipIf
 import wave
 
 from django.http import HttpRequest
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
@@ -321,7 +324,10 @@ class AudioViewsTest(KeepTestCase):
         obj.digitaltech.content.note = 'technician details'
         obj.digitaltech.content.digitization_purpose = 'dawson exhibit'
         # retrieve test user object to use for transfer engineer - also used to test
-        ldap_user = User.objects.get(username='ldap_user')
+        ldap_user = get_user_model().objects.get(username='ldap_user')
+        audio_curator = Group.objects.get(name='Audio Curator')
+        ldap_user.groups.add(audio_curator)
+
         # engineer & codec creator are initialized based on id values
         obj.digitaltech.content.create_transfer_engineer()
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
@@ -754,7 +760,9 @@ class AudioViewsTest(KeepTestCase):
         self.pids.append(obj.pid)
 
         # retrieve test user object to use for transfer engineer - also used to test
-        ldap_user = User.objects.get(username='ldap_user')
+        ldap_user = get_user_model().objects.get(username='ldap_user')
+        audio_curator = Group.objects.get(name='Audio Curator')
+        ldap_user.groups.add(audio_curator)
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -789,6 +797,7 @@ class AudioViewsTest(KeepTestCase):
         with patch('keep.collection.forms.CollectionObject.item_collections',
                    new=Mock(return_value=[coll_info])):
             response = self.client.post(edit_url, audio_data, follow=True)
+            print response
             # currently redirects to audio index
             (redirect_url, code) = response.redirect_chain[0]
             self.assert_(reverse('site-index') in redirect_url,
@@ -1845,7 +1854,7 @@ class TestAudioObject(KeepTestCase):
         # use request to pass logged-in user credentials for fedora access
         rqst = HttpRequest()
         user = ADMIN_CREDENTIALS['username']
-        rqst.user = User.objects.get(username=user)
+        rqst.user = get_user_model().objects.get(username=user)
         # use custom login so user credentials will be stored properly
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         rqst.session = self.client.session
@@ -1888,6 +1897,10 @@ class TestAudioObject(KeepTestCase):
         self.assertEqual('m4a', self.obj.access_file_extension())
 
 
+# check if mediainfo is installed on this system
+mediainfo_unavailable = (call(['which', 'mediainfo']) != 0)
+
+
 class TestWavDuration(KeepTestCase):
 
     def test_success(self):
@@ -1901,8 +1914,8 @@ class TestWavDuration(KeepTestCase):
     def test_nonexistent(self):
         self.assertRaises(IOError, audiomodels.wav_duration, 'i-am-not-a-real-file.wav')
 
+    @skipIf(mediainfo_unavailable, 'mediainfo is not installed')
     def test_mediainfo(self):
-
         # mock wav error to test mediainfo logic
         with patch('keep.audio.models.wave.open') as mockwaveopen:
             mockwaveopen.side_effect = wave.Error
