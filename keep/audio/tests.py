@@ -761,6 +761,8 @@ class AudioViewsTest(KeepTestCase):
 
         # retrieve test user object to use for transfer engineer - also used to test
         ldap_user = get_user_model().objects.get(username='ldap_user')
+        audio_curator = Group.objects.get(name='Audio Curator')
+        ldap_user.groups.add(audio_curator)
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -795,6 +797,7 @@ class AudioViewsTest(KeepTestCase):
         with patch('keep.collection.forms.CollectionObject.item_collections',
                    new=Mock(return_value=[coll_info])):
             response = self.client.post(edit_url, audio_data, follow=True)
+            print response
             # currently redirects to audio index
             (redirect_url, code) = response.redirect_chain[0]
             self.assert_(reverse('site-index') in redirect_url,
