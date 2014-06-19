@@ -1,6 +1,5 @@
 Django<1.6
-# TEMPORARY: rely on dev eullocal until release is ready, then tag eullocal 0.21
-https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.21.0-dev.tar.gz
+https://wilson.library.emory.edu/jenkins/job/eullocal-0.21.x/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.21.0.tar.gz
 eulxml>=0.21.0
 eulfedora>=0.22.1
 eulexistdb>=0.17.0
