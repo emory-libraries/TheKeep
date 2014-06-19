@@ -14,6 +14,7 @@ import wave
 from django.http import HttpRequest
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
@@ -322,6 +323,9 @@ class AudioViewsTest(KeepTestCase):
         obj.digitaltech.content.digitization_purpose = 'dawson exhibit'
         # retrieve test user object to use for transfer engineer - also used to test
         ldap_user = get_user_model().objects.get(username='ldap_user')
+        audio_curator = Group.objects.get(name='Audio Curator')
+        ldap_user.groups.add(audio_curator)
+
         # engineer & codec creator are initialized based on id values
         obj.digitaltech.content.create_transfer_engineer()
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
@@ -723,6 +727,7 @@ class AudioViewsTest(KeepTestCase):
             obj.mods.content = load_xmlobject_from_string(TestMods.invalid_xml, audiomodels.AudioMods)
             obj.save("schema-invalid MODS")
             response = self.client.post(edit_url, audio_data)
+            print response
             self.assertContains(response, '<ul class="errorlist">')
 
             # edit non-existent record should 404
