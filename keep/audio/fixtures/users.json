@@ -1,6 +1,6 @@
 [{
     "pk": 3,
-    "model": "auth.user",
+    "model": "emory_ldap.emoryldapuser",
     "fields": {
       "username": "euterpe",
       "first_name": "",
@@ -18,7 +18,7 @@
   },
   {
     "pk": 4,
-    "model": "auth.user",
+    "model": "emory_ldap.emoryldapuser",
     "fields": {
       "username": "ldap_user",
       "first_name": "Ldap",

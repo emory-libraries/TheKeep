@@ -1,6 +1,6 @@
 [{
     "pk": 5,
-    "model": "auth.user",
+    "model": "emory_ldap.emoryldapuser",
     "fields": {
       "username": "marbl",
       "first_name": "marbl",
@@ -18,7 +18,7 @@
   },
   {
     "pk": 6,
-    "model": "auth.user",
+    "model": "emory_ldap.emoryldapuser",
     "fields": {
       "username": "nonmarbl",
       "first_name": "nonmarbl",
