@@ -13,7 +13,7 @@ import wave
 
 from django.http import HttpRequest
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
@@ -321,7 +321,7 @@ class AudioViewsTest(KeepTestCase):
         obj.digitaltech.content.note = 'technician details'
         obj.digitaltech.content.digitization_purpose = 'dawson exhibit'
         # retrieve test user object to use for transfer engineer - also used to test
-        ldap_user = User.objects.get(username='ldap_user')
+        ldap_user = get_user_model().objects.get(username='ldap_user')
         # engineer & codec creator are initialized based on id values
         obj.digitaltech.content.create_transfer_engineer()
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
@@ -754,7 +754,7 @@ class AudioViewsTest(KeepTestCase):
         self.pids.append(obj.pid)
 
         # retrieve test user object to use for transfer engineer - also used to test
-        ldap_user = User.objects.get(username='ldap_user')
+        ldap_user = get_user_model().objects.get(username='ldap_user')
 
         # log in as staff
         self.client.login(**ADMIN_CREDENTIALS)
@@ -1845,7 +1845,7 @@ class TestAudioObject(KeepTestCase):
         # use request to pass logged-in user credentials for fedora access
         rqst = HttpRequest()
         user = ADMIN_CREDENTIALS['username']
-        rqst.user = User.objects.get(username=user)
+        rqst.user = get_user_model().objects.get(username=user)
         # use custom login so user credentials will be stored properly
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
         rqst.session = self.client.session
