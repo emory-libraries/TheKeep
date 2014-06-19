@@ -3,6 +3,26 @@
 CHANGELOG
 =========
 
+Release 1.9
+-----------
+
+* As a user (researcher and archivist) of the Keep, I can see a note when
+  I first access the application that informs me what browser I should use
+  in order to avoid problems when playing audio incompatible with some browsers.
+* As a staff user, I can see a visual indicator in the list views (search
+  results and browse pages) that indicates whether an audio item is available
+  to the public so that I can quickly see which items are inaccessible to
+  non-staff users.
+* As a researcher, I want to see a single audio item in a format consistent
+  with the search results, so that I know where to look to find the same information.
+* bugfix: error when LDAP fails is not obvious (generic 500?)
+* bugfix: edit field sizes are too large for Sublocation, Tape Brand/Stock,
+  and Part Note.
+* bugfix: Keep does not support 32bit float wav files.
+* bugfix: Django admin reassigns the staff flag if the user is an LDAP
+  user even if an administrator removed the flag. (note: fixed in eullocal 0.21)
+
+
 Release 1.8 - Permissions overhaul, Researcher Access, and Disk image/fixity improvements
 -----------------------------------------------------------------------------------------
 
