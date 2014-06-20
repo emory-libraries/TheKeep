@@ -321,6 +321,8 @@ Release 1.9
   :mod:`pymediainfo`, in order to support ingesting 32bit WAV files.
 * Run ``python manage.py migrate`` to update user profiles in the database
   for latest version of :mod:`eullocal`.
+* Now requires lame version 3.99.5 or later, in order to convert 32bit float
+  WAV files.
 
 Release 1.8
 ------------
