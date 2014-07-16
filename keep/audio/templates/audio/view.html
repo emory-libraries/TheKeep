@@ -16,21 +16,19 @@
         $('#jquery_jplayer_1').jPlayer({
             ready: function (event) {
                 $(this).jPlayer("setMedia", {
-                    // title: "{{ resource.label }}",
-                    mp3: "{{ resource.get_access_url }}",
-                    // m4a: "http://jplayer.org/audio/m4a/Miaow-07-Bubble.m4a",
+                    title: "{{ resource.label }}",
+                    {{ resource.access_file_extension }}: "{{ resource.get_access_url }}"
                 });
             },
             swfPath: "{% static 'js/' %}",
-            supplied: "mp3, m4a",
-            // preload: 'auto',
+            supplied: "{{ resource.access_file_extension }}",    {# previously was: supplied: "mp3, m4a", #}
             wmode: "window",
             smoothPlayBar: true,
             keyEnabled: true,
             remainingDuration: true,
             toggleDuration: true,
             warningAlerts: true,
-            errorAlerts:true,
+            errorAlerts:true                {#  do we want/need?   preload: 'auto', #}
         });
     });
   </script>
