@@ -51,7 +51,7 @@
             </h3>
 
             {% if perms.audio.change_audio %}
-            <div class="pull-right">
+            <div class="pull-right edit">
                 <a class="pull-right btn btn-primary" href="{% url 'audio:edit' resource.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
             </div>
             {% endif %}
@@ -77,7 +77,7 @@
           </ul>
         </header>
       </div>
-      <div class="row">
+      <div class="row meta">
         <ul class="nav nav-pills nav-justified">
           {% with origin_info=resource.mods.content.origin_info %}
             <li>
@@ -126,15 +126,20 @@
     </div>
     <div class="row">
         {% if resource.researcher_access|yesno:"yes,no" == "no" %}
-        <div class="messages">
-          <p class="bg-danger">This item is not accessible to researchers.
-            {% if resource.rights.content.access_status and resource.rights.content.access_status.code %}
-            <br/>Access code {{ resource.rights.content.access_status.code }}: {{ resource.rights.content.access_status.text }}
-            {% endif %}
-            {% if resource.rights.content.block_external_access %}
-            <br/>External access has been blocked.
-            {% endif %}
-          </p>
+        <div class="message no-researcher">
+          <div class="symbol">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+          </div>
+          <div class="content">
+            <p>This item is not accessible to researchers.
+              {% if resource.rights.content.access_status and resource.rights.content.access_status.code %}
+              <br/>Access code {{ resource.rights.content.access_status.code }}: {{ resource.rights.content.access_status.text }}
+              {% endif %}
+              {% if resource.rights.content.block_external_access %}
+              <br/>External access has been blocked.
+              {% endif %}
+            </p>
+          </div>
         </div>
         {% endif %}
     </div>

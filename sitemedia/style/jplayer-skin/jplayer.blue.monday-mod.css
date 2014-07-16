@@ -33,12 +33,16 @@ div.jp-video {
 	
 
 	border: 1px solid rgb(235, 235, 235);
-	background-color:#eee;
+	
+
+	background-color: #F3F3F3;
 }
 div.jp-audio {
-	width: 100%;
+	width: 104%;
 	height: auto;
 	float: left;
+	margin-left: -15px;
+	margin-right: -15px;
 }
 div.jp-audio-stream {
 	width:182px;
@@ -87,7 +91,7 @@ div.jp-video-full div.jp-interface {
 div.jp-interface {
 	position: relative;
 	background-color:#eee;
-	width:100%;
+	width: 100%;
 }
 
 div.jp-audio div.jp-type-single div.jp-interface {
@@ -166,8 +170,7 @@ div.jp-interface ul.jp-controls a {
 }
 
 div.jp-interface ul.jp-controls.play-controls a {
-    background-color: rgb(255, 255, 255);
-    border-bottom: 1px solid rgb(243, 243, 243);
+    background-color: #FFF;
 }
 
 div.jp-interface ul.jp-controls a:hover,
@@ -184,7 +187,7 @@ div.jp-interface ul.jp-controls a:active{
 a.jp-play,
 a.jp-pause {
 	width: 75px;
-	height: 75px;
+	height: 60px;
 }
 
 a.jp-play {
@@ -232,13 +235,18 @@ div.jp-progress {
 	background-color: #FAFAFA;
 }
 div.jp-audio div.jp-progress {
-	position: relative;
 	padding-left: 0;
 	bottom: 0;
 	display: table-cell;
 	float: none;
+	width: 100%;
+	position: relative;
 }
 div.jp-audio div.jp-type-single div.jp-progress {
+    position: relative;
+    vertical-align: middle;
+    display: table-cell;
+    padding: 0 20px;
 }
 div.jp-audio div.jp-type-playlist div.jp-progress {
 	left:166px;
@@ -251,20 +259,23 @@ div.jp-video div.jp-progress {
 	height:10px;
 }
 div.jp-seek-bar {
-	background: url(http://subtlepatterns.com/patterns/gplaypattern.png);
+	background: #FFE0BE;
 	width:0px;
-	height:100%;
+	height: 5px;
 	cursor: pointer;
 	z-index: 100;
 	box-shadow: -1px 1px 9px rgb(228, 228, 228) inset;
-	position: absolute;
-	opacity: 0.4;
+	position: relative;
+	opacity: 1;
+	top: 44%;
 }
 div.jp-play-bar {
 	background: rgb(255, 143, 0);
 	width:0px;
 	height:100%; 
 	box-shadow: 1px 1px 4px rgb(202, 202, 202);
+	position: relative;
+	overflow: inherit!important;
 }
 
 /* The seeking class is added/removed inside jPlayer */
@@ -279,6 +290,10 @@ div.jp-seeking-bg {
 	animation: progress-bar-stripes 2s linear infinite;
 
 	background-color: rgb(255, 255, 255);
+	
+
+	overflow: initial;
+
 }
 
 /* @end */
@@ -347,15 +362,15 @@ a.jp-volume-max:hover {
 
 div.jp-volume-bar {
 	position: absolute;
-	background-color: #FFE0BE;
+	background-color: #DBDBDB;
 	width:46px;
 	height:5px;
 	cursor: pointer;
 }
 div.jp-audio div.jp-volume-bar {
 	top: 44%;
-	left: 0;
-	width: 100%;
+	left: 13%;
+	width: 80%;
 }
 div.jp-audio-stream div.jp-volume-bar {
 	top:37px;
@@ -368,7 +383,7 @@ div.jp-video div.jp-volume-bar {
 div.jp-volume-bar-value {
 	width:0px;
 	height:5px;
-	background-color: rgb(255, 147, 10);
+	background-color: #9E9E9E;
 	position: relative;
 }
 
@@ -377,12 +392,13 @@ div.jp-volume-bar-value {
 /* @group current time and duration */
 
 div.jp-audio div.jp-time-holder {
-	position: absolute;
-	bottom: 10px;
+	position: relative;
 }
 div.jp-audio div.jp-type-single div.jp-time-holder {
-	left: 5%;
-	width: 90%;
+	left: 3%;
+	width: 25%;
+	float: left;
+	margin-top: 6px;
 }
 div.jp-audio div.jp-type-playlist div.jp-time-holder {
 	left:166px;
@@ -391,18 +407,19 @@ div.jp-audio div.jp-type-playlist div.jp-time-holder {
 
 div.jp-current-time,
 div.jp-duration {
-	width:60px;
 	font-size:.64em;
 	font-style:oblique;
 }
 div.jp-current-time {
 	float: left;
 	display:inline;
+	padding-right: 2em;
 }
 div.jp-duration {
-	float: right;
+	float: left;
 	display:inline;
 	text-align: right;
+	color: #C7BFBF;
 }
 
 div.jp-video div.jp-current-time {
@@ -688,12 +705,14 @@ div.jp-interface ul.jp-controls.volume-controls li {
 }
 
 div.jp-interface ul.jp-controls.volume-controls li a{
-	padding: 0px 2em;
+	padding: 0px 1em;
 }
 
 div.jp-audio ul.jp-controls.volume-controls {
-    width: 100%;
+    width: 25%;
     display: table;
+    min-width: 200px;
+    float: right;
 }
 div.jp-interface ul.jp-controls.volume-controls li.volume-bar {
     width: 300px;
@@ -701,9 +720,10 @@ div.jp-interface ul.jp-controls.volume-controls li.volume-bar {
 
 div.jp-audio ul.jp-controls {}
 div.jp-audio ul.jp-controls.play-controls {
-    font-size: 2.4em;
+    font-size: 2em;
 }
 
+div.jp-play-bar:after,
 div.jp-volume-bar-value:after {
     content: '';
     position: absolute;

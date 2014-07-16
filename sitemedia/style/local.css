@@ -787,17 +787,29 @@ article.view-media{
     margin: 1em auto;
     border: 1px solid rgb(219, 217, 217);
     max-width: 776px;
-    padding: 2em;
+    padding: 2em 2em 0;
     box-shadow: 1px 3px 7px rgb(228, 228, 228);
     border-radius: 3px;
 }
 
 article.view-media header {
-    margin: 0px -15px 20px;
+    margin: 0px -15px 15px;
 }
 
 article.view-media .container {
     width: 100%;
+    position: relative;
+}
+
+article.view-media .pull-right.edit {
+    position: absolute;
+    top: -2em;
+    right: -1em;
+    z-index: 2000;
+}
+
+article.view-media .pull-right.edit .btn{
+    border-radius:0px;
 }
 
 article.view-media h2 {
@@ -882,4 +894,28 @@ a:focus .access ul>li{
     border-style: solid;
     border-width: 0 10px 10px 10px;
     border-color: transparent transparent #333 transparent;
+}
+
+.meta.row{
+  padding-bottom: 2em;
+}
+
+.message.no-researcher {
+    background-color: #FFE3DF; color: #FF554D;
+    margin-left:-28px;
+    margin-right:-28px;
+    padding:5px 15px;
+}
+
+.message>.symbol, .message>.content {
+    display: table-cell;
+    padding: 10px;
+    vertical-align: top;
+}
+
+.message.no-researcher>.symbol span{
+    padding: 4px;
+    border-radius:4px;
+    color: #FF5C5C;
+    font-size: 3em;
 }
