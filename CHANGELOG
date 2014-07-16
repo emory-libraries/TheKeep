@@ -3,6 +3,12 @@
 CHANGELOG
 =========
 
+Release 1.9.1
+-------------
+
+* Bug fix: cleaner jplayer syntax for specifying mp3 or m4a audio file,
+  to avoid issues with some versions of Chrome
+
 Release 1.9
 -----------
 
