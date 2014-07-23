@@ -17,11 +17,18 @@
             ready: function (event) {
                 $(this).jPlayer("setMedia", {
                     title: "{{ resource.label }}",
-                    {{ resource.access_file_extension }}: "{{ resource.get_access_url }}"
+                    // {{ resource.access_file_extension }}: "{{ resource.get_access_url }}"
+                    // HACK: workaround for Chrome > 36 bug, which doesn't recognize mp3 as playable
+                    // pretend mp3s are m4as so that Chrome will play them
+                    'm4a': "{{ resource.get_access_url }}",
+                    'mp3': "{{ resource.get_access_url }}",
                 });
             },
-            swfPath: "{% static 'js/' %}",
-            supplied: "{{ resource.access_file_extension }}",    {# previously was: supplied: "mp3, m4a", #}
+            {# explicitly disable flash player because it doesn't send range requests needed for permissions check #}
+            solution: "html",
+            // swfPath: "{% static 'js/' %}",
+            // supplied: "{{ resource.access_file_extension }}",    {# previously was: supplied: "mp3, m4a", #}
+            supplied: "m4a, mp3",
             wmode: "window",
             smoothPlayBar: true,
             keyEnabled: true,
