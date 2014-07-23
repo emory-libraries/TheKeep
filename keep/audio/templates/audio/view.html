@@ -20,6 +20,7 @@
                     // {{ resource.access_file_extension }}: "{{ resource.get_access_url }}"
                     // HACK: workaround for Chrome > 36 bug, which doesn't recognize mp3 as playable
                     // pretend mp3s are m4as so that Chrome will play them
+                    // bug details here: https://code.google.com/p/chromium/issues/detail?id=386073
                     'm4a': "{{ resource.get_access_url }}",
                     'mp3': "{{ resource.get_access_url }}",
                 });
