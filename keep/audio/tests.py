@@ -2097,6 +2097,8 @@ class SourceAudioConversions(KeepTestCase):
         self.assertTrue(comparison_result,
             "duration for WAV and generated MP3 datastreams should match.")
 
+        self.assertTrue(obj.compressed_audio.mimetype, 'audio/mp3')
+
         # any other settings/info on the mp3 datastream that should be checked?
 
     def test_wav_to_mp3_localfile(self):
