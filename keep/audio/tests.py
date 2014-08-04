@@ -172,7 +172,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, download_url))
 
-        expected = 'audio/mpeg'
+        expected = 'audio/mp3'
         self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
