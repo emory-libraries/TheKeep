@@ -1893,7 +1893,7 @@ class TestAudioObject(KeepTestCase):
         self.obj.compressed_audio.mimetype = 'audio/mp3'
         self.obj.compressed_audio.exists = True		# not really (cheat)
         self.assertEqual('mp3', self.obj.access_file_extension())
-        self.obj.compressed_audio.mimetype = 'audio/mp4'
+        self.obj.compressed_audio.mimetype = 'audio/mpeg'
         self.assertEqual('m4a', self.obj.access_file_extension())
 
 
