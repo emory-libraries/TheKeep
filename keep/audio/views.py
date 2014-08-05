@@ -191,9 +191,9 @@ def download_audio(request, pid, type, extension=None):
     elif type == 'access':
         dsid = AudioObject.compressed_audio.id
         # make sure the requested file extension matches the datastream
-        if (obj.compressed_audio.mimetype == 'audio/mp4' and \
+        if (obj.compressed_audio.mimetype == 'audio/mpeg' and \
            extension != 'm4a') or \
-           (obj.compressed_audio.mimetype == 'audio/mpeg' and \
+           (obj.compressed_audio.mimetype == 'audio/mp3' and \
            extension != 'mp3'):
             raise Http404
         file_ext = extension

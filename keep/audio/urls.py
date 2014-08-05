@@ -12,6 +12,6 @@ urlpatterns = patterns('',
     url(r'^(?P<pid>[^/]+)/original/$', views.download_audio, {'type': 'original'},
             name='download-audio'),
     # NOTE: access copy filename extension is required for inclusion in iTunes
-    url(r'^(?P<pid>[^/]+)/access.(?P<extension>(mp3))$', views.download_audio,
+    url(r'^(?P<pid>[^/]+)/access.(?P<extension>(mp3|m4a))$', views.download_audio,
         {'type': 'access'}, name='download-compressed-audio'),
 )

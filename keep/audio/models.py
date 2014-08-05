@@ -420,7 +420,7 @@ class AudioObject(DigitalObject):
         if self.compressed_audio.exists:
             if self.compressed_audio.mimetype == 'audio/mp3':
                 return 'mp3'
-            if self.compressed_audio.mimetype == 'audio/mp4':
+            if self.compressed_audio.mimetype == 'audio/mpeg':
                 return 'm4a'
 
     @property
