@@ -220,7 +220,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got, 'Expected %s but returned %s for %s as patron with http range in request'
                              % (expected, got, download_url))
         # spot-check response object
-        expected = 'audio/mpeg'
+        expected = 'audio/mp3'
         self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
@@ -1890,7 +1890,7 @@ class TestAudioObject(KeepTestCase):
     def test_access_file_extension(self):
         # object created in fixture has no access copy
         self.assertEqual(None, self.obj.access_file_extension())
-        self.obj.compressed_audio.mimetype = 'audio/mpeg'
+        self.obj.compressed_audio.mimetype = 'audio/mp3'
         self.obj.compressed_audio.exists = True		# not really (cheat)
         self.assertEqual('mp3', self.obj.access_file_extension())
         self.obj.compressed_audio.mimetype = 'audio/mp4'
