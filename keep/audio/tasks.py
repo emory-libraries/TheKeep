@@ -109,7 +109,7 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 obj.compressed_audio.label = obj.audio.label
                 # always set the mimetype so that if we are regenerating a migrated audio item
                 # and converting from M4A to MP3 the mimetype will be accurate
-                obj.compressed_audio.mimetype = 'audio/mp3'
+                obj.compressed_audio.mimetype = 'audio/mpeg'
 
                 obj.save("Added compressed mp3 audio stream from LAME conversion output.")
             return "Successfully converted file"

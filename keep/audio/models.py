@@ -418,9 +418,9 @@ class AudioObject(DigitalObject):
         one), based on the datastream mimetype.  Currently, compressed
         audio could be MP3 or M4A/MP4.'''
         if self.compressed_audio.exists:
-            if self.compressed_audio.mimetype == 'audio/mp3':
-                return 'mp3'
             if self.compressed_audio.mimetype == 'audio/mpeg':
+                return 'mp3'
+            if self.compressed_audio.mimetype == 'audio/mp4':
                 return 'm4a'
 
     @property

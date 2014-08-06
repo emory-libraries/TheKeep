@@ -172,7 +172,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, download_url))
 
-        expected = 'audio/mp3'
+        expected = 'audio/mpeg'
         self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
@@ -220,7 +220,7 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got, 'Expected %s but returned %s for %s as patron with http range in request'
                              % (expected, got, download_url))
         # spot-check response object
-        expected = 'audio/mp3'
+        expected = 'audio/mpeg'
         self.assertEqual(response['Content-Type'], expected,
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
@@ -250,12 +250,12 @@ class AudioViewsTest(KeepTestCase):
                         "Expected '%s' but returned '%s' for %s content disposition" % \
                         (expected, response['Content-Type'], download_url))
 
-        # attempt to download m4a as mp3 - should 404 - not sure this is valid anymore
-        # response = self.client.get(download_url)
-        # code = response.status_code
-        # expected = 404
-        # self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A datastream as MP3)'
-        #                      % (expected, code, download_url))
+        # attempt to download m4a as mp3 - should 404
+        response = self.client.get(download_url)
+        code = response.status_code
+        expected = 404
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A datastream as MP3)'
+                             % (expected, code, download_url))
 
     @patch('keep.common.utils.solr_interface')  # for index page redirect
     def test_edit(self, mocksolr):
@@ -1890,10 +1890,10 @@ class TestAudioObject(KeepTestCase):
     def test_access_file_extension(self):
         # object created in fixture has no access copy
         self.assertEqual(None, self.obj.access_file_extension())
-        self.obj.compressed_audio.mimetype = 'audio/mp3'
+        self.obj.compressed_audio.mimetype = 'audio/mpeg'
         self.obj.compressed_audio.exists = True		# not really (cheat)
         self.assertEqual('mp3', self.obj.access_file_extension())
-        self.obj.compressed_audio.mimetype = 'audio/mpeg'
+        self.obj.compressed_audio.mimetype = 'audio/mp4'
         self.assertEqual('m4a', self.obj.access_file_extension())
 
 
@@ -2096,8 +2096,6 @@ class SourceAudioConversions(KeepTestCase):
         comparison_result = audiomodels.check_wav_mp3_duration(self.obj.pid)
         self.assertTrue(comparison_result,
             "duration for WAV and generated MP3 datastreams should match.")
-
-        self.assertTrue(obj.compressed_audio.mimetype, 'audio/mp3')
 
         # any other settings/info on the mp3 datastream that should be checked?
 
