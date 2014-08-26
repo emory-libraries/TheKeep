@@ -4,8 +4,13 @@ CHANGELOG
 =========
 
 
+Release 1.9.3
+-------------
+
+* added dc_cleanup manage command
+
 Release 1.9.2
----------------
+-------------
 
 * bugfix release: workaround for Chrome v35 or later issue in recognizing
   MP3s as playable in HTML5
