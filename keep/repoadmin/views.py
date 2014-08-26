@@ -1,3 +1,4 @@
+from django.conf import settings
 import logging
 from datetime import date, timedelta
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
@@ -87,7 +88,7 @@ def dashboard(request):
         {'recent_items': recent_items, 'recent_months': recent_months,
         'recent_collections': recent_collections,
         'recent_fixity_checks': recent_fixity_checks,
-        'month_ago': month_ago})
+        'month_ago': month_ago, 'manual_url': settings.KEEP_MANUAL_URL})
 
 
 @user_passes_test_with_403(is_staff)

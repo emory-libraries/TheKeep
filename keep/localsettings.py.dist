@@ -134,6 +134,8 @@ LARGE_FILE_STAGING_DIR = '/path/to/inbound/data'
 # Recommended: set to something around 1.0 - 1.5
 AUDIO_ALLOWED_DURATION_DISCREPANCY = 1.5
 
+# link to the Keep manual
+KEEP_MANUAL_URL = ''
 
 LOGGING = {
     'version': 1,
