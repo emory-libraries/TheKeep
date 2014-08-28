@@ -313,8 +313,8 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
 Upgrade Notes
 =============
-Release 1.9.3
------------
+Release 1.10
+------------
 
 * Add and configure **KEEP_MANUAL_URL** in ``localsettings.py``
 
