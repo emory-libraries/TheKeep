@@ -823,7 +823,8 @@ class CollectionViewsTest(KeepTestCase):
 
     @patch('keep.collection.views.solr_interface')
     @patch('keep.collection.views.CollectionObject')
-    def test_find_collection(self, mockcollobj, mocksolr_interface):
+    @patch.object(cforms.FindCollection, 'archive_choices_by_user')
+    def test_find_collection(self, mockarch_choices, mockcollobj, mocksolr_interface):
         # test shortcut method to find a collection
         archive_url = reverse('collection:list-archives')
 
@@ -840,6 +841,9 @@ class CollectionViewsTest(KeepTestCase):
             {'pid': 'test:1'},
         ]
         mockcollq.__getitem__.return_value = solr_result[0]
+
+        # patch archive_choices_by_user so search input will be valid
+        mockarch_choices.return_value = [('marbl', 'MARBL')]
 
         # search by archive & id
         coll_data = {'archive': 'marbl', 'collection': '1000'}
