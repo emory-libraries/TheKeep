@@ -5,3 +5,14 @@
 # AccessData proprietary forensics file format
 0       string          ADSEGMENTEDFILE\x00     AccessData Segmented File (AD1)
 !:mime  application/x-ad1
+
+
+# MBWF/RF64
+# see EBU – TECH 3306 http://tech.ebu.ch/docs/tech/tech3306-2009.pdf
+0       string  RF64\x86\x16\x68\x06WAVEds64            MBWF/RF64 audio
+!:mime  audio/x-wav
+>40     search/256      fmt\x20         \b
+>>&6    leshort         =1              \b, mono
+>>&6    leshort         =2              \b, stereo
+>>&6    leshort         >2              \b, %d channels
+>>&8    lelong          >0              %d Hz

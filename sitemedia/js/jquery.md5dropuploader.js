@@ -7,7 +7,7 @@ mimetypes.  For example:
 <script type="text/javascript" charset="utf-8">
    $("#drop_target").md5DropUploader({
       url : "{% url audio:upload %}",
-      allowed_types : ['audio/wav', 'audio/mp3'],
+      allowed_types : ['audio/wav', 'audio/x-wav' 'audio/mp3'],
       csrf_token: "...."
    });
 </script>

@@ -4,11 +4,12 @@ CHANGELOG
 =========
 
 
-Release 1.9.10
---------------
+Release 1.10
+------------
 
 * added dc_cleanup manage command
 * added link to Keep Manual on dashboard for staff members
+* added ability to upload 64bit wave files
 
 Release 1.9.2
 -------------

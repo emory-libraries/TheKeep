@@ -4,7 +4,7 @@ eulxml>=0.21.0
 eulfedora>=0.22.1
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
-https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.1.tar.gz
+https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.2.tar.gz
 python-magic
 pycrypto
 celery

@@ -173,9 +173,9 @@ To populate the index initially, or to reindex all content, run the
 Misc
 """"
 
-The WAV to MP3 audio conversion task uses LAME to do the actual
+The WAV to MP3 audio conversion task uses LAME and SOX to do the actual
 encoding.  On Ubuntu systems, this can be installed using ``sudo
-apt-get install lame``.
+apt-get install lame  sox libsox-fmt-mp3``.
 
 
 Install the Application
@@ -269,8 +269,9 @@ on configuring celery to run as a daemon.
 Custom MIME Types
 ^^^^^^^^^^^^^^^^^
 
-The AFF and AD1 disk image formats do not (yet) have official MIME types,
-so we have defined local mimetypes and you will need to update local magic files
+The AFF and AD1 disk image formats do not (yet) have official MIME types.
+Also the 64 bit WAV format W64  AKA RIFF Wave has been added.
+We have defined local mimetypes and you will need to update local magic files
 so these formats can be recognized.  The necessary definitions are included
 with the source code in a file called ``magic_extras.txt``.   On staging
 or production servers, a newly compiled magic file should be generated to
@@ -317,6 +318,8 @@ Release 1.10
 ------------
 
 * Add and configure **KEEP_MANUAL_URL** in ``localsettings.py``
+* Compile magic file with info from magic_extras.txt
+* install ``sox and libsox-fmt-mp3`` or equivalent system package
 
 
 Release 1.9
