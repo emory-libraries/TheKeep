@@ -28,8 +28,8 @@ from keep.testutil import KeepTestCase, mocksolr_nodupes
 ## Disk Image fixtures
 
 aff_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.aff')
-aff_md5 = '9d8daf0469a87dcfa65a29f5e107aac6'
-aff_sha1 = '98d027edf2246917b2aede948039fcea1811461b'
+aff_md5 = 'e6d5831932b9192afa722a51ce2e8fd5'
+aff_sha1 = '6a5b0535cb47c936a234247532f04c95f96719eb'
 
 ad1_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.ad1')
 ad1_md5 = 'e1ec1ac3a9e1f5a1c577a1de6e1e5c38'
