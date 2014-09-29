@@ -173,9 +173,13 @@ To populate the index initially, or to reindex all content, run the
 Misc
 """"
 
-The WAV to MP3 audio conversion task uses LAME and SOX to do the actual
+The WAV to MP3 audio conversion task uses FFMPEG to do the actual
 encoding.  On Ubuntu systems, this can be installed using ``sudo
-apt-get install lame  sox libsox-fmt-mp3``.
+apt-get install ffmpeg``.
+
+.. Note::
+  You may have to add the repo ppa:jon-severinsson/ffmpe to install ffmpeg
+
 
 
 Install the Application
@@ -319,7 +323,7 @@ Release 1.10
 
 * Add and configure **KEEP_MANUAL_URL** in ``localsettings.py``
 * Compile magic file with info from magic_extras.txt
-* install ``sox and libsox-fmt-mp3`` or equivalent system package
+* install ``ffmpeg`` or equivalent system package
 
 
 Release 1.9

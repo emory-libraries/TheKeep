@@ -101,7 +101,7 @@
     {% endif %}
     {{ conversion.task.status }}
     {{ conversion.task.result|default:'' }}
-    {# NOTE: task result could potentially have full LAME output (hopefully unlikely);  truncate? #}
+    {# NOTE: task result could potentially have full FFMPEG output (hopefully unlikely);  truncate? #}
   </p>
   {% endif %}
 {% endwith %}

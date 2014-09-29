@@ -92,20 +92,14 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
 
         # Call the conversion utility.
         # NOTE: With files greater than 2GB, the visual output from
-        # SOX will not be correct, but it will convert and return 0.
+        # FFMPEG will not be correct, but it will convert and return 0.
 
-        # see if WAV is regular or 64bit
-        info = MediaInfo.parse(wav_file_path)
-        if info.tracks[0].format_profile == 'RF64':
-            input_file_type = 'w64'
-        else:
-            input_file_type = 'wav'
 
-        process = subprocess.Popen(['sox', '-t', input_file_type, wav_file_path, mp3_file_path],
+        process = subprocess.Popen(['ffmpeg', '-y', '-i', wav_file_path, mp3_file_path],
                 stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
-        # returns a tuple of stdout, stderr. The output of the SOX goes to stderr.
+        # returns a tuple of stdout, stderr. The output of the FFMPEG goes to stderr.
         stdout_output, stderr_output = process.communicate()
         # Return code of the process.
         return_code = process.returncode
@@ -125,13 +119,13 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 # and converting from M4A to MP3 the mimetype will be accurate
                 obj.compressed_audio.mimetype = 'audio/mpeg'
 
-                obj.save("Added compressed mp3 audio stream from SOX conversion output.")
+                obj.save("Added compressed mp3 audio stream from FFMPEG conversion output.")
             return "Successfully converted file"
 
         # Raise error if this is reached - if conversion succeded, should have already returned
-        logger.error("Failed to convert audio file (SOX failed) for %s" % pid)
-        logger.error("SOX output: %s" % stderr_output)
-        raise Exception("Failed to convert audio (SOX failed): %s" % stderr_output)
+        logger.error("Failed to convert audio file (FFMPEG failed) for %s" % pid)
+        logger.error("FFMPEG output: %s" % stderr_output)
+        raise Exception("Failed to convert audio (FFMPEG failed): %s" % stderr_output)
 
     # General exception catch for logging.
     # possible more specific exceptions:
