@@ -27,6 +27,6 @@ bodatools
 bagit>=1.3.2
 # dev eultheme until next release
 -e git://github.com/emory-libraries/django-eultheme@develop#egg=django_eultheme
-django_admin_bootstrapped
+django_admin_bootstrapped<2.0
 django-widget-tweaks
 pymediainfo
