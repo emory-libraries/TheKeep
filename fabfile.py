@@ -32,9 +32,10 @@ run tests, and generate docs).
 '''
 
 env.project = 'keep'
-env.svn_rev_tag = ''
-env.remote_path = '/home/httpd/sites/keep'
-env.remote_acct = 'keep'
+env.git_rev_tag = ''
+env.git_rev = ''
+env.remote_path = '/tmp/REMOTE/keep'
+env.remote_acct = 'athom09'
 env.url_prefix = None
 env.remote_proxy = None
 # debian/ubuntu packages expected to be installed
@@ -90,15 +91,15 @@ def build():
 # deploy tasks
 ##
 
-def configure(path=None, user=None, url_prefix=None, check_svn_head=True,
+def configure(path=None, user=None, url_prefix=None,
               remote_proxy=None):
     'Configuration settings used internally for the build.'
     env.version = keep.__version__
-    config_from_svn(check_svn_head)
+    config_from_git()
     # construct a unique build directory name based on software version and svn revision
-    env.build_dir = '%(project)s-%(version)s%(svn_rev_tag)s' % env
-    env.tarball = '%(project)s-%(version)s%(svn_rev_tag)s.tar.bz2' % env
-    env.solr_tarball = '%(project)s-solr-%(version)s%(svn_rev_tag)s.tar.bz2' % env
+    env.build_dir = '%(project)s-%(version)s%(git_rev_tag)s' % env
+    env.tarball = '%(project)s-%(version)s%(git_rev_tag)s.tar.bz2' % env
+    env.solr_tarball = '%(project)s-solr-%(version)s%(git_rev_tag)s.tar.bz2' % env
 
     if path:
         env.remote_path = path.rstrip('/')
@@ -112,33 +113,20 @@ def configure(path=None, user=None, url_prefix=None, check_svn_head=True,
         puts('Setting remote proxy to %(remote_proxy)s' % env)
 
 
-def config_from_svn(check_svn_head=True):
-    """Infer subversion location & revision from local svn checkout."""
-    with hide('stdout'):
-        svn_info = XML(local('svn info --xml', capture=True))
-    env.svn_rev = svn_info.find('entry').get('revision')
+def config_from_git():
+    """Infer revision from local git checkout."""
+    # if not a released version, use revision tag
+    env.git_rev = local('git rev-parse --short HEAD', capture=True).strip()
     if keep.__version_info__[-1]:
-        env.svn_rev_tag = '-r' + env.svn_rev
-    env.svn_url = svn_info.find('entry/url').text
-
-    # using the local revision; ask confirmation if local checkout is
-    # not at HEAD revision
-    with hide('stdout'):
-        head_svn_info = XML(local('svn info --xml %(svn_url)s' % env, capture=True))
-    head_rev = head_svn_info.find('entry').get('revision')
-    if check_svn_head and head_rev != env.svn_rev:
-        if not confirm('Are you sure you want to deploy checked out svn revision %s (HEAD is %s)?' \
-                       % (env.svn_rev, head_rev)):
-            abort('Quitting')
-
+        env.rev_tag = '-r' + env.git_rev
 
 def prep_source():
     'Checkout the code from svn and do local prep.'
-    require('svn_url', 'svn_rev', 'build_dir',
+    require('git_rev', 'build_dir',
             used_for='Checking out code from svn into build area')
     local('mkdir -p build')
     local('rm -rf build/%(build_dir)s' % env)
-    local('svn export -r %(svn_rev)s %(svn_url)s build/%(build_dir)s' % env)
+    local('git archive --format=tar --prefix=%(build_dir)s/ %(git_rev)s | (cd build && tar xf -)' % env)
 
     # disk image fixture files are somewhat large and don't need to be included in deploy
     local('rm build/%(build_dir)s/keep/file/fixtures/*.a[df][1f]' % env)
@@ -266,21 +254,17 @@ def syncdb():
 
 @task
 def build_source_package(path=None, user=None, url_prefix='',
-                         check_svn_head=True, remote_proxy=None):
+                         remote_proxy=None):
     '''Produce a tarball of the source tree and a solr core.'''
     # exposed as a task since this is as far as we can go for now with solr.
     # as solr deployment matures we should expose the most mature piece
-    if isinstance(check_svn_head, basestring):
-        # "False" and friends should be false. everything else default True
-        check_svn_head = (check_svn_head.lower() not in
-                          ('false', 'f', 'no', 'n', '0'))
-    configure(path, user, url_prefix, check_svn_head, remote_proxy)
+    configure(path, user, url_prefix, remote_proxy)
     prep_source()
     package_source()
 
 
 @task
-def deploy(path=None, user=None, url_prefix='', check_svn_head=True, python=None,
+def deploy(path=None, user=None, url_prefix='', python=None,
            remote_proxy=None):
     '''Deploy the web app to a remote server.
 
@@ -293,9 +277,6 @@ def deploy(path=None, user=None, url_prefix='', check_svn_head=True, python=None
             tasks as the specified user
             Default: keep
       url_prefix: base url if site is not deployed at /
-      check_svn_head: by default, if current revision is not svn HEAD,
-            ask the user to confirm the deploy
-            (Use any of: no,n, false,f, or 0 to turn off)
        remote_proxy: HTTP proxy that can be used for pip/virtualenv
        installation on the remote server (server:port)
 
@@ -306,7 +287,7 @@ def deploy(path=None, user=None, url_prefix='', check_svn_head=True, python=None
 
     '''
 
-    build_source_package(path, user, url_prefix, check_svn_head,
+    build_source_package(path, user, url_prefix,
                          remote_proxy)
     upload_source()
     extract_source()
