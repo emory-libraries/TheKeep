@@ -34,8 +34,8 @@ run tests, and generate docs).
 env.project = 'keep'
 env.git_rev_tag = ''
 env.git_rev = ''
-env.remote_path = '/tmp/REMOTE/keep'
-env.remote_acct = 'athom09'
+env.remote_path = '/home/httpd/sites/keep'
+env.remote_acct = 'keep'
 env.url_prefix = None
 env.remote_proxy = None
 # debian/ubuntu packages expected to be installed
