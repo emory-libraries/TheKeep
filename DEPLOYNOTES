@@ -318,6 +318,17 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
 Upgrade Notes
 =============
+
+
+Release 2.0 - Video Ingest
+--------------------------
+* run command to create Video content model::
+
+    $ manage.py syncrepo
+
+* setup  ftp user and directory on staging server to have seperate video and diskimage directoryies and appopriate
+  users and restrictions.
+
 Release 1.10
 ------------
 

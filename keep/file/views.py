@@ -36,6 +36,7 @@ from keep.file.forms import UploadForm, DiskImageEditForm, LargeFileIngestForm, 
     SupplementalFileFormSet
 from keep.file.models import DiskImage, large_file_uploads
 from keep.file.utils import md5sum, dump_post_data
+from keep.video.models import Video
 
 
 logger = logging.getLogger(__name__)
@@ -393,8 +394,6 @@ def largefile_ingest(request):
     '''Large-file ingest.  On GET, displays a form allowing user to
     select a BagIt that has been uploaded to the configured large-file
     ingest staging area for ingest and association with a collection.
-    On POST, generates and ingests a DiskImage object based
-    on the contents of the selected BagIt.
     '''
     # ingest content from upload staging area
 
@@ -424,10 +423,15 @@ def largefile_ingest(request):
             # create dict with file info to add success/failure info
             file_info = {'label': os.path.basename(bag)}
 
+            #assuming type of ingest from subdirectory
+            type = bag.split('/')[-2]
             try:
 
-                # for now, large-file ingest workflow only supports disk images
-                obj = DiskImage.init_from_bagit(bag, request)
+                if type == 'diskimage':
+                    obj = DiskImage.init_from_bagit(bag, request)
+
+                if type == 'video':
+                    obj = Video.init_from_bagit(bag, request)
 
                 # set collection on ingest
                 obj.collection = collection
@@ -465,9 +469,13 @@ def largefile_ingest(request):
 
                 # re-init to allow checking fedora-calculated checksums on
                 # supplemental datastreams
-                obj = repo.get_object(obj.pid, type=DiskImage)
+                if type == 'diskimage':
+                    obj = repo.get_object(obj.pid, type=DiskImage)
 
-                # if save succeded (no exceptions), set summary info for diplay
+                if type == 'video':
+                    obj = repo.get_object(obj.pid, type=Video )
+
+                # if save succeded (no exceptions), set summary info for display
                 file_info.update({'success': True,
                                   'pid': obj.pid, 'url': obj.get_absolute_url(),
                                   'checksum': obj.content.checksum})

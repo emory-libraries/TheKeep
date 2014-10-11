@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     'keep.accounts',
     'keep.arrangement',
     'keep.audio',
+    'keep.video',
     'keep.collection',
     'keep.common',
     'keep.repoadmin',

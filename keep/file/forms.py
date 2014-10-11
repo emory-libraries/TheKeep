@@ -1,4 +1,5 @@
 import logging
+from keep.common.models import PremisSoftwareEnvironment, PremisHardwareEnvironment, PremisEnvironment, PremisObject
 import os
 
 from eulxml.forms import XmlObjectForm, SubformField
@@ -13,9 +14,7 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from keep.common.forms import ReadonlyTextInput, comment_field, EMPTY_LABEL_TEXT
 from keep.collection.forms import CollectionSuggestionField
 from keep.audio.forms import RightsForm
-from keep.file.models import DiskImageMods, DiskImagePremis, PremisObject, \
-    PremisEnvironment, PremisSoftwareEnvironment, PremisHardwareEnvironment, \
-    Application, large_file_uploads
+from keep.file.models import DiskImageMods, DiskImagePremis, Application, large_file_uploads
 
 
 logger = logging.getLogger(__name__)

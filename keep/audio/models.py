@@ -1,15 +1,14 @@
-import os
 import wave
 import logging
-import mutagen
 import math
 import tempfile
-from pymediainfo import MediaInfo
 
+import os
+import mutagen
+from pymediainfo import MediaInfo
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.db import models
-
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eullocal.django.taskresult.models import TaskResult
@@ -17,11 +16,10 @@ from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 from eulcm.xmlmap.boda import Rights
-
-
 from keep.collection.models import CollectionObject
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
-from keep.common.models import allow_researcher_access
+from keep.common.models import allow_researcher_access, _BaseDigitalTech
+
 
 logger = logging.getLogger(__name__)
 
@@ -205,12 +203,6 @@ class SourceTech(_BaseSourceTech):
 ##
 ## Digital technical metadata
 ##
-
-class _BaseDigitalTech(xmlmap.XmlObject):
-    'Base class for Digital Technical Metadata objects'
-    ROOT_NS = 'http://pid.emory.edu/ns/2010/digitaltech'
-    ROOT_NAMESPACES = {'dt': ROOT_NS}
-
 
 class TransferEngineer(_BaseDigitalTech):
     ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` transfer engineer'''
