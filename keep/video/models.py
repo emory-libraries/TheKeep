@@ -98,7 +98,7 @@ class Video(DigitalObject):
 
     'MODS :class:`~eulfedora.models.XmlDatastream` with content as :class:`VideoMods`'
 
-    content = FileDatastream("content", "Video datastream", defaults={
+    content = FileDatastream("VIDEO", "Video datastream", defaults={
             'versionable': True,
         })
     'master video :class:`~eulfedora.models.FileDatastream`'

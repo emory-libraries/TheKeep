@@ -80,11 +80,15 @@ class FileViewsTest(KeepTestCase):
         self.englishdocs = FedoraFixtures.englishdocs_collection()
         self.englishdocs.save()
 
-        self.tempdir = tempfile.mkdtemp(prefix='keep-test-')
+        self.staging_dir = '/tmp/staging'
+        self.diskimage_dir = '/tmp/staging/diskimage'
+        os.makedirs(self.diskimage_dir)
+
+        self.tempdir = tempfile.mkdtemp(prefix='keep-test-', dir=self.diskimage_dir)
 
     def tearDown(self):
         super(FileViewsTest, self).tearDown()
-        shutil.rmtree(self.tempdir)
+        shutil.rmtree(self.staging_dir)
 
     def test_upload_form(self):
         # test upload form
@@ -421,7 +425,7 @@ class FileViewsTest(KeepTestCase):
         self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
 
         # on GET with no uploaded files, should display message and no form
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             response = self.client.get(ingest_url)
         code = response.status_code
         expected = 200
@@ -435,16 +439,16 @@ class FileViewsTest(KeepTestCase):
             html=True)
 
         # construct a BagIt to test form display
-        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        bag_path = tempfile.mkdtemp(dir=self.diskimage_dir)
         bagit.make_bag(bag_path)
 
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             response = self.client.get(ingest_url)
         self.assertNotEqual(None, response.context['form'])
         self.assert_(isinstance(response.context['form'], LargeFileIngestForm))
 
         # collection & file are required; posting without should re-display form with errors
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             response = self.client.post(ingest_url)
         self.assertNotEqual(None, response.context['form'])
         self.assertFalse(response.context['form'].is_valid())
@@ -456,11 +460,11 @@ class FileViewsTest(KeepTestCase):
         shutil.rmtree(bag_path)
 
         # construct a BagIt and then post as selected file
-        emptybag_path = tempfile.mkdtemp(dir=self.tempdir)
+        emptybag_path = tempfile.mkdtemp(dir=self.diskimage_dir)
         # empty bag - valid but no disk image data
         bagit.make_bag(emptybag_path)
 
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             response = self.client.post(ingest_url, {'bag': emptybag_path, 'collection_0':
                 self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
         # should error because bagit does not contain a disk image file
@@ -475,7 +479,7 @@ class FileViewsTest(KeepTestCase):
         shutil.rmtree(emptybag_path)
 
         # construct a BagIt and then post as selected file
-        ad1bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        ad1bag_path = tempfile.mkdtemp(dir=self.diskimage_dir)
         # copy in ad1 fixture as payload
         shutil.copy(ad1_file, ad1bag_path)
         bagit.make_bag(ad1bag_path, checksum=['md5', 'sha1'])
@@ -498,7 +502,7 @@ class FileViewsTest(KeepTestCase):
             else:
                 return self.saved_obj
 
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             with patch('keep.file.models.DiskImage.save', new=mock_save):
                 with patch('keep.file.views.Repository') as mockrepo:
                     mockrepo.return_value.get_object = mockrepo_getobj
@@ -548,7 +552,7 @@ class FileViewsTest(KeepTestCase):
         # test invalid checksum after ingest
 
         # reconstruct BagIt for posting (previous removed on success)
-        bag_path = tempfile.mkdtemp(dir=self.tempdir)
+        bag_path = tempfile.mkdtemp(dir=self.diskimage_dir)
         # copy in ad1 fixture as payload
         shutil.copy(ad1_file, bag_path)
         bagit.make_bag(bag_path, checksum=['md5', 'sha1'])
@@ -560,7 +564,7 @@ class FileViewsTest(KeepTestCase):
             self.saved_obj.pid = 'fakepid:2'
             self.saved_obj.content.checksum = 'bogus md5'
 
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             with patch('keep.file.models.DiskImage.save', mock_save_badchecksum):
                 with patch('keep.file.views.Repository') as mockrepo:
                     mockrepo.return_value.get_object = mockrepo_getobj
@@ -622,7 +626,7 @@ class FileViewsTest(KeepTestCase):
             ingest_url = reverse('file:largefile-ingest')
 
             # construct test BagIt
-            ad1bag_path = tempfile.mkdtemp(dir=self.tempdir)
+            ad1bag_path = tempfile.mkdtemp(dir=self.diskimage_dir)
             # copy in ad1 fixture as payload
             shutil.copy(ad1_file, ad1bag_path)
             bagit.make_bag(ad1bag_path, checksum=['md5', 'sha1'])
@@ -635,7 +639,7 @@ class FileViewsTest(KeepTestCase):
             ]
             mocksolr.query.__iter__.return_value = iter(solr_result)
 
-            with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+            with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
 
                 response = self.client.post(ingest_url, {'bag': ad1bag_path, 'collection_0':
                     self.rushdie.pid, 'collection_1': 'Rushdie Collection'})
@@ -988,26 +992,30 @@ class UploadFormTest(TestCase):
 class LargeFileStagingBagsTest(TestCase):
 
     def setUp(self):
-        self.tempdir = tempfile.mkdtemp(prefix='keep-test-')
+        self.staging_dir = '/tmp/staging'
+        self.diskimage_dir = '/tmp/staging/diskimage'
+        os.makedirs(self.diskimage_dir)
+        
+        self.tempdir = tempfile.mkdtemp(prefix='keep-test-', dir=self.diskimage_dir)
 
     def tearDown(self):
-        shutil.rmtree(self.tempdir)
+        shutil.rmtree(self.staging_dir)
 
     def test_options(self):
 
-        with self.settings(LARGE_FILE_STAGING_DIR=self.tempdir):
+        with self.settings(LARGE_FILE_STAGING_DIR=self.staging_dir):
             # nothing in folder
             opts = largefile_staging_bags()
             self.assertEqual(1, len(opts),
                 'select option list should only have one option when no bagit files are available')
 
             # create two bags
-            bag1_path = tempfile.mkdtemp(dir=self.tempdir)
+            bag1_path = tempfile.mkdtemp(dir=self.diskimage_dir)
             bagit.make_bag(bag1_path)
-            bag2_path = tempfile.mkdtemp(dir=self.tempdir)
+            bag2_path = tempfile.mkdtemp(dir=self.diskimage_dir)
             bagit.make_bag(bag2_path)
             # create a directory that is not a bagit
-            nonbag_path = tempfile.mkdtemp(dir=self.tempdir)
+            nonbag_path = tempfile.mkdtemp(dir=self.diskimage_dir)
 
             opts = largefile_staging_bags()
             self.assertEqual(3, len(opts),
