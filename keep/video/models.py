@@ -561,6 +561,7 @@ class Video(DigitalObject):
         if content_file is None:
             raise Exception('No Video content found in %s' % os.path.basename(path))
 
+        access_file = None
         if mimetype in Video.allowed_access_mimetypes:
             access_file = filename
             access_mimetype = mimetype
