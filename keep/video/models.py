@@ -564,11 +564,21 @@ class Video(DigitalObject):
         if mimetype in Video.allowed_access_mimetypes:
             access_file = filename
             access_mimetype = mimetype
-                # require MD5
+
+            if file_uri:
+                access_location = 'file://%s' % urllib.quote(access_file)
+                # if Fedora base path is different from locally mounted staging directory,
+                # convert from local path to fedora server path
+                if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+                    access_location = access_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                        settings.LARGE_FILE_STAGING_FEDORA_DIR)
+
+            # require MD5
             try:
                 access_md5_checksum = bag.entries[data_path]['md5']
             except KeyError:
                 raise Exception(checksum_err_msg % 'MD5')
+
 
         if file_uri:
             ingest_location = 'file://%s' % urllib.quote(content_file)
@@ -576,13 +586,6 @@ class Video(DigitalObject):
             # convert from local path to fedora server path
             if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
                 ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
-                    settings.LARGE_FILE_STAGING_FEDORA_DIR)
-
-            access_location = 'file://%s' % urllib.quote(access_file)
-            # if Fedora base path is different from locally mounted staging directory,
-            # convert from local path to fedora server path
-            if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
-                access_location = access_location.replace(settings.LARGE_FILE_STAGING_DIR,
                     settings.LARGE_FILE_STAGING_FEDORA_DIR)
 
 
