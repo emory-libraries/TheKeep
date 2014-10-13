@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 
-vbag = os.path.join(settings.BASE_DIR, 'video', 'fixtures', '6452')
+vbag = os.path.join(settings.BASE_DIR, 'video', 'fixtures', 'BRIDGES_OF_THE_SPIRIT')
 
 class VideoTest(TestCase):
 
@@ -32,25 +32,32 @@ class VideoTest(TestCase):
 
         v = Video.init_from_bagit(vbag)
         
-        self.assertEqual(v.label, '6452')
-        self.assertEqual(v.dc.content.title, '6452')
-        self.assertEqual(v.content.checksum, '2a21627d670bcef9e599e12b36d8c1a1')
-        self.assertEqual(v.content.mimetype, 'video/mp4')
-        self.assertEqual(v.mods.content.title, '6452')
-        self.assertEqual(v.content.label, '6452')
+        self.assertEqual(v.label, 'BRIDGES_OF_THE_SPIRIT')
+        self.assertEqual(v.dc.content.title, 'BRIDGES_OF_THE_SPIRIT')
+        self.assertEqual(v.content.checksum, '0f40632ff448aaae6d42129278139fde')
+        self.assertEqual(v.content.mimetype, 'video/x-msvideo')
+        self.assertEqual(v.mods.content.title, 'BRIDGES_OF_THE_SPIRIT')
+        self.assertEqual(v.content.label, 'BRIDGES_OF_THE_SPIRIT')
         self.assertEqual(v.mods.content.resource_type, 'video recording')
         self.assertEqual(v.digitaltech.content.codec_quality, 'lossless')
-        self.assertEqual(v.digitaltech.content.duration, 366)
+        self.assertEqual(v.digitaltech.content.duration, 732)
         self.assertEqual(v.provenance.content.object.id_type, 'ark')
         self.assertEqual(v.provenance.content.object.id, '')
         self.assertEqual(v.provenance.content.object.type, 'p:file')
         self.assertEqual(v.provenance.content.object.composition_level, 0)
         self.assertEqual(v.provenance.content.object.checksums[0].algorithm, 'MD5')
-        self.assertEqual(v.provenance.content.object.checksums[0].digest, '2a21627d670bcef9e599e12b36d8c1a1')
+        self.assertEqual(v.provenance.content.object.checksums[0].digest, '0f40632ff448aaae6d42129278139fde')
         self.assertEqual(v.provenance.content.object.checksums[1].algorithm, 'SHA-1')
-        self.assertEqual(v.provenance.content.object.checksums[1].digest, '5b820424d811043e6b1fc0249564e0ef9c191592')
-        self.assertEqual(v.provenance.content.object.format.name, 'MP4')
-        self.assertEqual(v.content.ds_location, 'file://%s/data/6452.mp4' % vbag)
+        self.assertEqual(v.provenance.content.object.checksums[1].digest, 'f8d05442238e4ddbcde4cc9ffbfa37dc86cf74a7')
+        self.assertEqual(v.provenance.content.object.format.name, 'AVI')
+        self.assertEqual(v.content.ds_location, 'file://%s/data/BRIDGES_OF_THE_SPIRIT.avi' % vbag)
+
+        self.assertEqual(v.access_copy.label, 'BRIDGES_OF_THE_SPIRIT')
+        self.assertEqual(v.access_copy.checksum, '74fbf1ce0afcd91787c0f5f76f218442')
+        self.assertEqual(v.access_copy.mimetype, 'video/mp4')
+        self.assertEqual(v.access_copy.ds_location, 'file://%s/data/BRIDGES_OF_THE_SPIRIT.mp4' % vbag)
+
+
 
  
 

@@ -1,0 +1,4 @@
+Bag-Software-Agent: bagit.py <http://github.com/libraryofcongress/bagit-python>
+Bagging-Date: 2014-10-13
+Contact-Name: athom09
+Payload-Oxum: 160737511.2

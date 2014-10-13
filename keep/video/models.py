@@ -64,7 +64,7 @@ class DigitalTech(_BaseDigitalTech):
     'codec quality - lossless or lossy'
     duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]',
         help_text='Duration of video playing time', required=True)
-    'duration of the audio file'
+    'duration of the vidoe file'
 
 
 class Video(DigitalObject):
@@ -74,12 +74,14 @@ class Video(DigitalObject):
     NEW_OBJECT_VIEW = 'video:view'
 
     # There are several mimetypes for MPEG files
-    allowed_mimetypes = [
+    allowed_master_mimetypes = [
         'video/quicktime',
-        'video/mp4',
         'video/x-dv',
-        'video/mpeg', 'video/mpg', 'video/x-mpg', 'video/mpeg2', 'application/x-pn-mpg', 'video/x-mpeg', 'video/x-mpeg2a'
+        'video/mpeg',
+        'video/x-m4v',
+        'video/x-msvideo'
     ]
+    allowed_access_mimetypes = ['video/mp4']
 
     mods = XmlDatastream("MODS", "MODS Metadata", VideoMods, defaults={
             'control_group': 'M',
@@ -109,12 +111,12 @@ class Video(DigitalObject):
                                })
     '''``provenanceMetadata`` datastream for PREMIS object metadata; datastream
     XML content will be an instance of :class:`eulxml.xmlmap.premis.Premis`.'''
-    #
-    # compressed_audio = FileDatastream("CompressedAudio", "Compressed audio datastream", defaults={
-    #         'mimetype': 'audio/mpeg',
-    #         'versionable': True,
-    #     })
-    # 'access copy of audio :class:`~eulfedora.models.FileDatastream`'
+
+    access_copy = FileDatastream("CompressedVideo", "Compressed video datastream", defaults={
+            'mimetype': 'video/mp4',
+            'versionable': True,
+        })
+    'access copy of video :class:`~eulfedora.models.FileDatastream`'
     #
     #
     # sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", SourceTech,
@@ -392,8 +394,8 @@ class Video(DigitalObject):
     #
 
     @staticmethod
-    def init_from_file(filename, initial_label=None, request=None, md5_checksum=None,sha1_checksum=None,
-        content_location=None, mimetype=None):
+    def init_from_file(master_filename, initial_label=None, request=None, master_md5_checksum=None,master_sha1_checksum=None,
+        content_location=None, master_mimetype=None, access_filename=None, access_location=None, access_md5_checksum=None, access_mimetype=None):
         '''Static method to create a new :class:`Video` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Calculates and stores the duration
@@ -402,32 +404,35 @@ class Video(DigitalObject):
             * mods:typeOfResource = "sound recording"
             * dt:codecQuality = "lossless"
 
-        :param filename: full path to the audio file, as a string
+        :param master_filename: full path to the master file, as a string
         :param initial_label: optional initial label to use; if not specified,
             the base name of the specified file will be used
         :param request: :class:`django.http.HttpRequest` passed into a view method;
             must be passed in order to connect to Fedora as the currently-logged
             in user
-        :param md5_checksum: the MD5 checksum of the file being sent to fedora.
-        :param sha1_checksum: the sha-1 checksum of the file being sent to fedora.
+        :param master_md5_checksum: the MD5 checksum of the master file being sent to fedora.
+        :param master_sha1_checksum: the sha-1 checksum of the master file being sent to fedora.
         :param content_location: optional file URI for file-based Fedora ingest
-        :param mimetype: the mimetype of the file being sent to fedora
+        :param master_mimetype: the master_mimetype of the master file being sent to fedora
+        :param access_filename: full path to the access file, as a string
+        :param access_md5_checksum: the MD5 checksum of the access file being sent to fedora.
+        :param access_mimetype: the mimetype of the access file being sent to fedora
         :returns: :class:`Video` initialized from the file
         '''
 
         if initial_label is None:
-            initial_label = os.path.basename(filename)
+            initial_label = os.path.basename(master_filename)
         repo = Repository(request=request)
         obj = repo.get_object(type=Video)
-        # set initial object label from the base filename
+        # set initial object label from the base master_filename
         obj.label = initial_label
         obj.dc.content.title = obj.mods.content.title = obj.label
         # Set the file checksum, if set.
-        obj.content.checksum = md5_checksum
-        # set content datastream mimetype if passed in
-        if mimetype is not None:
-            obj.content.mimetype = mimetype
-        #Get the label, minus the extention (mimetype indicates that)
+        obj.content.checksum = master_md5_checksum
+        # set content datastream master_mimetype if passed in
+        if master_mimetype is not None:
+            obj.content.mimetype = master_mimetype
+        #Get the label, minus the extention (master_mimetype indicates that)
         obj.content.label = initial_label.rsplit('.',1)[0]
         # set initial mods:typeOfResource - all Vodeo default to video recording
         obj.mods.content.resource_type = 'video recording'
@@ -435,7 +440,7 @@ class Video(DigitalObject):
         # - default for Video, should only accept lossless video for master file
         obj.digitaltech.content.codec_quality = 'lossless'
         # get wav duration and store in digital tech metadata
-        info = MediaInfo.parse(filename)
+        info = MediaInfo.parse(master_filename)
         duration = info.tracks[0].duration / 1000
         obj.digitaltech.content.duration = '%d' % round(duration)
 
@@ -447,16 +452,16 @@ class Video(DigitalObject):
         obj.provenance.content.object.type = 'p:file'
         obj.provenance.content.object.composition_level = 0
         obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
-        obj.provenance.content.object.checksums[0].digest = md5_checksum
+        obj.provenance.content.object.checksums[0].digest = master_md5_checksum
 
-        if sha1_checksum is None:
-            sha1_checksum = sha1sum(filename)
+        if master_sha1_checksum is None:
+            master_sha1_checksum = sha1sum(master_filename)
         obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
-        obj.provenance.content.object.checksums[1].digest = sha1_checksum
+        obj.provenance.content.object.checksums[1].digest = master_sha1_checksum
 
         obj.provenance.content.object.create_format()
         #format name will be upper-cased version of file extension
-        obj.provenance.content.object.format.name = filename.rsplit('.', 1)[1].upper()
+        obj.provenance.content.object.format.name = master_filename.rsplit('.', 1)[1].upper()
 
         # if a content URI is specified (e.g. for large files), use that
         if content_location is not None:
@@ -464,7 +469,22 @@ class Video(DigitalObject):
 
         # otherwise set the file as content to be posted
         else:
-            obj.content.content = open(filename)
+            obj.content.content = open(master_filename)
+
+
+        # Access copy data
+
+        # if a access URI is specified (e.g. for large files), use that
+        if access_location is not None:
+            obj.access_copy.ds_location = access_location
+
+        # otherwise set the access file as content to be posted
+        else:
+            obj.access_copy.content = open(access_filename)
+
+        obj.access_copy.mimetype = access_mimetype
+        obj.access_copy.checksum = access_md5_checksum
+        obj.access_copy.label = initial_label
 
 
         return obj
@@ -510,18 +530,25 @@ class Video(DigitalObject):
         content_file = None
         m = magic.Magic(mime=True)
         # loop through bag content until we find a supported video file
+        content_file = None
+
         for data_path in bag.payload_files():
             # path is relative to bag root dir
             filename = os.path.join(path, data_path)
             mtype = m.from_file(filename)
             mimetype, separator, options = mtype.partition(';')
 
-            if mimetype in Video.allowed_mimetypes:
+            if mimetype in Video.allowed_master_mimetypes:
+                master_file_mimetype = mimetype
                 checksum_err_msg = '%%s checksum not found for video %s' \
                     % os.path.basename(data_path)
+
+                # this is the video content file
+                content_file = filename
+
                 # require both MD5 and SHA-1 for video to ingest
                 try:
-                    md5_checksum = bag.entries[data_path]['md5']
+                    master_md5_checksum = bag.entries[data_path]['md5']
                 except KeyError:
                     raise Exception(checksum_err_msg % 'MD5')
                 try:
@@ -529,14 +556,20 @@ class Video(DigitalObject):
                 except KeyError:
                     raise Exception(checksum_err_msg % 'SHA-1')
 
-                # this is the video content file
-                content_file = filename
 
         # no Video found
         if content_file is None:
             raise Exception('No Video content found in %s' % os.path.basename(path))
 
-        optional_args = {}
+        if mimetype in Video.allowed_access_mimetypes:
+            access_file = filename
+            access_mimetype = mimetype
+                # require MD5
+            try:
+                access_md5_checksum = bag.entries[data_path]['md5']
+            except KeyError:
+                raise Exception(checksum_err_msg % 'MD5')
+
         if file_uri:
             ingest_location = 'file://%s' % urllib.quote(content_file)
             # if Fedora base path is different from locally mounted staging directory,
@@ -545,10 +578,18 @@ class Video(DigitalObject):
                 ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
                     settings.LARGE_FILE_STAGING_FEDORA_DIR)
 
-            optional_args['content_location'] = ingest_location
+            access_location = 'file://%s' % urllib.quote(access_file)
+            # if Fedora base path is different from locally mounted staging directory,
+            # convert from local path to fedora server path
+            if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+                access_location = access_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                    settings.LARGE_FILE_STAGING_FEDORA_DIR)
 
-        vid = Video.init_from_file(content_file, initial_label=initial_label,
-            md5_checksum=md5_checksum, sha1_checksum=sha1_checksum, mimetype=mimetype, request=request, content_location=ingest_location)
+
+        vid = Video.init_from_file(content_file, initial_label=initial_label, master_md5_checksum=master_md5_checksum,
+                                   master_sha1_checksum=sha1_checksum, master_mimetype=master_file_mimetype,
+                                   request=request, content_location=ingest_location, access_filename=access_file,
+                                   access_location=access_location, access_mimetype=access_mimetype, access_md5_checksum=access_md5_checksum)
 
         return vid
     #
