@@ -395,7 +395,7 @@ class Video(DigitalObject):
 
     @staticmethod
     def init_from_file(master_filename, initial_label=None, request=None, master_md5_checksum=None,master_sha1_checksum=None,
-        content_location=None, master_mimetype=None, access_filename=None, access_location=None, access_md5_checksum=None, access_mimetype=None):
+        master_location=None, master_mimetype=None, access_filename=None, access_location=None, access_md5_checksum=None, access_mimetype=None):
         '''Static method to create a new :class:`Video` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Calculates and stores the duration
@@ -412,7 +412,7 @@ class Video(DigitalObject):
             in user
         :param master_md5_checksum: the MD5 checksum of the master file being sent to fedora.
         :param master_sha1_checksum: the sha-1 checksum of the master file being sent to fedora.
-        :param content_location: optional file URI for file-based Fedora ingest
+        :param master_location: optional file URI for file-based Fedora ingest of master file
         :param master_mimetype: the master_mimetype of the master file being sent to fedora
         :param access_filename: full path to the access file, as a string
         :param access_md5_checksum: the MD5 checksum of the access file being sent to fedora.
@@ -464,8 +464,8 @@ class Video(DigitalObject):
         obj.provenance.content.object.format.name = master_filename.rsplit('.', 1)[1].upper()
 
         # if a content URI is specified (e.g. for large files), use that
-        if content_location is not None:
-            obj.content.ds_location = content_location
+        if master_location is not None:
+            obj.content.ds_location = master_location
 
         # otherwise set the file as content to be posted
         else:
@@ -527,10 +527,10 @@ class Video(DigitalObject):
         initial_label = os.path.basename(path)
 
         # identify video content file within the bag
-        content_file = None
         m = magic.Magic(mime=True)
         # loop through bag content until we find a supported video file
-        content_file = None
+
+        opts = {'request': request, 'initial_label' : initial_label}
 
         for data_path in bag.payload_files():
             # path is relative to bag root dir
@@ -538,64 +538,50 @@ class Video(DigitalObject):
             mtype = m.from_file(filename)
             mimetype, separator, options = mtype.partition(';')
 
+            # require both MD5 and SHA-1 for video to ingest
+            try:
+                md5_checksum = bag.entries[data_path]['md5']
+            except KeyError:
+                raise Exception('MD5 checksum mismatch on file %s' % data_path)
+            try:
+                sha1_checksum = bag.entries[data_path]['sha1']
+            except KeyError:
+                raise Exception('SHA-1 checksum mismatch on file %s' % data_path)
+
             if mimetype in Video.allowed_master_mimetypes:
-                master_file_mimetype = mimetype
-                checksum_err_msg = '%%s checksum not found for video %s' \
-                    % os.path.basename(data_path)
+                opts['master_filename'] = filename
+                opts['master_md5_checksum'] = md5_checksum
+                opts['master_sha1_checksum'] = sha1_checksum
+                opts['master_mimetype'] = mimetype
+                if file_uri:
+                    # if Fedora base path is different from locally mounted staging directory,
+                    # convert from local path to fedora server path
+                    master_location = 'file://%s' % urllib.quote(opts['master_filename'])
+                    if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+                        master_location = master_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                            settings.LARGE_FILE_STAGING_FEDORA_DIR)
+                    opts['master_location'] = master_location
 
-                # this is the video content file
-                content_file = filename
-
-                # require both MD5 and SHA-1 for video to ingest
-                try:
-                    master_md5_checksum = bag.entries[data_path]['md5']
-                except KeyError:
-                    raise Exception(checksum_err_msg % 'MD5')
-                try:
-                    sha1_checksum = bag.entries[data_path]['sha1']
-                except KeyError:
-                    raise Exception(checksum_err_msg % 'SHA-1')
-
-
+            elif mimetype in Video.allowed_access_mimetypes:
+                opts['access_filename'] = filename
+                opts['access_md5_checksum'] = md5_checksum
+                opts['access_mimetype'] = mimetype
+                if file_uri:
+                    # if Fedora base path is different from locally mounted staging directory,
+                    # convert from local path to fedora server path
+                    access_location = 'file://%s' % urllib.quote(opts['access_filename'])
+                    if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+                        access_location = access_location.replace(settings.LARGE_FILE_STAGING_DIR,
+                            settings.LARGE_FILE_STAGING_FEDORA_DIR)
+                    opts['access_location'] = access_location
         # no Video found
-        if content_file is None:
+        if 'master_filename' not in opts:
             raise Exception('No Video content found in %s' % os.path.basename(path))
 
-        access_file = None
-        if mimetype in Video.allowed_access_mimetypes:
-            access_file = filename
-            access_mimetype = mimetype
-
-            if file_uri:
-                access_location = 'file://%s' % urllib.quote(access_file)
-                # if Fedora base path is different from locally mounted staging directory,
-                # convert from local path to fedora server path
-                if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
-                    access_location = access_location.replace(settings.LARGE_FILE_STAGING_DIR,
-                        settings.LARGE_FILE_STAGING_FEDORA_DIR)
-
-            # require MD5
-            try:
-                access_md5_checksum = bag.entries[data_path]['md5']
-            except KeyError:
-                raise Exception(checksum_err_msg % 'MD5')
-
-
-        if file_uri:
-            ingest_location = 'file://%s' % urllib.quote(content_file)
-            # if Fedora base path is different from locally mounted staging directory,
-            # convert from local path to fedora server path
-            if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
-                ingest_location = ingest_location.replace(settings.LARGE_FILE_STAGING_DIR,
-                    settings.LARGE_FILE_STAGING_FEDORA_DIR)
-
-
-        vid = Video.init_from_file(content_file, initial_label=initial_label, master_md5_checksum=master_md5_checksum,
-                                   master_sha1_checksum=sha1_checksum, master_mimetype=master_file_mimetype,
-                                   request=request, content_location=ingest_location, access_filename=access_file,
-                                   access_location=access_location, access_mimetype=access_mimetype, access_md5_checksum=access_md5_checksum)
-
+        vid = Video.init_from_file(**opts)
+                                   
         return vid
+
     #
     # @staticmethod
     # def all():

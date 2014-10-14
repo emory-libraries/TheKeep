@@ -462,7 +462,7 @@ def largefile_ingest(request):
                         # stop iterating - we have found last supplemental file
                         break
 
-                # same for access copy on Video files
+                # same for access copy checksum on Video files
                 if type == 'video':
                     access_checksum = obj.access_copy.checksum
                     obj.access_copy.checksum = None
@@ -477,7 +477,7 @@ def largefile_ingest(request):
                 if type == 'diskimage':
                     obj = repo.get_object(obj.pid, type=DiskImage)
 
-                if type == 'video':
+                elif type == 'video':
                     obj = repo.get_object(obj.pid, type=Video )
 
                 # if save succeded (no exceptions), set summary info for display
@@ -496,13 +496,14 @@ def largefile_ingest(request):
                 if obj.content.checksum != checksum:
                     checksum_errors.append('content')
 
-                if obj.access_copy.checksum != access_checksum:
-                    checksum_errors.append('access_copy')
-
                 for dsid, checksum in supplemental_checksums.iteritems():
                     dsobj = obj.getDatastreamObject(dsid)
                     if dsobj.checksum != checksum:
                         checksum_errors.append(dsid)
+
+                if type=='video' and obj.access_copy.checksum != access_checksum:
+                    checksum_errors.append('access_copy')
+
 
                 if checksum_errors:
                     message = 'Checksum mismatch%s detected on ' + \

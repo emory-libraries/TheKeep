@@ -15,18 +15,6 @@ vbag = os.path.join(settings.BASE_DIR, 'video', 'fixtures', 'BRIDGES_OF_THE_SPIR
 
 class VideoTest(TestCase):
 
-    def setUp(self):
-        self.pids = []
-
-    def tearDown(self):
-        # purge any objects created by individual tests
-        for pid in self.pids:
-            try:
-                self.repo.purge_object(pid)
-                logger.info('purging %s' % pid)
-            except:
-                logger.info('could not purge %s' % pid)
-
     def test_init_from_bagit(self):
         # This also tests init_from_file and get_default_pid also
 
@@ -51,16 +39,7 @@ class VideoTest(TestCase):
         self.assertEqual(v.provenance.content.object.checksums[1].digest, 'f8d05442238e4ddbcde4cc9ffbfa37dc86cf74a7')
         self.assertEqual(v.provenance.content.object.format.name, 'AVI')
         self.assertEqual(v.content.ds_location, 'file://%s/data/BRIDGES_OF_THE_SPIRIT.avi' % vbag)
-
         self.assertEqual(v.access_copy.label, 'BRIDGES_OF_THE_SPIRIT')
         self.assertEqual(v.access_copy.checksum, '74fbf1ce0afcd91787c0f5f76f218442')
         self.assertEqual(v.access_copy.mimetype, 'video/mp4')
         self.assertEqual(v.access_copy.ds_location, 'file://%s/data/BRIDGES_OF_THE_SPIRIT.mp4' % vbag)
-
-
-
- 
-
-
-
-
