@@ -1,0 +1,12 @@
+{% extends "page_base.html" %}
+{% load humanize %}
+
+{% block page-subtitle %}: Vidoe : {{ obj.label }}{% endblock %}
+
+{% block content-title %}{{ obj.label }} {% endblock %}
+
+{% block content-body %}
+{{ block.super }}
+{% include 'video/snippets/ds_links.html' %}
+
+{% endblock %}

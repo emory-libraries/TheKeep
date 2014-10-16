@@ -1,0 +1,24 @@
+{% load search_tags %}
+{# datastream and audit trail links for file objects #}
+<ul class='extra list-inline'>
+  {% if obj.audit_trail %}
+    <li><a href="{% url 'video:history' obj.pid %}">Event Log</a></li>
+  {% endif %}
+
+{#  {% if obj.mods.exists %}  FIXME: why is this not working? no return #}
+    <li><a href="{% url 'video:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'DC' %}">DC</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a></li>
+  {% if obj.audit_trail %}
+    <li><a href="{% url 'video:audit-trail' obj.pid %}">XML Audit Trail</a></li>
+  {% endif %}
+</ul>
+
+
+{# display checksum and format of video #}
+<p class="extra">{{ obj.provenance.content.object.format.name }} video ({{ obj.content.size|filesizeformat }}), checksum {{ obj.content.checksum }}</p>
+{# display last modified date and user #}
+<p class="extra">Last modified {{ obj.modified }}
+  {% for entry in obj.audit_trail.records %}{% if forloop.last %}by {{ entry.user|username_to_name }}{% endif %}{% endfor %}</p>

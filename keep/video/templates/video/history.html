@@ -1,0 +1,10 @@
+{% extends "page_base.html" %}
+
+{% block page-subtitle %}: Video : {{ obj.label }} : History{% endblock %}
+{% block content-title %}<a href="{% url 'video:view' obj.pid %}">{{ obj.label }}</a>{% endblock %}
+
+{% block content-body %}
+{{ block.super }}
+<h2>Record History</h2>
+  {% include "common/snippets/object_history.html" %}
+{% endblock %}
