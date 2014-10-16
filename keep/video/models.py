@@ -402,7 +402,6 @@ class Video(DigitalObject):
         based on the file. Also sets the following default metadata values:
 
             * mods:typeOfResource = "sound recording"
-            * dt:codecQuality = "lossless"
 
         :param master_filename: full path to the master file, as a string
         :param initial_label: optional initial label to use; if not specified,
@@ -436,10 +435,7 @@ class Video(DigitalObject):
         obj.content.label = initial_label.rsplit('.',1)[0]
         # set initial mods:typeOfResource - all Vodeo default to video recording
         obj.mods.content.resource_type = 'video recording'
-        # set codec quality to lossless in digital tech metadata
-        # - default for Video, should only accept lossless video for master file
-        obj.digitaltech.content.codec_quality = 'lossless'
-        # get wav duration and store in digital tech metadata
+        # get duration and store in digital tech metadata
         info = MediaInfo.parse(master_filename)
         duration = info.tracks[0].duration / 1000
         obj.digitaltech.content.duration = '%d' % round(duration)
@@ -450,7 +446,6 @@ class Video(DigitalObject):
         obj.provenance.content.object.id = ''
 
         obj.provenance.content.object.type = 'p:file'
-        obj.provenance.content.object.composition_level = 0
         obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
         obj.provenance.content.object.checksums[0].digest = master_md5_checksum
 
