@@ -62,6 +62,7 @@ class SearchViewsTest(KeepTestCase):
         # NOTE: template logic tested separately to avoid
         # complications with callable Mock objects
         testresult = {
+            'object_type': 'video',
             'pid': 'testobj:1',
             'title': 'Something Interesting',
             'collection_id': 'testcoll:123',
