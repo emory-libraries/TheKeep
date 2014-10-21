@@ -35,6 +35,8 @@ of {{ page.paginator.count|intcomma }}.</p>
       {% if obj.pid %}
         {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model %}
           {% url 'audio:edit' obj.pid as obj_url %}
+        {% elif 'info:fedora/emory-control:Video-1.0' in obj.content_model %}
+          {% url 'video:view' obj.pid as obj_url %}
         {% else %}
           {% url 'arrangement:edit' obj.pid as obj_url %}
         {% endif %}
@@ -57,6 +59,7 @@ of {{ page.paginator.count|intcomma }}.</p>
         <td>{% spaceless %}
           {% if obj.arrangement_id and obj.arrangement_id != 'None' %} {{ obj.arrangement_id }} : {% endif  %}{% firstof obj.title obj.label %}
 	  {% if obj.part %}({{ obj.part }}){% endif %}<br/>
+	  {% if obj.part %}({{ obj.part }}){% endif %}<br/>
           <span class="extra">
           {# # Show download links if it is an audio item  #}
           {% if 'info:fedora/emory-control:EuterpeAudio-1.0' in obj.content_model  %}
@@ -73,6 +76,18 @@ of {{ page.paginator.count|intcomma }}.</p>
               {% else %}
                 access copy
               {% endif %}{% endif %}
+          {% endif %}
+          </span>
+         <span class="extra">
+          {# # Show download links if it is an video item  #}
+          {% if 'info:fedora/emory-control:Video-1.0' in obj.content_model  %}
+              {% if obj.has_original %}
+                  original audio
+              {% endif %}
+            |
+              {% if obj.has_access_copy %}
+                access copy
+              {% endif %}
           {% endif %}
           </span>
         {% endspaceless %}</td>

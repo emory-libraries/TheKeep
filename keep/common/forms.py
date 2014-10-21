@@ -53,6 +53,7 @@ class ItemSearch(forms.Form):
        ("", ""), # FIXME: use from cmodels from models?
        ('info:fedora/emory-control:Arrangement-1.0', "Born-Digital"),
        ('info:fedora/emory-control:EuterpeAudio-1.0', "Audio"),
+       ('info:fedora/emory-control:Video-1.0', "Video"),
     )
 
     title = forms.CharField(required=False,

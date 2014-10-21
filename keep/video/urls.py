@@ -2,6 +2,7 @@ from django.conf.urls import *
 from keep.video import views
 
 urlpatterns = patterns('',
+    url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),
     url(r'^(?P<pid>[^/]+)/history/$', views.history, name='history'),
     url(r'^ds/(?P<pid>[^/]+)/(?P<dsid>[a-zA-Z-0-9]+)/$',

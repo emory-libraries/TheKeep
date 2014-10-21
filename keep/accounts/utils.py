@@ -9,6 +9,7 @@ from django.utils.http import urlquote
 
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.audio.models import AudioObject
+from keep.video.models import Video
 from keep.arrangement.models import ArrangementObject
 from keep.file.models import DiskImage
 
@@ -35,6 +36,9 @@ def searchable_cmodels(user):
         # included by using the arrangement content model
     if user.has_perm('file.view_disk_image'):
         cmodels.append(DiskImage.DISKIMAGE_CONTENT_MODEL)
+    #TODO for now always include video
+    cmodels.append(Video.VIDEO_CONTENT_MODEL)
+
 
     return cmodels
 

@@ -149,6 +149,8 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
                   <span class="glyphicon glyphicon-folder-open"></span>
                   {% elif obj.object_type  == 'audio' %}
                   <span class="glyphicon glyphicon-headphones"></span>
+                  {% elif obj.object_type  == 'video' %}
+                  <span class="glyphicon glyphicon-film"></span>
                   {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
                   <span class="glyphicon glyphicon-envelope"></span>
                   {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}

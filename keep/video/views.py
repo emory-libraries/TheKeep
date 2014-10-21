@@ -1,11 +1,18 @@
+#TODO add perms for views like in audo
+
+from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.http import Http404
+from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 
 from keep.common.fedora import Repository, TypeInferringRepository
 from keep.video.models import Video
 from keep.common.fedora import history_view
 from eulfedora.views import raw_datastream, raw_audit_trail
 
+def edit(request, pid):
+    return HttpResponseSeeOtherRedirect(reverse('video:view',
+                kwargs={'pid': pid}))
 
 
 def view(request, pid):

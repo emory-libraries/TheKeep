@@ -1,6 +1,9 @@
+#TODO Remove all commented unused code
+
 from django.db import models
 from keep.common.fedora import DigitalObject
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
+from eulfedora.util import RequestFailed
 from eulfedora.rdfns import relsext
 from keep.collection.models import CollectionObject
 from keep.common.fedora import DigitalObject, Repository, LocalMODS
@@ -285,113 +288,98 @@ class Video(DigitalObject):
     #         # access code no longer needs to be included, since we will not be searching
     #         self.dc.content.rights_list.append(self.rights.content.access_status.text)
     #
-    # def index_data(self):
-    #     '''Extend the default
-    #     :meth:`eulfedora.models.DigitalObject.index_data`
-    #     method to include additional fields specific to Keep
-    #     Audio objects.'''
-    #     # NOTE: we don't want to rely on other objects being indexed in Solr,
-    #     # so index data should not use Solr to find any related object info
-    #
-    #     # FIXME: is it worth splitting out descriptive index data here?
-    #     data = super(AudioObject, self).index_data()
-    #     data['object_type'] = 'audio'
-    #     if self.collection and self.collection.exists:
-    #
-    #         # collection_source_id  (0 is an allowable id, so check not None)
-    #         if self.collection.mods.content.source_id is not None:
-    #             data['collection_source_id'] = self.collection.mods.content.source_id
-    #
-    #         # FIXME: previously indexing URI; is this needed for any reason or can we
-    #         # use pid?  (needs to match collection index pid field for solr join)
-    #         # data['collection_id'] = self.collection.uri
-    #         data['collection_id'] = self.collection.pid
-    #         try:
-    #             # pull parent & archive collection objects directly from fedora
-    #             parent = CollectionObject(self.api, self.collection.uri)
-    #             data['collection_label'] = parent.label
-    #             # NB: as of 2011-08-23, eulindexer doesn't support automatic
-    #             # reindexing of audio objects when their collection changes.
-    #             # as a result, archive_id and archive_label may be stale.
-    #             # disable indexing them until eulindexer supports those
-    #             # chained updates.
-    #             #data['archive_id'] = parent.collection_id
-    #             #archive = CollectionObject(self.api, parent.collection_id)
-    #             #data['archive_label'] = archive.label
-    #         except RequestFailed as rf:
-    #             logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
-    #
-    #     # include resolvable ARK if available
-    #     if self.mods.content.ark_uri:
-    #         data['ark_uri'] = self.mods.content.ark_uri
-    #
-    #     # old identifiers from previous digital masters
-    #     dm1_ids = []
-    #     if self.mods.content.dm1_id:
-    #         dm1_ids.append(self.mods.content.dm1_id)
-    #     if self.mods.content.dm1_other_id:
-    #         dm1_ids.append(self.mods.content.dm1_other_id)
-    #     if dm1_ids:
-    #         data['dm1_id'] = dm1_ids
-    #
-    #     # digitization purpose, if not empty
-    #     if self.digitaltech.content.digitization_purpose_list:
-    #         # convert nodelist to a normal list that can be serialized as json
-    #         data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
-    #
-    #     # related files
-    #     if self.sourcetech.content.related_files_list:
-    #         data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
-    #
-    #     # part note
-    #     if self.mods.content.part_note and self.mods.content.part_note.text:
-    #         data['part'] = self.mods.content.part_note.text
-    #
-    #     # sublocation
-    #     if self.sourcetech.content.sublocation:
-    #         data['sublocation'] = self.sourcetech.content.sublocation
-    #
-    #     # rights access status code
-    #     if self.rights.content.access_status:
-    #         data['access_code'] = self.rights.content.access_status.code
-    #     # copyright date from rights metadata
-    #     if self.rights.content.copyright_date:
-    #         data['copyright_date'] = self.rights.content.copyright_date
-    #     # ip note from rights metadata
-    #     if self.rights.content.ip_note:
-    #         data['ip_note'] = self.rights.content.ip_note
-    #
-    #     # boolean values that should always be available
-    #     data.update({
-    #         # should this item be accessible to researchers?
-    #         'researcher_access': bool(self.researcher_access),  # if None, we want False
-    #         # flags to indicate which datastreams are available
-    #         'has_access_copy': self.compressed_audio.exists,
-    #         'has_original': self.audio.exists,
-    #     })
-    #
-    #     if self.compressed_audio.exists:
-    #         data.update({
-    #             'access_copy_size': self.compressed_audio.info.size,
-    #             'access_copy_mimetype': self.compressed_audio.mimetype,
-    #     })
-    #     if self.digitaltech.content.duration:
-    #         data['duration'] = self.digitaltech.content.duration
-    #
-    #     if self.mods.content.origin_info and \
-    #        self.mods.content.origin_info.issued:
-    #         data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
-    #     if self.mods.content.origin_info and \
-    #        self.mods.content.origin_info.created:
-    #         data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
-    #
-    #
-    #
-    #     if self.audio.exists:
-    #         data['content_md5'] = self.audio.checksum
-    #
-    #     return data
-    #
+    def index_data(self):
+        '''Extend the default
+        :meth:`eulfedora.models.DigitalObject.index_data`
+        method to include additional fields specific to Keep
+        Video objects.'''
+        # NOTE: we don't want to rely on other objects being indexed in Solr,
+        # so index data should not use Solr to find any related object info
+
+        data = super(Video, self).index_data()
+        data['object_type'] = 'video'
+        if self.collection and self.collection.exists:
+
+            # collection_source_id  (0 is an allowable id, so check not None)
+            if self.collection.mods.content.source_id is not None:
+                data['collection_source_id'] = self.collection.mods.content.source_id
+            data['collection_id'] = self.collection.pid
+            try:
+                # pull parent & archive collection objects directly from fedora
+                parent = CollectionObject(self.api, self.collection.uri)
+                data['collection_label'] = parent.label
+            except RequestFailed as rf:
+                logger.error('Error accessing collection or archive object in Fedora: %s' % rf)
+
+        # include resolvable ARK if available
+        if self.mods.content.ark_uri:
+            data['ark_uri'] = self.mods.content.ark_uri
+
+        #TODO May have to add these sections if more metada is added
+        # # old identifiers from previous digital masters
+        # dm1_ids = []
+        # if self.mods.content.dm1_id:
+        #     dm1_ids.append(self.mods.content.dm1_id)
+        # if self.mods.content.dm1_other_id:
+        #     dm1_ids.append(self.mods.content.dm1_other_id)
+        # if dm1_ids:
+        #     data['dm1_id'] = dm1_ids
+        #
+        # # digitization purpose, if not empty
+        # if self.digitaltech.content.digitization_purpose_list:
+        #     # convert nodelist to a normal list that can be serialized as json
+        #     data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
+        #
+        # # related files
+        # if self.sourcetech.content.related_files_list:
+        #     data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
+        #
+        # # part note
+        # if self.mods.content.part_note and self.mods.content.part_note.text:
+        #     data['part'] = self.mods.content.part_note.text
+        #
+        # # sublocation
+        # if self.sourcetech.content.sublocation:
+        #     data['sublocation'] = self.sourcetech.content.sublocation
+        #
+        # # rights access status code
+        # if self.rights.content.access_status:
+        #     data['access_code'] = self.rights.content.access_status.code
+        # # copyright date from rights metadata
+        # if self.rights.content.copyright_date:
+        #     data['copyright_date'] = self.rights.content.copyright_date
+        # # ip note from rights metadata
+        # if self.rights.content.ip_note:
+        #     data['ip_note'] = self.rights.content.ip_note
+        #
+        # # boolean values that should always be available
+        data.update({
+            # should this item be accessible to researchers?
+            'researcher_access': False,  # always False for now
+            # flags to indicate which datastreams are available
+            'has_access_copy': self.access_copy.exists,
+            'has_original': self.content.exists,
+        })
+
+        if self.access_copy.exists:
+            data.update({
+                'access_copy_size': self.access_copy.info.size,
+                'access_copy_mimetype': self.access_copy.mimetype,
+        })
+
+        if self.digitaltech.content.duration:
+            data['duration'] = self.digitaltech.content.duration
+
+        #TODO May have to add this section if more metada is added
+        # if self.mods.content.origin_info and \
+        #    self.mods.content.origin_info.issued:
+        #     data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
+        # if self.mods.content.origin_info and \
+        #    self.mods.content.origin_info.created:
+        #     data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
+
+        return data
+
 
     @staticmethod
     def init_from_file(master_filename, initial_label=None, request=None, master_md5_checksum=None,master_sha1_checksum=None,

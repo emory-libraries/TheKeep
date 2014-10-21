@@ -1,0 +1,105 @@
+{% extends 'eultheme/snippets/card_with_preview.html' %}
+{% load audio_extras %} {% load search_tags %}
+{# public-facing search result card #}
+
+{% block result-header %}
+    <h3><a href="{% url 'video:view' r.pid %}" title="{{r.title}}">{{ r.title|truncatechars:"60"}}</a></h3>
+
+     {% if 'info:fedora' in r.collection_id %}  {# convert to pid if id is in URI format #}
+        {% url 'collection:view' r.collection_id|slice:'12:' as collection_url %}
+    {% else %}
+        {% url 'collection:view' r.collection_id as collection_url %}
+    {% endif %}
+
+    <h4><a class="text-muted" href="{{ collection_url }}">{{ r.collection_source_id }} {% if r.collection_source_id %}: {% endif %}{{ r.collection_label }}</a></h4>
+    {# TODO: use r.collection_id to link to collection page once we have one #}
+
+{% endblock %}
+
+{% block result-info %}
+    {% if r.score %}
+    {# display numerical score in debug mode #}
+    {# {% if debug %}<p>{{ r.score }}</p>{% endif %} #}
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="{{ r.score }}" aria-valuemin="0" aria-valuemax="1.5" style="width:{% widthratio r.score 1 90 %}%"> </div>
+
+    </div>
+    {% endif %}
+    {% if not r.researcher_access %}
+    <section class="access">
+      <ul class="list-inline">
+        <li class="no-researcher" data-toggle="tooltip" data-placement="bottom" title="Not accessible to researchers">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+        </li>
+      </ul>
+    </section>
+    {% endif %}
+
+{% endblock %}
+
+{% block result-content %}
+    <div clas="row">
+        {# display ARK NOID if possible; fall-back to pid display #}
+        <dl class="dl-horizontal">
+          <dt>ID:</dt>
+          <dd>{% firstof r.ark_uri|ark_noid r.pid %}</dd>
+        </dl>
+    </div>
+
+    <div class="row">
+        <ul class="nav nav-pills nav-justified">
+            <li>
+                <h4>Issued</h4>
+                <span>
+                {% if r.date_issued %}
+                    {{ r.date_issued|natural_date }}
+                    {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            <li>
+                <h4>Created</h4>
+                <span>
+                {% if r.date_created %}
+                    {{ r.date_created|natural_date }}
+                    {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+
+            {# display part note if any (side A/B, etc) #}
+            <li>
+                <h4>Part</h4>
+                <span>{{ r.part|default:'---'}}</span>
+            </li>
+            <li>
+                <h4>Duration</h4>
+                <span>
+                {% if r.duration %}
+                    {{ r.duration|natural_seconds_abbrev }}
+                    {% else %}
+                    ---
+                {% endif %}
+            </span>
+            </li>
+        </ul>
+    </div>
+    <div class="row">
+    {% if perms.audio.change_audio %}
+        <div class="edit-option">
+            <a class="btn btn-default" href="{% url 'video:edit' r.pid %}"><span class="glyphicon glyphicon-edit"></span> Edit</a>
+        </div>
+    </div>
+    {% endif %}
+
+{% endblock %}
+
+{% block result-preview %}
+    <h3>{{ r.title }}</a></h3>
+    <p class="centered">
+        <a class="btn btn-primary" href="#" >Open Resource</a>
+    </p>
+{% endblock %}
+
