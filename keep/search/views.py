@@ -46,9 +46,12 @@ def search(request):
 
         solr = solr_interface()
 
-        # NOTE: restrict to audio and video for now since that is the only
+        # NOTE: restrict to audio for now since that is the only
         # content type currently supported for researcher access
-        cm_query = solr.Q(solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL) | solr.Q(content_model=Video.VIDEO_CONTENT_MODEL))
+        #
+        # TO SEARCH FOR VIDEO ADD: | solr.Q(content_model=Video.VIDEO_CONTENT_MODEL)   to below query
+        # MOST ALL OTHER PARTS ARE IN PLACE
+        cm_query = solr.Q(solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
 
         # start with a default query to add filters & search terms
         q = solr.query().filter(cm_query)
