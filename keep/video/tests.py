@@ -26,7 +26,7 @@ class VideoTest(TestCase):
         self.assertEqual(v.content.mimetype, 'video/x-msvideo')
         self.assertEqual(v.mods.content.title, 'BRIDGES_OF_THE_SPIRIT')
         self.assertEqual(v.content.label, 'BRIDGES_OF_THE_SPIRIT')
-        self.assertEqual(v.mods.content.resource_type, 'video recording')
+        self.assertEqual(v.mods.content.resource_type, 'moving image')
         self.assertEqual(v.digitaltech.content.duration, 732)
         self.assertEqual(v.provenance.content.object.id_type, 'ark')
         self.assertEqual(v.provenance.content.object.id, '')

@@ -422,7 +422,7 @@ class Video(DigitalObject):
         #Get the label, minus the extention (master_mimetype indicates that)
         obj.content.label = initial_label.rsplit('.',1)[0]
         # set initial mods:typeOfResource - all Vodeo default to video recording
-        obj.mods.content.resource_type = 'video recording'
+        obj.mods.content.resource_type = 'moving image'
         # get duration and store in digital tech metadata
         info = MediaInfo.parse(master_filename)
         duration = info.tracks[0].duration / 1000
