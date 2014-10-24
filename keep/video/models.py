@@ -11,7 +11,8 @@ from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from eulxml.xmlmap import premis
 import os
-from keep.common.models import _BaseDigitalTech
+from keep.common.models import _BaseDigitalTech, _BaseSourceTech, SourceTechMeasure, \
+    CodecCreator,TransferEngineer
 from pymediainfo import MediaInfo
 import bagit
 import magic
@@ -19,6 +20,7 @@ from django.conf import settings
 import urllib
 from keep.file.utils import md5sum, sha1sum
 from keep.common.models import PremisFixity, PremisObject
+from eulcm.xmlmap.boda import Rights
 
 import logging
 
@@ -30,17 +32,17 @@ logger = logging.getLogger(__name__)
 class VideoMods(LocalMODS):
     '''Customized MODS for :class:`Video`, based on
     :class:`~keep.common.fedora.LocalMODS`.'''
-    # general_note = xmlmap.NodeField('mods:note[@type="general"]',
-    #       mods.TypedNote, required=False)
-    # ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="general"`'
-    # part_note = xmlmap.NodeField('mods:note[@type="part number"]',
-    #                              mods.TypedNote)
-    # ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="part number"`'
-    #
-    # dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
-    #         required=False, verbose_name='Record ID/Filename')
-    # dm1_other_id = xmlmap.StringField('mods:identifier[@type="dm1_other"]',
-    #         required=False, verbose_name='Other ID')
+    general_note = xmlmap.NodeField('mods:note[@type="general"]',
+          mods.TypedNote, required=False)
+    ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="general"`'
+    part_note = xmlmap.NodeField('mods:note[@type="part number"]',
+                                 mods.TypedNote)
+    ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="part number"`'
+
+    dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
+            required=False, verbose_name='Record ID/Filename')
+    dm1_other_id = xmlmap.StringField('mods:identifier[@type="dm1_other"]',
+            required=False, verbose_name='Other ID')
 
 
 class VideoPremis(premis.Premis):
@@ -54,20 +56,145 @@ class VideoPremis(premis.Premis):
      as instances of :class:`eulxml.xmlmap.premis.Event`'''
 
 
+# Source Tech
+class VideoSourceTech(_BaseSourceTech):
+    ':class:`~eulxml.xmlmap.XmlObject` for Source Technical Metadata.'
+    ROOT_NAME = 'sourcetech'
+
+    # option lists for controlled vocabulary source tech fields
+    form_options = ('', 'audio cassette', 'open reel tape', 'LP', 'CD', 'sound file (WAV)',
+        'sound file (MP3)', 'sound file (M4A)', 'sound file (AIFF)', 'microcassette',
+        'DAT', '78', '45 RPM', 'acetate disc', 'aluminum disc', 'glass disc',
+        'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
+        'dictabelt', 'other')
+    'controlled vocabulary for :class:`SourceTech.form`'
+    housing_options = ('', 'jewel case', 'plastic container', 'paper sleeve',
+        'cardboard sleeve', 'cardboard box', 'other', 'none')
+    'controlled vocabulary for :class:`SourceTech.housing`'
+    reel_sizes = ('3', '4', '5', '7', '10', '12', '14')  # also Other -> empty field
+    'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
+    reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
+    reel_size_options.append(('Other', 'Other'))
+    reel_size_options.append(('Not Applicable', 'Not Applicable'))
+    # add an empty value at the beginning of the list to force active selection
+    reel_size_options.insert(0, ('', ''))
+    sound_characteristic_options = ('', 'mono', 'stereo')
+    'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
+    speed_options = (
+        # delimited format is aspect, value, unit
+        ('', ''),
+        ('tape', (
+            ('tape|15/16|inches/sec', '15/16 ips'),
+            ('tape|1.2|cm/sec', '1.2 cm/s'),
+            ('tape|2.4|cm/sec', '2.4 cm/s'),
+            ('tape|1 7/8|inches/sec', '1 7/8 ips'),
+            ('tape|3 3/4|inches/sec', '3 3/4 ips'),
+            ('tape|7 1/2|inches/sec', '7 1/2 ips'),
+            ('tape|15|inches/sec', '15 ips'),
+            ('tape|30|inches/sec', '30 ips'),
+            ('tape|other|other', 'Other'),
+            )
+         ),
+        ('phono disc', (
+            ('phono disc|16|rpm', '16 rpm'),
+            ('phono disc|33 1/3|rpm', '33 1/3 rpm'),
+            ('phono disc|45|rpm', '45 rpm'),
+            ('phono disc|78|rpm', '78 rpm'),
+            ('phono disc|other|other', 'Other'),
+            )
+        ),
+        ('phono cylinder', (
+            ('phono cylinder|90|rpm', '90 rpm'),
+            ('phono cylinder|120|rpm', '120 rpm'),
+            ('phono cylinder|160|rpm', '160 rpm'),
+            ('phono cylinder|other|other', 'Other'),
+            ),
+        ),
+        ('other', (
+            ('other|other|other', 'Other'),
+            ),
+        ),
+        ('na|Not applicable|na', 'Not Applicable'),
+    )
+    'controlled vocabulary for :class:`SourceTech.speed`, grouped by format'
+    # NOTE: speed should be displayed as ips but saved to xml as inches/sec
+    # speed options is formatted for grouped options in django select widget
+
+    # planned schema location (schema not yet available)
+    #XSD_SCHEMA = 'http://pid.emory.edu/ns/2010/sourcetech/v1/sourcetech-1.xsd'
+    #xmlschema = xmlmap.loadSchema(XSD_SCHEMA)
+    note = xmlmap.StringField('st:note[@type="general"]', required=False,
+        verbose_name='General Note', help_text='General note about the physical item')
+    'general note'
+    note_list = xmlmap.StringListField('st:note[@type="general"]')
+    related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False,
+        help_text='IDs of other digitized files for the same item, separated by semicolons. Required for multi-part items.')
+    'related files (string of IDs delimited by semicolons'
+    related_files_list = xmlmap.StringListField('st:note[@type="relatedFiles"]')
+        # NOTE: according to spec, related_files is required if multi-part--
+        # - not tracking multi-part for Min Items (that I know of)
+    conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]',
+        required=False)
+    'note about conservation history'
+    conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
+    speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
+        SourceTechMeasure)
+    ':class:`SourceTechMeasure`'
+    sublocation = xmlmap.StringField('st:sublocation', required=False,
+        help_text='Storage location within the collection (e.g., box and folder)')
+    'storage location within the collection'
+    form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options,
+        required=False, help_text='The physical form or medium of the resource')
+    'physical format - options controlled by :class:`SourceTech.form_options`'
+    form_list = xmlmap.StringListField('st:form[@type="sound"]')
+    sound_characteristics = xmlmap.StringField('st:soundChar',
+        choices=sound_characteristic_options, required=False)
+    'sound characteristics - options controlled by :class:`SourceTech.sound_characteristic_options`'
+    stock = xmlmap.StringField('st:stock', verbose_name='Tape Brand/Stock',
+       help_text='The brand or stock of the magnetic tape', required=False)
+    'Stock or brand of source media'
+    stock_list = xmlmap.StringListField('st:stock')
+    housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
+        required=False, help_text='Type of housing for the source item')
+    'Type of housing - options controlled by :class:`SourceTech.housing_options`'
+    reel_size = xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
+            SourceTechMeasure, required=False)
+    ':class:`SourceTechMeasure`'
+    # tech_note is migrate/view only
+    technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
+    'note with type="technical"'
 
 
-class DigitalTech(_BaseDigitalTech):
+
+
+class VideoDigitalTech(_BaseDigitalTech):
     ":class:`~eulxml.xmlmap.XmlObject` for Digital Technical Metadata."
     ROOT_NAME = 'digitaltech'
-    # date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdtf"]',
-    #     help_text='Date digital capture was made', required=True)
-    # 'date digital capture was made (string)'
+    date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdtf"]',
+        help_text='Date digital capture was made', required=True)
+    'date digital capture was made (string)'
     codec_quality = xmlmap.StringField('dt:codecQuality', required=True,
         help_text='Whether the data compression method was lossless or lossy')
     'codec quality - lossless or lossy'
     duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]',
         help_text='Duration of video playing time', required=True)
-    'duration of the vidoe file'
+    'duration of the video file'
+    # FIXME/TODO: note and digitization purpose could be plural
+    note = xmlmap.StringField('dt:note[@type="general"]', required=False,
+        help_text='Additional information that may be helpful in describing the surrogate')
+    'general note'
+    note_list = xmlmap.StringListField('dt:note[@type="general"]')
+    digitization_purpose = xmlmap.StringField('dt:note[@type="purpose of digitization"]',
+        required=False,
+        help_text='The reason why the digital surrogate was created (e.g., exhibit, patron request, preservation)')
+    'reason the item was digitized'
+    digitization_purpose_list = xmlmap.StringListField('dt:note[@type="purpose of digitization"]')
+    transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
+        required=False, help_text='The person who performed the digitization or conversion that produced the file')
+    ':class:`TransferEngineer` - person who digitized the item'
+    codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
+        help_text='Hardware, software, and software version used to create the digital file')
+    ':class:`CodecCreator` - hardware & software used to digitize the item'
 
 
 class Video(DigitalObject):
@@ -92,7 +219,7 @@ class Video(DigitalObject):
             'versionable': True,
         })
 
-    digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", DigitalTech,
+    digitaltech = XmlDatastream("DigitalTech", "Technical Metadata - Digital", VideoDigitalTech,
         defaults={
             'control_group': 'M',
             'versionable': True,
@@ -120,46 +247,34 @@ class Video(DigitalObject):
             'versionable': True,
         })
     'access copy of video :class:`~eulfedora.models.FileDatastream`'
-    #
-    #
-    # sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", SourceTech,
-    #     defaults={
-    #         'control_group': 'M',
-    #         'versionable': True,
-    #     })
-    # '''source technical metadata :class:`~eulfedora.models.XmlDatastream` with content as
-    # :class:`SourceTech`'''
-    #
-    # rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
-    #     defaults={
-    #         'control_group': 'M',
-    #         'versionable': True,
-    #     })
-    # '''access control metadata :class:`~eulfedora.models.XmlDatastream`
-    # with content as :class:`Rights`'''
-    #
-    # jhove = FileDatastream("JHOVE", "JHOVE datastream", defaults={
-    #         'mimetype': 'application/xml',
-    #         'control_group': 'M',
-    #         'versionable': True,
-    #         'format': 'http://hul.harvard.edu/ois/xml/xsd/jhove/jhove.xsd',
-    #     })
-    # 'JHOVE technical metadata for the master audio :class:`~eulfedora.models.FileDatastream`'
-    # # JHOVE is xml, but treat it as a file for now since we're just storing it,
-    # # not doing any processing, updating, etc.
-    #
+
+    sourcetech = XmlDatastream("SourceTech", "Technical Metadata - Source", VideoSourceTech,
+        defaults={
+            'control_group': 'M',
+            'versionable': True,
+        })
+    '''source technical metadata :class:`~eulfedora.models.XmlDatastream` with content as
+    :class:`SourceTech`'''
+
+    rights = XmlDatastream("Rights", "Usage rights and access control metadata", Rights,
+        defaults={
+            'control_group': 'M',
+            'versionable': True,
+        })
+    '''access control metadata :class:`~eulfedora.models.XmlDatastream`
+    with content as :class:`Rights`'''
+
     # # map datastream IDs to human-readable names for inherited history_events method
-    # component_key = {
-    #     'AUDIO': 'audio (master)',
-    #     'CompressedAudio': 'audio (access version)',
-    #     'SourceTech': 'source technical metadata',
-    #     'DigitalTech': 'digital technical metadata',
-    #     'JHOVE': 'technical metadata',
-    #     'MODS': 'descriptive metadata',
-    #     'DC': 'descriptive metadata',
-    #     'Rights': 'rights metadata',
-    #     'RELS-EXT': 'collection membership',  # TODO: revise when/if we add more relations
-    # }
+    component_key = {
+        'Video': 'video (master)',
+        'CompressedVideo': 'video (access version)',
+        'SourceTech': 'source technical metadata',
+        'DigitalTech': 'digital technical metadata',
+        'MODS': 'descriptive metadata',
+        'DC': 'descriptive metadata',
+        'Rights': 'rights metadata',
+        'RELS-EXT': 'collection membership',
+    }
     #
     collection = Relation(relsext.isMemberOfCollection, type=CollectionObject)
     ''':class:`~keep.collection.models.CollectionObject that this object is a member of,
@@ -186,34 +301,34 @@ class Video(DigitalObject):
         return pid
 
 
-    #
-    # def save(self, logMessage=None):
-    #     '''Save the object.  If the content of any :class:`~AudioObject.mods`,
-    #     :class:`AudioObject.rels_ext`, or :class:`AudioObject.digitaltech`
-    #     datastreams have been changed, the DC will be updated and saved as well.
-    #
-    #     :param logMessage: optional log message
-    #     '''
-    #     if not self.exists or self.mods.isModified() or self.rels_ext.isModified() or \
-    #         self.digitaltech.isModified() or self.rights.isModified():
-    #         # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
-    #         # If this is a new item (does not yet exist in Fedora)
-    #         # OR if any of the relevant datastreams have changed, update DC
-    #         self._update_dc()
-    #
-    #     # for now, keep object label in sync with MODS title
-    #     if self.mods.isModified() and self.mods.content.title:
-    #         self.label = self.mods.content.title
-    #
-    #     return super(AudioObject, self).save(logMessage)
+
+    def save(self, logMessage=None):
+        '''Save the object.  If the content of any :class:`~Video.mods`,
+        :class:`Video.rels_ext`, or :class:`Video.digitaltech`
+        datastreams have been changed, the DC will be updated and saved as well.
+
+        :param logMessage: optional log message
+        '''
+        if not self.exists or self.mods.isModified() or self.rels_ext.isModified() or \
+            self.digitaltech.isModified() or self.rights.isModified():
+            # DC is derivative metadata based on MODS/RELS-EXT/Digital Tech
+            # If this is a new item (does not yet exist in Fedora)
+            # OR if any of the relevant datastreams have changed, update DC
+            self._update_dc()
+
+        # for now, keep object label in sync with MODS title
+        if self.mods.isModified() and self.mods.content.title:
+            self.label = self.mods.content.title
+
+        return super(Video, self).save(logMessage)
     #
     @models.permalink
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return ('video:view', [str(self.pid)])
-    #
+
     # def get_access_url(self):
-    #     "Absolute url to hear this object's access version"
+    #     "Absolute url to view this object's access version"
     #     if self.compressed_audio.exists:
     #         return reverse('audio:download-compressed-audio',
     #                        args=[str(self.pid), self.access_file_extension()])
@@ -230,64 +345,56 @@ class Video(DigitalObject):
     #         if self.compressed_audio.mimetype == 'audio/mp4':
     #             return 'm4a'
     #
-    # @property
-    # def conversion_result(self):
-    #     '''Return the :class:`~eullocal.django.taskresult.models.TaskResult`
-    #     for the most recently requested access copy conversion (if any).
-    #     '''
-    #     conversions = TaskResult.objects.filter(object_id=self.pid).order_by('-created')
-    #     if conversions:
-    #         return conversions[0]
     #
     # @property
     # def researcher_access(self):
     #     return allow_researcher_access(self.rights.content)
     #
-    # def _update_dc(self):
-    #     '''Update Dublin Core (derivative metadata) based on master metadata
-    #     from MODS, RELS-EXT, and digital tech metadata in order to keep data
-    #     synchronized and make fields that need to be searchable accessible to
-    #     Fedora findObjects API method.
-    #      '''
-    #     # identifiers
-    #     del(self.dc.content.identifier_list)        # clear out any existing names
-    #
-    #     # title
-    #     if self.mods.content.title:
-    #         self.label = self.mods.content.title
-    #         self.dc.content.title = self.mods.content.title
-    #     if self.mods.content.resource_type:
-    #         self.dc.content.type = self.mods.content.resource_type
-    #
-    #     # creator names
-    #     del(self.dc.content.creator_list)        # clear out any existing names
-    #     for name in self.mods.content.names:
-    #         # for now, use unicode conversion as defined in mods.Name
-    #         self.dc.content.creator_list.append(unicode(name))
-    #
-    #     # clear out any dates previously in DC
-    #     del(self.dc.content.date_list)
-    #     if self.mods.content.origin_info and \
-    #        len(self.mods.content.origin_info.created) and \
-    #        self.mods.content.origin_info.created[0].date:
-    #         self.dc.content.date_list.append(self.mods.content.origin_info.created[0].date)
-    #     if self.mods.content.origin_info and \
-    #        len(self.mods.content.origin_info.issued) and \
-    #        self.mods.content.origin_info.issued[0].date:
-    #         self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
-    #
-    #     # clear out any descriptions previously in DC and set from MODS/digitaltech
-    #     del(self.dc.content.description_list)
-    #     if self.mods.content.general_note and \
-    #        self.mods.content.general_note.text:
-    #         self.dc.content.description_list.append(self.mods.content.general_note.text)
-    #
-    #     # clear out any rights previously in DC and set contents from Rights accessStatus
-    #     del(self.dc.content.rights_list)
-    #     if self.rights.content.access_status:
-    #         # access code no longer needs to be included, since we will not be searching
-    #         self.dc.content.rights_list.append(self.rights.content.access_status.text)
-    #
+    def _update_dc(self):
+        '''Update Dublin Core (derivative metadata) based on master metadata
+        from MODS, RELS-EXT, and digital tech metadata in order to keep data
+        synchronized and make fields that need to be searchable accessible to
+        Fedora findObjects API method.
+         '''
+        # identifiers
+        del(self.dc.content.identifier_list)        # clear out any existing names
+
+        # title
+        if self.mods.content.title:
+            self.label = self.mods.content.title
+            self.dc.content.title = self.mods.content.title
+        if self.mods.content.resource_type:
+            self.dc.content.type = self.mods.content.resource_type
+
+        # creator names
+        del(self.dc.content.creator_list)        # clear out any existing names
+        for name in self.mods.content.names:
+            # for now, use unicode conversion as defined in mods.Name
+            self.dc.content.creator_list.append(unicode(name))
+
+        # clear out any dates previously in DC
+        del(self.dc.content.date_list)
+        if self.mods.content.origin_info and \
+           len(self.mods.content.origin_info.created) and \
+           self.mods.content.origin_info.created[0].date:
+            self.dc.content.date_list.append(self.mods.content.origin_info.created[0].date)
+        if self.mods.content.origin_info and \
+           len(self.mods.content.origin_info.issued) and \
+           self.mods.content.origin_info.issued[0].date:
+            self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
+
+        # clear out any descriptions previously in DC and set from MODS/digitaltech
+        del(self.dc.content.description_list)
+        if self.mods.content.general_note and \
+           self.mods.content.general_note.text:
+            self.dc.content.description_list.append(self.mods.content.general_note.text)
+
+        # clear out any rights previously in DC and set contents from Rights accessStatus
+        del(self.dc.content.rights_list)
+        if self.rights.content.access_status:
+            # access code no longer needs to be included, since we will not be searching
+            self.dc.content.rights_list.append(self.rights.content.access_status.text)
+
     def index_data(self):
         '''Extend the default
         :meth:`eulfedora.models.DigitalObject.index_data`
