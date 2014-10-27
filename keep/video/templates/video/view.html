@@ -1,12 +1,16 @@
 {% extends "page_base.html" %}
 {% load humanize %}
 
-{% block page-subtitle %}: Vidoe : {{ obj.label }}{% endblock %}
+{% block page-subtitle %}: Video : {{ obj.label }}{% endblock %}
 
 {% block content-title %}{{ obj.label }} {% endblock %}
 
 {% block content-body %}
 {{ block.super }}
 {% include 'video/snippets/ds_links.html' %}
+
+{% if perms.audio.change_audio %}
+ <a class="pull-right btn btn-primary" href="{% url 'video:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+{% endif %}
 
 {% endblock %}

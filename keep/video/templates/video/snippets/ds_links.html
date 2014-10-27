@@ -10,6 +10,7 @@
     <li><a href="{% url 'video:raw-ds' obj.pid 'DC' %}">DC</a></li>
     <li><a href="{% url 'video:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
     <li><a href="{% url 'video:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
+     <li><a href="{% url 'audio:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
     <li><a href="{% url 'video:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a></li>
   {% if obj.audit_trail %}
     <li><a href="{% url 'video:audit-trail' obj.pid %}">XML Audit Trail</a></li>

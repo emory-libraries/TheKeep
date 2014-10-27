@@ -4,9 +4,9 @@
 
 {% block item_title %}
 {# display edit link if user has permission #}
-{#{% if perms.audio.change_audio %} #}
- {#<a class="pull-right btn btn-primary" href="{% url 'audio:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a> #}
-{#{% endif %}#}
+{% if perms.audio.change_audio %}
+ <a class="pull-right btn btn-primary" href="{% url 'video:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+{% endif %}
 
 <p><a href="{% url 'video:view' obj.pid %}">{{ obj.title|default:'(no title)' }}</a>
   {% if obj.part %} ({{ obj.part }}){% endif %}

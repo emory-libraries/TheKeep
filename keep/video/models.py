@@ -19,7 +19,7 @@ import magic
 from django.conf import settings
 import urllib
 from keep.file.utils import md5sum, sha1sum
-from keep.common.models import PremisFixity, PremisObject
+from keep.common.models import PremisFixity, PremisObject, allow_researcher_access
 from eulcm.xmlmap.boda import Rights
 
 import logging
@@ -62,12 +62,34 @@ class VideoSourceTech(_BaseSourceTech):
     ROOT_NAME = 'sourcetech'
 
     # option lists for controlled vocabulary source tech fields
-    form_options = ('', 'audio cassette', 'open reel tape', 'LP', 'CD', 'sound file (WAV)',
-        'sound file (MP3)', 'sound file (M4A)', 'sound file (AIFF)', 'microcassette',
-        'DAT', '78', '45 RPM', 'acetate disc', 'aluminum disc', 'glass disc',
-        'flexi disc', 'cardboard disc', 'phonograph cylinder', 'wire recording',
-        'dictabelt', 'other')
+    form_options = ('', 'VHS', 'S-VHS', 'BetacamSP', 'Digital Betacam', 'Umatic',
+                    'MiniDV', 'DVCAM', 'DVCPro', 'HDCAM', 'Video8', 'Digital8',
+                    'Betamax', 'DVD', 'DVD-R/+R/-RW/+RW', 'Open Reel', 'Laserdisc',
+                    'Film', 'Born digital')
     'controlled vocabulary for :class:`SourceTech.form`'
+
+    signal_format_options = (
+        ('', ''),
+        ('DVD', (
+            (0,0),
+            (1,1),
+            (2,2),
+            (3,3),
+            (4,4),
+            (5,5),
+            (6,6),
+            (7,7),
+            (8,8),
+            ('All','All'),
+            )
+        ),
+        ('VHS', (
+            ('NTSC', 'NTSC'),
+            ('PAL/SECAM', 'PAL/SECAM'),
+            )
+    )
+    )
+
     housing_options = ('', 'jewel case', 'plastic container', 'paper sleeve',
         'cardboard sleeve', 'cardboard box', 'other', 'none')
     'controlled vocabulary for :class:`SourceTech.housing`'
@@ -80,43 +102,9 @@ class VideoSourceTech(_BaseSourceTech):
     reel_size_options.insert(0, ('', ''))
     sound_characteristic_options = ('', 'mono', 'stereo')
     'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
-    speed_options = (
-        # delimited format is aspect, value, unit
-        ('', ''),
-        ('tape', (
-            ('tape|15/16|inches/sec', '15/16 ips'),
-            ('tape|1.2|cm/sec', '1.2 cm/s'),
-            ('tape|2.4|cm/sec', '2.4 cm/s'),
-            ('tape|1 7/8|inches/sec', '1 7/8 ips'),
-            ('tape|3 3/4|inches/sec', '3 3/4 ips'),
-            ('tape|7 1/2|inches/sec', '7 1/2 ips'),
-            ('tape|15|inches/sec', '15 ips'),
-            ('tape|30|inches/sec', '30 ips'),
-            ('tape|other|other', 'Other'),
-            )
-         ),
-        ('phono disc', (
-            ('phono disc|16|rpm', '16 rpm'),
-            ('phono disc|33 1/3|rpm', '33 1/3 rpm'),
-            ('phono disc|45|rpm', '45 rpm'),
-            ('phono disc|78|rpm', '78 rpm'),
-            ('phono disc|other|other', 'Other'),
-            )
-        ),
-        ('phono cylinder', (
-            ('phono cylinder|90|rpm', '90 rpm'),
-            ('phono cylinder|120|rpm', '120 rpm'),
-            ('phono cylinder|160|rpm', '160 rpm'),
-            ('phono cylinder|other|other', 'Other'),
-            ),
-        ),
-        ('other', (
-            ('other|other|other', 'Other'),
-            ),
-        ),
-        ('na|Not applicable|na', 'Not Applicable'),
-    )
-    'controlled vocabulary for :class:`SourceTech.speed`, grouped by format'
+    speed_options = ('','P','LP','EP','Other','Not applicable')
+    gauge_options = ('','16mm', '35mm', '65mm', 'Super 8', 'other')
+    'controlled vocabulary for :class:`SourceTech.speed`'
     # NOTE: speed should be displayed as ips but saved to xml as inches/sec
     # speed options is formatted for grouped options in django select widget
 
@@ -137,19 +125,26 @@ class VideoSourceTech(_BaseSourceTech):
         required=False)
     'note about conservation history'
     conservation_history_list = xmlmap.StringListField('st:note[@type="conservationHistory"]')
-    speed = xmlmap.NodeField('st:speed/st:measure[@type="speed"]',
-        SourceTechMeasure)
-    ':class:`SourceTechMeasure`'
+    speed = xmlmap.StringField('st:speed/st:measure[@type="speed"]', choices=speed_options, verbose_name='Recording Speed',
+                               required=False, help_text='Speed at which the video was recorded')
+    gauge = xmlmap.StringField('st:gauge', choices=gauge_options,
+                               verbose_name='Gauge', required=False, help_text='Width of the film')
     sublocation = xmlmap.StringField('st:sublocation', required=False,
         help_text='Storage location within the collection (e.g., box and folder)')
     'storage location within the collection'
-    form = xmlmap.StringField('st:form[@type="sound"]', choices=form_options,
+    form = xmlmap.StringField('st:form[@type="moving image"]', choices=form_options,
+        required=False, help_text='The physical form or medium of the resource')
+    'physical format - options controlled by :class:`SourceTech.form_options`'
+    signal_format = xmlmap.StringField('st:signalFormat[@type="moving image"]', choices=signal_format_options,
         required=False, help_text='The physical form or medium of the resource')
     'physical format - options controlled by :class:`SourceTech.form_options`'
     form_list = xmlmap.StringListField('st:form[@type="sound"]')
     sound_characteristics = xmlmap.StringField('st:soundChar',
         choices=sound_characteristic_options, required=False)
     'sound characteristics - options controlled by :class:`SourceTech.sound_characteristic_options`'
+    chroma = xmlmap.StringField('st:chroma', choices=('color', 'monochrome'),
+        required=False, help_text='The physical form or medium of the resource')
+    'physical format - options controlled by :class:`SourceTech.form_options`'
     stock = xmlmap.StringField('st:stock', verbose_name='Tape Brand/Stock',
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
@@ -174,7 +169,7 @@ class VideoDigitalTech(_BaseDigitalTech):
         help_text='Date digital capture was made', required=True)
     'date digital capture was made (string)'
     codec_quality = xmlmap.StringField('dt:codecQuality', required=True,
-        help_text='Whether the data compression method was lossless or lossy')
+        help_text='Whether the data compression method was lossless or lossy', choices=('lossless', 'compressed'))
     'codec quality - lossless or lossy'
     duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]',
         help_text='Duration of video playing time', required=True)
@@ -192,7 +187,7 @@ class VideoDigitalTech(_BaseDigitalTech):
     transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
         required=False, help_text='The person who performed the digitization or conversion that produced the file')
     ':class:`TransferEngineer` - person who digitized the item'
-    codec_creator = xmlmap.NodeField('dt:codecCreator', CodecCreator,
+    codec_creator = xmlmap.NodeField('dt:codecCreator[@type="moving image"]', CodecCreator,
         help_text='Hardware, software, and software version used to create the digital file')
     ':class:`CodecCreator` - hardware & software used to digitize the item'
 
@@ -346,10 +341,10 @@ class Video(DigitalObject):
     #             return 'm4a'
     #
     #
-    # @property
-    # def researcher_access(self):
-    #     return allow_researcher_access(self.rights.content)
-    #
+    @property
+    def researcher_access(self):
+        return allow_researcher_access(self.rights.content)
+
     def _update_dc(self):
         '''Update Dublin Core (derivative metadata) based on master metadata
         from MODS, RELS-EXT, and digital tech metadata in order to keep data
@@ -424,45 +419,45 @@ class Video(DigitalObject):
 
         #TODO May have to add these sections if more metada is added
         # # old identifiers from previous digital masters
-        # dm1_ids = []
-        # if self.mods.content.dm1_id:
-        #     dm1_ids.append(self.mods.content.dm1_id)
-        # if self.mods.content.dm1_other_id:
-        #     dm1_ids.append(self.mods.content.dm1_other_id)
-        # if dm1_ids:
-        #     data['dm1_id'] = dm1_ids
-        #
-        # # digitization purpose, if not empty
-        # if self.digitaltech.content.digitization_purpose_list:
-        #     # convert nodelist to a normal list that can be serialized as json
-        #     data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
-        #
-        # # related files
-        # if self.sourcetech.content.related_files_list:
-        #     data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
-        #
-        # # part note
-        # if self.mods.content.part_note and self.mods.content.part_note.text:
-        #     data['part'] = self.mods.content.part_note.text
-        #
-        # # sublocation
-        # if self.sourcetech.content.sublocation:
-        #     data['sublocation'] = self.sourcetech.content.sublocation
-        #
-        # # rights access status code
-        # if self.rights.content.access_status:
-        #     data['access_code'] = self.rights.content.access_status.code
-        # # copyright date from rights metadata
-        # if self.rights.content.copyright_date:
-        #     data['copyright_date'] = self.rights.content.copyright_date
-        # # ip note from rights metadata
-        # if self.rights.content.ip_note:
-        #     data['ip_note'] = self.rights.content.ip_note
+        dm1_ids = []
+        if self.mods.content.dm1_id:
+            dm1_ids.append(self.mods.content.dm1_id)
+        if self.mods.content.dm1_other_id:
+            dm1_ids.append(self.mods.content.dm1_other_id)
+        if dm1_ids:
+            data['dm1_id'] = dm1_ids
+
+        # digitization purpose, if not empty
+        if self.digitaltech.content.digitization_purpose_list:
+            # convert nodelist to a normal list that can be serialized as json
+            data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
+
+        # related files
+        if self.sourcetech.content.related_files_list:
+            data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
+
+        # part note
+        if self.mods.content.part_note and self.mods.content.part_note.text:
+            data['part'] = self.mods.content.part_note.text
+
+        # sublocation
+        if self.sourcetech.content.sublocation:
+            data['sublocation'] = self.sourcetech.content.sublocation
+
+        # rights access status code
+        if self.rights.content.access_status:
+            data['access_code'] = self.rights.content.access_status.code
+        # copyright date from rights metadata
+        if self.rights.content.copyright_date:
+            data['copyright_date'] = self.rights.content.copyright_date
+        # ip note from rights metadata
+        if self.rights.content.ip_note:
+            data['ip_note'] = self.rights.content.ip_note
         #
         # # boolean values that should always be available
         data.update({
             # should this item be accessible to researchers?
-            'researcher_access': False,  # always False for now
+            'researcher_access': bool(self.researcher_access),
             # flags to indicate which datastreams are available
             'has_access_copy': self.access_copy.exists,
             'has_original': self.content.exists,
@@ -477,13 +472,10 @@ class Video(DigitalObject):
         if self.digitaltech.content.duration:
             data['duration'] = self.digitaltech.content.duration
 
-        #TODO May have to add this section if more metada is added
-        # if self.mods.content.origin_info and \
-        #    self.mods.content.origin_info.issued:
-        #     data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
-        # if self.mods.content.origin_info and \
-        #    self.mods.content.origin_info.created:
-        #     data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
+        if self.mods.content.origin_info and self.mods.content.origin_info.issued:
+            data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
+        if self.mods.content.origin_info and self.mods.content.origin_info.created:
+            data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
 
         return data
 
