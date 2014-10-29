@@ -27,21 +27,20 @@
 
 <h2>{{ obj.label }}</h2>
 <ul class='extra dslist list-inline'>
-
-  {% if perms.video.download_video %}
+  {% if perms.audio.download_audio %}
   {% with 'download original video' as original %}
-    {% if obj.video.exists %}
+    {% if obj.content.exists %}
       <li>
         <a href="{% url 'video:download-video' obj.pid %}">{{ original }}</a>
         {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
       </li>
     {% else %}
-      <li>{{ original }} ({{ obj.digitaltech.content.duration|seconds_duration }})</li>
+      <li>{{ original }} </li>
     {% endif %}
   {% endwith %}
   {% with 'download access copy' as access %}
-    {% if obj.compressed_video.exists %}
-      <li><a href="{{ obj.get_access_url }}">{{ access }}</a></li>
+    {% if obj.access_copy.exists %}
+      <li><a href="{% url 'video:download-compressed-video' obj.pid %}">{{ access }}</a></li>
     {% else %}
       <li>{{ access }} </li>
     {% endif %}

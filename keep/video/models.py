@@ -199,14 +199,14 @@ class Video(DigitalObject):
     NEW_OBJECT_VIEW = 'video:view'
 
     # There are several mimetypes for MPEG files
-    allowed_master_mimetypes = [
-        'video/quicktime',
-        'video/x-dv',
-        'video/mpeg',
-        'video/x-m4v',
-        'video/x-msvideo'
-    ]
-    allowed_access_mimetypes = ['video/mp4']
+    allowed_master_mimetypes = {
+        'video/quicktime' : 'mov',
+        'video/x-dv': 'dv',
+        'video/mpeg': 'mpg',
+        'video/x-m4v': 'm4v',
+        'video/x-msvideo' : 'avi'
+}
+    allowed_access_mimetypes = {'video/mp4' : 'mp4'}
 
     mods = XmlDatastream("MODS", "MODS Metadata", VideoMods, defaults={
             'control_group': 'M',
@@ -630,7 +630,7 @@ class Video(DigitalObject):
             except KeyError:
                 raise Exception('SHA-1 checksum mismatch on file %s' % data_path)
 
-            if mimetype in Video.allowed_master_mimetypes:
+            if mimetype in Video.allowed_master_mimetypes.keys():
                 opts['master_filename'] = filename
                 opts['master_md5_checksum'] = md5_checksum
                 opts['master_sha1_checksum'] = sha1_checksum
@@ -644,7 +644,7 @@ class Video(DigitalObject):
                             settings.LARGE_FILE_STAGING_FEDORA_DIR)
                     opts['master_location'] = master_location
 
-            elif mimetype in Video.allowed_access_mimetypes:
+            elif mimetype in Video.allowed_access_mimetypes.keys():
                 opts['access_filename'] = filename
                 opts['access_md5_checksum'] = md5_checksum
                 opts['access_mimetype'] = mimetype

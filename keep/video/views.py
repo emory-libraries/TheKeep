@@ -8,6 +8,7 @@ from django.template.response import TemplateResponse
 from eulfedora.util import RequestFailed, PermissionDenied
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 
+from keep.accounts.utils import prompt_login_or_403
 from keep.common.fedora import Repository, TypeInferringRepository
 from keep.video.models import Video
 from keep.video import forms as videoforms
@@ -137,3 +138,70 @@ def view_datastream(request, pid, dsid):
     if response.get('Content-Type', None) == 'message/rfc822':
         response['Content-Type'] = 'text/plain'
     return response
+
+
+#@permission_required("audio.download_audio")
+def download_video(request, pid, type, extension=None):
+    '''Serve out an vidoe datastream for the fedora object specified by pid.
+    Can be used to download original file or the access copy.
+
+    :param pid: pid of the :class:`~keep.vidoe.models.Video` instance
+        from which the vidoe datastream should be returned
+    :param type: which video datastream to return - should be one of 'original'
+        or 'access'
+    :param extension: optional filename extension for access copy to
+        distinguish between different types of access copies
+
+    The :class:`django.http.HttpResponse` returned will have a Content-Disposition
+    set to prompt the user to download the file with a filename based on the
+    object noid and an appropriate file extension for the type of video requested.
+    '''
+    repo = Repository(request=request)
+    # retrieve the object so we can use it to set the download filename
+    obj = repo.get_object(pid, type=Video)
+
+    # user needs either *play* or *download* permissions
+    # - could be any video or researcher-accessible only, which additionally
+    #   requires checking object is researcher-accessible
+    # for now, use presence of 'HTTP_RANGE' in request to differentiate
+    # jplayer requests from straight downloads
+    # NOTE: this would not be too difficult for a savvy user to circumvent
+    # (if they know what we are checking), but is intended mainly to prevent
+    # unwanted access by staff and researchers in the reading room
+
+    # if http range is present in request, check for play permissions
+    # (also requires that request is for access copy, not original)
+    if 'HTTP_RANGE' in request.META:
+        if not (request.user.has_perm('audio.play_audio') and type == 'access') and \
+               not (request.user.has_perm('audio.play_researcher_audio') and \
+                    bool(obj.researcher_access) and type == 'access'):
+            return prompt_login_or_403(request)
+
+    # otherwise, check for download permissions
+    else:
+        # user either needs download vidoe permissions OR
+        # if they can download researcher audio and object must be researcher-accessible
+        if not request.user.has_perm('audio.download_audio') and \
+               not (request.user.has_perm('audio.download_researcher_audio') and \
+                    bool(obj.researcher_access)):
+            return prompt_login_or_403(request)
+
+
+    # determine which datastream is requsted & set datastream id & file extension
+    if type == 'original':
+        dsid = Video.content.id
+        file_ext = Video.allowed_master_mimetypes[obj.content.mimetype]
+    elif type == 'access':
+        dsid = Video.access_copy.id
+        # make sure the requested file extension matches the datastream
+        file_ext = Video.allowed_access_mimetypes[obj.access_copy.mimetype]
+    else:
+        # any other type is not supported
+        raise Http404
+    extra_headers = {
+        'Content-Disposition': "attachment; filename=%s.%s" % (obj.noid, file_ext)
+    }
+    # use generic raw datastream view from eulfedora
+    return raw_datastream(request, pid, dsid, type=Video,
+            repo=repo, headers=extra_headers, accept_range_request=True)
+    # errors accessing Fedora will fall through to default 500 error handling

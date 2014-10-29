@@ -82,10 +82,14 @@ of {{ page.paginator.count|intcomma }}.</p>
           {# # Show download links if it is an video item  #}
           {% if 'info:fedora/emory-control:Video-1.0' in obj.content_model  %}
               {% if obj.has_original %}
-                  original audio
+             <a href = "{%url 'video:download-video' obj.pid %}">original video</a>
+              {% else %}
+                original video
               {% endif %}
             |
               {% if obj.has_access_copy %}
+                 <a href = "{% url 'video:download-compressed-video' obj.pid %}">access copy</a>
+             {% else %}
                 access copy
               {% endif %}
           {% endif %}
