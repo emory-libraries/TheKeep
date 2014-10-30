@@ -28,6 +28,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class VideoCodecCreator(CodecCreator):
+    ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` codec creator
+    Overrides the base options and replaces with options for video'''
+    configurations = {
+        # current format is     id :  hardware, software, software version
+        '1': (('iMac',), 'Canopus ADVC-700, Final Cut Pro', '7'),
+        '2': (('iMac',), 'Canopus ADVC-300, Final Cut Pro', '7'),
+        '3': (('iMac',), 'Final Cut Pro', '7'),
+        '4': (('iMac',), 'MPEG Streamclip', '1.9'),
+        '5': (('Unknown',), 'Unknown',  None),
+        '6': (('Vendor',), 'Vendor',  None),
+    }
+    'controlled vocabulary for codec creator configurations'
+
+    options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
+                    for id, c in configurations.iteritems()]
+    options.insert(0, ('', ''))  # empty value at beginning of list (initial default)
+
 
 class VideoMods(LocalMODS):
     '''Customized MODS for :class:`Video`, based on
@@ -35,9 +53,6 @@ class VideoMods(LocalMODS):
     general_note = xmlmap.NodeField('mods:note[@type="general"]',
           mods.TypedNote, required=False)
     ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="general"`'
-    part_note = xmlmap.NodeField('mods:note[@type="part number"]',
-                                 mods.TypedNote)
-    ':class:`~eulxml.xmlmap.mods.TypedNote` with `type="part number"`'
 
     dm1_id = xmlmap.StringField('mods:identifier[@type="dm1_id"]',
             required=False, verbose_name='Record ID/Filename')
@@ -65,7 +80,7 @@ class VideoSourceTech(_BaseSourceTech):
     form_options = ('', 'VHS', 'S-VHS', 'BetacamSP', 'Digital Betacam', 'Umatic',
                     'MiniDV', 'DVCAM', 'DVCPro', 'HDCAM', 'Video8', 'Digital8',
                     'Betamax', 'DVD', 'DVD-R/+R/-RW/+RW', 'Open Reel', 'Laserdisc',
-                    'Film', 'Born digital')
+                    'Film', 'Born digital', 'other')
     'controlled vocabulary for :class:`SourceTech.form`'
 
     signal_format_options = (
@@ -93,16 +108,9 @@ class VideoSourceTech(_BaseSourceTech):
     housing_options = ('', 'jewel case', 'plastic container', 'paper sleeve',
         'cardboard sleeve', 'cardboard box', 'other', 'none')
     'controlled vocabulary for :class:`SourceTech.housing`'
-    reel_sizes = ('3', '4', '5', '7', '10', '12', '14')  # also Other -> empty field
-    'controlled vocabulary used to generate form options for :class:`SourceTech.reel_size`'
-    reel_size_options = [(size, '%s"' % size) for size in reel_sizes]
-    reel_size_options.append(('Other', 'Other'))
-    reel_size_options.append(('Not Applicable', 'Not Applicable'))
-    # add an empty value at the beginning of the list to force active selection
-    reel_size_options.insert(0, ('', ''))
     sound_characteristic_options = ('', 'mono', 'stereo')
     'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
-    speed_options = ('','P','LP','EP','Other','Not applicable')
+    speed_options = ('','SP','LP','EP','Other','Not applicable')
     gauge_options = ('','16mm', '35mm', '65mm', 'Super 8', 'other')
     'controlled vocabulary for :class:`SourceTech.speed`'
     # NOTE: speed should be displayed as ips but saved to xml as inches/sec
@@ -115,12 +123,6 @@ class VideoSourceTech(_BaseSourceTech):
         verbose_name='General Note', help_text='General note about the physical item')
     'general note'
     note_list = xmlmap.StringListField('st:note[@type="general"]')
-    related_files = xmlmap.StringField('st:note[@type="relatedFiles"]', required=False,
-        help_text='IDs of other digitized files for the same item, separated by semicolons. Required for multi-part items.')
-    'related files (string of IDs delimited by semicolons'
-    related_files_list = xmlmap.StringListField('st:note[@type="relatedFiles"]')
-        # NOTE: according to spec, related_files is required if multi-part--
-        # - not tracking multi-part for Min Items (that I know of)
     conservation_history = xmlmap.StringField('st:note[@type="conservationHistory"]',
         required=False)
     'note about conservation history'
@@ -152,9 +154,6 @@ class VideoSourceTech(_BaseSourceTech):
     housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
         required=False, help_text='Type of housing for the source item')
     'Type of housing - options controlled by :class:`SourceTech.housing_options`'
-    reel_size = xmlmap.NodeField('st:reelSize/st:measure[@type="diameter"][@aspect="reel size"]',
-            SourceTechMeasure, required=False)
-    ':class:`SourceTechMeasure`'
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
     'note with type="technical"'
@@ -168,7 +167,7 @@ class VideoDigitalTech(_BaseDigitalTech):
     date_captured = xmlmap.StringField('dt:dateCaptured[@encoding="w3cdtf"]',
         help_text='Date digital capture was made', required=True)
     'date digital capture was made (string)'
-    codec_quality = xmlmap.StringField('dt:codecQuality', required=True,
+    codec_quality = xmlmap.StringField('dt:codecQuality', required=False,
         help_text='Whether the data compression method was lossless or lossy', choices=('lossless', 'compressed'))
     'codec quality - lossless or lossy'
     duration = xmlmap.IntegerField('dt:duration/dt:measure[@type="time"][@unit="seconds"][@aspect="duration of playing time"]',
@@ -187,9 +186,9 @@ class VideoDigitalTech(_BaseDigitalTech):
     transfer_engineer = xmlmap.NodeField('dt:transferEngineer', TransferEngineer,
         required=False, help_text='The person who performed the digitization or conversion that produced the file')
     ':class:`TransferEngineer` - person who digitized the item'
-    codec_creator = xmlmap.NodeField('dt:codecCreator[@type="moving image"]', CodecCreator,
+    codec_creator = xmlmap.NodeField('dt:codecCreator[@type="moving image"]', VideoCodecCreator,
         help_text='Hardware, software, and software version used to create the digital file')
-    ':class:`CodecCreator` - hardware & software used to digitize the item'
+    ':class:`VideoCodecCreator` - hardware & software used to digitize the item'
 
 
 class Video(DigitalObject):
@@ -431,14 +430,6 @@ class Video(DigitalObject):
         if self.digitaltech.content.digitization_purpose_list:
             # convert nodelist to a normal list that can be serialized as json
             data['digitization_purpose'] = [dp for dp in self.digitaltech.content.digitization_purpose_list]
-
-        # related files
-        if self.sourcetech.content.related_files_list:
-            data['related_files'] = [rel for rel in self.sourcetech.content.related_files_list]
-
-        # part note
-        if self.mods.content.part_note and self.mods.content.part_note.text:
-            data['part'] = self.mods.content.part_note.text
 
         # sublocation
         if self.sourcetech.content.sublocation:
