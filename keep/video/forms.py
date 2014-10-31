@@ -107,8 +107,7 @@ class SourceTechForm(XmlObjectForm):
         # temporarily making repeating fields into single fields
         # (stringlistfields not yet supported by xmlobjectform)
         fields = ['note', 'conservation_history',
-            'speed', 'sublocation', 'form', 'signal_format', 'sound_characteristics', 'chroma', 'gauge', 'stock',
-            'housing']
+            'speed', 'sublocation', 'form', 'signal_format', 'sound_characteristics', 'chroma', 'gauge', 'stock']
         widgets = {
             'note': forms.Textarea(attrs={'class': 'form-control'}),
             'conservation_history': forms.TextInput(attrs={'class': 'form-control'}),

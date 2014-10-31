@@ -105,9 +105,6 @@ class VideoSourceTech(_BaseSourceTech):
     )
     )
 
-    housing_options = ('', 'jewel case', 'plastic container', 'paper sleeve',
-        'cardboard sleeve', 'cardboard box', 'other', 'none')
-    'controlled vocabulary for :class:`SourceTech.housing`'
     sound_characteristic_options = ('', 'mono', 'stereo')
     'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
     speed_options = ('','SP','LP','EP','Other','Not applicable')
@@ -151,9 +148,6 @@ class VideoSourceTech(_BaseSourceTech):
        help_text='The brand or stock of the magnetic tape', required=False)
     'Stock or brand of source media'
     stock_list = xmlmap.StringListField('st:stock')
-    housing = xmlmap.StringField('st:housing[@type="sound"]', choices=housing_options,
-        required=False, help_text='Type of housing for the source item')
-    'Type of housing - options controlled by :class:`SourceTech.housing_options`'
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
     'note with type="technical"'
