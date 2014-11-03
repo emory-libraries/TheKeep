@@ -9,7 +9,7 @@
 {{ block.super }}
 {% include 'video/snippets/ds_links.html' %}
 
-{% if perms.audio.change_audio %}
+{% if perms.video.change_videoperms %}
  <a class="pull-right btn btn-primary" href="{% url 'video:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
 {% endif %}
 

@@ -154,7 +154,7 @@ class DigitalTechForm(XmlObjectForm):
         options = [(_transfer_engineer_id(type=TransferEngineer.LDAP_ID_TYPE,
                                           id=user.username),
                     '%s (%s)' % (user.get_full_name(), user.username))
-                   for user in get_user_model().objects.filter(groups__name='Audio Curator').order_by('last_name')]
+                   for user in get_user_model().objects.filter(groups__name='Video Curator').order_by('last_name')]
         options.insert(0, ('', EMPTY_LABEL_TEXT))
 
         # add local transfer engineer options to the list

@@ -27,7 +27,7 @@
 
 <h2>{{ obj.label }}</h2>
 <ul class='extra dslist list-inline'>
-  {% if perms.audio.download_audio %}
+  {% if perms.video.download_video %}
   {% with 'download original video' as original %}
     {% if obj.content.exists %}
       <li>
