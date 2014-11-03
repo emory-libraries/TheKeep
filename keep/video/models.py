@@ -28,6 +28,23 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class VideoPerms(models.Model):
+    'Place-holder DB model to define permissions for video objects'
+    class Meta:
+        permissions = (
+            ("view_video", "Can view, search, and browse video objects"),
+            ("download_video", "Download video files (original or access copy)"),
+            ("play_video", "Play video"),
+            # resercher-specific perms
+            ("view_researcher_video", "Researcher search and view"),
+            ("download_researcher_video", "Researcher download"),
+            ("play_researcher_video", "Researcher play video"),
+        )
+
+
+
+
+
 class VideoCodecCreator(CodecCreator):
     ''':class:`~eulxml.xmlmap.XmlObject` for :class:`DigitalTech` codec creator
     Overrides the base options and replaces with options for video'''

@@ -326,6 +326,11 @@ Release 2.0 - Video Ingest
 
     $ manage.py syncrepo
 
+* run commands to create Video perms::
+
+    $ manage.py syncdb
+    $ manage.py migrate video
+
 * setup  ftp user and directory on staging server to have separate video and diskimage directories and appropriate
   users and restrictions.
 
