@@ -46,6 +46,17 @@ class VideoCodecCreator(CodecCreator):
                     for id, c in configurations.iteritems()]
     options.insert(0, ('', ''))  # empty value at beginning of list (initial default)
 
+    id = xmlmap.StringField('dt:codecCreatorID')
+    'codec creator id - `dt:codecCreatorId`'
+    hardware = xmlmap.StringField('dt:hardware')
+    'hardware  - `dt:hardware` (first hardware only, even if there are multiple)'
+    hardware_list = xmlmap.StringListField('dt:hardware')
+    'list of all hardware'
+    software = xmlmap.StringField('dt:software')
+    'software  - `dt:software` (first software only, even if there are multiple)'
+    software_version = xmlmap.StringField('dt:softwareVersion')
+    'list of all software'
+
 
 class VideoMods(LocalMODS):
     '''Customized MODS for :class:`Video`, based on
