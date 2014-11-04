@@ -1,5 +1,3 @@
-#TODO Remove all commented unused code
-
 from django.db import models
 from keep.common.fedora import DigitalObject
 from eulfedora.models import FileDatastream, XmlDatastream, Relation

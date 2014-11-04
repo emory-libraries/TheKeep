@@ -1,5 +1,3 @@
-#TODO add perms for views like in audo
-
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.http import HttpResponse, Http404, HttpResponseForbidden

@@ -9,6 +9,7 @@ from pidservices.clients import parse_ark
 from eulcm.models.boda import Arrangement, Mailbox, EmailMessage, RushdieFile
 
 from keep.audio.models import AudioObject
+from keep.video.models import Video
 from keep.collection.models import CollectionObject
 from keep.common.fedora import user_full_name
 from keep.file.models import DiskImage
@@ -91,6 +92,8 @@ def view_url(item):
     viewname = None
     if AudioObject.AUDIO_CONTENT_MODEL in cmodels:
         viewname = 'audio:view'
+    elif Video.VIDEO_CONTENT_MODEL in cmodels:
+        viewname = 'video:view'
     elif DiskImage.DISKIMAGE_CONTENT_MODEL in cmodels:
         viewname = 'file:view'
     elif CollectionObject.COLLECTION_CONTENT_MODEL in cmodels:
