@@ -43,11 +43,6 @@ def search(request):
         # for now, sort by most recently created
         solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
-        # Exclude content user does not have permission to see
-        if not request.user.has_perm('common.marbl_allowed'):
-            solrquery = solrquery.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
-        if not request.user.has_perm('common.arrangement_allowed'):
-            solrquery = solrquery.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
 
         # if user requested specific display fields, handle output display and formatting
         if form.cleaned_data['display_fields']:

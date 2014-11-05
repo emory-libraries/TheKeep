@@ -388,8 +388,16 @@ def ajax_upload(request):
     # success: return the name of the staging file to be used for ingest
     return HttpResponse(ingest_file, content_type='text/plain')
 
+# allowed perms for LFI
+def add_some_large_content(user):
+    '''Check that a user is allowed to add some content.
+    Views that use this test with permission decorator should handle
+    the variation in permissions access within the view logic.
+    '''
+    return user.has_perm('file.add_disk_image') or \
+           user.has_perm('video.add_videoperms')
 
-@permission_required_with_403("file.add_disk_image")
+@user_passes_test_with_403(add_some_large_content)
 def largefile_ingest(request):
     '''Large-file ingest.  On GET, displays a form allowing user to
     select a BagIt that has been uploaded to the configured large-file
