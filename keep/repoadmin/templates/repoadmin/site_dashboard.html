@@ -4,9 +4,12 @@
 {% block content-title %}Welcome to the Keep.{% endblock %}
 
 {% block content-body %}
-<p>Add content: <a href="{% url 'file:upload' %}">upload a file</a>
+<p>Add content:
+    {% if perms.file.add_disk_image or perms.audio.add_audio %}
+        <a href="{% url 'file:upload' %}">upload a file</a>
+    {% endif %}
 
-{% if perms.file.add_disk_image %}
+{% if perms.file.add_disk_image or perms.video.add_videoperms %}
     | <a href="{% url 'file:largefile-ingest' %}">ingest uploaded content</a></p>
 {% endif %}
 

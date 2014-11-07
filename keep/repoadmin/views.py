@@ -47,7 +47,7 @@ def dashboard(request):
                           limit=10, mincount=1) \
                 .paginate(rows=0)
     # filter the facet query by user permissions
-    facetq = filter_by_perms(facetq, request.user)
+    # facetq = filter_by_perms(facetq, request.user)
     facets = facetq.execute().facet_counts.facet_fields
 
     # reverse order and convert to datetime.date for use with naturalday
@@ -68,7 +68,7 @@ def dashboard(request):
                           mincount=1) \
                 .paginate(rows=0)
     # also filter this query by user perms
-    facetq = filter_by_perms(facetq, request.user)
+    # facetq = filter_by_perms(facetq, request.user)
     recent_month_facet = facetq.execute().facet_counts.facet_fields['created_month']
     recent_month_facet.reverse()
     recent_months = []
@@ -80,7 +80,7 @@ def dashboard(request):
     facetq = solr.query().filter(last_fixity_check__range=(month_ago, today))  \
                 .facet_by('last_fixity_result', mincount=1) \
                 .paginate(rows=0)
-    facetq = filter_by_perms(facetq, request.user)
+    # facetq = filter_by_perms(facetq, request.user)
     facets = facetq.execute().facet_counts.facet_fields
     recent_fixity_checks = facets['last_fixity_result']
 
@@ -105,7 +105,8 @@ def keyword_search(request):
         solr = solr_interface()
         # start with a default query to add filters & search terms
         # *first* filter to restrict to content models user has permission to view
-        q = filter_by_perms(solr.query(), request.user)
+        # q = filter_by_perms(solr.query(), request.user)
+        q = solr.query()
 
         # optional date filter for fixity check
         fixity_check_mindate = searchform.cleaned_data.get('fixity_check_mindate', None)
@@ -379,7 +380,7 @@ def keyword_search_suggest(request):
             solr = solr_interface()
             facetq = solr.query().paginate(rows=0)
             # filter by current user permssions
-            facetq = filter_by_perms(facetq, request.user)
+            # facetq = filter_by_perms(facetq, request.user)
             # return the 15 most common terms in the requested facet field
             # with a specified prefix
             facetq = facetq.facet_by(facet_field, prefix=prefix,

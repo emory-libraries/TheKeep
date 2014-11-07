@@ -9,6 +9,7 @@ from django.utils.http import urlquote
 
 from keep.collection.models import CollectionObject, SimpleCollection
 from keep.audio.models import AudioObject
+from keep.video.models import Video
 from keep.arrangement.models import ArrangementObject
 from keep.file.models import DiskImage
 
@@ -27,6 +28,8 @@ def searchable_cmodels(user):
         cmodels.append(CollectionObject.COLLECTION_CONTENT_MODEL)
     if user.has_perm('audio.view_audio'):
         cmodels.append(AudioObject.AUDIO_CONTENT_MODEL)
+    if user.has_perm('video.view_video'):
+        cmodels.append(Video.VIDEO_CONTENT_MODEL)
     if user.has_perm('common.arrangement_allowed'):
         cmodels.append(SimpleCollection.COLLECTION_CONTENT_MODEL)
     if user.has_perm('arrangement.view_arrangement'):
@@ -35,6 +38,7 @@ def searchable_cmodels(user):
         # included by using the arrangement content model
     if user.has_perm('file.view_disk_image'):
         cmodels.append(DiskImage.DISKIMAGE_CONTENT_MODEL)
+
 
     return cmodels
 

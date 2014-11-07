@@ -1,6 +1,7 @@
 import cStringIO
 from datetime import datetime
 import logging
+from keep.common.models import SourceTechMeasure, TransferEngineer, CodecCreator
 from mock import Mock, patch
 import os
 from shutil import copyfile
@@ -331,7 +332,7 @@ class AudioViewsTest(KeepTestCase):
         # engineer & codec creator are initialized based on id values
         obj.digitaltech.content.create_transfer_engineer()
         obj.digitaltech.content.transfer_engineer.id = ldap_user.username
-        obj.digitaltech.content.transfer_engineer.id_type = audiomodels.TransferEngineer.LDAP_ID_TYPE
+        obj.digitaltech.content.transfer_engineer.id_type = TransferEngineer.LDAP_ID_TYPE
         obj.digitaltech.content.create_codec_creator()
         obj.digitaltech.content.codec_creator.id = '1'
         # pre-populate rights metadata
@@ -462,7 +463,7 @@ class AudioViewsTest(KeepTestCase):
             self.assertEqual(item_dt.codec_quality, initial_data['codec_quality'])
             self.assertEqual(item_dt.note, initial_data['note'])
             self.assertEqual(item_dt.digitization_purpose, initial_data['digitization_purpose'])
-            self.assertEqual('%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE, ldap_user.username),
+            self.assertEqual('%s|%s' % (TransferEngineer.LDAP_ID_TYPE, ldap_user.username),
                              initial_data['engineer'])
             self.assertEqual(item_dt.codec_creator.id, initial_data['hardware'])
             # rights in initial data
@@ -506,7 +507,7 @@ class AudioViewsTest(KeepTestCase):
                         'st-_speed': 'tape|15/16|inches/sec',
                         # digital-tech data
                         'dt-digitization_purpose': 'patron request',
-                        'dt-engineer': '%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE,
+                        'dt-engineer': '%s|%s' % (TransferEngineer.LDAP_ID_TYPE,
                                                   ldap_user.username),
                         'dt-hardware': '3',
                         # rights metadata
@@ -572,11 +573,11 @@ class AudioViewsTest(KeepTestCase):
             # check that digital tech fields were updated correctly
             dt = updated_obj.digitaltech.content
             self.assertEqual(audio_data['dt-digitization_purpose'], dt.digitization_purpose)
-            self.assertEqual(audiomodels.TransferEngineer.LDAP_ID_TYPE, dt.transfer_engineer.id_type)
+            self.assertEqual(TransferEngineer.LDAP_ID_TYPE, dt.transfer_engineer.id_type)
             self.assertEqual(ldap_user.username, dt.transfer_engineer.id)
             self.assertEqual(ldap_user.get_full_name(), dt.transfer_engineer.name)
             # codec creator - used id 3, which has two hardware fields
-            hardware, software, version = audiomodels.CodecCreator.configurations[audio_data['dt-hardware']]
+            hardware, software, version = CodecCreator.configurations[audio_data['dt-hardware']]
             self.assertEqual(audio_data['dt-hardware'], dt.codec_creator.id)
             self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
             self.assertEqual(hardware[1], dt.codec_creator.hardware_list[1])
@@ -606,7 +607,7 @@ class AudioViewsTest(KeepTestCase):
             updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
             dt = updated_obj.digitaltech.content
             # codec creator - id 4 only has one two hardware and no software version
-            hardware, software, version = audiomodels.CodecCreator.configurations[data['dt-hardware']]
+            hardware, software, version = CodecCreator.configurations[data['dt-hardware']]
             self.assertEqual(data['dt-hardware'], dt.codec_creator.id)
             self.assertEqual(hardware[0], dt.codec_creator.hardware_list[0])
             self.assertEqual(1, len(dt.codec_creator.hardware_list))  # should only be one now
@@ -678,7 +679,7 @@ class AudioViewsTest(KeepTestCase):
             # engineer & codec creator are initialized based on id values
             obj.digitaltech.content.create_transfer_engineer()
             obj.digitaltech.content.transfer_engineer.id = 2100
-            obj.digitaltech.content.transfer_engineer.id_type = audiomodels.TransferEngineer.DM_ID_TYPE
+            obj.digitaltech.content.transfer_engineer.id_type = TransferEngineer.DM_ID_TYPE
             obj.digitaltech.content.transfer_engineer.name = 'Historic User'
             obj.save()
             # get the form - non-LDAP user should be listed & selected
@@ -707,8 +708,8 @@ class AudioViewsTest(KeepTestCase):
             # test local transfer engineer options
             # - when displaying the form, local options should be available
             response = self.client.get(edit_url)
-            for local_id, local_name in audiomodels.TransferEngineer.local_engineers.iteritems():
-                self.assertContains(response, '%s|%s' % (audiomodels.TransferEngineer.LOCAL_ID_TYPE,
+            for local_id, local_name in TransferEngineer.local_engineers.iteritems():
+                self.assertContains(response, '%s|%s' % (TransferEngineer.LOCAL_ID_TYPE,
                                                          local_id),
                     msg_prefix='select id should be listed for local transfer engineer %s' % local_name)
                 self.assertContains(response, local_name,
@@ -719,7 +720,7 @@ class AudioViewsTest(KeepTestCase):
             response = self.client.post(edit_url, data)
             # id type, id, and name should all be set to local engineer info
             updated_obj = repo.get_object(pid=obj.pid, type=audiomodels.AudioObject)
-            self.assertEqual(audiomodels.TransferEngineer.LOCAL_ID_TYPE,
+            self.assertEqual(TransferEngineer.LOCAL_ID_TYPE,
                              updated_obj.digitaltech.content.transfer_engineer.id_type)
             self.assertEqual('vendor1', updated_obj.digitaltech.content.transfer_engineer.id)
             self.assertEqual('Vendor', updated_obj.digitaltech.content.transfer_engineer.name)
@@ -785,7 +786,7 @@ class AudioViewsTest(KeepTestCase):
                     'st-_speed': 'other|other|other',
                     # digital-tech data
                     'dt-digitization_purpose': 'avoid nuclear war',
-                    'dt-engineer': '%s|%s' % (audiomodels.TransferEngineer.LDAP_ID_TYPE,
+                    'dt-engineer': '%s|%s' % (TransferEngineer.LDAP_ID_TYPE,
                                               ldap_user.username),
                     'dt-hardware': '3',
                     # rights metadata
@@ -1282,8 +1283,8 @@ class SourceTechTest(KeepTestCase):
 
     def test_init_types(self):
         self.assert_(isinstance(self.sourcetech, audiomodels.SourceTech))
-        self.assert_(isinstance(self.sourcetech.speed, audiomodels.SourceTechMeasure))
-        self.assert_(isinstance(self.sourcetech.reel_size, audiomodels.SourceTechMeasure))
+        self.assert_(isinstance(self.sourcetech.speed, SourceTechMeasure))
+        self.assert_(isinstance(self.sourcetech.reel_size, SourceTechMeasure))
 
     def test_fields(self):
         # check field values correctly accessible from fixture
@@ -1356,8 +1357,8 @@ class DigitalTechTest(KeepTestCase):
 
     def test_init_types(self):
         self.assert_(isinstance(self.digitaltech, audiomodels.DigitalTech))
-        self.assert_(isinstance(self.digitaltech.transfer_engineer, audiomodels.TransferEngineer))
-        self.assert_(isinstance(self.digitaltech.codec_creator, audiomodels.CodecCreator))
+        self.assert_(isinstance(self.digitaltech.transfer_engineer, TransferEngineer))
+        self.assert_(isinstance(self.digitaltech.codec_creator, CodecCreator))
 
     def test_fields(self):
         # check field values correctly accessible from fixture

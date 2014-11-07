@@ -7,6 +7,7 @@ from eulcommon.djangoextras.auth import user_passes_test_with_403
 
 from keep.accounts.utils import filter_by_perms
 from keep.audio.models import AudioObject
+from keep.video.models import Video
 from keep.search.forms import SearchForm
 from keep.common.utils import solr_interface
 
@@ -47,13 +48,13 @@ def search(request):
 
         # NOTE: restrict to audio for now since that is the only
         # content type currently supported for researcher access
-        base_search_opts = {
-            # restrict to audio items by content model
-            'content_model': AudioObject.AUDIO_CONTENT_MODEL
-        }
+        #
+        # TO SEARCH FOR VIDEO ADD: | solr.Q(content_model=Video.VIDEO_CONTENT_MODEL)   to below query
+        # MOST ALL OTHER PARTS ARE IN PLACE
+        cm_query = solr.Q(solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
 
         # start with a default query to add filters & search terms
-        q = solr.query().filter(**base_search_opts)
+        q = solr.query().filter(cm_query)
 
         # filter the query by logged-in user permissions
         # includes restricting to researcher-accessible content when appropriate
@@ -66,7 +67,7 @@ def search(request):
             q = q.sort_by('-score').field_limit(['pid', 'title', 'collection_id',
                 'collection_source_id', 'collection_label', 'ark_uri',
                 'date_issued', 'date_created', 'part', 'duration',
-                'researcher_access'],
+                'researcher_access', 'object_type'],
                 score=True)
             # NOTE: do we want a secondary sort after score?
         else:

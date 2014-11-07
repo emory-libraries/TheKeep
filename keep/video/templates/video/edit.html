@@ -1,0 +1,225 @@
+{% extends "page_base.html" %}
+{% load audio_extras %}
+
+{% block page-subtitle %}: Video : Edit {{ obj.label }}{% endblock %}
+{% block content-title %}Edit Video File{% endblock %}
+
+{% block javascript %}
+  {{ block.super }}
+  <script type="text/javascript" src="{{ STATIC_URL }}/js/edit.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+
+     {# collection autocomplete #}
+     {% include "collection/snippets/collection_suggest_js.html" %}
+    });
+
+  </script>
+{% endblock %}
+
+{% block content-body %}
+{{ block.super }}
+<div id="csrftoken">{% csrf_token %}</div> {# embed csrf for use in ajax calls #}
+
+<div class="pull-right"> {# assuming user can view if they can edit #}
+    <a class="pull-right btn btn-primary" href="{% url 'video:view' obj.pid %}">view</a>
+</div>
+
+<h2>{{ obj.label }}</h2>
+<ul class='extra dslist list-inline'>
+  {% if perms.video.download_video %}
+  {% with 'download original video' as original %}
+    {% if obj.content.exists %}
+      <li>
+        <a href="{% url 'video:download-video' obj.pid %}">{{ original }}</a>
+        {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
+      </li>
+    {% else %}
+      <li>{{ original }} </li>
+    {% endif %}
+  {% endwith %}
+  {% with 'download access copy' as access %}
+    {% if obj.access_copy.exists %}
+      <li><a href="{% url 'video:download-compressed-video' obj.pid %}">{{ access }}</a></li>
+    {% else %}
+      <li>{{ access }} </li>
+    {% endif %}
+  {% endwith %}
+  {% endif %}
+
+  {% if obj.audit_trail %}
+    <li><a href="{% url 'video:history' obj.pid %}">Event Log</a></li>
+  {% endif %}
+    <li><a href="{% url 'video:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'DC' %}">DC</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'SourceTech' %}">SourceTech</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
+    <li><a href="{% url 'video:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a></li>
+  {% if obj.audit_trail %}
+    <li><a href="{% url 'video:audit-trail' obj.pid %}">XML Audit Trail</a></li>
+  {% endif %}
+</ul>
+
+{# display checksum for original video #}
+{# TODO: find a better way/place to display original checksum (view page doesn't exist yet) #}
+{% if obj.video.exists %}
+  <p class="extra">Original video checksum: {{ obj.video.checksum }}</p>
+{% endif %}
+
+<div class="instructions">
+    <h2>Instructions for using this form</h2>
+    <ul>
+        <li><span class="required" title='required'>*</span> indicates a field is required.</li>
+    </ul>
+    {# NOTE: some overlap with collection edit form instructions #}
+</div>
+<div class="multi-edit" id="video-edit">
+<form method="post" name="edit_form">{% csrf_token %}
+
+<h3 id="mods-label" class="section-head toggle open">Descriptive Metadata</h3>
+<div id="mods">
+    {% if form.mods.non_field_errors %}
+    {{ form.mods.non_field_errors }}
+    {% endif %}
+ {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+<table class="edit-form">
+  {% if form.mods.non_field_errors %}
+    <tr><td colspan="3">{{ form.non_field_errors }}</td></tr>
+  {% endif %}
+  {% for field in form.visible_fields %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+  {% if form.mods.non_field_errors %}
+    <tr><td colspan="3">{{ form.mods.non_field_errors }}</td></tr>
+  {% endif %}
+  {% for field in form.mods %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+
+  {# display all subforms (notes, origin info, etc) #}
+   {% for name, subform in form.mods.subforms.items %}
+    <tr>
+       <th>{% firstof subform.form_label name %}</th>
+       <td>
+         {% for field in subform %}
+	   {% include 'snippets/form_field.html' %}
+         {% endfor %}
+         {% for form in subform.forms %}
+           {% for field in form %}
+ 	     {% include 'snippets/form_field.html' %}
+           {% endfor %}
+         {% endfor %}
+         {# display formsets under subforms (i.e., origin info dates) #}
+         {% for name, formset in subform.formsets.items %}
+           <label>{% firstof formset.form_label name %}</label>
+           {{ formset.management_form }}
+           {% for form in formset.forms %}
+             {% for field in form %}{% include 'snippets/form_field.html' %}{% endfor %}
+           {% endfor %}
+         {% endfor %}
+         {# NOTE: could potentially have sub-subforms also... #}
+       </td>
+    </tr>
+  {% endfor %}
+ {# NOTE: currently we have no formsets, so not handling #}
+
+{# view-only content - output directly rather than trying to use form for display #}
+{% if obj.mods.content.names %}
+  <tr id="creator">
+      <th>Creator{{ obj.mods.content.names|pluralize }}</th>
+{% comment %}names could be displayed in editable form using
+snippets/edit_mods_name.html, but it takes up a lot of page space,
+and they don't actually need to be editable for now.{% endcomment %}
+      <td class="multi-field">
+	<table class="name-role-auth">
+          <tr><th>Name</th><th>Role</th><th>Type</th><th>Authority</th></tr>
+        {% for name in obj.mods.content.names %}
+        <tr>
+          <td>{{ name }} </td>
+          <td> {% for role in name.roles %} {{ role.text }} {% endfor %}</td>
+          <td>{{ name.type }}</td>
+          <td>{{ name.authority }}</td>
+        </tr>
+        {% endfor %}
+        </table>
+      </td>
+  </tr>
+{% endif %}
+{% if obj.mods.content.genres %}
+  <tr>
+    <th>Genre{{ obj.mods.content.genres|pluralize }}</th>
+     <td>
+	{% for genre in obj.mods.content.genres %}
+	  <p>{{ genre.text }} {% if genre.authority %}[{{genre.authority }}]{% endif %}</p>
+        {% endfor %}
+     </td>
+   </tr>
+{% endif %}
+{% if obj.mods.content.languages %}
+   <tr>
+     <th>Language{{ obj.mods.content.languages|pluralize }}</th>
+     <td>
+       {% for lang in obj.mods.content.languages %}
+       {% for term in lang.terms %}
+         <p>{{ term.text }} {% if term.authority %}[{{ term.authority }}]{% endif %}</p>
+         {% endfor %}
+       {% endfor %}
+     </td>
+   </tr>
+{% endif %}
+{% if obj.mods.content.subjects %}
+   <tr>
+     <th>Subject{{ obj.mods.content.subjects|pluralize }}</th>
+     <td>
+       {% for subject in obj.mods.content.subjects %}
+       <p>
+         {% if subject.geographic %}<b>Geographic:</b> {{ subject.geographic }}{% endif %}
+         {% if subject.name %}<b>Name:</b> {{ subject.name }}{% endif %}
+         {% if subject.topic %}<b>Topic:</b> {{ subject.topic }}{% endif %}
+         {% if subject.title %}<b>Title:</b> {{ subject.title }}{% endif %}
+
+         {% if subject.authority %}
+           [{{ subject.authority }}]
+         {% endif %}
+       </p>
+       {% endfor %}
+     </td>
+   </tr>
+{% endif %}
+</table>
+</div>
+
+<h3 id="source-tech-label" class="section-head toggle">Source Technical Metadata</h3>
+<div id="source-tech">
+    {{ form.sourcetech.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.sourcetech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+<h3 id="digital-tech-label" class="section-head toggle">Digital Technical Metadata</h3>
+<div id="digital-tech">
+    {{ form.digitaltech.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.digitaltech %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+<h3 id="rights-label" class="section-head toggle">Rights Metadata</h3>
+<div id="rights">
+    {{ form.rights.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.rights %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+<div id="comments">
+    {{ form.comments.non_field_errors }}
+    <table class="edit-form">
+        {% for field in form.comments %}{% include 'snippets/form_field_tr.html' %}{% endfor %}
+    </table>
+</div>
+
+<input class="btn btn-primary form-submit" type="submit" name="_save" value="Save"/>
+<input class="btn form-submit" type="submit" name="_save_continue" value="Save and continue editing"/>
+</form>
+</div>
+{% endblock %}

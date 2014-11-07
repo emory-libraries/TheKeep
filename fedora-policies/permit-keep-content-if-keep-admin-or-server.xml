@@ -39,7 +39,22 @@ specific Keep admin users and from Keep application server.</Description>
                 DataType="&xsd;string" MustBePresent="false"/>
         </ResourceMatch>
       </Resource>
-
+      <Resource>
+        <ResourceMatch MatchId="&function;string-equal">
+            <AttributeValue
+		DataType="&xsd;string">&control;Video-1.0</AttributeValue>
+            <ResourceAttributeDesignator
+		AttributeId="&model;hasModel"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+        <ResourceMatch MatchId="&function;string-equal">
+            <AttributeValue
+		DataType="&xsd;string">thekeep-project</AttributeValue>
+            <ResourceAttributeDesignator
+		AttributeId="&object;owner"
+                DataType="&xsd;string" MustBePresent="false"/>
+        </ResourceMatch>
+      </Resource>
       <Resource>
         <ResourceMatch MatchId="&function;string-equal">
             <AttributeValue
@@ -87,6 +102,7 @@ specific Keep admin users and from Keep application server.</Description>
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">rsutton</AttributeValue> <!-- Rebecca -->
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">athom09</AttributeValue> <!-- Alex -->
           <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">eulindexer</AttributeValue> <!-- indexer (FIXME: read-only access?) -->
+          <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">hkglove</AttributeValue> <!-- Kevin Glover -->
         </Apply>
       </Condition>
 

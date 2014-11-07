@@ -174,5 +174,49 @@
       ]
     ]
   }
+},
+{
+  "pk": 6,
+  "model": "auth.group",
+  "fields": {
+    "name": "Video Curator",
+    "permissions": [
+      [
+        "add_videoperms",
+        "video",
+        "videoperms"
+      ],
+      [
+        "change_videoperms",
+        "video",
+        "videoperms"
+      ],
+      [
+        "delete_videoperms",
+        "video",
+        "videoperms"
+      ],
+      [
+        "download_video",
+        "video",
+        "videoperms"
+      ],
+      [
+        "play_video",
+        "video",
+        "videoperms"
+      ],
+      [
+        "view_video",
+        "video",
+        "videoperms"
+      ],
+      [
+        "view_collection",
+        "collection",
+        "collection"
+      ]
+    ]
+  }
 }
 ]

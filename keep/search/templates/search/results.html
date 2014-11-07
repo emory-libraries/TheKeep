@@ -25,7 +25,11 @@
         <div class="row result-listing cards">
 
             {% for r in results.object_list %}
-                {% include 'search/snippets/search_result_card.html' with preview_disabled=True %}
+              {% if r.object_type == 'audio' %}
+                {% include 'search/snippets/search_result_card_audio.html' with preview_disabled=True %}
+              {%elif r.object_type == 'video' %}
+                {% include 'search/snippets/search_result_card_video.html' with preview_disabled=True %}
+              {% endif %}
             {% endfor %}
         </div><!--/.cards-->
         {% endif %}

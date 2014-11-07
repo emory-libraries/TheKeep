@@ -51,6 +51,7 @@
 
   <div id="search-key">
     <div class="search-result"><span class="glyphicon glyphicon-headphones"></span> audio</div>
+    <div class="search-result"><span class="glyphicon glyphicon-film"></span> video</div>
     <div class="search-result"><span class="glyphicon glyphicon-envelope"></span> email</div>
     <div class="search-result"><span class="glyphicon glyphicon-folder-open"></span> collection</div>
     <div class="search-result"><span class="glyphicon glyphicon-hdd"></span> disk image</div>
@@ -76,6 +77,8 @@
       <span class="glyphicon glyphicon-folder-open"></span>
       {% elif obj.object_type  == 'audio' %}
       <span class="glyphicon glyphicon-headphones"></span>
+      {% elif obj.object_type  == 'video' %}
+      <span class="glyphicon glyphicon-film"></span>
       {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
       <span class="glyphicon glyphicon-envelope"></span>
       {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
@@ -90,6 +93,8 @@
       {% include "collection/snippets/list-collection.html" %}
     {% elif obj.object_type == 'audio' %}
       {% include "audio/snippets/list-audio.html" %}
+    {% elif obj.object_type == 'video' %}
+      {% include "video/snippets/list-video.html" %}
     {% elif obj.object_type == 'born-digital' %}
       {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
           {% include "file/snippets/list-diskimage.html" %}

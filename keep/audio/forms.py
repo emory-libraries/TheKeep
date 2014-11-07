@@ -9,10 +9,9 @@ from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcm.xmlmap.boda import Rights
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
 
-from keep.audio.models import AudioMods, SourceTech, DigitalTech,\
-    CodecCreator, TransferEngineer
+from keep.audio.models import AudioMods, SourceTech, DigitalTech
 from keep.collection.forms import NameForm, CollectionSuggestionField
-from keep.common.models import rights_access_terms_dict
+from keep.common.models import rights_access_terms_dict, TransferEngineer, CodecCreator
 from keep.common.forms import ReadonlyTextInput, rights_access_options, \
      EMPTY_LABEL_TEXT, CommentForm
 

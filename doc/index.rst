@@ -23,6 +23,7 @@ Contents
     app_management
     deploynotes
     changelog
+    developernotes
 
 
 Indices and tables

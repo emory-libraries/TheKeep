@@ -9,3 +9,36 @@ cookies as secure.  To enable login over HTTP (e.g. when developing with Django'
 you will need to override this in your ``localsettings.py``.  See the commented out example in
 ``localsettings.py.sample``.
     SESSION_COOKIE_SECURE = False
+
+
+Conversion to Git
+^^^^^^^^^^^^^^^^^
+
+All original code and old branches are still located in the SVN repository located `here <https://svn.library.emory.edu/svn/digital_masters/>`_
+
+
+
+Large File Upload Setup
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Setup NFS Mouont::
+
+
+    $ sudo apt-get install sshfs
+    $ sudo addgroup athom09 fusef
+    $ sudo chmod 665 /etc/fuse.conf
+
+Add the the following to `/etc/fuse.conf`::
+
+    user_allow_other
+
+
+Copy ``sshfsmount.sh`` and ``lfi_mount.sh`` to your ~/bin directory
+Modify ``lfi_mount.sh`` and fill in the variables. You will have to ask for the tomcat password.::
+
+    ./sshfsmount.sh -h <remote host> -m <mount point> -p <remote path> -r <your userid> -u tomcat
+
+
+To create the mouont run::
+
+    $ lfi_mount.sh

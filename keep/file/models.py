@@ -1,10 +1,11 @@
 import glob
-import os
 import logging
-import magic
-import bagit
 import urllib
 
+from keep.common.models import PremisFixity, PremisObject
+import os
+import magic
+import bagit
 from django.conf import settings
 from django.db import models
 from eulcm.xmlmap.boda import Rights
@@ -13,7 +14,6 @@ from eulfedora.models import FileDatastream, XmlDatastream, Relation, \
 from eulfedora.rdfns import relsext
 from eulxml import xmlmap
 from eulxml.xmlmap import mods, premis
-
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
 from keep.collection.models import CollectionObject
 from keep.file.utils import md5sum, sha1sum
@@ -56,59 +56,6 @@ class DiskImageMods(LocalMODS):
     genre = xmlmap.StringField('mods:genre[@authority="aat"]')
     'convience mapping for genre, for easy display on disk image edit form'
 
-class PremisFixity(premis.BasePremis):
-    ROOT_NAME = 'fixity'
-    algorithm = xmlmap.StringField('p:messageDigestAlgorithm')
-    digest = xmlmap.StringField('p:messageDigest')
-
-class PremisObjectFormat(premis.BasePremis):
-    ROOT_NAME = 'format'
-    name = xmlmap.StringField('p:formatDesignation/p:formatName')
-    version = xmlmap.StringField('p:formatDesignation/p:formatVersion')
-
-class PremisCreatingApplication(premis.BasePremis):
-    ROOT_NAME = 'creatingApplication'
-    name = xmlmap.StringField('p:creatingApplicationName')
-    version = xmlmap.StringField('p:creatingApplicationVersion')
-    date = xmlmap.DateField('p:dateCreatedByApplication')
-
-class PremisSoftwareEnvironment(premis.BasePremis):
-    ROOT_NAME = 'software'
-    name = xmlmap.StringField('p:swName',
-        help_text='Name of the software in original environment')
-    version = xmlmap.StringField('p:swVersion',
-        help_text='Software version')
-    type = xmlmap.StringField('p:swType', help_text='Type of software')
-
-hardware_types = ('personal computer', 'personal computer/laptop',
-    'external drive', 'removable media', 'word processor')
-
-class PremisHardwareEnvironment(premis.BasePremis):
-    ROOT_NAME = 'hardware'
-    name = xmlmap.StringField('p:hwName', help_text='Name of original hardware')
-    type = xmlmap.StringField('p:hwType', choices=hardware_types,
-        help_text='Type of hardware')
-    other_information = xmlmap.StringField('p:hwOtherInformation',
-        help_text='Other information about the original environment (e.g. original disk label)')
-
-class PremisEnvironment(premis.BasePremis):
-    ROOT_NAME = 'environment'
-    note = xmlmap.StringField('p:environmentNote')
-    # NOTE: both hardware and software could be repeated;
-    # for simplicity, onyl mapping one for disk images, for now
-    software = xmlmap.NodeField('p:software', PremisSoftwareEnvironment)
-    hardware = xmlmap.NodeField('p:hardware', PremisHardwareEnvironment)
-
-class PremisObject(premis.Object):
-    composition_level = xmlmap.IntegerField('p:objectCharacteristics/p:compositionLevel')
-    checksums = xmlmap.NodeListField('p:objectCharacteristics/p:fixity',
-                                     PremisFixity)
-    format = xmlmap.NodeField('p:objectCharacteristics/p:format',
-                              PremisObjectFormat)
-    creating_application = xmlmap.NodeField('p:objectCharacteristics/p:creatingApplication',
-                                            PremisCreatingApplication)
-    original_environment = xmlmap.NodeField('p:environment[p:environmentNote="Original environment"]',
-                                            PremisEnvironment)
 
 class DiskImagePremis(premis.Premis):
     XSD_SCHEMA = premis.PREMIS_SCHEMA
@@ -587,7 +534,9 @@ def large_file_uploads():
     upload_dir = getattr(settings, 'LARGE_FILE_STAGING_DIR')
     if upload_dir and os.path.isdir(upload_dir):
         # large file upload currently only supports BagIt SIPs, so ignore anythng else
-        bags = glob.glob('%s/*/bagit.txt' % upload_dir.rstrip('/'))
+        dbags = glob.glob('%s/diskimage/*/bagit.txt' % upload_dir.rstrip('/'))
+        vbags = glob.glob('%s/video/*/bagit.txt' % upload_dir.rstrip('/'))
+        bags = dbags + vbags
         return [os.path.dirname(b) for b in bags]
     else:
         logger.warning('LARGE_FILE_STAGING_DIR does not seem to be configured correctly')

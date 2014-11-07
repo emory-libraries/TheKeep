@@ -8,6 +8,7 @@ from django.template.response import TemplateResponse
 
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
+from keep.video.models import Video
 from keep.common import forms as commonforms
 #from keep.common.models import Rights
 from keep.common.utils import solr_interface
@@ -37,15 +38,11 @@ def search(request):
 
         # solr query to restrict this search to appropriate content models
         cm_query = solr.Q(solr.Q(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL) \
-                          | solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
+                          | solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL)\
+                          | solr.Q(content_model=Video.VIDEO_CONTENT_MODEL))
         # for now, sort by most recently created
         solrquery = solr.query(**search_opts).filter(cm_query).sort_by('-created')
 
-        # Exclude content user does not have permission to see
-        if not request.user.has_perm('common.marbl_allowed'):
-            solrquery = solrquery.exclude(content_model=AudioObject.AUDIO_CONTENT_MODEL)
-        if not request.user.has_perm('common.arrangement_allowed'):
-            solrquery = solrquery.exclude(content_model=ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
 
         # if user requested specific display fields, handle output display and formatting
         if form.cleaned_data['display_fields']:
