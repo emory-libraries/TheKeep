@@ -5,7 +5,11 @@ CHANGELOG
 
 Release 2.0 - Video Ingest
 --------------------------
-
+* Added ability for video ingest, search (by staff) and editing of metadata (by staff with appropriate permissions)
+* Video objects include access copy in bagit package
+* Larg File Upload SFTP server permissions and structure have been reworked to allow for different types of content
+* Video objects are browseable  in collection view
+* Now All staff can search for all types of content but viewing and editing metadata are still restricted by perms
 
 Release 1.10
 ------------
