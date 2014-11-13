@@ -56,12 +56,12 @@ def natural_date(date):
         return '%s' % date_parts[0]
     elif len(date_parts) == 2 or date_parts[2] == 0:
         d = datetime.date(1900, date_parts[1], 1)
-        month = d.strftime('%b').zfill(2)
+        month = d.strftime('%b')
         return "%s %s" % (month, date_parts[0])
     else:
         d = datetime.date(1900, date_parts[1], 1)
-        month = d.strftime('%b').zfill(2)
-        return "%s %s, %s" % (month, date_parts[2], date_parts[0])
+        month = d.strftime('%b')
+        return "%s %s, %s" % (month, date_parts[2].zfill(2), date_parts[0])
 
 
 @register.filter
