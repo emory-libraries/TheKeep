@@ -14,6 +14,10 @@ from keep.collection.models import CollectionObject
 from keep.common.fedora import user_full_name
 from keep.file.models import DiskImage
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 register = template.Library()
 
 @register.filter
@@ -51,12 +55,13 @@ def natural_date(date):
     if len(date_parts) == 1 or date_parts[1] == 0:  # also handle YYYY-00-00
         return '%s' % date_parts[0]
     elif len(date_parts) == 2 or date_parts[2] == 0:
-        d = datetime.date(date_parts[0], date_parts[1], 1)
-        return d.strftime('%b %Y')
+        d = datetime.date(1900, date_parts[1], 1)
+        month = d.strftime('%b')
+        return "%s %s" % (month, date_parts[0])
     else:
-        d = datetime.date(*date_parts)
-        # NOTE: Using 0-padded date because that is only option
-        return d.strftime('%b %d, %Y')
+        d = datetime.date(1900, date_parts[1], 1)
+        month = d.strftime('%b')
+        return "%s %s, %s" % (month, date_parts[2], date_parts[0])
 
 
 @register.filter
