@@ -85,6 +85,16 @@
         "audio"
       ],
       [
+        "play_researcher_video",
+        "video",
+        "videoperms"
+      ],
+      [
+        "view_researcher_video",
+        "video",
+        "videoperms"
+      ],
+      [
         "view_researcher_collection",
         "collection",
         "collection"
@@ -104,6 +114,11 @@
         "audio"
       ],
       [
+        "view_video",
+        "video",
+        "videoperms"
+      ],
+      [
         "view_collection",
         "collection",
         "collection"
@@ -112,6 +127,11 @@
         "play_audio",
         "audio",
         "audio"
+      ],
+      [
+        "play_video",
+        "video",
+        "videoperms"
       ],
        [
         "view_arrangement",
