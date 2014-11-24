@@ -108,7 +108,7 @@ def view(request, pid):
         raise Http404
 
 
-    return render(request, 'video/view.html', {"obj": obj})
+    return render(request, 'video/view.html', {"resource": obj})
 
 
 @permission_required_with_403("video.view_video")
