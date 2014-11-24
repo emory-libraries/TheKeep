@@ -1,16 +1,145 @@
-{% extends "page_base.html" %}
-{% load humanize %}
+{% extends "site_base.html" %}
+{% load static %} {% load audio_extras %} {% load search_tags %}
 
-{% block page-subtitle %}: Video : {{ obj.label }}{% endblock %}
+{% block page-subtitle %}: Video : {{ resource.label }}{% endblock %}
 
-{% block content-title %}{{ obj.label }} {% endblock %}
+{% block css %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'style/jplayer-skin/jplayer.blue.monday-mod.css' %}" />
+{% endblock %}
 
-{% block content-body %}
-{{ block.super }}
-{% include 'video/snippets/ds_links.html' %}
+{% block javascript %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/jquery.jplayer.min.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        $('#jquery_jplayer_1').jPlayer({
+            ready: function (event) {
+                $(this).jPlayer("setMedia", {
+                    title: "{{ resource.label }}",
+                    'm4v': "{{ resource.get_access_url }}"
+                    //'m4v': "http://wilson.library.emory.edu/~athom09/nshdf.mp4"
 
-{% if perms.video.change_videoperms %}
- <a class="pull-right btn btn-primary" href="{% url 'video:edit' obj.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
-{% endif %}
+                });
+            },
+            {# explicitly disable flash player because it doesn't send range requests needed for permissions check #}
+            solution: "html",
+            // swfPath: "{% static 'js/' %}",
+            // supplied: "{{ resource.access_file_extension }}",    {# previously was: supplied: "mp3, m4a", #}
+            supplied: "m4v",
+            wmode: "window",
+            smoothPlayBar: true,
+            keyEnabled: true,
+            remainingDuration: true,
+            toggleDuration: true,
+            warningAlerts: true,
+            errorAlerts:true                {#  do we want/need?   preload: 'auto', #}
+        });
+    });
+  </script>
 
 {% endblock %}
+
+{% block content %}
+<article class="view-media">
+    <header>
+        <div class="container">
+            <h2>{{ resource.label }}</h2>
+             <h3>
+              <a href="{% url 'collection:view' resource.collection.pid %}">
+              {% if resource.collection.mods.content.source_id != 0 %}
+                 {{ resource.collection.mods.content.source_id }}:
+              {% endif %}
+              {{ resource.collection.label }}</a>
+            </h3>
+
+            {% if perms.video.change_videoperms %}
+            <div class="pull-right edit">
+                <a class="pull-right btn btn-primary" href="{% url 'video:edit' resource.pid %}">edit <span class="glyphicon glyphicon-edit"></span></a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="container">
+      {# jplayer video player controls #}
+      {% include 'audio/snippets/audio_player.html' %}
+
+      <div class="row">
+        <header>
+          <ul class="nav nav-pills nav-justified">
+            <li class="id">
+              <h4>ID: <span>{% firstof resource.mods.content.ark_uri|ark_noid resource.pid %}</span></h4>
+            </li>
+              {% if resource.mods.content.ark_uri %}
+                <li>
+                  <h4>Permanent URL: <span><a href="{{ resource.mods.content.ark_uri }}" rel="bookmark">{{ resource.mods.content.ark_uri }}</a></span>
+                  </h4>
+                </li>
+              {% endif %}
+          </ul>
+        </header>
+      </div>
+      <div class="row meta">
+        <ul class="nav nav-pills nav-justified">
+          {% with origin_info=resource.mods.content.origin_info %}
+            <li>
+                <h4>Issued</h4>
+                <span>
+                {% if origin_info.issued %}
+                  {% for i in origin_info.issued %}{{ i|natural_date }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            <li>
+                <h4>Created</h4>
+                <span>
+                {% if origin_info.created %}
+                  {% for c in origin_info.created %}{{ c|natural_date }}{% if not forloop.last %}; {% endif %}{% endfor %}
+                {% else %}
+                    ---
+                {% endif %}
+                </span>
+            </li>
+            {% endwith %}
+
+            <li>
+                <h4>Duration</h4>
+                <span>
+                {% if resource.digitaltech.content.duration %}
+                    {{ resource.digitaltech.content.duration|natural_seconds }}
+                    {% else %}
+                    ---
+                {% endif %}
+            </span>
+            </li>
+        </ul>
+    </div>
+    <div class="row">
+        {% if resource.researcher_access|yesno:"yes,no" == "no" %}
+        <div class="message no-researcher">
+          <div class="symbol">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+          </div>
+          <div class="content">
+            <p>This item is not accessible to researchers.
+              {% if resource.rights.content.access_status and resource.rights.content.access_status.code %}
+              <br/>Access code {{ resource.rights.content.access_status.code }}: {{ resource.rights.content.access_status.text }}
+              {% endif %}
+              {% if resource.rights.content.block_external_access %}
+              <br/>External access has been blocked.
+              {% endif %}
+            </p>
+          </div>
+        </div>
+        {% endif %}
+    </div>
+  </div>
+
+
+</article>
+
+{% endblock %}
+

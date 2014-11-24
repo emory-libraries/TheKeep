@@ -9,6 +9,9 @@ from keep.collection.models import CollectionObject
 from keep.collection.forms import archive_choices
 from keep.common.utils import solr_interface
 
+import logging
+logger = logging.getLogger(__name__)
+
 def format_choices():
     choices = [
         (AudioObject.AUDIO_CONTENT_MODEL, 'Audio'),
@@ -75,7 +78,7 @@ class SearchForm(DateFilterSearchForm):
         q = q.facet_by('archive_id', sort='count', mincount=1) \
               .paginate(rows=0)
 
-        # - depending on permissions, restrict to collections with researcher audio
+        # - depending on permissions, restrict to collections with researcher content
         if not self.user.has_perm('collection.view_collection') and \
                self.user.has_perm('collection.view_researcher_collection'):
             q = q.join('collection_id', 'pid', researcher_access=True)

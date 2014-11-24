@@ -19,6 +19,7 @@ import urllib
 from keep.file.utils import md5sum, sha1sum
 from keep.common.models import PremisFixity, PremisObject, allow_researcher_access
 from eulcm.xmlmap.boda import Rights
+from django.core.urlresolvers import reverse
 
 import logging
 
@@ -341,25 +342,21 @@ class Video(DigitalObject):
         'Absolute url to view this object within the site'
         return ('video:view', [str(self.pid)])
 
-    # def get_access_url(self):
-    #     "Absolute url to view this object's access version"
-    #     if self.compressed_audio.exists:
-    #         return reverse('audio:download-compressed-audio',
-    #                        args=[str(self.pid), self.access_file_extension()])
-    #     # as of file migration (1.2), legacy DM access path is no longer needed
-    #
-    # def access_file_extension(self):
-    #     '''Return the expected file extension for whatever type of
-    #     compressed audio datastream the current object has (if it has
-    #     one), based on the datastream mimetype.  Currently, compressed
-    #     audio could be MP3 or M4A/MP4.'''
-    #     if self.compressed_audio.exists:
-    #         if self.compressed_audio.mimetype == 'audio/mpeg':
-    #             return 'mp3'
-    #         if self.compressed_audio.mimetype == 'audio/mp4':
-    #             return 'm4a'
-    #
-    #
+    def get_access_url(self):
+        "Absolute url to hear this object's access version"
+        if self.access_copy.exists:
+            return reverse('video:download-compressed-video',
+                           args=[str(self.pid)])
+
+    def access_file_extension(self):
+        '''Return the expected file extension for whatever type of
+        compressed video datastream the current object has (if it has
+        one), based on the datastream mimetype.  Currently, compressed
+        video is MP4.'''
+        if self.access_copy.exists:
+            return self.allowed_access_mimetypes.get(self.access_copy.mimetype, 'mp4')
+
+
     @property
     def researcher_access(self):
         return allow_researcher_access(self.rights.content)
