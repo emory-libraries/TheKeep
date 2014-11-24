@@ -55,9 +55,7 @@ class SearchViewsTest(KeepTestCase):
         mocksolr.query.sort_by.assert_called_with('title_exact')
         # check context params ?
 
-        mocksolr.query.filter.assert_called_with(
-            content_model=AudioObject.AUDIO_CONTENT_MODEL,
-            has_access_copy=True, researcher_access=True)
+        mocksolr.query.filter.assert_called_with(has_access_copy=True, researcher_access=True)
 
         # NOTE: template logic tested separately to avoid
         # complications with callable Mock objects
