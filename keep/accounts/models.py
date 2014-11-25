@@ -32,7 +32,7 @@ class AnonymousResearcher(AnonymousUser):
     def has_perm(self, perm):
         content_type, codename = perm.split('.')
         for p in self.permissions:
-            if str(p.content_type) == str(content_type) and p.codename == codename:
+            if str(p.content_type).replace( ' ', '') == str(content_type) and p.codename == codename:
                 return True
         return False
 
