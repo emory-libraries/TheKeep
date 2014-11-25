@@ -97,7 +97,7 @@ def view(request, pid):
     # # user either needs view video permissions OR
     # # if they can view researcher audio and object must be researcher-accessible
     if not request.user.has_perm('video.view_video') and \
-       not (request.user.has_perm('video.view_researcher_video') and \
+       not (request.user.has_perm('videoperms.view_researcher_video') and \
        bool(obj.researcher_access)):
         return prompt_login_or_403(request)
 
@@ -171,7 +171,7 @@ def download_video(request, pid, type, extension=None):
     # (also requires that request is for access copy, not original)
     if 'HTTP_RANGE' in request.META:
         if not (request.user.has_perm('video.play_video') and type == 'access') and \
-               not (request.user.has_perm('video.play_researcher_video') and \
+               not (request.user.has_perm('videoperms.play_researcher_video') and \
                     bool(obj.researcher_access) and type == 'access'):
             return prompt_login_or_403(request)
 

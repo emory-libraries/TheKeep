@@ -24,7 +24,9 @@ def audio_access(user):
     within the view logic.
     '''
     return user.has_perm('audio.view_audio') or \
-           user.has_perm('audio.view_researcher_audio')
+           user.has_perm('audio.view_researcher_audio') or \
+           user.has_perm('video.view_video') or \
+           user.has_perm('videoperms.view_researcher_video')
 
 @user_passes_test_with_403(audio_access)
 def site_index(request):
