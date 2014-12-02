@@ -480,9 +480,13 @@ class Video(DigitalObject):
         if self.digitaltech.content.duration:
             data['duration'] = self.digitaltech.content.duration
 
-        if self.mods.content.origin_info and self.mods.content.origin_info.issued:
+        if self.mods.content.origin_info and \
+           self.mods.content.origin_info.issued \
+                and not self.mods.content.origin_info.issued.is_empty():
             data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
-        if self.mods.content.origin_info and self.mods.content.origin_info.created:
+        if self.mods.content.origin_info and \
+           self.mods.content.origin_info.created \
+                and not self.mods.content.origin_info.created.is_empty():
             data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
 
         return data

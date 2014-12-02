@@ -49,19 +49,22 @@ def ark_noid(ark_uri):
 def natural_date(date):
     '''Display human readable date (Feb 01, 2002) for an ISO date in format
     YYYY-MM-DD, YYYY-MM, or YYYY.'''
-    date_parts = date.split('-')
-    date_parts = [int(v) for v in date_parts]
-    # year only: no modification needed
-    if len(date_parts) == 1 or date_parts[1] == 0:  # also handle YYYY-00-00
-        return '%s' % date_parts[0]
-    elif len(date_parts) == 2 or date_parts[2] == 0:
-        d = datetime.date(1900, date_parts[1], 1)
-        month = d.strftime('%b')
-        return "%s %s" % (month, date_parts[0])
-    else:
-        d = datetime.date(1900, date_parts[1], 1)
-        month = d.strftime('%b')
-        return "%s %s, %s" % (month, str(date_parts[2]).zfill(2), date_parts[0])
+    try:
+        date_parts = date.split('-')
+        date_parts = [int(v) for v in date_parts]
+        # year only: no modification needed
+        if len(date_parts) == 1 or date_parts[1] == 0:  # also handle YYYY-00-00
+            return '%s' % date_parts[0]
+        elif len(date_parts) == 2 or date_parts[2] == 0:
+            d = datetime.date(1900, date_parts[1], 1)
+            month = d.strftime('%b')
+            return "%s %s" % (month, date_parts[0])
+        else:
+            d = datetime.date(1900, date_parts[1], 1)
+            month = d.strftime('%b')
+            return "%s %s, %s" % (month, str(date_parts[2]).zfill(2), date_parts[0])
+    except:
+        return ''
 
 
 @register.filter
