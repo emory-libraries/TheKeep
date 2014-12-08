@@ -325,6 +325,12 @@ Release 2.1 - Video Front End
 
     $ manage.py syncrepo
 
+* run command to create Video permission::
+
+    $ manage.py syncdb
+
+* Replace current solr schema with one from the project
+
 
 Release 2.0 - Video Ingest
 --------------------------

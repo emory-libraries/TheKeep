@@ -2,6 +2,12 @@
 
 CHANGELOG
 =========
+Release 2.1 - Researcher Video Playback
+---------------------------------------
+* Enabled researcher video search and playback
+* Fixed issue date and creation date bug
+* Fixed index bug when file size is too large
+
 
 Release 2.0 - Video Ingest
 --------------------------
