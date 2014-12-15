@@ -321,10 +321,6 @@ Upgrade Notes
 
 Release 2.1 - Video Front End
 -----------------------------
-* run command to create Video content model::
-
-    $ manage.py syncrepo
-
 * run command to create Video permission::
 
     $ manage.py syncdb
