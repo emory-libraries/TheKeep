@@ -484,10 +484,12 @@ class AudioObject(DigitalObject):
             data['duration'] = self.digitaltech.content.duration
 
         if self.mods.content.origin_info and \
-           self.mods.content.origin_info.issued:
+           self.mods.content.origin_info.issued \
+                and not self.mods.content.origin_info.issued.is_empty():
             data['date_issued'] = [unicode(di) for di in self.mods.content.origin_info.issued]
         if self.mods.content.origin_info and \
-           self.mods.content.origin_info.created:
+           self.mods.content.origin_info.created \
+                and not self.mods.content.origin_info.created.is_empty():
             data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
 
 

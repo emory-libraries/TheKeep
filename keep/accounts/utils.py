@@ -13,7 +13,8 @@ from keep.video.models import Video
 from keep.arrangement.models import ArrangementObject
 from keep.file.models import DiskImage
 
-
+import logging
+logger = logging.getLogger(__name__)
 
 def searchable_cmodels(user):
     '''Generate a list of content models that can included in search results,
@@ -65,10 +66,10 @@ def filter_by_perms(solrq, user):
     if not user.has_perm('audio.view_audio') and \
            user.has_perm('audio.view_researcher_audio'):
 
-        # NOTE: this filter will only work for audio content
-        solrq = solrq.filter(content_model=AudioObject.AUDIO_CONTENT_MODEL,
-                             has_access_copy=True,
-                             researcher_access=True)
+        cm_query = solrq.Q(solrq.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL) |
+                          solrq.Q(content_model=Video.VIDEO_CONTENT_MODEL))
+
+        solrq = solrq.filter(cm_query).filter(has_access_copy=True, researcher_access=True)
     return solrq
 
 

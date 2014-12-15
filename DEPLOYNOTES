@@ -319,6 +319,14 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.1 - Video Front End
+-----------------------------
+* run command to create Video permission::
+
+    $ manage.py syncdb
+
+* Replace current solr schema with one from the project
+
 
 Release 2.0 - Video Ingest
 --------------------------

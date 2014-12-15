@@ -24,7 +24,9 @@ def audio_access(user):
     within the view logic.
     '''
     return user.has_perm('audio.view_audio') or \
-           user.has_perm('audio.view_researcher_audio')
+           user.has_perm('audio.view_researcher_audio') or \
+           user.has_perm('video.view_video') or \
+           user.has_perm('videoperms.view_researcher_video')
 
 @user_passes_test_with_403(audio_access)
 def site_index(request):
@@ -46,12 +48,9 @@ def search(request):
 
         solr = solr_interface()
 
-        # NOTE: restrict to audio for now since that is the only
-        # content type currently supported for researcher access
-        #
-        # TO SEARCH FOR VIDEO ADD: | solr.Q(content_model=Video.VIDEO_CONTENT_MODEL)   to below query
-        # MOST ALL OTHER PARTS ARE IN PLACE
-        cm_query = solr.Q(solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL))
+        # NOTE: content type currently supported for researcher access
+        cm_query = solr.Q(solr.Q(content_model=AudioObject.AUDIO_CONTENT_MODEL) |
+                          solr.Q(content_model=Video.VIDEO_CONTENT_MODEL))
 
         # start with a default query to add filters & search terms
         q = solr.query().filter(cm_query)
@@ -86,6 +85,12 @@ def search(request):
             # to libraries; join on pid->collection id in order to filter on
             # archive id property on the associated collection object
             q = q.join('pid', 'collection_id', archive_id=library)
+
+        # if format search term is specified, filter
+        if 'format' in search_opts and search_opts['format']:
+            format = search_opts['format']
+            # search on format by content model
+            q = q.query(solr.Q(content_model=format))
 
         # date search
         if search_opts.get('start_date', None) or search_opts.get('end_date', None):

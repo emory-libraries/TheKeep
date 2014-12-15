@@ -3,9 +3,22 @@ from eultheme.forms import DateFilterSearchForm
 from eulcommon.djangoextras.formfields import DynamicChoiceField
 
 from keep.repoadmin.forms import SolrSearchField
+from keep.audio.models import AudioObject
+from keep.video.models import Video
 from keep.collection.models import CollectionObject
 from keep.collection.forms import archive_choices
 from keep.common.utils import solr_interface
+
+import logging
+logger = logging.getLogger(__name__)
+
+def format_choices():
+    choices = [
+        (AudioObject.AUDIO_CONTENT_MODEL, 'Audio'),
+        (Video.VIDEO_CONTENT_MODEL, 'Video'),
+    ]
+    choices.insert(0, ('', ''))   # blank option at the beginning (default)
+    return choices
 
 
 class SearchForm(DateFilterSearchForm):
@@ -29,10 +42,13 @@ class SearchForm(DateFilterSearchForm):
     library = DynamicChoiceField(label="Library",  choices=archive_choices,
         initial='', required=False,
         help_text='Restrict search to materials owned by the specified library.')
+    format = DynamicChoiceField(label="Format",  choices=format_choices,
+        initial='', required=False,
+        help_text='Restrict search to materials by format.')
 
     # start and end date fields inherited from eultheme
 
-    _adv_fields = ['collection', 'library']
+    _adv_fields = ['collection', 'library', 'format']
 
     # advanced fields and advanced fields values properties needed
     # for search filter display are inherited from eulthemen
@@ -62,7 +78,7 @@ class SearchForm(DateFilterSearchForm):
         q = q.facet_by('archive_id', sort='count', mincount=1) \
               .paginate(rows=0)
 
-        # - depending on permissions, restrict to collections with researcher audio
+        # - depending on permissions, restrict to collections with researcher content
         if not self.user.has_perm('collection.view_collection') and \
                self.user.has_perm('collection.view_researcher_collection'):
             q = q.join('collection_id', 'pid', researcher_access=True)
