@@ -70,10 +70,7 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 raise
 
             try:
-                while True:
-                    data = obj.audio.content.read(2048)
-                    if not data:
-                        break
+                for data in  obj.audio.get_chunked_content():
                     destination.write(data)
             except Exception as e:
                 logger.error("Error downloading master audio file for conversion: %s" % e)
