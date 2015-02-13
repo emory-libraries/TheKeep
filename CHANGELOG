@@ -2,6 +2,11 @@
 
 CHANGELOG
 =========
+Release 2.1.1 - Bug-Fix - Large Master Conversion
+-------------------------------------------------
+* Fixed problem when convert large Audio files to MP3
+
+
 Release 2.1 - Researcher Video Playback
 ---------------------------------------
 * Enabled researcher video search and playback
