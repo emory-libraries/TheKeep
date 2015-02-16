@@ -14,12 +14,12 @@ from django.db import models
 from django.conf import settings
 from django.contrib.auth. models import User
 
-from keep import mods
+from eulxml.xmlmap import mods
 from keep.audio.models import  AudioObject, SourceTech, CodecCreator, \
      TransferEngineer
 from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository
-from keep.common.models import Rights
+from eulcm.xmlmap.boda import Rights
 
 logger = logging.getLogger(__name__)
 

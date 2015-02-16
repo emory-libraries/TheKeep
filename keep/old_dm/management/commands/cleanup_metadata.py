@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand
 from pidservices.clients import parse_ark
 
 from keep.audio.models import AudioObject
-from keep.mods import Identifier
+from eulxml.xmlmap.mods import Identifier
 
 logger = logging.getLogger(__name__)
 
