@@ -2,7 +2,7 @@ from django.conf import settings
 from mock import Mock, patch
 
 from keep.collection.fixtures import FedoraFixtures
-from keep import mods
+from eulxml.xmlmap import mods
 from keep.collection.models import CollectionObject
 from keep.old_dm import models
 from keep.testutil import KeepTestCase
