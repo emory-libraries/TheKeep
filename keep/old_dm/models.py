@@ -15,11 +15,14 @@ from django.conf import settings
 from django.contrib.auth. models import User
 
 from eulxml.xmlmap import mods
-from keep.audio.models import  AudioObject, SourceTech, CodecCreator, \
+from keep.video.models import  Video, VideoSourceTech, CodecCreator, \
      TransferEngineer
 from keep.collection.models import CollectionObject
 from keep.common.fedora import Repository
-from eulcm.xmlmap.boda import Rights
+from keep.common.models import rights_access_terms_dict
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +62,7 @@ class StaffName(models.Model):
             # use the Keep/LDAP account if possible
             first, sep, last = self.name.rpartition(' ')
             # restrict to LDAP via ldap user profile
-            user = User.objects.filter(emoryldapuserprofile__isnull=False,
-                                       first_name=first, last_name=last).get()
+            user = User.objects.filter(first_name=first, last_name=last).get()
             return (user.get_full_name(), user.username,
                          TransferEngineer.LDAP_ID_TYPE)
         except User.DoesNotExist:
@@ -203,11 +205,12 @@ class Subject(models.Model):
     def __unicode__(self):
         return '%s [authority = %s, field %s]' % (self.subject, self.authority.authority, self.fieldnames)
 
-class AudioContentManager(models.Manager):
+class VideoContentManager(models.Manager):
     # custom manager to find audio items only, using resource type
     def get_query_set(self):
-        # filter on resource type: starting with sound recording, will also match musical & nonmusical variant types
-        return super(AudioContentManager, self).get_query_set().filter(resource_type__type__startswith='sound recording')
+        # filter on resource type
+        return super(VideoContentManager, self).get_query_set().filter(models.Q(resource_type__type__startswith='moving image') |
+                                                                       models.Q(resource_type__type__startswith='video recording'))
 
 class Content(models.Model):   # individual item
     'A single Content item; main item-level record, and the basis for migration'
@@ -310,7 +313,7 @@ class Content(models.Model):   # individual item
 
     # default manager & custom audio-only manager
     objects = models.Manager()
-    audio_objects = AudioContentManager()
+    video_objects = VideoContentManager()
 
     class Meta:
         db_table = u'contents'
@@ -324,11 +327,9 @@ class Content(models.Model):   # individual item
 
     def as_digital_object_and_fields(self):
         repo = Repository()
-        obj = repo.get_object(type=AudioObject)
+        obj = repo.get_object(type=Video)
 
         row_data = self.descriptive_metadata(obj)
-        row_data += self.source_tech_metadata(obj)
-        row_data += self.digital_tech_metadata(obj)
         row_data += self.rights_metadata(obj)
 
         return obj, row_data
@@ -420,9 +421,9 @@ class Content(models.Model):   # individual item
             modsxml.general_note.text = full_note_text
         data.append(full_note_text)
 
-        logger.debug('Item Type of Resource: %s' % 'sound recording')
-        modsxml.resource_type = 'sound recording'
-        data.append('sound recording')
+        logger.debug('Item Type of Resource: %s' % 'moving image')
+        modsxml.resource_type = 'moving image'
+        data.append('moving image')
 
         if self.data_entered_by:
             logger.debug('Item recordOrigin: %s' % self.data_entered_by.name)
@@ -619,7 +620,7 @@ class Content(models.Model):   # individual item
             # convert to lower case for best match with keep format
             keepchars = chars[0].lower().strip()
             if keepchars != '' and keepchars != 'None':
-                if keepchars not in SourceTech.sound_characteristic_options:
+                if keepchars not in VideoSourceTech.sound_characteristic_options:
                     logger.warning("Sound characteristic '%s' is not in the options list" \
                         % keepchars)
                 st_xml.sound_characteristics = keepchars
@@ -733,7 +734,7 @@ class Content(models.Model):   # individual item
         # print out rights fields and return a list of values
         logger.debug('--- Rights Metadata ---')
         data = []
-        
+
         # shortcut reference to rights xml to be updated below
         rights_xml = obj.rights.content
         
@@ -811,7 +812,7 @@ class Restriction(models.Model):
         managed = False
 
     rights_mapping = {
-        # old_dm restriction id : keep.audio.models.Rights accessStatus code
+        # old_dm restriction id : keep.video.models.Rights accessStatus code
         1: 2,
         5: 2,
         2: 3,
@@ -826,18 +827,18 @@ class Restriction(models.Model):
 
     @property
     def access_code(self):
-        # return the equivalent keep.audio.models.Rights access status code for the current restriction id
+        # return the equivalent keep.vidoe.models.Rights access status code for the current restriction id
         return self.rights_mapping[self.id]
 
     @property
     def access_abbreviation(self):
         # return the migrated access abbreviation based on access code
-        return Rights.access_terms_dict[str(self.access_code)].abbreviation
+        return rights_access_terms_dict[str(self.access_code)].abbreviation
 
     @property
     def access_text(self):
         # return the migrated access text based on access code
-        return Rights.access_terms_dict[str(self.access_code)].text
+        return rights_access_terms_dict[str(self.access_code)].text
         
 
 class AccessRights(models.Model):
@@ -875,14 +876,14 @@ class CodecCreatorSound(models.Model):
         return unicode(self.id)
 
     codec_creator_mapping = {
-        # old_dm codec_creator_sounds id : keep.audio.models.CodecCreator.configuration
+        # old_dm codec_creator_sounds id : keep.video.models.CodecCreator.configuration
         1: '1', # mac g4
         2: '2', # mac g5
         3: '5', # unknown
     }
 
     def sourcetech_values(self):
-        # returns the value portion of keep.audio.models.CodecCreator.configurations
+        # returns the value portion of keep.video.models.CodecCreator.configurations
         # which consists of:
         # hardware, software, software version
         return CodecCreator.configurations[self.codec_creator_mapping[self.id]]
@@ -933,7 +934,7 @@ class Form(models.Model):
             form = form[len('Sound - '):]
         return form
 
-    # mappings between old_dm forms and equivalent keep.audio form options
+    # mappings between old_dm forms and equivalent keep.video form options
     form_map = {
         'acetate vinyl shellac - 45 rpm': '45 RPM',
         'audiocassette': 'audio cassette',
@@ -956,7 +957,7 @@ class Form(models.Model):
         # it needs to be converted
         if form in self.form_map:
             form = self.form_map[form]
-        if form not in SourceTech.form_options:
+        if form not in VideoSourceTech.form_options:
             logger.warn("Source form '%s' is not listed in form options" \
                                 % form)
         return form
@@ -996,30 +997,9 @@ class Speed(models.Model):
         elif 'ips' in self.speed_alt:
             return 'inches/sec'
 
-    # mappings between old_dm speed to keep.audio speed options
-    # format will be speed (in 'value unit' format) : aspect
-    # method to generate speed aspects from sourcetech speed_options
-    def _generate_speed_aspects():
-        aspects = {}
-        for st_speed in SourceTech.speed_options:
-            # speed options is formulated for django select with grouping
-            if isinstance(st_speed[1], tuple):
-                # pair will be | delimited value, display form
-                for pair in st_speed[1]:
-                  aspect, value, unit = pair[0].split('|')
-                  if value == unit:   # other
-                      lookup_value = value
-                  else:
-                      lookup_value = '%s %s' % (value, unit)
-                  aspects[lookup_value] = aspect
-        # skipping Not Applicable (no equivalent in old_dm data for migration)
-        return aspects
-    # populate speed aspects
-    speed_aspects = _generate_speed_aspects()
-
     @property
     def aspect(self):
-        'SourceTech aspect value - calculated from speed & unit'
+        'VideoSourceTech aspect value - calculated from speed & unit'
         if self.unit == 'other':
             lookup_speed = self.unit
         else:
@@ -1102,7 +1082,7 @@ class Housing(models.Model):
         return '%s' % self.id
 
     # mappings between old_dm housing options (in lower-case form) to the
-    # equivalent keep.audio housing options
+    # equivalent keep.video housing options
     housing_map = {
         'mixed': 'other',
         'extended/amaray case': 'jewel case',
@@ -1116,7 +1096,7 @@ class Housing(models.Model):
 
     def as_sourcetech_housing(self):
         '''Convert old_dm Housing description into an expected value
-        in the keep.audio.models.SourceTech.housing_options list'''
+        in the keep.video.models.VideoSourceTech.housing_options list'''
 
         # housing in old_dm DB looks like:
         #    Moving Image/Sound: Container
@@ -1124,14 +1104,14 @@ class Housing(models.Model):
         # We only care about the second part for this migration
         # TODO: probably requires additional clean-up
         prefix, sep, housing = self.description.partition(': ')
-        # keep.audio housing options are all lower case
+        # keep.video housing options are all lower case
         housing = housing.lower()
         # if it is listed in our housing map, get the equivalent field
         if housing in self.housing_map:
             housing = self.housing_map[housing]
         # fields should either be in housing_map or match source tech
         # housing fields after conversion to lower-case
-        if housing not in SourceTech.housing_options:
+        if housing not in VideoSourceTech.housing_options:
             logger.warn("Source housing '%s' is not listed in housing options" \
                                 % housing)
         return housing

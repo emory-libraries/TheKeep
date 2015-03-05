@@ -310,6 +310,7 @@ class Video(DigitalObject):
         pid = super(Video, self).get_default_pid()
 
         if self.mods.content.ark:
+            self.provenance.content.create_object()
             self.provenance.content.object.id = self.mods.content.ark
             self.provenance.content.object.id_type = 'ark'
 

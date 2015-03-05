@@ -54,8 +54,8 @@ class Command(BaseCommand):
         with self.open_csv(options) as csvfile:
             if csvfile:
                 csvfile.writerow(Content.all_fields)
-            # restrict to audio items
-            items = Content.audio_objects.all()
+            # restrict to video items
+            items = Content.video_objects.all()
             filter_labels = []   # human-readable labels for reporting filters in use
             # filter items by location if one was specified
             if 'location' in options and options['location'] is not None:
@@ -78,19 +78,12 @@ class Command(BaseCommand):
                 if item.marked_for_deletion():
                     logger.info('DELETE item %d -- Title: %s' % (item.id, item.title))
                     continue
-
                 obj, row_data = item.as_digital_object_and_fields()
                 if not options['dry_run']:
                     message = 'Migrated from legacy Digital Masters item %d' % (item.id,)
                     obj.save(logMessage=message)
                     logger.info('Ingested legacy Digital Masters item %d as %s' % (item.id, obj.pid))
 
-                    title_prefix = '(migrated to The Keep: %s) ' % (obj.pid,)
-                    item.title = title_prefix + item.title
-                    if len(item.title) > 255:
-                        logger.warning('Long title truncated in legacy DM database. Full version retained in The Keep.')
-                        item.title = item.title[:255]
-                    item.save()
                 if csvfile:
                     csvfile.writerow([_csv_sanitize(field) for field in row_data])
 
@@ -98,7 +91,7 @@ class Command(BaseCommand):
         filter = ''
         if filter_labels:
             filter = 'with %s' % ', '.join(filter_labels)
-        logger.info('\n\n%d audio items %s (%d total items)' % (items.count(), filter, Content.objects.count()))
+        logger.info('\n\n%d video items %s (%d total items)' % (items.count(), filter, Content.objects.count()))
         
         if MISSING_COLLECTIONS:
             warning = '\nThe following collections are referenced in the old database but are not yet available in Fedora:\n'
