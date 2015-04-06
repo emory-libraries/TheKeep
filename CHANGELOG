@@ -2,6 +2,11 @@
 
 CHANGELOG
 =========
+Release 2.1.2 - Hotfix Add ETD Library
+--------------------------------------
+* Added library for ETD
+
+
 Release 2.1.1 - Bug-Fix - Large Master Conversion
 -------------------------------------------------
 * Fixed problem when convert large Audio files to MP3
