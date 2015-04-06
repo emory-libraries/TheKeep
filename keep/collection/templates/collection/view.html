@@ -190,6 +190,11 @@ $.getJSON("{% url 'collection:playlist' collection.pid %}", function(data) {
             <span class="glyphicon glyphicon-edit"></span>
           </a>
           {% endif %} {# audio edit #}
+           {% if obj.object_type == 'video'  and perms.video.change_videoperms %}
+          <a class="aux-action"  href="{{ edit_url }}" title="Edit">
+            <span class="glyphicon glyphicon-edit"></span>
+          </a>
+          {% endif %} {# video edit #}
           {% if obj.object_type == 'born-digital' %}
             {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model and perms.file.change_disk_image %}
             <a class="aux-action"  href="{{ edit_url }}" title="Edit">
