@@ -319,6 +319,13 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.1.2 - ETD Library
+---------------------------
+* run command to create ETD library
+
+    $ manage.py syncrepo
+
+
 Release 2.1 - Video Front End
 -----------------------------
 * run command to create Video permission::
