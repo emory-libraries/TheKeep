@@ -140,6 +140,8 @@ def edit_url(item):
     viewname = None
     if AudioObject.AUDIO_CONTENT_MODEL in cmodels:
         viewname = 'audio:edit'
+    elif Video.VIDEO_CONTENT_MODEL in cmodels:
+        viewname = 'video:edit'
     elif DiskImage.DISKIMAGE_CONTENT_MODEL in cmodels:
         viewname = 'file:edit'
     elif CollectionObject.COLLECTION_CONTENT_MODEL in cmodels:
