@@ -14,7 +14,8 @@ from eulfedora.util import RequestFailed, ChecksumMismatch
 
 from keep.video.models import Video
 from keep.common.fedora import Repository
-from keep.file.utils import md5sum
+from keep.file.utils import md5sum, sha1sum
+from keep.common.models import PremisFixity, PremisObject
 
 logger = logging.getLogger(__name__)
 
@@ -108,11 +109,17 @@ class Command(BaseCommand):
 
                 master_path =  paths.dv or paths.mov or paths.mpg or paths.m4v
                 master_path_md5 = master_path + ".md5"
-                # master_path_sha1 = master_path + ".sha1"
-                with open(master_path_md5) as f:
-                    master_checksum = f.read().strip()
-                # with open(master_path_sha1) as f:
-                #     master_sha1 = f.read().strip()
+                master_path_sha1 = master_path + ".sha1"
+                try:
+                    with open(master_path_md5) as f:
+                        master_checksum = f.read().strip()
+                except:
+                    master_checksum = None
+                try:
+                    with open(master_path_sha1) as f:
+                        master_sha1 = f.read().strip()
+                except:
+                    master_sha1 = None
                 master_mimetype = self.mimetype[master_path.split(".")[-1]]
 
                 access_path = paths.mp4
@@ -179,6 +186,22 @@ class Command(BaseCommand):
                         file_info.append(self.file_ingest_status[access_updated])
                     else:
                         file_info.append('')	# blank to indicate no file
+
+                obj.provenance.content.create_object()
+                obj.provenance.content.object.id_type = 'ark'
+                obj.provenance.content.object.id = ''
+                obj.provenance.content.object.type = 'p:file'
+                obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
+                obj.provenance.content.object.checksums[0].digest = master_checksum
+
+                if master_sha1 is None:
+                    master_sha1 = sha1sum(master_path)
+
+                obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
+                obj.provenance.content.object.checksums[1].digest = master_sha1
+                obj.provenance.content.object.create_format()
+                obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper()
+                obj.save("updated provenance mmetadata")
 
                 if files_updated or options['dry_run']:
                     stats['updated'] += 1

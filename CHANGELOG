@@ -2,6 +2,10 @@
 
 CHANGELOG
 =========
+
+Release 2.2 - Ye'ol DM Video
+----------------------------
+* Migration scripts to migrate metadata and video files fromm DM to Keep
 Release 2.1.1 - Bug-Fix - Large Master Conversion
 -------------------------------------------------
 * Fixed problem when convert large Audio files to MP3
