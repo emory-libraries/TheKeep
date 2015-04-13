@@ -329,14 +329,11 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
                                source_id=int(num))
         # if parent is specified, restrict by archive id (parent should be a pid)
         if parent is not None:
-            # check for prefixed and non-prefixed pid
+            # remove prefix on parent
             prefix ='info:fedora/'
-            alt_parent = parent
             if parent.startswith(prefix):
-                alt_parent = parent[12:]
-            else:
-                alt_parent = '%s%s' % (prefix, parent)
-            solrquery = solrquery.query(solrquery.Q(archive_id=parent) | solrquery.Q(archive_id=alt_parent))
+                parent = parent[12:]
+            solrquery = solrquery.query(archive_id=parent)
         # by default, only returns 10; get everything
         # - solr response is a list of dictionary with collection info
         # use dictsort in template for sorting where appropriate
