@@ -319,6 +319,12 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.2 - Ye ol DM Video
+----------------------------
+* add old_dm and accessions to DB config
+* set OLD_DM_MEDIA_ROOT = 'http://webprd001.library.emory.edu/harvest/preservation/'  and make sure fedora server can access it via the web
+* set MIGRATION_VIDEO_ROOT to the mnt point where OLD_DM_MEDIA_ROOT points
+
 Release 2.1.2 - ETD Library
 ---------------------------
 * run command to create ETD library

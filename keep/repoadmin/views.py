@@ -156,6 +156,8 @@ def keyword_search(request):
 
         # search on all collected search terms
         q = q.query(*terms)
+        #Exclude archival collection (Top-level library)
+        q=q.exclude(solr.Q(object_type='collection') & ~solr.Q(archive_id__any=True))
 
         # get a copy of current url options for pagination
         # and to generate links to remove active filters

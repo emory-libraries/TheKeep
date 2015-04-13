@@ -365,7 +365,7 @@ class Content(models.Model):   # individual item
 
         # otherwise we have a collection
         else:
-            obj.collection_uri = self.collection_object.uri
+            obj.collection = self.collection_object
 
         if self.collection:
             logger.debug('Collection: %s' % self.collection)
