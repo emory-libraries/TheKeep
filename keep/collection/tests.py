@@ -1147,7 +1147,7 @@ class CollectionViewsTest(KeepTestCase):
         response = self.client.get(suggest_url, {'term': '1000 rushd'})
         solrquery.filter.assert_called_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
         solrquery.field_limit.assert_called_with(['pid', 'source_id', 'title',
-                                                        'archive_short_name', 'creator'])
+                                                        'archive_short_name', 'creator', 'archive_id'])
         solrquery.sort_by.assert_called_with('-score')
         # search terms
         solrquery.query.assert_called_with(['1000', 'rushd*'])
