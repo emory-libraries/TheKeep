@@ -140,7 +140,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter', 'exclude']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -178,7 +178,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter', 'exclude']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -190,6 +190,7 @@ class RepoAdminViewsTest(KeepTestCase):
         # - query should be called with tokenized search terms
         mocksolr.query.query.assert_any_call(collection_label='kittens')
         # - sort by date created wheno only using fielded search terms
+        logger.info("SORT: %s" % mocksolr.query.sort_by.call_args_list)
         sort_args = mocksolr.query.sort_by.call_args_list[-2:]
         self.assertEqual(call('-created'), sort_args[0])
 
@@ -222,7 +223,7 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter', 'exclude']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
         # set mock facet results via paginator
         mockpage = mockpaginator.return_value.page.return_value
