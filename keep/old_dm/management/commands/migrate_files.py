@@ -195,6 +195,8 @@ class Command(BaseCommand):
                 obj.provenance.content.object.checksums[0].digest = master_checksum
 
                 if master_sha1 is None:
+                    if self.verbosity > self.v_normal:
+                        self.stdout.write('Calculating SHA-1 for %s\n' % master_path)
                     master_sha1 = sha1sum(master_path)
 
                 obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
@@ -363,7 +365,7 @@ class Command(BaseCommand):
         '''
         if checksum is None:
             if self.verbosity > self.v_normal:
-                self.stdout.write('Calculating checksum for %s\n' % filepath)
+                self.stdout.write('Calculating MD5 for %s\n' % filepath)
             checksum = md5sum(filepath)
 
         # - if the content already exists with the correct checksum
