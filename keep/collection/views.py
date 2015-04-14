@@ -628,7 +628,7 @@ def collection_suggest(request):
         if term[-1] == '*' and q.count() == 0:
             q = base_query.query(search_terms(term[:-1]))
             #Exclude archival collection (Top-level library)
-        q=q.exclude(~solr.Q(archive_id__any=True))
+        q=q.filter(archive_id__any=True)
 
         suggestions = [{'label': '%s %s' % (c.get('source_id', ''),
                                             c.get('title', '(no title')),

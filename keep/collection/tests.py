@@ -1145,7 +1145,8 @@ class CollectionViewsTest(KeepTestCase):
         solrquery.__getitem__.return_value = result
         # search term, inspect query args and json result
         response = self.client.get(suggest_url, {'term': '1000 rushd'})
-        solrquery.filter.assert_called_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        solrquery.filter.assert_calleed_onec_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        solrquery.filter.assert_calleed_onec_with(archive_id__any=True)
         solrquery.field_limit.assert_called_with(['pid', 'source_id', 'title',
                                                         'archive_short_name', 'creator', 'archive_id'])
         solrquery.sort_by.assert_called_with('-score')
