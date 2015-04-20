@@ -615,7 +615,7 @@ def collection_suggest(request):
         base_query = solr.query() \
                     .filter(content_model=CollectionObject.COLLECTION_CONTENT_MODEL) \
                     .field_limit(['pid', 'source_id', 'title', 'archive_short_name',
-                                  'creator']) \
+                                  'creator', 'archive_id']) \
                     .sort_by('-score')
 
         q = base_query.query(terms)
@@ -627,6 +627,8 @@ def collection_suggest(request):
         # try the search again without the wildcard.
         if term[-1] == '*' and q.count() == 0:
             q = base_query.query(search_terms(term[:-1]))
+            #Exclude archival collection (Top-level library)
+        q=q.filter(archive_id__any=True)
 
         suggestions = [{'label': '%s %s' % (c.get('source_id', ''),
                                             c.get('title', '(no title')),

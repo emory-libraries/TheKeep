@@ -310,6 +310,7 @@ class Video(DigitalObject):
         pid = super(Video, self).get_default_pid()
 
         if self.mods.content.ark:
+            self.provenance.content.create_object()
             self.provenance.content.object.id = self.mods.content.ark
             self.provenance.content.object.id_type = 'ark'
 
@@ -675,6 +676,26 @@ class Video(DigitalObject):
         vid = Video.init_from_file(**opts)
                                    
         return vid
+
+    def old_dm_media_path(self):
+        logger.info("VIDEO MEDIA PATH")
+        old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id
+        logger.info("OLD_ID: %s" % old_id)
+        if old_id:
+            coll_obj = self._collection_object()
+            logger.info("COLLECTION_OBJ: %s" % coll_obj)
+            if not coll_obj:
+                return
+            logger.info("BEFORE COLL_PATH")
+            coll_path = coll_obj.old_dm_media_path()
+            logger.info("AFTER COLL_PATH")
+            if not coll_path:
+                return
+            return '%svideo/%s.m4a' % (coll_path, old_id)
+
+    def _collection_object(self):
+        return self.collection
+
 
     #
     # @staticmethod

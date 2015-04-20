@@ -46,7 +46,11 @@
         <div class="container">
             <h2>{{ resource.label }}</h2>
              <h3>
-              <a href="{% url 'collection:view' resource.collection.pid %}">
+              {% if resource.collection.pid %}
+                 <a href="{% url 'collection:view' resource.collection.pid %}">
+              {% else %}
+                 &lt;NO COLLECTION&gt;
+              {% endif %}
               {% if resource.collection.mods.content.source_id != 0 %}
                  {{ resource.collection.mods.content.source_id }}:
               {% endif %}

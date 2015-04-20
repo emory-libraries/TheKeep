@@ -108,6 +108,7 @@ INSTALLED_APPS = [
     'keep.repoadmin',
     'keep.file',
     'keep.search',
+    #'keep.old_dm',
     'djcelery',
 ]
 
@@ -158,6 +159,8 @@ djcelery.setup_loader()
 CELERY_ROUTES = {
     'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'}
 }
+
+DATABASE_ROUTERS = ['keep.old_dm.db.OldDMRouter']
 
 try:
     from keep.localsettings import *

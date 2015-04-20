@@ -195,6 +195,23 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
         # search for all items that belong to this collection
         return solr.query(collection_id=self.pid)
 
+    def old_dm_media_path(self):
+        'Path to media in old Digital Masters interface.'
+        logger.info("IN COLLECTION-OLD-DM-MEDIA-PATH")
+        coll_number = str(self.mods.content.source_id)
+        logger.info("SOURCE-ID %s" % coll_number)
+
+        parent = self.collection
+        marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
+        if parent.pid == marbl_pid:
+            if coll_number == '0':
+                return 'spec_col/Danowski/'
+            else:
+                return 'spec_col/MSS%s/' % (coll_number,)
+        else:
+            return 'univ_arch/SER%s/' % (coll_number,)
+
+
     @staticmethod
     def archives(format=None):
         """Find Archives objects, to which CollectionObjects belong.
@@ -312,6 +329,10 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
                                source_id=int(num))
         # if parent is specified, restrict by archive id (parent should be a pid)
         if parent is not None:
+            # remove prefix on parent
+            prefix ='info:fedora/'
+            if parent.startswith(prefix):
+                parent = parent[12:]
             solrquery = solrquery.query(archive_id=parent)
         # by default, only returns 10; get everything
         # - solr response is a list of dictionary with collection info

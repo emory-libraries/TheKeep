@@ -156,6 +156,9 @@ def keyword_search(request):
 
         # search on all collected search terms
         q = q.query(*terms)
+        #Exclude archival collection (Top-level library)
+        for p in settings.PID_ALIASES.values():
+            q=q.exclude(pid=p)
 
         # get a copy of current url options for pagination
         # and to generate links to remove active filters

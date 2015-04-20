@@ -2,6 +2,17 @@
 
 CHANGELOG
 =========
+Release 2.2 - Ye'ol DM Video
+----------------------------
+* Migration scripts to migrate metadata and video files fromm DM to Keep
+
+
+Release 2.1.3 - Hotfix-ish Filtering for Archive Collections
+------------------------------------------------------------
+* Filter archive collections for search results
+NOTE: this was already in develop branch but needed to be move to prod on the double
+
+
 Release 2.1.2 - Hotfix Add ETD Library
 --------------------------------------
 * Added library for ETD
