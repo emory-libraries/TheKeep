@@ -329,6 +329,7 @@ class Content(models.Model):   # individual item
         repo = Repository()
         obj = repo.get_object(type=Video)
 
+        #also does collection and sourcetech.note
         row_data = self.descriptive_metadata(obj)
         row_data += self.rights_metadata(obj)
 
@@ -353,15 +354,28 @@ class Content(models.Model):   # individual item
         modsxml = obj.mods.content
 
         # warn if no collection number could be found (either EUA or MARBL)
+        co = None
         if self.collection is None:
             ITEMS_WITHOUT_COLLECTION.add(self.id)
             logger.warn('Item %d does not have a collection or series number' % self.id)
+            try:
+                co = list(CollectionObject.find_by_collection_number(0, self.location.corresponding_repository))
+                obj.collection = co[0]
+                logger.warn('Reassigning %s to %s %s' % (self.id, self.location.corresponding_repository, 0))
+            except:
+                logger.warn('Failed to assign %s to %s %s' % (self.id, self.location.corresponding_repository, 0))
 
         # if there is a collection number, warn if the corresponding collection object could not be found
         elif self.collection_object is None:
             MISSING_COLLECTIONS[self.collection] += 1
             logger.warn('Could not find Collection Object in Fedora for Item %d, collection %s' % (self.id,
                                                                                                    self.collection))
+            try:
+                co = list(CollectionObject.find_by_collection_number(0, self.location.corresponding_repository))
+                obj.collection = co[0]
+                logger.warn('Reassigning %s to %s %s' % (self.id, self.location.corresponding_repository, 0))
+            except:
+                logger.warn('Failed to assign %s to %s %s' % (self.id, self.location.corresponding_repository, 0))
 
         # otherwise we have a collection
         else:
@@ -417,8 +431,9 @@ class Content(models.Model):   # individual item
             all_notes.append(self.toc)
         full_note_text = '\n\n'.join(all_notes)
         if full_note_text:
-            modsxml.create_general_note()
-            modsxml.general_note.text = full_note_text
+            # modsxml.create_general_note()
+            # modsxml.general_note.text = full_note_text
+            obj.sourcetech.content.note = full_note_text
         data.append(full_note_text)
 
         logger.debug('Item Type of Resource: %s' % 'moving image')

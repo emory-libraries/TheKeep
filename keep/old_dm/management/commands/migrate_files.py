@@ -1,6 +1,7 @@
 from collections import defaultdict, namedtuple
 from contextlib import contextmanager
 import csv
+from datetime import datetime as dt
 import logging
 from optparse import make_option
 import os
@@ -183,6 +184,7 @@ class Command(BaseCommand):
                         access_updated = self.update_datastream(obj.access_copy, access_path, access_checksum, access_path_sha1)
                         if access_updated:
                             files_updated += 1
+                            obj.mods.content.record_info.change_date = dt.now().isoformat()
                         file_info.append(self.file_ingest_status[access_updated])
                     else:
                         file_info.append('')	# blank to indicate no file
