@@ -269,7 +269,7 @@ class CollectionForm(XmlObjectForm):
         """
         cleaned_data = super(CollectionForm, self).clean()
         if cleaned_data.get('collection', '') and \
-           cleaned_data.get('source_id', '') and \
+                (cleaned_data.get('source_id', '') or cleaned_data.get('source_id', '') == 0) and \
            self._duplicate_exists(cleaned_data):
             msg = "A collection already exists with this Archive and Source Id."
             self._errors['collection'] = self.error_class([msg])
@@ -302,7 +302,7 @@ class CollectionForm(XmlObjectForm):
             # a duplicate
             return True
 
-        # otherwise there's exactly oone. if it's this object then this *is*
+        # otherwise there's exactly one. if it's this object then this *is*
         # the collection with that archive/id.
         return (response[0]['pid'] != self.object_instance.pid)
 
