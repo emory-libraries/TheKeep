@@ -214,7 +214,7 @@ class CollectionForm(XmlObjectForm):
                     widget=forms.TextInput(attrs={'class': 'form-control'}))
     # NOTE: handling date range with custom input forms and logic on update_instance
     # this could possibly be handled by a custom XmlObjectForm for originInfo
-    date_created = forms.CharField(help_text="Date created, or start date for a date range.")
+    date_created = forms.CharField(help_text="Date created, or start date for a date range.", required=False)
     date_end = forms.CharField(help_text="End date for a date range. Leave blank if not a range.",
                                 required=False)
     name = SubformField(formclass=NameForm)
