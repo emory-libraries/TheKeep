@@ -182,7 +182,9 @@ class Location(models.Model):
             if self.name.startswith('MARBL') \
                     and repo.label == 'Manuscript, Archives, and Rare Book Library':
                 return repo
-
+            if self.name.startswith('Marian K. Heilbrun Library') \
+                    and repo.label == 'Heilbrun Music & Media Library':
+                return repo
 
 class Subject(models.Model):
     subject = models.CharField(max_length=255)
@@ -282,6 +284,11 @@ class Content(models.Model):   # individual item
                 return repo_uri, 0
 
         if repo_uri == 'info:fedora/' + settings.PID_ALIASES['oxford']:
+            if self.series_number:
+                return repo_uri, self.series_number
+            else:
+                return repo_uri, 0
+        if repo_uri == 'info:fedora/' + settings.PID_ALIASES['musicmedia']:
             if self.series_number:
                 return repo_uri, self.series_number
             else:

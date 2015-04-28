@@ -126,7 +126,7 @@ class Command(BaseCommand):
                 except:
                     master_sha1 = None
 
-                master_mimetype = self.mimetype[master_path.split(".")[-1]]
+                master_mimetype = self.mimetype[master_path.split(".")[-1]] if master_path else None
 
                 access_path = paths.mp4
                 if access_path:
@@ -146,7 +146,7 @@ class Command(BaseCommand):
                 except:
                     access_sha1 = None
 
-                access_mimetype = self.mimetype[access_path.split(".")[-1]]
+                access_mimetype = self.mimetype[access_path.split(".")[-1]] if access_path else None
 
                 file_info = []	# info to report in CSV file
                 files_updated = 0
@@ -220,7 +220,7 @@ class Command(BaseCommand):
                     obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
                     obj.provenance.content.object.checksums[1].digest = master_sha1
                     obj.provenance.content.object.create_format()
-                    obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper()
+                    obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper() if master_path else None
                     obj.save("updated provenance mmetadata")
 
                 if files_updated or options['dry_run']:

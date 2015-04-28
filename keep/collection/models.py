@@ -203,8 +203,14 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
 
         parent = self.collection
         marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
+        oxford_pid = getattr(settings, 'PID_ALIASES', {}).get('oxford', None)
+        musicmedia_pid = getattr(settings, 'PID_ALIASES', {}).get('musicmedia', None)
         if parent.pid == marbl_pid:
             return 'spec_col/MSS%s/' % (coll_number,)
+        elif parent.pid == oxford_pid:
+            return 'oxford/%s/' % (coll_number,)
+        elif parent.pid == musicmedia_pid:
+            return 'music_media/%s/' % (coll_number,)
         else:
             return 'univ_arch/SER%s/' % (coll_number,)
 
