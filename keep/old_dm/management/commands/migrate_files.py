@@ -109,8 +109,12 @@ class Command(BaseCommand):
                     continue
 
                 master_path =  paths.dv or paths.mov or paths.mpg or paths.m4v
-                master_path_md5 = master_path + ".md5"
-                master_path_sha1 = master_path + ".sha1"
+                if master_path:
+                    master_path_md5 = master_path + ".md5"
+                    master_path_sha1 = master_path + ".sha1"
+                else:
+                    master_path_md5 = None
+                    master_path_sha1 = master_path + ".sha1"
                 try:
                     with open(master_path_md5) as f:
                         master_checksum = f.read().strip()
@@ -121,15 +125,27 @@ class Command(BaseCommand):
                         master_sha1 = f.read().strip()
                 except:
                     master_sha1 = None
+
                 master_mimetype = self.mimetype[master_path.split(".")[-1]]
 
                 access_path = paths.mp4
-                access_path_md5 = access_path + ".md5"
-                access_path_sha1 = access_path + ".sha1"
-                with open(access_path_md5) as f:
-                    access_checksum = f.read().strip()
-                with open(access_path_sha1) as f:
-                    access_path_sha1 = f.read().strip()
+                if access_path:
+                    access_path_md5 = access_path + ".md5"
+                    access_path_sha1 = access_path + ".sha1"
+                else:
+                    access_path_md5 = None
+                    access_path_sha1 = None
+                try:
+                    with open(access_path_md5) as f:
+                        access_checksum = f.read().strip()
+                except:
+                    access_checksum = None
+                try:
+                    with open(access_path_sha1) as f:
+                        access_sha1 = f.read().strip()
+                except:
+                    access_sha1 = None
+
                 access_mimetype = self.mimetype[access_path.split(".")[-1]]
 
                 file_info = []	# info to report in CSV file
@@ -181,7 +197,7 @@ class Command(BaseCommand):
                     if access_path:
                         # Set the correct mimetype
                         obj.access_copy.mimetype = access_mimetype
-                        access_updated = self.update_datastream(obj.access_copy, access_path, access_checksum, access_path_sha1)
+                        access_updated = self.update_datastream(obj.access_copy, access_path, access_checksum, access_sha1)
                         if access_updated:
                             files_updated += 1
                             obj.mods.content.record_info.change_date = dt.now().isoformat()
@@ -189,23 +205,23 @@ class Command(BaseCommand):
                     else:
                         file_info.append('')	# blank to indicate no file
 
-                obj.provenance.content.create_object()
-                obj.provenance.content.object.id_type = 'ark'
-                obj.provenance.content.object.id = ''
-                obj.provenance.content.object.type = 'p:file'
-                obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
-                obj.provenance.content.object.checksums[0].digest = master_checksum
+                    obj.provenance.content.create_object()
+                    obj.provenance.content.object.id_type = 'ark'
+                    obj.provenance.content.object.id = ''
+                    obj.provenance.content.object.type = 'p:file'
+                    obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
+                    obj.provenance.content.object.checksums[0].digest = master_checksum
 
-                if master_sha1 is None:
-                    if self.verbosity > self.v_normal:
-                        self.stdout.write('Calculating SHA-1 for %s\n' % master_path)
-                    master_sha1 = sha1sum(master_path)
+                    if master_sha1 is None:
+                        if self.verbosity > self.v_normal:
+                            self.stdout.write('Calculating SHA-1 for %s\n' % master_path)
+                        master_sha1 = sha1sum(master_path)
 
-                obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
-                obj.provenance.content.object.checksums[1].digest = master_sha1
-                obj.provenance.content.object.create_format()
-                obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper()
-                obj.save("updated provenance mmetadata")
+                    obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
+                    obj.provenance.content.object.checksums[1].digest = master_sha1
+                    obj.provenance.content.object.create_format()
+                    obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper()
+                    obj.save("updated provenance mmetadata")
 
                 if files_updated or options['dry_run']:
                     stats['updated'] += 1

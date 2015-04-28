@@ -204,10 +204,7 @@ class CollectionObject(Collectionv1_1, ArkPidDigitalObject):
         parent = self.collection
         marbl_pid = getattr(settings, 'PID_ALIASES', {}).get('marbl', None)
         if parent.pid == marbl_pid:
-            if coll_number == '0':
-                return 'spec_col/Danowski/'
-            else:
-                return 'spec_col/MSS%s/' % (coll_number,)
+            return 'spec_col/MSS%s/' % (coll_number,)
         else:
             return 'univ_arch/SER%s/' % (coll_number,)
 
