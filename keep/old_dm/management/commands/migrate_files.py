@@ -114,7 +114,7 @@ class Command(BaseCommand):
                     master_path_sha1 = master_path + ".sha1"
                 else:
                     master_path_md5 = None
-                    master_path_sha1 = master_path + ".sha1"
+                    master_path_sha1 = None
                 try:
                     with open(master_path_md5) as f:
                         master_checksum = f.read().strip()
