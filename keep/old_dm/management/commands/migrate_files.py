@@ -101,7 +101,7 @@ class Command(BaseCommand):
                 if self.verbosity > self.v_normal:
                     self.stdout.write('Found %s (dm1 id %s) %s\n' % \
                                       (obj.pid, old_id,
-                                      mods.title.encode('utf-8')))
+                                      mods.title))
                 paths = self.look_for_files(obj)
                 if not paths:
                     self.stdout.write("Error on %s: couldn't predict path. skipping.\n" % \
@@ -205,23 +205,36 @@ class Command(BaseCommand):
                     else:
                         file_info.append('')	# blank to indicate no file
 
-                    obj.provenance.content.create_object()
-                    obj.provenance.content.object.id_type = 'ark'
-                    obj.provenance.content.object.id = ''
-                    obj.provenance.content.object.type = 'p:file'
-                    obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
-                    obj.provenance.content.object.checksums[0].digest = master_checksum
+                    if master_checksum is None:
+                        if self.verbosity > self.v_normal:
+                            self.stdout.write('Calculating MD5 for %s\n' % master_path)
+                        try:
+                            master_checksum = md5sum(master_path)
+                        except:
+                            master_checksum = None
+
+                    if master_checksum:
+                        obj.provenance.content.create_object()
+                        obj.provenance.content.object.id_type = 'ark'
+                        obj.provenance.content.object.id = ''
+                        obj.provenance.content.object.type = 'p:file'
+                        obj.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
+                        obj.provenance.content.object.checksums[-1].digest = master_checksum
 
                     if master_sha1 is None:
                         if self.verbosity > self.v_normal:
                             self.stdout.write('Calculating SHA-1 for %s\n' % master_path)
-                        master_sha1 = sha1sum(master_path)
+                        try:
+                            master_sha1 = sha1sum(master_path)
+                        except:
+                            master_sha1 = None
 
-                    obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
-                    obj.provenance.content.object.checksums[1].digest = master_sha1
-                    obj.provenance.content.object.create_format()
-                    obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper() if master_path else None
-                    obj.save("updated provenance mmetadata")
+                    if master_sha1:
+                        obj.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
+                        obj.provenance.content.object.checksums[-1].digest = master_sha1
+                        obj.provenance.content.object.create_format()
+                        obj.provenance.content.object.format.name = master_path.rsplit('.', 1)[1].upper() if master_path else None
+                        obj.save("updated provenance mmetadata")
 
                 if files_updated or options['dry_run']:
                     stats['updated'] += 1
@@ -384,7 +397,10 @@ class Command(BaseCommand):
         if checksum is None:
             if self.verbosity > self.v_normal:
                 self.stdout.write('Calculating MD5 for %s\n' % filepath)
-            checksum = md5sum(filepath)
+            try:
+                checksum = md5sum(filepath)
+            except:
+                checksum = None
 
         # - if the content already exists with the correct checksum
         # (e.g., from a previous file migration run), skip it
