@@ -108,7 +108,7 @@ INSTALLED_APPS = [
     'keep.repoadmin',
     'keep.file',
     'keep.search',
-    #'keep.old_dm',
+    'keep.old_dm',
     'djcelery',
 ]
 

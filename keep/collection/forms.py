@@ -204,7 +204,7 @@ class CollectionForm(XmlObjectForm):
 
     # TODO: would be nice to have an ObjectChoiceField analogous to django's ModelChoiceField
     collection = DynamicChoiceField(label="Archive",  choices=archive_choices,
-                    required=False,
+                    required=True,
                     help_text="Owning repository for this collection of materials.")
                     # using URI because it will be used to set a relation in RELS-EXT
     source_id = forms.IntegerField(label="Source Identifier",
@@ -214,7 +214,7 @@ class CollectionForm(XmlObjectForm):
                     widget=forms.TextInput(attrs={'class': 'form-control'}))
     # NOTE: handling date range with custom input forms and logic on update_instance
     # this could possibly be handled by a custom XmlObjectForm for originInfo
-    date_created = forms.CharField(help_text="Date created, or start date for a date range.")
+    date_created = forms.CharField(help_text="Date created, or start date for a date range.", required=False)
     date_end = forms.CharField(help_text="End date for a date range. Leave blank if not a range.",
                                 required=False)
     name = SubformField(formclass=NameForm)
@@ -269,7 +269,7 @@ class CollectionForm(XmlObjectForm):
         """
         cleaned_data = super(CollectionForm, self).clean()
         if cleaned_data.get('collection', '') and \
-           cleaned_data.get('source_id', '') and \
+                (cleaned_data.get('source_id', '') or cleaned_data.get('source_id', '') == 0) and \
            self._duplicate_exists(cleaned_data):
             msg = "A collection already exists with this Archive and Source Id."
             self._errors['collection'] = self.error_class([msg])
@@ -302,7 +302,7 @@ class CollectionForm(XmlObjectForm):
             # a duplicate
             return True
 
-        # otherwise there's exactly oone. if it's this object then this *is*
+        # otherwise there's exactly one. if it's this object then this *is*
         # the collection with that archive/id.
         return (response[0]['pid'] != self.object_instance.pid)
 
