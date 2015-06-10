@@ -2,6 +2,11 @@
 
 CHANGELOG
 =========
+Release 2.2.1 - Health Sciences Library
+---------------------------------------
+* Added Health Sciences Library
+
+* Migration scripts to migrate metadata and video files fromm DM to Keep
 Release 2.2 - Ye'ol DM Video
 ----------------------------
 * Migration scripts to migrate metadata and video files fromm DM to Keep
