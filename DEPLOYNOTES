@@ -319,6 +319,10 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.2.1 - Health Sciences Library
+---------------------------------------
+* run syncrepo
+
 Release 2.2 - Ye ol DM Video
 ----------------------------
 * add old_dm and accessions to DB config
