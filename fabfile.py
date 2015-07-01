@@ -57,9 +57,9 @@ env.omit_coverage = ','.join([
 @task
 def install_deps():
     '''Install all dependencies in the current (local) environment.'''
-    local('pip install -r pip-install-req.txt -r pip-dev-req.txt')
+    local('pip install -r pip-install-req.txt -r pip-dev-req.txt --exists-action w')
     if os.path.exists('pip-local-req.txt'):
-        local('pip install -r pip-local-req.txt')
+        local('pip install -r pip-local-req.txt --exists-action w')
 
 
 @task
@@ -202,14 +202,14 @@ def setup_virtualenv(python=None):
              user=env.remote_acct)
         # activate the environment and install required packages
         with prefix('source env/bin/activate'):
-            pip_cmd = 'pip install -r pip-install-req.txt'
+            pip_cmd = 'pip install -r pip-install-req.txt --exists-action w'
             # use http proxy for pip installation if one is set
             if env.remote_proxy:
                 pip_cmd += ' --proxy=%(remote_proxy)s' % env
             sudo(pip_cmd, user=env.remote_acct)
             # install optional modules, if any
             if files.exists('pip-install-opt.txt'):
-                pip_cmd = 'pip install -r pip-install-opt.txt'
+                pip_cmd = 'pip install -r pip-install-opt.txt --exists-action w'
                 if env.remote_proxy:
                     pip_cmd += ' --proxy=%(remote_proxy)s' % env
                 sudo(pip_cmd, user=env.remote_acct)
