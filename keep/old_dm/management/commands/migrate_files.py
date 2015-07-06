@@ -409,7 +409,7 @@ class Command(BaseCommand):
             if self.verbosity > self.v_normal:
                 self.stdout.write('%s already has %s datastream with the expected checksum; skipping\n' \
                                   % (ds.obj.pid, ds.id))
-            return None
+            return True
         
         # datastream does not yet exist or does not have the expected content
         # migrate the file into the repository
@@ -428,7 +428,7 @@ class Command(BaseCommand):
                     if self.verbosity > self.v_normal:
                         self.stdout.write('Successfully updated %s/%s\n' \
                                       % (ds.obj.pid, ds.id))
-                    return True
+                    return None
                 else:
                     if self.verbosity >= self.v_normal:
                         self.stdout.write('Error updating %s/%s\n' \
