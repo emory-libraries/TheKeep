@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     'eullocal.django.taskresult',
     'eullocal.django.util',
     'eultheme',
+    'downtime',
     'keep.accounts',
     'keep.arrangement',
     'keep.audio',
@@ -224,4 +225,3 @@ if 'DJANGO_TEST_MODE' in os.environ:
     PIDMAN_USER = None
     PIDMAN_PASSWORD = None
     PIDMAN_DOMAIN = None
-
