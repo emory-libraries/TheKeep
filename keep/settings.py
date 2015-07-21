@@ -151,6 +151,13 @@ PID_ALIASES = {
     'health': 'emory:pq6rs',
 }
 
+# urls that should be accessible during configured downtime periods
+DOWNTIME_EXEMPT_PATHS = (
+   '/db-admin',
+   '/admin',
+   '/indexdata'
+)
+
 SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
 
 # Celery Config - standard stuff that will not change from project to project
