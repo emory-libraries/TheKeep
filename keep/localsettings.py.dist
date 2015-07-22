@@ -137,6 +137,9 @@ AUDIO_ALLOWED_DURATION_DISCREPANCY = 1.5
 # link to the Keep manual
 KEEP_MANUAL_URL = ''
 
+# list of IPs that can access the site during downtime periods
+# DOWNTIME_ALLOWED_IPS = ['127.0.0.1']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
