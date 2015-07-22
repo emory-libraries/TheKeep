@@ -31,3 +31,4 @@ django_admin_bootstrapped<2.0
 django-widget-tweaks
 pymediainfo
 psycopg2
+django-downtime
