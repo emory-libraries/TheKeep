@@ -56,6 +56,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",  # always include request in render context
     "django.core.context_processors.static",
     "eultheme.context_processors.template_settings",
+    "eultheme.context_processors.downtime_context",
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
