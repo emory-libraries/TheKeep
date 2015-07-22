@@ -9,6 +9,7 @@ from django.utils.encoding import iri_to_uri
 
 from eulfedora import models, server
 from eulfedora.util import RequestFailed, PermissionDenied
+from eulfedora.models import DublinCore, XmlDatastream, RdfDatastream
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
 from pidservices.clients import parse_ark
@@ -138,6 +139,15 @@ class ArkPidDigitalObject(models.DigitalObject):
     objects already in the repository). [Note that owner id is currently used
     for security purposes to identify Keep content in Fedora policies.]
     """
+
+    dc = XmlDatastream("DC", "Dublin Core", DublinCore, defaults={
+            'control_group': 'M',
+            'format': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+            'versionable': True,
+        })
+    ''':class:`XmlDatastream` for the required Fedora **DC** datastream;
+    datastream content will be automatically loaded as an instance of
+    :class:`eulxml.xmlmap.dc.DublinCore`. This has been overridden to be a managed and versionable datastream.'''
 
     @property
     def default_owner(self):

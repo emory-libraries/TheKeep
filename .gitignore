@@ -1,1 +1,8 @@
 keep.db
+keep/localsettings.py
+*.pyc
+parser.out
+parsetab.py
+localsettings.py
+build
+dist

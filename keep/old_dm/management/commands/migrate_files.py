@@ -17,6 +17,7 @@ from keep.video.models import Video
 from keep.common.fedora import Repository
 from keep.file.utils import md5sum, sha1sum
 from keep.common.models import PremisFixity, PremisObject
+import urllib
 
 logger = logging.getLogger(__name__)
 
@@ -408,15 +409,17 @@ class Command(BaseCommand):
             if self.verbosity > self.v_normal:
                 self.stdout.write('%s already has %s datastream with the expected checksum; skipping\n' \
                                   % (ds.obj.pid, ds.id))
-            return None
+            return True
         
         # datastream does not yet exist or does not have the expected content
         # migrate the file into the repository
         else:
             location = filepath.replace(settings.MIGRATION_VIDEO_ROOT, settings.OLD_DM_MEDIA_ROOT)
+            self.stdout.write('LOCATION: %s\n' % location)
+            self.stdout.write('MD5: %s\n' % checksum)
             ds.ds_location = location
-            ds.checksum_type = 'MD5'
-            ds.checksum = checksum
+            #ds.checksum_type = 'MD5'
+            #ds.checksum = checksum
             try:
                 # save just this datastream
                 success = ds.save('Migrated from legacy Digital Masters file %s\n' % \
@@ -425,7 +428,7 @@ class Command(BaseCommand):
                     if self.verbosity > self.v_normal:
                         self.stdout.write('Successfully updated %s/%s\n' \
                                       % (ds.obj.pid, ds.id))
-                    return True
+                    return None
                 else:
                     if self.verbosity >= self.v_normal:
                         self.stdout.write('Error updating %s/%s\n' \

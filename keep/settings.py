@@ -56,6 +56,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",  # always include request in render context
     "django.core.context_processors.static",
     "eultheme.context_processors.template_settings",
+    "eultheme.context_processors.downtime_context",
     "keep.collection.context_processors.collection_search",  # collection search form on every page
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
@@ -66,6 +67,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'eultheme.middleware.DownpageMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'keep.accounts.middleware.ResearcherAccessMiddleware',
@@ -99,6 +101,7 @@ INSTALLED_APPS = [
     'eullocal.django.taskresult',
     'eullocal.django.util',
     'eultheme',
+    'downtime',
     'keep.accounts',
     'keep.arrangement',
     'keep.audio',
@@ -148,6 +151,13 @@ PID_ALIASES = {
     'etd': 'emory:pgfch',
     'health': 'emory:pq6rs',
 }
+
+# urls that should be accessible during configured downtime periods
+DOWNTIME_EXEMPT_PATHS = (
+   '/db-admin',
+   '/admin',
+   '/indexdata'
+)
 
 SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
 
@@ -224,4 +234,3 @@ if 'DJANGO_TEST_MODE' in os.environ:
     PIDMAN_USER = None
     PIDMAN_PASSWORD = None
     PIDMAN_DOMAIN = None
-

@@ -2,6 +2,21 @@
 
 CHANGELOG
 =========
+
+Release 2.3
+-----------
+
+* As a site user I will see a Site Down page when maintenance is being
+  performed on the site or or other circumstances that will cause the
+  site to be temporarily unavailable so that I will have a general
+  idea of when I can use the site again.
+* As a site user I will see a banner that displays an informative
+  message on every page of the site so that I can be informed of future
+  site maintenance or other events.
+* As an application administrator, I want to generate a list of pids for
+  testing so that I can verify the application works with a subset of
+  representative but not sensitive real data.
+
 Release 2.2.1 - Health Sciences Library
 ---------------------------------------
 * Added Health Sciences Library
@@ -665,7 +680,3 @@ uses LDAP authentication for library staff.
   the development of editing interfaces.
 * Developers can link an XML Object with an XML schema so objects can
   be validated.
-
-
-
-
