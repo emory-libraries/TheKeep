@@ -577,7 +577,7 @@ class CollectionViewsTest(KeepTestCase):
         self.assertEqual(COLLECTION_DATA['title'], obj.mods.content.title,
             "MODS content updated in existing object from form data")
         # confirm that current site user appears in fedora audit trail
-        xm = obj.api.getObjectXML(obj.pid).content
+        xml = obj.api.getObjectXML(obj.pid).content
         self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml,
             'user logged into site is also username in fedora audit:trail')
 
