@@ -500,19 +500,19 @@ def largefile_ingest(request):
                 # (required because of file uri bug in fedora 3.4;
                 #  this can be removed once we upgrade to fedora 3.6+)
                 # checksum_errors = []
-                #
+                # 
                 # if obj.content.checksum != checksum:
                 #     checksum_errors.append('content')
-                #
+                # 
                 # for dsid, checksum in supplemental_checksums.iteritems():
                 #     dsobj = obj.getDatastreamObject(dsid)
                 #     if dsobj.checksum != checksum:
                 #         checksum_errors.append(dsid)
-                #
+                # 
                 # if type=='video' and obj.access_copy.checksum != access_checksum:
                 #     checksum_errors.append('access_copy')
-                #
-                #
+                # 
+                # 
                 # if checksum_errors:
                 #     message = 'Checksum mismatch%s detected on ' + \
                 #        '%s datastream%s; please contact a repository adminstrator.'''
@@ -799,3 +799,6 @@ def view_audit_trail(request, pid):
 def history(request, pid):
     'Display human-readable audit trail information.'
     return history_view(request, pid, type=DiskImage, template_name='file/history.html')
+
+
+
