@@ -1,4 +1,3 @@
-import json
 import logging
 import magic
 import os
@@ -484,8 +483,13 @@ def largefile_ingest(request):
                 # supplemental datastreams
                 if type == 'diskimage':
                     obj = repo.get_object(obj.pid, type=DiskImage)
+                    obj.content.save()
+                    obj = repo.get_object(obj.pid, type=DiskImage)
 
                 elif type == 'video':
+                    obj = repo.get_object(obj.pid, type=Video )
+                    obj.content.save()
+                    obj.access_copy.save()
                     obj = repo.get_object(obj.pid, type=Video )
 
                 # if save succeded (no exceptions), set summary info for display
