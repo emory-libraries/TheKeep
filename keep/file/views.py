@@ -1,3 +1,4 @@
+import json
 import logging
 import magic
 import os
