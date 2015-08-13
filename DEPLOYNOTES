@@ -326,10 +326,6 @@ Release 2.3 - Fedora 3.8 migration support
 
     $ manage.py syncrepo
 
-* Update ``localsettings.py`` to set **DOWNTIME_ALLOWED_IPS** to include
-  any IP addresses that should be allowed to access the site during
-  configured downtime periods.
-
 Release 2.2.1 - Health Sciences Library
 ---------------------------------------
 * run syncrepo

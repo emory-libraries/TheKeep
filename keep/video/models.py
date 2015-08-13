@@ -674,21 +674,21 @@ class Video(DigitalObject):
             raise Exception('No Video content found in %s' % os.path.basename(path))
 
         vid = Video.init_from_file(**opts)
-                                   
+
         return vid
 
     def old_dm_media_path(self):
-        logger.info("VIDEO MEDIA PATH")
+        #logger.info("VIDEO MEDIA PATH")
         old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id
-        logger.info("OLD_ID: %s" % old_id)
+        #logger.info("OLD_ID: %s" % old_id)
         if old_id:
             coll_obj = self._collection_object()
-            logger.info("COLLECTION_OBJ: %s" % coll_obj)
+        #    logger.info("COLLECTION_OBJ: %s" % coll_obj)
             if not coll_obj:
                 return
-            logger.info("BEFORE COLL_PATH")
+        #    logger.info("BEFORE COLL_PATH")
             coll_path = coll_obj.old_dm_media_path()
-            logger.info("AFTER COLL_PATH")
+        #    logger.info("AFTER COLL_PATH")
             if not coll_path:
                 return
             return '%svideo/%s.m4a' % (coll_path, old_id)

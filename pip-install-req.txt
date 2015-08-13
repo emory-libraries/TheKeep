@@ -1,7 +1,9 @@
 Django<1.6
 https://wilson.library.emory.edu/jenkins/job/eullocal-0.21.x/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.21.0.tar.gz
 eulxml>=0.21.0
-eulfedora>=0.22.1
+eulfedora>=1.1
+#-e git://github.com/emory-libraries/eulfedora.git@1.1#egg=eulfedora-fed3.8
+
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
 https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.2.tar.gz
@@ -26,7 +28,7 @@ pytz
 bodatools
 bagit>=1.3.2
 # dev eultheme until next release
--e git://github.com/emory-libraries/django-eultheme.git@1.1#egg=django_eultheme
+-e git://github.com/emory-libraries/django-eultheme.git@1.1.2#egg=django_eultheme
 django_admin_bootstrapped<2.0
 django-widget-tweaks
 pymediainfo
