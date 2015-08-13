@@ -2,6 +2,9 @@
 
 CHANGELOG
 =========
+Release 2.3.1
+-------------
+* Changes to make keep work with fedora 3.8.  Specifically, working around file uri checksum bug.
 
 Release 2.3
 -----------
