@@ -1,7 +1,7 @@
 Django<1.6
 https://wilson.library.emory.edu/jenkins/job/eullocal-0.21.x/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.21.0.tar.gz
 eulxml>=0.21.0
-eulfedora>=1.1
+eulfedora>=1.2
 #-e git://github.com/emory-libraries/eulfedora.git@1.1#egg=eulfedora-fed3.8
 
 eulexistdb>=0.17.0
