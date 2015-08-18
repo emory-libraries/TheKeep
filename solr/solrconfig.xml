@@ -7,16 +7,15 @@
        http://svn.apache.org/repos/asf/lucene/dev/trunk/solr/example/solr/conf/solrconfig.xml
 -->
 <config>
-  <luceneMatchVersion>LUCENE_48</luceneMatchVersion>
+  <luceneMatchVersion>LUCENE_48</luceneMatchVersion> 
   <updateHandler class="solr.DirectUpdateHandler2">
       <autoCommit>
           <maxDocs>10</maxDocs>
           <maxTime>1000</maxTime> <!-- ms -->
-          <!-- reopen any existing searchers so they see new results right away (defaults to false) -->
           <openSearcher>true</openSearcher>
     </autoCommit>
   </updateHandler>
-
+ 
   <indexConfig>
       <maxIndexingThreads>16</maxIndexingThreads>
       <lockType>single</lockType> <!-- can be single, native, or simple -->
