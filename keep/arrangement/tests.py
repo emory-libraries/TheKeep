@@ -513,6 +513,8 @@ class ArrangementObjectTest(KeepTestCase):
         coll = self.repo.get_object(type=CollectionObject)
         coll.pid = 'parent:1'
         coll.mods.content.source_id = '12345'
+        coll.save()
+        self.pids.append(coll.pid)
 
         #create test arrangement object
         self.arr = self.repo.get_object(type=ArrangementObject)
