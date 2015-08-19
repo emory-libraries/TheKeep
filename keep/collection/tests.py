@@ -516,8 +516,8 @@ class CollectionViewsTest(KeepTestCase):
                       "collection object is member of requested top-level collection")
 
         # confirm that current site user appears in fedora audit trail
-        xml, uri = new_coll.api.getObjectXML(new_coll.pid)
-        self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml)
+        xml = new_coll.api.getObjectXML(new_coll.pid)
+        self.assert_('<audit:responsibility>%s</audit:responsibility>' % ADMIN_CREDENTIALS['username'] in xml.content)
 
 #    @patch('keep.search.views.solr_interface')  # site-index on redirect - do we need this too?
     @patch('keep.collection.forms.solr_interface')
