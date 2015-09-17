@@ -92,11 +92,12 @@ INSTALLED_APPS = [
     'django_admin_bootstrapped.bootstrap3',
     'django_admin_bootstrapped',
     'django.contrib.admin',
-    'south',
     'widget_tweaks',
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
+    # emory_ldap included to migrate back to auth.User;
+    # should be removed in the next version
     'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
     'eullocal.django.util',
@@ -111,14 +112,15 @@ INSTALLED_APPS = [
     'keep.repoadmin',
     'keep.file',
     'keep.search',
-    'keep.old_dm',
+    # 'keep.old_dm',
     'djcelery',
 ]
 
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'eullocal.django.emory_ldap.backends.EmoryLDAPBackend',
+    'django_auth_ldap.backend.LDAPBackend',
+
 )
 
 FILE_UPLOAD_HANDLERS = (
@@ -134,9 +136,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # using default django login url
 LOGIN_URL = '/accounts/login/'
-
-# AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
-AUTH_USER_MODEL = 'emory_ldap.EmoryLDAPUser'
 
 # the default owner of all fedora objects created by this app
 FEDORA_OBJECT_OWNERID = 'thekeep-project'

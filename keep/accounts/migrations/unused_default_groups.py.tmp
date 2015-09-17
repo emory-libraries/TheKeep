@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+from django.db import models, migrations
+from django.core.management import call_command
+
+
+def load_fixture(apps, schema_editor):
+    'Load default groups.'
+    call_command('loaddata', 'initial_groups', app_label='accounts')
+
+def unload_fixture(apps, schema_editor):
+    'Remove default groups.'
+    Group = apps.get_model("auth", "Group")
+    default_groups = ["Born Digital Curator", "Patron", "Staff",
+        "Audio Curator", "Video Curator"]
+
+    for g in Group.objects.all():
+        if g.name in default_groups:
+            g.delete()
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('accounts', '0001_initial'),
+        ('auth', '0001_initial'),
+        ('contenttypes', '__first__'),
+        # requires permissions references for other models:
+        ('arrangement', '0001_initial'),
+        ('collection', '0001_initial'),
+        ('common', '0001_initial'),
+        ('file', '0001_initial'),
+        ('audio', '0001_initial'),
+        ('video', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.RunPython(load_fixture, reverse_code=unload_fixture, atomic=False)
+    ]
+

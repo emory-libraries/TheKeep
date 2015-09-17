@@ -1,10 +1,9 @@
-# Create your views here.
+import json
 import logging
 
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, Http404
-from django.utils import simplejson
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.template.response import TemplateResponse
@@ -108,7 +107,7 @@ def edit(request, pid):
         else:
             series_data.append({'id': series.id, 'value': series.title})
 
-    series_data = simplejson.dumps(series_data)
+    series_data = json.dumps(series_data)
 
     return TemplateResponse(request, 'arrangement/edit.html',
                   {'obj': obj, 'form': form, 'series_data': series_data})
@@ -186,7 +185,7 @@ def get_selected_series_data(request, id):
             series_data['series1fullid'] = series.id
             series_data['series1shortid'] = series.short_id
 
-    series_data = simplejson.dumps(series_data)
+    series_data = json.dumps(series_data)
 
     return HttpResponse(series_data, content_type='application/json')
 
