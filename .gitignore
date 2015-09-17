@@ -6,3 +6,8 @@ parsetab.py
 localsettings.py
 build
 dist
+
+# unittest and coverage artifacts
+.coverage
+coverage.xml
+nosetests.xml
