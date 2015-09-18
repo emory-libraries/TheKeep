@@ -319,6 +319,19 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.4
+-----------
+
+* Upgrade to django 1.7 and django migrations.  Installations with an existing
+  database will need to fake the initial auth migration::
+
+    $ python manage.py migrate auth 0001 --fake
+
+* For new installations, the default Group definitions will no longer
+  be automatically created.  To load them manually, run::
+
+    $ python manage.py loaddata initial_groups
+
 Release 2.3 - Fedora 3.8 migration support
 ------------------------------------------
 
