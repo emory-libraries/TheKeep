@@ -2,12 +2,38 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
+from django.db.utils import OperationalError
 import django.utils.timezone
 import django.core.validators
 
 # Create auth user if it does not already exist, i.e. if migrating
 # from an existing database with emory_ldap users.
-# In any other cases, this migration can be skipped.
+# A new installation that never had the emory_ldap user model set as
+# the django auth_user_model will already have auth.User.
+
+
+class CreateModelOptional(migrations.CreateModel):
+    # extend the createmodel migration operation to make the
+    # database forwards optional (catches and swallows an error because
+    # the table already exists), and make the backwards do nothing
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        try:
+            super(CreateModelOptional, self).database_forwards(app_label,
+                schema_editor, from_state, to_state)
+        except OperationalError as err:
+            # if creating a new db, this will error because auth_user
+            # already exists - but that's fine
+            pass
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        # do nothing, since creation is optional and table may have existed before
+        pass
+
+    def describe(self):
+        # base description is something like "create model name"
+        return super(CreateModelOptional, self).describe() + ' if it does not already exist'
+
 
 class Migration(migrations.Migration):
 
@@ -17,7 +43,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
+        CreateModelOptional(
             name='User',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
@@ -37,5 +63,6 @@ class Migration(migrations.Migration):
             options={
                 'db_table': 'auth_user',
             },
-            bases=(models.Model,),
-        )]
+            bases=(models.Model,)
+        )
+    ]
