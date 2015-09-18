@@ -1,7 +1,7 @@
 import cStringIO
 from datetime import datetime
 import logging
-from keep.common.models import SourceTechMeasure, TransferEngineer, CodecCreator
+import json
 from mock import Mock, patch
 import os
 from shutil import copyfile
@@ -21,7 +21,6 @@ from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
-from django.utils import simplejson
 
 from eulfedora.server import Repository
 from eulfedora.models import DigitalObjectSaveFailure
@@ -37,6 +36,7 @@ from keep.audio.tasks import convert_wav_to_mp3
 from keep.audio.templatetags import audio_extras
 from keep.collection.fixtures import FedoraFixtures
 from keep.collection.models import CollectionObject
+from keep.common.models import SourceTechMeasure, TransferEngineer, CodecCreator
 from keep.testutil import KeepTestCase, mocksolr_nodupes
 
 logger = logging.getLogger(__name__)
@@ -1775,7 +1775,7 @@ class TestAudioObject(KeepTestCase):
                          'sublocation should be set when present in sourcetech')
 
         # error if data is not serializable as json
-        self.assert_(simplejson.dumps(desc_data))
+        self.assert_(json.dumps(desc_data))
 
         colls = [mockmss, mockarchive]
         # pretend access copy exists in fedora
@@ -1791,7 +1791,7 @@ class TestAudioObject(KeepTestCase):
                          'duration should match digitaltech duration value')
             self.assert_(unicode(obj.mods.content.origin_info.issued[0]) in desc_data['date_issued'],
                          'date_issued should not be set based on mods origin_info.issued')
-            self.assert_(simplejson.dumps(desc_data))
+            self.assert_(json.dumps(desc_data))
 
         colls = [mockmss, mockarchive]
         # pretend original exists in fedora

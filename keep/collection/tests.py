@@ -11,7 +11,6 @@ from sunburnt import sunburnt
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client
-from django.utils import simplejson
 
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
@@ -281,7 +280,7 @@ class CollectionObjectTest(KeepTestCase):
             self.assertEqual(mockarchive.mods.content.short_name, arch_data['archive_short_name'],
                 'parent collection object (archive) short name should be set in index data')
             # error if data is not serializable as json
-            self.assert_(simplejson.dumps(arch_data))
+            self.assert_(json.dumps(arch_data))
 
         # skip index archive data and test the rest
         with patch.object(obj, '_index_data_archive', Mock(return_value={})):
@@ -296,7 +295,7 @@ class CollectionObjectTest(KeepTestCase):
             self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
                              'source id should be included in index data when set')
             # error if data is not serializable as json
-            self.assert_(simplejson.dumps(desc_data))
+            self.assert_(json.dumps(desc_data))
 
 
 # sample POST data for creating a collection

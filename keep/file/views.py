@@ -505,19 +505,19 @@ def largefile_ingest(request):
                 # (required because of file uri bug in fedora 3.4;
                 #  this can be removed once we upgrade to fedora 3.6+)
                 # checksum_errors = []
-                # 
+                #
                 # if obj.content.checksum != checksum:
                 #     checksum_errors.append('content')
-                # 
+                #
                 # for dsid, checksum in supplemental_checksums.iteritems():
                 #     dsobj = obj.getDatastreamObject(dsid)
                 #     if dsobj.checksum != checksum:
                 #         checksum_errors.append(dsid)
-                # 
+                #
                 # if type=='video' and obj.access_copy.checksum != access_checksum:
                 #     checksum_errors.append('access_copy')
-                # 
-                # 
+                #
+                #
                 # if checksum_errors:
                 #     message = 'Checksum mismatch%s detected on ' + \
                 #        '%s datastream%s; please contact a repository adminstrator.'''
@@ -651,7 +651,7 @@ def edit(request, pid):
         # it will have all the datastreams required for this view
 
         return HttpResponseForbidden('Permission Denied to access %s' % pid,
-                                     mimetype='text/plain')
+                                     content_type='text/plain')
 
     except RequestFailed as rf:
         # if fedora actually returned a 404, propagate it
@@ -662,7 +662,7 @@ def edit(request, pid):
               'This prevented us from accessing audio data. If this ' + \
               'problem persists, please alert the repository ' + \
               'administrator.'
-        return HttpResponse(msg, mimetype='text/plain', status=500)
+        return HttpResponse(msg, content_type='text/plain', status=500)
 
 
 class DatastreamFile(object):

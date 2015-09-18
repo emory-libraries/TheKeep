@@ -83,7 +83,7 @@ def search(request):
             # if CSV is requested with display_fields, return as csv before paginating
 
             if form.cleaned_data['output'] == 'csv':
-                response = HttpResponse(mimetype='text/csv')
+                response = HttpResponse(content_type='text/csv')
                 response['Content-Disposition'] = 'attachment; filename=Keep-report_%s.csv' \
                                            % date.today()
                 writer = unicodecsv.writer(response)
