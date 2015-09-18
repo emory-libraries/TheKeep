@@ -511,7 +511,7 @@ class ArrangementObjectTest(KeepTestCase):
 
         # create test collection
         coll = self.repo.get_object(type=CollectionObject)
-        coll.pid = 'parent:1'
+        coll.pid = '%s:parent-1' % settings.FEDORA_PIDSPACE
         coll.mods.content.source_id = '12345'
         coll.save()
         self.pids.append(coll.pid)
