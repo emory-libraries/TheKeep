@@ -45,7 +45,7 @@ def unmigrate_ldap_users(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0002_user'),
+        ('accounts', '0002_create_auth_user_if_necessary'),
         ('auth', '0001_initial'),
         ('contenttypes', '0001_initial'),
         ('emory_ldap', '0001_initial')
