@@ -62,7 +62,7 @@ alternate_wav_md5 = '736e0d8cd4dec9e02cd25283e424bbd5'
 # mock solr used to avoid ingest failure to do pre-ingest duplicate checking
 @patch('keep.common.fedora.solr_interface', new=mocksolr_nodupes())
 class AudioViewsTest(KeepTestCase):
-    fixtures = ['users']
+    fixtures = ['users', 'initial_groups']
 
     client = Client()
 
@@ -1862,7 +1862,7 @@ class TestAudioObject(KeepTestCase):
         new_obj = audiomodels.AudioObject.init_from_file(wav_filename, request=rqst)
         # NOTE: when eulfedora switches to requests-backed API, this will need to change:
         #  self.assertEqual(new_obj.api.username, user,
-        self.assertEqual(new_obj.api.opener.username, user,
+        self.assertEqual(new_obj.api.username, user,
             'object initialized with request has user credentials configured for fedora access')
 
     def test_collection(self):
