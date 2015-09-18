@@ -36,7 +36,6 @@ class KeepTestSettings(Plugin):
         # so override it
         from keep.common import fedora
         fedora.pidman = None
-        print >> sys.stderr, 'configured pidman is ', fedora.pidman
 
     def finalize(self, result):
         # do we need to restore any of these settings?
