@@ -631,7 +631,7 @@ def edit(request, pid):
 
         class AdminOpts(object):
             app_label = 'file'
-            module_name = 'application'
+            model_name = 'application'
 
         # options for generating admin link to edit/add file application db info
         admin_fileapp = AdminOpts()
