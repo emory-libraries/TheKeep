@@ -428,7 +428,8 @@ class TestCollectionForm(KeepTestCase):
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class CollectionViewsTest(KeepTestCase):
-    fixtures = ['users']
+    fixtures = ['users', 'initial_groups']
+    # default groups must be loaded for group-based permissions
 
     def setUp(self):
         super(CollectionViewsTest, self).setUp()
@@ -1144,8 +1145,8 @@ class CollectionViewsTest(KeepTestCase):
         solrquery.__getitem__.return_value = result
         # search term, inspect query args and json result
         response = self.client.get(suggest_url, {'term': '1000 rushd'})
-        solrquery.filter.assert_calleed_onec_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-        solrquery.filter.assert_calleed_onec_with(archive_id__any=True)
+        solrquery.filter.assert_called_once_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        solrquery.filter.assert_called_once_with(archive_id__any=True)
         solrquery.field_limit.assert_called_with(['pid', 'source_id', 'title',
                                                         'archive_short_name', 'creator', 'archive_id'])
         solrquery.sort_by.assert_called_with('-score')
