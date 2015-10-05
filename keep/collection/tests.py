@@ -11,6 +11,7 @@ from sunburnt import sunburnt
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client
+from django.utils.http import urlquote
 
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
@@ -1489,10 +1490,12 @@ class SimpleCollectionTest(KeepTestCase):
         expected, code = 200, response.status_code
         self.assertEqual(code, expected, 'Expected %s but returned %s' % (expected, code))
 
+        # NOTE: in previous versions of django, colons in pids did *not*
+        # get urlencoded; this should be fixed when we upgrade to 1.8
         self.assertContains(response, self.simple_collection_1.label)
-        self.assertContains(response, self.simple_collection_1.pid)
+        self.assertContains(response, urlquote(self.simple_collection_1.pid))
         self.assertContains(response, self.simple_collection_2.label)
-        self.assertContains(response, self.simple_collection_2.pid)
+        self.assertContains(response, urlquote(self.simple_collection_2.pid))
 
 
 class TestBatchUpdateStatusTask(KeepTestCase):
