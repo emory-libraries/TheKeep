@@ -1450,22 +1450,30 @@ class SimpleCollectionTest(KeepTestCase):
         # when syncUpdates is turned off
         self.repo.risearch.count_statements('* * *', flush=True)
 
+        # NOTE: since we no longer have a dedicated test fedora for unit tests,
+        # this runs against the dev fedora, which could contain other
+        # "simple collection" objects; filter by configured (test) pidspace
+        # to just the objects we expect
+        def filter_by_pidspace(obj_list):
+            return [o for o in obj_list
+                    if o.pid.startswith('%s:' % settings.FEDORA_PIDSPACE)]
+
         # Test Simple collection
         objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
-        obj_list = list(objs)
+        obj_list = filter_by_pidspace(objs)
         self.assertTrue(len(obj_list) == 2)
         self.assertTrue(isinstance(obj_list[0], SimpleCollection),
                         "object is of type SimpleCollection")
 
         # Test Simple collection wtith no obj type
         objs = _objects_by_type(REPO.SimpleCollection)
-        obj_list = list(objs)
+        obj_list = filter_by_pidspace(objs)
         self.assertTrue(len(obj_list) == 2)
         self.assertTrue(isinstance(obj_list[0], DigitalObject), "object is of type DigitalObject")
 
         # Test invalid type
         objs = _objects_by_type(REPO.FakeType)
-        obj_list = list(objs)
+        obj_list = filter_by_pidspace(objs)
         self.assertTrue(len(obj_list) == 0)
 
     def test_edit(self):
