@@ -541,7 +541,7 @@ class FileViewsTest(KeepTestCase):
         # inspect object as initialized (since save is simulated)
         # - should be created by logged in user
         self.assertEqual(ADMIN_CREDENTIALS['username'],
-            self.saved_obj.api.opener.username)
+            self.saved_obj.api.username)
         # - should be associated with collection
         # NOTE: this is failing because collection is None (because not ingested?)
         # self.assertEqual(self.rushdie.pid, self.saved_obj.collection.pid)
@@ -995,7 +995,7 @@ class LargeFileStagingBagsTest(TestCase):
         self.staging_dir = '/tmp/staging'
         self.diskimage_dir = '/tmp/staging/diskimage'
         os.makedirs(self.diskimage_dir)
-        
+
         self.tempdir = tempfile.mkdtemp(prefix='keep-test-', dir=self.diskimage_dir)
 
     def tearDown(self):
