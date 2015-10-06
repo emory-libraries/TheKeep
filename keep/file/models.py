@@ -85,8 +85,15 @@ class DiskImage(DigitalObject):
     CONTENT_MODELS = [DISKIMAGE_CONTENT_MODEL]
     NEW_OBJECT_VIEW = 'file:view'
 
-    diskimage_mimetypes = ['application/x-aff', 'application/x-ad1',
-                         'application/x-iso9660-image']
+    diskimage_mimetypes = [
+        'application/x-aff',    # AFF, advanced forensic format
+        'application/x-ad1',    # AD1, proprietary disk image format
+        'application/x-iso9660-image', # ISO
+        # dd?
+        # img?
+        'application/x-tar', # tar file
+        'application/mbox'  # mbox (? may require extra magic file entries)
+    ]
 
     allowed_mimetypes = ['', 'application/octet-stream'] + diskimage_mimetypes
     # NOTE: empty type and application/octet-stream are required for javascript upload,
