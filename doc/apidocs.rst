@@ -136,7 +136,7 @@ Utilities
 Search
 ------
 
-.. automodule:: keep.search 
+.. automodule:: keep.search
 
 
 Forms
@@ -149,7 +149,3 @@ Views
 .. automodule:: keep.search.views
     :members:
 
-Context Processors
-^^^^^^^^^^^^^^^^^^
-.. automodule:: keep.search.context_processors
-    :members:

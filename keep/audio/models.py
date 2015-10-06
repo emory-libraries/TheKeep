@@ -598,20 +598,18 @@ def check_wav_mp3_duration(obj_pid=None, wav_file_path=None, mp3_file_path=None)
     to check that they are roughly the same length.
 
     :param obj_pid: The pid of a fedora object (expected to be an
-    AudioObject) to get the wav and/or mp3 files from if they are
+        AudioObject) to get the wav and/or mp3 files from if they are
         not specified by path.
-
     :param wav_file_path: Path to the wav_file to use for comparison;
         if not specified, it will be downloaded from the object in
         Fedora.
-
     :param mp3_file_path: Path to the mp3_file to use for comparison;
         if not specified, it will be downloaded from the object in
         Fedora.  Note that this file must end in .mp3 for the duration
         to be calculated.
 
     :returns: True if the two files have the same duration, or close
-    enough duration (no more than 1 second difference)
+        enough duration (no more than 1 second difference)
     '''
     try:
         #Initialize temporary files to None.
