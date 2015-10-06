@@ -322,15 +322,22 @@ Upgrade Notes
 Release 2.4
 -----------
 
-* Upgrade to django 1.7 and django migrations.  Installations with an existing
+* Upgrade to django 1.8 and django migrations.  Installations with an existing
   database will need to fake the initial auth migration::
 
     $ python manage.py migrate auth 0001 --fake
+    $ python manage.py migrate
 
 * For new installations, the default Group definitions will no longer
   be automatically created.  To load them manually, run::
 
     $ python manage.py loaddata initial_groups
+
+* Configure the site not to use external Javascript and to suppress
+  Google Analytics code for requests from configured Researcher IP
+  addresses by setting **EULTHEME_NO_EXTERNAL_JS** and
+  **RESEARCHER_NO_ANALYTICS** both to True in ``localsettings.py``.
+
 
 Release 2.3 - Fedora 3.8 migration support
 ------------------------------------------

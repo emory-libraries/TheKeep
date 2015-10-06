@@ -61,6 +61,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
     "keep.repoadmin.context_processors.search",   # search form on every page
+    'keep.accounts.context_processors.researcher_no_analytics'
 )
 # NOTE: if you modify the configured context processors and need
 # a new processor included in unit tests, be sure to update

@@ -148,6 +148,11 @@ KEEP_MANUAL_URL = ''
 # list of IPs that can access the site during downtime periods
 # DOWNTIME_ALLOWED_IPS = ['127.0.0.1']
 
+# settings to use local javascript and disable analytics on the
+# researcher machine in the reading room
+EULTHEME_NO_EXTERNAL_JS = True
+RESEARCHER_NO_ANALYTICS = True
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
