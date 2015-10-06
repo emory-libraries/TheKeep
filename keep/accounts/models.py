@@ -6,7 +6,7 @@ class ResearcherIP(models.Model):
     '''Model for IP addresses where anonymous users should be considered
     researchers (i.e., access from MARBL Reading Room).'''
     name = models.CharField(max_length=255)
-    ip_address = models.IPAddressField('IP Address', max_length=30)
+    ip_address = models.GenericIPAddressField('IP Address', max_length=30)
 
     class Meta:
         verbose_name = 'Researcher IP'
