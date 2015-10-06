@@ -114,7 +114,7 @@ def edit(request, pid):
         # it will have all the datastreams required for this view
 
         return HttpResponseForbidden('Permission Denied to access %s' % pid,
-                                     mimetype='text/plain')
+                                     content_type='text/plain')
 
     except RequestFailed as rf:
         # if fedora actually returned a 404, propagate it
@@ -125,7 +125,7 @@ def edit(request, pid):
               'This prevented us from accessing audio data. If this ' + \
               'problem persists, please alert the repository ' + \
               'administrator.'
-        return HttpResponse(msg, mimetype='text/plain', status=500)
+        return HttpResponse(msg, content_type='text/plain', status=500)
 
 
 @permission_required_with_403("audio.view_audio")

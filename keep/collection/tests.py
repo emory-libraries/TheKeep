@@ -11,7 +11,7 @@ from sunburnt import sunburnt
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
 from django.test import Client
-from django.utils import simplejson
+from django.utils.http import urlquote
 
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
@@ -281,7 +281,7 @@ class CollectionObjectTest(KeepTestCase):
             self.assertEqual(mockarchive.mods.content.short_name, arch_data['archive_short_name'],
                 'parent collection object (archive) short name should be set in index data')
             # error if data is not serializable as json
-            self.assert_(simplejson.dumps(arch_data))
+            self.assert_(json.dumps(arch_data))
 
         # skip index archive data and test the rest
         with patch.object(obj, '_index_data_archive', Mock(return_value={})):
@@ -296,7 +296,7 @@ class CollectionObjectTest(KeepTestCase):
             self.assertEqual(obj.mods.content.source_id, desc_data['source_id'],
                              'source id should be included in index data when set')
             # error if data is not serializable as json
-            self.assert_(simplejson.dumps(desc_data))
+            self.assert_(json.dumps(desc_data))
 
 
 # sample POST data for creating a collection
@@ -429,7 +429,8 @@ class TestCollectionForm(KeepTestCase):
 @patch('keep.collection.forms.CollectionObject.archives',
        new=Mock(return_value=FedoraFixtures.archives(format=dict)))
 class CollectionViewsTest(KeepTestCase):
-    fixtures = ['users']
+    fixtures = ['users', 'initial_groups']
+    # default groups must be loaded for group-based permissions
 
     def setUp(self):
         super(CollectionViewsTest, self).setUp()
@@ -1145,8 +1146,8 @@ class CollectionViewsTest(KeepTestCase):
         solrquery.__getitem__.return_value = result
         # search term, inspect query args and json result
         response = self.client.get(suggest_url, {'term': '1000 rushd'})
-        solrquery.filter.assert_calleed_onec_with(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
-        solrquery.filter.assert_calleed_onec_with(archive_id__any=True)
+        solrquery.filter.assert_any_call(content_model=CollectionObject.COLLECTION_CONTENT_MODEL)
+        solrquery.filter.assert_any_call(archive_id__any=True)
         solrquery.field_limit.assert_called_with(['pid', 'source_id', 'title',
                                                         'archive_short_name', 'creator', 'archive_id'])
         solrquery.sort_by.assert_called_with('-score')
@@ -1449,22 +1450,30 @@ class SimpleCollectionTest(KeepTestCase):
         # when syncUpdates is turned off
         self.repo.risearch.count_statements('* * *', flush=True)
 
+        # NOTE: since we no longer have a dedicated test fedora for unit tests,
+        # this runs against the dev fedora, which could contain other
+        # "simple collection" objects; filter by configured (test) pidspace
+        # to just the objects we expect
+        def filter_by_pidspace(obj_list):
+            return [o for o in obj_list
+                    if o.pid.startswith('%s:' % settings.FEDORA_PIDSPACE)]
+
         # Test Simple collection
         objs = _objects_by_type(REPO.SimpleCollection, SimpleCollection)
-        obj_list = list(objs)
+        obj_list = filter_by_pidspace(objs)
         self.assertTrue(len(obj_list) == 2)
         self.assertTrue(isinstance(obj_list[0], SimpleCollection),
                         "object is of type SimpleCollection")
 
         # Test Simple collection wtith no obj type
         objs = _objects_by_type(REPO.SimpleCollection)
-        obj_list = list(objs)
+        obj_list = filter_by_pidspace(objs)
         self.assertTrue(len(obj_list) == 2)
         self.assertTrue(isinstance(obj_list[0], DigitalObject), "object is of type DigitalObject")
 
         # Test invalid type
         objs = _objects_by_type(REPO.FakeType)
-        obj_list = list(objs)
+        obj_list = filter_by_pidspace(objs)
         self.assertTrue(len(obj_list) == 0)
 
     def test_edit(self):

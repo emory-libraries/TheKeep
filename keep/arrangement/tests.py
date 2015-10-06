@@ -270,7 +270,7 @@ class ArrangementViewsTest(KeepTestCase):
         self.mailbox.pid = 'mailbox:pid'
         self.mailbox.label = 'TestMailBox'
 
-        # create emmail for test DO NOT INGEST this is used with mock for get_object return value
+        # create email for test DO NOT INGEST this is used with mock for get_object return value
         self.email = self.repo.get_object(type=EmailMessage)
         self.email.pid = 'email:pid'
         self.email.cerp.content.from_list = ['sender@sendmail.com']
@@ -426,10 +426,11 @@ class ArrangementViewsTest(KeepTestCase):
             msg_prefix='edit form should link to PDF view when object has a pdf')
 
 
-    @patch('keep.arrangement.views.TypeInferringRepository.get_object')
-    def test_view(self, mockget_obj):
+    @patch('keep.arrangement.views.TypeInferringRepository')
+    def test_view(self, mockrepo):
+        print 'mock repo = ', mockrepo
         # test generic view functionality (perms)
-        mockget_obj.return_value = self.email
+        mockrepo.return_value.get_object.return_value = self.email
 
         # non-authenticated user
         view_url = reverse('arrangement:view', kwargs={'pid': 'test:pid'})
@@ -446,7 +447,7 @@ class ArrangementViewsTest(KeepTestCase):
 
         # unsupported object type should 404
         fileobj = boda.RushdieFile(Mock())  # using mock for api
-        mockget_obj.return_value = fileobj
+        mockrepo.return_value.get_object.return_value = fileobj
         response = self.client.get(view_url)
         self.assertEqual(404, response.status_code,
             'unsupported object types should 404')
@@ -511,7 +512,7 @@ class ArrangementObjectTest(KeepTestCase):
 
         # create test collection
         coll = self.repo.get_object(type=CollectionObject)
-        coll.pid = 'parent:1'
+        coll.pid = '%s:parent-1' % settings.FEDORA_PIDSPACE
         coll.mods.content.source_id = '12345'
         coll.save()
         self.pids.append(coll.pid)

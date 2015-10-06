@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AnonymousUser, Group
+from django.contrib.auth.models import AnonymousUser
 
 
 class ResearcherIP(models.Model):
@@ -17,7 +17,8 @@ class ResearcherIP(models.Model):
 
 class AnonymousResearcher(AnonymousUser):
 
-    _groups = Group.objects.filter(name='Patron').all()
+    # default group membership of 'Patron' now set in
+    # app config, since it can only be done after models are loaded
 
     def is_anonymous_researcher(self):
         return True

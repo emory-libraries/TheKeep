@@ -444,7 +444,7 @@ def history_view(request, pid, type=ArkPidDigitalObject,
         # it will have all the datastreams required for this view
 
         return HttpResponseForbidden('Permission Denied to access %s' % pid,
-                                     mimetype='text/plain')
+                                     content_type='text/plain')
 
     except RequestFailed as rf:
         # if fedora actually returned a 404, propagate it
@@ -455,7 +455,7 @@ def history_view(request, pid, type=ArkPidDigitalObject,
               'This prevented us from accessing data. If this ' + \
               'problem persists, please alert the repository ' + \
               'administrator.'
-        return HttpResponse(msg, mimetype='text/plain', status=500)
+        return HttpResponse(msg, content_type='text/plain', status=500)
 
 
 # alias for now, clean up later
