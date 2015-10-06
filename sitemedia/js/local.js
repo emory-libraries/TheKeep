@@ -25,5 +25,12 @@ $.widget("custom.categorycomplete", $.ui.autocomplete, {
 $(document).ready(function(){
    $(".access li[data-toggle='tooltip']").tooltip();
 
+   // whenever a form is submitted, disable submit inputs and buttons
+   // to avoid double-clicks
+   // NOTE: custom js validation methods must now re-enable
+   // submit buttons when validation fails
+   $("form").on("submit", function(event) {
+      $(this).find(":submit").attr("disabled", true)
+   });
 
 });

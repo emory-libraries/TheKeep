@@ -21,6 +21,12 @@
                 error_list.append(err);
                }
            }
+           // if validation failed, re-enable the submit button
+           // to allow user to update the form and retry
+           if (! valid) {
+              $(this).find(":submit").attr("disabled", false)
+           }
+
            // store valid/invalid on form so md5 uploader can check
            $(this).data('valid', valid);
            return valid;
@@ -60,7 +66,7 @@
  {% endfor %}
 </table>
 
- <input class="form-submit" type="submit" value="Submit" id='submit-upload'/>
+ <input class="form-submit btn btn-primary" type="submit" value="Submit" id='submit-upload'/>
 </form>
 {% endif %}
 
