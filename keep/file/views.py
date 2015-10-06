@@ -485,7 +485,7 @@ def largefile_ingest(request):
                 if type == 'diskimage':
                     obj = repo.get_object(obj.pid, type=DiskImage)
                 elif type == 'video':
-                    obj = repo.get_object(obj.pid, type=Video )
+                    obj = repo.get_object(obj.pid, type=Video)
 
                 # if save succeded (no exceptions), set summary info for display
                 file_info.update({'type' : type, 'success': True,

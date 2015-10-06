@@ -212,15 +212,15 @@ def download_audio(request, pid, type, extension=None):
 @permission_required_with_ajax("audio.generate_audio_access")
 @require_http_methods(['POST'])
 def tasks(request, pid):
-    '''
-    Manage tasks associated with an :class:`~keep.audio.models.AudioObject'.
+    '''Manage tasks associated with an :class:`~keep.audio.models.AudioObject`.
     Currently, the only supported functionality is to queue access
     copy conversion; this should be done by POSTing the type of task to
     be queued, i.e. **generate access copy**.
 
     Supported tasks:
+
         * **generate access copy** - queue access copy conversion for an audio
-        item by pid.  Returns a status message as the body of a plain/text response
+            item by pid.  Returns a status message as the body of a plain/text response
 
     :param pid: the pid of the object for which tasks should be queued
 
