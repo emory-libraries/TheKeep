@@ -326,9 +326,9 @@ Release 2.4
   based on the example LDAP configuration in ``localsettings.py.dist``.
 
 * Upgrade to django 1.8 and django migrations.  Installations with an existing
-  database will need to fake the initial auth migration::
+  database will need to fake initial migration for existing tables::
 
-    $ python manage.py migrate auth 0001 --fake
+    $ python manage.py migrate --fake-initial
     $ python manage.py migrate
 
 * For new installations, the default Group definitions will no longer
