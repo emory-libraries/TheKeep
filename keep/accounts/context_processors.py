@@ -6,7 +6,7 @@ def researcher_no_analytics(request):
     # if researcher no analytics is set, check if this is a configured
     # researcher ip and set a template variable that will
     # allow google analytics to be suppressed
-    if settings.RESEARCHER_NO_ANALYTICS:
+    if getattr(settings, 'RESEARCHER_NO_ANALYTICS', False):
         ip_addr = request.META.get('REMOTE_ADDR', None)
         if ip_addr is not None:
             researcher_ip = ResearcherIP.objects.filter(ip_address__exact=ip_addr).count()
