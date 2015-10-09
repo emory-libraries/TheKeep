@@ -322,6 +322,9 @@ Upgrade Notes
 Release 2.4
 -----------
 
+* The configuration for LDAP has changed; update ``localsettings.py``
+  based on the example LDAP configuration in ``localsettings.py.dist``.
+
 * Upgrade to django 1.8 and django migrations.  Installations with an existing
   database will need to fake the initial auth migration::
 
