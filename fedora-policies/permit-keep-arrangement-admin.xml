@@ -92,6 +92,7 @@
           <Apply FunctionId="&function;string-bag">
             <AttributeValue DataType="&xsd;string">&action;id-addDatastream</AttributeValue>
             <AttributeValue DataType="&xsd;string">&action;id-getDatastream</AttributeValue>
+            <AttributeValue DataType="&xsd;string">&action;id-getDatastreamHistory</AttributeValue>
             <AttributeValue DataType="&xsd;string">&action;id-getDatastreams</AttributeValue>
             <AttributeValue DataType="&xsd;string">&action;id-modifyDatastreamByReference</AttributeValue>
             <AttributeValue DataType="&xsd;string">&action;id-modifyDatastreamByValue</AttributeValue>

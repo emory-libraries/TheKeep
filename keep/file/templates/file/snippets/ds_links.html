@@ -1,20 +1,33 @@
 {% load search_tags %}
 {# datastream and audit trail links for file objects #}
-<ul class='extra list-inline'>
+<div class="btn-group" role="group">
+{# <ul class='extra list-inline'> #}
   {% if obj.audit_trail %}
-    <li><a href="{% url 'file:history' obj.pid %}">Event Log</a></li>
+    <button type="button" class="btn btn-default"><a href="{% url 'file:history' obj.pid %}">Event Log</a></button>
   {% endif %}
+    <button type="button" class="btn btn-default"><a href="{% url 'file:raw-ds' obj.pid 'MODS' %}">MODS</a></button>
+    <button type="button" class="btn btn-default"><a href="{% url 'file:raw-ds' obj.pid 'DC' %}">DC</a></button>
+    <button type="button" class="btn btn-default"><a href="{% url 'file:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></button>
+    <button type="button" class="btn btn-default"><a href="{% url 'file:raw-ds' obj.pid 'Rights' %}">Rights</a></button>
 
-{#  {% if obj.mods.exists %}  FIXME: why is this not working? no return #}
-    <li><a href="{% url 'file:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
-    <li><a href="{% url 'file:raw-ds' obj.pid 'DC' %}">DC</a></li>
-    <li><a href="{% url 'file:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
-    <li><a href="{% url 'file:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
-    <li><a href="{% url 'file:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a></li>
+  {# premis: provide access to all versions #}
+  <div class="btn-group" role="group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" id="premis-versions" aria-haspopup="true" aria-expanded="false">PREMIS <span class="caret"></span></button>
+      <ul class="dropdown-menu" aria-labelledby="premis-versions">
+        <li class="dropdown-header">Versions</li>
+        {% for version in obj.provenance.history.versions %}
+          <li><a href="{% url 'file:raw-ds-version' obj.pid 'provenanceMetadata' version.created|date:'c' %}">{{ version.created }}</a></li>
+        {% endfor %}
+        {# <li role="separator" class="divider"></li> #}
+        {# diffs tool todo #}
+      </ul>
+    </div>
+
   {% if obj.audit_trail %}
-    <li><a href="{% url 'file:audit-trail' obj.pid %}">XML Audit Trail</a></li>
+    <button type="button" class="btn btn-default"><a href="{% url 'file:audit-trail' obj.pid %}">XML Audit Trail</a></button>
   {% endif %}
-</ul>
+</div>
+
 
 {# display checksum and format of disk image #}
 <p class="extra">{{ obj.provenance.content.object.format.name }} disk image ({{ obj.content.size|filesizeformat }}), checksum {{ obj.content.checksum }}</p>

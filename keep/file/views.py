@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import magic
@@ -7,6 +8,7 @@ import tempfile
 import time
 import traceback
 import bagit
+import dateutil.parser
 
 from django.conf import settings
 from django.contrib import messages
@@ -770,12 +772,18 @@ def manage_supplements(request, pid):
 # file versions the common ones?
 
 @permission_required_with_403("file.view_disk_image")
-def view_datastream(request, pid, dsid):
+def view_datastream(request, pid, dsid, date=None):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
     # use type-inferring repo to pick up rushdie file or generic arrangement
+
+    if date is not None:
+        date = dateutil.parser.parse(date)
+        # date = datetime.strptime(date, '%Y-%m-%dT%H:%M:%S.%f')
+
     response = raw_datastream(request, pid, dsid,
-                          repo=TypeInferringRepository(request=request))
+                          repo=TypeInferringRepository(request=request),
+                          as_of_date=date)
 
     # work-around for email MIME data : display as plain text so it
     # can be viewed in the browser
