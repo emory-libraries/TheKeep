@@ -507,9 +507,8 @@ def largefile_ingest(request):
                     if dsobj.checksum != checksum:
                         checksum_errors.append(dsid)
 
-                if type=='video' and obj.access_copy.checksum != access_checksum:
+                if type == 'video' and obj.access_copy.checksum != access_checksum:
                     checksum_errors.append('access_copy')
-
 
                 if checksum_errors:
                     message = 'Checksum mismatch%s detected on ' + \
