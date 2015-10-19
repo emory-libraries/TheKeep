@@ -26,47 +26,7 @@
 </div>
 
 <h2>{{ obj.label }}</h2>
-<ul class='extra dslist list-inline'>
-  {% if perms.video.download_video %}
-  {% with 'download original video' as original %}
-    {% if obj.content.exists %}
-      <li>
-        <a href="{% url 'video:download-video' obj.pid %}">{{ original }}</a>
-        {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
-      </li>
-    {% else %}
-      <li>{{ original }} </li>
-    {% endif %}
-  {% endwith %}
-  {% with 'download access copy' as access %}
-    {% if obj.access_copy.exists %}
-      <li><a href="{% url 'video:download-compressed-video' obj.pid %}">{{ access }}</a></li>
-    {% else %}
-      <li>{{ access }} </li>
-    {% endif %}
-  {% endwith %}
-  {% endif %}
-
-  {% if obj.audit_trail %}
-    <li><a href="{% url 'video:history' obj.pid %}">Event Log</a></li>
-  {% endif %}
-    <li><a href="{% url 'video:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'DC' %}">DC</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'SourceTech' %}">SourceTech</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a></li>
-  {% if obj.audit_trail %}
-    <li><a href="{% url 'video:audit-trail' obj.pid %}">XML Audit Trail</a></li>
-  {% endif %}
-</ul>
-
-{# display checksum for original video #}
-{# TODO: find a better way/place to display original checksum (view page doesn't exist yet) #}
-{% if obj.video.exists %}
-  <p class="extra">Original video checksum: {{ obj.video.checksum }}</p>
-{% endif %}
+{% include 'video/snippets/ds_links.html' %}
 
 <div class="instructions">
     <h2>Instructions for using this form</h2>

@@ -1,7 +1,6 @@
 {% load search_tags %}
 {# datastream and audit trail links for file objects #}
 <div class="btn-group" role="group">
-{# <ul class='extra list-inline'> #}
   {% if obj.audit_trail %}
     <button type="button" class="btn btn-default"><a href="{% url 'file:history' obj.pid %}">Event Log</a></button>
   {% endif %}
