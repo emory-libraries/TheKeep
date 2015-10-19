@@ -1,4 +1,5 @@
 {% extends 'repoadmin/snippets/list-item.html' %}
+{% load humanize %}
 
 {% block item_title %}
 <p>
@@ -24,6 +25,8 @@
 
 {% block item_info %}
   <ul class="list-inline">
+    {% if obj.format %}<li>{{ obj.format|join:', ' }}</li>{% endif %}
+    {% if obj.access_copy_size %}{{ obj.access_copy_size|filesizeformat }}{% endif %}
     {% if obj.rights %}<li>{{ obj.rights|join:', ' }}</li>{% endif %}
   </ul>
 {% endblock %}

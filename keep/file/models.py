@@ -495,7 +495,9 @@ class DiskImage(DigitalObject):
         # so index data should not use Solr to find any related object info
 
         data = super(DiskImage, self).index_data()
-        data['object_type'] = 'born-digital'
+        # FIXME: is born-digital type still needed for anything? perms?
+        # data['object_type'] = 'born-digital'
+        data['object_type'] = 'disk image'
         # set as born digital for now; eventually, we'll need to distinguish
         # between kinds of born digital content
 
@@ -530,6 +532,18 @@ class DiskImage(DigitalObject):
             last_fixity_check = self.provenance.content.fixity_checks[-1]
             data['last_fixity_check'] = last_fixity_check.date
             data['last_fixity_result'] = last_fixity_check.outcome
+
+        if self.provenance.content.object and self.provenance.content.object.format:
+            # using dc format for now (list field);
+            # possibly create a new content_format field?
+            data['format'] = self.provenance.content.object.format.name
+
+        # FIXME: cheating, not really an access copy; new solr field?
+        data['access_copy_size'] = self.content.size
+        # do users need filename?
+        # if so, perhaps add content_label and content_size
+        # if format needs to be available as a facet, it should be
+        # a new field or copied to a facet field
 
         return data
 

@@ -15,13 +15,21 @@
   {{ block.super }}
 
   {% if facets %}
-  <div>
+  <div class="facets">
     <h3>Filter your results:</h3>
     {% for field, results in facets.iteritems %}
       <h4>{{ field }}</h4>
-      <ul>
+      <ul class="{{ field }}">
       {% for val, count in results %}
-        <li><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
+        <li class="{{ val }}"><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">
+        {% if field == 'type' %}
+          {% if val == 'audio' %}<span class="glyphicon glyphicon-headphones"></span>
+          {% elif val == 'video' %}<span class="glyphicon glyphicon-film"></span>
+          {% elif val == 'collection' %}<span class="glyphicon glyphicon-folder-open"></span>
+          {% elif val == 'disk image' %}<span class="glyphicon glyphicon-hdd"></span>
+          {% else %}<span class="glyphicon glyphicon-file"></span>{% endif %}
+        {% endif %}
+        {% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
             ({{ count|intcomma }})</li>
       {% endfor %}
       </ul>
@@ -95,12 +103,10 @@
       {% include "audio/snippets/list-audio.html" %}
     {% elif obj.object_type == 'video' %}
       {% include "video/snippets/list-video.html" %}
+    {% elif obj.object_type == 'disk image' %}
+        {% include "file/snippets/list-diskimage.html" %}
     {% elif obj.object_type == 'born-digital' %}
-      {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
-          {% include "file/snippets/list-diskimage.html" %}
-      {% else %}
          {% include "arrangement/snippets/list-arrangement.html" %}
-      {% endif %}
     {% else %}
     {# fall-back display #}
       <p>{{ obj.pid }} {{ obj.title }} {{ obj.source_id }} {{ obj.creator }} {{ obj.content_model }}</p>

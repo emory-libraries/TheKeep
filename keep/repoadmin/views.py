@@ -156,9 +156,10 @@ def keyword_search(request):
 
         # search on all collected search terms
         q = q.query(*terms)
-        #Exclude archival collection (Top-level library)
+        # FIXME: there should be a way to exclude these by type
+        # Exclude archival collection (Top-level library)
         for p in settings.PID_ALIASES.values():
-            q=q.exclude(pid=p)
+            q = q.exclude(pid=p)
 
         # get a copy of current url options for pagination
         # and to generate links to remove active filters
@@ -243,6 +244,7 @@ def keyword_search(request):
         q = q.sort_by('-created')
 
         # list of currently known types for display in results
+        # FIXME: are these used anywhere?
         known_object_types = ['audio', 'collection', 'born-digital']
 
         # paginate the solr result set
@@ -277,7 +279,7 @@ def keyword_search(request):
         ctx.update({
             'page': results,
             'show_pages': show_pages,
-            'known_types': known_object_types,
+            # 'known_types': known_object_types,
             'search_opts': request.GET.urlencode(),
             'search_terms': terms,
             'search_info': search_info,

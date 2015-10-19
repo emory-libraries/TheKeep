@@ -477,7 +477,7 @@ class AudioObject(DigitalObject):
 
         if self.compressed_audio.exists:
             data.update({
-                'access_copy_size': self.compressed_audio.info.size,
+                'access_copy_size': self.compressed_audio.size,
                 'access_copy_mimetype': self.compressed_audio.mimetype,
         })
         if self.digitaltech.content.duration:
@@ -491,8 +491,6 @@ class AudioObject(DigitalObject):
            self.mods.content.origin_info.created \
                 and not self.mods.content.origin_info.created.is_empty():
             data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
-
-
 
         if self.audio.exists:
             data['content_md5'] = self.audio.checksum
