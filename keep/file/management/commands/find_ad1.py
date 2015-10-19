@@ -30,6 +30,6 @@ class Command(BaseCommand):
                     img_fmt = premis.object.format.name
 
             if img_fmt == 'AD1':
-                print obj.pid
+                print '%s %s' % (obj.pid, obj.content.label)
             if img_fmt is None and verbosity >= self.v_normal:
                 self.stderr.write('Warning: %s has no premis object format' % obj.pid)
