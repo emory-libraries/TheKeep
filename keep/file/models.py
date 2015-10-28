@@ -89,11 +89,20 @@ class DiskImage(DigitalObject):
         'application/x-aff',    # AFF, advanced forensic format
         'application/x-ad1',    # AD1, proprietary disk image format
         'application/x-iso9660-image', # ISO
-        # dd?
-        # img?
+        'application/x-ewf', # E01 Expert Witness Format
         'application/x-tar', # tar file
         'application/mbox'  # mbox (? may require extra magic file entries)
     ]
+
+    # mapping of mimetype to format label to insert in Premis
+    mimetype_format = {
+        'application/x-aff': 'AFF',
+        'application/x-ad1': 'AD1',
+        'application/x-iso9660-image': 'ISO',
+        'application/x-ewf': 'E01',
+        'application/x-tar': 'TAR',
+        'application/mbox': 'MBOX'
+    }
 
     allowed_mimetypes = ['', 'application/octet-stream'] + diskimage_mimetypes
     # NOTE: empty type and application/octet-stream are required for javascript upload,
@@ -299,6 +308,19 @@ class DiskImage(DigitalObject):
         # set genre as born digital
         obj.mods.content.genres.append(mods.Genre(authority='aat', text='born digital'))
 
+        # Set the file checksum
+        obj.content.checksum = checksum
+        # set mimetype
+        if mimetype is None:
+            # if no mimetype was passed in, determine from file
+            m = magic.Magic(mime=True)
+            mtype = m.from_file(filename)
+            mimetype, separator, options = mtype.partition(';')
+        obj.content.mimetype = mimetype
+
+        # Set disk image datastream label to filename
+        obj.content.label = initial_label
+
         # premis data
         obj.provenance.content.create_object()
         # NOTE: premis object id will be same as short-form ARK stored in MODS
@@ -323,33 +345,21 @@ class DiskImage(DigitalObject):
         obj.provenance.content.object.checksums[1].digest = sha1_checksum
 
         obj.provenance.content.object.create_format()
-        # for now, format name will be upper-cased version of file extension
-        # (i.e., AFF or AD1)
-        # FIXME: should this be generated based on mimetype instead?
-        # (might be more reliable)
-        obj.provenance.content.object.format.name = ext.upper().strip('.')
+        # set format based on mimetype
+        if mimetype in self.mimetype_format:
+            obj_format = self.mimetype_format[mimetype]
+        else:
+            # as a fallback, use the file extension for format
+            obj_format = ext.upper().strip('.')
+        obj.provenance.content.object.format.name = obj_format
 
         # if a content URI is specified (e.g. for large files), use that
         if content_location is not None:
             obj.content.ds_location = content_location
-
         # otherwise set the file as content to be posted
         else:
             obj.content.content = open(filename)
             # FIXME: at what point does/should this file get closed?
-
-        # Set the file checksum
-        obj.content.checksum = checksum
-        # set mimetype
-        if mimetype is None:
-            # if no mimetype was passed in, determine from file
-            m = magic.Magic(mime=True)
-            mtype = m.from_file(filename)
-            mimetype, separator, options = mtype.partition(';')
-        obj.content.mimetype = mimetype
-
-        # Set disk image datastream label to filename
-        obj.content.label = initial_label
 
         # descriptive/technical metadata todo
 

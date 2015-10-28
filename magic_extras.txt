@@ -16,3 +16,8 @@
 >>&6    leshort         =2              \b, stereo
 >>&6    leshort         >2              \b, %d channels
 >>&8    lelong          >0              %d Hz
+
+
+# ASR Data's Expert Witness Compression Format (EVF, EWF)
+0       string          EVF\x09\x0d\x0a\xff\x00   Expert Witness Compression Format (EVF)
+!:mime  application/x-ewf
