@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 from fabric.api import abort, env, lcd, local, prefix, put, puts, require, \
                        run, sudo, task
@@ -296,6 +297,7 @@ def deploy(path=None, user=None, url_prefix='', python=None,
     configure_site()
     update_links()
     compare_localsettings()
+    rm_old_builds()
 
 
 @task
@@ -335,3 +337,40 @@ def compare_localsettings(path=None, user=None):
                     puts(output)
                 else:
                     puts(green('No differences between current and previous localsettings.py'))
+
+@task
+def rm_old_builds(path=None, user=None):
+    '''Remove old build directories on the deploy server.
+
+    Takes the same path and user options as **deploy**.
+    '''
+    configure(path=path, user=user)
+    with cd(env.remote_path):
+        with hide('stdout'):  # suppress ls/readlink output
+            # get directory listing sorted by modification time (single-column for splitting)
+            dir_listing = sudo('ls -t1', user=env.remote_acct)
+            # get current and previous links so we don't remove either of them
+            current = sudo('readlink current', user=env.remote_acct) if files.exists('current') else None
+            previous = sudo('readlink previous', user=env.remote_acct) if files.exists('previous') else None
+
+        # split dir listing on newlines and strip whitespace
+        dir_items = [n.strip() for n in dir_listing.split('\n')]
+        # regex based on how we generate the build directory:
+        #   project name, numeric version, optional pre/dev suffix, optional revision #
+        build_dir_regex = r'^%(project)s-[0-9.]+(-[A-Za-z0-9_-]+)?(-r[0-9]+)?$' % env
+        build_dirs = [item for item in dir_items if re.match(build_dir_regex, item)]
+        # by default, preserve the 3 most recent build dirs from deletion
+        rm_dirs = build_dirs[3:]
+        # if current or previous for some reason is not in the 3 most recent,
+        # make sure we don't delete it
+        for link in [current, previous]:
+            if link in rm_dirs:
+                rm_dirs.remove(link)
+
+        if rm_dirs:
+            for build_dir in rm_dirs:
+                sudo('rm -rf %s' % build_dir, user=env.remote_acct)
+        else:
+            puts('No old build directories to remove')
+
+
