@@ -346,8 +346,8 @@ class DiskImage(DigitalObject):
 
         obj.provenance.content.object.create_format()
         # set format based on mimetype
-        if mimetype in self.mimetype_format:
-            obj_format = self.mimetype_format[mimetype]
+        if mimetype in DiskImage.mimetype_format:
+            obj_format = DiskImage.mimetype_format[mimetype]
         else:
             # as a fallback, use the file extension for format
             obj_format = ext.upper().strip('.')
