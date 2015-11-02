@@ -1,4 +1,5 @@
 from datetime import datetime
+import difflib
 import json
 import logging
 import magic
@@ -805,5 +806,52 @@ def history(request, pid):
     'Display human-readable audit trail information.'
     return history_view(request, pid, type=DiskImage, template_name='file/history.html')
 
+
+@permission_required_with_403("file.view_disk_image")
+def datastream_diff(request, pid, dsid, mode='summary'):
+    # for now, expecting premis only, but should work on any xml datastream
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=DiskImage)
+    if not obj.exists or not obj.has_requisite_content_models:
+        raise Http404
+
+    ds = obj.getDatastreamObject(dsid)
+    # only one version, nothing to diff
+    # if not len(ds.history().versions) > 1:
+        # raise Http404
+
+    # get versions from request if set
+    # otherwise, default to comparing the oldest and newest versions
+    v1 = request.GET.get('v1', None)
+    if v1 is not None:
+        v1 = dateutil.parser.parse(v1)
+    else:
+        v1 = ds.history().versions[-1].created
+
+    v2 = request.GET.get('v2', None)
+    if v2 is not None:
+        v2 = dateutil.parser.parse(v2)
+    else:
+        v2 = ds.history().versions[0].created
+
+    version_1 = obj.getDatastreamObject(dsid, as_of_date=v1)
+    version_2 = obj.getDatastreamObject(dsid, as_of_date=v2)
+    v1_lines = version_1.content.serialize(pretty=True).split('\n')
+    v2_lines = version_2.content.serialize(pretty=True).split('\n')
+
+    # side-by-side diff, html table requires full screen
+    if mode == 'full':
+        diff = difflib.HtmlDiff(8, 80)  # set columns to wrap at 80 characters
+        # generate a html table with line-by-line comparison (meant to be called in a new window)
+        changes = diff.make_file(v1_lines, v2_lines)
+        return HttpResponse(changes)
+
+    # briefer diff format
+    else:
+        changes = list(difflib.unified_diff(v1_lines, v2_lines))
+
+    return TemplateResponse(request, 'file/ds_diff.html',
+        {'obj': obj, 'ds': ds, 'version_1': version_1,
+        'version_2': version_2, 'changes': changes})
 
 
