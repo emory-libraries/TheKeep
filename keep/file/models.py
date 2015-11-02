@@ -414,6 +414,7 @@ class DiskImage(DigitalObject):
         m = magic.Magic(mime=True)
         supplemental_files = []
         supplement_mimetypes = {}
+        diskimage_mimetype = None
         # loop through bag content until we find a supported disk image file
         for data_path in bag.payload_files():
             # path is relative to bag root dir
@@ -434,7 +435,9 @@ class DiskImage(DigitalObject):
                     raise Exception(checksum_err_msg % 'SHA-1')
 
                 # this is the disk image content file
+                # store file and mimetype for further initialization
                 content_file = filename
+                diskimage_mimetype = mimetype
 
             # any data file that is not a disk image should be assumed
             # to be a supplemental file
@@ -459,7 +462,7 @@ class DiskImage(DigitalObject):
             optional_args['content_location'] = ingest_location
 
         img = DiskImage.init_from_file(content_file, initial_label=initial_label,
-            checksum=md5_checksum, mimetype=mimetype, request=request,
+            checksum=md5_checksum, mimetype=diskimage_mimetype, request=request,
             sha1_checksum=sha1_checksum, **optional_args)
 
         i = 0
