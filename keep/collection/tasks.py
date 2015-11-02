@@ -1,4 +1,6 @@
-from celery import task
+from __future__ import absolute_import
+
+from celery import shared_task
 from celery.utils.log import get_task_logger
 from eulfedora.rdfns import relsext as relsextns
 
@@ -11,7 +13,7 @@ from eullocal.django.taskresult.models import TaskResult
 logger = get_task_logger(__name__)
 
 
-@task
+@shared_task
 def batch_set_status(pid, status):
     repo = Repository()
     batch = repo.get_object(pid, type=SimpleCollection)

@@ -97,6 +97,7 @@ INSTALLED_APPS = [
     'django_admin_bootstrapped.bootstrap3',
     'django_admin_bootstrapped',
     'django.contrib.admin',
+    'djcelery',
     'widget_tweaks',
     'eulexistdb',
     'eulfedora',
@@ -105,7 +106,6 @@ INSTALLED_APPS = [
     # should be removed in the next version
     'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
-    'eullocal.django.util',
     'eultheme',
     'downtime',
     'keep.accounts',
@@ -118,7 +118,6 @@ INSTALLED_APPS = [
     'keep.file',
     'keep.search',
     # 'keep.old_dm',
-    'djcelery',
 ]
 
 
@@ -173,6 +172,8 @@ djcelery.setup_loader()
 CELERY_ROUTES = {
     'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'}
 }
+CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
+
 
 DATABASE_ROUTERS = ['keep.old_dm.db.OldDMRouter']
 
