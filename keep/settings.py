@@ -117,7 +117,6 @@ INSTALLED_APPS = [
     'keep.repoadmin',
     'keep.file',
     'keep.search',
-    # 'keep.old_dm',
 ]
 
 
@@ -174,8 +173,6 @@ CELERY_ROUTES = {
 }
 CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
 
-
-DATABASE_ROUTERS = ['keep.old_dm.db.OldDMRouter']
 
 try:
     from keep.localsettings import *
