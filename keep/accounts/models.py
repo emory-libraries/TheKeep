@@ -1,12 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import AnonymousUser, Group
+from django.contrib.auth.models import AnonymousUser
 
 
 class ResearcherIP(models.Model):
     '''Model for IP addresses where anonymous users should be considered
     researchers (i.e., access from MARBL Reading Room).'''
     name = models.CharField(max_length=255)
-    ip_address = models.IPAddressField('IP Address', max_length=30)
+    ip_address = models.GenericIPAddressField('IP Address', max_length=30)
 
     class Meta:
         verbose_name = 'Researcher IP'
@@ -17,7 +17,8 @@ class ResearcherIP(models.Model):
 
 class AnonymousResearcher(AnonymousUser):
 
-    _groups = Group.objects.filter(name='Patron').all()
+    # default group membership of 'Patron' now set in
+    # app config, since it can only be done after models are loaded
 
     def is_anonymous_researcher(self):
         return True

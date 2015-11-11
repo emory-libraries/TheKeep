@@ -7,25 +7,25 @@ Session configuration
 As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
 cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
 you will need to override this in your ``localsettings.py``.  See the commented out example in
-``localsettings.py.sample``.
+``localsettings.py.sample``::
+
     SESSION_COOKIE_SECURE = False
 
 
 Conversion to Git
 ^^^^^^^^^^^^^^^^^
 
-All original code and old branches are still located in the SVN repository located `here <https://svn.library.emory.edu/svn/digital_masters/>`_
-
+All original code and old branches are still located in the SVN repository
+located `here <https://svn.library.emory.edu/svn/digital_masters/>`_
 
 
 Large File Upload Setup
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Setup NFS Mouont::
-
+Setup NFS Mount::
 
     $ sudo apt-get install sshfs
-    $ sudo addgroup athom09 fusef
+    $ sudo addgroup USERNAME fusef
     $ sudo chmod 665 /etc/fuse.conf
 
 Add the the following to `/etc/fuse.conf`::

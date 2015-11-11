@@ -400,6 +400,6 @@ def keyword_search_suggest(request):
                            ]
 
     return HttpResponse(json_serializer.encode(suggestions),
-                         mimetype='application/json')
+                         content_type='application/json')
 
 

@@ -280,7 +280,7 @@ so these formats can be recognized.  The necessary definitions are included
 with the source code in a file called ``magic_extras.txt``.   On staging
 or production servers, a newly compiled magic file should be generated to
 replace the existing file (e.g., ``/usr/share/file/magic.mgc``).  For
-development systems, as a simpler solution, developers can instaed add
+development systems, as a simpler solution, developers can instead add
 the contents of ``magic_extras.txt`` to $HOME/.magic or /etc/magic.
 
 Notes for Developers
@@ -318,6 +318,31 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 
 Upgrade Notes
 =============
+
+Release 2.4
+-----------
+
+* The configuration for LDAP has changed; update ``localsettings.py``
+  based on the example LDAP configuration in ``localsettings.py.dist``.
+
+* Upgrade to django 1.8 and django migrations.  Installations with an existing
+  database will need to fake initial migration for existing tables::
+
+    $ python manage.py migrate --fake-initial
+    $ python manage.py migrate
+
+* For new installations, the default Group definitions will no longer
+  be automatically created.  To load them manually, run::
+
+    $ python manage.py loaddata initial_groups
+
+* Configure the site not to use external Javascript and to suppress
+  Google Analytics code for requests from configured Researcher IP
+  addresses by setting **EULTHEME_NO_EXTERNAL_JS** and
+  **RESEARCHER_NO_ANALYTICS** both to True in ``localsettings.py``.
+
+* This update includes a new mimetype for the E01 Expert Witness Format;
+  server magic files should be updated based on ``magic_extras.txt``.
 
 Release 2.3 - Fedora 3.8 migration support
 ------------------------------------------

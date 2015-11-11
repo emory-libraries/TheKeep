@@ -114,7 +114,7 @@ def edit(request, pid):
         # it will have all the datastreams required for this view
 
         return HttpResponseForbidden('Permission Denied to access %s' % pid,
-                                     mimetype='text/plain')
+                                     content_type='text/plain')
 
     except RequestFailed as rf:
         # if fedora actually returned a 404, propagate it
@@ -125,7 +125,7 @@ def edit(request, pid):
               'This prevented us from accessing audio data. If this ' + \
               'problem persists, please alert the repository ' + \
               'administrator.'
-        return HttpResponse(msg, mimetype='text/plain', status=500)
+        return HttpResponse(msg, content_type='text/plain', status=500)
 
 
 @permission_required_with_403("audio.view_audio")
@@ -212,15 +212,15 @@ def download_audio(request, pid, type, extension=None):
 @permission_required_with_ajax("audio.generate_audio_access")
 @require_http_methods(['POST'])
 def tasks(request, pid):
-    '''
-    Manage tasks associated with an :class:`~keep.audio.models.AudioObject'.
+    '''Manage tasks associated with an :class:`~keep.audio.models.AudioObject`.
     Currently, the only supported functionality is to queue access
     copy conversion; this should be done by POSTing the type of task to
     be queued, i.e. **generate access copy**.
 
     Supported tasks:
+
         * **generate access copy** - queue access copy conversion for an audio
-        item by pid.  Returns a status message as the body of a plain/text response
+            item by pid.  Returns a status message as the body of a plain/text response
 
     :param pid: the pid of the object for which tasks should be queued
 

@@ -61,7 +61,12 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "keep.audio.context_processors.item_search",  # audio item search form on every page
     "keep.version_context",  # include app version
     "keep.repoadmin.context_processors.search",   # search form on every page
+    'keep.accounts.context_processors.researcher_no_analytics'
 )
+# NOTE: if you modify the configured context processors and need
+# a new processor included in unit tests, be sure to update
+# the list in keep.testplugins.KeepTestSettings
+
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -92,14 +97,15 @@ INSTALLED_APPS = [
     'django_admin_bootstrapped.bootstrap3',
     'django_admin_bootstrapped',
     'django.contrib.admin',
-    'south',
+    'djcelery',
     'widget_tweaks',
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
+    # emory_ldap included to migrate back to auth.User;
+    # should be removed in the next version
     'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
-    'eullocal.django.util',
     'eultheme',
     'downtime',
     'keep.accounts',
@@ -111,14 +117,12 @@ INSTALLED_APPS = [
     'keep.repoadmin',
     'keep.file',
     'keep.search',
-    'keep.old_dm',
-    'djcelery',
 ]
 
 
 AUTHENTICATION_BACKENDS = (
+    'django_auth_ldap.backend.LDAPBackend',
     'django.contrib.auth.backends.ModelBackend',
-    'eullocal.django.emory_ldap.backends.EmoryLDAPBackend',
 )
 
 FILE_UPLOAD_HANDLERS = (
@@ -134,9 +138,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 # using default django login url
 LOGIN_URL = '/accounts/login/'
-
-# AUTH_PROFILE_MODULE = 'emory_ldap.EmoryLDAPUserProfile'
-AUTH_USER_MODEL = 'emory_ldap.EmoryLDAPUser'
 
 # the default owner of all fedora objects created by this app
 FEDORA_OBJECT_OWNERID = 'thekeep-project'
@@ -170,8 +171,8 @@ djcelery.setup_loader()
 CELERY_ROUTES = {
     'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'}
 }
+CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
 
-DATABASE_ROUTERS = ['keep.old_dm.db.OldDMRouter']
 
 try:
     from keep.localsettings import *
@@ -199,38 +200,10 @@ if django_nose is not None:
     NOSE_PLUGINS = [
         'eulexistdb.testutil.ExistDBSetUp',
         'eulfedora.testutil.EulfedoraSetUp',
-        # ...
+        'keep.testplugins.KeepTestSettings',
     ]
-    NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup']
+    NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup',
+        '--with-keeptestsettings']
 
 # disable south migrations in unit tests
 SOUTH_TESTS_MIGRATE = False
-
-# override certain settings when running unit tests
-if 'DJANGO_TEST_MODE' in os.environ:
-
-    # Context processors to be used for testing
-    # - remove search form context processors
-    # (otherwise, this adds a solr dependency to every page load)
-    TEMPLATE_CONTEXT_PROCESSORS = (
-        # django default context processors
-        "django.contrib.auth.context_processors.auth",
-        "django.core.context_processors.debug",
-        "django.core.context_processors.i18n",
-        "django.core.context_processors.media",
-        "django.contrib.messages.context_processors.messages",
-        "django.core.context_processors.request",
-        "keep.version_context"
-    )
-    # FIXME: maybe better to use original list and remove problematic ones?
-
-    # this setting is needed for unit tests involving celery tasks
-    # so the test doesn't hang
-    # NOTE: this setting must be set before other things happen or it doesn't work
-    CELERY_ALWAYS_EAGER = True
-
-    # remove PIDMAN settings - no need to generate PIDs when testing
-    PIDMAN_HOST = None
-    PIDMAN_USER = None
-    PIDMAN_PASSWORD = None
-    PIDMAN_DOMAIN = None

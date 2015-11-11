@@ -1,9 +1,11 @@
+from __future__ import absolute_import
+
 import logging
 import os
 import subprocess
 import tempfile
 import traceback
-from celery import task
+from celery import shared_task
 from pymediainfo import MediaInfo
 
 
@@ -17,7 +19,7 @@ from keep.file.utils import md5sum
 logger = logging.getLogger(__name__)
 
 
-@task
+@shared_task
 def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
     """Generate an mp3 file from a wav file associated with an
     :class:`~keep.audio.models.AudioObject`.  When conversion is successful,

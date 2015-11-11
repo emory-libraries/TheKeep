@@ -1,4 +1,5 @@
 {% extends "page_base.html" %}
+{% load fedora %}
 
 {% block page-subtitle %}: Arrangment : Email {{ obj.cerp.content.subject_list.0 }} {% endblock %}
 
@@ -6,7 +7,12 @@
 
 {{ block.super }}
     <div class="mailbox-link">
-        Mailbox: <a href="{% url 'arrangement:view' obj.mailbox.pid %}">{{ obj.mailbox.label }}</a>
+        Mailbox: <a href="{% url 'arrangement:view' obj.mailbox.pid %}">
+        {# getting occasional errors on accessing mailbox; workaround so entire page doesn't error #}
+        {% fedora_access %}{{ obj.mailbox.label }}
+        {% permission_denied %}{{ obj.mailbox.pid }}<!-- permission denied on label -->
+        {% fedora_failed %}{{ obj.mailbox.pid }}<!-- fedora error on label -->
+        {% end_fedora_access %}</a>
     </div>
 
      {% with obj.cerp.content as email %}

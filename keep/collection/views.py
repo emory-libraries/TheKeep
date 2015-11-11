@@ -638,4 +638,4 @@ def collection_suggest(request):
                        for c in q[:15]]
 
     return HttpResponse(json_serializer.encode(suggestions),
-                         mimetype='application/json')
+                         content_type='application/json')

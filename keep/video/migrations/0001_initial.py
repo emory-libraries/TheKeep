@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
-from south.utils import datetime_utils as datetime
-from south.db import db
-from south.v2 import SchemaMigration
-from django.db import models
+from __future__ import unicode_literals
+
+from django.db import models, migrations
 
 
-class Migration(SchemaMigration):
+class Migration(migrations.Migration):
 
-    def forwards(self, orm):
-        pass
+    dependencies = [
+    ]
 
-    def backwards(self, orm):
-        pass
-
-    models = {
-        
-    }
-
-    complete_apps = ['video']
+    operations = [
+        migrations.CreateModel(
+            name='VideoPerms',
+            fields=[
+                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
+            ],
+            options={
+                'permissions': (('view_video', 'Can view, search, and browse video objects'), ('download_video', 'Download video files (original or access copy)'), ('play_video', 'Play video'), ('view_researcher_video', 'Researcher search and view'), ('download_researcher_video', 'Researcher download'), ('play_researcher_video', 'Researcher play video')),
+            },
+            bases=(models.Model,),
+        ),
+    ]

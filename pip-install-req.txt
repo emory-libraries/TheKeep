@@ -1,9 +1,8 @@
-Django<1.6
-https://wilson.library.emory.edu/jenkins/job/eullocal-0.21.x/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.21.0.tar.gz
+Django>=1.8,<1.9
+# dev eullocal to migrate away from local python library for emory ldap
+https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.22.0-dev.tar.gz
 eulxml>=0.21.0
 eulfedora>=1.2
-#-e git://github.com/emory-libraries/eulfedora.git@1.1#egg=eulfedora-fed3.8
-
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
 https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.2.tar.gz
@@ -18,19 +17,18 @@ poster
 #-e git://github.com/tow/sunburnt.git@0faa3ed842d00661ec50b9cb96b41a6144ab3e6f#egg=sunburnt
 # 05/2014 need local version of sunburnt for Solr 4 join query support
 -e git://github.com/rlskoeser/sunburnt.git@solr4-join-support#egg=sunburnt
+#sunburnt==0.7
 httplib2
 unicodecsv
-south
 python-dateutil
 pytz
 # 0.1 release of eulcm content model objects
 -e git://github.com/emory-libraries/eulcm.git@0.1#egg=eulcm
 bodatools
 bagit>=1.3.2
-# dev eultheme until next release
--e git://github.com/emory-libraries/django-eultheme.git@1.1.2#egg=django_eultheme
+-e git://github.com/emory-libraries/django-eultheme.git@1.1.3#egg=django_eultheme
 django_admin_bootstrapped<2.0
 django-widget-tweaks
 pymediainfo
-psycopg2
 django-downtime
+django_auth_ldap
