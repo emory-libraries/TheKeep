@@ -224,7 +224,11 @@ def ingest_files(files, collection, comment, request):
             # if audio, needs an additional step:
             if objtype == AudioObject:
                 # Start asynchronous task to convert audio for access
-                queue_access_copy(obj, use_wav=filename, remove_wav=True)
+                # NOTE: not passing in user-upload file so that
+                # celery can more easily be run on a separate server
+                queue_access_copy(obj)
+                # remove the file now that we have sucessfully ingested
+                os.remove(filename)
 
             # NOTE: could remove MD5 file (if any) here, but MD5 files
             # should be small and will get cleaned up by the cron script
