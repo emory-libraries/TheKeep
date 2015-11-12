@@ -319,6 +319,19 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.5
+-----------
+
+* This release adds new fields to the Solr schema; Solr should be updated
+  with the project schema.xml, and content will be need to reindexed.  To
+  avoid reindexing all records, reindex the following content models:
+
+    - emory-control:DiskImage-1.0
+    - emory-control:Video-1.0
+    - emory-control:Rushdie-MailboxEntry-1.0
+    - emory-control:Rushdie-CerpMailbox-1.0
+
+
 Release 2.4
 -----------
 
