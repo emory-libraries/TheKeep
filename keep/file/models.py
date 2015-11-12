@@ -15,6 +15,7 @@ from eulfedora.rdfns import relsext
 from eulxml import xmlmap
 from eulxml.xmlmap import mods, premis
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
+from keep.common.rdfns import REPO
 from keep.collection.models import CollectionObject
 from keep.file.utils import md5sum, sha1sum
 
@@ -115,6 +116,11 @@ class DiskImage(DigitalObject):
     ''':class:`~keep.collection.models.CollectionObject that this object belongs to,
     via `isMemberOfCollection` relation.
     '''
+
+    # FIXME: placeholder properties, waiting on proper rdf
+    # TODO: document these
+    original = Relation(REPO.migrated, type='self')
+    migrated = Relation(REPO.original, type='self')
 
     mods = XmlDatastream("MODS", "MODS Metadata", DiskImageMods, defaults={
                          'control_group': 'M',
