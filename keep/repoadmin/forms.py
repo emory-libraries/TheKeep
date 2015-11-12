@@ -107,6 +107,7 @@ class KeywordSearch(forms.Form):
         # we need a facet field for collection to display collection names
         # but the non-facet version is used for searching
         ('collection', 'collection_label_facet'),
+        ('format', 'content_format'),
         ('access status', 'access_code'),
         ('added by', 'added_by_facet'),
         ('modified by', 'users_facet'),

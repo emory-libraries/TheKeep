@@ -87,9 +87,9 @@
       <span class="glyphicon glyphicon-headphones"></span>
       {% elif obj.object_type  == 'video' %}
       <span class="glyphicon glyphicon-film"></span>
-      {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+      {% elif obj.object_type  == 'email' %}
       <span class="glyphicon glyphicon-envelope"></span>
-      {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
+      {% elif obj.object_type  == 'disk image' %}
       <span class="glyphicon glyphicon-hdd"></span>
       {% else %}
       <span class="glyphicon glyphicon-file"></span>
@@ -105,7 +105,7 @@
       {% include "video/snippets/list-video.html" %}
     {% elif obj.object_type == 'disk image' %}
         {% include "file/snippets/list-diskimage.html" %}
-    {% elif obj.object_type == 'born-digital' %}
+    {% elif obj.object_type == 'born-digital' or obj.object_type == 'email' %}
          {% include "arrangement/snippets/list-arrangement.html" %}
     {% else %}
     {# fall-back display #}

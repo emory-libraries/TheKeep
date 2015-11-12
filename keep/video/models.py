@@ -490,6 +490,12 @@ class Video(DigitalObject):
                 and not self.mods.content.origin_info.created.is_empty():
             data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
 
+        # store master video format and size
+        if self.provenance.content.object and self.provenance.content.object.format:
+            data['content_format'] = self.provenance.content.object.format.name
+        data['content_size'] = self.content.size
+
+
         return data
 
 
