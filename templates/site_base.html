@@ -35,7 +35,7 @@
   {{ block.super }}
   <link rel="stylesheet" type="text/css" href="{% static 'style/local.css' %}" />
   <link rel="stylesheet" type="text/css" href="{% static 'style/smoothness/jquery-ui-1.8.19.custom.css' %}" />
-  {# <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}/style/bootstrap/css/bootstrap-icons.css" /> #}
+  {% block style %}{% endblock %} {# for compatibility with eullocal.taskresult styles #}
 {% endblock %}
 
 {% block javascript %}

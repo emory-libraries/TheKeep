@@ -2,9 +2,31 @@
 
 CHANGELOG
 =========
+
+Release 2.4.1
+-------------
+
+* Support for running celery daemon on a separate server from the
+  web application; modifies audio access copy conversion file handling
+  on ingest to allow for celery and audio file conversions to run
+  on a seprate server from the web UI where ingest is done.
+
+Release 2.4 - Support additional disk image mimetypes
+-----------------------------------------------------
+
+* An archivist can upload .tar, E01, and .mbox files and associated
+  metadata into the Keep as a part of a bag in order to ingest
+  preservation-stable file formats for disk images and composite files.
+* bugfix: prevent users from double-clicking ingest when uploading files
+  and ingesting the same file twice.
+* bugfix: make Keep frontend external dependencies configurable to
+  support restricted access researcher machines.
+* Upgrade to Django 1.8
+* Migrate from eullocal to django-auth-ldap for LDAP login support
+
 Release 2.3.1
 -------------
-* Changes to make keep work with fedora 3.8.  Specifically, working around file uri checksum bug.
+* Changes to work with fedora 3.8: work around file uri checksum bug.
 
 Release 2.3
 -----------
