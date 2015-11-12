@@ -17,6 +17,18 @@
 
 {% block content-body %}
 {{ block.super }}
+
+{% if obj.original %}
+<div class="alert alert-info" role="alert">Migrated from
+<a href="{% url 'file:edit' obj.original.pid %}">{{ obj.original.pid }}</a></div>
+{% endif %}
+{% if obj.migrated %}
+<div class="alert alert-danger" role="alert">Migrated to
+<a href="{% url 'file:edit' obj.migrated.pid %}">{{ obj.migrated.pid }}</a></div>
+{% endif %}
+
+
+
 {% include 'file/snippets/ds_links.html' %}
 
 <div class="instructions">
