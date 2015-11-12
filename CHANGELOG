@@ -3,6 +3,14 @@
 CHANGELOG
 =========
 
+Release 2.4.1
+-------------
+
+* Support for running celery daemon on a separate server from the
+  web application; modifies audio access copy conversion file handling
+  on ingest to allow for celery and audio file conversions to run
+  on a seprate server from the web UI where ingest is done.
+
 Release 2.4 - Support additional disk image mimetypes
 -----------------------------------------------------
 
