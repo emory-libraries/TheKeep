@@ -117,10 +117,12 @@ class DiskImage(DigitalObject):
     via `isMemberOfCollection` relation.
     '''
 
-    # FIXME: placeholder properties, waiting on proper rdf
-    # TODO: document these
-    original = Relation(REPO.migrated, type='self')
-    migrated = Relation(REPO.original, type='self')
+    #: original DiskImage object that this DiskImage is related to, if
+    #: this is a migrated object; related via fedora-rels-ext isDerivationOf
+    original = Relation(relsext.isDerivationOf, type='self')
+    #: migrated DiskImage object that supercedes this object, if a
+    #: migration has occurred; related via fedora-rels-ext hasDerivation
+    migrated = Relation(relsext.hasDerivation, type='self')
 
     mods = XmlDatastream("MODS", "MODS Metadata", DiskImageMods, defaults={
                          'control_group': 'M',
@@ -556,6 +558,9 @@ class DiskImage(DigitalObject):
         if self.provenance.content.object and self.provenance.content.object.format:
             data['content_format'] = self.provenance.content.object.format.name
         data['content_size'] = self.content.size
+
+        if self.original:
+            data['original_pid'] = self.original.pid
 
         return data
 
