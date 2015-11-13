@@ -7,6 +7,7 @@ from eulfedora.server import Repository
 import glob
 import os
 
+from keep.common.fedora import DuplicateContent
 from keep.file.models import DiskImage
 
 
@@ -23,6 +24,8 @@ class Command(BaseCommand):
             help='Path to directory containing bags with disk images')
         parser.add_argument('--pidspace', default='emory',
             help='Fedora pidspace to use when looking for original (default: %(default)s')
+        parser.add_argument('--file-uris', default=False, action='store_true',
+            help='Use file URIs (i.e., migrated content is in configured LARGE_FILE_STAGING_FEDORA_DIR')
 
 
     def handle(self, *args, **kwargs):
@@ -48,12 +51,13 @@ class Command(BaseCommand):
             elif not original.has_requisite_content_models:
                 print '%s is not a disk image; skipping' % original.pid
                 continue
-            # TODO: check if original already has a migration?
+            elif original.migrated is not None:
+                # also make sure object doesn't already have a migration
+                print '%s already has a migration; skipping' % original.pid
+                continue
 
             # create a new "migrated" disk image object from the bag
-            # for now, assuming we should not use file uri
-            # TODO: make this configurable via command-line option?
-            migrated = DiskImage.init_from_bagit(bagpath, file_uri=False)
+            migrated = DiskImage.init_from_bagit(bagpath, file_uri=kwargs['file_uris'])
             # associate with original
             migrated.original = original
             # copy over descriptive & rights metadata
@@ -76,4 +80,9 @@ class Command(BaseCommand):
             # update original object
             original.migrated = migrated.pid
             # TODO: insert deletion premis event for original
-            original.save()
+
+            try:
+                original.save()
+            except DuplicateContent as err:
+                self.stderr.write('Duplicate content detected for %s: %s' % \
+                    (bagpath, err))
