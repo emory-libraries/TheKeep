@@ -17,6 +17,7 @@ from eulxml.xmlmap import mods
 from keep.audio import models as audiomodels
 from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
     mp3_md5, wav_md5
+from keep.common.models import PremisObjectCharacteristics
 from keep.collection.fixtures import FedoraFixtures
 from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm, \
     largefile_staging_bags, LargeFileIngestForm
@@ -1340,6 +1341,22 @@ class DiskImageTest(KeepTestCase):
                          'ark uri should be present in index data')
         self.assertEqual(obj.content.checksum, desc_data['content_md5'],
                          'content datastream checksum should be included in index data')
+
+        # test format
+        # - normal object with only one set of object characteristics
+        obj.provenance.content.create_object()
+        obj.provenance.content.object.create_format()
+        obj.provenance.content.object.format.name = 'AD1'
+        desc_data = obj.index_data()
+        self.assertEqual('AD1', desc_data['content_format'])
+        # - migrated object with second set of object characterstics
+        obj_characteristics = PremisObjectCharacteristics(composition_level=0)
+        obj_characteristics.create_format()
+        obj_characteristics.format.name = 'E01'
+        obj.provenance.content.object.characteristics.append(obj_characteristics)
+        desc_data = obj.index_data()
+        self.assertEqual('E01', desc_data['content_format'])
+
 
     def test_supplemental_content(self):
         # test properties for interacting with supplemental file datastreams

@@ -2,6 +2,8 @@
 Manage command to ingest migration disk images and associate them
 with the existing disk image object they replace.
 '''
+from collections import defaultdict
+from copy import deepcopy
 from datetime import date, datetime
 from django.core.management.base import BaseCommand
 from eulfedora.server import Repository
@@ -43,6 +45,8 @@ class Command(BaseCommand):
         'date': date(2015, 3, 6)
     }
     ad1_migration_user = 'aeckhar'  # user who did the migration work
+    ad1_migration_event_detail = 'Extraction: program="AccessData FTK Imager"; version="3.1.2.0" Tar repackaging: program="Cygwin"; version="NT-10.0"'
+    ad1_migration_event_outcome = 'AD1 downloaded from repository, files extracted, files repackaged as tar file and ingested.'
 
     def handle(self, *args, **kwargs):
         verbosity = kwargs.get('verbosity', self.v_normal)
@@ -53,6 +57,8 @@ class Command(BaseCommand):
             self.stderr.write('No bagit content found to migrate')
             return
 
+        stats = defaultdict(int)
+
         for bagname in bags:
             bagpath = os.path.dirname(bagname)
             # for now, assuming bagit name is noid portion of object pid
@@ -62,15 +68,21 @@ class Command(BaseCommand):
                 type=DiskImage)
             # make sure object exists and is a disk image
             if not original.exists:
-                print '%s not found in Fedora' % original.pid
+                self.stderr.write('%s not found in Fedora' % original.pid)
+                stats['notfound'] += 1
                 continue
             elif not original.has_requisite_content_models:
-                print '%s is not a disk image; skipping' % original.pid
+                self.stderr.write('%s is not a disk image; skipping' % original.pid)
+                stats['not_diskimage'] += 1
                 continue
             elif original.migrated is not None:
                 # also make sure object doesn't already have a migration
-                print '%s already has a migration; skipping' % original.pid
+                self.stderr.write('%s already has a migration; skipping' % original.pid)
+                stats['previously_migrated'] += 1
                 continue
+            else:
+                if verbosity > self.v_normal:
+                    self.stdout.write('Migrating %s' % original.pid)
 
             # create a new "migrated" disk image object from the bag
             migrated = DiskImage.init_from_bagit(bagpath, file_uri=kwargs['file_uris'])
@@ -107,10 +119,11 @@ class Command(BaseCommand):
             obj_characteristics.creating_application.name = self.ad1_creating_app0['name']
             obj_characteristics.creating_application.version = self.ad1_creating_app0['version']
             obj_characteristics.creating_application.date = self.ad1_creating_app0['date']
-            # insert *before* the other object characteristics block
+            # insert *before* the other object characteristics section
             premis_ds.object.characteristics.insert(0, obj_characteristics)
             # copy original environment information from original disk image
-            premis_ds.object.original_environment = original.provenance.content.object.original_environment
+            # (using deepcopy to avoid removing content from the original)
+            premis_ds.object.original_environment = deepcopy(original.provenance.content.object.original_environment)
 
             # add relationship to the original object
             rel = PremisRelationship(type='derivation')
@@ -127,7 +140,9 @@ class Command(BaseCommand):
 
             try:
                 migrated.save('Ingest migrated version of %s' % original.pid)
-                print 'migrated object ingested as %s' % migrated.pid
+                if verbosity >= self.v_normal:
+                    self.stdout.write('Migration of %s ingested as %s' % \
+                        (original.pid, migrated.pid))
             except DuplicateContent as err:
                 self.stderr.write('Duplicate content detected for %s: %s %s' % \
                     (bagpath, err, ', '.join(err.pids)))
@@ -137,16 +152,16 @@ class Command(BaseCommand):
             # once migrated object has been ingested,
             # update original object with migration information
             # - add rels-ext reference to migrated object
-            original.migrated = migrated.pid
+            original.migrated = migrated
             # - update premis with migration event and relationship
             migration_event = PremisEvent()
             migration_event.id_type = 'UUID'
             migration_event.id = migration_event_id
             migration_event.type = 'migration'
             migration_event.date = datetime.now().isoformat()
-            migration_event.detail = 'Extraction: program=""; version="" Tar repackaging: program=""; version=""'
+            migration_event.detail = self.ad1_migration_event_detail
             migration_event.outcome = 'Pass'
-            migration_event.outcome_detail = 'AD1 downloaded from repository, files extracted, files repackaged as tar file and ingested.'
+            migration_event.outcome_detail = self.ad1_migration_event_outcome
             migration_event.agent_type = 'fedora user'
             migration_event.agent_id = self.ad1_migration_user
             # premis wants both source and outcome objects linked in the event
@@ -168,3 +183,20 @@ class Command(BaseCommand):
             original.provenance.content.object.relationships.append(rel)
 
             original.save()
+            stats['migrated'] += 1
+
+            if verbosity >= self.v_normal:
+                self.stdout.write('Updated original %s with migration event' % \
+                        original.pid)
+
+        # summarize what was done
+        stats['errors'] = stats['notfound'] + stats['not_diskimage'] + stats['previously_migrated']
+        self.stdout.write('Migrated %(migrated)d disk images with %(errors)d errors' % stats)
+        if stats['errors']:
+            if stats['notfound']:
+                self.stdout.write('  %(notfound)d not found' % stats)
+            if stats['not_diskimage']:
+                self.stdout.write('  %(not_diskimage)d not disk image objects' % stats)
+            if stats['previously_migrated']:
+                self.stdout.write('  %(previously_migrated)d previously migrated' %
+                    stats)

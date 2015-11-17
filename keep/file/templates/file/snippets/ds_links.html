@@ -17,7 +17,7 @@
 </ul>
 
 {# display checksum and format of disk image #}
-<p class="extra">{{ obj.provenance.content.object.format.name }} disk image ({{ obj.content.size|filesizeformat }}), checksum {{ obj.content.checksum }}</p>
+<p class="extra">{{ obj.provenance.content.object.latest_format.name }} disk image ({{ obj.content.size|filesizeformat }}), checksum {{ obj.content.checksum }}</p>
 {# display last modified date and user #}
 <p class="extra">Last modified {{ obj.modified }}
   {% for entry in obj.audit_trail.records %}{% if forloop.last %}by {{ entry.user|username_to_name }}{% endif %}{% endfor %}</p>

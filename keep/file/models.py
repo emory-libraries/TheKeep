@@ -555,8 +555,13 @@ class DiskImage(DigitalObject):
             data['last_fixity_result'] = last_fixity_check.outcome
 
         # store disk image format and size
-        if self.provenance.content.object and self.provenance.content.object.format:
-            data['content_format'] = self.provenance.content.object.format.name
+        # - some disk images (i.e., objects migrated from AD1/AFF)
+        # will have two sets of object characteristics; we want the
+        # format from the last one listed
+        if self.provenance.content.object and \
+          self.provenance.content.object.latest_format:
+            data['content_format'] = self.provenance.content.object.latest_format.name
+
         data['content_size'] = self.content.size
 
         if self.original:

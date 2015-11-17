@@ -165,6 +165,10 @@ class PremisObject(premis.Object):
                                      PremisFixity)
     format = xmlmap.NodeField('p:objectCharacteristics/p:format',
                               PremisObjectFormat)
+
+    latest_format = xmlmap.NodeField('p:objectCharacteristics[position() = last()]/p:format',
+                              PremisObjectFormat)
+
     creating_application = xmlmap.NodeField('p:objectCharacteristics/p:creatingApplication',
                                             PremisCreatingApplication)
     original_environment = xmlmap.NodeField('p:environment[p:environmentNote="Original environment"]',
@@ -185,6 +189,9 @@ class PremisEvent(premis.Event):
     # extend premis event in order to accurately describe migration events
     linked_objects = xmlmap.NodeListField('p:linkingObjectIdentifier',
         PremisLinkingObject)
+    #: outcome of the event (`eventOutcomeInformation/eventOutcomeDetail/eventOutcomeDetailNote`)
+    outcome_detail = xmlmap.StringField('p:eventOutcomeInformation/p:eventOutcomeDetail/p:eventOutcomeDetailNote', required=False)
+
 
 
 ##
