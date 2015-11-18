@@ -238,7 +238,9 @@ def keyword_search(request):
                 "part", "collection_label", "duration", "has_access_copy",
                 "access_copy_mimetype", "access_copy_size", "source_id",
                 # arrangement/disk image
-                "simpleCollection_label", "rights", "state"
+                "simpleCollection_label", "rights", "state",
+                # migrated / original
+                "original_pid", "isDerivationOf", "hasDerivation",
                 ],
                 score=True)
             ctx['show_relevance'] = True
