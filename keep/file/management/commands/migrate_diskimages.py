@@ -149,6 +149,10 @@ class Command(BaseCommand):
                 continue
             # would probably be good to catch other fedora errors
 
+            # reinitialize migrated object, just to avoid any issues
+            # with accessing ark uri for use in original object premis
+            migrated = repo.get_object(migrated.pid, type=DiskImage)
+
             # once migrated object has been ingested,
             # update original object with migration information
             # - add rels-ext reference to migrated object
