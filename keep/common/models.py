@@ -52,6 +52,10 @@ access term object has three properties: code, abbreviation, access, and text, w
 map to elements of access_terms.'''
 # e.g., access_terms_dict['11'].access == True
 
+#: dictionary to lookup up short abbreviation text by long rights text
+rights_access_abbrev = dict((term[3], term[1]) for term in rights_access_terms)
+
+
 def allow_researcher_access(rts):
     '''
     Check if rights XML indicate that researchers should be

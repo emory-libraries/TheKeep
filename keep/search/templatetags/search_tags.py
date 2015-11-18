@@ -12,6 +12,7 @@ from keep.audio.models import AudioObject
 from keep.video.models import Video
 from keep.collection.models import CollectionObject
 from keep.common.fedora import user_full_name
+from keep.common.models import rights_access_abbrev
 from keep.file.models import DiskImage
 
 import logging
@@ -162,6 +163,13 @@ def edit_url(item):
         return reverse(viewname, kwargs={'pid': pid})
     else:
         return ''
+
+
+@register.filter
+@stringfilter
+def rights_abbreviation(rights_text):
+    'Return the abbreviated text for a rights statement, if possible.'
+    return rights_access_abbrev.get(rights_text, '')
 
 
 

@@ -1,6 +1,5 @@
 {% extends 'repoadmin/snippets/list-item.html' %}
-{% load humanize %}
-{% load audio_extras %}
+{% load humanize audio_extras search_tags %}
 
 {% block item_title %}
 {# display edit link if user has permission #}
@@ -23,6 +22,6 @@
 {% block item_info %}
 <ul class="list-inline">
  {% if obj.duration %}<li>{{ obj.duration|seconds_duration }}</li>{% endif %}
-    </li>
+ {% if obj.rights %}<li>{{ obj.rights.0|rights_abbreviation }}</li>{% endif %}
 </ul>
 {% endblock %}
