@@ -60,7 +60,8 @@
   <div class="btn-group" role="group">
   {% with 'original audio' as original %}
     {% if obj.audio.exists %}
-      <a class="btn btn-default" href="{% url 'audio:download-audio' obj.pid %}">{{ original }}
+      <a class="btn btn-default" href="{% url 'audio:download-audio' obj.pid %}">
+        <i class="fa fa-download"></i> {{ original }}
         {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}</a>
     {% else %}
       <button type="button" class="btn btn-default">{{ original }}</button>
@@ -68,7 +69,8 @@
   {% endwith %}
   {% with 'access copy' as access %}
     {% if obj.compressed_audio.exists %}
-      <a class="btn btn-default" href="{{ obj.get_access_url }}">{{ access }}</a>
+      <a class="btn btn-default" href="{{ obj.get_access_url }}">
+      <i class="fa fa-download"></i> {{ access }}</a>
     {% endif %}
   {% endwith %}
   </div>
