@@ -18,7 +18,7 @@ poster
 # need unreleased sunburnt for results_as
 #-e git://github.com/tow/sunburnt.git@0faa3ed842d00661ec50b9cb96b41a6144ab3e6f#egg=sunburnt
 # 05/2014 need local version of sunburnt for Solr 4 join query support
--e git://github.com/rlskoeser/sunburnt.git@solr4-join-support#egg=sunburnt
+#-e git://github.com/rlskoeser/sunburnt.git@solr4-join-support#egg=sunburnt
 # 11/2015 testing local version of sunburnt with join query and basic group support
 -e git://github.com/rlskoeser/sunburnt.git@group-and-join#egg=sunburnt
 #sunburnt==0.7
