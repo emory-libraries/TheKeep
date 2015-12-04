@@ -135,7 +135,14 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         # FIXME: is it worth splitting out descriptive index data here?
         data = super(ArrangementObject, self).index_data()
 
-        data['object_type'] = 'born-digital'  # ??
+        if self.has_model(boda.EmailMessage.EMAIL_MESSAGE_CMODEL) or \
+          self.has_model(boda.Mailbox.MAILBOX_CONTENT_MODEL):
+            data['object_type'] = 'email'
+        # elif self.has_model(boda.RushdieFile.RUSHDIE_FILE_CMODEL):
+            # data['object_type'] = 'file'
+        else:
+            # generic fallback
+            data['object_type'] = 'born-digital'
 
         # Collection Info
         if self._deprecated_collection:

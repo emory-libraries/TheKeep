@@ -65,7 +65,7 @@ def allow_researcher_access(rts):
     access_term = rights_access_terms_dict.get(access_code, None)
     if not access_term:
         return None
-        
+
     return access_term.access
 
 class _DirPart(object):
@@ -138,16 +138,61 @@ class PremisEnvironment(premis.BasePremis):
     hardware = xmlmap.NodeField('p:hardware', PremisHardwareEnvironment)
 
 
+class PremisObjectCharacteristics(premis.BasePremis):
+    ROOT_NAME = 'objectCharacteristics'
+    composition_level = xmlmap.IntegerField('p:compositionLevel')
+    format = xmlmap.NodeField('p:format', PremisObjectFormat)
+    creating_application = xmlmap.NodeField('p:creatingApplication',
+                                        PremisCreatingApplication)
+
+class PremisRelationship(premis.BasePremis):
+    ROOT_NAME = 'relationship'
+    type = xmlmap.StringField('p:relationshipType')
+    subtype = xmlmap.StringField('p:relationshipSubType')
+
+    #: related object identifier type
+    related_object_type = xmlmap.StringField('p:relatedObjectIdentification/p:relatedObjectIdentifierType')
+    #: related object identifier value
+    related_object_id = xmlmap.StringField('p:relatedObjectIdentification/p:relatedObjectIdentifierValue')
+    #: related event identifier type
+    related_event_type = xmlmap.StringField('p:relatedEventIdentification/p:relatedEventIdentifierType')
+    #: related event identifier value
+    related_event_id = xmlmap.StringField('p:relatedEventIdentification/p:relatedEventIdentifierValue')
+
 class PremisObject(premis.Object):
     composition_level = xmlmap.IntegerField('p:objectCharacteristics/p:compositionLevel')
     checksums = xmlmap.NodeListField('p:objectCharacteristics/p:fixity',
                                      PremisFixity)
     format = xmlmap.NodeField('p:objectCharacteristics/p:format',
                               PremisObjectFormat)
+
+    latest_format = xmlmap.NodeField('p:objectCharacteristics[position() = last()]/p:format',
+                              PremisObjectFormat)
+
     creating_application = xmlmap.NodeField('p:objectCharacteristics/p:creatingApplication',
                                             PremisCreatingApplication)
     original_environment = xmlmap.NodeField('p:environment[p:environmentNote="Original environment"]',
                                             PremisEnvironment)
+
+    characteristics = xmlmap.NodeListField('p:objectCharacteristics',
+        PremisObjectCharacteristics)
+
+    relationships = xmlmap.NodeListField('p:relationship', PremisRelationship)
+
+class PremisLinkingObject(premis.BasePremis):
+    ROOT_NAME = 'linkingObjectIdentifier'
+    id_type = xmlmap.StringField('p:linkingObjectIdentifierType')
+    id = xmlmap.StringField('p:linkingObjectIdentifierValue')
+    role = xmlmap.StringField('p:linkingObjectRole')
+
+class PremisEvent(premis.Event):
+    # extend premis event in order to accurately describe migration events
+    linked_objects = xmlmap.NodeListField('p:linkingObjectIdentifier',
+        PremisLinkingObject)
+    #: outcome of the event (`eventOutcomeInformation/eventOutcomeDetail/eventOutcomeDetailNote`)
+    outcome_detail = xmlmap.StringField('p:eventOutcomeInformation/p:eventOutcomeDetail/p:eventOutcomeDetailNote', required=False)
+
+
 
 ##
 ## Source technical metadata

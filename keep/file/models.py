@@ -15,6 +15,7 @@ from eulfedora.rdfns import relsext
 from eulxml import xmlmap
 from eulxml.xmlmap import mods, premis
 from keep.common.fedora import DigitalObject, LocalMODS, Repository
+from keep.common.rdfns import REPO
 from keep.collection.models import CollectionObject
 from keep.file.utils import md5sum, sha1sum
 
@@ -115,6 +116,13 @@ class DiskImage(DigitalObject):
     ''':class:`~keep.collection.models.CollectionObject that this object belongs to,
     via `isMemberOfCollection` relation.
     '''
+
+    #: original DiskImage object that this DiskImage is related to, if
+    #: this is a migrated object; related via fedora-rels-ext isDerivationOf
+    original = Relation(relsext.isDerivationOf, type='self')
+    #: migrated DiskImage object that supercedes this object, if a
+    #: migration has occurred; related via fedora-rels-ext hasDerivation
+    migrated = Relation(relsext.hasDerivation, type='self')
 
     mods = XmlDatastream("MODS", "MODS Metadata", DiskImageMods, defaults={
                          'control_group': 'M',
@@ -508,7 +516,9 @@ class DiskImage(DigitalObject):
         # so index data should not use Solr to find any related object info
 
         data = super(DiskImage, self).index_data()
-        data['object_type'] = 'born-digital'
+        # FIXME: is born-digital type still needed for anything? perms?
+        # data['object_type'] = 'born-digital'
+        data['object_type'] = 'disk image'
         # set as born digital for now; eventually, we'll need to distinguish
         # between kinds of born digital content
 
@@ -543,6 +553,19 @@ class DiskImage(DigitalObject):
             last_fixity_check = self.provenance.content.fixity_checks[-1]
             data['last_fixity_check'] = last_fixity_check.date
             data['last_fixity_result'] = last_fixity_check.outcome
+
+        # store disk image format and size
+        # - some disk images (i.e., objects migrated from AD1/AFF)
+        # will have two sets of object characteristics; we want the
+        # format from the last one listed
+        if self.provenance.content.object and \
+          self.provenance.content.object.latest_format:
+            data['content_format'] = self.provenance.content.object.latest_format.name
+
+        data['content_size'] = self.content.size
+
+        if self.original:
+            data['original_pid'] = self.original.pid
 
         return data
 

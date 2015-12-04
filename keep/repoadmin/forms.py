@@ -104,14 +104,15 @@ class KeywordSearch(forms.Form):
 
     facet_field_names = SortedDict([
         ('type', 'object_type'),
-        # we need a facet field for collection to display collection names but the noon-facet version is used for searching
+        # we need a facet field for collection to display collection names
+        # but the non-facet version is used for searching
         ('collection', 'collection_label_facet'),
+        ('format', 'content_format'),
         ('access status', 'access_code'),
         ('added by', 'added_by_facet'),
         ('modified by', 'users_facet'),
         ('year', 'created_year'),
         ('fixity_check', 'last_fixity_result'),
-
     ])
     ''':class:`~django.utils.datastructures.SortedDict` of facet
     fields mapping human-readable display name to the Solr field that

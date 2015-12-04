@@ -295,6 +295,10 @@ class ArkPidDigitalObject(models.DigitalObject):
             data['added_by'] = user_full_name(self.ingest_user)
         data['audit_trail_users'] = list(self.audit_trail_users)
         data['users'] = [user_full_name(u) for u in self.audit_trail_users]
+
+        # used to group migrated objects; set on all objects so everything
+        # can be grouped and sorted in the same way
+        data['original_pid'] = self.pid
         return data
 
     def save(self, logMessage=None):
