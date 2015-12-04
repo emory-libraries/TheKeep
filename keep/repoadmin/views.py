@@ -114,6 +114,9 @@ def keyword_search(request):
             today = date.today()
             q = q.query(last_fixity_check__range=(fixity_check_mindate, today))
 
+        # use solr grouping queries to cluster original and migrated objects
+        # if they appear in the same search result set
+        q = q.group_by('original_pid', limit=5, sort='created desc', format='simple')
 
         # separate out normal and fielded search terms in keyword search string
         # TODO: should this logic be shifted to form validation/cleaning?
@@ -235,7 +238,9 @@ def keyword_search(request):
                 "part", "collection_label", "duration", "has_access_copy",
                 "access_copy_mimetype", "access_copy_size", "source_id",
                 # arrangement/disk image
-                "simpleCollection_label", "rights", "state"
+                "simpleCollection_label", "rights", "state",
+                # migrated / original
+                "original_pid", "isDerivationOf", "hasDerivation",
                 ],
                 score=True)
             ctx['show_relevance'] = True

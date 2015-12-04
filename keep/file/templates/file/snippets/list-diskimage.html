@@ -1,5 +1,5 @@
 {% extends 'repoadmin/snippets/list-item.html' %}
-{% load humanize %}
+{% load humanize search_tags %}
 
 {% block item_title %}
 <p>
@@ -25,18 +25,18 @@
 
 {% block item_info %}
   <ul class="list-inline">
-    {% if obj.format %}<li>{{ obj.format|join:', ' }}</li>{% endif %}
     {% if obj.content_format %}<li>{{ obj.content_format }}</li>{% endif %}
+    {% if obj.content_size %}<li>{{ obj.content_size|filesizeformat }}</li>{% endif %}
     {% if obj.access_copy_size %}{{ obj.access_copy_size|filesizeformat }}{% endif %}
-    {% if obj.rights %}<li>{{ obj.rights|join:', ' }}</li>{% endif %}
     {# migrated objects: display alerts for migrated/original #}
-    {% if obj.hasDerivation %}{% with migrated_pid=obj.hasDerivation.0|slice:"12:" %}
+    {% if obj.hasDerivation and 'info:fedora/' in obj.hasDerivation.0 %}{% with migrated_pid=obj.hasDerivation.0|slice:"12:" %}
     <li class="alert-danger">Migrated to
       <a href="{% url 'file:edit' migrated_pid  %}">{{ migrated_pid }}</a></li>
     {% endwith %}{% endif %}
-    {% if obj.isDerivationOf %}{% with original_pid=obj.isDerivationOf.0|slice:"12:" %}
+    {% if obj.isDerivationOf and 'info:fedora/' in obj.isDerivationOf.0 %}{% with original_pid=obj.isDerivationOf.0|slice:"12:" %}
     <li class="alert-info">Migrated from
       <a href="{% url 'file:edit' original_pid  %}">{{ original_pid }}</a></li>
     {% endwith %}{% endif %}
+    {% if obj.rights %}<li>{{ obj.rights.0|rights_abbreviation }}</li>{% endif %}
   </ul>
 {% endblock %}

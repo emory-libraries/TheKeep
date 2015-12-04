@@ -1,6 +1,5 @@
 {% extends 'repoadmin/snippets/list-item.html' %}
-{% load humanize %}
-{% load audio_extras %}
+{% load humanize audio_extras search_tags %}
 
 {% block item_title %}
 {# display edit link if user has permission #}
@@ -39,7 +38,7 @@
     </li>
   {% endif %}
   {% if obj.rights %}
-    <li>{{ obj.rights|join:', ' }}</li>
+    {% if obj.rights %}<li>{{ obj.rights.0|rights_abbreviation }}</li>{% endif %}
   {% endif %}
 </ul>
 {% endblock %}
