@@ -18,7 +18,7 @@ from keep.file.models import DiskImage
 
 
 class Command(BaseCommand):
-    '''Ingest migrated disk images and associate with older disk images.'''
+    '''Ingest migrated disk images and associate with existing AD1 disk images.'''
     help = __doc__
 
     #: default verbosity level
