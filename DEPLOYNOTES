@@ -326,7 +326,16 @@ Release 2.5
   with the project schema.xml, and all content will be need to reindexed.
 * The AFF Disk Image migration requires that the FTKimager command-line
   tools be installed on the server where celery tasks are run:
-  http://accessdata.com/product-download
+  http://accessdata.com/product-download under "Command Line Versions",
+  or use one of these links:
+
+    * `Fedora/Red Hat 32bit <thttp://accessdata.com/product-download/digital-forensics/fedora-and-red-hat-version-32bit-3.1.1>`_
+    * `Fedora/Red Hat 64bit <http://accessdata.com/product-download/digital-forensics/fedora-and-red-hat-version-x64-3.1.1>`_
+    * `Debian/Ubuntu 32bit <http://accessdata.com/product-download/digital-forensics/debian-and-ubuntu-32bit-3.1.1>`_
+    * `Debian/Ubuntu 64bit <http://accessdata.com/product-download/digital-forensics/debian-and-ubuntu-x64-3.1.1>`_
+    * `Mac OS 10.5/10.6 <http://accessdata.com/product-download/digital-forensics/mac-os-10.5-and-10.6x-version-3.1.1>`_
+    * `Windows 32bit <http://accessdata.com/product-download/digital-forensics/windows-32bit-3.1.1>`_
+
 * This release includes a new celery task for AFF migration, so the celery
   daemon should be restarted after deploy.
 * Run the script to migrate AD1 disk images, specifying the directory
