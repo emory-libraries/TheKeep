@@ -3,6 +3,29 @@
 CHANGELOG
 =========
 
+Release 2.5 - Migrate AD1/AFF Disk Images to sustainable formats
+----------------------------------------------------------------
+
+* An administrator can migrate AD1 master files to TAR files generated
+  by digital archives staff and add metadata that reflects this change
+  in order to update obsolete file formats in the repository.
+* An administrator can migrate the format of an AFF master composite
+  file and add metadata that reflects this change in order to update
+  obsolete file formats in the repository.
+* As a staff user, when I'm viewing a migrated disk image object, I want
+  to be able to access the original version (including metadata) that
+  was migrated, so that I understand the provenance of the object.
+* As a staff user, when I'm viewing the original version of a migrated
+  disk image object, I want to be able to access the migrated version
+  (including metadata) so that I can get to the most recent version.
+* As a staff user, I want to filter search results by disk image, email,
+  other born digital files, and format so that I can restrict results to
+  a specific set of content.
+* As a staff user, when my search results include migrated disk images,
+  I want to see the original version grouped with the migrated version
+  so that I understand that the files are related and I can tell which
+  one is the most recent version.
+
 Release 2.4.1
 -------------
 
