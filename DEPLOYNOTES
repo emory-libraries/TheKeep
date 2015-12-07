@@ -324,6 +324,20 @@ Release 2.5
 
 * This release adds new fields to the Solr schema; Solr should be updated
   with the project schema.xml, and all content will be need to reindexed.
+* The AFF Disk Image migration requires that the FTKimager command-line
+  tools be installed on the server where celery tasks are run:
+  http://accessdata.com/product-download
+* This release includes a new celery task for AFF migration, so the celery
+  daemon should be restarted after deploy.
+* Run the script to migrate AD1 disk images, specifying the directory
+  where born digital curators have provided the migration content::
+
+    $ python manage.py migrate_ad1_diskimages <directory>
+
+* Run the script to migrate AFF disk images ::
+
+    $ python manage.py migrate_aff_diskimages
+
 
 Release 2.4
 -----------
