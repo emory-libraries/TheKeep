@@ -169,10 +169,13 @@ djcelery.setup_loader()
 # explicitly assign a differently-named default queue to prevent
 # collisions with other projects using celery (allow celery to create queue for us)
 CELERY_ROUTES = {
-    'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'}
+    'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'},
+    'keep.file.tasks.migrate_aff_diskimage': {'queue': 'keep'}
 }
 CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
-
+# NOTE: should be possible to configure a default queue, but not sure
+# where that needs to be done
+CELERY_DEFAULT_QUEUE = 'keep'
 
 try:
     from keep.localsettings import *
