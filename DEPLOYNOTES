@@ -343,7 +343,9 @@ Release 2.5
 
     $ python manage.py migrate_ad1_diskimages <directory>
 
-* Run the script to migrate AFF disk images ::
+* Run the script to migrate AFF disk images; note that AFF and generated E01
+  temporary files will be placed in the **INGEST_STAGING_TEMP_DIR**
+  configured in `localsettings.py`::
 
     $ python manage.py migrate_aff_diskimages
 
