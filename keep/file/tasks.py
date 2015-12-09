@@ -2,6 +2,7 @@ from celery import shared_task, states
 from celery.exceptions import Ignore
 from celery.utils.log import get_task_logger
 from datetime import date, datetime
+from django.conf import settings
 from django.template.defaultfilters import filesizeformat
 from eulfedora.models import FileDatastreamObject
 import os
@@ -21,15 +22,16 @@ logger = get_task_logger(__name__)
 
 @shared_task(bind=True)
 def migrate_aff_diskimage(self, pid):
-    print 'self = ', self
-    print 'pid = ', pid
-
     creating_application = 'AccessData FTK Imager'
     application_version = 'v3.1.1 CLI'
     migration_event_detail = 'program="%s"; version="%s"' % \
         (creating_application, application_version)
     migration_event_outcome = 'AFF reformatted as E01 using command line ' + \
         'FTK program with settings: --e01 --compress 0 --frag 100T --quiet'
+
+    # use the configured ingesting staging area as the base tmp dir
+    # for all temporary files
+    tmpdir = getattr(settings, 'INGEST_STAGING_TEMP_DIR', None)
 
     # Retrieve the object to be migrated
     repo = Repository()
@@ -52,7 +54,7 @@ def migrate_aff_diskimage(self, pid):
 
     # download the aff disk image to a tempfile
     aff_file = tempfile.NamedTemporaryFile(suffix='.aff',
-        prefix='keep-%s_' % original.noid)
+        prefix='keep-%s_' % original.noid, dir=tmpdir)
     logger.debug('Saving AFF as %s for conversion (datastream size: %s)' \
         % (aff_file.name, filesizeformat(original.content.size)))
     try:
@@ -67,10 +69,10 @@ def migrate_aff_diskimage(self, pid):
     # run ftkimager to generate the E01 version
     logger.debug('Running ftkimager to generate E01')
     e01_file = tempfile.NamedTemporaryFile(suffix='.E01',
-        prefix='keep-%s_' % original.noid)
+        prefix='keep-%s_' % original.noid, dir=tmpdir)
     # file handle to capture console output from ftkimager
     ftk_output = tempfile.NamedTemporaryFile(suffix='.txt',
-        prefix='keep-%s-ftkimager_' % original.noid)
+        prefix='keep-%s-ftkimager_' % original.noid, dir=tmpdir)
     logger.debug('E01 temp file is %s' % e01_file.name)
     logger.debug('ftkimager output temp file is %s' % ftk_output.name)
     # ftkimager adds .E01 to the specified filename, so pass in filename without
