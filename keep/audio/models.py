@@ -574,6 +574,9 @@ def wav_duration(filename):
         logger.warn('Failed to open file %s as a WAV due to: %s' % (filename, werr))
         # fall-back logic: use mediainfo for files that python wav can't handle
         info = MediaInfo.parse(filename)
+        # FIXME: if this fails, add an error (e.g. check if mediainfo is installed)
+        # otherwise, the "no such file or directory" error is misleading
+
         # for now, since this method is *only* intended to handle WAV files,
         # (even though mediainfo can handle more), error if not detected as WAV
         if info.tracks[0].format != 'Wave':
