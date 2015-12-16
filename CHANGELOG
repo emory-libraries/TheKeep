@@ -26,6 +26,13 @@ Release 2.5 - Migrate AD1/AFF Disk Images to sustainable formats
   so that I understand that the files are related and I can tell which
   one is the most recent version.
 
+Release 2.4.2
+-------------
+
+* Bugfix: correct logic for creating ARKs via PID manager so that
+  the placeholder is not url-encoded and gets replaced properly with
+  the newly-minted noid.
+
 Release 2.4.1
 -------------
 

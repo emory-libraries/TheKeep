@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import render
-from django.utils.encoding import iri_to_uri
+import urllib
 
 from eulfedora import models, server
 from eulfedora.util import RequestFailed, PermissionDenied
@@ -228,7 +228,6 @@ class ArkPidDigitalObject(models.DigitalObject):
         return self._default_target_data
 
     PID_TOKEN = '{%PID%}'
-    ENCODED_PID_TOKEN = iri_to_uri(PID_TOKEN)
     def get_default_pid(self):
         '''Default pid logic for DigitalObjects in the Keep.  Mint a
         new ARK via the PID manager, store the ARK in the MODS
@@ -243,8 +242,10 @@ class ArkPidDigitalObject(models.DigitalObject):
             # first just reverse the view name.
             pid = '%s:%s' % (self.default_pidspace, self.PID_TOKEN)
             target = reverse(self.NEW_OBJECT_VIEW, kwargs={'pid': pid})
-            # reverse() encodes the PID_TOKEN, so unencode just that part
-            target = target.replace(self.ENCODED_PID_TOKEN, self.PID_TOKEN)
+            # reverse() encodes the PID_TOKEN and the :, so just unquote the url
+            # (shouldn't contain anything else that needs escaping)
+            target = urllib.unquote(target)
+
             # reverse() returns a full path - absolutize so we get scheme & server also
             target = absolutize_url(target)
             # pid name is not required, but helpful for managing pids
