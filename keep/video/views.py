@@ -188,12 +188,13 @@ def download_video(request, pid, type, extension=None):
     # determine which datastream is requsted & set datastream id & file extension
     if type == 'original':
         dsid = Video.content.id
-        file_ext = Video.allowed_master_mimetypes[obj.content.mimetype]
-    elif type == 'access':
-        dsid = Video.access_copy.id
         # set file extension based on the datastream content type,
         # with a fallback for generic binary (should not happen in production)
-        file_ext = Video.allowed_access_mimetypes.get(obj.access_copy.mimetype, 'bin')
+        file_ext = Video.allowed_master_mimetypes.get(obj.content.mimetype, 'bin')
+    elif type == 'access':
+        dsid = Video.access_copy.id
+        # set file extension based on the datastream content
+        file_ext = Video.allowed_access_mimetypes[obj.access_copy.mimetype]
     else:
         # any other type is not supported
         raise Http404
