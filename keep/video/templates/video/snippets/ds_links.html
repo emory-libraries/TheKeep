@@ -5,19 +5,18 @@
   {% if perms.video.download_video %}
   {% with 'original video' as original %}
     {% if obj.content.exists %}
-      <button type="button" class="btn btn-default">
-        <a class="btn btn-default" href="{% url 'video:download-video' obj.pid %}">{{ original }}</a>
+      <a class="btn btn-default" href="{% url 'video:download-video' obj.pid %}">
+        <i class="fa fa-download"></i> {{ original }}
         {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
-      </button>
+      </a>
     {% else %}
       <button type="button" class="btn btn-default">{{ original }}</button>
     {% endif %}
   {% endwith %}
   {% with 'access copy' as access %}
     {% if obj.access_copy.exists %}
-      <button type="button" class="btn btn-default">
-        <a class="btn btn-default" href="{% url 'video:download-compressed-video' obj.pid %}">{{ access }}</a>
-        </button>
+      <a class="btn btn-default" href="{% url 'video:download-compressed-video' obj.pid %}">
+        <i class="fa fa-download"></i> {{ access }}</a>
     {% else %}
       <button type="button" class="btn btn-default">{{ access }}</button>
     {% endif %}
