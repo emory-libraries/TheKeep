@@ -177,7 +177,7 @@ def download_video(request, pid, type, extension=None):
 
     # otherwise, check for download permissions
     else:
-        # user either needs download vidoe permissions OR
+        # user either needs download video permissions OR
         # if they can download researcher audio and object must be researcher-accessible
         if not request.user.has_perm('video.download_video') and \
                not (request.user.has_perm('video.download_researcher_video') and \
@@ -191,8 +191,9 @@ def download_video(request, pid, type, extension=None):
         file_ext = Video.allowed_master_mimetypes[obj.content.mimetype]
     elif type == 'access':
         dsid = Video.access_copy.id
-        # make sure the requested file extension matches the datastream
-        file_ext = Video.allowed_access_mimetypes[obj.access_copy.mimetype]
+        # set file extension based on the datastream content type,
+        # with a fallback for generic binary (should not happen in production)
+        file_ext = Video.allowed_access_mimetypes.get(obj.access_copy.mimetype, 'bin')
     else:
         # any other type is not supported
         raise Http404
