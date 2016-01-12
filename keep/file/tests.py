@@ -22,8 +22,10 @@ from keep.collection.fixtures import FedoraFixtures
 from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm, \
     largefile_staging_bags, LargeFileIngestForm
 from keep.file.models import DiskImage, Application
+from keep.file.tasks import ftkimager_verify
 from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase, mocksolr_nodupes
+
 
 
 ## Disk Image fixtures
@@ -39,6 +41,8 @@ ad1_sha1 = '2d3065eb1b1ceeb618821e2cf776d36c9ba19e4a'
 iso_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.iso')
 iso_md5 = '9d68ab115aff59154aedc4c42c8267e9'
 iso_sha1 = 'd17d15b0d0fb85ba0f07322fa37584be8fadb30b'
+
+e01_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.E01')
 
 
 class TestChecksum(TestCase):
@@ -1438,4 +1442,19 @@ class PremisEditFormTest(TestCase):
         self.assertEqual(self.today, updated.object.creating_application.date)
 
 
+class TestFtkimagerVerify(TestCase):
 
+    def test_verify(self):
+        checksums = ftkimager_verify(aff_file)
+        self.assert_('MD5' in checksums)
+        self.assert_('SHA1' in checksums)
+        self.assertEqual('443975a572945c766747aa079c7f8fce', checksums['MD5'])
+        self.assertEqual('bd30f28ad239167570634a210b5cb7c587d2bb8d', checksums['SHA1'])
+        # checksum is for the raw disk image contained within the AFF,
+        # so should not match the checksums for the entire AFF
+        self.assertNotEqual(checksums['MD5'], aff_md5)
+        self.assertNotEqual(checksums['SHA1'], aff_sha1)
+
+        checksums = ftkimager_verify(e01_file)
+        self.assertEqual('443975a572945c766747aa079c7f8fce', checksums['MD5'])
+        self.assertEqual('bd30f28ad239167570634a210b5cb7c587d2bb8d', checksums['SHA1'])

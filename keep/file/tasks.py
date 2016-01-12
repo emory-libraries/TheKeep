@@ -6,6 +6,7 @@ from django.conf import settings
 from django.template.defaultfilters import filesizeformat
 from eulfedora.models import FileDatastreamObject
 import os
+import re
 import subprocess
 import tempfile
 import uuid
@@ -94,6 +95,16 @@ def migrate_aff_diskimage(self, pid):
 
     logger.info('Generated E01 (%s) from %s AFF (%s)' % \
         (filesizeformat(e01_size), original.pid, filesizeformat(aff_size)))
+
+    # use ftkimager to verify aff and e01 and compare checksums
+    aff_checksums = ftkimager_verify(aff_file.name)
+    e01_checksums = ftkimager_verify(e01_file.name)
+    logger.debug('AFF verify checksums: %s' % \
+        ', '.join('%s: %s' % (k, v) for k, v in aff_checksums.iteritems()))
+    logger.debug('E01 verify checksums: %s' % \
+        ', '.join('%s: %s' % (k, v) for k, v in e01_checksums.iteritems()))
+    if aff_checksums != e01_checksums:
+        raise Exception('AFF and E01 ftkimager verify checksums do not match')
 
     # create a new diskimage object from the file
     migrated = DiskImage.init_from_file(e01_file.name,
@@ -208,4 +219,27 @@ def migrate_aff_diskimage(self, pid):
     logger.info('Migrated %s AFF to %s E01' % (original.pid, migrated.pid))
     return 'Migrated %s to %s' % (original.pid, migrated.pid)
 
+#: Regular Expression to find a computed MD5 or SHA1 hash in
+#: ftkimager verify output
+FTKIMAGER_HASH_RE = re.compile(r'\[(MD5|SHA1)\]\s+Computed hash: ([0-9A-Fa-f]+)',
+    flags=re.MULTILINE)
+# ftkimager verify output includes checksums in this format:
+# [MD5]
+#  Computed hash: 1a66df5b197ecbfd29338cc53d9db7c3
+# [SHA1]
+#  Computed hash: ccfdacc203ada4b0741a4784d15004bfbc2e520d
 
+
+def ftkimager_verify(filename):
+    '''Use ftkimager to verify a disk image file.
+
+    :param filename: path to file to be verified
+    :returns: dict of checksums (MD5 and SHA1) from verification output
+    '''
+    verify_command = ['ftkimager', '--verify', filename]
+
+    output = subprocess.check_output(verify_command,
+        stderr=subprocess.STDOUT)
+    # regular expression search returns a list of tuples with
+    # checksum type and value; convert into a dict keyed on checksum type
+    return dict(FTKIMAGER_HASH_RE.findall(output))
