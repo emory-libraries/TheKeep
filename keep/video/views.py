@@ -203,5 +203,6 @@ def download_video(request, pid, type, extension=None):
     }
     # use generic raw datastream view from eulfedora
     return raw_datastream(request, pid, dsid, type=Video,
-            repo=repo, headers=extra_headers, accept_range_request=True)
+            repo=repo, headers=extra_headers, accept_range_request=True,
+            streaming=True)
     # errors accessing Fedora will fall through to default 500 error handling
