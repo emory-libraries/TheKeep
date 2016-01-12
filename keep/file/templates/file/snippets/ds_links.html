@@ -1,6 +1,12 @@
 {% load search_tags %}
 {# datastream and audit trail links for file objects #}
 <div class="btn-group" role="group">
+  {% if perms.video.view_disk_image %}
+      <a class="btn btn-default" href="{% url 'file:download' obj.pid %}"
+        title="download disk image">
+        <i class="fa fa-download"></i>
+      </a>
+  {% endif %}
   {% if obj.audit_trail %}
     <a class="btn btn-default" href="{% url 'file:history' obj.pid %}">Event Log</a>
   {% endif %}

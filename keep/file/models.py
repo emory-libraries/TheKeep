@@ -38,6 +38,7 @@ class Disk_Image(models.Model):
         permissions = (
             ("view_disk_image", "Can view, search, and browse disk images"),
             ("manage_disk_image_supplements", "Can manage disk image supplemental files"),
+            ("download_disk_image", "Can download disk image binary content"),
         )
 
 
