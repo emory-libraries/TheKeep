@@ -55,7 +55,7 @@ def migrate_aff_diskimage(self, pid):
 
     # download the aff disk image to a tempfile
     aff_file = tempfile.NamedTemporaryFile(suffix='.aff',
-        prefix='keep-%s_' % original.noid, dir=tmpdir)
+        prefix='keep-%s_' % original.noid, dir=tmpdir, delete=False)
     logger.debug('Saving AFF as %s for conversion (datastream size: %s)' \
         % (aff_file.name, filesizeformat(original.content.size)))
     try:
@@ -64,13 +64,17 @@ def migrate_aff_diskimage(self, pid):
     except Exception as err:
         raise Exception('Error downloading %s AFF for conversion' % original.pid)
 
+    # close the file handle in case of weird interactions with ftkimager
+    aff_file.close()
     aff_size = os.path.getsize(aff_file.name)
     logger.debug('Downloaded %s' % filesizeformat(aff_size))
 
     # run ftkimager to generate the E01 version
     logger.debug('Running ftkimager to generate E01')
     e01_file = tempfile.NamedTemporaryFile(suffix='.E01',
-        prefix='keep-%s_' % original.noid, dir=tmpdir)
+        prefix='keep-%s_' % original.noid, dir=tmpdir, delete=False)
+    # close the file handle in case of weird interactions with ftkimager
+    e01_file.close()
     # file handle to capture console output from ftkimager
     ftk_output = tempfile.NamedTemporaryFile(suffix='.txt',
         prefix='keep-%s-ftkimager_' % original.noid, dir=tmpdir)
@@ -173,9 +177,10 @@ def migrate_aff_diskimage(self, pid):
             original.pid, err, ', '.join(err.pids))
     # would probably be good to catch other fedora errors
 
-    # remove ftkimager text file
-    # (all other files will get removed automatically by tempfile)
-    os.remove(ftk_detail_output)
+    # remove temporary files
+    os.remove(ftk_detail_output)    # ftkimager text file
+    os.remove(aff_file.name)
+    os.remove(e01_file.name)
 
     # reinitialize migrated object, just to avoid any issues
     # with accessing ark uri for use in original object premis
