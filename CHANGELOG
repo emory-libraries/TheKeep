@@ -12,6 +12,8 @@ Release 2.5 - Migrate AD1/AFF Disk Images to sustainable formats
 * An administrator can migrate the format of an AFF master composite
   file and add metadata that reflects this change in order to update
   obsolete file formats in the repository.
+* An archivist can download a local copy of an image file in the lab
+  for processing, arrangement, and description.
 * As a staff user, when I'm viewing a migrated disk image object, I want
   to be able to access the original version (including metadata) that
   was migrated, so that I understand the provenance of the object.
@@ -25,6 +27,10 @@ Release 2.5 - Migrate AD1/AFF Disk Images to sustainable formats
   I want to see the original version grouped with the migrated version
   so that I understand that the files are related and I can tell which
   one is the most recent version.
+* Bugfix: Primary target URI in pid manager for new Keep objects were
+  being garbled.
+* Bugfix: Fix video record download original file (now using streaming
+  download)
 
 Release 2.4.2
 -------------
@@ -32,6 +38,7 @@ Release 2.4.2
 * Bugfix: correct logic for creating ARKs via PID manager so that
   the placeholder is not url-encoded and gets replaced properly with
   the newly-minted noid.
+
 
 Release 2.4.1
 -------------
