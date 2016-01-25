@@ -88,7 +88,7 @@ def migrate_aff_diskimage(self, pid):
     # quiet simply suppresses progress output, which is not meaningful
     # in a captured text file
     logger.debug('conversion command is %s' % ' '.join(convert_command))
-    return_val = subprocess.check_output(convert_command, stdout=ftk_output,
+    return_val = subprocess.call(convert_command, stdout=ftk_output,
         stderr=subprocess.STDOUT)
     logger.debug('ftkimager return value is %s' % return_val)
     ftk_detail_output = '%s.txt' % e01_file.name
@@ -103,10 +103,10 @@ def migrate_aff_diskimage(self, pid):
     # use ftkimager to verify aff and e01 and compare checksums
     aff_checksums = ftkimager_verify(aff_file.name)
     if not aff_checksums:
-        raise Exception('Error running ftkimager verify on AFF')
+        raise Exception('Error running ftkimager verify on AFF for %s' % original.pid)
     e01_checksums = ftkimager_verify(e01_file.name)
     if not e01_checksums:
-        raise Exception('Error running ftkimager verify on E01')
+        raise Exception('Error running ftkimager verify on E01 for %s' % original.pid)
 
     logger.debug('AFF verify checksums: %s' % \
         ', '.join('%s: %s' % (k, v) for k, v in aff_checksums.iteritems()))
