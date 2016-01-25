@@ -79,7 +79,7 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
                 logger.debug("Stack trace for download error:\n" + traceback.format_exc())
                 raise
             finally:
-                #NOTE: This automatically closes the open tmpfd via Python magic, calling os.close(tmpfd) at this point will error.
+                #NOTE: This automatically closes the open tmpfd via Python magic, c
                 destination.close()
 
         # TODO: check file size against datastream? os.path.getsize(path)
@@ -93,6 +93,7 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
         # NOTE: With files greater than 2GB, the visual output from
         # FFMPEG will not be correct, but it will convert and return 0.
 
+        # NOTE: might be cleaner to call with subprocess.check_call
 
         process = subprocess.Popen(['ffmpeg', '-y', '-i', wav_file_path, mp3_file_path],
                 stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,

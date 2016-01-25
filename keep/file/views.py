@@ -787,6 +787,17 @@ def view_datastream(request, pid, dsid):
         response['Content-Type'] = 'text/plain'
     return response
 
+@permission_required_with_403("file.download_disk_image")
+def download(request, pid):
+    'Download disk image datastream contents'
+    repo = Repository(request=request)
+    obj = repo.get_object(pid, type=DiskImage)
+    extra_headers = {
+        'Content-Disposition': "attachment; filename=%s.%s" % \
+            (obj.noid, obj.provenance.content.object.latest_format.name)
+    }
+    return raw_datastream(request, pid, DiskImage.content.id,
+        repo=repo, headers=extra_headers, streaming=True)
 
 @permission_required_with_403("file.view_disk_image")
 def view_audit_trail(request, pid):

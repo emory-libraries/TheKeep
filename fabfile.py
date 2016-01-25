@@ -98,9 +98,9 @@ def configure(path=None, user=None, url_prefix=None,
     env.version = keep.__version__
     config_from_git()
     # construct a unique build directory name based on software version and svn revision
-    env.build_dir = '%(project)s-%(version)s%(git_rev_tag)s' % env
-    env.tarball = '%(project)s-%(version)s%(git_rev_tag)s.tar.bz2' % env
-    env.solr_tarball = '%(project)s-solr-%(version)s%(git_rev_tag)s.tar.bz2' % env
+    env.build_dir = '%(project)s-%(version)s%(rev_tag)s' % env
+    env.tarball = '%(project)s-%(version)s%(rev_tag)s.tar.bz2' % env
+    env.solr_tarball = '%(project)s-solr-%(version)s%(rev_tag)s.tar.bz2' % env
 
     if path:
         env.remote_path = path.rstrip('/')

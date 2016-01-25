@@ -10,16 +10,9 @@
         <div class="panel-body small">
       {% block sidebar-left %}
   {% if user.is_authenticated %}{# for now restrict search to logged-in users #}
-   <div class="note well">
-     <h3>Note</h3>
-
-     <p>The old item and collection search are being replaced by the
-     new, combined search to the right.</p>
-     <p>The old search will be available for a transition period but
-     will eventually be removed.  If you find any functionality in the
-     old search that is not available in the new one, please report
-     it.</p>
-   </div>
+  <p><a href="{{ manual_url }}" target="_blank">
+    <i class="fa fa-book"></i>
+    Keep manual</a></p>
 
    <a id="use-old-search">Access the old search.</a>
 

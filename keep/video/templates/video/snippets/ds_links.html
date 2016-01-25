@@ -1,22 +1,45 @@
-{% load search_tags %}
-{# datastream and audit trail links for file objects #}
-<ul class='extra list-inline'>
-  {% if obj.audit_trail %}
-    <li><a href="{% url 'video:history' obj.pid %}">Event Log</a></li>
+{% load search_tags audio_extras %}
+{# datastream and audit trail links for video #}
+<div class="btn-toolbar" role="toolbar">
+<div class="btn-group" role="group">
+  {% if perms.video.download_video %}
+  {% with 'original video' as original %}
+    {% if obj.content.exists %}
+      <a class="btn btn-default" href="{% url 'video:download-video' obj.pid %}">
+        <i class="fa fa-download"></i> {{ original }}
+        {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
+      </a>
+    {% else %}
+      <button type="button" class="btn btn-default">{{ original }}</button>
+    {% endif %}
+  {% endwith %}
+  {% with 'access copy' as access %}
+    {% if obj.access_copy.exists %}
+      <a class="btn btn-default" href="{% url 'video:download-compressed-video' obj.pid %}">
+        <i class="fa fa-download"></i> {{ access }}</a>
+    {% else %}
+      <button type="button" class="btn btn-default">{{ access }}</button>
+    {% endif %}
+  {% endwith %}
   {% endif %}
+  </div>
 
-{#  {% if obj.mods.exists %}  FIXME: why is this not working? no return #}
-    <li><a href="{% url 'video:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'DC' %}">DC</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
-     <li><a href="{% url 'video:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
-    <li><a href="{% url 'video:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a></li>
+<div class="btn-group" role="group">
   {% if obj.audit_trail %}
-    <li><a href="{% url 'video:audit-trail' obj.pid %}">XML Audit Trail</a></li>
+    <a class="btn btn-default" href="{% url 'video:history' obj.pid %}">Event Log</a>
   {% endif %}
-</ul>
-
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'MODS' %}">MODS</a>
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'DC' %}">DC</a>
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a>
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'SourceTech' %}">SourceTech</a>
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a>
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'Rights' %}">Rights</a>
+    <a class="btn btn-default" href="{% url 'video:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a>
+  {% if obj.audit_trail %}
+    <a class="btn btn-default" href="{% url 'video:audit-trail' obj.pid %}">XML Audit Trail</a>
+  {% endif %}
+</div>
+</div>
 
 {# display checksum and format of video #}
 <p class="extra">{{ obj.provenance.content.object.format.name }} video ({{ obj.content.size|filesizeformat }}), checksum {{ obj.content.checksum }}</p>

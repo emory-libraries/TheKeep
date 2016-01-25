@@ -496,6 +496,6 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         :param archive_name: name of the repository/subarea (numbering scheme)
         :returns: :class:`~keep.collection.models.FindingAid` instance
         '''
-        return FindingAid.objects.filter(archdesc__did__unitid__identifier=id,
-                repository=archive_name).get()
+        return FindingAid.objects.get(archdesc__did__unitid__identifier=id,
+                repository=archive_name)
 

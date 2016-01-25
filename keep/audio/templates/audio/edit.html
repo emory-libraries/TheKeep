@@ -54,43 +54,47 @@
 </div>
 
 <h2>{{ obj.label }}</h2>
-<ul class='extra dslist list-inline'>
 
+<div class="btn-toolbar" role="toolbar">
   {% if perms.audio.download_audio %}
-  {% with 'download original audio' as original %}
+  <div class="btn-group" role="group">
+  {% with 'original audio' as original %}
     {% if obj.audio.exists %}
-      <li>
-        <a href="{% url 'audio:download-audio' obj.pid %}">{{ original }}</a>
-        {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}
-      </li>
+      <a class="btn btn-default" href="{% url 'audio:download-audio' obj.pid %}">
+        <i class="fa fa-download"></i> {{ original }}
+        {% if obj.digitaltech.content.duration %}({{ obj.digitaltech.content.duration|seconds_duration }}){% endif %}</a>
     {% else %}
-      <li>{{ original }}</li>
+      <button type="button" class="btn btn-default">{{ original }}</button>
     {% endif %}
   {% endwith %}
-  {% with 'download access copy' as access %}
+  {% with 'access copy' as access %}
     {% if obj.compressed_audio.exists %}
-      <li><a href="{{ obj.get_access_url }}">{{ access }}</a></li>
+      <a class="btn btn-default" href="{{ obj.get_access_url }}">
+      <i class="fa fa-download"></i> {{ access }}</a>
     {% endif %}
   {% endwith %}
+  </div>
   {% endif %}
 
+  <div class="btn-group" role="group">
   {% if obj.audit_trail %}
-    <li><a href="{% url 'audio:history' obj.pid %}">Event Log</a></li>
+    <a class="btn btn-default" href="{% url 'audio:history' obj.pid %}">Event Log</a>
   {% endif %}
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'DC' %}">DC</a></li>
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'SourceTech' %}">SourceTech</a></li>
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a></li>
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'MODS' %}">MODS</a>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'DC' %}">DC</a>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'SourceTech' %}">SourceTech</a>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'DigitalTech' %}">DigitalTech</a>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'Rights' %}">Rights</a>
   {# not all objects will have JHOVE, but go ahead and provide access for those that do #}
   {% if obj.jhove.exists %}
-    <li><a href="{% url 'audio:raw-ds' obj.pid 'JHOVE' %}">JHOVE</a></li>
+    <a class="btn btn-default" href="{% url 'audio:raw-ds' obj.pid 'JHOVE' %}">JHOVE</a>
   {% endif %}
   {% if obj.audit_trail %}
-    <li><a href="{% url 'audio:audit-trail' obj.pid %}">XML Audit Trail</a></li>
+    <a class="btn btn-default" href="{% url 'audio:audit-trail' obj.pid %}">XML Audit Trail</a>
   {% endif %}
-</ul>
+</div>
+</div>
 {% with obj.conversion_result as conversion %}
   {% if conversion %}
   <p class="extra">

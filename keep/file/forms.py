@@ -201,8 +201,12 @@ class PremisEditForm(XmlObjectForm):
     def __init__(self, data=None, instance=None, prefix=None, initial={}, **kwargs):
         if instance is not None:
             # set initial form data based on the xml
-            if instance.object and instance.object.creating_application:
-                creating_app = instance.object.creating_application
+            # NOTE: migrated objects have two sets of characteristics,
+            # and the creating application to be displayed is the second one.
+            # Always display and update the last of any creating applications
+            if instance.object and instance.object.characteristics and \
+              instance.object.characteristics[-1].creating_application:
+                creating_app = instance.object.characteristics[-1].creating_application
                 initial['date'] = creating_app.date
                 try:
                     app = Application.objects.get(name=creating_app.name,
@@ -222,9 +226,10 @@ class PremisEditForm(XmlObjectForm):
         # update premis fields based on form data
         self.instance.object.create_creating_application()
         app = Application.objects.get(id=data['application'])
-        self.instance.object.creating_application.name = app.name
-        self.instance.object.creating_application.version = app.version
-        self.instance.object.creating_application.date = data['date']
+        # Update the last of any creating applications in the metadata
+        self.instance.object.characteristics[-1].creating_application.name = app.name
+        self.instance.object.characteristics[-1].creating_application.version = app.version
+        self.instance.object.characteristics[-1].creating_application.date = data['date']
         return self.instance
 
 

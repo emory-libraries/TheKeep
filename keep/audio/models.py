@@ -477,7 +477,7 @@ class AudioObject(DigitalObject):
 
         if self.compressed_audio.exists:
             data.update({
-                'access_copy_size': self.compressed_audio.info.size,
+                'access_copy_size': self.compressed_audio.size,
                 'access_copy_mimetype': self.compressed_audio.mimetype,
         })
         if self.digitaltech.content.duration:
@@ -491,8 +491,6 @@ class AudioObject(DigitalObject):
            self.mods.content.origin_info.created \
                 and not self.mods.content.origin_info.created.is_empty():
             data['date_created'] = [unicode(di) for di in self.mods.content.origin_info.created]
-
-
 
         if self.audio.exists:
             data['content_md5'] = self.audio.checksum
@@ -576,6 +574,9 @@ def wav_duration(filename):
         logger.warn('Failed to open file %s as a WAV due to: %s' % (filename, werr))
         # fall-back logic: use mediainfo for files that python wav can't handle
         info = MediaInfo.parse(filename)
+        # FIXME: if this fails, add an error (e.g. check if mediainfo is installed)
+        # otherwise, the "no such file or directory" error is misleading
+
         # for now, since this method is *only* intended to handle WAV files,
         # (even though mediainfo can handle more), error if not detected as WAV
         if info.tracks[0].format != 'Wave':

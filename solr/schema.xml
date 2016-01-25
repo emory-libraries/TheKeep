@@ -97,6 +97,7 @@ see:
     <field name="isMemberOfCollection" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="hasCollectionMember" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="isDerivationOf" type="string" indexed="true" stored="true" multiValued="true"/>
+    <field name="hasDerivation" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="isDependentOf" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="hasDependent" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="isDescriptionOf" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -133,12 +134,17 @@ see:
     <field name="researcher_access" type="boolean" indexed="true" stored="true" multiValued="false"/>
     <field name="has_original" type="boolean" indexed="true" stored="true" multiValued="false"/>
     <field name="has_access_copy" type="boolean" indexed="true" stored="true" multiValued="false"/>
-    <field name="access_copy_size" type="long" indexed="true" stored="true" multiValued="false"/> 
+    <field name="access_copy_size" type="long" indexed="true" stored="true" multiValued="false"/>
     <field name="access_copy_mimetype" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="duration" type="integer" indexed="true" stored="true" multiValued="false"/>
     <field name="sublocation" type="text" indexed="true" stored="true" multiValued="false"/>
     <field name="copyright_date" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="ip_note" type="text" indexed="true" stored="true" multiValued="true"/>
+      <!-- main content format and size -->
+    <field name="content_format" type="string" indexed="true" stored="true" multiValued="false"/>
+    <field name="content_size" type="long" indexed="true" stored="true" multiValued="false"/>
+    <!-- for tracking/grouping migrated disk images -->
+    <field name="original_pid" type="string" indexed="true" stored="true" multiValued="false"/>
 
     <!--  * objects with premis (disk images only for now) -->
     <field name="last_fixity_check" type="string" indexed="true" stored="false" required="false"/>

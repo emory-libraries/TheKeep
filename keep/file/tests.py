@@ -1,10 +1,12 @@
+import bagit
 import datetime
 from mock import Mock, patch, MagicMock
 import os
 import shutil
+import subprocess
 import sunburnt
 import tempfile
-import bagit
+from unittest import skipIf
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -17,12 +19,15 @@ from eulxml.xmlmap import mods
 from keep.audio import models as audiomodels
 from keep.audio.tests import ADMIN_CREDENTIALS, mp3_filename, wav_filename, \
     mp3_md5, wav_md5
+from keep.common.models import PremisObjectCharacteristics
 from keep.collection.fixtures import FedoraFixtures
 from keep.file.forms import UploadForm, PremisEditForm, DiskImageEditForm, \
     largefile_staging_bags, LargeFileIngestForm
 from keep.file.models import DiskImage, Application
+from keep.file.tasks import ftkimager_verify
 from keep.file.utils import md5sum, sha1sum
 from keep.testutil import KeepTestCase, mocksolr_nodupes
+
 
 
 ## Disk Image fixtures
@@ -38,6 +43,8 @@ ad1_sha1 = '2d3065eb1b1ceeb618821e2cf776d36c9ba19e4a'
 iso_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.iso')
 iso_md5 = '9d68ab115aff59154aedc4c42c8267e9'
 iso_sha1 = 'd17d15b0d0fb85ba0f07322fa37584be8fadb30b'
+
+e01_file = os.path.join(settings.BASE_DIR, 'file', 'fixtures', 'test.E01')
 
 
 class TestChecksum(TestCase):
@@ -1341,6 +1348,22 @@ class DiskImageTest(KeepTestCase):
         self.assertEqual(obj.content.checksum, desc_data['content_md5'],
                          'content datastream checksum should be included in index data')
 
+        # test format
+        # - normal object with only one set of object characteristics
+        obj.provenance.content.create_object()
+        obj.provenance.content.object.create_format()
+        obj.provenance.content.object.format.name = 'AD1'
+        desc_data = obj.index_data()
+        self.assertEqual('AD1', desc_data['content_format'])
+        # - migrated object with second set of object characterstics
+        obj_characteristics = PremisObjectCharacteristics(composition_level=0)
+        obj_characteristics.create_format()
+        obj_characteristics.format.name = 'E01'
+        obj.provenance.content.object.characteristics.append(obj_characteristics)
+        desc_data = obj.index_data()
+        self.assertEqual('E01', desc_data['content_format'])
+
+
     def test_supplemental_content(self):
         # test properties for interacting with supplemental file datastreams
 
@@ -1421,4 +1444,31 @@ class PremisEditFormTest(TestCase):
         self.assertEqual(self.today, updated.object.creating_application.date)
 
 
+def command_available(cmd):
+    # check if a command is available by trying to call it
+    # NOTE: use shutil.which if/when we updrade to python 3
+    try:
+        subprocess.call([cmd, '--help'], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        return True
+    except OSError:
+        return False
 
+
+@skipIf(not command_available('ftkimager'), 'ftkimager is not available')
+class TestFtkimagerVerify(TestCase):
+
+    def test_verify(self):
+        checksums = ftkimager_verify(aff_file)
+        self.assert_('MD5' in checksums)
+        self.assert_('SHA1' in checksums)
+        self.assertEqual('443975a572945c766747aa079c7f8fce', checksums['MD5'])
+        self.assertEqual('bd30f28ad239167570634a210b5cb7c587d2bb8d', checksums['SHA1'])
+        # checksum is for the raw disk image contained within the AFF,
+        # so should not match the checksums for the entire AFF
+        self.assertNotEqual(checksums['MD5'], aff_md5)
+        self.assertNotEqual(checksums['SHA1'], aff_sha1)
+
+        checksums = ftkimager_verify(e01_file)
+        self.assertEqual('443975a572945c766747aa079c7f8fce', checksums['MD5'])
+        self.assertEqual('bd30f28ad239167570634a210b5cb7c587d2bb8d', checksums['SHA1'])

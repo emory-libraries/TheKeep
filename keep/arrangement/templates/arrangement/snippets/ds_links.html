@@ -1,41 +1,38 @@
 {# datastream and audit trail links for arrangement objects #}
-<ul class='extra list-inline'>
+<div class="btn-group" role="group">
   {% if obj.audit_trail %}
-    <li><a href="{% url 'arrangement:history' obj.pid %}">Event Log</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:history' obj.pid %}">Event Log</a>
   {% endif %}
   {% if obj.original.exists %}
-    <li>
-       <a href="{% url 'arrangement:raw-ds' obj.pid 'ORIGINAL' %}"
+     <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'ORIGINAL' %}"
           title="original file; {{ obj.original.mimetype}}, {{ obj.original.size|filesizeformat }}; MD5 checksum {{ obj.original.checksum }}"
           >Original</a>
-    </li>
   {% endif %}
   {% if obj.pdf and obj.pdf.exists %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'PDF' %}">PDF</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'PDF' %}">PDF</a>
   {% endif %}
   {% if obj.mods.exists %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'MODS' %}">MODS</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'MODS' %}">MODS</a>
   {% endif %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'DC' %}">DC</a></li>
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'DC' %}">DC</a>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'RELS-EXT' %}">RELS-EXT</a>
   {% if obj.filetech.exists %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'FileMasterTech' %}">FileTech</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'FileMasterTech' %}">FileTech</a>
   {% endif %}
   {% if obj.mime_data.exists %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'MIME' %}"
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'MIME' %}"
            title="raw email message; MD5 checksum {{ obj.mime_data.checksum }}">MIME</a>
-    </li>
   {% endif %}
   {% if obj.cerp.exists %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'CERP' %}">CERP</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'CERP' %}">CERP</a>
   {% endif %}
-    <li><a href="{% url 'arrangement:raw-ds' obj.pid 'Rights' %}">Rights</a></li>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'Rights' %}">Rights</a>
   {% if obj.audit_trail %}
-    <li><a href="{% url 'arrangement:audit-trail' obj.pid %}">XML Audit Trail</a></li>
+      <a class="btn btn-default" href="{% url 'arrangement:audit-trail' obj.pid %}">XML Audit Trail</a>
   {% endif %}
-</ul>
+</div>
 
-{# display checksum for original datastream, if present #}
+{# display checksum for original datastream, if esent #}
 {# TODO: find a better way/place to display original checksum (view page doesn't exist yet) #}
 {% if obj.original.exists %}
   <p class="extra">Original file checksum: {{ obj.original.checksum }}</p>

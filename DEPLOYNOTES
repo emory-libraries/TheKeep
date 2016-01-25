@@ -319,6 +319,37 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.5
+-----------
+
+* This release adds new fields to the Solr schema; Solr should be updated
+  with the project schema.xml, and all content will be need to reindexed.
+* The AFF Disk Image migration requires that the FTKimager command-line
+  tools be installed on the server where celery tasks are run:
+  http://accessdata.com/product-download under "Command Line Versions",
+  or use one of these links:
+
+    * `Fedora/Red Hat 32bit <thttp://accessdata.com/product-download/digital-forensics/fedora-and-red-hat-version-32bit-3.1.1>`_
+    * `Fedora/Red Hat 64bit <http://accessdata.com/product-download/digital-forensics/fedora-and-red-hat-version-x64-3.1.1>`_
+    * `Debian/Ubuntu 32bit <http://accessdata.com/product-download/digital-forensics/debian-and-ubuntu-32bit-3.1.1>`_
+    * `Debian/Ubuntu 64bit <http://accessdata.com/product-download/digital-forensics/debian-and-ubuntu-x64-3.1.1>`_
+    * `Mac OS 10.5/10.6 <http://accessdata.com/product-download/digital-forensics/mac-os-10.5-and-10.6x-version-3.1.1>`_
+    * `Windows 32bit <http://accessdata.com/product-download/digital-forensics/windows-32bit-3.1.1>`_
+
+* This release includes a new celery task for AFF migration, so the celery
+  daemon should be restarted after deploy.
+* Run the script to migrate AD1 disk images, specifying the directory
+  where born digital curators have provided the migration content::
+
+    $ python manage.py migrate_ad1_diskimages <directory>
+
+* Run the script to migrate AFF disk images; note that AFF and generated E01
+  temporary files will be placed in the **INGEST_STAGING_TEMP_DIR**
+  configured in `localsettings.py`::
+
+    $ python manage.py migrate_aff_diskimages
+
+
 Release 2.4
 -----------
 
@@ -328,6 +359,7 @@ Release 2.4
 * Upgrade to django 1.8 and django migrations.  Installations with an existing
   database will need to fake initial migration for existing tables::
 
+    $ python manage.py migrate accounts
     $ python manage.py migrate --fake-initial
     $ python manage.py migrate
 

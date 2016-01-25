@@ -17,9 +17,7 @@ from eulcommon.djangoextras.auth import permission_required_with_403
 @permission_required_with_403("video.change_videoperms")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.video.models.Video`.'''
-    #*********REMOVE THIS AFTE TEST*********#
     repo = Repository(request=request)
-    #repo = Repository(username='fedoraAdmin', password='fedoraAdmin')
     obj = repo.get_object(pid, type=Video)
     try:
         # if this is not actually a Vide0, then 404 (object is not available at this url)
@@ -177,7 +175,7 @@ def download_video(request, pid, type, extension=None):
 
     # otherwise, check for download permissions
     else:
-        # user either needs download vidoe permissions OR
+        # user either needs download video permissions OR
         # if they can download researcher audio and object must be researcher-accessible
         if not request.user.has_perm('video.download_video') and \
                not (request.user.has_perm('video.download_researcher_video') and \
@@ -188,10 +186,12 @@ def download_video(request, pid, type, extension=None):
     # determine which datastream is requsted & set datastream id & file extension
     if type == 'original':
         dsid = Video.content.id
-        file_ext = Video.allowed_master_mimetypes[obj.content.mimetype]
+        # set file extension based on the datastream content type,
+        # with a fallback for generic binary (should not happen in production)
+        file_ext = Video.allowed_master_mimetypes.get(obj.content.mimetype, 'bin')
     elif type == 'access':
         dsid = Video.access_copy.id
-        # make sure the requested file extension matches the datastream
+        # set file extension based on the datastream content
         file_ext = Video.allowed_access_mimetypes[obj.access_copy.mimetype]
     else:
         # any other type is not supported
@@ -201,5 +201,6 @@ def download_video(request, pid, type, extension=None):
     }
     # use generic raw datastream view from eulfedora
     return raw_datastream(request, pid, dsid, type=Video,
-            repo=repo, headers=extra_headers, accept_range_request=True)
+            repo=repo, headers=extra_headers, accept_range_request=True,
+            streaming=True)
     # errors accessing Fedora will fall through to default 500 error handling

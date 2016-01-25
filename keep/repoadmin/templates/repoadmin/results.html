@@ -15,13 +15,20 @@
   {{ block.super }}
 
   {% if facets %}
-  <div>
+  <div class="facets">
     <h3>Filter your results:</h3>
     {% for field, results in facets.iteritems %}
       <h4>{{ field }}</h4>
-      <ul>
+      <ul class="{{ field }}">
       {% for val, count in results %}
-        <li><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
+        <li class="{{ val }}"><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{% if field == 'type' %}
+          {% if val == 'audio' %}<span class="glyphicon glyphicon-headphones"></span>
+          {% elif val == 'video' %}<span class="glyphicon glyphicon-film"></span>
+          {% elif val == 'collection' %}<span class="glyphicon glyphicon-folder-open"></span>
+          {% elif val == 'disk image' %}<span class="glyphicon glyphicon-hdd"></span>
+          {% elif val == 'email' %}<span class="glyphicon glyphicon-envelope"></span>
+          {% else %}<span class="glyphicon glyphicon-file"></span>{% endif %}
+        {% endif %}{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
             ({{ count|intcomma }})</li>
       {% endfor %}
       </ul>
@@ -59,11 +66,10 @@
   </div>
 
   {% for obj in page.object_list %}
-      {% comment %} display correct icon and other info based on content model or obj_type.
-      This should be cleaned up later by creating better obj_types
-      {% endcomment %}
-      <div class="search-result">
-
+  {% ifchanged obj.original_pid %}
+  {# original pid is indicator for grouped records; if it has changed, display normally #}
+    <hr class="result-separator"/>
+    <div class="search-result">
     {% if show_relevance and obj.score %}
       <div class="relevance">
         <div class="score" style="width:{% widthratio obj.score  1 100 %}px">&nbsp;</div>
@@ -79,14 +85,23 @@
       <span class="glyphicon glyphicon-headphones"></span>
       {% elif obj.object_type  == 'video' %}
       <span class="glyphicon glyphicon-film"></span>
-      {% elif 'info:fedora/emory-control:Rushdie-MailboxEntry-1.0' in obj.content_model or 'info:fedora/emory-control:Rushdie-CerpMailbox-1.0' in obj.content_model %}
+      {% elif obj.object_type  == 'email' %}
       <span class="glyphicon glyphicon-envelope"></span>
-      {% elif 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
+      {% elif obj.object_type  == 'disk image' %}
       <span class="glyphicon glyphicon-hdd"></span>
       {% else %}
       <span class="glyphicon glyphicon-file"></span>
       {% endif %}
     </span>
+
+  {% else %} {# original pid is unchanged; display associated record result #}
+  <div class="row">
+    <div class="col-md-1">
+    {# using upside down share arrow to indicate relation #}
+      <p class="text-muted"><i class="fa fa-share fa-2x fa-flip-vertical" ></i></p>
+    </div>
+    <div class="col-md-11 related-search-result">
+  {% endifchanged %}
 
     {# render the appropriate list template based on object type #}
     {% if obj.object_type == 'collection' %}
@@ -95,18 +110,20 @@
       {% include "audio/snippets/list-audio.html" %}
     {% elif obj.object_type == 'video' %}
       {% include "video/snippets/list-video.html" %}
-    {% elif obj.object_type == 'born-digital' %}
-      {% if 'info:fedora/emory-control:DiskImage-1.0' in obj.content_model %}
-          {% include "file/snippets/list-diskimage.html" %}
-      {% else %}
+    {% elif obj.object_type == 'disk image' %}
+        {% include "file/snippets/list-diskimage.html" %}
+    {% elif obj.object_type == 'born-digital' or obj.object_type == 'email' %}
          {% include "arrangement/snippets/list-arrangement.html" %}
-      {% endif %}
     {% else %}
     {# fall-back display #}
       <p>{{ obj.pid }} {{ obj.title }} {{ obj.source_id }} {{ obj.creator }} {{ obj.content_model }}</p>
     {% endif %}
 
-  </div>
+  {% ifchanged obj.original_pid %}{# nothing to do #}{% else %}
+    </div> {# close related search result div #}
+  {% endifchanged %}
+
+  </div> {# end search-result OR end row for related search result #}
   {% endfor %}
 
   {% pagination_links page show_pages search_opts %}
