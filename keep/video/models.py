@@ -10,7 +10,7 @@ from eulxml.xmlmap import mods
 from eulxml.xmlmap import premis
 import os
 from keep.common.models import _BaseDigitalTech, _BaseSourceTech, SourceTechMeasure, \
-    CodecCreator,TransferEngineer
+    CodecCreator, TransferEngineer
 from pymediainfo import MediaInfo
 import bagit
 import magic
@@ -53,8 +53,8 @@ class VideoCodecCreator(CodecCreator):
         '2': (('iMac',), 'Canopus ADVC-300, Final Cut Pro', '7'),
         '3': (('iMac',), 'Final Cut Pro', '7'),
         '4': (('iMac',), 'MPEG Streamclip', '1.9'),
-        '5': (('Unknown',), 'Unknown',  None),
-        '6': (('Vendor',), 'Vendor',  None),
+        '5': (('Unknown', ), 'Unknown', None),
+        '6': (('Vendor', ), 'Vendor', None),
     }
     'controlled vocabulary for codec creator configurations'
 
@@ -113,16 +113,16 @@ class VideoSourceTech(_BaseSourceTech):
     signal_format_options = (
         ('', ''),
         ('DVD', (
-            (0,0),
-            (1,1),
-            (2,2),
-            (3,3),
-            (4,4),
-            (5,5),
-            (6,6),
-            (7,7),
-            (8,8),
-            ('All','All'),
+            (0, 0),
+            (1, 1),
+            (2, 2),
+            (3, 3),
+            (4, 4),
+            (5, 5),
+            (6, 6),
+            (7, 7),
+            (8, 8),
+            ('All', 'All'),
             )
         ),
         ('VHS', (
@@ -134,8 +134,8 @@ class VideoSourceTech(_BaseSourceTech):
 
     sound_characteristic_options = ('', 'mono', 'stereo')
     'controlled vocabulary for :class:`SourceTech.sound_characteristics`'
-    speed_options = ('','SP','LP','EP','Other','Not applicable')
-    gauge_options = ('','16mm', '35mm', '65mm', 'Super 8', 'other')
+    speed_options = ('', 'SP', 'LP', 'EP', 'Other', 'Not applicable')
+    gauge_options = ('', '16mm', '35mm', '65mm', 'Super 8', 'other')
     'controlled vocabulary for :class:`SourceTech.speed`'
     # NOTE: speed should be displayed as ips but saved to xml as inches/sec
     # speed options is formatted for grouped options in django select widget
@@ -178,8 +178,6 @@ class VideoSourceTech(_BaseSourceTech):
     # tech_note is migrate/view only
     technical_note = xmlmap.StringListField('st:note[@type="technical"]', required=False)
     'note with type="technical"'
-
-
 
 
 class VideoDigitalTech(_BaseDigitalTech):
@@ -538,7 +536,7 @@ class Video(DigitalObject):
         if master_mimetype is not None:
             obj.content.mimetype = master_mimetype
         #Get the label, minus the extention (master_mimetype indicates that)
-        obj.content.label = initial_label.rsplit('.',1)[0]
+        obj.content.label = initial_label.rsplit('.', 1)[0]
         # set initial mods:typeOfResource - all Vodeo default to video recording
         obj.mods.content.resource_type = 'moving image'
         # get duration and store in digital tech metadata
@@ -571,7 +569,6 @@ class Video(DigitalObject):
         # otherwise set the file as content to be posted
         else:
             obj.content.content = open(master_filename)
-
 
         # Access copy data
 
@@ -684,24 +681,18 @@ class Video(DigitalObject):
         return vid
 
     def old_dm_media_path(self):
-        #logger.info("VIDEO MEDIA PATH")
         old_id = self.mods.content.dm1_other_id or self.mods.content.dm1_id
-        #logger.info("OLD_ID: %s" % old_id)
         if old_id:
             coll_obj = self._collection_object()
-        #    logger.info("COLLECTION_OBJ: %s" % coll_obj)
             if not coll_obj:
                 return
-        #    logger.info("BEFORE COLL_PATH")
             coll_path = coll_obj.old_dm_media_path()
-        #    logger.info("AFTER COLL_PATH")
             if not coll_path:
                 return
             return '%svideo/%s.m4a' % (coll_path, old_id)
 
     def _collection_object(self):
         return self.collection
-
 
     #
     # @staticmethod

@@ -17,9 +17,7 @@ from eulcommon.djangoextras.auth import permission_required_with_403
 @permission_required_with_403("video.change_videoperms")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.video.models.Video`.'''
-    #*********REMOVE THIS AFTE TEST*********#
     repo = Repository(request=request)
-    #repo = Repository(username='fedoraAdmin', password='fedoraAdmin')
     obj = repo.get_object(pid, type=Video)
     try:
         # if this is not actually a Vide0, then 404 (object is not available at this url)
