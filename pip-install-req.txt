@@ -4,9 +4,7 @@ https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifa
 eulxml>=0.21.0
 # pinning to an installable version (required by rdflib, which is required by eulfedora)
 SPARQLWrapper==1.7.2
-#eulfedora>=1.2
-# next release (1.4?) for streaming option in raw datastream view
--e git://github.com/emory-libraries/eulfedora.git@develop#egg=eulfedora
+eulfedora>=1.4
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
 https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.2.tar.gz
