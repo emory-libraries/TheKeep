@@ -107,8 +107,8 @@ class TestSolrInterface(TestCase):
                                               proxy_host='localhost', proxy_port=3128)
         mockhttplib.Http.assert_called_with(proxy_info=mockhttplib.ProxyInfo.return_value)
 
-        # when solr url is http, no proxy should be set
-        mockhttplib.reset()
+        # when solr url is https, no proxy should be set
+        mockhttplib.reset_mock()
         settings.SOLR_SERVER_URL = 'https://test.solr/'
         solr_interface()
         mockhttplib.ProxyInfo.assert_not_called()

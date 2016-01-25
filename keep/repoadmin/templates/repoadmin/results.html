@@ -21,16 +21,14 @@
       <h4>{{ field }}</h4>
       <ul class="{{ field }}">
       {% for val, count in results %}
-        <li class="{{ val }}"><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">
-        {% if field == 'type' %}
+        <li class="{{ val }}"><a href="?{{ url_params }}&amp;{{ field }}={{ val }}">{% if field == 'type' %}
           {% if val == 'audio' %}<span class="glyphicon glyphicon-headphones"></span>
           {% elif val == 'video' %}<span class="glyphicon glyphicon-film"></span>
           {% elif val == 'collection' %}<span class="glyphicon glyphicon-folder-open"></span>
           {% elif val == 'disk image' %}<span class="glyphicon glyphicon-hdd"></span>
           {% elif val == 'email' %}<span class="glyphicon glyphicon-envelope"></span>
           {% else %}<span class="glyphicon glyphicon-file"></span>{% endif %}
-        {% endif %}
-        {% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
+        {% endif %}{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
             ({{ count|intcomma }})</li>
       {% endfor %}
       </ul>
