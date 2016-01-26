@@ -322,6 +322,10 @@ Upgrade Notes
 Release 2.5
 -----------
 
+* Migrate the database to add a new permission definition::
+
+    $ python manage.py migrate
+
 * This release adds new fields to the Solr schema; Solr should be updated
   with the project schema.xml, and all content will be need to reindexed.
 * The AFF Disk Image migration requires that the FTKimager command-line
