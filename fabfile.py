@@ -33,7 +33,7 @@ run tests, and generate docs).
 '''
 
 env.project = 'keep'
-env.git_rev_tag = ''
+env.rev_tag = ''
 env.git_rev = ''
 env.remote_path = '/home/httpd/sites/keep'
 env.remote_acct = 'keep'
@@ -120,6 +120,7 @@ def config_from_git():
     env.git_rev = local('git rev-parse --short HEAD', capture=True).strip()
     if keep.__version_info__[-1]:
         env.rev_tag = '-r' + env.git_rev
+
 
 def prep_source():
     'Checkout the code from svn and do local prep.'
