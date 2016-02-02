@@ -93,7 +93,7 @@ def migrate_aff_diskimage(self, pid):
     logger.debug('ftkimager return value is %s' % return_val)
     ftk_detail_output = '%s.txt' % e01_file.name
 
-    e01_size = os.path.getsize(aff_file.name)
+    e01_size = os.path.getsize(e01_file.name)
     if e01_size == 0:
         raise Exception('Generated E01 file is 0 size')
 
