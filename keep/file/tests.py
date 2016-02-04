@@ -1,10 +1,12 @@
+import bagit
 import datetime
 from mock import Mock, patch, MagicMock
 import os
 import shutil
+import subprocess
 import sunburnt
 import tempfile
-import bagit
+from unittest import skipIf
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -1442,6 +1444,18 @@ class PremisEditFormTest(TestCase):
         self.assertEqual(self.today, updated.object.creating_application.date)
 
 
+def command_available(cmd):
+    # check if a command is available by trying to call it
+    # NOTE: use shutil.which if/when we updrade to python 3
+    try:
+        subprocess.call([cmd, '--help'], stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+        return True
+    except OSError:
+        return False
+
+
+@skipIf(not command_available('ftkimager'), 'ftkimager is not available')
 class TestFtkimagerVerify(TestCase):
 
     def test_verify(self):

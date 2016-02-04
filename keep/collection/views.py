@@ -484,7 +484,7 @@ def browse_archive(request, archive):
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC)'
     # initialize local repo with logged-in user credentials & call generic view
-    return raw_datastream(request, pid, dsid, type=CollectionObject, repo=Repository(request=request))
+    return raw_datastream(request, pid, dsid, repo=Repository(request=request))
 
 
 @permission_required_with_403("collection.view_collection")

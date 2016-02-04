@@ -45,8 +45,7 @@ def view_datastream(request, pid, dsid):
     'Access raw object datastreams (MODS, RELS-EXT, DC, DigitalTech, SourceTech, JHOVE)'
     # initialize local repo with logged-in user credentials & call generic view
 
-    return raw_datastream(request, pid, dsid, type=AudioObject,
-                          repo=Repository(request=request))
+    return raw_datastream(request, pid, dsid, repo=Repository(request=request))
 
 
 @permission_required_with_403("audio.view_audio")
@@ -204,8 +203,7 @@ def download_audio(request, pid, type, extension=None):
         'Content-Disposition': "attachment; filename=%s.%s" % (obj.noid, file_ext)
     }
     # use generic raw datastream view from eulfedora
-    return raw_datastream(request, pid, dsid, type=AudioObject,
-            repo=repo, headers=extra_headers, accept_range_request=True)
+    return raw_datastream(request, pid, dsid, repo=repo, headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling
 
 

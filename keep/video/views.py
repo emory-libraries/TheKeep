@@ -17,9 +17,7 @@ from eulcommon.djangoextras.auth import permission_required_with_403
 @permission_required_with_403("video.change_videoperms")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.video.models.Video`.'''
-    #*********REMOVE THIS AFTE TEST*********#
     repo = Repository(request=request)
-    #repo = Repository(username='fedoraAdmin', password='fedoraAdmin')
     obj = repo.get_object(pid, type=Video)
     try:
         # if this is not actually a Vide0, then 404 (object is not available at this url)
@@ -199,10 +197,10 @@ def download_video(request, pid, type, extension=None):
         # any other type is not supported
         raise Http404
     extra_headers = {
-        'Content-Disposition': "attachment; filename=%s.%s" % (obj.noid, file_ext)
+        'Content-Disposition': 'attachment; filename="%s.%s"' % (obj.noid, file_ext)
     }
+
     # use generic raw datastream view from eulfedora
-    return raw_datastream(request, pid, dsid, type=Video,
-            repo=repo, headers=extra_headers, accept_range_request=True,
-            streaming=True)
+    return raw_datastream(request, pid, dsid, repo=repo,
+        headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling

@@ -797,7 +797,7 @@ def download(request, pid):
             (obj.noid, obj.provenance.content.object.latest_format.name)
     }
     return raw_datastream(request, pid, DiskImage.content.id,
-        repo=repo, headers=extra_headers, streaming=True)
+        repo=repo, headers=extra_headers)
 
 @permission_required_with_403("file.view_disk_image")
 def view_audit_trail(request, pid):

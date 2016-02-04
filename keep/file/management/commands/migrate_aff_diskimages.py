@@ -30,6 +30,13 @@ class Command(BaseCommand):
             objs = repo.get_objects_with_cmodel(DiskImage.DISKIMAGE_CONTENT_MODEL,
                 type=DiskImage)
             for obj in objs:
+                # objects found by risearch *should* exist, but
+                # just in case of discrepancies (hopefully only in QA),
+                # ignore non-existent objects
+                if not obj.exists:
+                    self.stderr.write(self.style.WARNING('%s does not exist' % obj.pid))
+                    continue
+
                 # check premis for to find Disk Images in AFF format;
                 # exclude any that have already been migrated
                 if obj.provenance.exists:
@@ -46,12 +53,13 @@ class Command(BaseCommand):
             migration_tasks.add(migrate_aff_diskimage.delay(pid))
 
         # wait for tasks to complete
-        try:
-            migration_tasks.join()
-        except Exception:
-            # exceptions from tasks gets propagated here, but ignore
-            # them and report based on success/failure
-            pass
+        while migration_tasks.waiting():
+            try:
+                migration_tasks.join()
+            except Exception:
+                # exceptions from tasks gets propagated here, but ignore
+                # them and report based on success/failure
+                pass
 
         print '%d migrations completed, %s failures' % \
             (migration_tasks.completed_count(),

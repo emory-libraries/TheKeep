@@ -55,7 +55,7 @@ def migrate_aff_diskimage(self, pid):
 
     # download the aff disk image to a tempfile
     aff_file = tempfile.NamedTemporaryFile(suffix='.aff',
-        prefix='keep-%s_' % original.noid, dir=tmpdir)
+        prefix='keep-%s_' % original.noid, dir=tmpdir, delete=False)
     logger.debug('Saving AFF as %s for conversion (datastream size: %s)' \
         % (aff_file.name, filesizeformat(original.content.size)))
     try:
@@ -64,13 +64,17 @@ def migrate_aff_diskimage(self, pid):
     except Exception as err:
         raise Exception('Error downloading %s AFF for conversion' % original.pid)
 
+    # close the file handle in case of weird interactions with ftkimager
+    aff_file.close()
     aff_size = os.path.getsize(aff_file.name)
     logger.debug('Downloaded %s' % filesizeformat(aff_size))
 
     # run ftkimager to generate the E01 version
     logger.debug('Running ftkimager to generate E01')
     e01_file = tempfile.NamedTemporaryFile(suffix='.E01',
-        prefix='keep-%s_' % original.noid, dir=tmpdir)
+        prefix='keep-%s_' % original.noid, dir=tmpdir, delete=False)
+    # close the file handle in case of weird interactions with ftkimager
+    e01_file.close()
     # file handle to capture console output from ftkimager
     ftk_output = tempfile.NamedTemporaryFile(suffix='.txt',
         prefix='keep-%s-ftkimager_' % original.noid, dir=tmpdir)
@@ -89,7 +93,7 @@ def migrate_aff_diskimage(self, pid):
     logger.debug('ftkimager return value is %s' % return_val)
     ftk_detail_output = '%s.txt' % e01_file.name
 
-    e01_size = os.path.getsize(aff_file.name)
+    e01_size = os.path.getsize(e01_file.name)
     if e01_size == 0:
         raise Exception('Generated E01 file is 0 size')
 
@@ -98,7 +102,12 @@ def migrate_aff_diskimage(self, pid):
 
     # use ftkimager to verify aff and e01 and compare checksums
     aff_checksums = ftkimager_verify(aff_file.name)
+    if not aff_checksums:
+        raise Exception('Error running ftkimager verify on AFF for %s' % original.pid)
     e01_checksums = ftkimager_verify(e01_file.name)
+    if not e01_checksums:
+        raise Exception('Error running ftkimager verify on E01 for %s' % original.pid)
+
     logger.debug('AFF verify checksums: %s' % \
         ', '.join('%s: %s' % (k, v) for k, v in aff_checksums.iteritems()))
     logger.debug('E01 verify checksums: %s' % \
@@ -173,9 +182,10 @@ def migrate_aff_diskimage(self, pid):
             original.pid, err, ', '.join(err.pids))
     # would probably be good to catch other fedora errors
 
-    # remove ftkimager text file
-    # (all other files will get removed automatically by tempfile)
-    os.remove(ftk_detail_output)
+    # remove temporary files
+    os.remove(ftk_detail_output)    # ftkimager text file
+    os.remove(aff_file.name)
+    os.remove(e01_file.name)
 
     # reinitialize migrated object, just to avoid any issues
     # with accessing ark uri for use in original object premis
@@ -237,9 +247,14 @@ def ftkimager_verify(filename):
     :returns: dict of checksums (MD5 and SHA1) from verification output
     '''
     verify_command = ['ftkimager', '--verify', filename]
+    try:
+        output = subprocess.check_output(verify_command,
+            stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        logger.error('ftkimager verification failed on %s: %s' % \
+            (filename, err))
+        return
 
-    output = subprocess.check_output(verify_command,
-        stderr=subprocess.STDOUT)
     # regular expression search returns a list of tuples with
     # checksum type and value; convert into a dict keyed on checksum type
     return dict(FTKIMAGER_HASH_RE.findall(output))

@@ -87,7 +87,7 @@ class RepoAdminViewsTest(KeepTestCase):
 
         mocksolr.query.return_value = mocksolr.query
         for method in ['query', 'facet_by', 'sort_by', 'field_limit',
-                       'filter', 'exclude']:
+                       'filter', 'exclude', 'group_by']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # no guest access
@@ -140,7 +140,8 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter', 'exclude']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+            'filter', 'exclude', 'group_by']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -178,7 +179,8 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter', 'exclude']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+            'filter', 'exclude', 'group_by']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -223,7 +225,8 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter', 'exclude']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+            'filter', 'exclude', 'group_by']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
         # set mock facet results via paginator
         mockpage = mockpaginator.return_value.page.return_value
@@ -339,7 +342,8 @@ class RepoAdminViewsTest(KeepTestCase):
         mocksolr = mocksolr_interface.return_value
 
         mocksolr.query.return_value = mocksolr.query
-        for method in ['query', 'facet_by', 'sort_by', 'field_limit', 'filter']:
+        for method in ['query', 'facet_by', 'sort_by', 'field_limit',
+            'filter', 'group_by']:
             getattr(mocksolr.query, method).return_value = mocksolr.query
 
         # log in as staff
@@ -532,7 +536,8 @@ class SearchTemplatesTest(TestCase):
         }
         ctx = self.context.copy()
         ctx['facets'] = mock_facets
-        ctx['url_params'] = 'keyword=interesting stuff'
+        kw_search = 'interesting stuff'
+        ctx['url_params'] = 'keyword=%s' % kw_search
         response = render(self.rqst, self.search_results, ctx)
         self.assertContains(response, 'Filter your results')
 
@@ -546,8 +551,17 @@ class SearchTemplatesTest(TestCase):
                     self.assertContains(response, '>Unknown from Old DM<',
                         msg_prefix='for access status, abbreviation should be listed')
                 else:
-                    self.assertContains(response, '>%s<' % term,
-                        msg_prefix='facet value should be listed')
+                    # NOTE: Using html comparisons to avoid discrepancies
+                    # in whitespace
+                    if term == 'audio':
+                        icon = '<span class="glyphicon glyphicon-headphones"></span>'
+                    elif term == 'born-digital':
+                        icon = '<span class="glyphicon glyphicon-file"></span>'
+                    else:
+                        icon = ''
+                    self.assertContains(response, '<a href="?keyword=%(kw)s&amp;%(field)s=%(term)s">%(icon)s%(term)s</a>' \
+                        % {'kw': kw_search, 'field': field, 'term': term, 'icon': icon},
+                        msg_prefix='facet value should be listed', html=True)
 
                 self.assertContains(response, '(%s)' % count,
                     msg_prefix='facet count should be listed')
