@@ -197,10 +197,10 @@ def download_video(request, pid, type, extension=None):
         # any other type is not supported
         raise Http404
     extra_headers = {
-        'Content-Disposition': "attachment; filename=%s.%s" % (obj.noid, file_ext)
+        'Content-Disposition': 'attachment; filename="%s.%s"' % (obj.noid, file_ext)
     }
+
     # use generic raw datastream view from eulfedora
-    return raw_datastream(request, pid, dsid, type=Video,
-            repo=repo, headers=extra_headers, accept_range_request=True,
-            streaming=True)
+    return raw_datastream(request, pid, dsid, repo=repo,
+        headers=extra_headers)
     # errors accessing Fedora will fall through to default 500 error handling
