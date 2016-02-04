@@ -18,14 +18,10 @@
                 $(this).jPlayer("setMedia", {
                     title: "{{ resource.label }}",
                     'm4v': "{{ resource.get_access_url }}"
-                    //'m4v': "http://wilson.library.emory.edu/~athom09/nshdf.mp4"
-
                 });
             },
             {# explicitly disable flash player because it doesn't send range requests needed for permissions check #}
             solution: "html",
-            // swfPath: "{% static 'js/' %}",
-            // supplied: "{{ resource.access_file_extension }}",    {# previously was: supplied: "mp3, m4a", #}
             supplied: "m4v",
             wmode: "window",
             smoothPlayBar: true,
@@ -33,7 +29,7 @@
             remainingDuration: true,
             toggleDuration: true,
             warningAlerts: true,
-            errorAlerts:true                {#  do we want/need?   preload: 'auto', #}
+            errorAlerts:true
         });
     });
   </script>
