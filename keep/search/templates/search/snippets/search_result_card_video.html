@@ -17,6 +17,8 @@
 {% endblock %}
 
 {% block result-info %}
+    <i class="pull-right text-muted fa fa-video-camera fa-2x"></i>
+    <div class="clear"> </div>
     {% if r.score %}
     {# display numerical score in debug mode #}
     {# {% if debug %}<p>{{ r.score }}</p>{% endif %} #}
@@ -25,6 +27,7 @@
 
     </div>
     {% endif %}
+
     {% if not r.researcher_access %}
     <section class="access">
       <ul class="list-inline">
@@ -40,6 +43,7 @@
 {% block result-content %}
     <div clas="row">
         {# display ARK NOID if possible; fall-back to pid display #}
+
         <dl class="dl-horizontal">
           <dt>ID:</dt>
           <dd>{% firstof r.ark_uri|ark_noid r.pid %}</dd>
