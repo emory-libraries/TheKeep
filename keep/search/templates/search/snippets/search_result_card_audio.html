@@ -3,6 +3,16 @@
 {# public-facing search result card; currently audio-only #}
 
 {% block result-header %}
+    {% if not r.researcher_access %}
+    <section class="access col-xs-2">
+      <ul class="list-inline">
+        <li class="no-researcher" data-toggle="tooltip" data-placement="bottom" title="Not accessible to researchers">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+        </li>
+      </ul>
+    </section>
+    {% endif %}
+
     <h3><a href="{% url 'audio:view' r.pid %}" title="{{r.title}}">{{ r.title|truncatechars:"60"}}</a></h3>
 
      {% if 'info:fedora' in r.collection_id %}  {# convert to pid if id is in URI format #}
@@ -17,6 +27,7 @@
 {% endblock %}
 
 {% block result-info %}
+
     {% if r.score %}
     {# display numerical score in debug mode #}
     {# {% if debug %}<p>{{ r.score }}</p>{% endif %} #}
@@ -25,16 +36,8 @@
 
     </div>
     {% endif %}
-    {% if not r.researcher_access %}
-    <section class="access">
-      <ul class="list-inline">
-        <li class="no-researcher" data-toggle="tooltip" data-placement="bottom" title="Not accessible to researchers">
-            <span class="glyphicon glyphicon-ban-circle"></span>
-        </li>
-      </ul>
-    </section>
-    {% endif %}
 
+    <i class="pull-right text-muted fa fa-volume-up fa-2x"></i>
 {% endblock %}
 
 {% block result-content %}

@@ -3,6 +3,16 @@
 {# public-facing search result card #}
 
 {% block result-header %}
+    {% if not r.researcher_access %}
+    <section class="access col-xs-2">
+      <ul class="list-inline">
+        <li class="no-researcher" data-toggle="tooltip" data-placement="bottom" title="Not accessible to researchers">
+            <span class="glyphicon glyphicon-ban-circle"></span>
+        </li>
+      </ul>
+    </section>
+    {% endif %}
+
     <h3><a href="{% url 'video:view' r.pid %}" title="{{r.title}}">{{ r.title|truncatechars:"60"}}</a></h3>
 
      {% if 'info:fedora' in r.collection_id %}  {# convert to pid if id is in URI format #}
@@ -20,26 +30,19 @@
     {% if r.score %}
     {# display numerical score in debug mode #}
     {# {% if debug %}<p>{{ r.score }}</p>{% endif %} #}
-    <div class="progress">
+    <div class="progress pull-right" style="width:45px" >
         <div class="progress-bar" role="progressbar" aria-valuenow="{{ r.score }}" aria-valuemin="0" aria-valuemax="1.5" style="width:{% widthratio r.score 1 90 %}%"> </div>
 
     </div>
     {% endif %}
-    {% if not r.researcher_access %}
-    <section class="access">
-      <ul class="list-inline">
-        <li class="no-researcher" data-toggle="tooltip" data-placement="bottom" title="Not accessible to researchers">
-            <span class="glyphicon glyphicon-ban-circle"></span>
-        </li>
-      </ul>
-    </section>
-    {% endif %}
 
+    <i class="pull-right text-muted fa fa-video-camera fa-2x"></i>
 {% endblock %}
 
 {% block result-content %}
     <div clas="row">
         {# display ARK NOID if possible; fall-back to pid display #}
+
         <dl class="dl-horizontal">
           <dt>ID:</dt>
           <dd>{% firstof r.ark_uri|ark_noid r.pid %}</dd>

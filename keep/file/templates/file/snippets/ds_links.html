@@ -1,12 +1,17 @@
 {% load search_tags %}
-{# datastream and audit trail links for file objects #}
-<div class="btn-group" role="group">
-  {% if perms.video.view_disk_image %}
+{# link to download original; separate toolbar for consistency with audio/video #}
+{% if perms.video.download_disk_image %}
+<div class="btn-toolbar" role="toolbar">
+  <div class="btn-group" role="group">
       <a class="btn btn-default" href="{% url 'file:download' obj.pid %}"
         title="download disk image">
-        <i class="fa fa-download"></i>
+        <i class="fa fa-download"></i> original disk image
       </a>
-  {% endif %}
+  </div>
+</div>
+{% endif %}
+{# datastream and audit trail links for file objects #}
+<div class="btn-group" role="group">
   {% if obj.audit_trail %}
     <a class="btn btn-default" href="{% url 'file:history' obj.pid %}">Event Log</a>
   {% endif %}

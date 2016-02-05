@@ -322,7 +322,8 @@ Upgrade Notes
 Release 2.5
 -----------
 
-* Migrate the database to add a new permission definition::
+* Run database migrations to add the new download disk image permission
+  and add it to Born Digital Curator group.
 
     $ python manage.py migrate
 
