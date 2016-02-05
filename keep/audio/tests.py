@@ -137,10 +137,10 @@ class AudioViewsTest(KeepTestCase):
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
 
-        expected = 'attachment; filename=%s.wav' % obj.noid
+        expected = 'attachment; filename="%s.wav"' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
-                        (expected, response['Content-Type'], download_url))
+                        (expected, response['Content-Disposition'], download_url))
 
     def test_download_compressed_audio(self):
         # create a test audio object
@@ -178,10 +178,10 @@ class AudioViewsTest(KeepTestCase):
                         "Expected '%s' but returned '%s' for %s mimetype" % \
                         (expected, response['Content-Type'], download_url))
 
-        expected = 'attachment; filename=%s.mp3' % obj.noid
+        expected = 'attachment; filename="%s.mp3"' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
-                        (expected, response['Content-Type'], download_url))
+                        (expected, response['Content-Disposition'], download_url))
 
         # logout to test guest/researcher access
         self.client.logout()
@@ -246,10 +246,10 @@ class AudioViewsTest(KeepTestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s (M4A'
                              % (expected, code, m4a_download_url))
-        expected = 'attachment; filename=%s.m4a' % obj.noid
+        expected = 'attachment; filename="%s.m4a"' % obj.noid
         self.assertEqual(response['Content-Disposition'], expected,
                         "Expected '%s' but returned '%s' for %s content disposition" % \
-                        (expected, response['Content-Type'], download_url))
+                        (expected, response['Content-Disposition'], download_url))
 
         # attempt to download m4a as mp3 - should 404
         response = self.client.get(download_url)
@@ -867,9 +867,9 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'Expected %s but returned %s for mimetype on %s (SourceTech datastream)' \
                 % (expected, got, ds_url))
-        content = response.content  # response.content is a generator here. only read it once
-        # self.assertTrue('<st:sourcetech' in content)
-        # self.assertTrue(obj.sourcetech.content.note in content)
+        content = ' '.join(response.streaming_content)
+        self.assertTrue('<st:sourcetech' in content)
+        self.assertTrue(obj.sourcetech.content.note in content)
         # Digital Tech
         ds_url = reverse('audio:raw-ds', kwargs={'pid': obj.pid, 'dsid': 'DigitalTech'})
         response = self.client.get(ds_url)
@@ -881,14 +881,14 @@ class AudioViewsTest(KeepTestCase):
         self.assertEqual(expected, got,
             'Expected %s but returned %s for mimetype on %s (DigitalTech datastream)' \
                 % (expected, got, ds_url))
-        content = response.content  # response.content is a generator here. only read it once
-        # self.assertTrue('<dt:digitaltech' in content)
-        # self.assertTrue(obj.digitaltech.content.date_captured in content)
+        content = ' '.join(response.streaming_content)
+        self.assertTrue('<dt:digitaltech' in content)
+        self.assertTrue(obj.digitaltech.content.date_captured in content)
 
         # not testing bogus datastream id because url config currently does not
         # allow it
 
-         # non-existent record should 404
+        # non-existent record should 404
         fakepid = 'bogus-pid:1'
         ds_url = reverse('audio:raw-ds', kwargs={'pid': fakepid, 'dsid': 'MODS'})
         response = self.client.get(ds_url)  # follow redirect to check error message
