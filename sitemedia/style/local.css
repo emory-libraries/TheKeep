@@ -538,7 +538,7 @@ header.row.title > div:first-child {
     color: inherit;
     float: none;
     transition: color 0.2s;
-    width: 100%;     
+    width: 100%;
     display: table-cell;
 }
 
@@ -550,7 +550,7 @@ header.row.title > div:first-child {
     width: 100%;
 }
 
-.media-list .media>a:hover, 
+.media-list .media>a:hover,
 .media-list .media>a:focus{
     color: #44C2FF;
     border-color: #DFE9EE;
@@ -619,7 +619,7 @@ li.media.with-edit>.aux-action{
     padding-right: 5px;
     background-color: #F7F7F7;
 }
-li.media.with-edit>.aux-action:hover,  
+li.media.with-edit>.aux-action:hover,
 li.media.with-edit>.aux-action:focus {
   background-color: #F2FBFD;
 }
@@ -680,7 +680,7 @@ article.view-media .row header .nav>li {
     article.view-media .row header {
         margin: 25px -28px 15px;
         background-color: whitesmoke;
-    
+
         width: 107.8%;
 }
     article.view-media .row header .nav>li {
@@ -706,11 +706,11 @@ article.view-media .row header .nav>li h4 span{
   Login
 ******/
 
-form#login-form .table>thead>tr>th, 
-form#login-form .table>tbody>tr>th, 
-form#login-form .table>tfoot>tr>th, 
-form#login-form .table>thead>tr>td, 
-form#login-form .table>tbody>tr>td, 
+form#login-form .table>thead>tr>th,
+form#login-form .table>tbody>tr>th,
+form#login-form .table>tfoot>tr>th,
+form#login-form .table>thead>tr>td,
+form#login-form .table>tbody>tr>td,
 form#login-form .table>tfoot>tr>td{
   border:none;
 }
@@ -918,4 +918,10 @@ a:focus .access ul>li{
     border-radius:4px;
     color: #FF5C5C;
     font-size: 3em;
+}
+
+.result-listing.cards section.access {
+  float:right;
+  display: inline-block;
+  padding: 0 3px;
 }
