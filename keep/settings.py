@@ -166,12 +166,6 @@ SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
 import djcelery
 djcelery.setup_loader()
 
-# explicitly assign a differently-named default queue to prevent
-# collisions with other projects using celery (allow celery to create queue for us)
-CELERY_ROUTES = {
-    'keep.audio.tasks.convert_wav_to_mp3': {'queue': 'keep'},
-    'keep.file.tasks.migrate_aff_diskimage': {'queue': 'keep'}
-}
 CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
 # NOTE: should be possible to configure a default queue, but not sure
 # where that needs to be done
@@ -185,6 +179,16 @@ except ImportError:
         'stuff blows up, try copying localsettings.py.dist to ' + \
         'localsettings.py and setting appropriately for your environment.'
     pass
+
+
+# explicitly assign a differently-named default queue to prevent
+# collisions with other projects using celery (allow celery to create queue for us)
+# NOTE: setting after including localsettings to allow local override
+CELERY_ROUTES = {
+    'keep.audio.tasks.convert_wav_to_mp3': {'queue': CELERY_DEFAULT_QUEUE},
+    'keep.file.tasks.migrate_aff_diskimage': {'queue': CELERY_DEFAULT_QUEUE}
+}
+
 
 # django_nose configurations
 
