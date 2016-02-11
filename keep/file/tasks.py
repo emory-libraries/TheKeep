@@ -7,8 +7,10 @@ from django.template.defaultfilters import filesizeformat
 from eulfedora.models import FileDatastreamObject
 import os
 import re
+import shutil
 import subprocess
 import tempfile
+import urllib
 import uuid
 
 from keep.common.fedora import Repository, DuplicateContent
@@ -31,8 +33,12 @@ def migrate_aff_diskimage(self, pid):
         'FTK program with settings: --e01 --compress 0 --frag 100T --quiet'
 
     # use the configured ingesting staging area as the base tmp dir
+    # create
     # for all temporary files
-    tmpdir = getattr(settings, 'INGEST_STAGING_TEMP_DIR', None)
+    staging_dir = getattr(settings, 'LARGE_FILE_STAGING_DIR', None)
+    # create a tempdir within the large file staging area
+    tmpdir = tempfile.mkdtemp(suffix='-aff-migration', dir=staging_dir)
+    logger.debug('Using tmpdir %s', tmpdir)
 
     # Retrieve the object to be migrated
     repo = Repository()
@@ -116,8 +122,17 @@ def migrate_aff_diskimage(self, pid):
         raise Exception('AFF and E01 ftkimager verify checksums do not match')
 
     # create a new diskimage object from the file
+    # - calculate file uri for content location
+    e01_file_uri = 'file://%s' % urllib.quote(e01_file.name)
+    # if Fedora base path is different from locally mounted staging directory,
+    # convert from local path to fedora server path
+    if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+        ingest_location = e01_file_uri.replace(settings.LARGE_FILE_STAGING_DIR,
+            settings.LARGE_FILE_STAGING_FEDORA_DIR)
+    logger.debug('E01 fedora file URI is %s', e01_file_uri)
+
     migrated = DiskImage.init_from_file(e01_file.name,
-        initial_label=original.label)
+        initial_label=original.label, content_location=e01_file_uri)
 
     # add ftkimager text output & details as supplemental files
     # - console output captured from subprocess call
@@ -225,6 +240,9 @@ def migrate_aff_diskimage(self, pid):
     original.provenance.content.object.relationships.append(rel)
     original.save()
     logger.debug('Original disk image updated with migration data')
+
+    # remove aff migration temp dir and any remaining contents
+    shutil.rmtree(tmpdir)
 
     logger.info('Migrated %s AFF to %s E01' % (original.pid, migrated.pid))
     return 'Migrated %s to %s' % (original.pid, migrated.pid)
