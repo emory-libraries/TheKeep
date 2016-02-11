@@ -12,7 +12,7 @@
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript">
-    $(document).ready(function() {
+    $(document).ready(function() {  {# NOTE: this code is largely duplicated from audio template #}
         $('#jquery_jplayer_1').jPlayer({
             ready: function (event) {
                 $(this).jPlayer("setMedia", {
@@ -20,7 +20,7 @@
                     'm4v': "{{ resource.get_access_url }}"
                 });
             },
-            {# explicitly disable flash player because it doesn't send range requests needed for permissions check #}
+            {#  explicitly disable flash player because it doesn't send range requests needed for permissions check #}
             solution: "html",
             supplied: "m4v",
             wmode: "window",
@@ -29,7 +29,7 @@
             remainingDuration: true,
             toggleDuration: true,
             warningAlerts: true,
-            errorAlerts:true
+            // errorAlerts:true  {# NOTE: turn on when debugging #}
         });
     });
   </script>
@@ -63,7 +63,7 @@
 
     <div class="container">
       {# jplayer video player controls #}
-      {% include 'audio/snippets/audio_player.html' %}
+      {% include 'audio/snippets/audio_player.html' with video=1 %}
 
       <div class="row">
         <header>
