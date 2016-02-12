@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 import urllib
 import uuid
 
@@ -208,7 +209,6 @@ def migrate_aff_diskimage(self, pid):
     # would probably be good to catch other fedora errors
 
     # remove temporary files
-    os.remove(ftk_detail_output)    # ftkimager text file
     for tmpfilename in [aff_file.name, e01_file.name, ftk_output.name,
                         ftk_detail_output]:
         os.remove(tmpfilename)
@@ -256,7 +256,17 @@ def migrate_aff_diskimage(self, pid):
     logger.debug('Original disk image updated with migration data')
 
     # remove aff migration temp dir and any remaining contents
-    shutil.rmtree(tmpdir)
+    try:
+        shutil.rmtree(tmpdir)
+    except OSError:
+        # tempdir removal could fail due to nfs files
+        # wait a few seconds and try again
+        time.sleep(3)
+        try:
+            shutil.rmtree(tmpdir)
+        except OSError as os_err:
+            logger.warning('Failed to remove tmpdir %s : %s',
+                tmpdir, os_err)
 
     logger.info('Migrated %s AFF to %s E01' % (original.pid, migrated.pid))
     return 'Migrated %s to %s' % (original.pid, migrated.pid)
