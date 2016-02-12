@@ -209,8 +209,9 @@ def migrate_aff_diskimage(self, pid):
 
     # remove temporary files
     os.remove(ftk_detail_output)    # ftkimager text file
-    os.remove(aff_file.name)
-    os.remove(e01_file.name)
+    for tmpfilename in [aff_file.name, e01_file.name, ftk_output.name,
+                        ftk_detail_output]:
+        os.remove(tmpfilename)
 
     # reinitialize migrated object, just to avoid any issues
     # with accessing ark uri for use in original object premis
