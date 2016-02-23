@@ -7,8 +7,11 @@ from django.template.defaultfilters import filesizeformat
 from eulfedora.models import FileDatastreamObject
 import os
 import re
+import shutil
 import subprocess
 import tempfile
+import time
+import urllib
 import uuid
 
 from keep.common.fedora import Repository, DuplicateContent
@@ -31,8 +34,12 @@ def migrate_aff_diskimage(self, pid):
         'FTK program with settings: --e01 --compress 0 --frag 100T --quiet'
 
     # use the configured ingesting staging area as the base tmp dir
+    # create
     # for all temporary files
-    tmpdir = getattr(settings, 'INGEST_STAGING_TEMP_DIR', None)
+    staging_dir = getattr(settings, 'LARGE_FILE_STAGING_DIR', None)
+    # create a tempdir within the large file staging area
+    tmpdir = tempfile.mkdtemp(suffix='-aff-migration', dir=staging_dir)
+    logger.debug('Using tmpdir %s', tmpdir)
 
     # Retrieve the object to be migrated
     repo = Repository()
@@ -93,7 +100,7 @@ def migrate_aff_diskimage(self, pid):
     logger.debug('ftkimager return value is %s' % return_val)
     ftk_detail_output = '%s.txt' % e01_file.name
 
-    e01_size = os.path.getsize(aff_file.name)
+    e01_size = os.path.getsize(e01_file.name)
     if e01_size == 0:
         raise Exception('Generated E01 file is 0 size')
 
@@ -116,8 +123,18 @@ def migrate_aff_diskimage(self, pid):
         raise Exception('AFF and E01 ftkimager verify checksums do not match')
 
     # create a new diskimage object from the file
+    # - calculate file uri for content location
+    e01_file_uri = fedora_file_uri(e01_file.name)
+    logger.debug('E01 fedora file URI is %s', e01_file_uri)
+
+    # change permissions on tmpdir + files to ensure fedora can access them
+    os.chmod(tmpdir, 0775)
+    os.chmod(e01_file.name, 0666)
+    os.chmod(ftk_output.name, 0666)
+    os.chmod(ftk_detail_output, 0666)
+
     migrated = DiskImage.init_from_file(e01_file.name,
-        initial_label=original.label)
+        initial_label=original.label, content_location=e01_file_uri)
 
     # add ftkimager text output & details as supplemental files
     # - console output captured from subprocess call
@@ -173,6 +190,15 @@ def migrate_aff_diskimage(self, pid):
     rel.related_event_id = migration_event_id
     premis_ds.object.relationships.append(rel)
 
+    ## NOTE: Due to a Fedora bug with checksums and file uri ingest,
+    ## content datastream checksum must be cleared out before ingest
+    ## and manually checked after.
+
+    # store datastream checksum that would be sent to fedora
+    e01_checksum = migrated.content.checksum
+    # clear it out so Fedora can ingest without erroring
+    migrated.content.checksum = None
+
     # ingest
     try:
         migrated.save('Ingest migrated version of %s' % original.pid)
@@ -183,13 +209,16 @@ def migrate_aff_diskimage(self, pid):
     # would probably be good to catch other fedora errors
 
     # remove temporary files
-    os.remove(ftk_detail_output)    # ftkimager text file
-    os.remove(aff_file.name)
-    os.remove(e01_file.name)
+    for tmpfilename in [aff_file.name, e01_file.name, ftk_output.name,
+                        ftk_detail_output]:
+        os.remove(tmpfilename)
 
     # reinitialize migrated object, just to avoid any issues
     # with accessing ark uri for use in original object premis
     migrated = repo.get_object(migrated.pid, type=DiskImage)
+    # verify checksum
+    if migrated.content.checksum != e01_checksum:
+        raise Exception('Checksum mismatch detected on E01 for %s', migrated.pid)
 
     # once migrated object has been ingested,
     # update original object with migration information
@@ -226,6 +255,19 @@ def migrate_aff_diskimage(self, pid):
     original.save()
     logger.debug('Original disk image updated with migration data')
 
+    # remove aff migration temp dir and any remaining contents
+    try:
+        shutil.rmtree(tmpdir)
+    except OSError:
+        # tempdir removal could fail due to nfs files
+        # wait a few seconds and try again
+        time.sleep(3)
+        try:
+            shutil.rmtree(tmpdir)
+        except OSError as os_err:
+            logger.warning('Failed to remove tmpdir %s : %s',
+                tmpdir, os_err)
+
     logger.info('Migrated %s AFF to %s E01' % (original.pid, migrated.pid))
     return 'Migrated %s to %s' % (original.pid, migrated.pid)
 
@@ -258,3 +300,13 @@ def ftkimager_verify(filename):
     # regular expression search returns a list of tuples with
     # checksum type and value; convert into a dict keyed on checksum type
     return dict(FTKIMAGER_HASH_RE.findall(output))
+
+
+def fedora_file_uri(filename):
+    filename = 'file://%s' % urllib.quote(filename)
+    # if Fedora base path is different from locally mounted staging directory,
+    # convert from local path to fedora server path
+    if getattr(settings, 'LARGE_FILE_STAGING_FEDORA_DIR', None) is not None:
+        filename = filename.replace(settings.LARGE_FILE_STAGING_DIR,
+            settings.LARGE_FILE_STAGING_FEDORA_DIR)
+    return filename

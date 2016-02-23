@@ -241,6 +241,8 @@ def keyword_search(request):
                 "simpleCollection_label", "rights", "state",
                 # migrated / original
                 "original_pid", "isDerivationOf", "hasDerivation",
+                # format and size, used for disk images display (at least)
+                "content_size", "content_format"
                 ],
                 score=True)
             ctx['show_relevance'] = True

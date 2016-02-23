@@ -3,6 +3,17 @@
 CHANGELOG
 =========
 
+Release 2.6 - Migrate Large AFF Disk Images + Video Improvements
+----------------------------------------------------------------
+
+* As a researcher, I want to be able to view video in full screen mode
+  so that I can see the video more easily.
+* Bugfix: Improve video playback on startup and skip (now using
+  streaming response and Fedora range requests)
+* As a repository administrator, I can migrate large AFF master
+  disk images and add metadata that reflects these changes in order
+  to update obsolete file formats in the repository.
+
 Release 2.5 - Migrate AD1/AFF Disk Images to sustainable formats
 ----------------------------------------------------------------
 

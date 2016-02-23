@@ -12,28 +12,24 @@
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/jquery.jplayer.min.js' %}"></script>
     <script type="text/javascript">
-    $(document).ready(function() {
+    $(document).ready(function() {  {# NOTE: this code is largely duplicated from audio template #}
         $('#jquery_jplayer_1').jPlayer({
             ready: function (event) {
                 $(this).jPlayer("setMedia", {
                     title: "{{ resource.label }}",
                     'm4v': "{{ resource.get_access_url }}"
-                    //'m4v': "http://wilson.library.emory.edu/~athom09/nshdf.mp4"
-
                 });
             },
-            {# explicitly disable flash player because it doesn't send range requests needed for permissions check #}
+            {#  explicitly disable flash player because it doesn't send range requests needed for permissions check #}
             solution: "html",
-            // swfPath: "{% static 'js/' %}",
-            // supplied: "{{ resource.access_file_extension }}",    {# previously was: supplied: "mp3, m4a", #}
             supplied: "m4v",
             wmode: "window",
             smoothPlayBar: true,
             keyEnabled: true,
             remainingDuration: true,
             toggleDuration: true,
-            warningAlerts: true,
-            errorAlerts:true                {#  do we want/need?   preload: 'auto', #}
+            // warningAlerts: true,
+            // errorAlerts:true    {# NOTE: turn these on when debugging #}
         });
     });
   </script>
@@ -67,7 +63,7 @@
 
     <div class="container">
       {# jplayer video player controls #}
-      {% include 'audio/snippets/audio_player.html' %}
+      {% include 'audio/snippets/audio_player.html' with video=1 %}
 
       <div class="row">
         <header>
