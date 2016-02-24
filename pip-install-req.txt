@@ -34,6 +34,7 @@ bagit>=1.3.2
 -e git://github.com/emory-libraries/django-eultheme.git@1.1.3#egg=django_eultheme
 django_admin_bootstrapped<2.0
 django-widget-tweaks
-pymediainfo
+# 2016/02 pymediainfo 2.0 causes a segfault with libmediainfo.so (mismatch with installed version?)
+pymediainfo<2.0
 django-downtime
 django_auth_ldap
