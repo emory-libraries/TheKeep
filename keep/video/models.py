@@ -224,7 +224,7 @@ class Video(DigitalObject):
         'video/x-m4v': 'm4v',
         'video/x-msvideo' : 'avi'
 }
-    allowed_access_mimetypes = {'video/mp4' : 'mp4'}
+    allowed_access_mimetypes = {'video/mp4': 'mp4'}
 
     mods = XmlDatastream("MODS", "MODS Metadata", VideoMods, defaults={
             'control_group': 'M',
@@ -314,8 +314,6 @@ class Video(DigitalObject):
 
         return pid
 
-
-
     def save(self, logMessage=None):
         '''Save the object.  If the content of any :class:`~Video.mods`,
         :class:`Video.rels_ext`, or :class:`Video.digitaltech`
@@ -355,7 +353,6 @@ class Video(DigitalObject):
         if self.access_copy.exists:
             return self.allowed_access_mimetypes.get(self.access_copy.mimetype, 'mp4')
 
-
     @property
     def researcher_access(self):
         return allow_researcher_access(self.rights.content)
@@ -367,7 +364,7 @@ class Video(DigitalObject):
         Fedora findObjects API method.
          '''
         # identifiers
-        del(self.dc.content.identifier_list)        # clear out any existing names
+        del self.dc.content.identifier_list        # clear out any existing names
 
         # title
         if self.mods.content.title:
@@ -377,13 +374,13 @@ class Video(DigitalObject):
             self.dc.content.type = self.mods.content.resource_type
 
         # creator names
-        del(self.dc.content.creator_list)        # clear out any existing names
+        del self.dc.content.creator_list        # clear out any existing names
         for name in self.mods.content.names:
             # for now, use unicode conversion as defined in mods.Name
             self.dc.content.creator_list.append(unicode(name))
 
         # clear out any dates previously in DC
-        del(self.dc.content.date_list)
+        del self.dc.content.date_list
         if self.mods.content.origin_info and \
            len(self.mods.content.origin_info.created) and \
            self.mods.content.origin_info.created[0].date:
@@ -394,13 +391,13 @@ class Video(DigitalObject):
             self.dc.content.date_list.append(self.mods.content.origin_info.issued[0].date)
 
         # clear out any descriptions previously in DC and set from MODS/digitaltech
-        del(self.dc.content.description_list)
+        del self.dc.content.description_list
         if self.mods.content.general_note and \
            self.mods.content.general_note.text:
             self.dc.content.description_list.append(self.mods.content.general_note.text)
 
         # clear out any rights previously in DC and set contents from Rights accessStatus
-        del(self.dc.content.rights_list)
+        del self.dc.content.rights_list
         if self.rights.content.access_status:
             # access code no longer needs to be included, since we will not be searching
             self.dc.content.rights_list.append(self.rights.content.access_status.text)
@@ -496,10 +493,11 @@ class Video(DigitalObject):
 
         return data
 
-
     @staticmethod
-    def init_from_file(master_filename, initial_label=None, request=None, master_md5_checksum=None,master_sha1_checksum=None,
-        master_location=None, master_mimetype=None, access_filename=None, access_location=None, access_md5_checksum=None, access_mimetype=None):
+    def init_from_file(master_filename, initial_label=None, request=None,
+        master_md5_checksum=None, master_sha1_checksum=None,
+        master_location=None, master_mimetype=None, access_filename=None,
+        access_location=None, access_md5_checksum=None, access_mimetype=None):
         '''Static method to create a new :class:`Video` instance from
         a file.  Sets the object label and metadata title based on the initial
         label specified, or file basename.  Calculates and stores the duration
