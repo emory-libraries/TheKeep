@@ -3,6 +3,18 @@
 CHANGELOG
 =========
 
+Release 2.6.1
+-------------
+
+* As a staff user, I want to be able to find objects with no collection
+  or access status set so that I can identify and fix content that has
+  been uploaded but not had any metadata added.
+* Bugfix for error editing objects that include empty, non-existent
+  xml datastreams (actual fix in eulfedora 1.5.1)
+* Bugfix: catch and report problems with MediaInfo when getting video
+  duration on ingest
+
+
 Release 2.6 - Migrate Large AFF Disk Images + Video Improvements
 ----------------------------------------------------------------
 
