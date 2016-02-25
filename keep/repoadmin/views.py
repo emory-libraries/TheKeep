@@ -97,7 +97,7 @@ def keyword_search(request):
     items.
     '''
     searchform = KeywordSearch(request.GET)
-    missing_label = '[missing]'
+    missing_label = '[null]'
 
     ctx = {'form': searchform}
     if searchform.is_valid():
@@ -211,7 +211,7 @@ def keyword_search(request):
                 elif filter_val == 'fixity_check':
                     label = 'fixity check: %s' % 'valid' if val == 'pass' else 'invalid'
                 elif val == missing_label:
-                    label = 'missing %s' % filter_val
+                    label = '%s: null' % filter_val
                 elif filter_val == 'access status':
                     # use access status abbreviation instead of numeric code
                     label = rights_access_terms_dict[val].abbreviation
