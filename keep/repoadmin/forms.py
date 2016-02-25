@@ -120,3 +120,7 @@ class KeywordSearch(forms.Form):
     order they should be displayed.'''
     # NOTE: it would be nice to facet on 'archive_short_name',
     # but currently only collections have it indexed
+
+    #: fields that should have a "missing" count displayed for items with
+    #: no value for that field (e.g., no collection or no access status set)
+    show_missing_facets = ['access_code', 'collection_label_facet', 'format']
