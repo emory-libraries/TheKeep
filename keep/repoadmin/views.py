@@ -97,6 +97,7 @@ def keyword_search(request):
     items.
     '''
     searchform = KeywordSearch(request.GET)
+    missing_label = '[null]'
 
     ctx = {'form': searchform}
     if searchform.is_valid():
@@ -186,8 +187,13 @@ def keyword_search(request):
                 if not val:
                     continue
 
-                # filter the current solr query
-                q = q.filter(**{facet_field: val})
+                # special case: search for items without a field
+                if val == missing_label:
+                    q = q.exclude(**{'%s__any' % facet_field: True})
+
+                else:
+                    # filter the current solr query
+                    q = q.filter(**{facet_field: val})
 
                 # add to list of active filters
                 active_filters[filter_val].append(val)
@@ -204,6 +210,8 @@ def keyword_search(request):
                     label = '%s %s' % (filter_val, val)
                 elif filter_val == 'fixity_check':
                     label = 'fixity check: %s' % 'valid' if val == 'pass' else 'invalid'
+                elif val == missing_label:
+                    label = '%s: null' % filter_val
                 elif filter_val == 'access status':
                     # use access status abbreviation instead of numeric code
                     label = rights_access_terms_dict[val].abbreviation
@@ -216,8 +224,10 @@ def keyword_search(request):
         # Update solr query to return values & counts for the
         # configured facet fields
         q = q.facet_by(searchform.facet_field_names.values(),
-                       mincount=1, limit=15, sort='count')
-        # TODO: add support for missing=True for access_code
+                       mincount=1, limit=15, sort='count',
+                       missing=True)
+        # NOTE: missing true displays count for items without any value
+        # for the facet field (e.g., no access code set)
 
         # if there are any *keyword* terms, sort by relevance and display score
         # (for fielded search terms, items will either match or not, so relevance
@@ -228,7 +238,7 @@ def keyword_search(request):
             # should be returned
             q = q.sort_by('-score').field_limit([
                 # common item information
-                "object_type","content_model", "pid", "label", "title",
+                "object_type", "content_model", "pid", "label", "title",
                 "creator", "created", "last_modified", "added_by",
                 # collection
                 "archive_short_name", "hasMember",
@@ -278,8 +288,16 @@ def keyword_search(request):
                 show_facets = []
                 # skip any display facet values that are already in effect
                 for val in facet_fields[field]:
-                    if val[0] not in active_filters[display_name]:
-                        show_facets.append(val)
+                    try:
+                        if val[0] not in active_filters[display_name]:
+                            show_facets.append(val)
+                    except TypeError:
+                        # when solr missing=True is turned on,
+                        # last result is a count of items with no value
+                        # for this field
+                        if val is not 0 and field in searchform.show_missing_facets \
+                          and missing_label not in active_filters[display_name]:
+                            show_facets.append((missing_label, val))
                 if show_facets:
                     facets[display_name] = show_facets
 

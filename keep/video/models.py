@@ -538,8 +538,12 @@ class Video(DigitalObject):
         # set initial mods:typeOfResource - all Vodeo default to video recording
         obj.mods.content.resource_type = 'moving image'
         # get duration and store in digital tech metadata
-        info = MediaInfo.parse(master_filename)
-        duration = info.tracks[0].duration / 1000
+        try:
+            info = MediaInfo.parse(master_filename)
+            duration = info.tracks[0].duration / 1000
+        except:
+            raise Exception('Error getting video duration')
+
         obj.digitaltech.content.duration = '%d' % round(duration)
 
         # premis data

@@ -28,7 +28,7 @@
           {% elif val == 'disk image' %}<span class="glyphicon glyphicon-hdd"></span>
           {% elif val == 'email' %}<span class="glyphicon glyphicon-envelope"></span>
           {% else %}<span class="glyphicon glyphicon-file"></span>{% endif %}
-        {% endif %}{% if field == "access status" %}{{ val|access_code_abbreviation }}{% else %}{{ val }}{% endif %}</a>
+        {% endif %}{% if field == "access status" %}{{ val|access_code_abbreviation|default:val }}{% else %}{{ val }}{% endif %}</a>
             ({{ count|intcomma }})</li>
       {% endfor %}
       </ul>
