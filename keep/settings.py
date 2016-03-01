@@ -212,5 +212,3 @@ if django_nose is not None:
     NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup',
         '--with-keeptestsettings']
 
-# disable south migrations in unit tests
-SOUTH_TESTS_MIGRATE = False
