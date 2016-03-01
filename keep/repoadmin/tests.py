@@ -245,7 +245,8 @@ class RepoAdminViewsTest(KeepTestCase):
         response = self.client.get(search_url)
         # check solr facet args
         mocksolr.query.facet_by.assert_called_with(KeywordSearch.facet_field_names.values(),
-                                                   mincount=1, limit=15, sort='count')
+                                                   mincount=1, limit=15, sort='count',
+                                                   missing=True)
         for solr_field in mock_facets.keys():
             self.assert_(solr_field not in response.context['facets'])
 
