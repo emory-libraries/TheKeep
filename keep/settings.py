@@ -151,6 +151,7 @@ PID_ALIASES = {
     'musicmedia': 'emory:cwtgk',
     'etd': 'emory:pgfch',
     'health': 'emory:pq6rs',
+    'law': 'emory:rgrj6',
 }
 
 # urls that should be accessible during configured downtime periods

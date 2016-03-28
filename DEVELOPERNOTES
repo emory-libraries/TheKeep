@@ -4,9 +4,10 @@ Notes for Developers
 Session configuration
 ^^^^^^^^^^^^^^^^^^^^^
 
-As of `Release 1.0 - Min Items, part IV`_ the project default Session configuration is set to mark
-cookies as secure.  To enable login over HTTP (e.g. when developing with Django's runserver),
-you will need to override this in your ``localsettings.py``.  See the commented out example in
+As of :ref:`Release1-0` the project default Session configuration is set to mark
+cookies as secure.  To enable login over HTTP (e.g. when developing with
+Django's runserver), you will need to override this in your
+``localsettings.py``.  See the commented out example in
 ``localsettings.py.sample``::
 
     SESSION_COOKIE_SECURE = False
@@ -15,14 +16,17 @@ you will need to override this in your ``localsettings.py``.  See the commented 
 Conversion to Git
 ^^^^^^^^^^^^^^^^^
 
-All original code and old branches are still located in the SVN repository
-located `here <https://svn.library.emory.edu/svn/digital_masters/>`_
-
+All original code and old branches are still available
+the `SVN repository <https://svn.library.emory.edu/svn/digital_masters/>`_.
 
 Large File Upload Setup
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Setup NFS Mount::
+The large file upload requires a shared network mount point between the
+Django server and the Fedora server.  The easiest way to
+simulate that for development is to use sshfs.
+
+Setup SSHFS Mount::
 
     $ sudo apt-get install sshfs
     $ sudo addgroup USERNAME fusef
