@@ -319,6 +319,14 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.6.2 - MacMillan Law Library
+-------------------------------------
+
+* Run syncrepo to load the new top-level collection object to Fedora::
+
+    $ python manage.py migrate
+
+
 Release 2.5
 -----------
 
@@ -386,11 +394,14 @@ Release 2.3 - Fedora 3.8 migration support
 
 * Update the database for configurable downtime::
 
-    $ manage.py syncrepo
+    $ python manage.py syncdb
 
 Release 2.2.1 - Health Sciences Library
 ---------------------------------------
-* run syncrepo
+
+* Run syncrepo to load the new top-level collection object to Fedora::
+
+    $ python manage.py migrate
 
 Release 2.2 - Ye ol DM Video
 ----------------------------
