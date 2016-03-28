@@ -3,6 +3,11 @@
 CHANGELOG
 =========
 
+Release 2.6.2 - MacMillan Law Library
+-------------------------------------
+
+* Adds Law Libary as a top-level collection
+
 Release 2.6.1
 -------------
 
@@ -583,6 +588,8 @@ Release 1.0.2
 -------------
 
 * Update to Fedora XACML policy for production environment.
+
+.. _Release1-0:
 
 Release 1.0 - Min Items, part IV
 ---------------------------------
