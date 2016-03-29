@@ -1,6 +1,9 @@
 Notes for Developers
 --------------------
 
+See also :ref:`APP_MANAGEMENT` for documentation on application
+management tasks that occasionally need to be handled by developers.
+
 Session configuration
 ^^^^^^^^^^^^^^^^^^^^^
 
