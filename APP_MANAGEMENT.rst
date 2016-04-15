@@ -48,6 +48,19 @@ they can also be regenerated from the command line::
 
    $ python manage.py generate_access_copy <pid> <pid>
 
+If you need to do a larger batch, or queue access copy generation for objects
+based on a Fedora query or Solr search, you can also do that in the
+python console like this::
+
+  from eulfedora.server import Repository
+  from keep.audio.models import AudioObject
+  from keep.audio.tasks import queue_access_copy
+
+  obj = repo.get_object(result['pid'], type=AudioObject)
+  queue_access_copy(obj)
+
+
+
 
 Creating a new top-level collection AKA Archive AKA Repository
 ==============================================================
