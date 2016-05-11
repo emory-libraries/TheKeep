@@ -220,7 +220,7 @@ man_pages = [
 # configuration for intersphinx: refer to the Python standard library, eul libs, django
 intersphinx_mapping = {
     'http://docs.python.org/': None,
-    'http://waterhouse.library.emory.edu:8080/hudson/job/eullocal/javadoc/': None,
+    'https://wilson.library.emory.edu/jenkins/job/eullocal/javadoc/': None,
     'http://docs.djangoproject.com/en/1.2/ref/': 'http://docs.djangoproject.com/en/dev/_objects/',
     'http://eulcommon.readthedocs.org/en/latest/': None,
     'http://eulexistdb.readthedocs.org/en/latest/': None,
