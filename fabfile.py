@@ -40,7 +40,7 @@ env.remote_acct = 'keep'
 env.url_prefix = None
 env.remote_proxy = None
 # debian/ubuntu packages expected to be installed
-env.system_packages = ['imagemagick']
+env.system_packages = ['ImageMagick']
 
 
 ##
