@@ -6,7 +6,7 @@ CHANGELOG
 Release 2.6.3 - Video Permissions
 ---------------------------------
 
-* Fixing banner
+* Removed middleware for the banner to check if the current browser is supported
 * Video Permissions bug
 * Audio timeout error
 
