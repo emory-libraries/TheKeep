@@ -8,7 +8,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # NOTE: user media unused in this site,
 # so MEDIA_ROOT and MEDIA_URL are not set
-
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
@@ -76,7 +75,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'keep.accounts.middleware.ResearcherAccessMiddleware',
-    'keep.search.middleware.UnsupportedBrowserMiddleware',
 )
 
 ROOT_URLCONF = 'keep.urls'

@@ -40,7 +40,7 @@ env.remote_acct = 'keep'
 env.url_prefix = None
 env.remote_proxy = None
 # debian/ubuntu packages expected to be installed
-env.system_packages = ['imagemagick']
+env.system_packages = ['ImageMagick']
 
 
 ##
@@ -186,7 +186,7 @@ def check_sysdeps():
     with settings(hide('stdout'),       # suppress full dpkg output
                   warn_only=True):      # don't abort on dpkg not-installed error code
         for pkg in env.system_packages:
-            if 'ii' not in run('dpkg -l %s' % pkg):
+            if 'ImageMagick' not in run('yum list installed | grep %s' % pkg):
                 not_installed.append(pkg)
 
     if not_installed:
