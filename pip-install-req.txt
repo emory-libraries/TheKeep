@@ -2,7 +2,7 @@ Django>=1.8,<1.9
 # dev eullocal to migrate away from local python library for emory ldap
 ndg-httpsclient
 pyOpenSSL
-https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.22.0-dev.tar.gz
+https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.22.0.dev0.tar.gz
 eulxml>=0.21.0
 # pinning to an installable version (required by rdflib, which is required by eulfedora)
 SPARQLWrapper==1.7.2
