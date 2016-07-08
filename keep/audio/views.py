@@ -30,9 +30,6 @@ def view(request, pid):
     '''
     repo = Repository(request=request)
     obj = repo.get_object(pid, type=AudioObject)
-    print request.user.has_perm('audio.view_audio')
-    print request.user.has_perm('audio.view_researcher_audio')
-    print bool(obj.researcher_access)
     # user either needs view audio permissions OR
     # if they can view researcher audio and object must be researcher-accessible
     if not request.user.has_perm('audio.view_audio') and \
