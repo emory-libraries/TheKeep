@@ -1,6 +1,8 @@
 from django.conf import settings
 
 from keep.accounts.models import ResearcherIP
+from django.views.decorators.debug import sensitive_variables
+from django.core import context_processors
 
 def researcher_no_analytics(request):
     # if researcher no analytics is set, check if this is a configured

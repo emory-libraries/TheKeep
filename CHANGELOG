@@ -7,8 +7,9 @@ Release 2.6.3 - Video Permissions
 ---------------------------------
 
 * Removed middleware for the banner to check if the current browser is supported
-* Video Permissions bug
+* Video Permissions bug (revision video switched to videoperms 07/08/2016)
 * Audio timeout error
+* Check content type when accessing Audio
 
 Release 2.6.2 - MacMillan Law Library
 -------------------------------------
