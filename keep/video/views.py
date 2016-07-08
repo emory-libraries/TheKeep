@@ -14,7 +14,7 @@ from keep.common.fedora import history_view
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulcommon.djangoextras.auth import permission_required_with_403
 
-@permission_required_with_403("video.change_videoperms")
+@permission_required_with_403("videoperms.change_videoperms")
 def edit(request, pid):
     '''Edit the metadata for a single :class:`~keep.video.models.Video`.'''
     repo = Repository(request=request)
@@ -94,9 +94,11 @@ def view(request, pid):
     obj = repo.get_object(pid=pid, type=Video)
     # # user either needs view video permissions OR
     # # if they can view researcher audio and object must be researcher-accessible
-    if not request.user.has_perm('video.view_video') and \
-       not (request.user.has_perm('video.view_researcher_video') and \
-       bool(obj.researcher_access)):
+    viewable =  request.user.has_perm('videoperms.view_video') or \
+       (request.user.has_perm('videoperms.view_researcher_video') and \
+       bool(obj.researcher_access))
+
+    if not viewable:
         return prompt_login_or_403(request)
 
     try:
@@ -109,19 +111,19 @@ def view(request, pid):
     return render(request, 'video/view.html', {"resource": obj})
 
 
-@permission_required_with_403("video.view_video")
+@permission_required_with_403("videoperms.view_video")
 def history(request, pid):
     'Display human-readable audit trail information.'
     return history_view(request, pid, type=Video, template_name='video/history.html')
 
-@permission_required_with_403("video.view_video")
+@permission_required_with_403("videoperms.view_video")
 def view_audit_trail(request, pid):
     'Access XML audit trail'
     # initialize local repo with logged-in user credentials & call eulfedora view
     # type shouldn't matter for audit trail
     return raw_audit_trail(request, pid, repo=Repository(request=request))
 
-@permission_required_with_403("video.view_video")
+@permission_required_with_403("videoperms.view_video")
 def view_datastream(request, pid, dsid):
     'Access raw object datastreams'
     # initialize local repo with logged-in user credentials & call generic view
@@ -168,8 +170,8 @@ def download_video(request, pid, type, extension=None):
     # if http range is present in request, check for play permissions
     # (also requires that request is for access copy, not original)
     if 'HTTP_RANGE' in request.META:
-        if not (request.user.has_perm('video.play_video') and type == 'access') and \
-               not (request.user.has_perm('video.play_researcher_video') and \
+        if not (request.user.has_perm('videoperms.play_video') and type == 'access') and \
+               not (request.user.has_perm('videoperms.play_researcher_video') and \
                     bool(obj.researcher_access) and type == 'access'):
             return prompt_login_or_403(request)
 
@@ -177,8 +179,8 @@ def download_video(request, pid, type, extension=None):
     else:
         # user either needs download video permissions OR
         # if they can download researcher audio and object must be researcher-accessible
-        if not request.user.has_perm('video.download_video') and \
-               not (request.user.has_perm('video.download_researcher_video') and \
+        if not request.user.has_perm('videoperms.download_video') and \
+               not (request.user.has_perm('videoperms.download_researcher_video') and \
                     bool(obj.researcher_access)):
             return prompt_login_or_403(request)
 
