@@ -179,6 +179,9 @@ except ImportError:
         'localsettings.py and setting appropriately for your environment.'
     pass
 
+# use eulfedora filter to keep fedora credentials from showing up
+# in debug stack traces and emails when an exception occurs in an api request
+DEFAULT_EXCEPTION_REPORTER_FILTER = 'eulfedora.util.SafeExceptionReporterFilter'
 
 # explicitly assign a differently-named default queue to prevent
 # collisions with other projects using celery (allow celery to create queue for us)
