@@ -10,6 +10,11 @@ Release 2.6.4
   to use `videoperms` instead of video)
 * bugfix: Audio view now checks content models and will raise a 404
   for non audio, rather than incorrectly displaying video content
+* Require latest eulfedora (1.6) for debug filter and retries
+* Enable new eulfedora debug filter to keep fedora auth credentials from
+  being displayed in stack traces and debug emails
+* Enable django-debug-toolbar for development with eulfedora panel
+* Regenerate accounts migrations and remove eullocal.emory_ldap dependency
 
 Release 2.6.3 - Video Permissions
 ---------------------------------
