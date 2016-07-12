@@ -98,9 +98,6 @@ INSTALLED_APPS = [
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
-    # emory_ldap included to migrate back to auth.User;
-    # should be removed in the next version
-    'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
     'eultheme',
     'downtime',
