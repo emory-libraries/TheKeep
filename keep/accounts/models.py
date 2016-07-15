@@ -31,9 +31,12 @@ class AnonymousResearcher(AnonymousUser):
         return perms
 
     def has_perm(self, perm):
-        content_type, codename = perm.split('.')
-        for p in self.permissions:
-            if str(p.content_type).replace( ' ', '') == str(content_type) and p.codename == codename:
+        app_label, codename = perm.split('.')
+        for perm in self.permissions:
+            # django permission codes are tested on the *app* label
+            # and not the model name
+            if perm.content_type.app_label == app_label and \
+              perm.codename == codename:
                 return True
         return False
 

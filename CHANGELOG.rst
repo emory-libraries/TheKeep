@@ -3,13 +3,29 @@
 CHANGELOG
 =========
 
+Release 2.6.4
+-------------
+
+* bugfix: researcher access permissions to view video revisited (updated
+  to use `videoperms` instead of video)
+* bugfix: Audio view now checks content models and will raise a 404
+  for non audio, rather than incorrectly displaying video content
+* Require latest eulfedora (1.6) for debug filter and retries
+* Enable new eulfedora debug filter to keep fedora auth credentials from
+  being displayed in stack traces and debug emails
+* Enable django-debug-toolbar for development with eulfedora panel
+* Regenerate accounts migrations and remove eullocal.emory_ldap dependency
+
 Release 2.6.3 - Video Permissions
 ---------------------------------
 
-* Removed middleware for the banner to check if the current browser is supported
-* Video Permissions bug (revision video switched to videoperms 07/08/2016)
+* Browser warning removed (removed UnsupportedBrowserMiddleware middleware,
+  which check for supported browsers and displayed a banner; browser
+  support is no longer an issue)
+* Video Permissions bug
 * Audio timeout error
-* Check content type when accessing Audio
+* Improved documentation for adding top-level collections
+* Documentation for queuing batch-conversion of audio
 
 Release 2.6.2 - MacMillan Law Library
 -------------------------------------

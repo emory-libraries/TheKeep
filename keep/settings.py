@@ -25,8 +25,6 @@ STATICFILES_DIRS = [
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(BASE_DIR, '..', 'sitemedia'),
 ]
-if 'VIRTUAL_ENV' in os.environ:
-    STATICFILES_DIRS.append(os.path.join(os.environ['VIRTUAL_ENV'], 'themes', 'genlib'))
 
 
 # List of finder classes that know how to find static files in
@@ -100,9 +98,6 @@ INSTALLED_APPS = [
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
-    # emory_ldap included to migrate back to auth.User;
-    # should be removed in the next version
-    'eullocal.django.emory_ldap',
     'eullocal.django.taskresult',
     'eultheme',
     'downtime',
@@ -179,6 +174,9 @@ except ImportError:
         'localsettings.py and setting appropriately for your environment.'
     pass
 
+# use eulfedora filter to keep fedora credentials from showing up
+# in debug stack traces and emails when an exception occurs in an api request
+DEFAULT_EXCEPTION_REPORTER_FILTER = 'eulfedora.util.SafeExceptionReporterFilter'
 
 # explicitly assign a differently-named default queue to prevent
 # collisions with other projects using celery (allow celery to create queue for us)
@@ -209,5 +207,33 @@ if django_nose is not None:
         'keep.testplugins.KeepTestSettings',
     ]
     NOSE_ARGS = ['--with-existdbsetup', '--with-eulfedorasetup',
-        '--with-keeptestsettings']
+                 '--with-keeptestsettings']
 
+# enable django-debug-toolbar when available & in debug/dev modes
+if DEBUG or DEV_ENV:
+    try:
+        import debug_toolbar
+        # import to ensure debug panel is available before configuring
+        # (not yet in released version of eulfedora)
+        # from eulfedora import debug_panel
+        INSTALLED_APPS.append('debug_toolbar')
+    except ImportError:
+        pass
+
+# configure: default toolbars + existdb query panel
+DEBUG_TOOLBAR_PANELS = [
+    'debug_toolbar.panels.versions.VersionsPanel',
+    'debug_toolbar.panels.timer.TimerPanel',
+    'debug_toolbar.panels.settings.SettingsPanel',
+    'debug_toolbar.panels.headers.HeadersPanel',
+    'debug_toolbar.panels.request.RequestPanel',
+    'eulfedora.debug_panel.FedoraPanel',
+    'debug_toolbar.panels.sql.SQLPanel',
+    'debug_toolbar.panels.staticfiles.StaticFilesPanel',
+    'debug_toolbar.panels.templates.TemplatesPanel',
+    'debug_toolbar.panels.cache.CachePanel',
+    'debug_toolbar.panels.signals.SignalsPanel',
+    'debug_toolbar.panels.logging.LoggingPanel',
+    'debug_toolbar.panels.redirects.RedirectsPanel',
+    # 'debug_toolbar.panels.profiling.ProfilingPanel',
+]

@@ -84,7 +84,7 @@ when a new one is needed it will need to be created manually.
   4. Add the new pid to the **PID_ALIASES** in :mod:`keep.settings`.
   5. Ingest the new object using ``python manage.py syncrepo`` or the
      Fedora Admin interface.  The empty collection should now be accessible
-     at the colletions url you created based on the short label.  (It won't show
+     at the collections url you created based on the short label.  (It won't show
      up in the `Collections by Library <https://keep.library.emory.edu/collections/>`_
      listing until it includes content.)  When you deploy a new release including
      a fixture, you should also document this step in the deploy notes.
