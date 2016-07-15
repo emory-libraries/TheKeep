@@ -132,6 +132,8 @@ def prep_source():
 
     # disk image fixture files are somewhat large and don't need to be included in deploy
     local('rm build/%(build_dir)s/keep/file/fixtures/*.a[df][1f]' % env)
+    # video text fixture includes an entire bag with avi and mp4
+    local('rm -rf build/%(build_dir)s/keep/video/fixtures/*' % env)
 
     # local settings handled remotely
 
@@ -202,8 +204,13 @@ def setup_virtualenv(python=None):
     with cd('%(remote_path)s/%(build_dir)s' % env):
         sudo('virtualenv --no-site-packages --prompt="[%(build_dir)s]" env ' % env,
              user=env.remote_acct)
+
         # activate the environment and install required packages
         with prefix('source env/bin/activate'):
+            sudo('pip install --upgrade pip', user=env.remote_acct)
+
+            # explicitly set wilson as trusted?
+            # pip_cmd = 'pip install -r pip-install-req.txt --trusted-host wilson.library.emory.edu'
             pip_cmd = 'pip install -r pip-install-req.txt'
             # use http proxy for pip installation if one is set
             if env.remote_proxy:

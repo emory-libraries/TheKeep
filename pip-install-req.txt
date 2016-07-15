@@ -1,12 +1,10 @@
 Django>=1.8,<1.9
 # dev eullocal to migrate away from local python library for emory ldap
-ndg-httpsclient
-pyOpenSSL
 https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.22.0.dev0.tar.gz
 eulxml>=0.21.0
 # pinning to an installable version (required by rdflib, which is required by eulfedora)
 SPARQLWrapper==1.7.2
-eulfedora>=1.5.1
+eulfedora>=1.6
 eulexistdb>=0.17.0
 eulcommon>=0.17.0
 https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.2.tar.gz
@@ -39,3 +37,7 @@ django-widget-tweaks
 pymediainfo<2.0
 django-downtime
 django_auth_ldap
+# packasges to help with ssl issues
+ndg-httpsclient
+pyOpenSSL
+httplib2.ca-certs-locater
