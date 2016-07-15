@@ -132,6 +132,8 @@ def prep_source():
 
     # disk image fixture files are somewhat large and don't need to be included in deploy
     local('rm build/%(build_dir)s/keep/file/fixtures/*.a[df][1f]' % env)
+    # video text fixture includes an entire bag with avi and mp4
+    local('rm build/%(build_dir)s/keep/video/fixtures/*')
 
     # local settings handled remotely
 
