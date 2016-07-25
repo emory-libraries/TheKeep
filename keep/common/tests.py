@@ -75,7 +75,10 @@ class TestSolrInterface(TestCase):
         settings.SOLR_CA_CERT_PATH = '/some/path/to/certs'
         solr_interface()
         # httplib should be initialized with ca_certs option
-        mockhttplib.Http.assert_called_with(ca_certs=settings.SOLR_CA_CERT_PATH)
+        mockhttplib.Http.assert_called_with(
+            ca_certs=settings.SOLR_CA_CERT_PATH
+            # proxy_info=mockhttplib.ProxyInfo.return_value
+        )
 
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
@@ -86,14 +89,17 @@ class TestSolrInterface(TestCase):
         # proxy info should be configured & passed to httplib2
         mockhttplib.ProxyInfo.assert_called_with(proxy_type=mockhttplib.socks.PROXY_TYPE_HTTP_NO_TUNNEL,
                                               proxy_host='localhost', proxy_port=3128)
-        mockhttplib.Http.assert_called_with(proxy_info=mockhttplib.ProxyInfo.return_value)
+        mockhttplib.Http.assert_called_with(
+            proxy_info=mockhttplib.ProxyInfo.return_value,
+            ca_certs=settings.SOLR_CA_CERT_PATH)
 
         # when solr url is https, no proxy should be set
         mockhttplib.reset_mock()
         settings.SOLR_SERVER_URL = 'https://test.solr/'
         solr_interface()
         mockhttplib.ProxyInfo.assert_not_called()
-        mockhttplib.Http.assert_called_with() # no args
+        # no args except default cert path
+        mockhttplib.Http.assert_called_with(ca_certs=settings.SOLR_CA_CERT_PATH)
 
 
 
