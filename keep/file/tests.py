@@ -438,7 +438,7 @@ class FileViewsTest(KeepTestCase):
         expected = 200
         self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
                              % (expected, code, ingest_url))
-        self.assert_('form' not in response.context,
+        self.assert_('<form' not in response.context,
             'form should not be set in response context when no files are available for ingest')
         self.assertTrue(response.context['no_files'])
         self.assertContains(response, '<p>No files are currently available for ingest.</p>',
@@ -538,7 +538,7 @@ class FileViewsTest(KeepTestCase):
             'BagIt should be removed on successful ingest')
 
         # form should not redisplay if no more files are available for ingest
-        self.assert_('form' not in response.context,
+        self.assert_('<form' not in response.context,
             'form should not redisplay after ingest if no files are available for ingest')
         self.assertTrue(response.context['no_files'])
         self.assertContains(response, '<p>No more files are currently available for ingest.</p>',
