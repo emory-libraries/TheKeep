@@ -15,6 +15,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
+from django.views.decorators.http import require_http_methods
 
 from eulcommon.djangoextras.auth import permission_required_with_403, \
     permission_required_with_ajax, user_passes_test_with_403
@@ -22,11 +23,13 @@ from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 from eulfedora.views import raw_datastream, raw_audit_trail
 from eulcommon.searchutil import search_terms
 from eulfedora.util import RequestFailed
+from eulexistdb.exceptions import DoesNotExist, ReturnedMultiple
 
 from keep.accounts.utils import filter_by_perms, prompt_login_or_403
 from keep.collection.forms import CollectionForm, CollectionSearch, \
   SimpleCollectionEditForm, FindCollection
-from keep.collection.models import CollectionObject, SimpleCollection
+from keep.collection.models import CollectionObject, SimpleCollection, \
+    FindingAid
 from keep.collection.tasks import queue_batch_status_update
 from keep.common.fedora import Repository, history_view
 from keep.common.rdfns import REPO
@@ -140,6 +143,59 @@ def playlist(request, pid):
         playlist.append(data)
 
     return HttpResponse(json.dumps(playlist), content_type='application/json')
+
+
+@permission_required_with_403("collection.add_collection")
+@require_http_methods(['POST'])
+def create_from_findingaid(request):
+    form = FindCollection(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Form is not valid; please try again.')
+    else:
+        data = form.cleaned_data
+        q = CollectionObject.item_collection_query()
+        # submitted value is pid alias; lookup pid for solr query
+        archive_id = settings.PID_ALIASES[data['archive']]
+        q = q.query(archive_id=archive_id,
+                    source_id=data['collection'])
+        # if collection is found, redirect to collection view with message
+        if q.count():
+            messages.info(request, 'Found %d collection%s for %s %s.' %
+                          (q.count(), 's' if q.count() != 1 else '',
+                           data['archive'].upper(), data['collection']))
+            return HttpResponseSeeOtherRedirect(reverse('collection:view',
+                kwargs={'pid': q[0]['pid']}))
+
+        else:
+            # otherwise, create the new record and redirect to new
+            # collection edit page
+            repo = Repository(request=request)
+            coll_id = data['collection']
+            coll = None
+            try:
+                archive = repo.get_object(archive_id, type=CollectionObject)
+                fa = FindingAid.find_by_unitid(unicode(coll_id),
+                                               archive.mods.content.title)
+                coll = fa.generate_collection()
+                coll.collection = archive
+                coll.save()
+                messages.info(request, 'Added %s for collection %s: %s'
+                              % (coll, coll_id, coll.mods.content.title))
+
+                return HttpResponseSeeOtherRedirect(
+                    reverse('collection:edit', kwargs={'pid': coll.pid}))
+
+            except DoesNotExist:
+                messages.error(request, 'No EAD found for id %s in %s' %
+                               (coll_id, archive_id))
+            except ReturnedMultiple:
+                messages.error(request, 'Multiple EADs found for %s in %s' %
+                               (coll_id, archive_id))
+            except RequestFailed as err:
+                print err
+                messages.error(request, 'Failed to save new collection')
+
+    return HttpResponseSeeOtherRedirect(reverse('repo-admin:dashboard'))
 
 
 # NOTE: permission should actually be add or change depending on pid...

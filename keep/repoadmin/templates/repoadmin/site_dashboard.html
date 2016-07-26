@@ -4,6 +4,14 @@
 {% block content-title %}Welcome to the Keep.{% endblock %}
 
 {% block content-body %}
+{% if perms.collection.add_collection %}
+<div class="pull-right">
+	<p>Create a new collection from a finding aid</p>
+	{% url 'collection:new-from-findingaid' as new_coll_from_findingaid %}
+	{% include 'collection/snippets/find_collection_form.html' with action_url=new_coll_from_findingaid form_method="POST" %}
+</div>
+{% endif %}
+
 <p>Add content:
     {% if perms.file.add_disk_image or perms.audio.add_audio %}
         <a href="{% url 'file:upload' %}">upload a file</a>
