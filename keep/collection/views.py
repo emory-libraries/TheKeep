@@ -186,11 +186,11 @@ def create_from_findingaid(request):
                     reverse('collection:edit', kwargs={'pid': coll.pid}))
 
             except DoesNotExist:
-                messages.error(request, 'No EAD found for id %s in %s' %
-                               (coll_id, archive_id))
+                messages.error(request, 'No EAD found for %s in %s' %
+                               (coll_id, data['archive'].upper()))
             except ReturnedMultiple:
                 messages.error(request, 'Multiple EADs found for %s in %s' %
-                               (coll_id, archive_id))
+                               (coll_id, data['archive'].upper()))
             except RequestFailed as err:
                 print err
                 messages.error(request, 'Failed to save new collection')
