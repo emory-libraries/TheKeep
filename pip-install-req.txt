@@ -1,13 +1,13 @@
 Django>=1.8,<1.9
 # dev eullocal to migrate away from local python library for emory ldap
-https://wilson.library.emory.edu/jenkins/job/eullocal/lastSuccessfulBuild/artifact/eullocal/dist/eullocal-0.22.0.dev0.tar.gz
+git+ssh://git@github.com/emory-libraries/eullocal.git
 eulxml>=1.1
 # pinning to an installable version (required by rdflib, which is required by eulfedora)
 SPARQLWrapper==1.7.2
 eulfedora>=1.6
 eulexistdb>=0.20
 eulcommon>=0.17.0
-https://wilson.library.emory.edu/jenkins/job/pidman-rest-client_1.1.x/lastSuccessfulBuild/artifact/pidmanclient/dist/pidservices-1.1.2.tar.gz
+git+ssh://git@github.com/emory-libraries/pidmanclient.git
 python-magic
 pycrypto
 celery
