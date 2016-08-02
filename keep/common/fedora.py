@@ -160,7 +160,6 @@ class ArkPidDigitalObject(models.DigitalObject):
     def __init__(self, *args, **kwargs):
         super(DigitalObject, self).__init__(*args, **kwargs)
         self._default_target_data = None
-        self._pidman_client = None
 
     def _init_as_new_object(self):
         super(DigitalObject, self)._init_as_new_object()
@@ -303,18 +302,6 @@ class ArkPidDigitalObject(models.DigitalObject):
         data['original_pid'] = self.pid
         return data
 
-    @property
-    # create one reusable DjangoPidmanRestClient object that can be used
-    # to interact with pid manager
-    def pidman_client(self):
-        # create a pid manager rest client
-        if self._pidman_client is None:
-            try:
-                self._pidman_client = DjangoPidmanRestClient()
-            except:
-                return "An error occurred while creating a DjangoPidmanRestClient object"
-        return self._pidman_client
-
     def save(self, logMessage=None):
         # check for duplicate content before initial ingest
         if self._create and self.content_md5 is not None:
@@ -334,7 +321,7 @@ class ArkPidDigitalObject(models.DigitalObject):
 
         # check if the label (title/identifier) of the object has been changed
         # if changed, apply the change to the object in pidman
-        pidman_label = self.pidman_client.get_ark(self.noid)['name']
+        pidman_label = pidman.get_ark(self.noid)['name']
         if pidman_label != self.label.decode('utf-8'): # compare unicode against unicode
             self.update_label(self.noid, self.label)
 
@@ -345,7 +332,7 @@ class ArkPidDigitalObject(models.DigitalObject):
     # object_label - the label (title/identifier) that will be applied
     #                to the object in pidman
     def update_label(self, object_pid, object_label):
-        self.pidman_client.update_ark(noid=object_pid, name=object_label)
+        pidman.update_ark(noid=object_pid, name=object_label)
 
     # map datastream IDs to human-readable names for inherited history_events method
     # (common datastream IDs only here)
