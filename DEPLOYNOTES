@@ -319,6 +319,18 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.7
+-----------
+
+* The Keep has been updated for eXist 2.2 compatilibity; the **EXIST_**
+  configurations in ``localsettings.py`` should be updated to match
+  settings for the current findingaids database.
+
+* The MARBL collection label and MODS title should be updated to reflect
+  the full title, in order to match the subarea in the findingaids:
+  "Stuart A. Rose Manuscript, Archives, and Rare Book Library"
+
+
 Release 2.6.2 - MacMillan Law Library
 -------------------------------------
 
