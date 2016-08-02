@@ -16,7 +16,7 @@
    <p><a href="{% url 'admin:taskresult_taskresult_changelist' %}">View all task results</a></p>
    <ul>
       {% for r in task_results %}
-        {% include 'taskresult/snippets/display_task.html' %}
+        {% include 'taskresult/snippets/display_task.html' with result=r %}
       {% empty %}
         <li>No recent tasks.</li>
       {% endfor %}

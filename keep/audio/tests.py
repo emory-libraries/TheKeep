@@ -24,7 +24,7 @@ from django.test import Client, TestCase
 
 from eulfedora.server import Repository
 from eulfedora.models import DigitalObjectSaveFailure
-from eullocal.django.taskresult.models import TaskResult
+from eulcommon.djangoextras.taskresult.models import TaskResult
 from eulfedora.util import RequestFailed, ChecksumMismatch
 from eulxml.xmlmap import load_xmlobject_from_string
 from eulxml.xmlmap import mods
