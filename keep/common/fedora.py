@@ -321,8 +321,10 @@ class ArkPidDigitalObject(models.DigitalObject):
 
         # check if the mods content title of the object has been changed
         # if changed, apply the change to the object in pidman
-        if self.mods.isModified(): # if title is changed it'd be reflected in mods
-            self.update_label(self.noid, self.mods.content.title)
+        pidman_label = self.pidman_client.get_ark(self.noid)['name']
+        if self.mods.isModified(): # if the item is changed it'd be reflected in mods
+            if self.mods.content.title != pidman_label: # when the title is different
+                self.update_label(self.noid, self.mods.content.title)
 
         return super(DigitalObject, self).save(logMessage)
 
