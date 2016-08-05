@@ -4,6 +4,8 @@ from keep.collection import views
 urlpatterns = patterns('',
     url(r'^$', views.list_archives, name='list-archives'),
     url(r'^new/$', views.edit, name='new'),
+    url(r'^new/from-findingaid/$', views.create_from_findingaid,
+        name='new-from-findingaid'),
     url(r'^search/$', views.search, name='search'),
     url(r'^suggest/$', views.collection_suggest, name='suggest'),
     url(r'^simple/$', views.simple_browse, name='simple_browse'),

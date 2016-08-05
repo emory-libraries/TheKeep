@@ -319,8 +319,12 @@ class ArkPidDigitalObject(models.DigitalObject):
 
                 raise DuplicateContent(msg, pids, pid_cmodels)
 
-        return super(DigitalObject, self).save(logMessage)
+        # check if the mods content title of the object has been changed
+        # if changed, apply the change to the object in pidman
+        if self.mods.isModified(): # if title is changed it'd be reflected in mods
+            pidman.update_ark(noid=self.noid, name=self.mods.content.title)
 
+        return super(DigitalObject, self).save(logMessage)
 
     # map datastream IDs to human-readable names for inherited history_events method
     # (common datastream IDs only here)

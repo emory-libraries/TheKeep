@@ -16,7 +16,8 @@
 
 {% endcomment %}
 
-<form class="find-coll" role="form" method="GET" action="{% url 'collection:list-archives' %}">
+<form class="find-coll" role="form" method="{% if form_method %}{{ form_method }}{% else %}GET{% endif %}" action="{% if action_url %}{{ action_url }}{% else %}{% url 'collection:list-archives' %}{% endif %}">
+{% if form_method = 'POST' %}{% csrf_token %}{% endif %}
   <div class="input-group">
     <div class="input-group-btn">
       <label class="sr-only" for="{{ find_collection.archive.id_for_label }}">{{ find_collection.archive.label }}</label>
