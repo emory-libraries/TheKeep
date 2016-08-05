@@ -238,10 +238,10 @@ class Command(BaseCommand):
         # try to configure a pidman client to get pids.
         try:
             return DjangoPidmanRestClient()
-        except:
-            # if we're in dev mode then we can fall back on the fedora default
-            # pid allocator. in non-dev, though, we really need pidman
-            if getattr(settings, 'DEV_ENV', False):
-                pidman = None
-            else:
-                raise
+        except CommandError as e:
+            error_msg = """
+            Cannot initialize DjangoPidmanRestClient.
+            Please check your configuration for more details.
+            """
+            sys.stderr.write(error_msg)
+            raise CommandError(e)
