@@ -322,7 +322,7 @@ class ArkPidDigitalObject(models.DigitalObject):
         # check if the mods content title of the object has been changed
         # if changed, apply the change to the object in pidman
         if self.mods.isModified(): # if title is changed it'd be reflected in mods
-            pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+            self.update_label(self.noid, self.mods.content.title)
 
         return super(DigitalObject, self).save(logMessage)
 
@@ -334,6 +334,14 @@ class ArkPidDigitalObject(models.DigitalObject):
         'Rights': 'rights metadata',
         'RELS-EXT': 'related objects',
     }
+
+    def update_label(self, object_pid, object_label):
+        """update an object's label (title/identifier) in pidman
+        Args:
+            object_pid (str): the pid of the object that will be updated
+            object_label (str): the label (title/identifier) that will be applied to the object in pidman
+        """
+        self.pidman_client.update_ark(noid=object_pid, name=object_label)
 
     def history_events(self):
         '''Cluster API calls documented in the
