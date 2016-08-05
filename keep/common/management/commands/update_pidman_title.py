@@ -1,7 +1,3 @@
-'''
-Manage command for updating the title of objects in the pidman with information
-from the Keep.
-'''
 import sys, os, random, time, logging, getopt
 from optparse import make_option
 from django.conf import settings
@@ -17,6 +13,10 @@ from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
 class Command(BaseCommand):
+    """Manage command for updating the title of objects in the pidman with information
+       from the Keep.
+    """
+
     greetings = """
     This manage command will help you synchronize object titles from
     the Keep to the Pid Manager. It reads object titles from Fedora and
@@ -35,13 +35,13 @@ class Command(BaseCommand):
 
     """
 
+    # dry-run option declaration
     option_list = BaseCommand.option_list + (
         make_option('--dry-run',
             '-n',
             action='store_true',
             help='Dry run the command to get an output but with no changes applied'),
     )
-    help = 'Dry run the command to get an output but with no changes applied'
 
     def handle(self, *args, **kwargs):
         # disable info messages in the console
@@ -62,10 +62,10 @@ class Command(BaseCommand):
         # dry run notice
         if kwargs.get('dry_run', True):
             dry_run_notice = """
-            Currently you are running the script in dry-run mode.
-            It means that no changes will be applied to any of the
-            repositories except for that the script will still
-            generate statistics about objects in your repositories.
+            [DRY-RUN ACTIVATED] Currently you are running the script
+            in dry-run mode. It means that no changes will be applied
+            to any of the repositories except for that the script will
+            still generate statistics about objects in your repositories.
 
             """
             sys.stdout.write(dry_run_notice)
@@ -135,6 +135,14 @@ class Command(BaseCommand):
         self.update_progress(mailbox_objects, "Mailbox", self.pidman)
 
     def update_progress(self, objects, task_name, pidman):
+        """Update the objects in Pidman and reports progress back to the user.
+
+        Args:
+           objects (array): Array of objects retreived from Fedora
+           task_name (str): Name of each task (object collection)
+           pidman (DjangoPidmanRestClient): PidmanRestClient that can be used
+            to interact with Pidman
+        """
         # update progress on the screen
         sys.stdout.write("Starting %s tasks \n" % task_name)
         sys.stdout.flush()
@@ -220,6 +228,13 @@ class Command(BaseCommand):
         summary_log.close()
 
     def get_pidman(self):
+        """Initialize a new Pidman client using the DjangoPidmanRestClient
+        wrapper. The credentials are pulled from the application settings.
+
+        Returns:
+            DjangoPidmanRestClient
+
+        """
         # try to configure a pidman client to get pids.
         try:
             return DjangoPidmanRestClient()
