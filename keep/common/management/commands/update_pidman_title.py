@@ -137,15 +137,15 @@ class Command(BaseCommand):
         self.stdout.write("Object collection finished.")
 
         # update objects in each content model
-        self.update_progress(audio_objects, "AudioObject", self.pidman)
-        self.update_progress(video_objects, "VideoObject", self.pidman)
-        self.update_progress(arrangement_objects, "ArrangementObject", self.pidman)
-        self.update_progress(diskimage_objects, "DiskImage", self.pidman)
-        self.update_progress(simple_collection_objects, "SimpleCollection", self.pidman)
-        self.update_progress(collection_objects, "CollectionObject", self.pidman)
-        self.update_progress(mailbox_objects, "Mailbox", self.pidman)
+        self.update_progress(audio_objects, "AudioObject")
+        self.update_progress(video_objects, "VideoObject")
+        self.update_progress(arrangement_objects, "ArrangementObject")
+        self.update_progress(diskimage_objects, "DiskImage")
+        self.update_progress(simple_collection_objects, "SimpleCollection")
+        self.update_progress(collection_objects, "CollectionObject")
+        self.update_progress(mailbox_objects, "Mailbox")
 
-    def update_progress(self, objects, task_name, pidman):
+    def update_progress(self, objects, task_name):
         """Update the objects in Pidman and reports progress back to the user.
 
         Args:
@@ -177,7 +177,7 @@ class Command(BaseCommand):
         # iterate through all items in collection
         for index, item in enumerate(objects):
             try:
-                pidman_label = pidman.get_ark(item.noid)['name']
+                pidman_label = self.pidman.get_ark(item.noid)['name']
                 # TODO: to be safe the actual code to update is not included here
                 # will verify the environments before we accidentally start
                 # a detrimental process
