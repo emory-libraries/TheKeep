@@ -11,6 +11,8 @@ from eulcm.models import boda
 from keep.collection.models import SimpleCollection
 from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
+from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
+import signal
 
 class Command(BaseCommand):
     """Manage command for updating the title of objects in the pidman with information
@@ -46,6 +48,9 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         # disable info messages in the console
         logging.getLogger('requests').setLevel(logging.CRITICAL)
+
+        # initialize an interruption flag
+        self.interrupted = False
 
         # initialize a Pidman client object
         self.pidman = self.get_pidman()
@@ -96,6 +101,9 @@ class Command(BaseCommand):
             os.makedirs(self.output_path)
         if not os.path.exists(self.error_path):
             os.makedirs(self.error_path)
+
+        # create log files
+        self.summary_log = open(("%s/%s" % (self.output_path, "summary.csv")), "w+")
 
         # start the object collection process
         self.stdout.write("Started collecting objects from Fedora...")
@@ -149,14 +157,18 @@ class Command(BaseCommand):
 
         # initialize counters
         total_count = len(objects)
-        fail_count = 0
         change_count = 0
         nochange_count = 0
 
-        # create log files
-        change_log = open(("%s/%s" % (self.output_path, "change.csv")), "w+")
-        nochange_log = open(("%s/%s" % (self.output_path, "nochange.csv")), "w+")
-        summary_log = open(("%s/%s" % (self.output_path, "summary.log")), "w+")
+        # bind a handler for interrupt signal
+        signal.signal(signal.SIGINT, self.interrupt_handler)
+
+        # initialize a progress bar following the Readux example
+        pbar = ProgressBar(widgets=[Percentage(),
+            ' (', Counter(), ')',
+            Bar(),
+            ETA()],
+            maxval=total_count).start()
 
         # iterate through all items in collection
         for index, item in enumerate(objects):
@@ -174,9 +186,10 @@ class Command(BaseCommand):
                 if (pidman_label != item.label):
                     change_count += 1
                     # change_log.write("[TIME]: %s, [PID]: %s, [FEDORA_LABEL]: %s, [PIDMAN_LABEL]: %s \n" % (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), item.pid, item.label, pidman_label) )
-                    change_log.write("%s, %s, %s, %s, %s\n" % \
+                    self.summary_log.write("%s, %s, %s, %s, %s, %s\n" % \
                         (time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
+                        "change-needed", \
                         task_name, \
                         item.pid, \
                         item.label, \
@@ -185,28 +198,17 @@ class Command(BaseCommand):
                 else:
                     nochange_count += 1
                     # nochange_log.write("[TIME]: %s, [PID]: %s, [FEDORA_LABEL]: %s, [PIDMAN_LABEL]: %s \n" % (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), item.pid, item.label, pidman_label) )
-                    nochange_log.write("%s, %s, %s, %s, %s\n" % \
+                    self.summary_log.write("%s, %s, %s, %s, %s, %s\n" % \
                         (time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
+                        "no-change-needed", \
                         task_name, \
                         item.pid, \
                         item.label, \
                         pidman_label))
 
-                # #TODO: remove this: write in the success log
-                # success_log.write("[TIME]: %s, [PID]: %s, [FEDORA_LABEL]: %s, [PIDMAN_LABEL]: %s \n" % (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), item.pid, item.label, pidman_label) )
-                # success_count += 1
-
-                # update progress on screen
-                msg = "Object %i of %i for %s" % (index, len(objects)-1, task_name)
-                sys.stdout.write(msg + chr(8) * len(msg))
-                sys.stdout.flush()
-                time.sleep(0.1)
-
             # when any errors (exceptions) occur
             except Exception, e:
-                fail_count += 1
-
                 # log the failure in a file
                 error_file_path = "%s/%s.log" % (self.error_path, item.noid)
                 error_log = open(error_file_path, 'w+')
@@ -217,15 +219,21 @@ class Command(BaseCommand):
                     str(e)))
                 error_log.close()
 
-        # update progress to "DONE" when all items are iterated through
-        sys.stdout.write("DONE" + " "*len(msg)+"\n")
-        sys.stdout.flush()
+            # update progress
+            pbar.update(change_count + nochange_count)
+
+            # break if anything goes wrong
+            if self.interrupted:
+                break
+
+        # update finish when all tasks are completed
+        if not self.interrupted:
+            pbar.finish()
 
         # write statistics
-        summary_log.write("Total objects: %i \n" % total_count)
-        summary_log.write("Failed objects: %i \n" % fail_count)
-        summary_log.write("No change: %i | Change required: %i\n" % (nochange_count, change_count))
-        summary_log.close()
+        self.summary_log.write("Total objects: %i \n" % total_count)
+        self.summary_log.write("No change: %i | Change required: %i\n" % (nochange_count, change_count))
+        self.summary_log.close()
 
     def get_pidman(self):
         """Initialize a new Pidman client using the DjangoPidmanRestClient
@@ -245,3 +253,13 @@ class Command(BaseCommand):
             """
             sys.stderr.write(error_msg)
             raise CommandError(e)
+
+    def interrupt_handler(self, signum, frame):
+        '''Gracefully handle a SIGINT. Stop and report what was done.
+            Originally from Readux
+        '''
+        if signum == signal.SIGINT:
+            # restore default signal handler so a second SIGINT can be used to quit
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            # set interrupt flag so main loop knows to quit
+            self.interrupted = True
