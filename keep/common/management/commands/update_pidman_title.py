@@ -1,4 +1,5 @@
-import sys, os, random, time, logging, getopt
+import sys, os, random, time, logging, getopt, signal, unicodecsv
+from io import BytesIO
 from optparse import make_option
 from django.conf import settings
 from django.core.management.base import BaseCommand
@@ -12,7 +13,7 @@ from keep.collection.models import SimpleCollection
 from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
-import signal
+
 
 class Command(BaseCommand):
     """Manage command for updating the title of objects in the pidman with information
@@ -103,7 +104,9 @@ class Command(BaseCommand):
             os.makedirs(self.error_path)
 
         # create log files
-        self.summary_log = open(("%s/%s" % (self.output_path, "summary.csv")), "w+")
+        summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
+        self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
+        self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', 'Title in Fedora', 'Title in Pidman'))
 
         # start the object collection process
         self.stdout.write("Started collecting objects from Fedora...")
@@ -186,9 +189,7 @@ class Command(BaseCommand):
                 # when the names are not the same
                 if (pidman_label != item.label):
                     change_count += 1
-                    # change_log.write("[TIME]: %s, [PID]: %s, [FEDORA_LABEL]: %s, [PIDMAN_LABEL]: %s \n" % (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), item.pid, item.label, pidman_label) )
-                    self.summary_log.write("%s, %s, %s, %s, %s, %s\n" % \
-                        (time.strftime("%Y-%m-%d %H:%M:%S", \
+                    self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
                         "change-needed", \
                         task_name, \
@@ -198,9 +199,7 @@ class Command(BaseCommand):
                 # when the names are the same
                 else:
                     nochange_count += 1
-                    # nochange_log.write("[TIME]: %s, [PID]: %s, [FEDORA_LABEL]: %s, [PIDMAN_LABEL]: %s \n" % (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), item.pid, item.label, pidman_label) )
-                    self.summary_log.write("%s, %s, %s, %s, %s, %s\n" % \
-                        (time.strftime("%Y-%m-%d %H:%M:%S", \
+                    self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
                         "no-change-needed", \
                         task_name, \
@@ -232,8 +231,8 @@ class Command(BaseCommand):
             pbar.finish()
 
         # write statistics
-        self.summary_log.write("Total objects: %i \n" % total_count)
-        self.summary_log.write("No change: %i | Change required: %i\n" % (nochange_count, change_count))
+        self.stdout.write("Total objects: %i \n" % total_count)
+        self.stdout.write("No change: %i | Change required: %i\n" % (nochange_count, change_count))
         self.summary_log.close()
 
     def get_pidman(self):
