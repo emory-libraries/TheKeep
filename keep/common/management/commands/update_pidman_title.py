@@ -9,11 +9,11 @@ from keep.audio.models import AudioObject
 from keep.file.models import DiskImage
 from keep.video.models import Video
 from eulcm.models import boda
+from eulfedora.rdfns import model as modelns
 from keep.collection.models import SimpleCollection
 from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
-
 
 class Command(BaseCommand):
     """Manage command for updating the title of objects in the pidman with information
@@ -109,59 +109,46 @@ class Command(BaseCommand):
         self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', 'Title in Fedora', 'Title in Pidman'))
 
         # start the object collection process
-        self.stdout.write("Started collecting objects from Fedora...")
+        self.stdout.write("Started summarize objects from Fedora...")
 
-        # get objects of different content models
-        audio_objects = self.repo.get_objects_with_cmodel(AudioObject.AUDIO_CONTENT_MODEL)
-        self.stderr.write("%i Audio objects found." % len(audio_objects))
+        # get object uris of different content models with generators
+        audio_count = self.summarize_work(AudioObject.AUDIO_CONTENT_MODEL, "Audio")
+        video_count = self.summarize_work(Video.VIDEO_CONTENT_MODEL, "Video")
+        arrangement_count = self.summarize_work(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, "Arrangement")
+        diskimage_count = self.summarize_work(DiskImage.DISKIMAGE_CONTENT_MODEL, "DiskImage")
+        simple_collection_count = self.summarize_work(SimpleCollection.COLLECTION_CONTENT_MODEL, "SimpleCollection")
+        collection_count = self.summarize_work(CollectionObject.COLLECTION_CONTENT_MODEL, "Collection")
+        mailbox_count = self.summarize_work(boda.Mailbox.MAILBOX_CONTENT_MODEL, "Mailbox")
 
-        video_objects = self.repo.get_objects_with_cmodel(Video.VIDEO_CONTENT_MODEL)
-        self.stderr.write("%i Video objects found." % len(video_objects))
-
-        arrangement_objects = self.repo.get_objects_with_cmodel(ArrangementObject.ARRANGEMENT_CONTENT_MODEL)
-        self.stderr.write("%i Arrangement objects found." % len(arrangement_objects))
-
-        diskimage_objects = self.repo.get_objects_with_cmodel(DiskImage.DISKIMAGE_CONTENT_MODEL)
-        self.stderr.write("%i DiskImage objects found." % len(diskimage_objects))
-
-        simple_collection_objects = self.repo.get_objects_with_cmodel(SimpleCollection.COLLECTION_CONTENT_MODEL)
-        self.stderr.write("%i SimpleCollection objects found." % len(simple_collection_objects))
-
-        collection_objects = self.repo.get_objects_with_cmodel(CollectionObject.COLLECTION_CONTENT_MODEL)
-        self.stderr.write("%i Collection objects found." % len(collection_objects))
-
-        mailbox_objects = self.repo.get_objects_with_cmodel(boda.Mailbox.MAILBOX_CONTENT_MODEL)
-        self.stderr.write("%i Mailbox objects found." % len(mailbox_objects))
-
-        # end the object collection process and start
-        self.stdout.write("Object collection finished.")
+        # end the object summarization process
+        self.stdout.write("Object summarization finished.")
 
         # update objects in each content model
-        self.update_progress(audio_objects, "AudioObject")
-        self.update_progress(video_objects, "VideoObject")
-        self.update_progress(arrangement_objects, "ArrangementObject")
-        self.update_progress(diskimage_objects, "DiskImage")
-        self.update_progress(simple_collection_objects, "SimpleCollection")
-        self.update_progress(collection_objects, "CollectionObject")
-        self.update_progress(mailbox_objects, "Mailbox")
+        self.update_progress(AudioObject.AUDIO_CONTENT_MODEL, "Audio", audio_count)
+        self.update_progress(Video.VIDEO_CONTENT_MODEL, "Video", video_count)
+        self.update_progress(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, "Arrangement", arrangement_count)
+        self.update_progress(DiskImage.DISKIMAGE_CONTENT_MODEL, "DiskImage", diskimage_count)
+        self.update_progress(SimpleCollection.COLLECTION_CONTENT_MODEL, "SimpleCollection", simple_collection_count)
+        self.update_progress(CollectionObject.COLLECTION_CONTENT_MODEL, "Collection", collection_count)
+        self.update_progress(boda.Mailbox.MAILBOX_CONTENT_MODEL, "Mailbox", mailbox_count)
 
-    def update_progress(self, objects, task_name):
+    def update_progress(self, content_model, content_model_name, total_count):
         """Update the objects in Pidman and reports progress back to the user.
 
-        Args:
-           objects (array): Array of objects retreived from Fedora
-           task_name (str): Name of each task (object collection)
-           pidman (DjangoPidmanRestClient): PidmanRestClient that can be used
-            to interact with Pidman
+            :param content_model: the content model of a object collection
+            :param content_model_name: a human readable name for the content model/objects
+            :param total_count: total count of objects founds within a collection
+            :type content_model: str
+            :type content_model_name: str
+            :type total_count: number
         """
 
         # initialize counters
-        total_count = len(objects)
         change_count = 0
         nochange_count = 0
 
         # update progress on the screen
-        sys.stdout.write("Starting %s tasks. %i objects found. \n" % (task_name, total_count))
+        sys.stdout.write("Starting %s task. %i objects in total.\n" % (content_model_name, total_count))
         sys.stdout.flush()
 
         # bind a handler for interrupt signal
@@ -174,10 +161,13 @@ class Command(BaseCommand):
             ETA()],
             maxval=total_count).start()
 
-        # iterate through all items in collection
-        for index, item in enumerate(objects):
+        # use generator to process each object
+        object_uris = self.repo.risearch.get_subjects(modelns.hasModel, content_model)
+        for object_uri in object_uris:
             try:
+                item = self.repo.get_object(object_uri)
                 pidman_label = self.pidman.get_ark(item.noid)['name']
+
                 # TODO: to be safe the actual code to update is not included here
                 # will verify the environments before we accidentally start
                 # a detrimental process
@@ -192,17 +182,18 @@ class Command(BaseCommand):
                     self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
                         "change-needed", \
-                        task_name, \
+                        content_model_name, \
                         item.pid, \
                         item.label, \
                         pidman_label))
+
                 # when the names are the same
                 else:
                     nochange_count += 1
                     self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
                         "no-change-needed", \
-                        task_name, \
+                        content_model_name, \
                         item.pid, \
                         item.label, \
                         pidman_label))
@@ -214,7 +205,7 @@ class Command(BaseCommand):
                 error_log = open(error_file_path, 'w+')
                 error_log.write('[TIME]: %s, [CONTENT_MODEL]: %s, [PID]: %s\n %s \n' % \
                     (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), \
-                    task_name, \
+                    content_model_name, \
                     item.noid, \
                     str(e)))
                 error_log.close()
@@ -233,14 +224,13 @@ class Command(BaseCommand):
         # write statistics
         self.stdout.write("Total objects: %i \n" % total_count)
         self.stdout.write("No change: %i | Change required: %i\n" % (nochange_count, change_count))
-        self.summary_log.close()
 
     def get_pidman(self):
         """Initialize a new Pidman client using the DjangoPidmanRestClient
-        wrapper. The credentials are pulled from the application settings.
+            wrapper. The credentials are pulled from the application settings.
 
-        Returns:
-            DjangoPidmanRestClient
+            :return: a Pidman client to interact with the Pidman APIs
+            :rtype: DjangoPidmanRestClient
 
         """
         # try to configure a pidman client to get pids.
@@ -263,3 +253,20 @@ class Command(BaseCommand):
             signal.signal(signal.SIGINT, signal.SIG_DFL)
             # set interrupt flag so main loop knows to quit
             self.interrupted = True
+
+    def summarize_work(self, content_model, content_model_name):
+        '''Summarize the number of object that is available to be processed for each
+            content model type. It uses a generator to collect the total number of
+            objects, prompts the user on the screen, and return the total count.
+
+            :param content_model: the content model of a object collection
+            :param content_model_name: a human readable name for the content model/objects
+            :type content_model: str
+            :type content_model_name: str
+            :return: object_count total count of objects founds within a collection
+            :rtype: number
+        '''
+        object_uris = self.repo.risearch.get_subjects(modelns.hasModel, content_model)
+        object_count = sum(1 for _ in object_uris)
+        self.stderr.write("%i %s objects found." % (object_count, content_model_name))
+        return object_count
