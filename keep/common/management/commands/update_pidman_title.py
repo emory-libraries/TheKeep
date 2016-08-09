@@ -151,14 +151,15 @@ class Command(BaseCommand):
            pidman (DjangoPidmanRestClient): PidmanRestClient that can be used
             to interact with Pidman
         """
-        # update progress on the screen
-        sys.stdout.write("Starting %s tasks \n" % task_name)
-        sys.stdout.flush()
 
         # initialize counters
         total_count = len(objects)
         change_count = 0
         nochange_count = 0
+
+        # update progress on the screen
+        sys.stdout.write("Starting %s tasks. %i objects found. \n" % (task_name, total_count))
+        sys.stdout.flush()
 
         # bind a handler for interrupt signal
         signal.signal(signal.SIGINT, self.interrupt_handler)
