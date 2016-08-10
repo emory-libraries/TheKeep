@@ -349,7 +349,6 @@ class ArkPidDigitalObject(models.DigitalObject):
         # proceed only when all can pass
         # Python evaluates conditionals from left to right; therefore the
         # order here matters
-        import pdb; pdb.set_trace()
         if self.mods.exists and hasattr(self, 'mods'):
             # perform update when either force_update flag is provided, or otherwise
             # only take actions when mods is modified.
