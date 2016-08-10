@@ -142,9 +142,10 @@ class Command(BaseCommand):
             :type total_count: number
         """
 
-        # initialize counters
+        # initialize counters and a status label (needs change vs. does not need change)
         change_count = 0
         nochange_count = 0
+        status_label = ""
 
         # update progress on the screen
         sys.stdout.write("Starting %s task. %i objects in total.\n" % (content_model_name, total_count))
@@ -175,25 +176,22 @@ class Command(BaseCommand):
                 # when the names are not the same
                 if (pidman_label != digital_object.label):
                     change_count += 1
-                    self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
-                        time.localtime()), \
-                        "change-needed", \
-                        content_model_name, \
-                        digital_object.pid, \
-                        digital_object.label, \
-                        pidman_label))
+                    status_label = "change-needed"
 
                 # when the names are the same
                 else:
                     nochange_count += 1
-                    self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
-                        time.localtime()), \
-                        "no-change-needed", \
-                        content_model_name, \
-                        digital_object.pid, \
-                        digital_object.label, \
-                        pidman_label))
+                    status_label = "no-change-needed"
 
+                # write to CSV
+                self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
+                    time.localtime()), \
+                    status_label, \
+                    content_model_name, \
+                    digital_object.pid, \
+                    digital_object.label, \
+                    pidman_label))
+                    
             # when any errors (exceptions) occur
             except Exception, e:
                 # log the failure in a file
