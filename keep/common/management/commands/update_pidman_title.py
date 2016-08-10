@@ -8,9 +8,7 @@ from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.file.models import DiskImage
 from keep.video.models import Video
-from eulcm.models import boda
 from eulfedora.rdfns import model as modelns
-from keep.collection.models import SimpleCollection
 from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
@@ -116,9 +114,7 @@ class Command(BaseCommand):
         video_count = self.summarize_work(Video.VIDEO_CONTENT_MODEL, "Video")
         arrangement_count = self.summarize_work(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, "Arrangement")
         diskimage_count = self.summarize_work(DiskImage.DISKIMAGE_CONTENT_MODEL, "DiskImage")
-        simple_collection_count = self.summarize_work(SimpleCollection.COLLECTION_CONTENT_MODEL, "SimpleCollection")
         collection_count = self.summarize_work(CollectionObject.COLLECTION_CONTENT_MODEL, "Collection")
-        mailbox_count = self.summarize_work(boda.Mailbox.MAILBOX_CONTENT_MODEL, "Mailbox")
 
         # end the object summarization process
         self.stdout.write("Object summarization finished.")
@@ -128,9 +124,7 @@ class Command(BaseCommand):
         self.update_progress(Video.VIDEO_CONTENT_MODEL, "Video", video_count)
         self.update_progress(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, "Arrangement", arrangement_count)
         self.update_progress(DiskImage.DISKIMAGE_CONTENT_MODEL, "DiskImage", diskimage_count)
-        self.update_progress(SimpleCollection.COLLECTION_CONTENT_MODEL, "SimpleCollection", simple_collection_count)
         self.update_progress(CollectionObject.COLLECTION_CONTENT_MODEL, "Collection", collection_count)
-        self.update_progress(boda.Mailbox.MAILBOX_CONTENT_MODEL, "Mailbox", mailbox_count)
 
     def update_progress(self, content_model, content_model_name, total_count):
         """Update the objects in Pidman and reports progress back to the user.
