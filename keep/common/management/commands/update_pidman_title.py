@@ -167,13 +167,10 @@ class Command(BaseCommand):
                 digital_object = self.repo.get_object(object_uri, object_class)
                 pidman_label = self.pidman.get_ark(digital_object.noid)['name']
 
-                # TODO: to be safe the actual code to update is not included here
-                # will verify the environments before we accidentally start
-                # a detrimental process
-                # if self.is_dry_run:
-                #     #TODO skip the actual update codes
-                # else:
-                #     #TODO actually update (BE CAREFUL)
+                # execute irreversible update when the dry run flag is not set
+                # be cautious
+                if not self.is_dry_run:
+                    digital_object.update_ark_label(force_update=True)
 
                 # when the names are not the same
                 if (pidman_label != digital_object.label):

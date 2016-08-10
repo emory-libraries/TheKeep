@@ -334,10 +334,13 @@ class ArkPidDigitalObject(models.DigitalObject):
         'RELS-EXT': 'related objects',
     }
 
-    def update_ark_label(self):
+    def update_ark_label(self, force_update=False):
         """Update an object's label. Check if the mods
         content title of the object has been changed; if changed, apply the change
         to the object in pidman
+
+        :param force_update: optional flag that will enforce update of the object title
+            regardless of mods.isModified(), when supplied as True
         """
 
         # first check if the fedora object exists
@@ -346,10 +349,14 @@ class ArkPidDigitalObject(models.DigitalObject):
         # proceed only when all can pass
         # Python evaluates conditionals from left to right; therefore the
         # order here matters
-        if self.exists and hasattr(self, 'mods') and self.mods.isModified():
-            pidman_label = pidman.get_ark(self.noid)['name']
-            if self.mods.content.title != pidman_label: # when the title is different
-                pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+        import pdb; pdb.set_trace()
+        if self.mods.exists and hasattr(self, 'mods'):
+            # perform update when either force_update flag is provided, or otherwise
+            # only take actions when mods is modified.
+            if force_update or self.mods.isModified():
+                pidman_label = pidman.get_ark(self.noid)['name']
+                if self.mods.content.title != pidman_label: # when the title is different
+                    pidman.update_ark(noid=self.noid, name=self.mods.content.title)
         else:
             # log as a warning if the update fails because there is no mods attirbute
             # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
