@@ -342,9 +342,10 @@ class ArkPidDigitalObject(models.DigitalObject):
         """
 
         if self.mods.isModified(): # if the item is changed it'd be reflected in mods
-            pidman_label = pidman.get_ark(self.noid)['name']
-            if self.mods.content.title != pidman_label: # when the title is different
-                pidman.update_ark(noid=self.noid, name=object_label)
+            if hasattr(self, 'mods'): # if the object does have mods
+                pidman_label = pidman.get_ark(self.noid)['name']
+                if self.mods.content.title != pidman_label: # when the title is different
+                    pidman.update_ark(noid=self.noid, name=object_label)
 
     def history_events(self):
         '''Cluster API calls documented in the
