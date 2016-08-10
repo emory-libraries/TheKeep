@@ -217,8 +217,9 @@ class Command(BaseCommand):
 
         # write statistics
         self.stdout.write("Total objects: %i \n" % total_count)
-        self.stdout.write("No change: %i | Change required: %i\n" % (nochange_count, change_count))
-
+        self.stdout.write("No change: %i | Change required: %i | Failed (see logs): %i\n" \
+            % (nochange_count, change_count, (total_count - nochange_count - change_count)))
+            
     def get_pidman(self):
         """Initialize a new Pidman client using the DjangoPidmanRestClient
             wrapper. The credentials are pulled from the application settings.
