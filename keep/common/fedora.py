@@ -319,12 +319,8 @@ class ArkPidDigitalObject(models.DigitalObject):
 
                 raise DuplicateContent(msg, pids, pid_cmodels)
 
-        # check if the mods content title of the object has been changed
-        # if changed, apply the change to the object in pidman
-        if self.mods.isModified(): # if the item is changed it'd be reflected in mods
-            pidman_label = self.pidman_client.get_ark(self.noid)['name']
-            if self.mods.content.title != pidman_label: # when the title is different
-                self.update_label(self.noid, self.mods.content.title)
+        # update the pidman label when there is a name conflict
+        self.update_pidman_label(self.mods.content.title)
 
         return super(DigitalObject, self).save(logMessage)
 
@@ -337,13 +333,18 @@ class ArkPidDigitalObject(models.DigitalObject):
         'RELS-EXT': 'related objects',
     }
 
-    def update_label(self, object_pid, object_label):
-        """update an object's label (title/identifier) in pidman
-        Args:
-            object_pid (str): the pid of the object that will be updated
-            object_label (str): the label (title/identifier) that will be applied to the object in pidman
+    def update_pidman_label(self, object_label):
+        """Update a pidman object's label (title/identifier). Check if the mods
+        content title of the object has been changed; if changed, apply the change
+        to the object in pidman
+
+        :param object_label: label (title/identifier) that will be applied to the object in pidman
         """
-        self.pidman_client.update_ark(noid=object_pid, name=object_label)
+
+        if self.mods.isModified(): # if the item is changed it'd be reflected in mods
+            pidman_label = pidman.get_ark(self.noid)['name']
+            if self.mods.content.title != pidman_label: # when the title is different
+                pidman.update_ark(noid=self.noid, name=object_label)
 
     def history_events(self):
         '''Cluster API calls documented in the
