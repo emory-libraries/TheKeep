@@ -120,16 +120,16 @@ class Command(BaseCommand):
         self.stdout.write("Object summarization finished.")
 
         # update objects in each content model
-        self.update_progress(AudioObject.AUDIO_CONTENT_MODEL, "Audio", audio_count)
-        self.update_progress(Video.VIDEO_CONTENT_MODEL, "Video", video_count)
-        self.update_progress(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, "Arrangement", arrangement_count)
-        self.update_progress(DiskImage.DISKIMAGE_CONTENT_MODEL, "DiskImage", diskimage_count)
-        self.update_progress(CollectionObject.COLLECTION_CONTENT_MODEL, "Collection", collection_count)
+        # self.update_progress(AudioObject, "Audio", audio_count)
+        self.update_progress(Video, "Video", video_count)
+        self.update_progress(ArrangementObject, "Arrangement", arrangement_count)
+        self.update_progress(DiskImage, "DiskImage", diskimage_count)
+        self.update_progress(CollectionObject, "Collection", collection_count)
 
-    def update_progress(self, content_model, content_model_name, total_count):
+    def update_progress(self, object_class, content_model_name, total_count):
         """Update the objects in Pidman and reports progress back to the user.
 
-            :param content_model: the content model of a object collection
+            :param object_class: the class of a object collection
             :param content_model_name: a human readable name for the content model/objects
             :param total_count: total count of objects founds within a collection
             :type content_model: str
@@ -156,11 +156,11 @@ class Command(BaseCommand):
             maxval=total_count).start()
 
         # use generator to process each object
-        object_uris = self.repo.risearch.get_subjects(modelns.hasModel, content_model)
+        object_uris = self.repo.risearch.get_subjects(modelns.hasModel, object_class.CONTENT_MODELS[0])
         for object_uri in object_uris:
             try:
-                item = self.repo.get_object(object_uri)
-                pidman_label = self.pidman.get_ark(item.noid)['name']
+                digital_object = self.repo.get_object(object_uri, object_class)
+                pidman_label = self.pidman.get_ark(digital_object.noid)['name']
 
                 # TODO: to be safe the actual code to update is not included here
                 # will verify the environments before we accidentally start
@@ -171,14 +171,14 @@ class Command(BaseCommand):
                 #     #TODO actually update (BE CAREFUL)
 
                 # when the names are not the same
-                if (pidman_label != item.label):
+                if (pidman_label != digital_object.label):
                     change_count += 1
                     self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                         time.localtime()), \
                         "change-needed", \
                         content_model_name, \
-                        item.pid, \
-                        item.label, \
+                        digital_object.pid, \
+                        digital_object.label, \
                         pidman_label))
 
                 # when the names are the same
@@ -188,19 +188,19 @@ class Command(BaseCommand):
                         time.localtime()), \
                         "no-change-needed", \
                         content_model_name, \
-                        item.pid, \
-                        item.label, \
+                        digital_object.pid, \
+                        digital_object.label, \
                         pidman_label))
 
             # when any errors (exceptions) occur
             except Exception, e:
                 # log the failure in a file
-                error_file_path = "%s/%s.log" % (self.error_path, item.noid)
+                error_file_path = "%s/%s.log" % (self.error_path, digital_object.noid)
                 error_log = open(error_file_path, 'w+')
                 error_log.write('[TIME]: %s, [CONTENT_MODEL]: %s, [PID]: %s\n %s \n' % \
                     (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), \
                     content_model_name, \
-                    item.noid, \
+                    digital_object.noid, \
                     str(e)))
                 error_log.close()
 
