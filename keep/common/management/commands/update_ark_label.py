@@ -59,9 +59,6 @@ class Command(BaseCommand):
         # initialize a Fedora repository object
         self.repo = Repository()
 
-        # initialize a Fedora ResourceIndex
-        self.ri = self.get_eulfedora_ri()
-
         # send greeting message with instructions
         self.stdout.write(self.greetings)
 
@@ -191,7 +188,7 @@ class Command(BaseCommand):
                     digital_object.pid, \
                     digital_object.label, \
                     pidman_label))
-                    
+
             # when any errors (exceptions) occur
             except Exception, e:
                 # log the failure in a file
@@ -239,24 +236,6 @@ class Command(BaseCommand):
             sys.stderr.write(error_msg)
             raise CommandError(e)
 
-    def get_eulfedora_ri(self):
-        """Initialize a new eulfedora ResourceIndex.
-        The credentials are pulled from the application settings.
-
-            :return: an eulfedora ResourceIndex to interact with Fedora
-            :rtype: ResourceIndex
-        """
-        # try to configure a ResourceIndex to interact with Fedora.
-        try:
-            return ResourceIndex(settings.FEDORA_ROOT, settings.FEDORA_USER, settings.FEDORA_PASSWORD)
-        except CommandError as e:
-            error_msg = """
-            Cannot initialize eulfedora ResourceIndex.
-            Please check your configuration for more details.
-            """
-            sys.stderr.write(error_msg)
-            raise CommandError(e)
-
     def interrupt_handler(self, signum, frame):
         '''Gracefully handle a SIGINT. Stop and report what was done.
             Originally from Readux
@@ -280,6 +259,6 @@ class Command(BaseCommand):
             :rtype: number
         '''
         count_query = "* <fedora-model:hasModel> <%s>" % str(object_class.CONTENT_MODELS[0])
-        object_count = self.ri.count_statements(count_query)
+        object_count = self.repo.risearch.count_statements(count_query)
         self.stderr.write("%i %s objects found." % (object_count, content_model_name))
         return object_count
