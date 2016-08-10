@@ -1,4 +1,5 @@
 import sys, os, random, time, logging, getopt, signal, unicodecsv
+from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO
 from optparse import make_option
 from django.conf import settings
@@ -12,6 +13,7 @@ from eulfedora.rdfns import model as modelns
 from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
+from eulfedora.api import ResourceIndex
 
 class Command(BaseCommand):
     """Manage command for updating the title of objects in the pidman with information
@@ -56,6 +58,9 @@ class Command(BaseCommand):
 
         # initialize a Fedora repository object
         self.repo = Repository()
+
+        # initialize a Fedora ResourceIndex
+        self.ri = self.get_eulfedora_ri()
 
         # send greeting message with instructions
         self.stdout.write(self.greetings)
@@ -109,18 +114,18 @@ class Command(BaseCommand):
         # start the object collection process
         self.stdout.write("Started summarize objects from Fedora...")
 
-        # get object uris of different content models with generators
-        audio_count = self.summarize_work(AudioObject.AUDIO_CONTENT_MODEL, "Audio")
-        video_count = self.summarize_work(Video.VIDEO_CONTENT_MODEL, "Video")
-        arrangement_count = self.summarize_work(ArrangementObject.ARRANGEMENT_CONTENT_MODEL, "Arrangement")
-        diskimage_count = self.summarize_work(DiskImage.DISKIMAGE_CONTENT_MODEL, "DiskImage")
-        collection_count = self.summarize_work(CollectionObject.COLLECTION_CONTENT_MODEL, "Collection")
+        # get object counts with Fedora ResourceIndex and summarize stats on screen
+        audio_count = self.summarize_work(AudioObject, "Audio")
+        video_count = self.summarize_work(Video, "Video")
+        arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
+        diskimage_count = self.summarize_work(DiskImage, "DiskImage")
+        collection_count = self.summarize_work(CollectionObject, "Collection")
 
         # end the object summarization process
         self.stdout.write("Object summarization finished.")
 
         # update objects in each content model
-        # self.update_progress(AudioObject, "Audio", audio_count)
+        self.update_progress(AudioObject, "Audio", audio_count)
         self.update_progress(Video, "Video", video_count)
         self.update_progress(ArrangementObject, "Arrangement", arrangement_count)
         self.update_progress(DiskImage, "DiskImage", diskimage_count)
@@ -219,7 +224,7 @@ class Command(BaseCommand):
         self.stdout.write("Total objects: %i \n" % total_count)
         self.stdout.write("No change: %i | Change required: %i | Failed (see logs): %i\n" \
             % (nochange_count, change_count, (total_count - nochange_count - change_count)))
-            
+
     def get_pidman(self):
         """Initialize a new Pidman client using the DjangoPidmanRestClient
             wrapper. The credentials are pulled from the application settings.
@@ -239,6 +244,24 @@ class Command(BaseCommand):
             sys.stderr.write(error_msg)
             raise CommandError(e)
 
+    def get_eulfedora_ri(self):
+        """Initialize a new eulfedora ResourceIndex.
+        The credentials are pulled from the application settings.
+
+            :return: an eulfedora ResourceIndex to interact with Fedora
+            :rtype: ResourceIndex
+        """
+        # try to configure a ResourceIndex to interact with Fedora.
+        try:
+            return ResourceIndex(settings.FEDORA_ROOT, settings.FEDORA_USER, settings.FEDORA_PASSWORD)
+        except CommandError as e:
+            error_msg = """
+            Cannot initialize eulfedora ResourceIndex.
+            Please check your configuration for more details.
+            """
+            sys.stderr.write(error_msg)
+            raise CommandError(e)
+
     def interrupt_handler(self, signum, frame):
         '''Gracefully handle a SIGINT. Stop and report what was done.
             Originally from Readux
@@ -249,19 +272,19 @@ class Command(BaseCommand):
             # set interrupt flag so main loop knows to quit
             self.interrupted = True
 
-    def summarize_work(self, content_model, content_model_name):
+    def summarize_work(self, object_class, content_model_name):
         '''Summarize the number of object that is available to be processed for each
             content model type. It uses a generator to collect the total number of
             objects, prompts the user on the screen, and return the total count.
 
-            :param content_model: the content model of a object collection
+            :param object_class: the class of a object collection
             :param content_model_name: a human readable name for the content model/objects
             :type content_model: str
             :type content_model_name: str
             :return: object_count total count of objects founds within a collection
             :rtype: number
         '''
-        object_uris = self.repo.risearch.get_subjects(modelns.hasModel, content_model)
-        object_count = sum(1 for _ in object_uris)
+        count_query = "* <fedora-model:hasModel> <%s>" % str(object_class.CONTENT_MODELS[0])
+        object_count = self.ri.count_statements(count_query)
         self.stderr.write("%i %s objects found." % (object_count, content_model_name))
         return object_count
