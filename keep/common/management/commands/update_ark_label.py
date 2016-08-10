@@ -16,14 +16,14 @@ from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
 from eulfedora.api import ResourceIndex
 
 class Command(BaseCommand):
-    """Manage command for updating the title of objects in the pidman with information
+    """Manage command for updating the label of objects in the pidman with information
        from the Keep.
     """
 
     greetings = """
-    This manage command will help you synchronize object titles from
-    the Keep to the Pid Manager. It reads object titles from Fedora and
-    compare them against those in Pidman, and update the title when
+    This manage command will help you synchronize object labels from
+    the Keep to the Pid Manager. It reads object labels from Fedora and
+    compare them against those in Pidman, and update the label when
     there is a descrepancy.
 
     The command will also generate a summary report in which you can
@@ -109,7 +109,7 @@ class Command(BaseCommand):
         # create log files
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
-        self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', 'Title in Fedora', 'Title in Pidman'))
+        self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', 'Label in Fedora', 'Label in Pidman'))
 
         # start the object collection process
         self.stdout.write("Started summarize objects from Fedora...")
