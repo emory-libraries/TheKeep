@@ -340,16 +340,22 @@ class ArkPidDigitalObject(models.DigitalObject):
         to the object in pidman
         """
 
-        if hasattr(self, 'mods'): # if the object does have mods
-            if self.mods.isModified(): # if the item is changed it'd be reflected in mods
-                pidman_label = pidman.get_ark(self.noid)['name']
-                if self.mods.content.title != pidman_label: # when the title is different
-                    pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+        # first check if the fedora object exists
+        # then check if the object has mods
+        # finally check if the object's mods is changed
+        # proceed only when all can pass
+        # Python evaluates conditionals from left to right; therefore the
+        # order here matters
+        if self.exists and hasattr(self, 'mods') and self.mods.isModified():
+            pidman_label = pidman.get_ark(self.noid)['name']
+            if self.mods.content.title != pidman_label: # when the title is different
+                pidman.update_ark(noid=self.noid, name=self.mods.content.title)
         else:
             # log as a warning if the update fails because there is no mods attirbute
             # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
             # return a false when 'mods' attribute is not present, so logging that here.
-            logging.warning("PID: %s does not have attribute 'mods' during pid edit.\n", str(self.noid))
+            logging.warning("PID: %s does not exist or does not \
+                have attribute 'mods' during pid edit.\n", str(self.noid))
 
     def history_events(self):
         '''Cluster API calls documented in the
