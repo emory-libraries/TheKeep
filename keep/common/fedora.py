@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import render
-import urllib
+import urllib, logging
 
 from eulfedora import models, server
 from eulfedora.util import RequestFailed, PermissionDenied
@@ -17,6 +17,7 @@ from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
 from keep.accounts.views import decrypt
 from keep.common.utils import absolutize_url, solr_interface
+
 
 # TODO: write unit tests now that this code is an app and django knows how to run tests for it
 
@@ -318,8 +319,10 @@ class ArkPidDigitalObject(models.DigitalObject):
 
                 raise DuplicateContent(msg, pids, pid_cmodels)
 
-        return super(DigitalObject, self).save(logMessage)
+        # update the ark label in pidman when there is a name conflict
+        self.update_ark_label()
 
+        return super(DigitalObject, self).save(logMessage)
 
     # map datastream IDs to human-readable names for inherited history_events method
     # (common datastream IDs only here)
@@ -329,6 +332,35 @@ class ArkPidDigitalObject(models.DigitalObject):
         'Rights': 'rights metadata',
         'RELS-EXT': 'related objects',
     }
+
+    def update_ark_label(self, force_update=False):
+        """Update an object's label. Check if the mods
+        content title of the object has been changed; if changed, apply the change
+        to the object in pidman
+
+        :param force_update: optional flag that will enforce update of the object title
+            regardless of mods.isModified(), when supplied as True
+        """
+
+        # first check if the fedora object exists
+        # then check if the object has mods
+        # finally check if the object's mods is changed
+        # proceed only when all can pass
+        # Python evaluates conditionals from left to right; therefore the
+        # order here matters
+        if self.mods.exists and hasattr(self, 'mods'):
+            # perform update when either force_update flag is provided, or otherwise
+            # only take actions when mods is modified.
+            if force_update or self.mods.isModified():
+                pidman_label = pidman.get_ark(self.noid)['name']
+                if self.mods.content.title != pidman_label: # when the title is different
+                    pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+        else:
+            # log as a warning if the update fails because there is no mods attirbute
+            # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
+            # return a false when 'mods' attribute is not present, so logging that here.
+            logging.warning("PID: %s does not exist or does not \
+                have attribute 'mods' during pid edit.\n", str(self.noid))
 
     def history_events(self):
         '''Cluster API calls documented in the
