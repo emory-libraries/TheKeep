@@ -6,7 +6,7 @@ eulfedora>=1.6
 eulexistdb>=0.20
 eulcommon>=0.19.0
 # dev eulcommon to test removing eullocal (should be 0.19)
-git+https://github.com/emory-libraries/eulcommon.git@feature/import-eullocal-taskresult#egg=eulcommon
+git+ssh://git@github.com/emory-libraries/eullocal.git@0.22#egg=eullocal
 git+https://github.com/emory-libraries/pidman-client.git@release-1.1.2#egg=pidservices
 python-magic
 pycrypto
