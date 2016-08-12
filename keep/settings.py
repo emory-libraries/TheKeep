@@ -98,7 +98,7 @@ INSTALLED_APPS = [
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
-    'eullocal.django.taskresult',
+    'eulcommon.djangoextras.taskresult',
     'eultheme',
     'downtime',
     'keep.accounts',

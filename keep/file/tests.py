@@ -13,7 +13,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 
 from eulfedora.server import Repository
-from eullocal.django.taskresult.models import TaskResult
+from eulcommon.djangoextras.taskresult.models import TaskResult
 from eulxml.xmlmap import mods
 
 from keep.audio import models as audiomodels

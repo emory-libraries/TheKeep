@@ -18,7 +18,7 @@ urlpatterns = patterns('',
     url(r'^collections/', include('keep.collection.urls', namespace='collection')),
     url(r'^accounts/', include('keep.accounts.urls', namespace='accounts')),
     url(r'^file/', include('keep.file.urls', namespace='file')),
-    url(r'^tasks/', include('eullocal.django.taskresult.urls', namespace='tasks')),
+    url(r'^tasks/', include('eulcommon.djangoextras.taskresult.urls', namespace='tasks')),
 
     # index data for solr
     url(r'^indexdata/', include('eulfedora.indexdata.urls', namespace='indexdata')),

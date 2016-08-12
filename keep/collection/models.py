@@ -420,16 +420,16 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
         if self.archdesc.did.origination:
             name_text = unicode(self.archdesc.did.origination)
             # determine type of name
-            type = self.archdesc.did.node.xpath('''local-name(e:origination/e:persname |
+            colltype = self.archdesc.did.node.xpath('''local-name(e:origination/e:persname |
                 e:origination/e:corpname  | e:origination/e:famname)''',
                 namespaces=self.ROOT_NAMESPACES)
-            if type == 'persname':
+            if colltype == 'persname':
                 name_type = 'personal'
-            elif type == 'famname':
+            elif colltype == 'famname':
                 name_type = 'family'
                 # family names consistently end with a period, which can be removed
                 name_text = name_text.rstrip('.')
-            elif type == 'corpname':
+            elif colltype == 'corpname':
                 name_type = 'corporate'
 
             if name_type is not None:
@@ -474,6 +474,10 @@ class FindingAid(XmlModel, EncodedArchivalDescription):
             coll.mods.content.create_use_and_reproduction()
             coll.mods.content.use_and_reproduction.text = "\n".join([
                     unicode(c) for c in self.archdesc.use_restriction.content])
+
+        # set initial mods:typeOfResource - not specified in EAD, but all
+        # collections shoud be mixed material
+        coll.mods.content.resource_type = 'mixed material'
 
         # EAD url - where does this go?
         # accessible at self.eadid.url

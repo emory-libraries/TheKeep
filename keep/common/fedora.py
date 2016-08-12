@@ -40,7 +40,6 @@ class LocalMODS(xmlmap.mods.MODS):
     ark_uri = xmlmap.StringField('mods:identifier[@type="uri"][contains(., "ark:")]')
 
 
-
 class AuditTrailEvent(object):
     '''An object to cluster a group of related Fedora
     :class:`~eulfedora.xml.AuditTrailRecord` objects into a single
