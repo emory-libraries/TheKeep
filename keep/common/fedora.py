@@ -365,9 +365,7 @@ class ArkPidDigitalObject(models.DigitalObject):
                 # return a false when 'mods' attribute is not present, so logging that here.
                 logging.warning("Could not update ARK label for %s because MODS is not available", \
                     str(self.noid))
-        else:
-            logging.warning("Fedora object does not exist.")
-
+                    
     def history_events(self):
         '''Cluster API calls documented in the
         :attr:`eulfedora.models.DigitalObject.audit_trail` into
