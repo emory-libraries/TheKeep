@@ -163,7 +163,7 @@ class Command(BaseCommand):
         for object_uri in object_uris:
             try:
                 digital_object = self.repo.get_object(object_uri, object_class)
-                pidman_label = self.pidman.get_ark(digital_object.noid)['name']
+                pidman_label = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN, pid=digital_object.noid)["results"][0]["name"]
 
                 # execute irreversible update when the dry run flag is not set
                 # be cautious
