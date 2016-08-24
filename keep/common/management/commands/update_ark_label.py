@@ -161,8 +161,13 @@ class Command(BaseCommand):
         # use generator to process each object
         object_uris = self.repo.risearch.get_subjects(modelns.hasModel, object_class.CONTENT_MODELS[0])
         for object_uri in object_uris:
+            digital_object = ""
+            digital_object_pid = ""
+            pidman_label = ""
+            status_label = ""
             try:
                 digital_object = self.repo.get_object(object_uri, object_class)
+                digital_object_pid = digital_object.pid
                 pidman_label = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN, pid=digital_object.noid)["results"][0]["name"]
 
                 # execute irreversible update when the dry run flag is not set
@@ -180,15 +185,6 @@ class Command(BaseCommand):
                     nochange_count += 1
                     status_label = "no-change-needed"
 
-                # write to CSV
-                self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
-                    time.localtime()), \
-                    status_label, \
-                    content_model_name, \
-                    digital_object.pid, \
-                    digital_object.label, \
-                    pidman_label))
-
             # when any errors (exceptions) occur
             except Exception, e:
                 # log the failure in a file
@@ -200,6 +196,16 @@ class Command(BaseCommand):
                     digital_object.noid, \
                     str(e)))
                 error_log.close()
+                status_label = "not-found"
+
+            # write to CSV
+            self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
+                time.localtime()), \
+                status_label, \
+                content_model_name, \
+                digital_object_pid, \
+                digital_object.label, \
+                pidman_label))
 
             # update progress
             pbar.update(change_count + nochange_count)
