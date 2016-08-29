@@ -653,3 +653,66 @@ class TestAuditTrailEvent(TestCase):
         modify_event = AuditTrailEvent(self.modify)
         self.assertEqual('modify', ingest_event.action)
 
+class ArkPidDigitalObjectTest(TestCase):
+    naan = '123'
+    noid = 'bcd'
+    testark = 'http://p.id/ark:/%s/%s' % (naan, noid)
+
+
+    @patch('keep.common.fedora.pidman')
+
+    def test_update_ark_label(self, mockpidman):
+
+        mockpidman.create_ark.return_value = self.testark
+
+        # create the mods digital object
+        digobj = ModsDigitalObject(Mock())
+        pid = digobj.get_default_pid()
+        mods = digobj.mods
+        force_update = True
+
+        print digobj.mods
+        print digobj.mods.exists
+        print digobj.mods.content.identifiers
+
+        # print self
+        # print pid
+        # print mods
+        # print digobj.mods.content
+
+        # assume that the object's mods is not none
+        self.assertNotEqual(digobj.mods, None)
+        self.assertEqual(digobj.mods.exists, True)
+
+        # TODO assume it returns True
+        if not digobj.mods.isModified():
+            self.assertEqual(force_update, True)
+        else:
+            self.assertEqual(digobj.mods.isModified(), True)
+
+        self.assertNotEqual(mockpidman, None)
+        noid = pid.split(':')[1]
+        pidman_label = mockpidman.get_ark(noid)['name']
+        print (pidman_label)
+
+
+        #
+        #
+        #
+        # # use a fedora data fixture object
+        # fedora_object = FedoraFixtures.archives(format=dict)
+        # print(fedora_object)
+
+
+
+
+        # mockpidman.create_ark.return_value = self.testark
+        #
+        # digobj = DcDigitalObject(Mock())
+        # digobj.label = 'my test object'
+        # pid = digobj.get_default_pid()
+        # self.assertEqual('%s:%s' % (settings.FEDORA_PIDSPACE, self.noid), pid)
+        # # test/inspect mockpidman.create_ark arguments?
+        #
+        # # generated ARK should be stored in dc:identifier
+        # self.assert_(self.testark in digobj.dc.content.identifier_list)
