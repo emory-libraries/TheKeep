@@ -18,6 +18,7 @@ from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from keep.accounts.views import decrypt
 from keep.common.utils import absolutize_url, solr_interface
 
+logger = logging.getLogger(__name__)
 
 # TODO: write unit tests now that this code is an app and django knows how to run tests for it
 
@@ -355,17 +356,19 @@ class ArkPidDigitalObject(models.DigitalObject):
                 if force_update or self.mods.isModified():
                     if pidman is not None:
                         pidman_label = pidman.get_ark(self.noid)['name']
+                        # when the name attribute doens't exist
+                        # when a record doens't have an exist (active/inactive; throw an error)
                         if self.mods.content.title != pidman_label: # when the title is different
                             pidman.update_ark(noid=self.noid, name=self.mods.content.title)
                     else:
-                        logging.warning("Pidman client does not exist.")
+                        logger.warning("Pidman client does not exist.")
             else:
                 # log as a warning if the update fails because there is no mods attirbute
                 # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
                 # return a false when 'mods' attribute is not present, so logging that here.
-                logging.warning("Could not update ARK label for %s because MODS is not available", \
+                logger.warning("Could not update ARK label for %s because MODS is not available", \
                     str(self.noid))
-                    
+
     def history_events(self):
         '''Cluster API calls documented in the
         :attr:`eulfedora.models.DigitalObject.audit_trail` into
