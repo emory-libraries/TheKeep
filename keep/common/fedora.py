@@ -355,11 +355,13 @@ class ArkPidDigitalObject(models.DigitalObject):
                 # only take actions when mods is modified.
                 if force_update or self.mods.isModified():
                     if pidman is not None:
-                        pidman_label = pidman.get_ark(self.noid)['name']
-                        # when the name attribute doens't exist
-                        # when a record doens't have an exist (active/inactive; throw an error)
-                        if self.mods.content.title != pidman_label: # when the title is different
-                            pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+                        try:
+                            pidman_label = pidman.get_ark(self.noid)['name']
+                            if self.mods.content.title != pidman_label: # when the title is different
+                                pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+                        except Exception e:
+                            logger.exception += "Object %s errored out in Pidman. \
+                                Error message: %s \n" % (self.noid, str(e))
                     else:
                         logger.warning("Pidman client does not exist.")
             else:
