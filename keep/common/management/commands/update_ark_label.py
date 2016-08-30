@@ -106,6 +106,7 @@ class Command(BaseCommand):
         # create log files
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
+        self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_DOMAIN))
         self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', 'Label in Fedora', 'Label in Pidman'))
 
         # start the object collection process
@@ -163,20 +164,50 @@ class Command(BaseCommand):
         for object_uri in object_uris:
             digital_object = ""
             digital_object_pid = ""
+            digital_object_label = ""
+            pidman_digital_obejct = ""
             pidman_label = ""
             status_label = ""
+            hasException = False
+            exception_string = ""
+
             try:
                 digital_object = self.repo.get_object(object_uri, object_class)
                 digital_object_pid = digital_object.pid
-                pidman_label = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN, pid=digital_object.noid)["results"][0]["name"]
+            except Exception, e:
+                hasException = True
+                exception_string += "Object %s is not found in Fedora. \
+                    Error message: %s \n" % (digital_object_pid, str(e))
 
+            try:
+                pidman_digital_obejct = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN, pid=digital_object.noid)
+            except Exception, e:
+                hasException = True
+                exception_string += "Object %s is not found in Pidman. \
+                    Error message: %s \n" % (digital_object_pid, str(e))
+
+            try:
+                pidman_label = pidman_digital_obejct["results"][0]["name"]
+            except Exception, e:
+                hasException = True
+                exception_string += "Object %s does not have ['results'][0]['name'] attributes. \
+                    Error message: %s \n" % (digital_object_pid, str(e))
+
+            try:
+                digital_object_label = digital_object.label
+            except Exception, e:
+                hasException = True
+                exception_string += "Object %s cannot access its label attribute. \
+                    Error message: %s \n" % (digital_object_pid, str(e))
+
+            if hasException is not True:
                 # execute irreversible update when the dry run flag is not set
                 # be cautious
                 if not self.is_dry_run:
                     digital_object.update_ark_label(force_update=True)
 
                 # when the names are not the same
-                if (pidman_label != digital_object.label):
+                if (pidman_label != digital_object_label):
                     change_count += 1
                     status_label = "change-needed"
 
@@ -185,8 +216,7 @@ class Command(BaseCommand):
                     nochange_count += 1
                     status_label = "no-change-needed"
 
-            # when any errors (exceptions) occur
-            except Exception, e:
+            if hasException:
                 # log the failure in a file
                 error_file_path = "%s/%s.log" % (self.error_path, digital_object.noid)
                 error_log = open(error_file_path, 'w+')
@@ -194,9 +224,9 @@ class Command(BaseCommand):
                     (time.strftime("%Y%m%d %H:%M:%S", time.localtime()), \
                     content_model_name, \
                     digital_object.noid, \
-                    str(e)))
+                    exception_string))
                 error_log.close()
-                status_label = "not-found"
+                status_label = "error"
 
             # write to CSV
             self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
@@ -204,7 +234,7 @@ class Command(BaseCommand):
                 status_label, \
                 content_model_name, \
                 digital_object_pid, \
-                digital_object.label, \
+                digital_object_label, \
                 pidman_label))
 
             # update progress
