@@ -602,7 +602,9 @@ class ArrangementObjectTest(KeepTestCase):
         self.assertEquals(self.arr.collection.mods.content.source_id, idx_data['collection_source_id'])
 
     # Test the update_ark_label method in the keep.common.fedora
-    @patch('keep.common.fedora.pidman') # mock the pidman client (the API service)
+    # Note that this test is a simplified version of keep.common.fedora:ArkPidDigitalObject.test_update_ark_label
+    # The udpate_ark_label here is an overriden method that is more specifc, and is used on Arrangement objects
+    @patch('keep.arrangement.models.pidman') # mock the pidman client (the API service)
     def test_update_ark_label(self, mockpidman):
 
         # Create a ArrangementObject
@@ -640,7 +642,6 @@ class ArrangementObjectTest(KeepTestCase):
             arrangement_object.update_ark_label()
             mockpidman.get_ark.assert_called_with(arrangement_object.noid) # assert that it is called with a noid too
             mockpidman.update_ark.assert_called_with(noid=arrangement_object.noid, name=arrangement_object.dc.content.title)
-
 
 class EmailMessageTest(KeepTestCase):
 
