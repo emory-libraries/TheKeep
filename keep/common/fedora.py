@@ -359,7 +359,7 @@ class ArkPidDigitalObject(models.DigitalObject):
                             pidman_label = pidman.get_ark(self.noid)['name']
                             if self.mods.content.title != pidman_label: # when the title is different
                                 pidman.update_ark(noid=self.noid, name=self.mods.content.title)
-                        except Exception e:
+                        except Exception, e:
                             logger.exception += "Object %s errored out in Pidman. \
                                 Error message: %s \n" % (self.noid, str(e))
                     else:
