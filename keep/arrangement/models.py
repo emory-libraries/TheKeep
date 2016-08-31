@@ -150,7 +150,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                         if self.dc.content.title != pidman_label: # when the title is different
                             pidman.update_ark(noid=self.noid, name=self.dc.content.title)
                     except Exception, e:
-                        logger.exception += "Object %s errored out in Pidman. \
+                        logger.exception = "Object %s errored out in Pidman. \
                             Error message: %s \n" % (self.noid, str(e))
                 else:
                     logging.warning("Pidman client does not exist.")
