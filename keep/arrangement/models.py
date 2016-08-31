@@ -127,38 +127,39 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                 self.rels_ext.content.add(_restricted_triple)
 
     def update_ark_label(self, force_update=False):
-        """Update an object's label. Check if the mods
-        content title of the object has been changed; if changed, apply the change
-        to the object in pidman. For ArrangementObject we are using 'dc' field and not the
-        'mods' field because there is no 'mods.title' due to a prior issue.
+        """Update an object's label. While arrangement objects do have a MODS datastream,
+        the descriptive metadata about the object (including title) is currently stored
+        in the DC (or Dublin Core). In Fedora the DC data stream is a special one that
+        always exists, and we do not need to check if the dc exists. This method will compare
+        the title in DC field in Fedora and that in the Pidman object.
 
         :param force_update: optional flag that will enforce update of the object title
             regardless of mods.isModified(), when supplied as True
         """
 
-        # first check if the fedora object exists
-        # then check if the object has mods
-        # finally check if the object's mods is changed
-        # proceed only when all can pass
+        # Check if the object itself exists, and proceed if so.
         # Python evaluates conditionals from left to right; therefore the
         # order here matters
         if self.exists:
-            if hasattr(self, 'mods') and self.mods.exists:
-                # perform update when either force_update flag is provided, or otherwise
-                # only take actions when mods is modified.
-                if force_update or self.dc.isModified():
-                    if pidman is not None:
+            # perform update when either force_update flag is provided, or otherwise
+            # only take actions when mods is modified.
+            if force_update or self.dc.isModified():
+                if pidman is not None:
+                    try:
                         pidman_label = pidman.get_ark(self.noid)['name']
                         if self.dc.content.title != pidman_label: # when the title is different
                             pidman.update_ark(noid=self.noid, name=self.dc.content.title)
-                    else:
-                        logging.warning("Pidman client does not exist.")
-            else:
-                # log as a warning if the update fails because there is no mods attirbute
-                # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
-                # return a false when 'mods' attribute is not present, so logging that here.
-                logging.warning("Could not update ARK label for %s because MODS is not available", \
-                    str(self.noid))
+                    except Exception, e:
+                        logger.exception += "Object %s errored out in Pidman. \
+                            Error message: %s \n" % (self.noid, str(e))
+                else:
+                    logging.warning("Pidman client does not exist.")
+        else:
+            # log as a warning if the update fails because there is no mods attirbute
+            # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
+            # return a false when 'mods' attribute is not present, so logging that here.
+            logging.warning("Could not update ARK label for %s because MODS is not available", \
+                str(self.noid))
 
     @property
     def content_md5(self):
