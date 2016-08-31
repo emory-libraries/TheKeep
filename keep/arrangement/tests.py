@@ -601,6 +601,47 @@ class ArrangementObjectTest(KeepTestCase):
         self.assertEquals(self.arr.collection.pid, idx_data['collection_id'])
         self.assertEquals(self.arr.collection.mods.content.source_id, idx_data['collection_source_id'])
 
+    # Test the update_ark_label method in the keep.common.fedora
+    @patch('keep.common.fedora.pidman') # mock the pidman client (the API service)
+    def test_update_ark_label(self, mockpidman):
+
+        # Create a ArrangementObject
+        arrangement_object = ArrangementObject(Mock())
+
+        # Set a pid on the object so that it could internally generate a noid etc.
+        arrangement_object.pid = "test:1234"
+
+        # Simulate when the object doesn't exist (or hasn't been saved)
+        # By default it appears as if it doesn't exist
+        arrangement_object.update_ark_label()
+
+        # What we should expect is that the update_ark_label is not called on pidman
+        # Also there shouldn't be any errors
+        # Use the mock assertFalse to check if a method is called or not
+        self.assertFalse(mockpidman.get_ark.called)
+
+        # Mock when the object exists (returns True)
+        # Note: Need to set the Mock on the class and not the object because
+        # this (exists) is a property method
+        with patch.object(ArrangementObject, 'exists', new=Mock(return_value=True)):
+            arrangement_object.update_ark_label()
+            self.assertFalse(mockpidman.get_ark.called)
+
+        # Set the label before the object exists so we don't trigger API calls
+        arrangement_object.dc.content.title = "testpid"
+        with patch.object(ArrangementObject, 'exists', new=Mock(return_value=True)):
+            mockpidman.get_ark.return_value = {"name": arrangement_object.dc.content.title}
+            arrangement_object.update_ark_label()
+            mockpidman.get_ark.assert_called_with(arrangement_object.noid) # assert that it is called with a noid too
+            self.assertFalse(mockpidman.update_ark.called)
+
+            # When the label is different from that in Pidman
+            mockpidman.get_ark.return_value = {"name": "another pid"}
+            arrangement_object.update_ark_label()
+            mockpidman.get_ark.assert_called_with(arrangement_object.noid) # assert that it is called with a noid too
+            mockpidman.update_ark.assert_called_with(noid=arrangement_object.noid, name=arrangement_object.dc.content.title)
+
+
 class EmailMessageTest(KeepTestCase):
 
     def setUp(self):
@@ -746,4 +787,3 @@ class ArrangementObjectEditFormTest(TestCase):
         self.assertEqual(mock_upload.name, fileobj.pdf.label)
         self.assertEqual(mock_upload.content_type, fileobj.pdf.mimetype)
         self.assertEqual(mock_upload, fileobj.pdf.content)
-
