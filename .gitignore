@@ -15,3 +15,4 @@ nosetests.xml
 .noseids
 keep/accounts/migrations/0004_auto_20160613_1112.py
 thekeep.db
+tmp/
