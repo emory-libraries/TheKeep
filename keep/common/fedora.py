@@ -338,6 +338,9 @@ class ArkPidDigitalObject(models.DigitalObject):
         """Update an object's label. Check if the mods
         content title of the object has been changed; if changed, apply the change
         to the object in pidman
+        There is a similar method in ArranagementObject. They are similar but not the same
+        because in ArrangementObject we use Dublin Core vs. MODS here. So do check out the
+        other method when you make changes to this method.
 
         :param force_update: optional flag that will enforce update of the object title
             regardless of mods.isModified(), when supplied as True
@@ -359,9 +362,12 @@ class ArkPidDigitalObject(models.DigitalObject):
                             pidman_label = pidman.get_ark(self.noid)['name']
                             if self.mods.content.title != pidman_label: # when the title is different
                                 pidman.update_ark(noid=self.noid, name=self.mods.content.title)
-                        except Exception, e:
-                            logger.exception += "Object %s errored out in Pidman. \
-                                Error message: %s \n" % (self.noid, str(e))
+                        except KeyError as e:
+                            logger.error("Pidman object %s doesn't have a 'name' attribute. \
+                                Error message: %s", self.noid, str(e))
+                        except Exception as e:
+                            logger.error("Object %s errored out in Pidman. \
+                                Error message: %s", self.noid, str(e))
                     else:
                         logger.warning("Pidman client does not exist.")
             else:

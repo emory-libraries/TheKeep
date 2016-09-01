@@ -149,9 +149,20 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                         pidman_label = pidman.get_ark(self.noid)['name']
                         if self.dc.content.title != pidman_label: # when the title is different
                             pidman.update_ark(noid=self.noid, name=self.dc.content.title)
-                    except Exception, e:
-                        logger.exception = "Object %s errored out in Pidman. \
-                            Error message: %s \n" % (self.noid, str(e))
+
+                    # catch KeyError
+                    except KeyError as e:
+                        logger.error("Object %s doesn't have a name attribute in Pidman.", self.noid)
+
+                    # catch HTTPError (e.g. 401, 404)
+                    except urllib2.HTTPError as e:
+                        logger.error("Object %s errored out in Pidman HTTP requests. \
+                            HTTP status code: %s \n", self.noid, str(e.code))
+
+                    # catch other exceptions
+                    except Exception as e:
+                        logger.error("Object %s errored out in Pidman. \
+                            Error message: %s \n", self.noid, str(e))
                 else:
                     logging.warning("Pidman client does not exist.")
         else:

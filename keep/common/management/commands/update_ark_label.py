@@ -171,36 +171,33 @@ class Command(BaseCommand):
             hasException = False
             exception_string = ""
 
-            try:
-                digital_object = self.repo.get_object(object_uri, object_class)
-                digital_object_pid = digital_object.pid
-            except Exception, e:
-                hasException = True
-                exception_string += "Object %s is not found in Fedora. \
-                    Error message: %s \n" % (digital_object_pid, str(e))
+            digital_object = self.repo.get_object(object_uri, object_class)
+            digital_object_pid = digital_object.pid
 
             try:
                 pidman_digital_obejct = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN, pid=digital_object.noid)
-            except Exception, e:
+            except Exception as e:
                 hasException = True
                 exception_string += "Object %s is not found in Pidman. \
                     Error message: %s \n" % (digital_object_pid, str(e))
 
-            try:
-                pidman_label = pidman_digital_obejct["results"][0]["name"]
-            except Exception, e:
-                hasException = True
-                exception_string += "Object %s does not have ['results'][0]['name'] attributes. \
-                    Error message: %s \n" % (digital_object_pid, str(e))
+            if pidman_digital_obejct.get("results_count", 0):
+                pidman_label = pidman_digital_obejct["results"][0].get("name", None)
+                if pidman_label is None:
+                    hasException = True
+                    exception_string += "Object %s does not exist or have a valid label."
 
             try:
                 digital_object_label = digital_object.label
-            except Exception, e:
+            except AttributeError as e:
                 hasException = True
-                exception_string += "Object %s cannot access its label attribute. \
+                exception_string += "Fedora object %s doesn't have a label attribute."
+            except Exception as e:
+                hasException = True
+                exception_string += "Object %s does not have a valid label attribute. \
                     Error message: %s \n" % (digital_object_pid, str(e))
 
-            if hasException is not True:
+            if not hasException:
                 # execute irreversible update when the dry run flag is not set
                 # be cautious
                 if not self.is_dry_run:
@@ -216,7 +213,7 @@ class Command(BaseCommand):
                     nochange_count += 1
                     status_label = "no-change-needed"
 
-            if hasException:
+            else:
                 # log the failure in a file
                 error_file_path = "%s/%s.log" % (self.error_path, digital_object.noid)
                 error_log = open(error_file_path, 'w+')
