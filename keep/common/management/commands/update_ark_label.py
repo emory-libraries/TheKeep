@@ -114,21 +114,21 @@ class Command(BaseCommand):
         self.stdout.write("Started summarize objects from Fedora...")
 
         # get object counts with Fedora ResourceIndex and summarize stats on screen
-        audio_count = self.summarize_work(AudioObject, "Audio")
-        video_count = self.summarize_work(Video, "Video")
+        # audio_count = self.summarize_work(AudioObject, "Audio")
+        # video_count = self.summarize_work(Video, "Video")
         arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
-        diskimage_count = self.summarize_work(DiskImage, "DiskImage")
-        collection_count = self.summarize_work(CollectionObject, "Collection")
+        # diskimage_count = self.summarize_work(DiskImage, "DiskImage")
+        # collection_count = self.summarize_work(CollectionObject, "Collection")
 
         # end the object summarization process
         self.stdout.write("Object summarization finished.")
 
         # update objects in each content model
-        self.update_progress(AudioObject, "Audio", audio_count)
-        self.update_progress(Video, "Video", video_count)
+        # self.update_progress(AudioObject, "Audio", audio_count)
+        # self.update_progress(Video, "Video", video_count)
         self.update_progress(ArrangementObject, "Arrangement", arrangement_count)
-        self.update_progress(DiskImage, "DiskImage", diskimage_count)
-        self.update_progress(CollectionObject, "Collection", collection_count)
+        # self.update_progress(DiskImage, "DiskImage", diskimage_count)
+        # self.update_progress(CollectionObject, "Collection", collection_count)
 
     def update_progress(self, object_class, content_model_name, total_count):
         """Update the objects in Pidman and reports progress back to the user.
@@ -178,21 +178,25 @@ class Command(BaseCommand):
                 exception_string += "Object %s is not found in Pidman. \
                     Error message: %s \n" % (digital_object_pid, str(e))
 
-            if pidman_digital_obejct.get("results_count", 0):
-                pidman_label = pidman_digital_obejct["results"][0].get("name", None)
-                if pidman_label is None:
+            if not hasException:
+                try:
+                    pidman_label = pidman_digital_obejct["results"][0].get("name", None)
+                except KeyError as e:
                     hasException = True
-                    exception_string += "Object %s does not exist or does not have a valid label." % digital_object_pid
+                    exception_string += "Pidman object %s doesn't exist or doesn't have a valid label." % digital_object_pid
+                except Exception as e:
+                    hasException = True
+                    exception_string += "Pidman object %s is not accessible. Error message: %s" % (digital_object_pid, str(e))
 
-            try:
-                digital_object_label = digital_object.label
-            except AttributeError as e:
-                hasException = True
-                exception_string += "Fedora object %s doesn't have a label attribute." % digital_object_pid
-            except Exception as e:
-                hasException = True
-                exception_string += "Object %s does not have a valid label attribute. \
-                    Error message: %s \n" % (digital_object_pid, str(e))
+                try:
+                    digital_object_label = digital_object.label
+                except AttributeError as e:
+                    hasException = True
+                    exception_string += "Fedora object %s doesn't have a label attribute." % digital_object_pid
+                except Exception as e:
+                    hasException = True
+                    exception_string += "Fedora object %s is not accessible. \
+                        Error message: %s \n" % (digital_object_pid, str(e))
 
             if not hasException:
                 # execute irreversible update when the dry run flag is not set
