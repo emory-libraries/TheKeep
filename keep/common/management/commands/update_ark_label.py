@@ -206,7 +206,7 @@ class Command(BaseCommand):
                 # when the names are the same
                 else:
                     nochange_count += 1
-                    status_label = "no-change-needed"
+                    status_label = "ok"
 
             else:
                 # log the failure in a file
