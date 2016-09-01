@@ -114,10 +114,10 @@ class Command(BaseCommand):
 
         # get object counts with Fedora ResourceIndex and summarize stats on screen
         audio_count = self.summarize_work(AudioObject, "Audio")
-        # video_count = self.summarize_work(Video, "Video")
-        # arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
-        # diskimage_count = self.summarize_work(DiskImage, "DiskImage")
-        # collection_count = self.summarize_work(CollectionObject, "Collection")
+        video_count = self.summarize_work(Video, "Video")
+        arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
+        diskimage_count = self.summarize_work(DiskImage, "DiskImage")
+        collection_count = self.summarize_work(CollectionObject, "Collection")
 
         # end the object summarization process
         self.stdout.write("Object summarization finished.")
