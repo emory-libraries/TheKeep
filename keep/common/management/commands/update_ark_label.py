@@ -107,7 +107,8 @@ class Command(BaseCommand):
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
         self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_DOMAIN))
-        self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', 'Label in Fedora', 'Label in Pidman'))
+        self.summary_log.writerow(('Time', 'Status', 'Content Model', 'PID', \
+            'Label in Fedora', 'Label in Pidman', 'Exception Details'))
 
         # start the object collection process
         self.stdout.write("Started summarize objects from Fedora...")
@@ -228,7 +229,8 @@ class Command(BaseCommand):
                 content_model_name, \
                 digital_object_pid, \
                 digital_object_label, \
-                pidman_label))
+                pidman_label, \
+                exception_string))
 
             # update progress
             pbar.update(change_count + nochange_count)
