@@ -4,6 +4,7 @@ import logging
 from mock import Mock, MagicMock, patch
 import os
 from sunburnt import sunburnt
+import urllib2
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -359,11 +360,29 @@ class DigitalObjectTest(TestCase):
                 mockpidman.get_ark.assert_called_with(digobj.noid) # assert that it is called with a noid too
                 self.assertFalse(mockpidman.update_ark.called)
 
+                # When the name is not found
+                # Make this test case above others that may make the mockpidman.update_ark.called
+                # Otherwise we'd need to reset the 'called'
+                mockpidman.get_ark.return_value = {}
+                digobj.update_ark_label()
+                self.assertFalse(mockpidman.update_ark.called)
+
                 # When the label is different from that in Pidman
                 mockpidman.get_ark.return_value = {"name": "another pid"}
                 digobj.update_ark_label()
                 mockpidman.get_ark.assert_called_with(digobj.noid) # assert that it is called with a noid too
                 mockpidman.update_ark.assert_called_with(noid=digobj.noid, name=digobj.mods.content.title)
+
+                # HTTPError
+                # Sometimes there might be bad HTTP Requests made through urllib2
+                # and we'd like to catch these errors
+                # Here we are simulating when the request has a 401
+                mock_url = "some_url"
+                mock_http_code = 401
+                mock_message = "mock HTTPError message: Permission Denied"
+                mockpidman.update_ark.side_effect = urllib2.HTTPError(mock_url, mock_http_code, mock_message, {}, None) # raise urllib2.HTTPError exception with side effect
+                digobj.update_ark_label()
+                self.assertRaises(urllib2.HTTPError)
 
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',

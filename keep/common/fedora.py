@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import render
-import urllib, logging
+import urllib, logging, urllib2
 
 from eulfedora import models, server
 from eulfedora.util import RequestFailed, PermissionDenied
@@ -359,9 +359,13 @@ class ArkPidDigitalObject(models.DigitalObject):
                 if force_update or self.mods.isModified():
                     if pidman is not None:
                         try:
-                            pidman_label = pidman.get_ark(self.noid)['name']
-                            if self.mods.content.title != pidman_label: # when the title is different
-                                pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+                            pidman_label = pidman.get_ark(self.noid).get("name", None)
+                            if pidman_label is not None:
+                                if self.mods.content.title != pidman_label: # when the title is different
+                                    pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+                        except urllib2.HTTPError as e:
+                            logger.error("Pidman object %s failed when making an HTTP request. \
+                                Error message: %s", self.noid, str(e))
                         except KeyError as e:
                             logger.error("Pidman object %s doesn't have a 'name' attribute. \
                                 Error message: %s", self.noid, str(e))
