@@ -114,21 +114,21 @@ class Command(BaseCommand):
         self.stdout.write("Started summarize objects from Fedora...")
 
         # get object counts with Fedora ResourceIndex and summarize stats on screen
-        # audio_count = self.summarize_work(AudioObject, "Audio")
-        # video_count = self.summarize_work(Video, "Video")
+        audio_count = self.summarize_work(AudioObject, "Audio")
+        video_count = self.summarize_work(Video, "Video")
         arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
-        # diskimage_count = self.summarize_work(DiskImage, "DiskImage")
-        # collection_count = self.summarize_work(CollectionObject, "Collection")
+        diskimage_count = self.summarize_work(DiskImage, "DiskImage")
+        collection_count = self.summarize_work(CollectionObject, "Collection")
 
         # end the object summarization process
         self.stdout.write("Object summarization finished.")
 
         # update objects in each content model
-        # self.update_progress(AudioObject, "Audio", audio_count)
-        # self.update_progress(Video, "Video", video_count)
+        self.update_progress(AudioObject, "Audio", audio_count)
+        self.update_progress(Video, "Video", video_count)
         self.update_progress(ArrangementObject, "Arrangement", arrangement_count)
-        # self.update_progress(DiskImage, "DiskImage", diskimage_count)
-        # self.update_progress(CollectionObject, "Collection", collection_count)
+        self.update_progress(DiskImage, "DiskImage", diskimage_count)
+        self.update_progress(CollectionObject, "Collection", collection_count)
 
     def update_progress(self, object_class, content_model_name, total_count):
         """Update the objects in Pidman and reports progress back to the user.
