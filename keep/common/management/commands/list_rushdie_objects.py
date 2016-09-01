@@ -20,15 +20,19 @@ class Command(BaseCommand):
     """
 
     greetings = """
-    Rushdie colliding pid script
+    Rushdie colliding pid script.
+    It fetches all pid objects from domain "Rushdie Collection"
+    and looks up corresponding pids in Fedora to see if they exist.
+    Whether it exsits in Fedora or not it will genereate a report that summarizes
+    the findings.
+
+    Before you run please make sure you have the correct credentials for Pidman
+    and Fedora environments so that you are getting results of what you are concerned about.
     """
 
     def handle(self, *args, **kwargs):
         # disable info messages in the console
         logging.getLogger('requests').setLevel(logging.CRITICAL)
-
-        # initialize an interruption flag
-        self.interrupted = False
 
         # initialize a Pidman client object
         self.pidman = self.get_pidman()
@@ -68,7 +72,9 @@ class Command(BaseCommand):
         # create log files
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
-        self.summary_log.writerow(('Time', 'Pid', 'Label', 'URI', 'Target URI', 'Access URI'))
+        self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_DOMAIN))
+        self.summary_log.writerow(('Time', 'PM_Pid', 'PM_Label', 'PM_Target_URI', \
+            "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Status"))
 
         # collect pids in Rushdie Collection
         results = self.pidman.search_pids(domain="Rushdie Collection")
@@ -87,9 +93,6 @@ class Command(BaseCommand):
         sys.stdout.write("%i objects in total.\n" % results_count)
         sys.stdout.flush()
 
-        # bind a handler for interrupt signal
-        signal.signal(signal.SIGINT, self.interrupt_handler)
-
         # initialize a progress bar following the Readux example
         pbar = ProgressBar(widgets=[Percentage(),
             ' (', Counter(), ')',
@@ -100,22 +103,36 @@ class Command(BaseCommand):
         max_results_per_page = results["max_results_per_page"]
         pages = int(math.ceil(results_count / max_results_per_page))
         current_count = 0
+
+        # iterate through all results fetched from pidman
         for page in range(1, pages):
             page_results = self.pidman.search_pids(domain="Rushdie Collection", page=page)
             for page_result in page_results["results"]:
-                object_pid = page_result["pid"]
-                label = page_result["name"]
-                uri = page_result["targets"][0]["uri"]
-                target_uri = page_result["targets"][0]["target_uri"]
-                access_uri = page_result["targets"][0]["access_uri"]
-                current_count += 1
+                pm_object_pid, pm_label, pm_target_uri = (None,)*3
+                in_fedora, fedora_object, fedora_label, fedora_create_time_stamp = (None,)*4
+                status = "no-exception"
+                try:
+                    pm_object_pid = "emory:" + page_result["pid"]
+                    pm_label = page_result["name"]
+                    pm_target_uri = page_result["targets"][0]["target_uri"]
+                    fedora_object = self.repo.get_object(pm_object_pid)
+                    in_fedora = "Yes" if fedora_object.exists else "No"
+                    fedora_label = fedora_object.label
+                    fedora_create_time_stamp = fedora_object.created.strftime("%Y-%m-%d %H:%M:%S")
+                except Exception as e:
+                    status = "Exception: %s" % str(e)
+
                 self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                     time.localtime()), \
-                    object_pid, \
-                    label, \
-                    uri, \
-                    target_uri, \
-                    access_uri))
+                    pm_object_pid, \
+                    pm_label, \
+                    pm_target_uri, \
+                    in_fedora, \
+                    fedora_label, \
+                    fedora_create_time_stamp, \
+                    status))
+
+                current_count += 1
 
                 # update progress
                 pbar.update(current_count)
@@ -138,30 +155,3 @@ class Command(BaseCommand):
             """
             sys.stderr.write(error_msg)
             raise CommandError(e)
-
-    def interrupt_handler(self, signum, frame):
-        '''Gracefully handle a SIGINT. Stop and report what was done.
-            Originally from Readux
-        '''
-        if signum == signal.SIGINT:
-            # restore default signal handler so a second SIGINT can be used to quit
-            signal.signal(signal.SIGINT, signal.SIG_DFL)
-            # set interrupt flag so main loop knows to quit
-            self.interrupted = True
-
-    def summarize_work(self, object_class, content_model_name):
-        '''Summarize the number of object that is available to be processed for each
-            content model type. It uses a generator to collect the total number of
-            objects, prompts the user on the screen, and return the total count.
-
-            :param object_class: the class of a object collection
-            :param content_model_name: a human readable name for the content model/objects
-            :type content_model: str
-            :type content_model_name: str
-            :return: object_count total count of objects founds within a collection
-            :rtype: number
-        '''
-        count_query = "* <fedora-model:hasModel> <%s>" % str(object_class.CONTENT_MODELS[0])
-        object_count = self.repo.risearch.count_statements(count_query)
-        self.stderr.write("%i %s objects found." % (object_count, content_model_name))
-        return object_count
