@@ -114,10 +114,10 @@ class Command(BaseCommand):
 
         # get object counts with Fedora ResourceIndex and summarize stats on screen
         audio_count = self.summarize_work(AudioObject, "Audio")
-        video_count = self.summarize_work(Video, "Video")
-        arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
-        diskimage_count = self.summarize_work(DiskImage, "DiskImage")
-        collection_count = self.summarize_work(CollectionObject, "Collection")
+        # video_count = self.summarize_work(Video, "Video")
+        # arrangement_count = self.summarize_work(ArrangementObject, "Arrangement")
+        # diskimage_count = self.summarize_work(DiskImage, "DiskImage")
+        # collection_count = self.summarize_work(CollectionObject, "Collection")
 
         # end the object summarization process
         self.stdout.write("Object summarization finished.")
@@ -163,7 +163,8 @@ class Command(BaseCommand):
         object_uris = self.repo.risearch.get_subjects(modelns.hasModel, object_class.CONTENT_MODELS[0])
         for object_uri in object_uris:
             digital_object, digital_object_pid, digital_object_label, pidman_digital_obejct = (None,)*4
-            pidman_label, status_label, exception_string = (None,)*3
+            pidman_label, status_label  = (None,)*2
+            exception_string = ""
             hasException = False
 
             digital_object = self.repo.get_object(object_uri, object_class)
