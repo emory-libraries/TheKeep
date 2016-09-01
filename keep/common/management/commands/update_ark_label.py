@@ -162,14 +162,9 @@ class Command(BaseCommand):
         # use generator to process each object
         object_uris = self.repo.risearch.get_subjects(modelns.hasModel, object_class.CONTENT_MODELS[0])
         for object_uri in object_uris:
-            digital_object = ""
-            digital_object_pid = ""
-            digital_object_label = ""
-            pidman_digital_obejct = ""
-            pidman_label = ""
-            status_label = ""
+            digital_object, digital_object_pid, digital_object_label, pidman_digital_obejct = (None,)*4
+            pidman_label, status_label, exception_string = (None,)*3
             hasException = False
-            exception_string = ""
 
             digital_object = self.repo.get_object(object_uri, object_class)
             digital_object_pid = digital_object.pid
@@ -185,13 +180,13 @@ class Command(BaseCommand):
                 pidman_label = pidman_digital_obejct["results"][0].get("name", None)
                 if pidman_label is None:
                     hasException = True
-                    exception_string += "Object %s does not exist or have a valid label."
+                    exception_string += "Object %s does not exist or does not have a valid label." % digital_object_pid
 
             try:
                 digital_object_label = digital_object.label
             except AttributeError as e:
                 hasException = True
-                exception_string += "Fedora object %s doesn't have a label attribute."
+                exception_string += "Fedora object %s doesn't have a label attribute." % digital_object_pid
             except Exception as e:
                 hasException = True
                 exception_string += "Object %s does not have a valid label attribute. \
