@@ -165,12 +165,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                             Error message: %s \n", self.noid, str(e))
                 else:
                     logging.warning("Pidman client does not exist.")
-        else:
-            # log as a warning if the update fails because there is no mods attirbute
-            # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
-            # return a false when 'mods' attribute is not present, so logging that here.
-            logging.warning("Could not update ARK label for %s because MODS is not available", \
-                str(self.noid))
 
     @property
     def content_md5(self):

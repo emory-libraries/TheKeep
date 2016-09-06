@@ -374,12 +374,6 @@ class ArkPidDigitalObject(models.DigitalObject):
                                 Error message: %s", self.noid, str(e))
                     else:
                         logger.warning("Pidman client does not exist.")
-            else:
-                # log as a warning if the update fails because there is no mods attirbute
-                # Python 2.7 doesn't seem to swallow exceptions when we use hasattr but it does
-                # return a false when 'mods' attribute is not present, so logging that here.
-                logger.warning("Could not update ARK label for %s because MODS is not available", \
-                    str(self.noid))
 
     def history_events(self):
         '''Cluster API calls documented in the
