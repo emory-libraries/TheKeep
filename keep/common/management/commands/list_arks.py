@@ -249,8 +249,12 @@ class Command(BaseCommand):
                     else:
                         if pidman_target_uri == keep_target_uri and pidman_label == digital_object_label:
                             mismatch = "No"
-                        else:
-                            mismatch = "Yes"
+                        elif pidman_target_uri != keep_target_uri and pidman_label != digital_object_label:
+                            mismatch = "label&uri"
+                        elif pidman_target_uri != keep_target_uri:
+                            mismatch = "uri"
+                        elif pidman_label != digital_object_label:
+                            mismatch = "label"
                 except Exception as e:
                     hasException = True
                     exception_string += "Either Pidman or Keep target_uri doesn't exist. Error message: %s" % (digital_object_pid, str(e))
