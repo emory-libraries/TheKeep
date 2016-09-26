@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import json
 import logging
-from mock import Mock, patch, NonCallableMock
+from mock import Mock, patch, NonCallableMock, MagicMock
 from os import path
 from django.contrib.auth import get_user_model
 from rdflib import URIRef
@@ -11,6 +11,7 @@ from unittest import skip
 
 from django.conf import settings
 from django.core.urlresolvers import reverse, resolve
+from django.contrib import messages
 from django.test import Client
 from django.utils.http import urlquote
 
@@ -18,6 +19,7 @@ from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
 from eulxml.xmlmap import mods
 from eulcm.xmlmap.mods import MODS
+from eulexistdb.exceptions import DoesNotExist, ReturnedMultiple
 
 from keep.audio.models import AudioObject
 from keep.accounts.models import ResearcherIP
@@ -1303,6 +1305,120 @@ class CollectionViewsTest(KeepTestCase):
             'guest access to collection view should redirect to login page')
 
         researchip.delete()
+
+    @patch('keep.collection.views.CollectionObject.item_collection_query')
+    def test_create_from_findingaid(self, mock_coll_query):
+        # test creating a collection object from findingaid
+
+        # configure solr response to find no match
+        query_return = MagicMock()
+        mock_coll_query.return_value.query.return_value = query_return
+        query_return.count.return_value = 0
+
+        new_coll_url = reverse('collection:new-from-findingaid')
+
+        # post without permission to add - should be denied
+        response = self.client.post(new_coll_url)
+        expected, got = 302, response.status_code
+        self.assertEqual(
+            expected, got,
+           'Expected access denied (%s) for anonymous access on %s, got %s' %
+            (expected, new_coll_url, got))
+
+        # log in as staff
+        # NOTE: using admin view so user credentials will be used to access fedora
+        self.client.post(settings.LOGIN_URL, ADMIN_CREDENTIALS)
+        dashboard_url = reverse('repo-admin:dashboard')
+
+        # allows post only
+        response = self.client.get(new_coll_url)
+        expected, got = 405, response.status_code
+        self.assertEqual(expected, got,
+                         'Expected bad request (%s) for GET on %s, got %s' %
+                         (expected, new_coll_url, got))
+
+        # no form values; should redirect with a message
+        response = self.client.post(new_coll_url)
+        expected, code = 303, response.status_code
+        self.assertEqual(code, expected, 'Expected %s but returned %s for %s as admin'
+                         % (expected, code, new_coll_url))
+        self.assert_(dashboard_url in response['location'])
+
+        # get dashboard page to get context message
+        def get_last_message():
+            response = self.client.get(dashboard_url)
+            return list(response.context['messages'])[0]
+
+        msg = get_last_message()
+        self.assert_('Form is not valid' in msg.message)
+        self.assertEqual(messages.ERROR, msg.level)
+
+        # not found in solr or exist
+        response = self.client.post(
+            new_coll_url, {'collection': 1000, 'archive': 'marbl'})
+        # redirect to dashboard with message
+        self.assert_(dashboard_url in response['location'])
+
+        # check context message
+        msg = get_last_message()
+        self.assertEqual('No EAD found for 1000 in MARBL', msg.message)
+        self.assertEqual(messages.ERROR, msg.level)
+
+        # mock findingaid model to simulate exist portion
+        with patch('keep.collection.views.FindingAid') as mockfindingaid:
+            newcoll = self.repo.get_object(type=CollectionObject)
+            newcoll.mods.content.title = 'So and So papers'
+            mockfindingaid.find_by_unitid.return_value \
+                          .generate_collection.return_value = newcoll
+                            # fa = FindingAid.find_by_unitid(unicode(coll_id),
+                                               # archive.mods.content.title)
+            response = self.client.post(
+                new_coll_url, {'collection': 1000, 'archive': 'marbl'})
+
+            # should create new collection and redirect to edit
+            self.assert_(
+                reverse('collection:edit', kwargs={'pid': newcoll.pid})
+                in response['location'])
+
+            msg = get_last_message()
+            self.assertEqual('Added %s for collection 1000: %s' % \
+                (newcoll.pid, newcoll.mods.content.title), msg.message)
+            self.assertEqual(messages.INFO, msg.level)
+
+            # exist errors
+            mockfindingaid.find_by_unitid.side_effect = DoesNotExist
+            response = self.client.post(
+                new_coll_url, {'collection': 1000, 'archive': 'marbl'})
+            # redirect to dashboard with message
+            self.assert_(dashboard_url in response['location'])
+            msg = get_last_message()
+            self.assertEqual('No EAD found for 1000 in MARBL',
+                             msg.message)
+            self.assertEqual(messages.ERROR, msg.level)
+
+            mockfindingaid.find_by_unitid.side_effect = ReturnedMultiple
+            response = self.client.post(
+                new_coll_url, {'collection': 1000, 'archive': 'marbl'})
+            # redirect to dashboard with message
+            self.assert_(dashboard_url in response['location'])
+            msg = get_last_message()
+            self.assertEqual('Multiple EADs found for 1000 in MARBL',
+                             msg.message)
+            self.assertEqual(messages.ERROR, msg.level)
+
+        # found existing collection
+        query_return.count.return_value = 1
+        foundcoll_pid = 'coll:123'
+        query_return.__getitem__.return_value = {'pid': foundcoll_pid}
+        response = self.client.post(
+            new_coll_url, {'collection': 1000, 'archive': 'marbl'})
+        # should redirect to collection view for found collection
+        self.assert_(reverse('collection:view', kwargs={'pid': foundcoll_pid})
+                     in response['location'])
+        msg = get_last_message()
+        self.assertEqual('Found 1 collection for MARBL 1000.', msg.message)
+        self.assertEqual(messages.INFO, msg.level)
+
 
 
 @skip('eXist integration currently out of date and unsupported')

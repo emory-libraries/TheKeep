@@ -4,11 +4,12 @@ import logging
 from mock import Mock, MagicMock, patch
 import os
 from sunburnt import sunburnt
+import urllib2
 
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 
 from eulfedora.models import XmlDatastream
 from eulfedora.xml import AuditTrailRecord
@@ -44,34 +45,16 @@ class TestAbsolutizeUrl(TestCase):
         self.assertEqual('http://example.com/foo/', absolutize_url('/foo/'))
 
 
-
+@override_settings(SOLR_SERVER_URL='http://test.solr/', SOLR_CA_CERT_PATH=None)
 class TestSolrInterface(TestCase):
 
     def setUp(self):
-        # save any solr settings and replace with test values
-        # TODO: update to use django.test.override_settings decorator
-        self._solr_url = getattr(settings, 'SOLR_SERVER_URL', None)
-        settings.SOLR_SERVER_URL = 'http://test.solr/'
-        self._solr_ca_cert_path = getattr(settings, 'SOLR_CA_CERT_PATH', None)
-        if self._solr_ca_cert_path:
-            delattr(settings, 'SOLR_CA_CERT_PATH')
-
         self._http_proxy = os.getenv('HTTP_PROXY', None)
         if 'HTTP_PROXY' in os.environ:
             del os.environ['HTTP_PROXY']
 
     def tearDown(self):
-        # restore any solr settings
-        if self._solr_url is None:
-            delattr(settings, 'SOLR_SERVER_URL')
-        else:
-            settings.SOLR_SERVER_URL = self._solr_url
-
-        if self._solr_ca_cert_path is None and hasattr(settings, 'SOLR_CA_CERT_PATH'):
-            delattr(settings, 'SOLR_CA_CERT_PATH')
-        else:
-            settings.SOLR_CA_CERT_PATH = self._solr_ca_cert_path
-
+        # restore proxy setting
         if self._http_proxy is not None:
             os.putenv('HTTP_PROXY', self._http_proxy)
 
@@ -80,9 +63,8 @@ class TestSolrInterface(TestCase):
     def test_solr_interface(self, mocksunburnt, mockhttplib):
         # basic init with no options
         solr_interface()
-        mockhttplib.Http.assert_called_once()
-        # httplib2.Http should be initialized with defaults (no args)
-        mockhttplib.Http.assert_called_with()
+        # httplib2.Http should be initialized with defaults (no args, no cert)
+        mockhttplib.Http.called_with(ca_certs=None)
         mocksunburnt.SolrInterface.assert_called_with(settings.SOLR_SERVER_URL,
             schemadoc=settings.SOLR_SCHEMA,
             http_connection=mockhttplib.Http.return_value)
@@ -94,7 +76,10 @@ class TestSolrInterface(TestCase):
         settings.SOLR_CA_CERT_PATH = '/some/path/to/certs'
         solr_interface()
         # httplib should be initialized with ca_certs option
-        mockhttplib.Http.assert_called_with(ca_certs=settings.SOLR_CA_CERT_PATH)
+        mockhttplib.Http.assert_called_with(
+            ca_certs=settings.SOLR_CA_CERT_PATH
+            # proxy_info=mockhttplib.ProxyInfo.return_value
+        )
 
     @patch('keep.common.utils.httplib2')
     @patch('keep.common.utils.sunburnt')
@@ -105,14 +90,17 @@ class TestSolrInterface(TestCase):
         # proxy info should be configured & passed to httplib2
         mockhttplib.ProxyInfo.assert_called_with(proxy_type=mockhttplib.socks.PROXY_TYPE_HTTP_NO_TUNNEL,
                                               proxy_host='localhost', proxy_port=3128)
-        mockhttplib.Http.assert_called_with(proxy_info=mockhttplib.ProxyInfo.return_value)
+        mockhttplib.Http.assert_called_with(
+            proxy_info=mockhttplib.ProxyInfo.return_value,
+            ca_certs=settings.SOLR_CA_CERT_PATH)
 
         # when solr url is https, no proxy should be set
         mockhttplib.reset_mock()
         settings.SOLR_SERVER_URL = 'https://test.solr/'
         solr_interface()
         mockhttplib.ProxyInfo.assert_not_called()
-        mockhttplib.Http.assert_called_with() # no args
+        # no args except default cert path
+        mockhttplib.Http.assert_called_with(ca_certs=settings.SOLR_CA_CERT_PATH)
 
 
 
@@ -333,6 +321,68 @@ class DigitalObjectTest(TestCase):
                     self.assert_(r['pid'] in e.pids)
                     self.assertEqual(r['content_model'], e.pid_cmodels[r['pid']])
 
+    # Test the update_ark_label method in the keep.common.fedora
+    @patch('keep.common.fedora.pidman') # mock the pidman client (the API service)
+    def test_update_ark_label(self, mockpidman):
+
+        # Create a ModsDigitalObject
+        digobj = ModsDigitalObject(Mock())
+
+        # Set a pid on the object so that it could internally generate a noid etc.
+        digobj.pid = "test:1234"
+
+        # Simulate when the object doesn't exist (or hasn't been saved)
+        # By default it appears as if it doesn't exist
+        digobj.update_ark_label()
+
+        # What we should expect is that the update_ark_label is not called on pidman
+        # Also there shouldn't be any errors
+        # Use the mock assertFalse to check if a method is called or not
+        self.assertFalse(mockpidman.get_ark.called)
+
+        # Mock when the object exists (returns True)
+        # Note: Need to set the Mock on the class and not the object because
+        # this (exists) is a property method
+        with patch.object(DigitalObject, 'exists', new=Mock(return_value=True)):
+            digobj.update_ark_label()
+            self.assertFalse(mockpidman.get_ark.called)
+
+            with patch.object(digobj.mods, 'exists', new=True):
+                digobj.update_ark_label()
+                self.assertFalse(mockpidman.get_ark.called)
+
+        # Set the label before the object exists so we don't trigger API calls
+        digobj.mods.content.title = "testpid"
+        with patch.object(DigitalObject, 'exists', new=Mock(return_value=True)):
+            with patch.object(digobj.mods, 'exists', new=True):
+                mockpidman.get_ark.return_value = {"name": digobj.mods.content.title}
+                digobj.update_ark_label()
+                mockpidman.get_ark.assert_called_with(digobj.noid) # assert that it is called with a noid too
+                self.assertFalse(mockpidman.update_ark.called)
+
+                # When the name is not found
+                # Make this test case above others that may make the mockpidman.update_ark.called
+                # Otherwise we'd need to reset the 'called'
+                mockpidman.get_ark.return_value = {}
+                digobj.update_ark_label()
+                self.assertFalse(mockpidman.update_ark.called)
+
+                # When the label is different from that in Pidman
+                mockpidman.get_ark.return_value = {"name": "another pid"}
+                digobj.update_ark_label()
+                mockpidman.get_ark.assert_called_with(digobj.noid) # assert that it is called with a noid too
+                mockpidman.update_ark.assert_called_with(noid=digobj.noid, name=digobj.mods.content.title)
+
+                # HTTPError
+                # Sometimes there might be bad HTTP Requests made through urllib2
+                # and we'd like to catch these errors
+                # Here we are simulating when the request has a 401
+                mock_url = "some_url"
+                mock_http_code = 401
+                mock_message = "mock HTTPError message: Permission Denied"
+                mockpidman.update_ark.side_effect = urllib2.HTTPError(mock_url, mock_http_code, mock_message, {}, None) # raise urllib2.HTTPError exception with side effect
+                digobj.update_ark_label()
+                self.assertRaises(urllib2.HTTPError)
 
 # mock archives used to generate archives choices for form field
 @patch('keep.collection.forms.CollectionObject.archives',
@@ -665,4 +715,3 @@ class TestAuditTrailEvent(TestCase):
 
         modify_event = AuditTrailEvent(self.modify)
         self.assertEqual('modify', ingest_event.action)
-

@@ -16,7 +16,14 @@ class Command(BaseCommand):
     will look for the corresponding EAD document within the requested numbering
     scheme and generate a new :class:`~keep.collection.models.CollectionObject`.
     '''
-    help = __doc__
+    help = '''Create a new collection based on a Finding Aid EAD document.
+Takes a pid or pid alias for the archive the new collection will belong to
+and the collection number, which are used to find the appropriate Finding Aid
+document.  Can also take a list of multiple collection numbers.  Example use:
+
+    load_ead marbl 488 1000
+
+'''
     args = 'num-scheme-pid collection-id [...]'
 
     option_list = BaseCommand.option_list + (
@@ -38,11 +45,20 @@ class Command(BaseCommand):
         errors = 0
 
         for id in ids:
+            # check for existing collection before creating new
+            existing_coll = list(CollectionObject.
+                                 find_by_collection_number(id, numbering.pid))
+            if existing_coll:
+                print 'Collection %s already exists as %s' % \
+                      (id, ', '.join([coll.pid for coll in existing_coll]))
+                continue
+
             coll = None
             try:
                 fa = FindingAid.find_by_unitid(id, numbering_title)
                 coll = fa.generate_collection()
-                coll.set_collection(numbering.uri)
+                # new collection parent collection is the archive collection object
+                coll.collection = numbering
                 if not options['dryrun']:
                     coll.save()
                 if verbosity:

@@ -8,9 +8,8 @@ import traceback
 from celery import shared_task
 from pymediainfo import MediaInfo
 
-
 from django.conf import settings
-from eullocal.django.taskresult.models import TaskResult
+from eulcommon.djangoextras.taskresult.models import TaskResult
 
 from keep.audio.models import AudioObject, check_wav_mp3_duration
 from keep.common.fedora import Repository

@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.db import models
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
-from eullocal.django.taskresult.models import TaskResult
+from eulcommon.djangoextras.taskresult.models import TaskResult
 from eulfedora.models import FileDatastream, XmlDatastream, Relation
 from eulfedora.rdfns import relsext
 from eulfedora.util import RequestFailed
@@ -334,7 +334,7 @@ class AudioObject(DigitalObject):
 
     @property
     def conversion_result(self):
-        '''Return the :class:`~eullocal.django.taskresult.models.TaskResult`
+        '''Return the :class:`~eulcommon.djangoextras.taskresult.models.TaskResult`
         for the most recently requested access copy conversion (if any).
         '''
         conversions = TaskResult.objects.filter(object_id=self.pid).order_by('-created')

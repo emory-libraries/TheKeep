@@ -12,12 +12,24 @@ from keep.collection.models import SimpleCollection
 from keep.common.fedora import ArkPidDigitalObject, Repository
 from keep.common.utils import solr_interface
 from keep.collection.models import CollectionObject
+from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
 logger = logging.getLogger(__name__)
 
 # content models currently used for xacml access / restriction
 ACCESS_ALLOWED_CMODEL = "info:fedora/emory-control:ArrangementAccessAllowed-1.0"
 ACCESS_RESTRICTED_CMODEL = "info:fedora/emory-control:ArrangementAccessRestricted-1.0"
+
+# try to configure a pidman client to get pids.
+try:
+    pidman = DjangoPidmanRestClient()
+except:
+    # if we're in dev mode then we can fall back on the fedora default
+    # pid allocator. in non-dev, though, we really need pidman
+    if getattr(settings, 'DEV_ENV', False):
+        pidman = None
+    else:
+        raise
 
 # FIXME: what about this one ? emory-control:RushdieResearcherAllowed-1.0
 
@@ -28,7 +40,6 @@ class Arrangement(models.Model):
         permissions = (
             ("view_arrangement", "Can view, search, and browse arrangement objects"),
         )
-
 
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     '''Subclass of :class:`eulfedora.models.DigitalObject` for
@@ -114,6 +125,46 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
                 self.rels_ext.content.remove(_allowed_triple)
             if _restricted_triple not in self.rels_ext.content:
                 self.rels_ext.content.add(_restricted_triple)
+
+    def update_ark_label(self, force_update=False):
+        """Update an object's label. While arrangement objects do have a MODS datastream,
+        the descriptive metadata about the object (including title) is currently stored
+        in the DC (or Dublin Core). In Fedora the DC data stream is a special one that
+        always exists, and we do not need to check if the dc exists. This method will compare
+        the title in DC field in Fedora and that in the Pidman object.
+
+        :param force_update: optional flag that will enforce update of the object title
+            regardless of mods.isModified(), when supplied as True
+        """
+
+        # Check if the object itself exists, and proceed if so.
+        # Python evaluates conditionals from left to right; therefore the
+        # order here matters
+        if self.exists:
+            # perform update when either force_update flag is provided, or otherwise
+            # only take actions when mods is modified.
+            if force_update or self.dc.isModified():
+                if pidman is not None:
+                    try:
+                        pidman_label = pidman.get_ark(self.noid)['name']
+                        if self.dc.content.title != pidman_label: # when the title is different
+                            pidman.update_ark(noid=self.noid, name=self.dc.content.title)
+
+                    # catch KeyError
+                    except KeyError as e:
+                        logger.error("Object %s doesn't have a name attribute in Pidman.", self.noid)
+
+                    # catch HTTPError (e.g. 401, 404)
+                    except urllib2.HTTPError as e:
+                        logger.error("Object %s errored out in Pidman HTTP requests. \
+                            HTTP status code: %s \n", self.noid, str(e.code))
+
+                    # catch other exceptions
+                    except Exception as e:
+                        logger.error("Object %s errored out in Pidman. \
+                            Error message: %s \n", self.noid, str(e))
+                else:
+                    logging.warning("Pidman client does not exist.")
 
     @property
     def content_md5(self):

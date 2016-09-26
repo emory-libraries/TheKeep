@@ -12,6 +12,7 @@ from eulcommon.djangoextras.auth import user_passes_test_with_403, \
 from eulcommon.searchutil import pages_to_show, parse_search_terms
 
 from keep.accounts.utils import filter_by_perms
+from keep.collection.forms import FindCollection
 from keep.common.models import rights_access_terms_dict
 from keep.common.utils import solr_interface
 from keep.repoadmin.forms import KeywordSearch
@@ -88,7 +89,8 @@ def dashboard(request):
         {'recent_items': recent_items, 'recent_months': recent_months,
         'recent_collections': recent_collections,
         'recent_fixity_checks': recent_fixity_checks,
-        'month_ago': month_ago, 'manual_url': settings.KEEP_MANUAL_URL})
+        'month_ago': month_ago, 'manual_url': settings.KEEP_MANUAL_URL,
+        'find_collection': FindCollection()})
 
 
 @user_passes_test_with_403(is_staff)

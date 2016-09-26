@@ -8,7 +8,7 @@ from keep.arrangement.models import ArrangementObject
 from keep.collection.models import SimpleCollection
 from keep.common.fedora import Repository
 
-from eullocal.django.taskresult.models import TaskResult
+from eulcommon.djangoextras.taskresult.models import TaskResult
 
 logger = get_task_logger(__name__)
 

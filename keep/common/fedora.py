@@ -5,7 +5,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import render
-import urllib
+import urllib, logging, urllib2
 
 from eulfedora import models, server
 from eulfedora.util import RequestFailed, PermissionDenied
@@ -17,6 +17,8 @@ from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
 from keep.accounts.views import decrypt
 from keep.common.utils import absolutize_url, solr_interface
+
+logger = logging.getLogger(__name__)
 
 # TODO: write unit tests now that this code is an app and django knows how to run tests for it
 
@@ -37,7 +39,6 @@ class LocalMODS(xmlmap.mods.MODS):
     # short-cut to type-specific identifiers
     ark = xmlmap.StringField('mods:identifier[@type="ark"]')
     ark_uri = xmlmap.StringField('mods:identifier[@type="uri"][contains(., "ark:")]')
-
 
 
 class AuditTrailEvent(object):
@@ -319,8 +320,10 @@ class ArkPidDigitalObject(models.DigitalObject):
 
                 raise DuplicateContent(msg, pids, pid_cmodels)
 
-        return super(DigitalObject, self).save(logMessage)
+        # update the ark label in pidman when there is a name conflict
+        self.update_ark_label()
 
+        return super(DigitalObject, self).save(logMessage)
 
     # map datastream IDs to human-readable names for inherited history_events method
     # (common datastream IDs only here)
@@ -330,6 +333,47 @@ class ArkPidDigitalObject(models.DigitalObject):
         'Rights': 'rights metadata',
         'RELS-EXT': 'related objects',
     }
+
+    def update_ark_label(self, force_update=False):
+        """Update an object's label. Check if the mods
+        content title of the object has been changed; if changed, apply the change
+        to the object in pidman
+        There is a similar method in ArranagementObject. They are similar but not the same
+        because in ArrangementObject we use Dublin Core vs. MODS here. So do check out the
+        other method when you make changes to this method.
+
+        :param force_update: optional flag that will enforce update of the object title
+            regardless of mods.isModified(), when supplied as True
+        """
+
+        # first check if the fedora object exists
+        # then check if the object has mods
+        # finally check if the object's mods is changed
+        # proceed only when all can pass
+        # Python evaluates conditionals from left to right; therefore the
+        # order here matters
+        if self.exists:
+            if hasattr(self, 'mods') and self.mods.exists:
+                # perform update when either force_update flag is provided, or otherwise
+                # only take actions when mods is modified.
+                if force_update or self.mods.isModified():
+                    if pidman is not None:
+                        try:
+                            pidman_label = pidman.get_ark(self.noid).get("name", None)
+                            if pidman_label is not None:
+                                if self.mods.content.title != pidman_label: # when the title is different
+                                    pidman.update_ark(noid=self.noid, name=self.mods.content.title)
+                        except urllib2.HTTPError as e:
+                            logger.error("Pidman object %s failed when making an HTTP request. \
+                                Error message: %s", self.noid, str(e))
+                        except KeyError as e:
+                            logger.error("Pidman object %s doesn't have a 'name' attribute. \
+                                Error message: %s", self.noid, str(e))
+                        except Exception as e:
+                            logger.error("Object %s errored out in Pidman. \
+                                Error message: %s", self.noid, str(e))
+                    else:
+                        logger.warning("Pidman client does not exist.")
 
     def history_events(self):
         '''Cluster API calls documented in the

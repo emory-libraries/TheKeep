@@ -70,6 +70,10 @@ FEDORA_TEST_ROOT = 'http://localhost:8180/fedora/'
 # use this to explicitly configure a test pidspace; by default, uses pidspace-test
 #FEDORA_TEST_PIDSPACE = 'testme'
 
+# Fedora user with access to manage content; used for migration and management scripts
+FEDORA_MANAGEMENT_USER = ''
+FEDORA_MANAGEMENT_PASSWORD = ''
+
 # Exist DB Settings
 EXISTDB_SERVER_URL      = 'http://user:password@existdb.example.com/exist/xmlrpc'
 # collection should begin with / -  e.g., /edc
