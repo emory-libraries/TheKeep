@@ -1,14 +1,16 @@
 from django.core.management.base import BaseCommand, CommandError
-from eulfedora.server import TypeInferringRepository
 from eulfedora.util import RequestFailed
 import re
 import tempfile
 
+from keep.arrangement.models import ArrangementObject
+from keep.common.fedora import Repository
+
 
 class Command(BaseCommand):
-    '''Export an existing Fedora object and import it with a new pid,
+    '''Export an existing arrangement object and import it with a new pid,
 preserving all history, datastreams, audit trails, etc.
-NOTE: should not be used except in dire need; may not work with large objects.'''
+NOTE: should not be used except in dire need; may fail on large objects.'''
     help = __doc__
 
     # regular expressions to remove datastream checksums before reingest
@@ -44,15 +46,21 @@ NOTE: should not be used except in dire need; may not work with large objects.''
 
     def handle(self, *args, **options):
 
-        # use type inferring repo so we can set the correct
-        # url as the pidman target uri
-
-        repo = TypeInferringRepository()
+        repo = Repository()
 
         for pid in options['pids']:
             # initialize current object so we can determine type,
             # and generate an appropriate Keep url
-            obj = repo.get_object(pid)
+            obj = repo.get_object(pid, type=ArrangementObject)
+
+            # check that object exists and is an arrangement object
+            if not obj.exists:
+                self.stderr.write('Error: %s not found' % pid)
+                continue
+            if not obj.has_requisite_content_models:
+                self.stderr.write('Error: %s is not an arrangement object' % pid)
+                continue
+
             # print ds id and checksum (for latest version), to help
             # with verifying content after ingest
             self.datastream_summary(obj)
