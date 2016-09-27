@@ -679,6 +679,14 @@ class ArrangementObjectTest(KeepTestCase):
         mockapi.username = 'fedoraAdmin'
         arrangement_object = ArrangementObject(mockapi)
         arrangement_object.pid = 'test:1234'
+
+        # set object premis so we can validate
+        mockapi.getDatastreamDissemination.return_value = []
+        with patch.object(arrangement_object, 'getDatastreamObject') as mockgetds:
+            mockgetds.return_value.checksum = '123456789'
+            mockgetds.return_value.mimetype = 'text/plain'
+            arrangement_object.set_premis_object()
+
         arrangement_object.identifier_change_event('old-pid:1')
         premis = arrangement_object.provenance.content
         self.assertEqual(1, len(premis.events))
@@ -696,8 +704,9 @@ class ArrangementObjectTest(KeepTestCase):
         self.assertEqual('fedora user', event.agent_type)
         self.assertEqual('fedoraAdmin', event.agent_id)
 
-        # NOTE: can't check that premis is valid because premis object
-        # is not present here
+        # generated premis should be valid
+        self.assertTrue(premis.is_valid())
+
 
 class EmailMessageTest(KeepTestCase):
 

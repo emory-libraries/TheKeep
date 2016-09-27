@@ -111,11 +111,11 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 newobj.identifier_change_event(pid)
                 # generated premis should be valid, but double-check before
                 # saving invalid premis to fedora
-                if not obj.provenance.content.is_valid():
+                if not newobj.provenance.content.is_valid():
                     print 'Error! premis is not valid'
-                    print obj.provenance.content.validation_errors()
+                    print newobj.provenance.content.validation_errors()
                 else:
-                    obj.save('Add premis with identifier change event')
+                    newobj.provenance.save('Add premis with identifier change event')
 
             except RequestFailed as err:
                 print 'Error ingesting %s as %s: %s' % (pid, newpid, err)
