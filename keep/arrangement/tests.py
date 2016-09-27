@@ -17,7 +17,7 @@ from eulcm.models import boda
 from eulcm.xmlmap.boda import FileMasterTech_Base
 from eulxml.xmlmap import cerp
 
-
+from keep import __version__
 from keep.arrangement.management.commands.migrate_rushdie import CONTENT_MODELS
 from keep.arrangement.management.commands import migrate_rushdie
 from keep.arrangement.models import ArrangementObject, RushdieArrangementFile, \
@@ -428,7 +428,6 @@ class ArrangementViewsTest(KeepTestCase):
 
     @patch('keep.arrangement.views.TypeInferringRepository')
     def test_view(self, mockrepo):
-        print 'mock repo = ', mockrepo
         # test generic view functionality (perms)
         mockrepo.return_value.get_object.return_value = self.email
 
@@ -522,7 +521,6 @@ class ArrangementObjectTest(KeepTestCase):
         self.arr.pid = 'foo:1'
         self.arr.collection = coll
 
-
     def tearDown(self):
         for pid in self.pids:
             self.repo.purge_object(pid)
@@ -604,7 +602,7 @@ class ArrangementObjectTest(KeepTestCase):
     # Test the update_ark_label method in the keep.common.fedora
     # Note that this test is a simplified version of keep.common.fedora:ArkPidDigitalObject.test_update_ark_label
     # The udpate_ark_label here is an overriden method that is more specifc, and is used on Arrangement objects
-    @patch('keep.arrangement.models.pidman') # mock the pidman client (the API service)
+    @patch('keep.arrangement.models.pidman')  # mock the pidman client (the API service)
     def test_update_ark_label(self, mockpidman):
 
         # Create a ArrangementObject
@@ -642,6 +640,64 @@ class ArrangementObjectTest(KeepTestCase):
             arrangement_object.update_ark_label()
             mockpidman.get_ark.assert_called_with(arrangement_object.noid) # assert that it is called with a noid too
             mockpidman.update_ark.assert_called_with(noid=arrangement_object.noid, name=arrangement_object.dc.content.title)
+
+    def test_set_premis_object(self):
+        mockapi = Mock()
+        arrangement_object = ArrangementObject(mockapi)
+        arrangement_object.pid = "test:1234"
+        # return empty iterator for original data to checksum
+        mockapi.getDatastreamDissemination.return_value = []
+        with patch.object(arrangement_object, 'getDatastreamObject') as mockgetds:
+            mockgetds.return_value.checksum = '123456789'
+            mockgetds.return_value.mimetype = 'text/plain'
+            arrangement_object.set_premis_object()
+
+        self.assert_(arrangement_object.provenance.content.object)
+        premis = arrangement_object.provenance.content
+        # FIXME: placeholder tests for placeholder functionality,
+        # should be updated to use ARK uri once that is implemented
+        self.assertEqual('pid', premis.object.id_type)
+        self.assertEqual('test:1234', premis.object.id)
+        self.assertEqual('p:file', premis.object.type)
+        self.assertEqual(0, premis.object.composition_level)
+        self.assertEqual('MD5', premis.object.checksums[0].algorithm)
+        self.assertEqual('123456789',
+                         premis.object.checksums[0].digest)
+        # sha1 for an empty file
+        empty_sha1 = 'da39a3ee5e6b4b0d3255bfef95601890afd80709'
+        self.assertEqual('SHA-1', premis.object.checksums[1].algorithm)
+        self.assertEqual(empty_sha1,
+                         premis.object.checksums[1].digest)
+        # object format should be original mietype
+        self.assertEqual('text/plain', premis.object.format.name)
+
+        # generated premis should be valid
+        self.assertTrue(premis.is_valid())
+
+    def test_identifier_change_event(self):
+        mockapi = Mock()
+        mockapi.username = 'fedoraAdmin'
+        arrangement_object = ArrangementObject(mockapi)
+        arrangement_object.pid = 'test:1234'
+        arrangement_object.identifier_change_event('old-pid:1')
+        premis = arrangement_object.provenance.content
+        self.assertEqual(1, len(premis.events))
+        event = premis.events[0]
+        self.assertEqual('UUID', event.id_type)
+        # id should be set, we don't care what it is exactly
+        self.assert_(event.id)
+        self.assertEqual('identifier assignment', event.type)
+        self.assertEqual('program="keep"; version="%s"' % __version__,
+                         event.detail)
+        self.assertEqual('Pass', event.outcome)
+        msg = 'Persistent identifier reassigned from %s to %s' % \
+            ('old-pid:1', arrangement_object.pid)
+        self.assertEqual(msg, event.outcome_detail)
+        self.assertEqual('fedora user', event.agent_type)
+        self.assertEqual('fedoraAdmin', event.agent_id)
+
+        # NOTE: can't check that premis is valid because premis object
+        # is not present here
 
 class EmailMessageTest(KeepTestCase):
 

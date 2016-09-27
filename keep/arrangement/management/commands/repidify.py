@@ -107,7 +107,7 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 # print datastream summary with checksums for comparison
                 self.datastream_summary(newobj)
                 # add premis in order to record the identifier change
-                newobj.add_premis()
+                newobj.set_premis_object()
                 newobj.identifier_change_event(pid)
                 # generated premis should be valid, but double-check before
                 # saving invalid premis to fedora

@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
+import os
 from rdflib import URIRef
 import tempfile
 import uuid
@@ -56,6 +57,8 @@ class ArrangementPremis(premis.Premis):
     XSD_SCHEMA = premis.PREMIS_SCHEMA
 
     object = xmlmap.NodeField('p:object', PremisObject)
+
+    events = xmlmap.NodeListField('p:event', PremisEvent)
 
 
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
@@ -120,7 +123,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
         return super(ArrangementObject, self).save(logMessage)
 
-    def add_premis(self):
+    def set_premis_object(self):
         # NOTE: could add a check to see if premis exists before setting
         # these values (although we don't expect arrangment objects
         # to have premis by default)
@@ -157,10 +160,9 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         # don't delete when file handle is closed
         origtmpfile = tempfile.NamedTemporaryFile(
             prefix='%s-orig-' % self.noid, delete=False)
-        for data in  original_ds.get_chunked_content():
+        for data in original_ds.get_chunked_content():
             origtmpfile.write(data)
 
-        print 'saving original to ', origtmpfile.name
         # close to flush contents before calculating checksum
         origtmpfile.close()
 
@@ -168,23 +170,12 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         self.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
         self.provenance.content.object.checksums[1].digest = sha1sum(origtmpfile.name)
 
-        # delete temporary copy of the original file
-        origtmpfile.delete()
+        # clean up temporary copy of the original file
+        os.remove(origtmpfile.name)
 
-        # set object format
+        # set object format - using original file mimetype
         self.provenance.content.object.create_format()
-        # TODO: calculate and set format based on original content format
-        # - based on mimetype ?  or use file master tech format value?
-        # for disk image premis, this is based on mimetype and uses a lookup:
-        # if mimetype in DiskImage.mimetype_format:
-        #     obj_format = DiskImage.mimetype_format[mimetype]
-        # else:
-        #     # as a fallback, use the file extension for format
-        #     obj_format = ext.upper().strip('.')
-        # obj.provenance.content.object.format.name = obj_format
-
-        # FIXME: setting a place-holder format value for now
-        self.provenance.content.object.format.name = 'TEXT'
+        self.provenance.content.object.format.name = original_ds.mimetype
 
     def identifier_change_event(self, oldpid):
         '''Add an identifier change event to the premis for this object.'''
@@ -194,7 +185,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         idchange_event = PremisEvent()
         idchange_event.id_type = 'UUID'
         idchange_event.id = uuid.uuid1()
-        idchange_event.type = 'migration'
+        idchange_event.type = 'identifier assignment'
         idchange_event.date = datetime.now().isoformat()
         idchange_event.detail = 'program="keep"; version="%s"' % __version__
         idchange_event.outcome = 'Pass'
