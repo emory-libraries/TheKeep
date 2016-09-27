@@ -28,7 +28,7 @@
   {% endif %}
     <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'Rights' %}">Rights</a>
   {% if obj.provenance.exists %}
-    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'provenanceMetadata' %}">Provenance</a>
+    <a class="btn btn-default" href="{% url 'arrangement:raw-ds' obj.pid 'provenanceMetadata' %}">PREMIS</a>
   {% endif %}
   {% if obj.audit_trail %}
       <a class="btn btn-default" href="{% url 'arrangement:audit-trail' obj.pid %}">XML Audit Trail</a>
