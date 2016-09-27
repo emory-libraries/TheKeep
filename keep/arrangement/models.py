@@ -1,18 +1,27 @@
+from datetime import datetime
 import logging
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
 from rdflib import URIRef
+import tempfile
+import uuid
 
-from eulfedora.models import Relation, ReverseRelation
+from eulfedora.models import Relation, ReverseRelation, XmlDatastream
 from eulfedora.util import RequestFailed
 from eulfedora.rdfns import relsext, model as modelns
 from eulcm.models import boda
+from eulxml import xmlmap
+from eulxml.xmlmap import premis
+from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
+from keep import __version__
 from keep.collection.models import SimpleCollection
+from keep.common.models import PremisFixity, PremisObject, PremisEvent
 from keep.common.fedora import ArkPidDigitalObject, Repository
 from keep.common.utils import solr_interface
 from keep.collection.models import CollectionObject
-from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
+from keep.file.utils import sha1sum
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +50,23 @@ class Arrangement(models.Model):
             ("view_arrangement", "Can view, search, and browse arrangement objects"),
         )
 
+
+class ArrangementPremis(premis.Premis):
+    # adapdet from diskimage premis
+    XSD_SCHEMA = premis.PREMIS_SCHEMA
+
+    object = xmlmap.NodeField('p:object', PremisObject)
+
+
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     '''Subclass of :class:`eulfedora.models.DigitalObject` for
     "arrangement" content.'''
 
     NEW_OBJECT_VIEW = 'arrangement:edit'
+
+    provenance = XmlDatastream(
+        'provenanceMetadata', 'Provenance metadata',
+        ArrangementPremis, defaults={'versionable': False})
 
     component_key = {
         'FileMasterTech': 'file technical metadata',
@@ -98,6 +119,89 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             self._update_access_cmodel()
 
         return super(ArrangementObject, self).save(logMessage)
+
+    def add_premis(self):
+        # NOTE: could add a check to see if premis exists before setting
+        # these values (although we don't expect arrangment objects
+        # to have premis by default)
+
+        # NOTE: this is how disk image handles setting the ark identifier,
+        # but arrangement objects don't currently use MODS for ARKs; the ark
+        # may need to be passed in from the calling code.
+        # if obj.mods.content.ark:
+        #     obj.provenance.content.object.id = obj.mods.content.ark
+        #     obj.provenance.content.object.id_type = 'ark'
+
+        # NOTE: should be using the ark:/####/#### id form here
+
+        # FIXME: placeholder identifier info, in the absence of ark logic
+        self.provenance.content.create_object()
+        self.provenance.content.object.id_type = 'pid'
+        self.provenance.content.object.id = self.pid
+
+        # add basic object premis information
+        # object type required to be schema valid, must be in premis namespace
+        self.provenance.content.object.type = 'p:file'
+        self.provenance.content.object.composition_level = 0
+
+        # retrieve original datastream to store/calculate checsums
+        original_ds = self.getDatastreamObject('ORIGINAL')
+
+        # add MD5 and SHA-1 checksums for original datastream content
+        # Fedora should already have an MD5
+        # (NOTE: could confirm that this is MD5 using checksum_type)
+        self.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
+        self.provenance.content.object.checksums[0].digest = original_ds.checksum
+
+        # save original content to disk in order to calculate a SHA-1 checkusum
+        # don't delete when file handle is closed
+        origtmpfile = tempfile.NamedTemporaryFile(
+            prefix='%s-orig-' % self.noid, delete=False)
+        for data in  original_ds.get_chunked_content():
+            origtmpfile.write(data)
+
+        print 'saving original to ', origtmpfile.name
+        # close to flush contents before calculating checksum
+        origtmpfile.close()
+
+        # calculate SHA-1 and add to premis
+        self.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
+        self.provenance.content.object.checksums[1].digest = sha1sum(origtmpfile.name)
+
+        # delete temporary copy of the original file
+        origtmpfile.delete()
+
+        # set object format
+        self.provenance.content.object.create_format()
+        # TODO: calculate and set format based on original content format
+        # - based on mimetype ?  or use file master tech format value?
+        # for disk image premis, this is based on mimetype and uses a lookup:
+        # if mimetype in DiskImage.mimetype_format:
+        #     obj_format = DiskImage.mimetype_format[mimetype]
+        # else:
+        #     # as a fallback, use the file extension for format
+        #     obj_format = ext.upper().strip('.')
+        # obj.provenance.content.object.format.name = obj_format
+
+        # FIXME: setting a place-holder format value for now
+        self.provenance.content.object.format.name = 'TEXT'
+
+    def identifier_change_event(self, oldpid):
+        '''Add an identifier change event to the premis for this object.'''
+
+        detail_msg = 'Persistent identifier reassigned from %s to %s' % \
+            (oldpid, self.pid)
+        idchange_event = PremisEvent()
+        idchange_event.id_type = 'UUID'
+        idchange_event.id = uuid.uuid1()
+        idchange_event.type = 'migration'
+        idchange_event.date = datetime.now().isoformat()
+        idchange_event.detail = 'program="keep"; version="%s"' % __version__
+        idchange_event.outcome = 'Pass'
+        idchange_event.outcome_detail = detail_msg
+        idchange_event.agent_type = 'fedora user'
+        idchange_event.agent_id = self.api.username
+        self.provenance.content.events.append(idchange_event)
 
     def _update_access_cmodel(self):
         # update access/restriction content models based on rights access code
@@ -170,7 +274,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     def content_md5(self):
         if self.filetech.content.file and self.filetech.content.file[0].md5:
             return self.filetech.content.file[0].md5
-
 
     def index_data(self):
         '''Extend the default

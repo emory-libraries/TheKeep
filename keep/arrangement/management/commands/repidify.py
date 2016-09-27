@@ -1,10 +1,15 @@
-from django.core.management.base import BaseCommand, CommandError
+from datetime import datetime
+from django.core.management.base import BaseCommand
 from eulfedora.util import RequestFailed
 import re
 import tempfile
+import uuid
 
+from keep import __version__
 from keep.arrangement.models import ArrangementObject
 from keep.common.fedora import Repository
+from keep.common.models import PremisFixity, PremisEvent
+from keep.file.utils import sha1sum
 
 
 class Command(BaseCommand):
@@ -98,7 +103,19 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
             try:
                 newpid = repo.ingest(newpidobj)
                 print 'Successfully re-ingested %s as %s' % (pid, newpid)
-                self.datastream_summary(repo.get_object(newpid))
+                newobj = repo.get_object(newpid, type=ArrangementObject)
+                # print datastream summary with checksums for comparison
+                self.datastream_summary(newobj)
+                # add premis in order to record the identifier change
+                newobj.add_premis()
+                newobj.identifier_change_event(pid)
+                # generated premis should be valid, but double-check before
+                # saving invalid premis to fedora
+                if not obj.provenance.content.is_valid():
+                    print 'Error! premis is not valid'
+                    print obj.provenance.content.validation_errors()
+                else:
+                    obj.save('Add premis with identifier change event')
 
             except RequestFailed as err:
                 print 'Error ingesting %s as %s: %s' % (pid, newpid, err)
