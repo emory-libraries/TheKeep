@@ -7,7 +7,7 @@ import uuid
 
 from keep import __version__
 from keep.arrangement.models import ArrangementObject
-from keep.common.fedora import Repository
+from keep.common.fedora import ManagementRepository
 from keep.common.models import PremisFixity, PremisEvent
 from keep.file.utils import sha1sum
 
@@ -51,7 +51,7 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
 
     def handle(self, *args, **options):
 
-        repo = Repository()
+        repo = ManagementRepository()
 
         for pid in options['pids']:
             # initialize current object so we can determine type,
