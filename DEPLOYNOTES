@@ -326,6 +326,13 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
+Release 2.8
+-----------
+
+* New local settings must be configured to support for Rushdie pid
+  and reuse and cleanup: **PIDMAN_RUSHDIE_DOMAIN** and
+  **PIDMAN_RUSHDIE_UNUSED_URI**
+
 Release 2.7
 -----------
 
