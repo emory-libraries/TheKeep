@@ -1,10 +1,11 @@
-import sys, os, random, time, logging, getopt, signal, unicodecsv, math
+import sys, os, random, time, logging, getopt, signal, unicodecsv, math, urllib
 from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO
 from optparse import make_option
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from keep.common.fedora import Repository
+from keep.common.utils import absolutize_url
 from keep.arrangement.models import ArrangementObject
 from keep.audio.models import AudioObject
 from keep.file.models import DiskImage
@@ -54,6 +55,13 @@ class Command(BaseCommand):
     and Fedora environments so that you are getting results of what you are concerned about.
     """
 
+    # dry-run option declaration
+    option_list = BaseCommand.option_list + (
+        make_option('--update-rushdie-pidman',
+            action='store_true',
+            help='Dry run the command to get an output but with no changes applied'),
+        )
+
     def handle(self, *args, **kwargs):
         # disable info messages in the console
         logging.getLogger('requests').setLevel(logging.CRITICAL)
@@ -66,6 +74,19 @@ class Command(BaseCommand):
 
         # send greeting message with instructions
         self.stdout.write(self.greetings)
+
+        # initialize an update flag to false
+        self.update = False
+
+        # dry run notice
+        if kwargs.get('update_rushdie_pidman', True):
+            notice = """
+            [Update Rushdie in Pidman] This will update the object title/label,
+            as well as target_uri in the Rushdie Collection in Pidman
+
+            """
+            sys.stdout.write(notice)
+            self.update = True
 
         # verify environments
         environment_notice = """
@@ -132,16 +153,33 @@ class Command(BaseCommand):
         for page in range(1, pages):
             page_results = self.pidman.search_pids(domain="Rushdie Collection", page=page)
             for page_result in page_results["results"]:
-                pm_object_pid, pm_label, pm_target_uri = (None,)*3
+                pm_object_pid, pm_object_noid, pm_label, pm_target_uri = (None,)*4
                 in_fedora, fedora_object, fedora_label, fedora_create_time_stamp = (None,)*4
                 status = "no-exception"
+
                 try:
                     pm_object_pid = "emory:" + page_result["pid"]
+                    pm_object_noid = page_result["pid"]
                     pm_label = page_result["name"]
                     pm_target_uri = page_result["targets"][0]["target_uri"]
                     fedora_object = self.repo.get_object(pm_object_pid)
+                    import pdb; pdb.set_trace()
                     in_fedora = "Yes" if fedora_object.exists else "No"
                     fedora_label = fedora_object.label
+
+                    # update metadata when update flag is set
+                    if self.update:
+                        # label update
+                        if pm_label != fedora_label and fedora_label is not None:
+                            self.pidman.update_pid(noid=pm_object_noid, name=fedora_label)
+
+                        # target_uri update
+                        # create the target_uri using the logic that is used in creating objects from TheKeep
+                        keep_target = reverse(fedora_object.NEW_OBJECT_VIEW, kwargs={'pid': fedora_object.pid})
+                        keep_target = urllib.unquote(keep_target)
+                        keep_target_uri = absolutize_url(keep_target)
+                        if pm_target_uri != keep_target_uri:
+                            self.pidman.update_target(noid=pm_object_noid, target_uri=keep_target_uri)
                     fedora_create_time_stamp = fedora_object.created.strftime("%Y-%m-%d %H:%M:%S")
                 except Exception as e:
                     status = "Exception: %s" % str(e)
