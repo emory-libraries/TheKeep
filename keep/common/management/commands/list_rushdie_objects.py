@@ -156,8 +156,6 @@ class Command(BaseCommand):
                     fedora_object = self.repo.get_object(pm_object_pid)
                     in_fedora = True if fedora_object.exists else False
 
-
-                    status_label = "actual-run"
                     # fedora object doesn't exist:
                     # - mark item as PIDMAN_RUSHDIE_UNUSED_URI
                     # - use generic target URI PIDMAN_RUSHDIE_UNUSED_URI
