@@ -1,9 +1,11 @@
+import base64
 from collections import OrderedDict
 from datetime import datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.core.urlresolvers import reverse
 from eulcm.models import boda
+from eulfedora.rdfns import relsext
 from eulfedora.server import TypeInferringRepository
 from eulfedora.util import RequestFailed
 from eulxml.xmlmap import mods
@@ -43,7 +45,13 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
             flags=re.MULTILINE|re.DOTALL),
         # regex to remove all datastream checksums, as a fallback for
         # an object that can't be ingested due to checksum errors
-        'all': re.compile(r'(?P<digest><foxml:contentDigest[^>]+)DIGEST="[0-9a-f]*"\s*/>')
+        'all': re.compile(r'(?P<digest><foxml:contentDigest[^>]+)DIGEST="[0-9a-f]*"\s*/>'),
+        # rels ext base64 encoded ocntent
+        'rels_encoded': re.compile(
+            r'<foxml:datastreamVersion ID="RELS-EXT.\d+"[^>]*>\s+' +
+            r'<foxml:contentDigest[^>]*DIGEST="[0-9a-f]*"/>\s+' +
+            r'<foxml:binaryContent>([^<]+)</foxml:binaryContent>',
+            flags=re.MULTILINE|re.DOTALL),
     }
 
     def add_arguments(self, parser):
@@ -82,12 +90,30 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 self.stderr.write('Error: %s not found' % pid)
                 continue
 
+            obj_cmodels = [str(cmodel) for cmodel in obj.get_models()]
+
             # check by content model instead of class, since could be
             # email content or file content
             if boda.Arrangement.ARRANGEMENT_CONTENT_MODEL not in \
-               [str(cmodel) for cmodel in obj.get_models()]:
+               obj_cmodels:
                 self.stderr.write('Error: %s is not an arrangement object' % pid)
                 continue
+
+            # skip anything without an original datastream (can't generate premis)
+            try:
+                obj.get_original_datastream()
+            except Exception:
+                self.stderr.write('Error: %s has no original datastream; not supported' % pid)
+                continue
+
+            # explicitly do not convert mailbox objects, since we don't
+            # support generating premis for them (no content)
+            if boda.Mailbox.MAILBOX_CONTENT_MODEL in obj_cmodels:
+                self.stderr.write('Error: mailbox object %s is not supported' % pid)
+                continue
+
+            # set flag so we can check for email messages
+            is_email = boda.EmailMessage.EMAIL_MESSAGE_CMODEL in obj_cmodels
 
             # todo use pidman client to search for pids in
             # PIDMAN_RUSHDIE_DOMAIN with label PIDMAN_RUSHDIE_UNUSED
@@ -102,9 +128,29 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
             response = repo.api.export(obj.pid, context='archive')
             objexport = response.content
 
+            # if rels-ext content is base64 encoded, it needs to be
+            # decoded first so search and replacing the pid will work
+
             # search and replace within the archive foxml to change
             # every reference from the old pid to the new one
             newpidobj = objexport.replace(obj.pid, newpid)
+
+            encoded_rels = self.dsre['rels_encoded'].findall(newpidobj)
+            for content in encoded_rels:
+                # decode the content
+                newcontent = base64.b64decode(content)
+                # replace old pid with new
+                newcontent = newcontent.replace(obj.pid, newpid)
+                # replace old encoded cntent with new encoded content
+                newpidobj = newpidobj.replace(content, base64.b64encode(newcontent))
+
+            # NOTE: if problems come up with the import foxml,
+            # it may be useful to write it out to a tempfile for inspection
+            # import tempfile
+            # xmlfile = tempfile.NamedTemporaryFile(delete=False)
+            # xmlfile.write(newpidobj)
+            # xmlfile.close()
+            # print 'ingest content : ', xmlfile.name
 
             # clean up checksums based on requested option
             if options['checksum_cleanup'] == 'all':
@@ -127,6 +173,17 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 # init as same type of object as old
                 # newobj = repo.get_object(newpid, type=obj.__class__)
                 newobj = repo.get_object(newpid)
+
+                # for email objects, update mailbox reference to new pid
+                if is_email:
+                    # remove relation to old pid
+                    obj.mailbox.rels_ext.content.remove(
+                        (obj.mailbox.uriref, relsext.hasPart, obj.uriref))
+                    # and add relation to the new one
+                    obj.mailbox.rels_ext.content.add(
+                        (obj.mailbox.uriref, relsext.hasPart, newobj.uriref))
+                    obj.mailbox.save('Updating relation for identifier change %s -> %s' % \
+                        (obj.noid, newobj.noid))
 
                 # store ark and ark uri from in-memory old object before
                 # comparing, because comparison seems to replace model-based
@@ -183,6 +240,7 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
 
             except RequestFailed as err:
                 print 'Error ingesting %s as %s: %s' % (pid, newpid, err)
+                raise
 
     def get_new_pid(self, obj):
         # TODO: first, make sure object label is set appropriately before

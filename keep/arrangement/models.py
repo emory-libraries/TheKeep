@@ -434,11 +434,23 @@ class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
 
+class Mailbox(boda.Mailbox, ArrangementObject):
+    CONTENT_MODELS = [boda.Mailbox.MAILBOX_CONTENT_MODEL,
+                      boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
+
+    NEW_OBJECT_VIEW = 'arrangement:view'
+
+    # note: mailbox lists email messages in rels-ext
+
+
 class EmailMessage(boda.EmailMessage, ArrangementObject):
     CONTENT_MODELS = [boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
     NEW_OBJECT_VIEW = 'arrangement:view'
+
+    # messages are related to mailbox via is part of
+    mailbox = Relation(relsext.isPartOf, type=Mailbox)
 
     @property
     def headers(self):
@@ -578,9 +590,4 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         return EmailMessage.find_by_field('arrangement_id', id, repo=repo)
 
 
-class Mailbox(boda.Mailbox, ArrangementObject):
-    CONTENT_MODELS = [boda.Mailbox.MAILBOX_CONTENT_MODEL,
-                      boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
-
-    NEW_OBJECT_VIEW = 'arrangement:view'
 
