@@ -1,4 +1,5 @@
 import sys, os, random, time, logging, getopt, signal, unicodecsv, math, urllib
+from django.core.urlresolvers import reverse
 from django.core.management.base import BaseCommand, CommandError
 from io import BytesIO
 from optparse import make_option
@@ -11,6 +12,7 @@ from keep.audio.models import AudioObject
 from keep.file.models import DiskImage
 from keep.video.models import Video
 from eulfedora.rdfns import model as modelns
+from eulfedora.server import TypeInferringRepository
 from keep.collection.models import CollectionObject
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 from progressbar import ProgressBar, Bar, Percentage, ETA, Counter
@@ -31,14 +33,21 @@ class Command(BaseCommand):
 
     Before you run please make sure you have the correct credentials for Pidman
     and Fedora environments so that you are getting results of what you are concerned about.
+
+    Dry run is an option that only generates the report without applying
+    any changes. Please be sure that you know what you are doing, and
+    have the Fedora and Pidman environments set up correctly before
+    you proceed. You can use '-n' or '--dry-run' to enable the dry run
+    mode.
     """
 
     # dry-run option declaration
     option_list = BaseCommand.option_list + (
-        make_option('--update-rushdie-pidman',
+        make_option('--dry-run',
+            '-n',
             action='store_true',
             help='Dry run the command to get an output but with no changes applied'),
-        )
+    )
 
     def handle(self, *args, **kwargs):
         # disable info messages in the console
@@ -47,24 +56,26 @@ class Command(BaseCommand):
         # initialize a Pidman client object
         self.pidman = self.get_pidman()
 
-        # initialize a Fedora repository object
-        self.repo = ManagementRepository()
+        # initialize a TypeInferringRepository object
+        self.repo = TypeInferringRepository(username=settings.FEDORA_MANAGEMENT_USER, password=settings.FEDORA_MANAGEMENT_PASSWORD)
 
         # send greeting message with instructions
         self.stdout.write(self.greetings)
 
-        # initialize an update flag to false
-        self.update = False
+        # initialize dry-run flag to false
+        self.is_dry_run = False
 
         # dry run notice
-        if kwargs.get('update_rushdie_pidman', True):
-            notice = """
-            [Update Rushdie in Pidman] This will update the object title/label,
-            as well as target_uri in the Rushdie Collection in Pidman
+        if kwargs.get('dry_run', True):
+            dry_run_notice = """
+            [DRY-RUN ACTIVATED] Currently you are running the script
+            in dry-run mode. It means that no changes will be applied
+            to any of the repositories except for that the script will
+            still generate statistics about objects in your repositories.
 
             """
-            sys.stdout.write(notice)
-            self.update = True
+            sys.stdout.write(dry_run_notice)
+            self.is_dry_run = True
 
         # verify environments
         environment_notice = """
@@ -96,8 +107,8 @@ class Command(BaseCommand):
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
         self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_DOMAIN))
-        self.summary_log.writerow(('Time', 'PM_Pid', 'PM_Label', 'PM_Target_URI', \
-            "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Status"))
+        self.summary_log.writerow(('Time', 'Status', 'PM_Pid', 'PM_Label', 'PM_Target_URI', 'Supposed_Target_URI', \
+            "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Exceptions"))
 
         # collect pids in Rushdie Collection
         results = self.pidman.search_pids(domain="Rushdie Collection")
@@ -131,9 +142,10 @@ class Command(BaseCommand):
         for page in range(1, pages):
             page_results = self.pidman.search_pids(domain="Rushdie Collection", page=page)
             for page_result in page_results["results"]:
-                pm_object_pid, pm_object_noid, pm_label, pm_target_uri = (None,)*4
+                pm_object_pid, pm_object_noid, pm_label, updated_pm_label, pm_target_uri, keep_target_uri = (None,)*6
                 in_fedora, fedora_object, fedora_label, fedora_create_time_stamp = (None,)*4
-                status = "no-exception"
+                status_label = "dry-run"
+                exception_label = "no-exception"
 
                 try:
                     pm_object_pid = "emory:" + page_result["pid"]
@@ -141,36 +153,63 @@ class Command(BaseCommand):
                     pm_label = page_result["name"]
                     pm_target_uri = page_result["targets"][0]["target_uri"]
                     fedora_object = self.repo.get_object(pm_object_pid)
-                    import pdb; pdb.set_trace()
-                    in_fedora = "Yes" if fedora_object.exists else "No"
-                    fedora_label = fedora_object.label
+                    in_fedora = True if fedora_object.exists else False
 
-                    # update metadata when update flag is set
-                    if self.update:
-                        # label update
-                        if pm_label != fedora_label and fedora_label is not None:
-                            self.pidman.update_pid(noid=pm_object_noid, name=fedora_label)
+                    if not self.is_dry_run:
+                        status_label = "actual-run"
+                        # fedora object doesn't exist:
+                        # - mark item as PIDMAN_RUSHDIE_UNUSED_URI
+                        # - use generic target URI PIDMAN_RUSHDIE_UNUSED_URI
+                        # - set status_label as "unused-pid-identified"
+                        if not fedora_object.exists:
+                            status_label = "actual-run"
+                            pid_response = self.pidman.update_pid(type="ark", noid=pm_object_noid, name=settings.PIDMAN_RUSHDIE_UNUSED)
+                            target_response = self.pidman.update_target(type="ark", noid=pm_object_noid, target_uri=settings.PIDMAN_RUSHDIE_UNUSED_URI)
+                            if pid_response["name"] == settings.PIDMAN_RUSHDIE_UNUSED and target_response["target_uri"] == settings.PIDMAN_RUSHDIE_UNUSED_URI:
+                                status_label += ", unused-pid-updated"
+                            else:
+                                status_label += ", unused-pid-update-failed"
 
-                        # target_uri update
-                        # create the target_uri using the logic that is used in creating objects from TheKeep
-                        keep_target = reverse(fedora_object.NEW_OBJECT_VIEW, kwargs={'pid': fedora_object.pid})
-                        keep_target = urllib.unquote(keep_target)
-                        keep_target_uri = absolutize_url(keep_target)
-                        if pm_target_uri != keep_target_uri:
-                            self.pidman.update_target(noid=pm_object_noid, target_uri=keep_target_uri)
+                        # fedora object exists
+                        # - update label to that in Fedora
+                        # - update target_uri to that in Fedora
+                        else:
+                            # label update
+                            fedora_label = fedora_object.label
+                            if pm_label != fedora_label and fedora_label is not None:
+                                response = self.pidman.update_pid(type="ark", noid=pm_object_noid, name=fedora_label)
+                                if response["name"] == fedora_label:
+                                    status_label += ", label-updated"
+                                else:
+                                    status_label += ", label-update-failed"
+
+                            # target_uri update
+                            # create the target_uri using the logic that is used in creating objects from TheKeep
+                            keep_target = reverse(fedora_object.NEW_OBJECT_VIEW, kwargs={'pid': fedora_object.pid})
+                            keep_target = urllib.unquote(keep_target)
+                            keep_target_uri = absolutize_url(keep_target)
+                            if pm_target_uri != keep_target_uri:
+                                response = self.pidman.update_target(type="ark", noid=pm_object_noid, target_uri=keep_target_uri)
+                                if keep_target_uri == response["target_uri"]:
+                                    status_label += ", target_uri-updated"
+                                else:
+                                    status_label += ", target_uri-update-failed"
+
                     fedora_create_time_stamp = fedora_object.created.strftime("%Y-%m-%d %H:%M:%S")
                 except Exception as e:
-                    status = "Exception: %s" % str(e)
+                    exception_label = "Exception: %s" % str(e)
 
                 self.summary_log.writerow((time.strftime("%Y-%m-%d %H:%M:%S", \
                     time.localtime()), \
+                    status_label, \
                     pm_object_pid, \
                     pm_label, \
                     pm_target_uri, \
-                    in_fedora, \
+                    keep_target_uri, \
+                    str(in_fedora), \
                     fedora_label, \
                     fedora_create_time_stamp, \
-                    status))
+                    exception_label))
 
                 current_count += 1
 
