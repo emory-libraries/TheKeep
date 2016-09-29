@@ -99,6 +99,12 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 self.stderr.write('Error: %s is not an arrangement object' % pid)
                 continue
 
+            # explicitly do not convert mailbox objects, since we don't
+            # support generating premis for them (no content)
+            if boda.Mailbox.MAILBOX_CONTENT_MODEL in obj_cmodels:
+                self.stderr.write('Error: mailbox object %s is not supported' % pid)
+                continue
+
             # skip anything without an original datastream (can't generate premis)
             try:
                 obj.get_original_datastream()
@@ -106,14 +112,14 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 self.stderr.write('Error: %s has no original datastream; not supported' % pid)
                 continue
 
-            # explicitly do not convert mailbox objects, since we don't
-            # support generating premis for them (no content)
-            if boda.Mailbox.MAILBOX_CONTENT_MODEL in obj_cmodels:
-                self.stderr.write('Error: mailbox object %s is not supported' % pid)
-                continue
-
             # set flag so we can check for email messages
             is_email = boda.EmailMessage.EMAIL_MESSAGE_CMODEL in obj_cmodels
+
+            # some email objects don't have a fedora object label, which is
+            # used to set the pid name; if email label is empty, use email
+            # label method to set it
+            if is_email and obj.label is None or obj.label == '':
+                obj.label = obj.email_label()
 
             # todo use pidman client to search for pids in
             # PIDMAN_RUSHDIE_DOMAIN with label PIDMAN_RUSHDIE_UNUSED
@@ -184,6 +190,11 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                         (obj.mailbox.uriref, relsext.hasPart, newobj.uriref))
                     obj.mailbox.save('Updating relation for identifier change %s -> %s' % \
                         (obj.noid, newobj.noid))
+                    print 'Updated mailbox %s reference for new id %s' % \
+                        (obj.mailbox.noid, newobj.noid)
+
+                    # copy updated label if any before checking
+                    newobj.label = obj.label
 
                 # store ark and ark uri from in-memory old object before
                 # comparing, because comparison seems to replace model-based
