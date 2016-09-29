@@ -107,7 +107,7 @@ class Command(BaseCommand):
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
         self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_DOMAIN))
-        self.summary_log.writerow(('Time', 'Status', 'PM_Pid', 'PM_Label', 'PM_Target_URI', 'Supposed_Target_URI', \
+        self.summary_log.writerow(('Time', 'Status', 'PM_Pid', 'PM_Label', 'PM_Target_URI', 'Supposed_Label', 'Supposed_Target_URI', \
             "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Exceptions"))
 
         # collect pids in Rushdie Collection
@@ -142,8 +142,9 @@ class Command(BaseCommand):
         for page in range(1, pages):
             page_results = self.pidman.search_pids(domain="Rushdie Collection", page=page)
             for page_result in page_results["results"]:
-                pm_object_pid, pm_object_noid, pm_label, updated_pm_label, pm_target_uri, keep_target_uri = (None,)*6
+                pm_object_pid, pm_object_noid, pm_label, updated_pm_label, pm_target_uri = (None,)*5
                 in_fedora, fedora_object, fedora_label, fedora_create_time_stamp = (None,)*4
+                supposed_label, supposed_target_uri = (None,)*2
                 status_label = "dry-run"
                 exception_label = "no-exception"
 
@@ -155,13 +156,14 @@ class Command(BaseCommand):
                     fedora_object = self.repo.get_object(pm_object_pid)
                     in_fedora = True if fedora_object.exists else False
 
-                    if not self.is_dry_run:
-                        status_label = "actual-run"
-                        # fedora object doesn't exist:
-                        # - mark item as PIDMAN_RUSHDIE_UNUSED_URI
-                        # - use generic target URI PIDMAN_RUSHDIE_UNUSED_URI
-                        # - set status_label as "unused-pid-identified"
-                        if not fedora_object.exists:
+
+                    status_label = "actual-run"
+                    # fedora object doesn't exist:
+                    # - mark item as PIDMAN_RUSHDIE_UNUSED_URI
+                    # - use generic target URI PIDMAN_RUSHDIE_UNUSED_URI
+                    # - set status_label as "unused-pid-identified"
+                    if not fedora_object.exists:
+                        if not self.is_dry_run:
                             status_label = "actual-run"
                             pid_response = self.pidman.update_pid(type="ark", noid=pm_object_noid, name=settings.PIDMAN_RUSHDIE_UNUSED)
                             target_response = self.pidman.update_target(type="ark", noid=pm_object_noid, target_uri=settings.PIDMAN_RUSHDIE_UNUSED_URI)
@@ -169,11 +171,15 @@ class Command(BaseCommand):
                                 status_label += ", unused-pid-updated"
                             else:
                                 status_label += ", unused-pid-update-failed"
-
-                        # fedora object exists
-                        # - update label to that in Fedora
-                        # - update target_uri to that in Fedora
                         else:
+                            supposed_label = settings.PIDMAN_RUSHDIE_UNUSED
+                            supposed_target_uri = settings.PIDMAN_RUSHDIE_UNUSED_URI
+
+                    # fedora object exists
+                    # - update label to that in Fedora
+                    # - update target_uri to that in Fedora
+                    else:
+                        if not self.is_dry_run:
                             # label update
                             fedora_label = fedora_object.label
                             if pm_label != fedora_label and fedora_label is not None:
@@ -194,6 +200,11 @@ class Command(BaseCommand):
                                     status_label += ", target_uri-updated"
                                 else:
                                     status_label += ", target_uri-update-failed"
+                        else:
+                            keep_target = reverse(fedora_object.NEW_OBJECT_VIEW, kwargs={'pid': fedora_object.pid})
+                            keep_target = urllib.unquote(keep_target)
+                            supposed_label = fedora_object.label
+                            supposed_target_uri = absolutize_url(keep_target)
 
                     fedora_create_time_stamp = fedora_object.created.strftime("%Y-%m-%d %H:%M:%S")
                 except Exception as e:
@@ -205,7 +216,8 @@ class Command(BaseCommand):
                     pm_object_pid, \
                     pm_label, \
                     pm_target_uri, \
-                    keep_target_uri, \
+                    supposed_label, \
+                    supposed_target_uri, \
                     str(in_fedora), \
                     fedora_label, \
                     fedora_create_time_stamp, \
