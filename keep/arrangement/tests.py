@@ -645,6 +645,8 @@ class ArrangementObjectTest(KeepTestCase):
         mockapi = Mock()
         arrangement_object = ArrangementObject(mockapi)
         arrangement_object.pid = "test:1234"
+        arrangement_object.mods.content.ark = 'ark:/1234/987'
+
         # return empty iterator for original data to checksum
         mockapi.getDatastreamDissemination.return_value = []
         with patch.object(arrangement_object, 'getDatastreamObject') as mockgetds:
@@ -656,8 +658,8 @@ class ArrangementObjectTest(KeepTestCase):
         premis = arrangement_object.provenance.content
         # FIXME: placeholder tests for placeholder functionality,
         # should be updated to use ARK uri once that is implemented
-        self.assertEqual('pid', premis.object.id_type)
-        self.assertEqual('test:1234', premis.object.id)
+        self.assertEqual('ark', premis.object.id_type)
+        self.assertEqual(arrangement_object.mods.content.ark, premis.object.id)
         self.assertEqual('p:file', premis.object.type)
         self.assertEqual(0, premis.object.composition_level)
         self.assertEqual('MD5', premis.object.checksums[0].algorithm)
@@ -679,6 +681,7 @@ class ArrangementObjectTest(KeepTestCase):
         mockapi.username = 'fedoraAdmin'
         arrangement_object = ArrangementObject(mockapi)
         arrangement_object.pid = 'test:1234'
+        arrangement_object.mods.content.ark = 'ark:/1234/987'
 
         # set object premis so we can validate
         mockapi.getDatastreamDissemination.return_value = []
