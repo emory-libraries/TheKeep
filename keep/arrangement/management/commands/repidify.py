@@ -135,8 +135,6 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 ark = obj.mods.content.ark
                 ark_uri = obj.mods.content.ark_uri
 
-
-
                 # validate the new object before purging
                 errors = self.compare_objects(obj, newobj)
                 # if there are any errors, report and don't purge
@@ -180,8 +178,8 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                     print 'Error! premis is not valid'
                     print newobj.provenance.content.validation_errors()
                 else:
-                    newobj.provenance.save('Add premis with identifier change event')
-                    newobj.save('Add ARK to descriptive metadata')
+                    newobj.save('Add premis with identifier change event; ' +
+                                'add ARK to descriptive metadata')
 
             except RequestFailed as err:
                 print 'Error ingesting %s as %s: %s' % (pid, newpid, err)
@@ -238,9 +236,6 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
             # (this logic duplicated from base get_default_pid method)
             # if we have a mods datastream, store the ARK as mods:identifier
             if hasattr(obj, 'mods'):
-                print '*** old object mods class'
-
-                print obj.mods.content.__class__
                 # store full uri and short-form ark
                 obj.mods.content.identifiers.extend([
                     mods.Identifier(type='ark', text=ark),

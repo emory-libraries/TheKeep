@@ -141,6 +141,23 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
 
         return super(ArrangementObject, self).save(logMessage)
 
+    def get_original_datastream(self):
+        # retrieve original datastream object; used to generate
+        # object information for premis checksums
+        orig_ds = self.getDatastreamObject('ORIGINAL')
+        if orig_ds.exists:
+            return orig_ds
+
+        # for email content, use MIME datastream as original content
+        orig_ds = self.getDatastreamObject('MIME')
+        if orig_ds.exists:
+            return orig_ds
+
+        # TODO: what to do for email folders ?
+
+        raise Exception('No original datastream found')
+
+
     def set_premis_object(self):
         # NOTE: could add a check to see if premis exists before setting
         # these values (although we don't expect arrangment objects
@@ -157,8 +174,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         self.provenance.content.object.type = 'p:file'
         self.provenance.content.object.composition_level = 0
 
-        # retrieve original datastream to store/calculate checsums
-        original_ds = self.getDatastreamObject('ORIGINAL')
+        original_ds = self.get_original_datastream()
 
         # add MD5 and SHA-1 checksums for original datastream content
         # Fedora should already have an MD5
@@ -431,6 +447,10 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         '''
         return dict([(h.name, h.value) for h in self.cerp.content.headers])
 
+    def get_original_datastream(self):
+        # for email content, use MIME datastream as original content
+        return self.getDatastreamObject('MIME')
+
     def email_label(self):
         '''
         Construct a label based on to, from, subject and date as
@@ -559,7 +579,8 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
 
 
 class Mailbox(boda.Mailbox, ArrangementObject):
-    CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
-                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
+    CONTENT_MODELS = [boda.Mailbox.MAILBOX_CONTENT_MODEL,
+                      boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
     NEW_OBJECT_VIEW = 'arrangement:view'
+
