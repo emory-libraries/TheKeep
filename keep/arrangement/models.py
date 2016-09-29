@@ -11,8 +11,10 @@ from eulfedora.models import Relation, ReverseRelation, XmlDatastream
 from eulfedora.util import RequestFailed
 from eulfedora.rdfns import relsext, model as modelns
 from eulcm.models import boda
+from eulcm.xmlmap.boda import ArrangementMods
+from eulcm.xmlmap.mods import MODS
 from eulxml import xmlmap
-from eulxml.xmlmap import premis
+from eulxml.xmlmap import premis, mods
 from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
 from keep import __version__
@@ -61,11 +63,27 @@ class ArrangementPremis(premis.Premis):
     events = xmlmap.NodeListField('p:event', PremisEvent)
 
 
+class LocalArrangementMods(ArrangementMods, MODS):
+    # extend eulcml arrangement mods to include eulcm mods with
+    # mappings for identifiers, ark and ark uri
+    pass
+
+
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     '''Subclass of :class:`eulfedora.models.DigitalObject` for
     "arrangement" content.'''
 
     NEW_OBJECT_VIEW = 'arrangement:edit'
+
+    mods = XmlDatastream('MODS', 'MODS Metadata', LocalArrangementMods,
+        defaults={
+            'control_group': 'M',
+            'format': mods.MODS_NAMESPACE,
+            'versionable': True,
+    })
+    '''MODS :class:`~eulfedora.models.XmlDatastream` with content as
+    :class:`ArrangementMods`; datstream ID ``MODS``'''
+
 
     provenance = XmlDatastream(
         'provenanceMetadata', 'Provenance metadata',
@@ -128,19 +146,11 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
         # these values (although we don't expect arrangment objects
         # to have premis by default)
 
-        # NOTE: this is how disk image handles setting the ark identifier,
-        # but arrangement objects don't currently use MODS for ARKs; the ark
-        # may need to be passed in from the calling code.
-        # if obj.mods.content.ark:
-        #     obj.provenance.content.object.id = obj.mods.content.ark
-        #     obj.provenance.content.object.id_type = 'ark'
-
         # NOTE: should be using the ark:/####/#### id form here
-
-        # FIXME: placeholder identifier info, in the absence of ark logic
+        # using ArkPidDigitalObject ark property
         self.provenance.content.create_object()
-        self.provenance.content.object.id_type = 'pid'
-        self.provenance.content.object.id = self.pid
+        self.provenance.content.object.id_type = 'ark'
+        self.provenance.content.object.id = self.mods.content.ark
 
         # add basic object premis information
         # object type required to be schema valid, must be in premis namespace
