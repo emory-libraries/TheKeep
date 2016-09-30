@@ -83,7 +83,7 @@ class Command(BaseCommand):
         following environments:
         FEDORA: %s
         PIDMAN: %s
-        """ % (settings.FEDORA_ROOT, settings.PIDMAN_DOMAIN)
+        """ % (settings.FEDORA_ROOT, settings.PIDMAN_RUSHDIE_DOMAIN)
         self.stdout.write(environment_notice)
 
         # confirm to proceed
@@ -106,7 +106,7 @@ class Command(BaseCommand):
         # create log files
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
-        self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_DOMAIN))
+        self.summary_log.writerow(('Environments', 'FEDORA', settings.FEDORA_ROOT, 'PIDMAN', settings.PIDMAN_RUSHDIE_DOMAIN))
         self.summary_log.writerow(('Time', 'Status', 'PM_Pid', 'PM_Label', 'PM_Target_URI', 'Supposed_Label', 'Supposed_Target_URI', \
             "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Exceptions"))
 
