@@ -111,7 +111,7 @@ class Command(BaseCommand):
             "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Exceptions"))
 
         # collect pids in Rushdie Collection
-        results = self.pidman.search_pids(domain_uri=settings.PIDMAN_RUSHDIE_DOMAIN, target=settings.PIDMAN_RUSHDIE_UNUSED_URI)
+        results = self.pidman.search_pids(domain_uri=settings.PIDMAN_RUSHDIE_DOMAIN)
         results_count = results["results_count"]
 
         self.update_progress(results, results_count)
@@ -140,7 +140,7 @@ class Command(BaseCommand):
 
         # iterate through all results fetched from pidman
         for page in range(1, pages):
-            page_results = self.pidman.search_pids(domain_uri=settings.PIDMAN_RUSHDIE_DOMAIN, target=settings.PIDMAN_RUSHDIE_UNUSED_URI, page=page)
+            page_results = self.pidman.search_pids(domain_uri=settings.PIDMAN_RUSHDIE_DOMAIN, page=page)
             for page_result in page_results["results"]:
                 pm_object_pid, pm_object_noid, pm_label, updated_pm_label, pm_target_uri = (None,)*5
                 in_fedora, fedora_object, fedora_label, fedora_create_time_stamp = (None,)*4
