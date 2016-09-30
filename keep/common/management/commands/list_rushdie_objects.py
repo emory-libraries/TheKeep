@@ -111,7 +111,7 @@ class Command(BaseCommand):
             "In_Fedora?", "Fedora_Label", "Fedora_Create_Time", "Exceptions"))
 
         # collect pids in Rushdie Collection
-        results = self.pidman.search_pids(domain="Rushdie Collection")
+        results = self.pidman.search_pids(domain_uri=settings.PIDMAN_RUSHDIE_DOMAIN, target=settings.PIDMAN_RUSHDIE_UNUSED_URI)
         results_count = results["results_count"]
 
         self.update_progress(results, results_count)
@@ -140,13 +140,17 @@ class Command(BaseCommand):
 
         # iterate through all results fetched from pidman
         for page in range(1, pages):
-            page_results = self.pidman.search_pids(domain="Rushdie Collection", page=page)
+            page_results = self.pidman.search_pids(domain_uri=settings.PIDMAN_RUSHDIE_DOMAIN, target=settings.PIDMAN_RUSHDIE_UNUSED_URI, page=page)
             for page_result in page_results["results"]:
                 pm_object_pid, pm_object_noid, pm_label, updated_pm_label, pm_target_uri = (None,)*5
                 in_fedora, fedora_object, fedora_label, fedora_create_time_stamp = (None,)*4
-                supposed_label, supposed_target_uri = (None,)*2
-                status_label = "dry-run"
+                supposed_label, supposed_target_uri, status_label = (None,)*3
                 exception_label = "no-exception"
+
+                if not self.is_dry_run:
+                    status_label = "actual-run"
+                else:
+                    status_label = "dry-run"
 
                 try:
                     pm_object_pid = "emory:" + page_result["pid"]
@@ -162,16 +166,16 @@ class Command(BaseCommand):
                     # - set status_label as "unused-pid-identified"
                     if not fedora_object.exists:
                         if not self.is_dry_run:
-                            status_label = "actual-run"
                             pid_response = self.pidman.update_pid(type="ark", noid=pm_object_noid, name=settings.PIDMAN_RUSHDIE_UNUSED)
                             target_response = self.pidman.update_target(type="ark", noid=pm_object_noid, target_uri=settings.PIDMAN_RUSHDIE_UNUSED_URI)
                             if pid_response["name"] == settings.PIDMAN_RUSHDIE_UNUSED and target_response["target_uri"] == settings.PIDMAN_RUSHDIE_UNUSED_URI:
                                 status_label += ", unused-pid-updated"
                             else:
                                 status_label += ", unused-pid-update-failed"
-                        else:
-                            supposed_label = settings.PIDMAN_RUSHDIE_UNUSED
-                            supposed_target_uri = settings.PIDMAN_RUSHDIE_UNUSED_URI
+
+                        # supposed label and target_uri
+                        supposed_label = settings.PIDMAN_RUSHDIE_UNUSED
+                        supposed_target_uri = settings.PIDMAN_RUSHDIE_UNUSED_URI
 
                     # fedora object exists
                     # - update label to that in Fedora
@@ -198,11 +202,12 @@ class Command(BaseCommand):
                                     status_label += ", target_uri-updated"
                                 else:
                                     status_label += ", target_uri-update-failed"
-                        else:
-                            keep_target = reverse(fedora_object.NEW_OBJECT_VIEW, kwargs={'pid': fedora_object.pid})
-                            keep_target = urllib.unquote(keep_target)
-                            supposed_label = fedora_object.label
-                            supposed_target_uri = absolutize_url(keep_target)
+
+                        # supposed label and target_uri
+                        keep_target = reverse(fedora_object.NEW_OBJECT_VIEW, kwargs={'pid': fedora_object.pid})
+                        keep_target = urllib.unquote(keep_target)
+                        supposed_label = fedora_object.label
+                        supposed_target_uri = absolutize_url(keep_target)
 
                     fedora_create_time_stamp = fedora_object.created.strftime("%Y-%m-%d %H:%M:%S")
                 except Exception as e:
