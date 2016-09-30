@@ -6,27 +6,24 @@ CHANGELOG
 Release 2.6.5
 -------------
 
-* bugfix: Keep load_ead script (generate Keep collections from EAD) to work
+* bugfix: Fix Keep load_ead script (generate Keep collections from EAD) to work
   with latest code updates
-* Allow users to create new collections from finding aids so that the metadata
-  for collections is consistent
+* As a collection manager, I want to be able to create new collections from
+  finding aids so that the metadata for collections is consistent
 * Update to existdb 2.2
 * Update to use migrated taskresult in eulcommon and remove eullocal dependency
 * Set up testkeep fedora content and pidqas so pid updates can be tested
-* Add a one-time update of ARK records in the Pid Manager to match current
-  titles in the Keep so that the metadata is consistent in the two systems
-* Allow Pidman title to be automatically updated in order to have
-  accurate/matching information in Pidman, when users edit an object title in
-  the Keep
-* bugfix: Pidman rest api does not find pids in subdomains when searching by
-  domain (requires Pidman 1.0.3)
+* As a Keep administrator, I want a one-time update of ARK records in the Pid
+  Manager to match current titles in the Keep so that the metadata is
+  consistent in the two systems
+* As a collection curator, when I edit an object title in the Keep, I want the
+  Pidman title to automatically update in order to have accurate/matching
+  information in Pidman
+* bugfix: The Pidman rest api does not find pids in subdomains when searching
+  by domain (requires Pidman 1.0.3)
 * Resolve an issue in which Rushdie pids in Fedora do not match Pidman -
   Report on unused PIDS and missmatches
-* Note: Starting from version 2.6.5, the Keep requires the
-  `FEDORA_MANAGEMENT_USER` and `FEDORA_MANAGEMENT_PASSWORD` to run management
-  commands that query objects in Fedora. Please make sure that these two local
-  variables are defined in the `localsettings.py`.
-  
+
 Release 2.6.4
 -------------
 
