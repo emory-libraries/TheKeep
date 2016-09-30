@@ -36,10 +36,10 @@ def md5sum(filename):
     '''
     return checksum(filename, 'md5')
 
+
 def sha1sum(filename):
     'Calculate and return a SHA-1 hash for a file.  Same usage as :meth:`md5sum`'
     return checksum(filename, 'sha1')
-
 
 
 _DUMP_BLOCK_SIZE = 16 * 1024  # mostly arbitrary. this size seems nice.
