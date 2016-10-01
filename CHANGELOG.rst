@@ -3,6 +3,17 @@
 CHANGELOG
 =========
 
+Release 2.7
+-----------
+
+* As a staff user, when I'm viewing a Rushdie object with a reassigned pid, I
+  want to be able to see PREMIS metadata documenting this change so that I
+  understand the provenance of the object
+* As a Keep administrator, I want Rushdie pids mismatched in Pidman to be
+  assigned to a new pid within the Rushdie allocation range in Pidman
+* As a Keep administrator, I want a one-time update of  pidman metadata for
+  Rushdie objects (label/target) where objects exist in Fedora.
+
 Release 2.6.5
 -------------
 
