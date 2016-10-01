@@ -319,7 +319,7 @@ as a fedora account.  See :mod:`keep.audio.tests` for account details.
 Upgrade Notes
 =============
 
-Release 2.8
+Release 2.7
 -----------
 
 * New local settings must be configured to support for Rushdie pid
