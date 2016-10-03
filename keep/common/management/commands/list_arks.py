@@ -192,7 +192,7 @@ class Command(BaseCommand):
         object_uris = self.repo.risearch.get_subjects(modelns.hasModel, object_class.CONTENT_MODELS[0])
         for object_uri in object_uris:
             digital_object, digital_object_pid, digital_object_label, pidman_digital_obejct = (None,)*4
-            pidman_label, pidman_target_uri, keep_target_uri, status_label, mismatch = (None,)*5
+            pidman_label, updated_pidman_label, pidman_target_uri, keep_target_uri, status_label, mismatch = (None,)*6
             exception_string = ""
             hasException = False
 
@@ -262,13 +262,23 @@ class Command(BaseCommand):
             if not hasException:
                 # execute irreversible update when the dry run flag is not set
                 # be cautious
-                # if not self.is_dry_run:
-                #     digital_object.update_ark_label(force_update=True)
+                if not self.is_dry_run:
+                    try:
+                        if pidman_label != digital_object_label and digital_object_label is not None:
+                            response = self.pidman.update_pid(type="ark", noid=digital_object.noid, name=digital_object_label)
+                            updated_pidman_label = response["name"]
+                            status_label = "changed"
+                    except Exception as e:
+                        hasException = True
+                        exception_string += "Pidman object %s is not updated. Error message: %s" % (digital_object_pid, str(e))
 
                 # when the names are not the same
                 if (pidman_label != digital_object_label):
                     change_count += 1
-                    status_label = "change-needed"
+                    if updated_pidman_label == digital_object_label:
+                        status_label = "changed"
+                    else:
+                        status_label = "change-needed"
 
                 # when the names are the same
                 else:

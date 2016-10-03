@@ -87,6 +87,11 @@ PIDMAN_USER = 'exampleuser'
 PIDMAN_PASSWORD = 'examplepass'
 PIDMAN_DOMAIN = 'http://pid.emory.edu/domains/42/' # the full url of the domain we'll create pids in
 
+# special case settings for rushdie pid cleanup & reuse
+PIDMAN_RUSHDIE_DOMAIN = ''
+PIDMAN_RUSHDIE_UNUSED = 'Unallocated Rushdie pid'
+PIDMAN_RUSHDIE_UNUSED_URI = ''
+
 # django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
 CACHES = {
     'default': {

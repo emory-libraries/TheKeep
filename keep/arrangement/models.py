@@ -1,18 +1,30 @@
+from datetime import datetime
 import logging
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import models
+import os
 from rdflib import URIRef
+import tempfile
+import uuid
 
-from eulfedora.models import Relation, ReverseRelation
+from eulfedora.models import Relation, ReverseRelation, XmlDatastream
 from eulfedora.util import RequestFailed
 from eulfedora.rdfns import relsext, model as modelns
 from eulcm.models import boda
+from eulcm.xmlmap.boda import ArrangementMods
+from eulcm.xmlmap.mods import MODS
+from eulxml import xmlmap
+from eulxml.xmlmap import premis, mods
+from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
 
+from keep import __version__
 from keep.collection.models import SimpleCollection
+from keep.common.models import PremisFixity, PremisObject, PremisEvent
 from keep.common.fedora import ArkPidDigitalObject, Repository
 from keep.common.utils import solr_interface
 from keep.collection.models import CollectionObject
-from pidservices.djangowrapper.shortcuts import DjangoPidmanRestClient
+from keep.file.utils import sha1sum
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +53,41 @@ class Arrangement(models.Model):
             ("view_arrangement", "Can view, search, and browse arrangement objects"),
         )
 
+
+class ArrangementPremis(premis.Premis):
+    # adapdet from diskimage premis
+    XSD_SCHEMA = premis.PREMIS_SCHEMA
+
+    object = xmlmap.NodeField('p:object', PremisObject)
+
+    events = xmlmap.NodeListField('p:event', PremisEvent)
+
+
+class LocalArrangementMods(ArrangementMods, MODS):
+    # extend eulcml arrangement mods to include eulcm mods with
+    # mappings for identifiers, ark and ark uri
+    pass
+
+
 class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     '''Subclass of :class:`eulfedora.models.DigitalObject` for
     "arrangement" content.'''
 
     NEW_OBJECT_VIEW = 'arrangement:edit'
+
+    mods = XmlDatastream('MODS', 'MODS Metadata', LocalArrangementMods,
+        defaults={
+            'control_group': 'M',
+            'format': mods.MODS_NAMESPACE,
+            'versionable': True,
+    })
+    '''MODS :class:`~eulfedora.models.XmlDatastream` with content as
+    :class:`ArrangementMods`; datstream ID ``MODS``'''
+
+
+    provenance = XmlDatastream(
+        'provenanceMetadata', 'Provenance metadata',
+        ArrangementPremis, defaults={'versionable': False})
 
     component_key = {
         'FileMasterTech': 'file technical metadata',
@@ -98,6 +140,85 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
             self._update_access_cmodel()
 
         return super(ArrangementObject, self).save(logMessage)
+
+    def get_original_datastream(self):
+        # retrieve original datastream object; used to generate
+        # object information for premis checksums
+        orig_ds = self.getDatastreamObject('ORIGINAL')
+        if orig_ds.exists:
+            return orig_ds
+
+        # for email content, use MIME datastream as original content
+        orig_ds = self.getDatastreamObject('MIME')
+        if orig_ds.exists:
+            return orig_ds
+
+        # TODO: what to do for email folders ?
+
+        raise Exception('No original datastream found')
+
+
+    def set_premis_object(self):
+        # NOTE: could add a check to see if premis exists before setting
+        # these values (although we don't expect arrangment objects
+        # to have premis by default)
+
+        # NOTE: should be using the ark:/####/#### id form here
+        # using ArkPidDigitalObject ark property
+        self.provenance.content.create_object()
+        self.provenance.content.object.id_type = 'ark'
+        self.provenance.content.object.id = self.mods.content.ark
+
+        # add basic object premis information
+        # object type required to be schema valid, must be in premis namespace
+        self.provenance.content.object.type = 'p:file'
+        self.provenance.content.object.composition_level = 0
+
+        original_ds = self.get_original_datastream()
+
+        # add MD5 and SHA-1 checksums for original datastream content
+        # Fedora should already have an MD5
+        # (NOTE: could confirm that this is MD5 using checksum_type)
+        self.provenance.content.object.checksums.append(PremisFixity(algorithm='MD5'))
+        self.provenance.content.object.checksums[0].digest = original_ds.checksum
+
+        # save original content to disk in order to calculate a SHA-1 checkusum
+        # don't delete when file handle is closed
+        origtmpfile = tempfile.NamedTemporaryFile(
+            prefix='%s-orig-' % self.noid, delete=False)
+        for data in original_ds.get_chunked_content():
+            origtmpfile.write(data)
+
+        # close to flush contents before calculating checksum
+        origtmpfile.close()
+
+        # calculate SHA-1 and add to premis
+        self.provenance.content.object.checksums.append(PremisFixity(algorithm='SHA-1'))
+        self.provenance.content.object.checksums[1].digest = sha1sum(origtmpfile.name)
+
+        # clean up temporary copy of the original file
+        os.remove(origtmpfile.name)
+
+        # set object format - using original file mimetype
+        self.provenance.content.object.create_format()
+        self.provenance.content.object.format.name = original_ds.mimetype
+
+    def identifier_change_event(self, oldpid):
+        '''Add an identifier change event to the premis for this object.'''
+
+        detail_msg = 'Persistent identifier reassigned from %s to %s' % \
+            (oldpid, self.pid)
+        idchange_event = PremisEvent()
+        idchange_event.id_type = 'UUID'
+        idchange_event.id = uuid.uuid1()
+        idchange_event.type = 'identifier assignment'
+        idchange_event.date = datetime.now().isoformat()
+        idchange_event.detail = 'program="keep"; version="%s"' % __version__
+        idchange_event.outcome = 'Pass'
+        idchange_event.outcome_detail = detail_msg
+        idchange_event.agent_type = 'fedora user'
+        idchange_event.agent_id = self.api.username
+        self.provenance.content.events.append(idchange_event)
 
     def _update_access_cmodel(self):
         # update access/restriction content models based on rights access code
@@ -170,7 +291,6 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     def content_md5(self):
         if self.filetech.content.file and self.filetech.content.file[0].md5:
             return self.filetech.content.file[0].md5
-
 
     def index_data(self):
         '''Extend the default
@@ -314,11 +434,23 @@ class RushdieArrangementFile(boda.RushdieFile, ArrangementObject):
                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
 
+class Mailbox(boda.Mailbox, ArrangementObject):
+    CONTENT_MODELS = [boda.Mailbox.MAILBOX_CONTENT_MODEL,
+                      boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
+
+    NEW_OBJECT_VIEW = 'arrangement:view'
+
+    # note: mailbox lists email messages in rels-ext
+
+
 class EmailMessage(boda.EmailMessage, ArrangementObject):
     CONTENT_MODELS = [boda.EmailMessage.EMAIL_MESSAGE_CMODEL,
                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL]
 
     NEW_OBJECT_VIEW = 'arrangement:view'
+
+    # messages are related to mailbox via is part of
+    mailbox = Relation(relsext.isPartOf, type=Mailbox)
 
     @property
     def headers(self):
@@ -326,6 +458,10 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         Access CERP headers as a dictionary.
         '''
         return dict([(h.name, h.value) for h in self.cerp.content.headers])
+
+    def get_original_datastream(self):
+        # for email content, use MIME datastream as original content
+        return self.getDatastreamObject('MIME')
 
     def email_label(self):
         '''
@@ -454,8 +590,4 @@ class EmailMessage(boda.EmailMessage, ArrangementObject):
         return EmailMessage.find_by_field('arrangement_id', id, repo=repo)
 
 
-class Mailbox(boda.Mailbox, ArrangementObject):
-    CONTENT_MODELS = [ boda.Mailbox.MAILBOX_CONTENT_MODEL,
-                       boda.Arrangement.ARRANGEMENT_CONTENT_MODEL ]
 
-    NEW_OBJECT_VIEW = 'arrangement:view'

@@ -40,13 +40,6 @@ spawned from that shell will read their environment only from this
 directory, not from the system-wide site packages. Installations will
 correspondingly be installed into this environment.
 
-Starting from version 2.6.5, the Keep requires the `FEDORA_MANAGEMENT_USER` and
-`FEDORA_MANAGEMENT_PASSWORD` to run management commands that query objects in
-Fedora. Please make sure that these two local variables are defined in the
-`localsettings.py`.
-
-Please also make sure that all migrations are run during the deployment process.
-
 .. Note::
   Installation instructions and upgrade notes below assume that
   you are already in an activated shell.
@@ -329,6 +322,14 @@ Upgrade Notes
 Release 2.7
 -----------
 
+* New local settings must be configured to support for Rushdie pid
+  and reuse and cleanup: **PIDMAN_RUSHDIE_DOMAIN** and
+  **PIDMAN_RUSHDIE_UNUSED_URI**
+
+
+Release 2.6.5
+-------------
+
 * The Keep has been updated for eXist 2.2 compatilibity; the **EXIST_**
   configurations in ``localsettings.py`` should be updated to match
   settings for the current findingaids database.
@@ -336,6 +337,16 @@ Release 2.7
 * The MARBL collection label and MODS title should be updated to reflect
   the full title, in order to match the subarea in the findingaids:
   "Stuart A. Rose Manuscript, Archives, and Rare Book Library"
+
+* In the localsettings.py this version starts to require the
+  `FEDORA_MANAGEMENT_USER` and `FEDORA_MANAGEMENT_PASSWORD` in order to
+  run management commands that query objects in Fedora. Please make sure
+  that these two local variables are defined in the `localsettings.py`.
+  Please also make sure that all migrations are run during the deployment
+  process.
+
+* Please also make sure that all migrations are run during the deployment
+  process.
 
 
 Release 2.6.2 - MacMillan Law Library
