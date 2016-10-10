@@ -32,7 +32,7 @@
     <foxml:datastreamVersion ID="DC.0" MIMETYPE="text/xml" FORMAT_URI="http://www.openarchives.org/OAI/2.0/oai_dc/" LABEL="Dublin Core">
       <foxml:xmlContent>
         <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:dc="http://purl.org/dc/elements/1.1/">
-          <dc:title>Manuscript, Archives, and Rare Book Library</dc:title>
+          <dc:title>Stuart A. Rose Manuscript, Archives, and Rare Book Library</dc:title>
         </oai_dc:dc>
       </foxml:xmlContent>
     </foxml:datastreamVersion>
