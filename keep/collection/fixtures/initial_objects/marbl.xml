@@ -22,7 +22,7 @@
         <mods:mods xmlns:mods="http://www.loc.gov/mods/v3">
           <mods:identifier type="local_short_name">MARBL</mods:identifier>
           <mods:titleInfo>
-            <mods:title>Manuscript, Archives, and Rare Book Library</mods:title>
+            <mods:title>>Stuart A. Rose Manuscript, Archives, and Rare Book Library</mods:title>
           </mods:titleInfo>
         </mods:mods>
       </foxml:xmlContent>
