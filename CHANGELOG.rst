@@ -3,6 +3,11 @@
 CHANGELOG
 =========
 
+Release 2.7.1 
+-------------
+* INC02570212 - Keep configuration change: new codec creator
+
+
 Release 2.7
 -----------
 
