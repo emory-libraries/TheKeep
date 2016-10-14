@@ -3,13 +3,14 @@
 CHANGELOG
 =========
 
-Release 2.7.4
+Release 2.7.1
 -------------
 
 * Fixing Mods Dates errors
 * Keep collection generation isn't working because the repository name for the Rose Library is incorrect.
 * Testkeep is producing an error message for some audio objects.
 * Bags with Iso disk images cannot be ingested into the Keep.
+* INC02570212 - Keep configuration change: new codec creator
 
 
 Release 2.7
