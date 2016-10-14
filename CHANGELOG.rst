@@ -3,6 +3,15 @@
 CHANGELOG
 =========
 
+Release 2.7.4
+-------------
+
+* Fixing Mods Dates errors
+* Keep collection generation isn't working because the repository name for the Rose Library is incorrect.
+* Testkeep is producing an error message for some audio objects.
+* Bags with Iso disk images cannot be ingested into the Keep.
+
+
 Release 2.7
 -----------
 
