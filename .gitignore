@@ -12,6 +12,8 @@ doc/_build
 .coverage
 coverage.xml
 nosetests.xml
+changed_objects.csv
+changed_objects2.csv
 .noseids
 keep/accounts/migrations/0004_auto_20160613_1112.py
 thekeep.db

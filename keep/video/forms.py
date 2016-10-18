@@ -56,9 +56,9 @@ class OriginInfoForm(XmlObjectForm):
     form_label = 'Origin Info'
     #Create the subform fields from fields (xmlmap) in eulxml.
     created = SubformField(formclass=xmlobjectform_factory(mods.DateCreated,
-                            form=SimpleDateForm, max_num=1, can_delete=False))
+                            form=SimpleDateForm, max_num=1))
     issued = SubformField(formclass=xmlobjectform_factory(mods.DateIssued,
-                            form=SimpleDateForm, max_num=1, can_delete=False),
+                            form=SimpleDateForm, max_num=1),
                           label='Date Issued')
     class Meta:
         model = mods.OriginInfo
