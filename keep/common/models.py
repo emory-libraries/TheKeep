@@ -263,6 +263,8 @@ class CodecCreator(_BaseDigitalTech):
         '6': (('iMac', 'Benchmark ADC1'), 'Adobe Audition CS6', '5.0'),
         '7': (('iMac', 'Benchmark ADC1'), 'Sound Forge Pro', '1.0'),
         '8': (('iMac',), 'iTunes', None),
+        '9': (('iMac', 'Benchmark ADC1'), 'Sound Forge Pro', '2.5.1'),
+
     }
     'controlled vocabulary for codec creator configurations'
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))

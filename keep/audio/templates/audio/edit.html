@@ -9,6 +9,41 @@
   <script type="text/javascript" src="{{ STATIC_URL }}/js/edit.js"></script>
   <script type="text/javascript">
     $(document).ready(function() {
+
+      $("#id_mods-origin_info-issued-0-date_year").keyup(function () {
+          if ($(this).val() == "") {
+              $("#id_mods-origin_info-issued-0-DELETE").prop("checked", true);
+          } else {
+              $("#id_mods-origin_info-issued-0-DELETE").prop("checked", false);
+          }
+      });
+
+      $("#id_mods-origin_info-issued-0-DELETE").change(function () {
+          if (!$(this).is(':checked')) {
+              $("#id_mods-origin_info-issued-0-date_year").val("");
+          }
+      });
+
+
+      $("#id_mods-origin_info-created-0-date_year").keyup(function () {
+          if ($(this).val() == "") {  
+              $("#id_mods-origin_info-created-0-DELETE").prop("checked", true);
+          } else {
+              $("#id_mods-origin_info-created-0-DELETE").prop("checked", false);
+          }
+      });
+
+      $("#id_mods-origin_info-created-0-DELETE").change(function () {
+          if (!$(this).is(':checked')) {
+              $("#id_mods-origin_info-created-0-date_year").val("");
+          }
+      });
+
+      $("#id_mods-origin_info-created-0-DELETE").hide();
+      $("#id_mods-origin_info-issued-0-DELETE").hide();
+      $('#id_mods-origin_info-issued-0-DELETE').parent().hide();
+      $("#id_mods-origin_info-created-0-DELETE").parent().hide();
+
      $("#queue_access_conversion").click(function() {
         var el = $(this).parent()
         /* immediately replace link with text to avoid double-clicks and give user feedback */
