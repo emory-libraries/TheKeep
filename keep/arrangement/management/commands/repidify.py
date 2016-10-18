@@ -251,7 +251,8 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
 
             except RequestFailed as err:
                 print 'Error ingesting %s as %s: %s' % (pid, newpid, err)
-                raise
+            except Exception as err:
+                print "Exception: %s" % str(err)
 
     def get_new_pid(self, obj):
         # TODO: first, make sure object label is set appropriately before
@@ -360,4 +361,3 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                         errors['%s-%s' % (dsid, dsdate)] = 'checksum mismatch'
 
         return errors
-
