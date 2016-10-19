@@ -123,7 +123,7 @@ def view_datastream(request, pid, dsid):
 
     # work-around for email MIME data : display as plain text so it
     # can be viewed in the browser
-    if response['Content-Type'] == 'message/rfc822':
+    if response.get('Content-Type') == 'message/rfc822': 
         response['Content-Type'] = 'text/plain'
     return response
 
