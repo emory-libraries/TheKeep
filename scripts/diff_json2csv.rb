@@ -54,7 +54,6 @@ end
 # Handle removed objects
 CSV.open('removed.csv','wb') do |csvfile|
   csvfile << ["removed", "pid", "label", "path"]
-  pry
   data_hash['removed'].each do |row|
     csvfile << ["removed", row["PID"], row["LABEL"], row["PATH"]]
   end
