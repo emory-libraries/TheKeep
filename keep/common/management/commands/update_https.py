@@ -173,7 +173,7 @@ class Command(BaseCommand):
                             updated_target_uri = response["target_uri"]
                             status_label = "https-changed"
                         else:
-                            status_label = "dry-run"
+                            status_label = "updated - dry-run"
                             updated_target_uri = https_uri
                     else:
                         nochange_count += 1
