@@ -47,6 +47,10 @@ class Command(BaseCommand):
             '-n',
             action='store_true',
             help='Dry run the command to get an output but with no changes applied'),
+        make_option('--domain',
+            '-d',
+            help='Override default domain defined in "settings.PIDMAN_DOMAIN"\
+                  , in the format of "https://pid.library.emory.edu/domains/0/"'),
     )
 
     def handle(self, *args, **kwargs):
@@ -65,6 +69,9 @@ class Command(BaseCommand):
         # initialize dry-run flag to false
         self.is_dry_run = False
 
+        # domain used in script
+        self.query_domain = settings.PIDMAN_DOMAIN
+
         # dry run notice
         if kwargs.get('dry_run', True):
             dry_run_notice = """
@@ -77,12 +84,16 @@ class Command(BaseCommand):
             sys.stdout.write(dry_run_notice)
             self.is_dry_run = True
 
+        # domain from
+        if kwargs.get('domain', True):
+            self.query_domain = kwargs.get('domain')
+
         # verify environments
         environment_notice = """
         Please confirm that you would like to proceed with the
         following environments:
         PIDMAN: %s
-        """ % (settings.PIDMAN_DOMAIN)
+        """ % (self.query_domain)
         self.stdout.write(environment_notice)
 
         # confirm to proceed
@@ -105,13 +116,13 @@ class Command(BaseCommand):
         # create log files
         summary_log_path = open("%s/%s" % (self.output_path, "summary.csv"), 'wb')
         self.summary_log = unicodecsv.writer(summary_log_path, encoding='utf-8')
-        self.summary_log.writerow(('Environments', 'PIDMAN', settings.PIDMAN_DOMAIN))
+        self.summary_log.writerow(('Environments', 'PIDMAN', self.query_domain))
         self.summary_log.writerow(('Time', 'Status', 'noid', \
             'Pidman label', 'Pidman target_uri', \
             'target_uri update', 'Exception Details'))
 
         # collect pids in Keep Domain
-        results = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN)
+        results = self.pidman.search_pids(domain_uri=self.query_domain)
         results_count = results["results_count"]
 
         self.update_progress(results, results_count)
@@ -142,7 +153,7 @@ class Command(BaseCommand):
 
         # iterate through all results fetched from pidman
         for page in range(1, pages):
-            page_results = self.pidman.search_pids(domain_uri=settings.PIDMAN_DOMAIN, page=page)
+            page_results = self.pidman.search_pids(domain_uri=self.query_domain, page=page)
             for page_result in page_results["results"]:
                 status_label = ""
                 updated_target_uri = ""
