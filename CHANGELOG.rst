@@ -11,6 +11,7 @@ Release 2.7.1
 * Testkeep is producing an error message for some audio objects.
 * Bags with Iso disk images cannot be ingested into the Keep.
 * INC02570212 - Keep configuration change: new codec creator
+* Fixing indexing issue related to provenanceMetadata
 
 
 Release 2.7
