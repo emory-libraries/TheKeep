@@ -10,7 +10,7 @@ git+https://github.com/emory-libraries/pidman-client.git@release-1.1.2#egg=pidse
 python-magic
 git+https://github.com/eliben/pycparser@release_v2.14
 pycrypto
-celery
+celery==3.1.24
 django-celery>=3.0
 mutagen
 poster
