@@ -429,7 +429,8 @@ class AudioObjectEditForm(forms.Form):
         # override default update to handle extra fields
         #super(AudioObjectEditForm, self).update_instance()
         self.object_instance.mods.content = self.mods.update_instance()
-        self.object_instance.mods.content.record_info.change_date = str(datetime.now().isoformat())
+        if self.object_instance.mods.content.record_info.change_date:
+            self.object_instance.mods.content.record_info.change_date = str(datetime.now().isoformat())
         self.object_instance.sourcetech.content = self.sourcetech.update_instance()
         self.object_instance.digitaltech.content = self.digitaltech.update_instance()
         self.object_instance.rights.content = self.rights.update_instance()
