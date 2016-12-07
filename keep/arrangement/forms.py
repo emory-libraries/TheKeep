@@ -274,7 +274,7 @@ class ArrangementObjectEditForm(forms.Form):
     def update_instance(self):
         # override default update to handle extra fields
         self.object_instance.mods.content = self.mods.update_instance()
-        if self.object_instance.mods.content.record_info.change_date:
+        if self.object_instance.mods.content.record_info:
             self.object_instance.mods.content.record_info.change_date = str(datetime.now().isoformat())
         self.object_instance.rights.content = self.rights.update_instance()
         # NOTE: filetech form is currently used entirely for display,
