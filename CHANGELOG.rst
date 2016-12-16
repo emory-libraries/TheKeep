@@ -3,6 +3,15 @@
 CHANGELOG
 =========
 
+Release 2.7.2
+-------------
+
+* Keep reindex errors ( premis metadata version )
+* Manage command for pids that don't have matching mimetypes
+* ModsrecordChangeDate is not updating when pid is updated
+* mov objects are not calculating the correct mimetype
+* Updated to a specific version of celery because 4.0 is failing
+
 Release 2.7.1
 -------------
 
