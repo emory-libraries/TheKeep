@@ -2,6 +2,7 @@ from django import forms
 from django.utils.safestring import mark_safe
 
 from eulxml.xmlmap import mods
+from datetime import datetime
 
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
@@ -273,6 +274,8 @@ class ArrangementObjectEditForm(forms.Form):
     def update_instance(self):
         # override default update to handle extra fields
         self.object_instance.mods.content = self.mods.update_instance()
+        if self.object_instance.mods.content.record_info:
+            self.object_instance.mods.content.record_info.change_date = str(datetime.now().isoformat())
         self.object_instance.rights.content = self.rights.update_instance()
         # NOTE: filetech form is currently used entirely for display,
         # all fields are read-only. Do NOT update object file-tech metadata.

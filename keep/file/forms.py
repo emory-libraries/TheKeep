@@ -5,6 +5,7 @@ import os
 from eulxml.forms import XmlObjectForm, SubformField
 from eulxml.xmlmap import mods
 from eulcommon.djangoextras.formfields import W3CDateField, DynamicChoiceField
+from datetime import datetime
 
 from django import forms
 from django.forms.formsets import formset_factory
@@ -298,6 +299,8 @@ class DiskImageEditForm(forms.Form):
     def update_instance(self):
         # override default update to handle extra fields
         self.object_instance.mods.content = self.mods.update_instance()
+        if self.object_instance.mods.content.record_info:
+            self.object_instance.mods.content.record_info.change_date = str(datetime.now().isoformat())
         self.object_instance.rights.content = self.rights.update_instance()
         self.object_instance.provenance.content = self.premis.update_instance()
 

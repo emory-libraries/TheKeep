@@ -17,4 +17,5 @@ changed_objects2.csv
 .noseids
 keep/accounts/migrations/0004_auto_20160613_1112.py
 thekeep.db
+data.txt
 tmp/

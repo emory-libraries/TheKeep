@@ -3,6 +3,7 @@ import logging
 from django import forms
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
+from datetime import datetime
 
 from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField, xmlobjectform_factory
@@ -376,7 +377,10 @@ class VideoEditForm(forms.Form):
     def update_instance(self):
         # override default update to handle extra fields
         #super(VideoEditForm, self).update_instance()
+        
         self.object_instance.mods.content = self.mods.update_instance()
+        if self.object_instance.mods.content.record_info:
+            self.object_instance.mods.content.record_info.change_date = str(datetime.now().isoformat())
         self.object_instance.sourcetech.content = self.sourcetech.update_instance()
         self.object_instance.digitaltech.content = self.digitaltech.update_instance()
         self.object_instance.rights.content = self.rights.update_instance()
