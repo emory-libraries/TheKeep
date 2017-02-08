@@ -59,6 +59,7 @@ env.omit_coverage = ','.join([
 def install_deps():
     '''Install all dependencies in the current (local) environment.'''
     local('pip install -r pip-install-req.txt -r pip-dev-req.txt')
+    local('pip install lxml --upgrade --force-reinstall --no-binary :all:')
     if os.path.exists('pip-local-req.txt'):
         local('pip install -r pip-local-req.txt')
 
