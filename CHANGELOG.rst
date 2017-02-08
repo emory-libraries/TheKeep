@@ -3,6 +3,14 @@
 CHANGELOG
 =========
 
+Release 2.7.3
+-------------
+
+* Making changes to celery backend
+* Switching to a different RabbitMQ
+* changing celery task to convert from wav to mp3
+
+
 Release 2.7.2
 -------------
 
