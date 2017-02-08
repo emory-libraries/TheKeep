@@ -9,7 +9,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'keep.settings')
 
 from django.conf import settings
 
-app = Celery('keep', broker=getattr(settings, 'BROKER_URL', None))
+app = Celery('keep',backend='amqp', broker=getattr(settings, 'BROKER_URL', None))
 
 # Using a string here means the worker will not have to
 # pickle the object when using Windows.

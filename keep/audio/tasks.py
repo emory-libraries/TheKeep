@@ -93,10 +93,13 @@ def convert_wav_to_mp3(pid, use_wav=None, remove_wav=False):
         # FFMPEG will not be correct, but it will convert and return 0.
 
         # NOTE: might be cleaner to call with subprocess.check_call
-
-        process = subprocess.Popen(['ffmpeg', '-y', '-i', wav_file_path, mp3_file_path],
-                stdout=subprocess.PIPE, preexec_fn=os.setsid, stdin=subprocess.PIPE,
-                stderr=subprocess.PIPE)
+        
+        cmd = "/usr/local/bin/ffmpeg -i %s -f mp3 %s"  % (wav_file_path, mp3_file_path)
+        #subprocess.call(['ffmpeg', '-i', mp3_file_path, wav_file_path])
+        #cmd = "cp /tmp/services /tmp/services.php" 
+        process = subprocess.Popen(cmd,
+                stdout=subprocess.PIPE, stdin=subprocess.PIPE,
+                stderr=subprocess.PIPE, shell=True)
 
         # returns a tuple of stdout, stderr. The output of the FFMPEG goes to stderr.
         stdout_output, stderr_output = process.communicate()

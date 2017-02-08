@@ -60,6 +60,7 @@ where you plan to run unit tests, code coverage reports, or build sphinx
 documentation, you probably will also want to::
 
   pip install -r build-dependencies
+  pip install lxml --upgrade --force-reinstall --no-binary :all:
 
 After this step, your virtual environment should contain all of the
 dependencies for The Keep.
