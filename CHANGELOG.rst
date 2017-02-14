@@ -3,6 +3,12 @@
 CHANGELOG
 =========
 
+Release 2.7.4
+-------------
+
+* Removed Record Info section from Video edit page
+
+
 Release 2.7.3
 -------------
 
