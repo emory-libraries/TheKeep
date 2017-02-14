@@ -1,3 +1,4 @@
+pip>=9.0
 Django>=1.8,<1.9
 eulxml>=1.1
 # pinning to an installable version (required by rdflib, which is required by eulfedora)
