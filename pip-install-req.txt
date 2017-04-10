@@ -7,7 +7,7 @@ eulfedora>=1.6
 eulexistdb>=0.20
 eulcommon>=0.19.0
 # dev eulcommon to test removing eullocal (should be 0.19)
-git+https://github.com/emory-libraries/pidman-client.git@release-1.1.2#egg=pidservices
+git+https://github.com/emory-libraries/pidman-client.git#egg=pidservices
 python-magic
 git+https://github.com/eliben/pycparser@release_v2.14
 pycrypto

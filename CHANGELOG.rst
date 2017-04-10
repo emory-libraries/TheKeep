@@ -3,6 +3,11 @@
 CHANGELOG
 =========
 
+Release 2.7.5
+-------------
+
+* Updated pidman client to the current version of requests
+
 Release 2.7.4
 -------------
 
