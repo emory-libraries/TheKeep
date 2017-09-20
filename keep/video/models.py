@@ -162,14 +162,14 @@ class VideoSourceTech(_BaseSourceTech):
         required=False, help_text='The physical form or medium of the resource')
     'physical format - options controlled by :class:`SourceTech.form_options`'
     signal_format = xmlmap.StringField('st:signalFormat[@type="moving image"]', choices=signal_format_options,
-        required=False, help_text='The physical form or medium of the resource')
+        required=False, help_text='')
     'physical format - options controlled by :class:`SourceTech.form_options`'
     form_list = xmlmap.StringListField('st:form[@type="sound"]')
     sound_characteristics = xmlmap.StringField('st:soundChar',
         choices=sound_characteristic_options, required=False)
     'sound characteristics - options controlled by :class:`SourceTech.sound_characteristic_options`'
     chroma = xmlmap.StringField('st:chroma', choices=('color', 'monochrome'),
-        required=False, help_text='The physical form or medium of the resource')
+        required=False, help_text='')
     'physical format - options controlled by :class:`SourceTech.form_options`'
     stock = xmlmap.StringField('st:stock', verbose_name='Tape Brand/Stock',
        help_text='The brand or stock of the magnetic tape', required=False)
