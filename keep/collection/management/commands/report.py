@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 title = ''
                 collection_code = 0
                 for doc in solrquery:
-                    object_type += 1
+                    object_count += 1
                     try:    
                         object_type = doc['object_type']
                     except:

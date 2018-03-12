@@ -478,8 +478,24 @@ def largefile_ingest(request):
                 if type == 'video':
                     access_checksum = obj.access_copy.checksum
                     obj.access_copy.checksum = None
+                
+                pids_exists = []
+                if type == 'video':
+                    pids_exists = repo.find_objects(type=Video, label=obj.label)
+                
+                if type == 'diskimage':
+                    pids_exists = repo.find_objects(type=DiskImage, label=obj.label)
 
-                obj.save(comment)
+                exists = 0
+                for pid in pids_exists:
+                    if pid.pid:
+                        exists += 1
+
+                if exists == 0:
+                    obj.save(comment)
+                else:
+                    raise ValueError('Duplicate content detected.')
+
 
                 # remove the ingested bag from large-file staging area
                 shutil.rmtree(bag)
