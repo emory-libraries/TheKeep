@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-__version_info__ = (2, 7, 5, None)
+__version_info__ = (2, 7, 6, None)
 
 
 # Dot-connect all but the last. Last is dash-connected if not None.
