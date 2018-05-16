@@ -13,7 +13,8 @@ from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, Http404, \
-    HttpResponseForbidden
+    HttpResponseForbidden, HttpResponseRedirect
+
 from django.template.response import TemplateResponse
 from django.utils.safestring import mark_safe
 
@@ -442,7 +443,7 @@ def largefile_ingest(request):
                 if type == 'diskimage':
                     obj = DiskImage.init_from_bagit(bag, request)
 
-                if type == 'video':
+                elif type == 'video':
                     obj = Video.init_from_bagit(bag, request)
 
                 # set collection on ingest
@@ -569,6 +570,8 @@ def largefile_ingest(request):
 
             # report success/failure in the same format as web-upload ingest
             context['ingest_results'] = [file_info]
+            messages.success(request, 'Ingest results: %s' % file_info)
+            return HttpResponseRedirect("/admin")
 
     # on GET display form to select item(s) for ingest
     # OR on completed valid form post

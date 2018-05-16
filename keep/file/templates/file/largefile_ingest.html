@@ -9,7 +9,7 @@
      $(document).ready(function () {
         // client-side form validation before submitting files
         // NOTE: bind before md5 drop uploader so validation happens first
-        $('form#upload').submit(function(event){
+        $('#large-upload').submit(function(event){
            var valid = true;
            if (! $(this).find('#id_collection_0').val()) {
               valid = false;
@@ -25,6 +25,8 @@
            // to allow user to update the form and retry
            if (! valid) {
               $(this).find(":submit").attr("disabled", false)
+           }else{
+              $(this).find(":submit").attr("disabled", true)
            }
 
            // store valid/invalid on form so md5 uploader can check
@@ -57,7 +59,7 @@
 {% endif %}
 
 {% if form %}
-<form class="upload" method="post" action="{% url 'file:largefile-ingest' %}">{% csrf_token %}
+<form class="upload" id="large-upload" method="post" action="{% url 'file:largefile-ingest' %}">{% csrf_token %}
 
 <table>
  {{ form.non_field_errors }}
