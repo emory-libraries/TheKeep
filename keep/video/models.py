@@ -540,7 +540,9 @@ class Video(DigitalObject):
         # get duration and store in digital tech metadata
         try:
             info = MediaInfo.parse(master_filename)
-            duration = info.tracks[0].duration / 1000
+            for track in info.tracks:
+                if track.track_type == 'General' and track.duration:
+                    duration = track.duration / 1000
         except:
             raise Exception('Error getting video duration')
 
