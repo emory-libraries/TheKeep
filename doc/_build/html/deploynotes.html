@@ -1,0 +1,1321 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>DEPLOYNOTES &mdash; The Keep 2.7.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.7.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="The Keep 2.7.7 documentation" href="index.html" />
+    <link rel="next" title="CHANGELOG" href="changelog.html" />
+    <link rel="prev" title="Application Management" href="app_management.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="deploynotes">
+<span id="id1"></span><h1>DEPLOYNOTES<a class="headerlink" href="#deploynotes" title="Permalink to this headline">¶</a></h1>
+<p>Instructions for installation &amp; upgrade notes.</p>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="software-dependencies">
+<h3>Software Dependencies<a class="headerlink" href="#software-dependencies" title="Permalink to this headline">¶</a></h3>
+<p>We recommend the use of <a class="reference external" href="http://pip.openplans.org/">pip</a> and <a class="reference external" href="http://virtualenv.openplans.org/">virtualenv</a> for environment and dependency
+management in this and other Python projects. If you don&#8217;t have them
+installed we recommend <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">easy_install</span> <span class="pre">pip</span></code> and then <code class="docutils literal"><span class="pre">sudo</span> <span class="pre">pip</span> <span class="pre">install</span>
+<span class="pre">virtualenv</span></code>.</p>
+<div class="section" id="configure-the-environment">
+<h4>Configure the environment<a class="headerlink" href="#configure-the-environment" title="Permalink to this headline">¶</a></h4>
+<p>When first installing this project, you&#8217;ll need to create a virtual environment
+for it. The environment is just a directory. You can store it anywhere you like;
+in this documentation it’ll live right next to the source. For instance, if the
+source is in /home/thekeep/src, consider creating an environment in
+/home/thekeep/env. To create such an environment, su into apache&#8217;s user
+and:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">virtualenv</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">thekeep</span><span class="o">/</span><span class="n">env</span>
+</pre></div>
+</div>
+<p>This creates a new virtual environment in that directory. Source the activation
+file to invoke the virtual environment (requires that you use the bash shell):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">.</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">thekeep</span><span class="o">/</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+<p>Once the environment has been activated inside a shell, Python programs
+spawned from that shell will read their environment only from this
+directory, not from the system-wide site packages. Installations will
+correspondingly be installed into this environment.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Installation instructions and upgrade notes below assume that
+you are already in an activated shell.</p>
+</div>
+</div>
+<div class="section" id="install-python-dependencies">
+<h4>Install python dependencies<a class="headerlink" href="#install-python-dependencies" title="Permalink to this headline">¶</a></h4>
+<p>The Keep depends on several python libraries. The installation is mostly
+automated, and will print status messages as packages are installed. If there
+are any errors, pip should announce them very loudly.</p>
+<p>To install python dependencies, cd into the repository checkout and:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">pip</span><span class="o">-</span><span class="n">dependencies</span>
+</pre></div>
+</div>
+<p>If you are a developer or are installing to a continuous ingration server
+where you plan to run unit tests, code coverage reports, or build sphinx
+documentation, you probably will also want to:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">build</span><span class="o">-</span><span class="n">dependencies</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">lxml</span> <span class="o">--</span><span class="n">upgrade</span> <span class="o">--</span><span class="n">force</span><span class="o">-</span><span class="n">reinstall</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">binary</span> <span class="p">:</span><span class="nb">all</span><span class="p">:</span>
+</pre></div>
+</div>
+<p>After this step, your virtual environment should contain all of the
+dependencies for The Keep.</p>
+<p>Alternatively, you can use the fabric deploy/build script to install
+dependencies for you:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">fabric</span>
+<span class="n">fab</span> <span class="n">install_deps</span>
+</pre></div>
+</div>
+<div class="section" id="known-issues">
+<h5>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h5>
+<ul>
+<li><p class="first">As of 01/2011, there is a problem installing <strong>python-magic</strong> with pip; this
+is apparently caused by either an incorrect dependency on a ctypes PyPi package
+or a problem with the PyPi ctypes package that causes it to be uninstallable.
+As a work-around, python-magic can be manually installed without dependencies:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">deps</span> <span class="n">python</span><span class="o">-</span><span class="n">magic</span>
+</pre></div>
+</div>
+<p>You may need to comment out python-magic in the pip-dependencies file to allow
+the other packages to install correctly.</p>
+</li>
+<li><p class="first">As of 03/2011, installing <strong>eullocal</strong> from git via pip does not install
+the eullocal template themes correctly.  The easiest way to fix this is to
+manually create a symbolic link from the root of your virtualenv to the
+eullocal theme directory:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">thekeep</span><span class="o">/</span><span class="n">env</span>
+<span class="n">ln</span> <span class="o">-</span><span class="n">s</span> <span class="n">src</span><span class="o">/</span><span class="n">eullocal</span><span class="o">/</span><span class="n">themes</span><span class="o">/</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="install-configure-system-dependencies">
+<h4>Install/Configure System Dependencies<a class="headerlink" href="#install-configure-system-dependencies" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="fedora">
+<h5>Fedora<a class="headerlink" href="#fedora" title="Permalink to this headline">¶</a></h5>
+<p>The Keep expects to connect to a Fedora-Commons repository version
+3.4.x.  Fedora should be configured as follows:</p>
+<ul class="simple">
+<li>LDAP login filter</li>
+<li>To support large file ingest, the storage length for uploaded file
+should be increased from the default value of 5 minutes, e.g.:</li>
+</ul>
+<div class="highlight-xml"><div class="highlight"><pre><span></span><span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">&quot;uploadStorageMinutes&quot;</span> <span class="na">value=</span><span class="s">&quot;15&quot;</span><span class="nt">&gt;</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li>XACML policy enforcement enabled with  a combining algorithm of
+Permit-Overrides.  You should have the following in the fedora.fcfg:</li>
+</ul>
+<div class="highlight-xml"><div class="highlight"><pre><span></span><span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">&quot;XACML-COMBINING-ALGORITHM&quot;</span> <span class="na">value=</span><span class="s">&quot;com.sun.xacml.combine.OrderedPermitOverridesPolicyAlg&quot;</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;param</span> <span class="na">name=</span><span class="s">&quot;ENFORCE-MODE&quot;</span> <span class="na">value=</span><span class="s">&quot;enforce-policies&quot;</span><span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>Fedora xacml repository policies should be installed from
+<a class="reference external" href="https://svn.library.emory.edu/svn/fedora/repository-policies/">https://svn.library.emory.edu/svn/fedora/repository-policies/</a> (or from
+the most recently tagged version of the repository-policies, as
+identified in version-specific upgrade notes).  This checkout should
+include a policy file named
+<strong>permit-keep-content-if-keep-admin-or-server.xml</strong> in the directory
+of Keep-specific policies.  The default configuration should be
+suitable for a production environment, but if you are deploying the
+policies to another environment, you should update the policy to
+include the IP address of the server where the web application will
+run.</p>
+<p>The Keep relies on EULindexer for searching and indexing. See the
+<a class="reference external" href="https://github.com/emory-libraries/eulindexer/blob/master/DEPLOYNOTES.rst">EULindexer Deploy Notes</a>
+for additional Fedora configuration requirements for that program.</p>
+</div>
+<div class="section" id="celery-rabbitmq">
+<h5>Celery/RabbitMQ<a class="headerlink" href="#celery-rabbitmq" title="Permalink to this headline">¶</a></h5>
+<p>We use celery for asynchronous tasks (currently only WAV to MP3 audio
+encoding), which requires a task broker.  We recommend RabbitMQ.  For
+more information on configuring this, please see
+<a class="reference external" href="http://celeryq.org/docs/getting-started/broker-installation.html">http://celeryq.org/docs/getting-started/broker-installation.html</a></p>
+</div>
+<div class="section" id="solr-eulindexer">
+<h5>Solr/EULindexer<a class="headerlink" href="#solr-eulindexer" title="Permalink to this headline">¶</a></h5>
+<p>The Keep uses Solr for searching Fedora content.  The Solr schema
+included with the source code at <code class="docutils literal"><span class="pre">solr/schema.xml</span></code> should be used as
+the Solr schema configuration.  Solr should be configured to
+autocommit index changes within a fairly brief time period (perhaps
+1-3 seconds); edit the Solr configuration file <code class="docutils literal"><span class="pre">solrconfig.xml</span></code> and
+set a value for <code class="docutils literal"><span class="pre">maxTime</span></code> in the <code class="docutils literal"><span class="pre">autoCommit</span></code> section.</p>
+<p>The url for accessing the configured Solr instance should be added to
+Keep <code class="docutils literal"><span class="pre">localsettings.py</span></code> as <strong>SOLR_SERVER_URL</strong>.</p>
+<p>Repository content created and updated by the Keep should be indexed
+using <strong>EULindexer</strong>.  To add the Keep to an installed and configured
+instance of EULindexer, add the Keep indexdata url to the
+eulindexer <code class="docutils literal"><span class="pre">localsettings.py</span></code>, e.g.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">INDEXER_SITE_URLS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;keep&#39;</span><span class="p">:</span> <span class="s1">&#39;http://keep.library.emory.edu:/indexdata/&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>To populate the index initially, or to reindex all content, run the
+<code class="docutils literal"><span class="pre">reindex</span></code> script that is available in EULindexer:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">reindex</span> <span class="o">-</span><span class="n">s</span> <span class="n">keep</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="misc">
+<h5>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h5>
+<p>The WAV to MP3 audio conversion task uses FFMPEG to do the actual
+encoding.  On Ubuntu systems, this can be installed using <code class="docutils literal"><span class="pre">sudo</span>
+<span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">ffmpeg</span></code>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You may have to add the repo ppa:jon-severinsson/ffmpe to install ffmpeg</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="install-the-application">
+<h3>Install the Application<a class="headerlink" href="#install-the-application" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="apache">
+<h4>Apache<a class="headerlink" href="#apache" title="Permalink to this headline">¶</a></h4>
+<p>After installing dependencies, copy and edit the wsgi and apache
+configuration files in src/apache inside the source code checkout. Both will
+probably require some tweaking for paths and such.</p>
+<p>The application provides an RSS podcast feed intended for iTunes on
+the MARBL reading room kiosk.  The URLs for the podcast feeds and MP3
+files should be IP restricted at the Apache level to allow only those
+machines that are permitted access to the content.  The url patterns
+that should be restricted are:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">audio</span><span class="o">/</span><span class="n">feeds</span><span class="o">/</span><span class="p">[</span><span class="mi">0</span><span class="o">-</span><span class="mi">9</span><span class="p">]</span><span class="o">+/</span>
+<span class="o">/</span><span class="n">audio</span><span class="o">/*/</span><span class="n">access</span><span class="o">.</span><span class="n">mp3</span>         <span class="o">*</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">fedora</span> <span class="nb">object</span> <span class="n">pid</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="configuration">
+<h4>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h4>
+<p>Configure application settings by copying localsettings.py.sample to
+localsettings.py and editing for local database, LDAP, fedora, PID manager,
+eXist-DB and key configuration.</p>
+<div class="section" id="exist-db">
+<h5>eXist-DB<a class="headerlink" href="#exist-db" title="Permalink to this headline">¶</a></h5>
+<p>The Keep requires access to an eXist Database in order to
+auto-generate Fedora collection objects based on EAD Finding Aid
+documents.  All EXISTDB_* settings in the localsettings example file
+should be configured for access to an eXist 1.4.x instance with
+Finding Aids content.  It is recommended to configure eXist access
+using guest access or a non-privileged account.</p>
+</div>
+<div class="section" id="pid-manager">
+<h5>PID Manager<a class="headerlink" href="#pid-manager" title="Permalink to this headline">¶</a></h5>
+<p>Commenting out or removing any of the PIDMAN_* configuration options will
+raise an error if the <code class="docutils literal"><span class="pre">DEV_ENV</span></code> setting is <code class="docutils literal"><span class="pre">False</span></code> (as is normal for a
+production install).</p>
+<p>The configured PIDMAN_USER must have permission inside the pid
+manager to add pids and targets.</p>
+<hr class="docutils" />
+<p>After configuring all settings, initialize the db with all needed
+tables and initial data using:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+</pre></div>
+</div>
+<p>Load Fedora fixtures and control objects to the configured repository
+using:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncrepo</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="ingest-clean-up-cron-job">
+<h4>Ingest clean-up cron job<a class="headerlink" href="#ingest-clean-up-cron-job" title="Permalink to this headline">¶</a></h4>
+<p>Configure the ingest cleanup script to run as a cron job.  This is a custom
+manage.py script that cleans up the ingest staging temp directory so that
+any uploaded files that are not successfully ingested into Fedora will
+be cleaned up.  The script cleans up files older than the age specified in
+localsettings.py.  When run with verbosity 0, only errors will be reported:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span>  <span class="n">ingest_cleanup</span> <span class="o">-</span><span class="n">v</span> <span class="mi">0</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This script will delete all files older than a specified age
+in the configured directory, so it should <strong>not</strong> be run as a
+privileged user.</p>
+</div>
+</div>
+<div class="section" id="celery-daemon">
+<h4>Celery Daemon<a class="headerlink" href="#celery-daemon" title="Permalink to this headline">¶</a></h4>
+<p>The celery worker needs to be running for asynchronous tasks.  To run through
+django do:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">celeryd</span> <span class="o">-</span><span class="n">Q</span> <span class="n">keep</span>
+</pre></div>
+</div>
+<p>Note that we are using a different default queue so that keep-specific tasks
+are not sent to a non-keep celery daemon.</p>
+<p>See <a class="reference external" href="http://ask.github.com/celery/cookbook/daemonizing.html">http://ask.github.com/celery/cookbook/daemonizing.html</a> for instructions
+on configuring celery to run as a daemon.</p>
+</div>
+<div class="section" id="custom-mime-types">
+<span id="mimetype-config"></span><h4>Custom MIME Types<a class="headerlink" href="#custom-mime-types" title="Permalink to this headline">¶</a></h4>
+<p>The AFF and AD1 disk image formats do not (yet) have official MIME types.
+Also the 64 bit WAV format W64  AKA RIFF Wave has been added.
+We have defined local mimetypes and you will need to update local magic files
+so these formats can be recognized.  The necessary definitions are included
+with the source code in a file called <code class="docutils literal"><span class="pre">magic_extras.txt</span></code>.   On staging
+or production servers, a newly compiled magic file should be generated to
+replace the existing file (e.g., <code class="docutils literal"><span class="pre">/usr/share/file/magic.mgc</span></code>).  For
+development systems, as a simpler solution, developers can instead add
+the contents of <code class="docutils literal"><span class="pre">magic_extras.txt</span></code> to $HOME/.magic or /etc/magic.</p>
+</div>
+</div>
+<div class="section" id="notes-for-developers">
+<h3>Notes for Developers<a class="headerlink" href="#notes-for-developers" title="Permalink to this headline">¶</a></h3>
+<p>The following instructions can be ignored when deploying to a staging
+or production environment, but may be helpful to a developer working
+on the project or running automated tests.</p>
+<div class="section" id="session-configuration">
+<h4>Session configuration<a class="headerlink" href="#session-configuration" title="Permalink to this headline">¶</a></h4>
+<p>As of <a class="reference internal" href="#release-1-0-min-items-part-iv">Release 1.0 - Min Items, part IV</a> the project default Session configuration is set to mark
+cookies as secure.  To enable login over HTTP (e.g. when developing with Django&#8217;s runserver),
+you will need to override this in your <code class="docutils literal"><span class="pre">localsettings.py</span></code>.  See the commented out example in
+<code class="docutils literal"><span class="pre">localsettings.py.sample</span></code>.</p>
+</div>
+<div class="section" id="fedora-xacml-policy">
+<h4>Fedora XACML policy<a class="headerlink" href="#fedora-xacml-policy" title="Permalink to this headline">¶</a></h4>
+<p>The version of the Fedora XACML policy checked into subversion is
+configured for the production environment.  When this policy is
+deployed to a development environment, you will want to edit the
+deployed version to include the IP addresses of any servers that will
+need to access Keep content for development or testing.</p>
+</div>
+<div class="section" id="test-setup">
+<h4>Test Setup<a class="headerlink" href="#test-setup" title="Permalink to this headline">¶</a></h4>
+<p>Certain unit tests pass test user credentials to Fedora, in order to test and
+simulate accessing Fedora as the logged in user.  For tests to work properly,
+the unit test user should be defined (with appropriate permissions)
+as a fedora account.  See <code class="xref py py-mod docutils literal"><span class="pre">keep.audio.tests</span></code> for account details.</p>
+</div>
+</div>
+</div>
+<div class="section" id="upgrade-notes">
+<h2>Upgrade Notes<a class="headerlink" href="#upgrade-notes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="release-2-7">
+<h3>Release 2.7<a class="headerlink" href="#release-2-7" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>New local settings must be configured to support for Rushdie pid
+and reuse and cleanup: <strong>PIDMAN_RUSHDIE_DOMAIN</strong> and
+<strong>PIDMAN_RUSHDIE_UNUSED_URI</strong></li>
+</ul>
+</div>
+<div class="section" id="release-2-6-5">
+<h3>Release 2.6.5<a class="headerlink" href="#release-2-6-5" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>The Keep has been updated for eXist 2.2 compatilibity; the <strong>EXIST_</strong>
+configurations in <code class="docutils literal"><span class="pre">localsettings.py</span></code> should be updated to match
+settings for the current findingaids database.</li>
+<li>The MARBL collection label and MODS title should be updated to reflect
+the full title, in order to match the subarea in the findingaids:
+&#8220;Stuart A. Rose Manuscript, Archives, and Rare Book Library&#8221;</li>
+<li>In the localsettings.py this version starts to require the
+<cite>FEDORA_MANAGEMENT_USER</cite> and <cite>FEDORA_MANAGEMENT_PASSWORD</cite> in order to
+run management commands that query objects in Fedora. Please make sure
+that these two local variables are defined in the <cite>localsettings.py</cite>.
+Please also make sure that all migrations are run during the deployment
+process.</li>
+<li>Please also make sure that all migrations are run during the deployment
+process.</li>
+</ul>
+</div>
+<div class="section" id="release-2-6-2-macmillan-law-library">
+<h3>Release 2.6.2 - MacMillan Law Library<a class="headerlink" href="#release-2-6-2-macmillan-law-library" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Run syncrepo to load the new top-level collection object to Fedora:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py migrate
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-5">
+<h3>Release 2.5<a class="headerlink" href="#release-2-5" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Run database migrations to add the new download disk image permission
+and add it to Born Digital Curator group.</p>
+<blockquote>
+<div><p>$ python manage.py migrate</p>
+</div></blockquote>
+</li>
+<li><p class="first">This release adds new fields to the Solr schema; Solr should be updated
+with the project schema.xml, and all content will be need to reindexed.</p>
+</li>
+<li><p class="first">The AFF Disk Image migration requires that the FTKimager command-line
+tools be installed on the server where celery tasks are run:
+<a class="reference external" href="http://accessdata.com/product-download">http://accessdata.com/product-download</a> under &#8220;Command Line Versions&#8221;,
+or use one of these links:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="thttp://accessdata.com/product-download/digital-forensics/fedora-and-red-hat-version-32bit-3.1.1">Fedora/Red Hat 32bit</a></li>
+<li><a class="reference external" href="http://accessdata.com/product-download/digital-forensics/fedora-and-red-hat-version-x64-3.1.1">Fedora/Red Hat 64bit</a></li>
+<li><a class="reference external" href="http://accessdata.com/product-download/digital-forensics/debian-and-ubuntu-32bit-3.1.1">Debian/Ubuntu 32bit</a></li>
+<li><a class="reference external" href="http://accessdata.com/product-download/digital-forensics/debian-and-ubuntu-x64-3.1.1">Debian/Ubuntu 64bit</a></li>
+<li><a class="reference external" href="http://accessdata.com/product-download/digital-forensics/mac-os-10.5-and-10.6x-version-3.1.1">Mac OS 10.5/10.6</a></li>
+<li><a class="reference external" href="http://accessdata.com/product-download/digital-forensics/windows-32bit-3.1.1">Windows 32bit</a></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">This release includes a new celery task for AFF migration, so the celery
+daemon should be restarted after deploy.</p>
+</li>
+<li><p class="first">Run the script to migrate AD1 disk images, specifying the directory
+where born digital curators have provided the migration content:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py migrate_ad1_diskimages &lt;directory&gt;
+</pre></div>
+</div>
+</li>
+<li><p class="first">Run the script to migrate AFF disk images; note that AFF and generated E01
+temporary files will be placed in the <strong>INGEST_STAGING_TEMP_DIR</strong>
+configured in <cite>localsettings.py</cite>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py migrate_aff_diskimages
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-4">
+<h3>Release 2.4<a class="headerlink" href="#release-2-4" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The configuration for LDAP has changed; update <code class="docutils literal"><span class="pre">localsettings.py</span></code>
+based on the example LDAP configuration in <code class="docutils literal"><span class="pre">localsettings.py.dist</span></code>.</p>
+</li>
+<li><p class="first">Upgrade to django 1.8 and django migrations.  Installations with an existing
+database will need to fake initial migration for existing tables:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py migrate accounts
+$ python manage.py migrate --fake-initial
+$ python manage.py migrate
+</pre></div>
+</div>
+</li>
+<li><p class="first">For new installations, the default Group definitions will no longer
+be automatically created.  To load them manually, run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py loaddata initial_groups
+</pre></div>
+</div>
+</li>
+<li><p class="first">Configure the site not to use external Javascript and to suppress
+Google Analytics code for requests from configured Researcher IP
+addresses by setting <strong>EULTHEME_NO_EXTERNAL_JS</strong> and
+<strong>RESEARCHER_NO_ANALYTICS</strong> both to True in <code class="docutils literal"><span class="pre">localsettings.py</span></code>.</p>
+</li>
+<li><p class="first">This update includes a new mimetype for the E01 Expert Witness Format;
+server magic files should be updated based on <code class="docutils literal"><span class="pre">magic_extras.txt</span></code>.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-3-fedora-3-8-migration-support">
+<h3>Release 2.3 - Fedora 3.8 migration support<a class="headerlink" href="#release-2-3-fedora-3-8-migration-support" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Update the database for configurable downtime:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py syncdb
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-2-1-health-sciences-library">
+<h3>Release 2.2.1 - Health Sciences Library<a class="headerlink" href="#release-2-2-1-health-sciences-library" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Run syncrepo to load the new top-level collection object to Fedora:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py migrate
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-2-ye-ol-dm-video">
+<h3>Release 2.2 - Ye ol DM Video<a class="headerlink" href="#release-2-2-ye-ol-dm-video" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>add old_dm and accessions to DB config</li>
+<li>set OLD_DM_MEDIA_ROOT = &#8216;<a class="reference external" href="http://webprd001.library.emory.edu/harvest/preservation/">http://webprd001.library.emory.edu/harvest/preservation/</a>&#8216;  and make sure fedora server can access it via the web</li>
+<li>set MIGRATION_VIDEO_ROOT to the mnt point where OLD_DM_MEDIA_ROOT points</li>
+<li>If PID_ALIASES  exists in localsettings remove it.</li>
+</ul>
+</div>
+<div class="section" id="release-2-1-2-etd-library">
+<h3>Release 2.1.2 - ETD Library<a class="headerlink" href="#release-2-1-2-etd-library" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">run command to create ETD library</p>
+<blockquote>
+<div><p>$ manage.py syncrepo</p>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-1-video-front-end">
+<h3>Release 2.1 - Video Front End<a class="headerlink" href="#release-2-1-video-front-end" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">run command to create Video permission:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ manage.py syncdb
+</pre></div>
+</div>
+</li>
+<li><p class="first">Replace current solr schema with one from the project</p>
+</li>
+</ul>
+</div>
+<div class="section" id="release-2-0-video-ingest">
+<h3>Release 2.0 - Video Ingest<a class="headerlink" href="#release-2-0-video-ingest" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">run command to create Video content model:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ manage.py syncrepo
+</pre></div>
+</div>
+</li>
+<li><p class="first">run commands to create Video perms:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ manage.py syncdb
+$ manage.py migrate video
+</pre></div>
+</div>
+</li>
+<li><p class="first">setup  ftp user and directory on staging server to have separate video and diskimage directories and appropriate
+users and restrictions.</p>
+</li>
+<li><p class="first">Update permit-keep-content-if-keep-admin-or-server.xml with Video-1.0 section and reload policies</p>
+</li>
+</ul>
+</div>
+<div class="section" id="release-1-10">
+<h3>Release 1.10<a class="headerlink" href="#release-1-10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Add and configure <strong>KEEP_MANUAL_URL</strong> in <code class="docutils literal"><span class="pre">localsettings.py</span></code></li>
+<li>Compile magic file with info from magic_extras.txt</li>
+<li>install <code class="docutils literal"><span class="pre">ffmpeg</span></code> or equivalent system package</li>
+</ul>
+</div>
+<div class="section" id="release-1-9">
+<h3>Release 1.9<a class="headerlink" href="#release-1-9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Now requires that <strong>mediainfo</strong> be installed on the server for use with
+<code class="xref py py-mod docutils literal"><span class="pre">pymediainfo</span></code>, in order to support ingesting 32bit WAV files.</li>
+<li>Run <code class="docutils literal"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">migrate</span></code> to update user profiles in the database
+for latest version of <code class="xref py py-mod docutils literal"><span class="pre">eullocal</span></code>.</li>
+<li>Now requires lame version 3.99.5 or later, in order to convert 32bit float
+WAV files.</li>
+</ul>
+</div>
+<div class="section" id="release-1-8">
+<h3>Release 1.8<a class="headerlink" href="#release-1-8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Run <code class="docutils literal"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">syncdb</span></code> to ensure that newly defined, more granular
+permissions and pre-defined groups are loaded to the database.  Note that
+site admins may need to defined and configure group membership before
+users will be able to use the site.</li>
+<li>The Keep now requires Solr 4.  A new Solr core should be created, the
+<strong>SOLR_SERVER_URL</strong> configuration in <code class="docutils literal"><span class="pre">localsettings.py</span></code> should be updated,
+and all site content should be reindexed using eulindexer.</li>
+<li>Be sure to restart the eulindexer service so that it picks up the new Solr
+configuration and server connection information.</li>
+<li>The iTunes podcast feed functionality has been removed.  This requires the
+following changes:<ul>
+<li>The cron job to run the new_feed_notice manage.py script should be
+removed or disabled (the script no longer exists)</li>
+<li>Configurations in localsettings.py for <strong>MAX_ITEMS_PER_PODCAST_FEED</strong>
+and <strong>FEED_ADMINS</strong> are no longer used and should be removed.</li>
+<li>All apache configurations restricting access to audio feeds and audio
+download URLS by IP address and/or LDAP username should be <em>removed</em>;
+access restriction is now managed within the django app.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="release-1-7-1">
+<h3>Release 1.7.1<a class="headerlink" href="#release-1-7-1" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>To support ingesting disk image files around 80-100 GB, you should ensure
+that the WSGI inactivity timeout configured in Apache is set fairly high,
+probably at least 1 hour (3600).</li>
+</ul>
+</div>
+<div class="section" id="release-1-7">
+<h3>Release 1.7<a class="headerlink" href="#release-1-7" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Set up a shared network space where designated Keep users can upload
+large disk image content for ingest.  This directory should be mounted
+on the Django app server and made read/write accessible by the Keep
+application user, and should be mounted on the Fedora server in a path
+where security policies allow file ingest.  Configure the appropriate
+paths in <strong>LARGE_FILE_STAGING_DIR</strong> and
+<strong>LARGE_FILE_STAGING_FEDORA_DIR</strong> in <code class="docutils literal"><span class="pre">localsettings.py</span></code>.</li>
+<li>The Fedora XACML policy <code class="docutils literal"><span class="pre">deny-unallowed-file-resolution.xml</span></code> must
+be modified to allow File URI ingest from the directory that is set up
+as the large-file staging directory on the fedora server by logged
+in users.</li>
+</ul>
+</div>
+<div class="section" id="release-1-6">
+<h3>Release 1.6<a class="headerlink" href="#release-1-6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>To support AFF and AD1 disk image files, custom mimetypes are required.
+See <a class="reference internal" href="#mimetype-config"><span class="std std-ref">Custom MIME Types</span></a> for setup instructions.</li>
+<li>Run <code class="docutils literal"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">syncdb</span></code> to update the database schema for
+new models.</li>
+<li>Restart the eulindexer service indexing the deployed site so it will
+start picking up and indexing any new Disk Image content.</li>
+<li>Update XACML policies in Fedora with the latest version to allow
+access to disk image content.</li>
+</ul>
+</div>
+<div class="section" id="release-1-5-2">
+<h3>Release 1.5.2<a class="headerlink" href="#release-1-5-2" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Django settings have been updated to follow Django 1.5 conventions.
+In particular, check <code class="docutils literal"><span class="pre">localsettings.py.dist</span></code> for changes to
+<strong>CACHES</strong> and <strong>LOGGING</strong>.</li>
+<li>Make sure to restart the celery daemon so that it will pick up the
+new batch status update task.</li>
+</ul>
+</div>
+<div class="section" id="release-1-5">
+<h3>Release 1.5<a class="headerlink" href="#release-1-5" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">This update includes Solr index changes; update Solr with the latest
+<code class="docutils literal"><span class="pre">schema.xml</span></code> and reindex site content.</p>
+</li>
+<li><p class="first">The allowed difference between original audio and generated access copies
+must now be configured via <strong>AUDIO_ALLOWED_DURATION_DISCREPANCY</strong> in
+<code class="docutils literal"><span class="pre">localsettings.py</span></code>.</p>
+</li>
+<li><p class="first">Update Apache configurations to reference the WSGI file in the new location
+(<code class="docutils literal"><span class="pre">keep/wsgi.py</span></code>), following Django 1.4 conventions.</p>
+</li>
+<li><p class="first">Update site and database to work with celery 3.0.</p>
+<ul>
+<li><p class="first">Update the database for the newest version of <code class="xref py py-mod docutils literal"><span class="pre">celery</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">migrate</span> <span class="n">djcelery</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Celery broker should now be configured using <strong>BROKER_URL</strong> instead of
+individual <strong>BROKER_</strong> settings; see <code class="docutils literal"><span class="pre">localsettings.py.dist</span></code> for
+an example.</p>
+</li>
+<li><p class="first">The celery worker should now be started via:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">celery</span> <span class="n">worker</span> <span class="o">-</span><span class="n">Q</span> <span class="n">keep</span>
+</pre></div>
+</div>
+<p>Be sure to update any cron jobs or init scripts that use the old
+<code class="docutils literal"><span class="pre">celeryd</span></code> syntax.</p>
+</li>
+<li><p class="first">If you are not using the WSGI script included with the source code, add the
+following to your wsgi script:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">djcelery</span>
+<span class="n">djcelery</span><span class="o">.</span><span class="n">setup_loader</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first">Allowed duration discrepancy when generating access copies of audio files
+is now configurable in <code class="docutils literal"><span class="pre">localsettings.py</span></code> using <strong>AUDIO_ALLOWED_DURATION_DISCREPANCY</strong>.</p>
+</li>
+<li><p class="first">Previously ingested and migrated Arrangement objects were associated with
+the Rushdie collection incorrectly (using the isMemberOf relation instead of
+isMemberOfCollection).  This can be corrected in the Django console as follows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">shell</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">keep.common.fedora</span> <span class="kn">import</span> <span class="n">Repository</span>
+<span class="kn">from</span> <span class="nn">keep.arrangement.models</span> <span class="kn">import</span> <span class="n">ArrangementObject</span>
+
+<span class="n">repo</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="s1">&#39;fedoraAdmin&#39;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s1">&#39;fedoraAdmin&#39;</span><span class="p">)</span>
+<span class="n">objs</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_objects_with_cmodel</span><span class="p">(</span><span class="n">ArrangementObject</span><span class="o">.</span><span class="n">ARRANGEMENT_CONTENT_MODEL</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">ArrangementObject</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">_deprecated_collection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">_deprecated_collection</span><span class="o">.</span><span class="n">exists</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">_deprecated_collection</span><span class="o">.</span><span class="n">has_requisite_content_models</span><span class="p">:</span>
+          <span class="c1"># populate collection if not set</span>
+          <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="o">.</span><span class="n">collection</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">collection</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">_deprecated_collection</span>
+          <span class="c1"># remove deprecated collection</span>
+          <span class="k">del</span> <span class="n">obj</span><span class="o">.</span><span class="n">_deprecated_collection</span>
+          <span class="c1"># save changes</span>
+          <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">rels_ext</span><span class="o">.</span><span class="n">isModified</span><span class="p">():</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;converting incorrect collection membership from isMemberOf to isMemberOfCollection&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In a development or staging environment where a collection is incorrectly referenced but does not
+exist, you may want to check the deprecated collection by pid.  In particular, it is important
+not to remove all <code class="docutils literal"><span class="pre">isMemberOf</span></code> relations, because Rushdie Mailbox objects are associated with
+their corresponding Email account objects via <code class="docutils literal"><span class="pre">isMemberOf</span></code>.</p>
+</div>
+<ul>
+<li><p class="first">This release includes several one-time scripts to import content and verdict
+for Rushdie&#8217;s 5300c computer.  These should be run by a developer or someone familiar with
+both the site and the content as follows, in this order:</p>
+<ol class="arabic">
+<li><p class="first">Import series and verdict information for non-email content based on a CSV file, which will be
+provided by born-digital archivist or project manager:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">import_verdict</span> <span class="o">--</span><span class="n">csv</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">csvfile</span>
+</pre></div>
+</div>
+<p>Note that this step may identify duplicate records, which will require manual clean up; any
+clean up should be completed <strong>before</strong> running the next script (import_content).</p>
+</li>
+<li><p class="first">Import file content for non-email objects.  This will require the 5300c disk
+image be mounted on the local file system, using a command something like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">mount</span> <span class="mi">5300</span><span class="n">c</span><span class="o">.</span><span class="n">img</span> <span class="o">-</span><span class="n">o</span> <span class="n">loop</span> <span class="o">-</span><span class="n">t</span> <span class="n">hfs</span> <span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">rushdie_5300c</span>
+</pre></div>
+</div>
+<p>Then run the script to import file content from the disk image, providing it the pid
+for the 5300c processing batch (aka &#8220;simple collection&#8221;):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">import_content</span> <span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">rushdie_5300c</span> <span class="n">emory</span><span class="p">:</span><span class="n">bm4pr</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Import email messages from the 5300c disk image; pid should be the processing batch (aka &#8220;simple collection&#8221;)
+id; file path should be the location of Eudora email content:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">ingest_5300c_email</span> <span class="n">emory</span><span class="p">:</span><span class="n">bm4pr</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">Eudora</span>\ <span class="n">Folder</span><span class="o">/</span> <span class="o">--</span><span class="n">user</span><span class="o">=&lt;</span><span class="n">user</span><span class="o">&gt;</span> <span class="o">--</span><span class="n">password</span><span class="o">=</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Import series and verdict information for email content based on a CSV file:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">import_verdicts</span> <span class="o">--</span><span class="n">email</span> <span class="o">--</span><span class="n">csv</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="mi">5300</span><span class="n">c_email_verdicts</span><span class="o">.</span><span class="n">csv</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>The output from each of these scripts should be collected and sent to project managers and/or
+born-digital archivists for review.</p>
+</li>
+<li><p class="first">This release includes a new manage.py script for sending notification when the number of available
+iTunes podcast changes.  Update the database with the new table that will be used to keep track of
+the number of feeds:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+</pre></div>
+</div>
+<p>Update <code class="docutils literal"><span class="pre">localsettings.py</span></code> with configurations for sending emails, optionally including <a class="reference external" href="https://docs.djangoproject.com/en/1.4/ref/settings/#server-email">SERVER_EMAIL</a>,
+<a class="reference external" href="https://docs.djangoproject.com/en/1.4/ref/settings/#email-subject-prefix">EMAIL_SUBJECT_PREFIX</a> (see <code class="docutils literal"><span class="pre">localsettings.py.dist</span></code>), and set any necessary SMTP configuration (see
+<a class="reference external" href="https://docs.djangoproject.com/en/1.4/ref/settings/#email-host">Django email settings</a>).  Add the email addresses for the users who should receive this
+notification to the new <strong>FEED_ADMINS</strong> setting.</p>
+</li>
+</ul>
+<blockquote>
+<div><p>Run the script once to populate the current count in the database:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">new_feed_notice</span>
+</pre></div>
+</div>
+<p>Configure this script to run as a nightly cron job.</p>
+</div></blockquote>
+</div>
+<div class="section" id="release-1-4-search-and-ingest-enhancements">
+<h3>Release 1.4 - search and ingest enhancements<a class="headerlink" href="#release-1-4-search-and-ingest-enhancements" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The Keep has been updated to make use of Django&#8217;s
+<a class="reference external" href="http://docs.djangoproject.com/en/dev/_objects/ref/contrib/staticfiles/#module-django.contrib.staticfiles" title="(in Django v3.1)"><code class="xref py py-mod docutils literal"><span class="pre">staticfiles</span></code></a> application for managing static
+files (i.e., website images, CSS, and Javascript).  The fabric
+deploy script will run the <code class="docutils literal"><span class="pre">collectstatic</span></code> manage command, which
+will collect all static files into the configured <strong>STATIC_ROOT</strong>
+path in <code class="docutils literal"><span class="pre">settings.py</span></code> (currently a <code class="docutils literal"><span class="pre">static</span></code> directory inside the
+deploy).  Existing apache configurations should be updated; instead
+of multiple aliases for sitemedia and genlib_media directories, a
+single alias should be set up for the <code class="docutils literal"><span class="pre">/static</span></code> URL, pointing at
+the configured static directory.  (See latest
+<code class="docutils literal"><span class="pre">apache/the_keep.conf</span></code> for an example.)</p>
+</li>
+<li><p class="first">This update includes Solr index changes; update Solr with the latest
+<code class="docutils literal"><span class="pre">schema.xml</span></code> and reindex site content.</p>
+</li>
+<li><p class="first">This update requires modifications to Fedora XACML policies; update
+Fedora with the latest polices and and reload them.</p>
+</li>
+<li><p class="first">Run syncdb to load the Born Digital group using the following command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">When the code is deployed to staging the ENABLE_BETA_WARNING
+variable should be set in localsettings.py:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ENABLE_BETA_WARNING</span> <span class="o">=</span> <span class="kc">True</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-1-3-search-based-report-generation">
+<h3>Release 1.3 - Search-based Report generation<a class="headerlink" href="#release-1-3-search-based-report-generation" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Fabric deploy script has been updated to follow latest fabfile best
+practices &amp; local conventions.  Run <code class="docutils literal"><span class="pre">fab</span> <span class="pre">-l</span></code> and <code class="docutils literal"><span class="pre">fab</span> <span class="pre">-d</span> <span class="pre">deploy</span></code>
+for usage details.</p>
+</li>
+<li><p class="first">The Keep has been updated to work with Solr 3.3.  Use the included
+solr configuration configurations or the Solr tarball created by the
+fabric deploy script to create a new Solr core and then use
+eulindexer to index all Keep content.</p>
+</li>
+<li><p class="first">Now that the <code class="docutils literal"><span class="pre">old_dm</span></code> migration has been completed, migration code
+has been removed.  Database configurations for <strong>old_dm</strong> and
+<strong>accessions</strong> databases should be removed from <code class="docutils literal"><span class="pre">localsettings.py</span></code>.</p>
+</li>
+<li><p class="first">We are now using <code class="xref py py-mod docutils literal"><span class="pre">south</span></code> to manage database migrations for
+emory_ldap (part of <code class="xref py py-mod docutils literal"><span class="pre">eullocal</span></code>) and <code class="xref py py-mod docutils literal"><span class="pre">djcelery</span></code>.  To update
+an existing database, you will need a few extra steps.  First, run
+<code class="docutils literal"><span class="pre">syncdb</span></code> to create the database tables for <code class="xref py py-mod docutils literal"><span class="pre">south</span></code>. Then, to
+update emory_ldap, you will need to fake the initial migration, run
+migrations 0002 and 0003 normally, and then fake step 0004:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span> python manage.py migrate --fake emory_ldap 0001
+ python manage.py migrate emory_ldap 0003
+ python manage.py migrate --fake emory_ldap 0004
+
+For :mod:`djcelery`, all djcelery_ and celery_ tables should be
+dropped from the database and recreated via migrate::
+
+ python manage.py migrate djcelery
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-1-2-verdict-app">
+<h3>Release 1.2 - Verdict App<a class="headerlink" href="#release-1-2-verdict-app" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Configure the LOGGING section in the localsettings.py file on the remote server
+based on the example in the localsettings.py.dist file.
+Log rotation need to be set for this file as well.</p>
+</li>
+<li><dl class="first docutils">
+<dt>Devloper should run the fabric deploy script:</dt>
+<dd><ul class="first last">
+<li><p class="first">On the local workstation, copy settings.json.dist to settings.json and configure</p>
+</li>
+<li><p class="first">run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">fab</span> <span class="n">load_config</span><span class="p">:</span><span class="n">settings</span><span class="o">.</span><span class="n">json</span> <span class="n">deploy</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">TheKeep XACML policies should be updated to the appropriate branch or tag:</p>
+<ul class="simple">
+<li>Staging: <a class="reference external" href="https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.9">https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.9</a></li>
+<li>Production: <a class="reference external" href="https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.9">https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.9</a></li>
+<li>reload policies on fedora</li>
+</ul>
+</li>
+<li><dl class="first docutils">
+<dt>The solr schema should be updated:</dt>
+<dd><ul class="first last simple">
+<li>Copy &lt;project base&gt;/solr/schema.xml to the appropriate solr core</li>
+<li>Solr should be restarted</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p class="first">The following manage commands should be run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">./</span><span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+<span class="n">python</span> <span class="o">./</span><span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncrepo</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The paths in the http config file should be verified since some have changed or may be different from enviroment to enviroment..</p>
+</li>
+<li><p class="first">At this point systems should move the link to point to the current version.</p>
+</li>
+<li><dl class="first docutils">
+<dt>Contact developer for these tasks:</dt>
+<dd><ul class="first last">
+<li><p class="first">Assign appropriate permissions for each user in the database</p>
+</li>
+<li><p class="first">Load  P5300c objects to fedora using the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">./</span><span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">load_arrangement</span> <span class="o">&lt;</span><span class="n">CSV</span> <span class="n">file</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">master</span> <span class="n">collection</span> <span class="n">pid</span><span class="o">&gt;</span> <span class="o">&lt;</span><span class="n">new</span> <span class="n">simple</span> <span class="n">collection</span> <span class="n">name</span><span class="o">&gt;</span> <span class="o">-</span><span class="n">u</span> <span class="o">&lt;</span><span class="n">user</span><span class="o">&gt;</span> <span class="o">--</span><span class="n">password</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Reindex the site:</dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>Make sure that eulindexer has an entry for &#8220;keep&#8221; in localsettings.py &gt; INDEXER_SITE_URLS .</dt>
+<dd><ul class="first last simple">
+<li>Staging:: <a class="reference external" href="https://testkeep.library.emory.edu/indexdata/">https://testkeep.library.emory.edu/indexdata/</a></li>
+<li>Production:: <a class="reference external" href="https://keep.library.emory.edu/indexdata/">https://keep.library.emory.edu/indexdata/</a></li>
+<li>EULIndexer should be restarted</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>When running this command you must be in the eulindexer virtual
+environment.</p>
+<blockquote class="last">
+<div><ul>
+<li><p class="first">Run the command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">./</span><span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">reindex</span> <span class="o">-</span><span class="n">s</span> <span class="n">keep</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">After the above commad finishes make sure the indxer is runnng so new items can be indexed</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="release-1-1-metadata-migration">
+<h3>Release 1.1 - Metadata Migration<a class="headerlink" href="#release-1-1-metadata-migration" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The kiosk RSS feed now links to files in the old Digital Masters datastore
+once their metadata records are in The Keep. This requires setting an
+<strong>OLD_DM_MEDIA_ROOT</strong> in localsettings. It should point to the root URL for
+preservation files. Our correct production setting is the one listed in
+<code class="docutils literal"><span class="pre">localsettings.py.sample</span></code>.</p>
+</li>
+<li><p class="first">This release relies on new Fedora content model objects. Execute the
+following command to load them:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncrepo</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The Keep now uses Solr for searching and eulindexer for indexing
+items.  Follow the directions in <a class="reference internal" href="#solr-eulindexer">Solr/EULindexer</a> to set up a new
+Solr index and add the Keep to EULindexer.  Before indexing existing
+content, run a one-time clean-up script to update existing objects
+in Fedora:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">cleanup_metadata</span>
+</pre></div>
+</div>
+<p>After this script completes, configure EULindexer and run its reindex
+script as described in <a class="reference internal" href="#solr-eulindexer">Solr/EULindexer</a> to populate the Solr index for
+existing repository content.  Make sure that the indexer script is running
+before migrating new content, so that newly ingested items will
+automatically be indexed.</p>
+</li>
+<li><p class="first">After existing content has been reindexed and the website has been
+verified to work correctly, prepare to migrate legacy metadata. First
+dry-run the migration script:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">migrate_metadata</span> <span class="o">-</span><span class="n">n</span> <span class="o">-</span><span class="n">v2</span> <span class="o">-</span><span class="n">c</span> <span class="n">migrate</span><span class="o">.</span><span class="n">csv</span> <span class="o">&gt;</span> <span class="n">migrate</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+</div>
+<p>Developers and project stakeholders will review migration output
+(<code class="docutils literal"><span class="pre">migrate.csv</span></code> and <code class="docutils literal"><span class="pre">migrate.out</span></code>). This review process will probably
+result in a request for a <code class="docutils literal"><span class="pre">load_ead</span></code> command as performed in Release 0.7
+below. Once the review and any additional configuration are complete, run
+the final metadata migration:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">migrate_metadata</span> <span class="o">-</span><span class="n">c</span> <span class="n">migrate</span><span class="o">.</span><span class="n">csv</span> <span class="o">&gt;</span> <span class="n">migrate</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+</div>
+<p>The application does not use the CSV or output files. After the migration
+is complete, these files may be archived and/or deleted.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="release-1-0-3">
+<h3>Release 1.0.3<a class="headerlink" href="#release-1-0-3" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">This release depends on a newer version of python-eulcore. Activate
+the virtualenv and update:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">pip</span><span class="o">-</span><span class="n">dependencies</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Previously, the code did not add a name to PID records when
+generating ARKs for new objects.  To update the PID records with
+labels for objects that have already been created, the following
+code can be used in the django console:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">keep.common.fedora</span> <span class="kn">import</span> <span class="n">Repository</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">pidservices.djangowrapper.shortcuts</span> <span class="kn">import</span> <span class="n">DjangoPidmanRestClient</span>
+<span class="n">repo</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">()</span>
+<span class="n">pidman</span> <span class="o">=</span> <span class="n">DjangoPidmanRestClient</span><span class="p">()</span>
+<span class="n">objs</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="n">owner</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">FEDORA_OBJECT_OWNERID</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+    <span class="n">pidman</span><span class="o">.</span><span class="n">update_ark</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">noid</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-1-0-2">
+<h3>Release 1.0.2<a class="headerlink" href="#release-1-0-2" title="Permalink to this headline">¶</a></h3>
+<p>The Fedora XACML policy has been corrected for the production
+environment.  Please update the Fedora policies to this tag:</p>
+<p><a class="reference external" href="https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.6.1">https://svn.library.emory.edu/svn/fedora/repository-policies/tags/release_1.6.1</a></p>
+<p>See <a class="reference internal" href="#fedora">Fedora</a> configuration notes for additional information on
+possible additional steps for customizing this policy (for
+non-production environment).</p>
+</div>
+<div class="section" id="release-1-0-min-items-part-iv">
+<h3>Release 1.0 - Min Items, part IV<a class="headerlink" href="#release-1-0-min-items-part-iv" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">We are using a newer version of python-eulcore. To update:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">.</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">keep</span><span class="o">/</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">pip</span><span class="o">-</span><span class="n">dependencies</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Django Session default configuration has been modified in <code class="docutils literal"><span class="pre">settings.py</span></code>.  By default,
+the application will now store session data in the django cache (already in use by the application and configured via
+<code class="docutils literal"><span class="pre">CACHE_BACKEND</span></code>), mark cookies as secure (HTTPS transfer only), expire after one week, and expire when the browser
+is closed.  Any of these configurations may be overridden in <code class="docutils literal"><span class="pre">localsettings.py</span></code>.  For more details on configuration
+options, see <a class="reference external" href="http://docs.djangoproject.com/en/1.2/topics/http/sessions/">Django Sessions documentation</a> .</p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Developers are affected by this configuration change and should consult <a class="reference internal" href="#notes-for-developers">Notes for Developers</a>.</p>
+</div>
+</div>
+<div class="section" id="release-0-9-min-items-part-iii">
+<h3>Release 0.9 - Min Items, part III<a class="headerlink" href="#release-0-9-min-items-part-iii" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The application now includes an asynchronous task for generating MP3 files,
+which requires LAME, celery configuration, and a celery broker.  See
+<a class="reference internal" href="#celery-rabbitmq">Celery/RabbitMQ</a> and <a class="reference internal" href="#misc">Misc</a> in  <a class="reference internal" href="#install-configure-system-dependencies">Install/Configure System
+Dependencies</a>.  Celery and broker configurations are now required in
+localsettings.py (see localsettings.py.sample; search for BROKER).
+Running tasks requires that a celery worker process be run; see the
+<a class="reference internal" href="#celery-daemon">Celery Daemon</a> section in <a class="reference internal" href="#install-the-application">Install the Application</a>.</p>
+<p>New database tables in the relational database are required for the
+celery functionality.  To initialize them, run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The application now provides an RSS podcast feed intended for iTunes on the
+MARBL reading room kiosk.  Due to limitations in the amount of data that iTunes
+can harvest in a single feed, the podcast feed generation logic expects a setting
+for MAX_ITEMS_PER_PODCAST_FEED.  See localsettings.py.sample for example
+configuration and recommended value.</p>
+<p>When deployed in production, Apache should be configured to restrict access to
+the podcast feed and MP3 URLs. See the <a class="reference internal" href="#apache">Apache</a> section of <a class="reference internal" href="#install-the-application">Install the
+Application</a> for details.</p>
+</li>
+<li><p class="first">Dependencies have been addded for celery tasks and MP3 error checking.
+To install the new dependencies:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">.</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">keep</span><span class="o">/</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">pip</span><span class="o">-</span><span class="n">dependencies</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">The application now uses an eulcore task result module to report on celery tasks,
+which requires additional tables in the relational database. To initialize them,
+sync the db:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">New datastreams have been added to the Fedora Audio object.  Any audio objects
+loaded in the staging environment should be removed when this update is deployed.
+This can be done in the django console as follows. Start the console:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">shell</span>
+</pre></div>
+</div>
+<p>And then run:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">keep.common.fedora</span> <span class="kn">import</span> <span class="n">Repository</span>
+<span class="kn">from</span> <span class="nn">keep.audio.models</span> <span class="kn">import</span> <span class="n">AudioObject</span>
+<span class="n">repo</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">()</span>
+<span class="n">repo</span><span class="o">.</span><span class="n">get_objects_with_cmodel</span><span class="p">(</span><span class="n">AudioObject</span><span class="o">.</span><span class="n">AUDIO_CONTENT_MODEL</span><span class="p">)</span>
+<span class="n">objs</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_objects_with_cmodel</span><span class="p">(</span><span class="n">AudioObject</span><span class="o">.</span><span class="n">AUDIO_CONTENT_MODEL</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">purge_object</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">As part of branding this project with its new name, &#8220;The Keep&#8221;, the pseudo-owner
+used for repository-level permissions has been changed.  The Fedora repository
+policies should be updated to
+<a class="reference external" href="https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.3">https://svn.library.emory.edu/svn/fedora/repository-policies/branches/release_1.3</a>
+Any existing objects will need to be either removed and re-generated or updated
+with the new owner ID.  Updating existing objects can be done in the django
+console.  Start the console:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">shell</span>
+</pre></div>
+</div>
+<p>Then run the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">keep.common.fedora</span> <span class="kn">import</span> <span class="n">Repository</span>
+<span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="n">repo</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">()</span>
+<span class="n">objs</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">find_objects</span><span class="p">(</span><span class="n">owner</span><span class="o">=</span><span class="s1">&#39;euterpe-project&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+    <span class="n">o</span><span class="o">.</span><span class="n">owner</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">FEDORA_OBJECT_OWNERID</span>
+    <span class="n">o</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">As part of branding this project as &#8220;The Keep&#8221;, the main source directory
+is now <code class="docutils literal"><span class="pre">src/keep</span></code> instead of <code class="docutils literal"><span class="pre">src/digitalmasters</span></code> .</p>
+</li>
+</ul>
+</div>
+<div class="section" id="release-0-8-min-items-part-ii">
+<h3>Release 0.8 - Min Items, part II<a class="headerlink" href="#release-0-8-min-items-part-ii" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The app now depends on the standard django <code class="docutils literal"><span class="pre">sites</span></code> module. This module
+stores some data in the relational database. To initialize it, sync the db:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncdb</span>
+</pre></div>
+</div>
+<p>After restarting the web app, configure the default site by replacing the
+<code class="docutils literal"><span class="pre">example.com</span></code> domain with the domain of the live webapp.</p>
+</li>
+<li><p class="first">Django caching for lists based on Fedora objects requires defining a
+CACHE_BACKEND in localsettings.py (see localsettings.py.sample)</p>
+</li>
+<li><p class="first">The namespace for Digital Technical metadata was modified; any Audio objects
+loaded in the staging environment should be removed when this update is
+deployed.  This can be done in the django console as follows. Start
+the console:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">shell</span>
+</pre></div>
+</div>
+<p>And then run:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">keep.fedora</span> <span class="kn">import</span> <span class="n">Repository</span>
+<span class="kn">from</span> <span class="nn">keep.audio.models</span> <span class="kn">import</span> <span class="n">AudioObject</span>
+<span class="n">repo</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">()</span>
+<span class="n">repo</span><span class="o">.</span><span class="n">get_objects_with_cmodel</span><span class="p">(</span><span class="n">AudioObject</span><span class="o">.</span><span class="n">AUDIO_CONTENT_MODEL</span><span class="p">)</span>
+<span class="n">objs</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_objects_with_cmodel</span><span class="p">(</span><span class="n">AudioObject</span><span class="o">.</span><span class="n">AUDIO_CONTENT_MODEL</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+    <span class="n">repo</span><span class="o">.</span><span class="n">purge_object</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">pid</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Support added for fetching new object pids from the pid manager. PID
+Manager configuration is now required in localsettings.py.  For
+example settings, see localsettings.py.sample (search for PIDMAN).</p>
+<p>See <a class="reference internal" href="#pid-manager">PID Manager</a> in the <a class="reference internal" href="#configuration">Configuration</a> section for additional details.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="release-0-7-min-items-part-i">
+<h3>Release 0.7 - Min Items, part I<a class="headerlink" href="#release-0-7-min-items-part-i" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">The new batch-upload/ingest process may result in uploaded files
+that will need to be cleaned up.  See <a class="reference internal" href="#ingest-clean-up-cron-job">Ingest clean-up cron job</a> .</p>
+</li>
+<li><p class="first">Now requires access to eXist Database for the purpose of generating
+Fedora collection objects based on EAD Finding Aid documents; new
+configurations are required in localsettings.py; search
+localsettings.py.sample for EXISTDB.  See also the <a class="reference internal" href="#exist-db">eXist-DB</a>
+section of <a class="reference internal" href="#configuration">Configuration</a>.</p>
+</li>
+<li><p class="first">Dependencies changed slightly. The current version depends on an updated
+version of <code class="xref py py-mod docutils literal"><span class="pre">eulcore</span></code>, and we swapped our python-magic dependency for better
+Windows support. Remove the old dependencies and refresh them:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">.</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">keep</span><span class="o">/</span><span class="n">env</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+<span class="n">pip</span> <span class="n">uninstall</span> <span class="n">eulcore</span> <span class="n">python</span><span class="o">-</span><span class="n">magic</span><span class="p">:</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">pip</span><span class="o">-</span><span class="n">dependencies</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">After installation and configuration, ensure required numbering scheme
+objects are defined in fedora:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncrepo</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">After defining numbering schemes, admins may want to load collections from
+Finding Aids:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">load_ead</span> <span class="n">marbl</span> <span class="mi">10</span> <span class="mi">59</span> <span class="mi">265</span> <span class="mi">494</span> <span class="mi">539</span> <span class="mi">558</span> <span class="mi">572</span> <span class="mi">579</span> <span class="mi">612</span> \
+    <span class="mi">616</span> <span class="mi">618</span> <span class="mi">622</span> <span class="mi">629</span> <span class="mi">644</span> <span class="mi">653</span> <span class="mi">663</span> <span class="mi">673</span> <span class="mi">682</span> <span class="mi">685</span> <span class="mi">687</span> <span class="mi">689</span> <span class="mi">741</span> <span class="mi">745</span> <span class="mi">771</span> <span class="mi">797</span> \
+    <span class="mi">800</span> <span class="mi">807</span> <span class="mi">832</span> <span class="mi">840</span> <span class="mi">845</span> <span class="mi">853</span> <span class="mi">855</span> <span class="mi">856</span> <span class="mi">869</span> <span class="mi">890</span> <span class="mi">892</span> <span class="mi">923</span> <span class="mi">926</span> <span class="mi">927</span> <span class="mi">932</span> <span class="mi">937</span> \
+    <span class="mi">960</span> <span class="mi">966</span> <span class="mi">968</span> <span class="mi">981</span> <span class="mi">1000</span> <span class="mi">1002</span> <span class="mi">1025</span> <span class="mi">1032</span> <span class="mi">1054</span> <span class="mi">1056</span> <span class="mi">1061</span>
+<span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">load_ead</span> <span class="n">eua</span> <span class="mi">8</span> <span class="mi">11</span> <span class="mi">26</span> <span class="mi">60</span> <span class="mi">113</span> <span class="mi">1002</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="release-0-6">
+<h3>Release 0.6<a class="headerlink" href="#release-0-6" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Requires Fedora 3.4 or greater with LDAP login configured.</p>
+</li>
+<li><p class="first">Requires Fedora XACML policies (bundled with other local policies in
+<a class="reference external" href="https://svn.library.emory.edu/svn/fedora/repository-policies/">https://svn.library.emory.edu/svn/fedora/repository-policies/</a> )</p>
+</li>
+<li><p class="first">After django application and Fedora are both configured, run
+syncrepo to load Fedora fixtures and control objects:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">manage</span><span class="o">.</span><span class="n">py</span> <span class="n">syncrepo</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">DEPLOYNOTES</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a><ul>
+<li><a class="reference internal" href="#software-dependencies">Software Dependencies</a><ul>
+<li><a class="reference internal" href="#configure-the-environment">Configure the environment</a></li>
+<li><a class="reference internal" href="#install-python-dependencies">Install python dependencies</a><ul>
+<li><a class="reference internal" href="#known-issues">Known Issues</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#install-configure-system-dependencies">Install/Configure System Dependencies</a><ul>
+<li><a class="reference internal" href="#fedora">Fedora</a></li>
+<li><a class="reference internal" href="#celery-rabbitmq">Celery/RabbitMQ</a></li>
+<li><a class="reference internal" href="#solr-eulindexer">Solr/EULindexer</a></li>
+<li><a class="reference internal" href="#misc">Misc</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#install-the-application">Install the Application</a><ul>
+<li><a class="reference internal" href="#apache">Apache</a></li>
+<li><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li><a class="reference internal" href="#exist-db">eXist-DB</a></li>
+<li><a class="reference internal" href="#pid-manager">PID Manager</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#ingest-clean-up-cron-job">Ingest clean-up cron job</a></li>
+<li><a class="reference internal" href="#celery-daemon">Celery Daemon</a></li>
+<li><a class="reference internal" href="#custom-mime-types">Custom MIME Types</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#notes-for-developers">Notes for Developers</a><ul>
+<li><a class="reference internal" href="#session-configuration">Session configuration</a></li>
+<li><a class="reference internal" href="#fedora-xacml-policy">Fedora XACML policy</a></li>
+<li><a class="reference internal" href="#test-setup">Test Setup</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#upgrade-notes">Upgrade Notes</a><ul>
+<li><a class="reference internal" href="#release-2-7">Release 2.7</a></li>
+<li><a class="reference internal" href="#release-2-6-5">Release 2.6.5</a></li>
+<li><a class="reference internal" href="#release-2-6-2-macmillan-law-library">Release 2.6.2 - MacMillan Law Library</a></li>
+<li><a class="reference internal" href="#release-2-5">Release 2.5</a></li>
+<li><a class="reference internal" href="#release-2-4">Release 2.4</a></li>
+<li><a class="reference internal" href="#release-2-3-fedora-3-8-migration-support">Release 2.3 - Fedora 3.8 migration support</a></li>
+<li><a class="reference internal" href="#release-2-2-1-health-sciences-library">Release 2.2.1 - Health Sciences Library</a></li>
+<li><a class="reference internal" href="#release-2-2-ye-ol-dm-video">Release 2.2 - Ye ol DM Video</a></li>
+<li><a class="reference internal" href="#release-2-1-2-etd-library">Release 2.1.2 - ETD Library</a></li>
+<li><a class="reference internal" href="#release-2-1-video-front-end">Release 2.1 - Video Front End</a></li>
+<li><a class="reference internal" href="#release-2-0-video-ingest">Release 2.0 - Video Ingest</a></li>
+<li><a class="reference internal" href="#release-1-10">Release 1.10</a></li>
+<li><a class="reference internal" href="#release-1-9">Release 1.9</a></li>
+<li><a class="reference internal" href="#release-1-8">Release 1.8</a></li>
+<li><a class="reference internal" href="#release-1-7-1">Release 1.7.1</a></li>
+<li><a class="reference internal" href="#release-1-7">Release 1.7</a></li>
+<li><a class="reference internal" href="#release-1-6">Release 1.6</a></li>
+<li><a class="reference internal" href="#release-1-5-2">Release 1.5.2</a></li>
+<li><a class="reference internal" href="#release-1-5">Release 1.5</a></li>
+<li><a class="reference internal" href="#release-1-4-search-and-ingest-enhancements">Release 1.4 - search and ingest enhancements</a></li>
+<li><a class="reference internal" href="#release-1-3-search-based-report-generation">Release 1.3 - Search-based Report generation</a></li>
+<li><a class="reference internal" href="#release-1-2-verdict-app">Release 1.2 - Verdict App</a></li>
+<li><a class="reference internal" href="#release-1-1-metadata-migration">Release 1.1 - Metadata Migration</a></li>
+<li><a class="reference internal" href="#release-1-0-3">Release 1.0.3</a></li>
+<li><a class="reference internal" href="#release-1-0-2">Release 1.0.2</a></li>
+<li><a class="reference internal" href="#release-1-0-min-items-part-iv">Release 1.0 - Min Items, part IV</a></li>
+<li><a class="reference internal" href="#release-0-9-min-items-part-iii">Release 0.9 - Min Items, part III</a></li>
+<li><a class="reference internal" href="#release-0-8-min-items-part-ii">Release 0.8 - Min Items, part II</a></li>
+<li><a class="reference internal" href="#release-0-7-min-items-part-i">Release 0.7 - Min Items, part I</a></li>
+<li><a class="reference internal" href="#release-0-6">Release 0.6</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="app_management.html" title="previous chapter">Application Management</a></li>
+      <li>Next: <a href="changelog.html" title="next chapter">CHANGELOG</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/deploynotes.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2011, Emory University Libraries.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/deploynotes.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

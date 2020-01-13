@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Application Management &mdash; The Keep 2.7.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.7.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="The Keep 2.7.7 documentation" href="index.html" />
+    <link rel="next" title="DEPLOYNOTES" href="deploynotes.html" />
+    <link rel="prev" title="README" href="readme.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="application-management">
+<span id="app-management"></span><h1>Application Management<a class="headerlink" href="#application-management" title="Permalink to this headline">¶</a></h1>
+<p>Until we come up with a better solution, various application management processes will be documented here.</p>
+<div class="section" id="purging-records-from-the-keep">
+<h2>Purging Records from the Keep<a class="headerlink" href="#purging-records-from-the-keep" title="Permalink to this headline">¶</a></h2>
+<p>The Keep web application does not currently support deletion, so on occasion
+developers may be asked to remove records (e.g., items that should not have
+been ingested or duplicate records).  To purge a Keep record, use the
+following process.</p>
+<ul>
+<li><p class="first">Secure shell into the production deployed instance of the Keep, su to the
+keep user, and start the python console:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py shell
+</pre></div>
+</div>
+</li>
+<li><p class="first">Initialize a repository connection to inspect and purge objects.  Retrieve
+the object by pid, but be sure to check the object label or other metadata
+to confirm it matches information provided about the object to be
+deleted:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">keep.common.fedora</span> <span class="k">import</span> <span class="n">Repository</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">keep.audio.models</span> <span class="k">import</span> <span class="n">AudioObject</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">repo</span> <span class="o">=</span> <span class="n">Repository</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="s1">&#39;emory:bt0nm&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">AudioObject</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj</span><span class="o">.</span><span class="n">label</span>
+<span class="go">&#39;record 5 side A.wav&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">repo</span><span class="o">.</span><span class="n">purge_object</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">pid</span><span class="p">,</span> <span class="s1">&#39;purge at user request - duplicate&#39;</span><span class="p">)</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Update the corresponding ARK in the PID manager to mark the default target
+as inactive (either use the web admin and search by pid or or alternately
+use the Python pidman client in the django console if you are removing a
+large number of records).</p>
+</li>
+</ul>
+</div>
+<div class="section" id="regenerating-audio-access-copies">
+<h2>Regenerating Audio Access Copies<a class="headerlink" href="#regenerating-audio-access-copies" title="Permalink to this headline">¶</a></h2>
+<p>Normally The Keep will automatically generate access copies for audio
+objects it ingests. Occasionally, though, this process fails or needs to be
+rerun. Future versions of the web application will expose functionality for
+some users to request regeneration of these access copies. In the meantime,
+they can also be regenerated from the command line:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python manage.py generate_access_copy &lt;pid&gt; &lt;pid&gt;
+</pre></div>
+</div>
+<p>If you need to do a larger batch, or queue access copy generation for objects
+based on a Fedora query or Solr search, you can also do that in the
+python console like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eulfedora.server</span> <span class="k">import</span> <span class="n">Repository</span>
+<span class="kn">from</span> <span class="nn">keep.audio.models</span> <span class="k">import</span> <span class="n">AudioObject</span>
+<span class="kn">from</span> <span class="nn">keep.audio.tasks</span> <span class="k">import</span> <span class="n">queue_access_copy</span>
+
+<span class="n">obj</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_object</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;pid&#39;</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="n">AudioObject</span><span class="p">)</span>
+<span class="n">queue_access_copy</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-a-new-top-level-collection-aka-archive-aka-repository">
+<h2>Creating a new top-level collection AKA Archive AKA Repository<a class="headerlink" href="#creating-a-new-top-level-collection-aka-archive-aka-repository" title="Permalink to this headline">¶</a></h2>
+<p>There is no user interface for creating or managing the top-level
+collections (including the MARBL, EUA, or Pitts collection objects), so
+when a new one is needed it will need to be created manually.</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first">Get the full name and a short-hand name for the archive to be created.</p>
+</li>
+<li><p class="first">Use the PID manager to create a new ARK for the object.  The ARK target
+should be the Keep collection URL based on the short name of the library
+that you will enter later, e.g. <a class="reference external" href="https://keep.library.emory.edu/collections/marbl/">https://keep.library.emory.edu/collections/marbl/</a>
+or <a class="reference external" href="https://keep.library.emory.edu/collections/oxford/">https://keep.library.emory.edu/collections/oxford/</a></p>
+</li>
+<li><p class="first">Copy one of the existing initial object fixtures (<code class="docutils literal"><span class="pre">keep/collection/fixtures/initial_objects</span></code>)
+and update the pid, full name, and short name everywhere they appear and add the new
+fixture to version control.</p>
+<dl class="docutils">
+<dt>3a. You may want to ingest the object in a development or staging Fedora Repository</dt>
+<dd><p class="first last">as a sanity check before committing to version control or creating in production.</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">Add the new pid to the <strong>PID_ALIASES</strong> in <code class="xref py py-mod docutils literal"><span class="pre">keep.settings</span></code>.</p>
+</li>
+<li><p class="first">Ingest the new object using <code class="docutils literal"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">syncrepo</span></code> or the
+Fedora Admin interface.  The empty collection should now be accessible
+at the collections url you created based on the short label.  (It won&#8217;t show
+up in the <a class="reference external" href="https://keep.library.emory.edu/collections/">Collections by Library</a>
+listing until it includes content.)  When you deploy a new release including
+a fixture, you should also document this step in the deploy notes.</p>
+</li>
+</ol>
+</div></blockquote>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This procedure is also documented in Emory Service Now Knowledge Base
+as article KB05198.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Application Management</a><ul>
+<li><a class="reference internal" href="#purging-records-from-the-keep">Purging Records from the Keep</a></li>
+<li><a class="reference internal" href="#regenerating-audio-access-copies">Regenerating Audio Access Copies</a></li>
+<li><a class="reference internal" href="#creating-a-new-top-level-collection-aka-archive-aka-repository">Creating a new top-level collection AKA Archive AKA Repository</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="readme.html" title="previous chapter">README</a></li>
+      <li>Next: <a href="deploynotes.html" title="next chapter">DEPLOYNOTES</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/app_management.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2011, Emory University Libraries.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/app_management.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

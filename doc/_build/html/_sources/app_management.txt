@@ -1,0 +1,1 @@
+.. include:: ../APP_MANAGEMENT.rst

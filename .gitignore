@@ -6,7 +6,6 @@ parsetab.py
 localsettings.py
 build
 dist
-doc/_build
 
 # unittest and coverage artifacts
 .coverage

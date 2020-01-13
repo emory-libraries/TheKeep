@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>keep Code Documentation for The Keep &mdash; The Keep 2.7.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.7.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="The Keep 2.7.7 documentation" href="index.html" />
+    <link rel="next" title="README" href="readme.html" />
+    <link rel="prev" title="Documentation for The Keep 2.7.7" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-keep">
+<span id="keep-code-documentation-for-the-keep"></span><h1><a class="reference internal" href="#module-keep" title="keep"><code class="xref py py-mod docutils literal"><span class="pre">keep</span></code></a> Code Documentation for The Keep<a class="headerlink" href="#module-keep" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-keep.collection">
+<span id="collection"></span><h2>Collection<a class="headerlink" href="#module-keep.collection" title="Permalink to this headline">¶</a></h2>
+<p>Django module for creating, editing, and searching Collection objects, which
+are used to aggregate audio content.</p>
+<div class="section" id="models">
+<h3>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="forms">
+<h3>Forms<a class="headerlink" href="#forms" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="views">
+<h3>Views<a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="management-commands-scripts">
+<h3>Management Commands/Scripts<a class="headerlink" href="#management-commands-scripts" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="context-processors">
+<h3>Context Processors<a class="headerlink" href="#context-processors" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="module-keep.arrangement">
+<span id="arrangement"></span><h2>Arrangement<a class="headerlink" href="#module-keep.arrangement" title="Permalink to this headline">¶</a></h2>
+<p>Django module for processing and arranging born digital content.</p>
+<div class="section" id="note-on-permissions">
+<h3>Note on Permissions<a class="headerlink" href="#note-on-permissions" title="Permalink to this headline">¶</a></h3>
+<p>Currently, the arrangement app uses Fedora object status to indicate
+whether an item is processed or accessioned (i.e., unprocessed), in
+order to allow restricting researcher access to unprocessed items.
+Processed items will have a Fedora object status of <code class="docutils literal"><span class="pre">Active</span></code>;
+accessioned items should have a status of <code class="docutils literal"><span class="pre">Inactive</span></code>.</p>
+<p>The arrangement app currently uses two content models to allow
+distinguishing between restricted and unrestricted items (which can be
+accessed on the researcher workstation using the rushdie web app).
+These two content models are:</p>
+<ul class="simple">
+<li>emory-control:ArrangementAccessAllowed-1.0</li>
+<li>emory-control:ArrangementAccessRestricted-1.0</li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h3>Models<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id2">
+<h3>Forms<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id3">
+<h3>Views<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id4">
+<h3>Management Commands/Scripts<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="module-keep.audio">
+<span id="audio"></span><h2>Audio<a class="headerlink" href="#module-keep.audio" title="Permalink to this headline">¶</a></h2>
+<p>Django module for uploading audio content (either single files or in batches)
+for ingest into the repository, with functionality for editing metadata, and
+searching audio objects.</p>
+<div class="section" id="id5">
+<h3>Models<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id6">
+<h3>Forms<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id7">
+<h3>Views<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id8">
+<h3>Management Commands/Scripts<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<span class="target" id="module-keep.audio.management.commands.ingest_cleanup"></span><dl class="class">
+<dt id="keep.audio.management.commands.ingest_cleanup.Command">
+<em class="property">class </em><code class="descclassname">keep.audio.management.commands.ingest_cleanup.</code><code class="descname">Command</code><span class="sig-paren">(</span><em>stdout=None</em>, <em>stderr=None</em>, <em>no_color=False</em><span class="sig-paren">)</span><a class="headerlink" href="#keep.audio.management.commands.ingest_cleanup.Command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clean up any files uploaded for ingest older than a specified duration.
+Uses directory and file age configurations from django settings.  If minimal
+output is requested, only errors will be reported.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="id9">
+<h3>Context Processors<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="accounts">
+<h2>Accounts<a class="headerlink" href="#accounts" title="Permalink to this headline">¶</a></h2>
+<p>This app adds custom login &amp; logout views with supporting functionality to allow
+accessing the repository as the user logged into the website.</p>
+<div class="section" id="id10">
+<h3>Views<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="module-keep.common">
+<span id="common-code"></span><h2>Common code<a class="headerlink" href="#module-keep.common" title="Permalink to this headline">¶</a></h2>
+<p>This is a module of common code and utility methods that is used by
+multiple apps.  It is placed in a common module for convenience
+(including simplifying running unit tests, since Django only knows how
+to test apps).</p>
+<p>As we find better places for &#8220;common&#8221; code, they should be moved into
+appropiately named apps.</p>
+<div class="section" id="fedora">
+<h3>Fedora<a class="headerlink" href="#fedora" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id11">
+<h3>Models<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="module-keep.common.utils">
+<span id="utilities"></span><h3>Utilities<a class="headerlink" href="#module-keep.common.utils" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="keep.common.utils.absolutize_url">
+<code class="descclassname">keep.common.utils.</code><code class="descname">absolutize_url</code><span class="sig-paren">(</span><em>local_url</em><span class="sig-paren">)</span><a class="headerlink" href="#keep.common.utils.absolutize_url" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a local url to an absolute url, with scheme and server name,
+based on the current configured <a class="reference external" href="http://docs.djangoproject.com/en/dev/_objects/ref/contrib/sites/#django.contrib.sites.models.Site" title="(in Django v3.1)"><code class="xref py py-class docutils literal"><span class="pre">Site</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>local_url</strong> &#8211; local url to be absolutized, e.g. something generated by
+<code class="xref py py-meth docutils literal"><span class="pre">reverse()</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="keep.common.utils.redact_email">
+<code class="descclassname">keep.common.utils.</code><code class="descname">redact_email</code><span class="sig-paren">(</span><em>content</em><span class="sig-paren">)</span><a class="headerlink" href="#keep.common.utils.redact_email" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace any sensitive information in the email message with
+a redacted text label.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Requires an import of <code class="docutils literal"><span class="pre">redactions.py</span></code> that should <em>not</em>
+be added to version control because it contains the
+sensitive information to be redacted from email message.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="keep.common.utils.solr_interface">
+<code class="descclassname">keep.common.utils.</code><code class="descname">solr_interface</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#keep.common.utils.solr_interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper function to initialize a
+<code class="xref py py-class docutils literal"><span class="pre">sunburnt.SolrInterface</span></code> based on django settings and
+evironment.  Uses <strong>SOLR_SERVER_URL</strong> and <strong>SOLR_CA_CERT_PATH</strong> if
+one is set.  Additionally, if an <strong>HTTP_PROXY</strong> is set in the
+environment, it will be configured.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="module-keep.search">
+<span id="search"></span><h2>Search<a class="headerlink" href="#module-keep.search" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="#module-keep.search" title="keep.search"><code class="xref py py-mod docutils literal"><span class="pre">keep.search</span></code></a> Django app is intended to provide <em>public-facing</em>
+search and access to researcher-accessible content (or to staff-accessible
+content for logged-in staff members).</p>
+<div class="section" id="id12">
+<h3>Forms<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id13">
+<h3>Views<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#"><code class="docutils literal"><span class="pre">keep</span></code> Code Documentation for The Keep</a><ul>
+<li><a class="reference internal" href="#module-keep.collection">Collection</a><ul>
+<li><a class="reference internal" href="#models">Models</a></li>
+<li><a class="reference internal" href="#forms">Forms</a></li>
+<li><a class="reference internal" href="#views">Views</a></li>
+<li><a class="reference internal" href="#management-commands-scripts">Management Commands/Scripts</a></li>
+<li><a class="reference internal" href="#context-processors">Context Processors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-keep.arrangement">Arrangement</a><ul>
+<li><a class="reference internal" href="#note-on-permissions">Note on Permissions</a></li>
+<li><a class="reference internal" href="#id1">Models</a></li>
+<li><a class="reference internal" href="#id2">Forms</a></li>
+<li><a class="reference internal" href="#id3">Views</a></li>
+<li><a class="reference internal" href="#id4">Management Commands/Scripts</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-keep.audio">Audio</a><ul>
+<li><a class="reference internal" href="#id5">Models</a></li>
+<li><a class="reference internal" href="#id6">Forms</a></li>
+<li><a class="reference internal" href="#id7">Views</a></li>
+<li><a class="reference internal" href="#id8">Management Commands/Scripts</a></li>
+<li><a class="reference internal" href="#id9">Context Processors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#accounts">Accounts</a><ul>
+<li><a class="reference internal" href="#id10">Views</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-keep.common">Common code</a><ul>
+<li><a class="reference internal" href="#fedora">Fedora</a></li>
+<li><a class="reference internal" href="#id11">Models</a></li>
+<li><a class="reference internal" href="#module-keep.common.utils">Utilities</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-keep.search">Search</a><ul>
+<li><a class="reference internal" href="#id12">Forms</a></li>
+<li><a class="reference internal" href="#id13">Views</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Documentation for The Keep 2.7.7</a></li>
+      <li>Next: <a href="readme.html" title="next chapter">README</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/apidocs.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2011, Emory University Libraries.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/apidocs.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

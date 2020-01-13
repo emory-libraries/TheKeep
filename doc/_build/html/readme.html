@@ -1,0 +1,238 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>README &mdash; The Keep 2.7.7 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '2.7.7',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="The Keep 2.7.7 documentation" href="index.html" />
+    <link rel="next" title="Application Management" href="app_management.html" />
+    <link rel="prev" title="keep Code Documentation for The Keep" href="apidocs.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="readme">
+<span id="id1"></span><h1>README<a class="headerlink" href="#readme" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The Keep is a repository-based Django web application for managing digital
+surrogates or &#8220;masters&#8221; of archival (and other) source materials.  For the first
+phase of the project, The Keep is intended to handle audio materials only.</p>
+<p>The Keep is intended to replace (eventually) the previous system that handled
+some of this functionality, a Ruby-on-Rails application known as
+&#8220;Digital Masters&#8221;.</p>
+</div>
+<div class="section" id="components">
+<h2>Components<a class="headerlink" href="#components" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="collection">
+<h3>Collection<a class="headerlink" href="#collection" title="Permalink to this headline">¶</a></h3>
+<p>Functionality for creating, editing, and searching Collection objects that are
+used to aggregate item-level content, and roughly correspond (in most cases) to
+a manuscript or archival collection.</p>
+</div>
+<div class="section" id="audio">
+<h3>Audio<a class="headerlink" href="#audio" title="Permalink to this headline">¶</a></h3>
+<p>Functionality for ingesting audio content (via single-file or batch upload) into
+Fedora, editing metadata to describe the audio item, and searching across audio
+items.</p>
+</div>
+<div class="section" id="accounts">
+<h3>Accounts<a class="headerlink" href="#accounts" title="Permalink to this headline">¶</a></h3>
+<p>Custom login/logout functionality in support of passing user LDAP credentials
+to Fedora so that objects in the repository will be accessed and updated
+by the individual user rather than by a single site-wide account.
+To Access MARBL materal a user will need the common | MARBL Allowed permission.
+To Access Arrangement materal the user will need common | Arrangement Allowed permission
+and and entry in the permit-keep-arrangement-admin.xml XACML policy.</p>
+</div>
+<div class="section" id="grant-access-to-new-existing-users">
+<h3>Grant access to new / existing users<a class="headerlink" href="#grant-access-to-new-existing-users" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Change any Apache / firewall config that is necessary.</p>
+</li>
+<li><p class="first">Make sure the user is created in the database:</p>
+<ul>
+<li><p class="first">Check by logging in to the site and go to Admin &gt; Users</p>
+</li>
+<li><p class="first">If the userid does not exist, do one of the following:</p>
+<blockquote>
+<div><ol class="loweralpha">
+<li><p class="first">Go to Admin &gt; Emory ldap user profiles and enter the USERID
+then click &#8220;Add username&#8221;</p>
+</li>
+<li><p class="first">run the following on the command line while in the keep
+environment:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python ./manage.py inituser USERNAME
+</pre></div>
+</div>
+</li>
+</ol>
+</div></blockquote>
+</li>
+<li><p class="first">The user should now be in the list.</p>
+</li>
+</ul>
+</li>
+<li><p class="first">For access to Audio only:</p>
+<ul class="simple">
+<li>Go to Admin &gt; Users &gt; USERID<ul>
+<li>Make sure the <strong>Active</strong>&#8221; and the <strong>Staff</strong> flag is checked and
+the <strong>Superuser</strong> flag is NOT checked.</li>
+<li>In the Permissions box make sure that <em>common | permissions |
+Access to MARBL material</em> is selected.</li>
+<li>Save the user.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p class="first">For access to BoDA:</p>
+<ul class="simple">
+<li>Go to Admin &gt; Users &gt; USERID</li>
+<li>Make sure the <strong>Active</strong> and the <strong>Staff</strong> flag is checked and the
+<strong>Superuser</strong> flag is NOT checked.</li>
+<li>In the Permissions box make sure that &#8220;common | permissions |
+Access to MARBL material&#8221; is selected.</li>
+<li>In the Permissions box make sure that &#8220;common | permissions |
+Access to Arrangement material&#8221; is selected.</li>
+<li>Save the user.</li>
+<li>In Fedora go to the policies directory and then to
+thekeep-policies directory.</li>
+<li>edit permit-keep-arrangement-admin.xml and add an entry for the
+USERID in the &#8220;Arrangement&#8221; section near the bottom of the file.</li>
+<li>Reload policies.</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="common">
+<h3>Common<a class="headerlink" href="#common" title="Permalink to this headline">¶</a></h3>
+<p>Common code used by multiple components that does not clearly belong to a single
+component is placed here.  This currently includes a customized Fedora Repository
+server connection class (<code class="xref py py-class docutils literal"><span class="pre">Repository</span></code>), which
+has logic for accessing Fedora with the credentials of the currently-logged in
+user, as well as utility methods.</p>
+</div>
+</div>
+<div class="section" id="system-dependencies">
+<h2>System Dependencies<a class="headerlink" href="#system-dependencies" title="Permalink to this headline">¶</a></h2>
+<p>The Keep requires the following network resources:</p>
+<blockquote>
+<div><ul class="simple">
+<li>LDAP for user authentication</li>
+<li>Fedora 3.4 with risearch enabled. It should be configured for FeSL LDAP
+authentication. Note that the localsettings.py requests Fedora user
+credentials; these are used by command line applications. Users logged
+into the web application use their own LDAP credentials when accessing
+Fedora.</li>
+<li>A relational database for user and session information</li>
+<li>Persistent ID manager for minting ARKs to use as object identifiers.</li>
+<li>eXist-db XML database for auto-generating Fedora Collection objects
+from the corresponding EAD Finding Aids</li>
+<li>RabbitMQ for brokering asynchronous tasks</li>
+</ul>
+</div></blockquote>
+<hr class="docutils" />
+<p>For more detailed information, including installation instructions and upgrade
+notes, see <a class="reference internal" href="deploynotes.html#deploynotes"><span class="std std-ref">DEPLOYNOTES</span></a>.  For details about the features included in each release,
+see <a class="reference internal" href="changelog.html#changelog"><span class="std std-ref">CHANGELOG</span></a>.  See <a class="reference internal" href="app_management.html#app-management"><span class="std std-ref">Application Management</span></a> for documentation on application management steps that currently cannot be performed within the web application.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">README</a><ul>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#components">Components</a><ul>
+<li><a class="reference internal" href="#collection">Collection</a></li>
+<li><a class="reference internal" href="#audio">Audio</a></li>
+<li><a class="reference internal" href="#accounts">Accounts</a></li>
+<li><a class="reference internal" href="#grant-access-to-new-existing-users">Grant access to new / existing users</a></li>
+<li><a class="reference internal" href="#common">Common</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#system-dependencies">System Dependencies</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="apidocs.html" title="previous chapter"><code class="docutils literal"><span class="pre">keep</span></code> Code Documentation for The Keep</a></li>
+      <li>Next: <a href="app_management.html" title="next chapter">Application Management</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/readme.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2011, Emory University Libraries.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/readme.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

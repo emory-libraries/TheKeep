@@ -430,7 +430,7 @@ class DiskImage(DigitalObject):
             filename = os.path.join(path, data_path)
             mtype = m.from_file(filename)
             mimetype, separator, options = mtype.partition(';')
-            if mimetype in DiskImage.diskimage_mimetypes:
+            if mimetype in DiskImage.allowed_mimetypes:
                 checksum_err_msg = '%%s checksum not found for disk image %s' \
                     % os.path.basename(data_path)
                 # require both MD5 and SHA-1 for disk image to ingest

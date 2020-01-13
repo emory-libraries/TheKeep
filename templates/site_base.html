@@ -7,6 +7,39 @@
   {% endblock %}
 {% block page-title %}The Keep{% block page-subtitle %}{% endblock %}{% endblock %}
 
+{% block beta_banner %}<style>
+    #beta_warning {
+        background-color: #ff7373;
+        border: 1px solid red;
+        top: 0;
+        width: 100%;
+        z-index: 9000000000;
+        margin-bottom: 2px;
+        
+    }
+    #beta_message {
+        margin-top: 15px;
+        margin-bottom: 15px;
+        text-align:center;
+        font-weight: bold;
+        font-size: 16px;
+    }
+</style>
+ 
+
+    <div id="beta_warning">
+      <div id="beta_message">
+        Requesting of offsite materials will be unavailable December 13-17. 
+        <p style="font-size: 12px; padding-right: 30px; padding-left: 30px; margin-bottom: 0px; margin-top: 10px;">
+        Researchers visiting Rose Library during that time should make requests for offsite materials by 5pm on Wednesday, December 12.
+        </p>
+        <p style="font-size: 12px; padding-right: 30px; padding-left: 30px; margin-bottom: 0px;">
+        For assistance, please contact us at rose.library@emory.edu or 404-727-6887.
+        </p>
+      </div>
+    </div>
+{% endblock %}
+
 {% block navlinks %}
   {% include 'snippets/navlinks.html' %}
 {% endblock %}
