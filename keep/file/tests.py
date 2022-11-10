@@ -9,7 +9,7 @@ import tempfile
 from unittest import skipIf
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase
 
 from eulfedora.server import Repository

@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import Client, TestCase
 
 from eulfedora.rdfns import relsext as relsextns, model as modelns

@@ -18,7 +18,7 @@
             <b>{{ v }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}{% if not forloop.last %}; {% endif %}
         {% endfor %}
     {% else %} {# regular dict #}
-    {% for field, val in search_info.iteritems %}
+    {% for field, val in search_info.items %}
       {{ field }}:
       {# link to regular collections, but not to top-level collections/owning repos #}
       <b>{% if val.pid and val.collection_id %} <a href="{% url 'collection:edit' val.pid %}">{{ val.title }}</a>

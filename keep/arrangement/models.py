@@ -6,6 +6,7 @@ import os
 from rdflib import URIRef
 import tempfile
 import uuid
+import urllib.request as urllib2
 
 from eulfedora.models import Relation, ReverseRelation, XmlDatastream
 from eulfedora.util import RequestFailed
@@ -101,7 +102,7 @@ class ArrangementObject(boda.Arrangement, ArkPidDigitalObject):
     # map arrangement status to fedora object state
 
     def _get_arrangement_status(self):
-        for status, code in self.status_codes.iteritems():
+        for status, code in self.status_codes.items():
             if self.state == code:
                 return status
 

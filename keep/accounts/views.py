@@ -6,7 +6,7 @@ import ldap
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import views as authviews
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from eulcommon.djangoextras.http import HttpResponseSeeOtherRedirect
 

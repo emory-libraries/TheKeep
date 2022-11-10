@@ -1,0 +1,264 @@
+{% extends "eultheme/site_base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block metadata %}
+  <meta property="og:site_name" content="This site is currently undergoing some maintenance."/>
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="{{request.build_absolute_uri}}"/>
+
+  <meta name="twitter:domain" content="{{request.get_host}}" />
+  <title>This site is currently undergoing some maintenance.</title>
+{% endblock %}
+
+{% block css %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+<style>
+  html, body{
+    background-color:#f8f8f8;
+    height:100%;
+    width:100%;
+  }
+  .jumbotron{
+    position: relative;
+    background-color: white;
+    border-radius: 2px;
+    box-shadow: 0 4px 6px 1px rgba(50, 50, 50, 0.14);
+    box-sizing: border-box;
+    color: rgb(89, 89, 89);
+    line-height: 1.5;
+    margin: 5.5em auto 0;
+    max-width: 740px;
+    padding: 30px 35px 30px 37px;
+    width: 100%;
+  }
+
+  .icon {
+    position: absolute;
+    top: 60px;
+    right: 50px;
+    background-color: #eee;
+    color: #FFF;
+    padding: 10px 25px;
+    font-size: 5em;
+    border-radius: 50%;
+    border:1px solid transparent;
+    width: 120px;
+    height: 120px;
+    overflow: hidden;
+  }
+
+  .icon> span {
+      margin-top: 25%;
+      margin-left: -2px;
+      position: relative;
+      text-shadow: rgb(217, 217, 217) 1px 1px,
+        rgb(217, 217, 217) 2px 2px,
+        rgb(217, 217, 217) 3px 3px,
+        rgb(217, 217, 217) 4px 4px,
+        rgb(217, 217, 217) 5px 5px,
+        rgb(217, 217, 217) 6px 6px,
+        rgb(217, 217, 217) 7px 7px,
+        rgb(217, 217, 217) 8px 8px,
+        rgb(217, 217, 217) 9px 9px,
+        rgb(217, 217, 217) 10px 10px,
+        rgb(217, 217, 217) 11px 11px,
+        rgb(217, 217, 217) 12px 12px,
+        rgb(217, 217, 217) 13px 13px,
+        rgb(217, 217, 217) 14px 14px,
+        rgb(217, 217, 217) 15px 15px,
+        rgb(217, 217, 217) 16px 16px,
+        rgb(217, 217, 217) 17px 17px,
+        rgb(217, 217, 217) 18px 18px,
+        rgb(217, 217, 217) 19px 19px,
+        rgb(217, 217, 217) 20px 20px,
+        rgb(217, 217, 217) 21px 21px,
+        rgb(217, 217, 217) 22px 22px,
+        rgb(217, 217, 217) 23px 23px,
+        rgb(217, 217, 217) 24px 24px,
+        rgb(217, 217, 217) 25px 25px,
+        rgb(217, 217, 217) 26px 26px,
+        rgb(217, 217, 217) 27px 27px,
+        rgb(217, 217, 217) 28px 28px,
+        rgb(217, 217, 217) 29px 29px,
+        rgb(217, 217, 217) 30px 30px,
+        rgb(217, 217, 217) 31px 31px,
+        rgb(217, 217, 217) 32px 32px,
+        rgb(217, 217, 217) 33px 33px,
+        rgb(217, 217, 217) 34px 34px,
+        rgb(217, 217, 217) 35px 35px,
+        rgb(217, 217, 217) 36px 36px,
+        rgb(217, 217, 217) 37px 37px,
+        rgb(217, 217, 217) 38px 38px,
+        rgb(217, 217, 217) 39px 39px,
+        rgb(217, 217, 217) 40px 40px,
+        rgb(217, 217, 217) 41px 41px,
+        rgb(217, 217, 217) 42px 42px,
+        rgb(217, 217, 217) 43px 43px,
+        rgb(217, 217, 217) 44px 44px,
+        rgb(217, 217, 217) 45px 45px,
+        rgb(217, 217, 217) 46px 46px,
+        rgb(217, 217, 217) 47px 47px,
+        rgb(217, 217, 217) 48px 48px,
+        rgb(217, 217, 217) 49px 49px,
+        rgb(217, 217, 217) 50px 50px,
+        rgb(217, 217, 217) 51px 51px,
+        rgb(217, 217, 217) 52px 52px,
+        rgb(217, 217, 217) 53px 53px,
+        rgb(217, 217, 217) 54px 54px,
+        rgb(217, 217, 217) 55px 55px,
+        rgb(217, 217, 217) 56px 56px,
+        rgb(217, 217, 217) 57px 57px,
+        rgb(217, 217, 217) 58px 58px,
+        rgb(217, 217, 217) 59px 59px,
+        rgb(217, 217, 217) 60px 60px,
+        rgb(217, 217, 217) 61px 61px,
+        rgb(217, 217, 217) 62px 62px,
+        rgb(218, 218, 218) 63px 63px,
+        rgb(218, 218, 218) 64px 64px,
+        rgb(218, 218, 218) 65px 65px,
+        rgb(218, 218, 218) 66px 66px,
+        rgb(219, 219, 219) 67px 67px,
+        rgb(219, 219, 219) 68px 68px,
+        rgb(219, 219, 219) 69px 69px,
+        rgb(219, 219, 219) 70px 70px,
+        rgb(220, 220, 220) 71px 71px,
+        rgb(220, 220, 220) 72px 72px,
+        rgb(220, 220, 220) 73px 73px,
+        rgb(220, 220, 220) 74px 74px,
+        rgb(221, 221, 221) 75px 75px,
+        rgb(221, 221, 221) 76px 76px,
+        rgb(221, 221, 221) 77px 77px,
+        rgb(221, 221, 221) 78px 78px,
+        rgb(222, 222, 222) 79px 79px,
+        rgb(222, 222, 222) 80px 80px,
+        rgb(222, 222, 222) 81px 81px,
+        rgb(222, 222, 222) 82px 82px,
+        rgb(223, 223, 223) 83px 83px,
+        rgb(223, 223, 223) 84px 84px,
+        rgb(223, 223, 223) 85px 85px,
+        rgb(223, 223, 223) 86px 86px,
+        rgb(224, 224, 224) 87px 87px,
+        rgb(224, 224, 224) 88px 88px,
+        rgb(224, 224, 224) 89px 89px,
+        rgb(224, 224, 224) 90px 90px,
+        rgb(224, 224, 224) 91px 91px,
+        rgb(225, 225, 225) 92px 92px,
+        rgb(225, 225, 225) 93px 93px,
+        rgb(225, 225, 225) 94px 94px,
+        rgb(225, 225, 225) 95px 95px,
+        rgb(226, 226, 226) 96px 96px,
+        rgb(226, 226, 226) 97px 97px,
+        rgb(226, 226, 226) 98px 98px,
+        rgb(226, 226, 226) 99px 99px,
+        rgb(227, 227, 227) 100px 100px,
+        rgb(227, 227, 227) 101px 101px,
+        rgb(227, 227, 227) 102px 102px,
+        rgb(227, 227, 227) 103px 103px,
+        rgb(228, 228, 228) 104px 104px,
+        rgb(228, 228, 228) 105px 105px,
+        rgb(228, 228, 228) 106px 106px,
+        rgb(228, 228, 228) 107px 107px,
+        rgb(229, 229, 229) 108px 108px,
+        rgb(229, 229, 229) 109px 109px,
+        rgb(229, 229, 229) 110px 110px,
+        rgb(229, 229, 229) 111px 111px,
+        rgb(230, 230, 230) 112px 112px,
+        rgb(230, 230, 230) 113px 113px,
+        rgb(230, 230, 230) 114px 114px,
+        rgb(230, 230, 230) 115px 115px,
+        rgb(231, 231, 231) 116px 116px,
+        rgb(231, 231, 231) 117px 117px,
+        rgb(231, 231, 231) 118px 118px,
+        rgb(231, 231, 231) 119px 119px,
+        rgb(231, 231, 231) 120px 120px,
+        rgb(232, 232, 232) 121px 121px,
+        rgb(232, 232, 232) 122px 122px,
+        rgb(232, 232, 232) 123px 123px,
+        rgb(232, 232, 232) 124px 124px,
+        rgb(233, 233, 233) 125px 125px,
+        rgb(233, 233, 233) 126px 126px,
+        rgb(233, 233, 233) 127px 127px,
+        rgb(233, 233, 233) 128px 128px,
+        rgb(234, 234, 234) 129px 129px,
+        rgb(234, 234, 234) 130px 130px,
+        rgb(234, 234, 234) 131px 131px,
+        rgb(234, 234, 234) 132px 132px,
+        rgb(235, 235, 235) 133px 133px,
+        rgb(235, 235, 235) 134px 134px,
+        rgb(235, 235, 235) 135px 135px,
+        rgb(235, 235, 235) 136px 136px,
+        rgb(236, 236, 236) 137px 137px,
+        rgb(236, 236, 236) 138px 138px,
+        rgb(236, 236, 236) 139px 139px,
+        rgb(236, 236, 236) 140px 140px,
+        rgb(237, 237, 237) 141px 141px,
+        rgb(237, 237, 237) 142px 142px,
+        rgb(237, 237, 237) 143px 143px,
+        rgb(237, 237, 237) 144px 144px,
+        rgb(238, 238, 238) 145px 145px;
+       background-color: rgb(238, 238, 238);
+  }
+
+  .jumbotron .h1, .jumbotron h1 {
+      padding-right: 80px;
+      font-size: 50px;
+  }
+
+  @media (max-width:700px){
+    .jumbotron{
+      margin-top:2em;
+    }
+
+    .jumbotron h1{
+      padding-right: 0;
+      font-size: 40px;
+    }
+
+    .icon{
+      display:none;
+    }
+  }
+
+  .footer{
+    opacity:0.5;
+    padding-top:2em;
+  }
+
+</style>
+{% endblock %}
+
+{% block javascript %}
+<!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+{% endblock %}
+{% block page-title %}{% block page-subtitle %}{% endblock %}{% endblock %}
+
+{% block nav_class %}navbar navbar-inverse navbar-fixed-top{% endblock %}
+
+{% block admin-navlink %} {% endblock %}
+
+{% block mx_banner %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+      <div class="jumbotron">
+        <h1>Sorry, {% block downtime-site-title %}this site{% endblock %} is currently down for maintenance.</h1>
+        <div class="icon"><span class="glyphicon glyphicon-cog"></span></div>
+        <p class="lead">
+          {% if banner.period.end_time %}
+          <span>We should be back up and running {{banner.period.end_time}}</span>
+          {% elif site_is_down and site_is_down.0.end_time %}
+          <span>We are scheduled to be back up and running {{site_is_down.0.end_time}}</span>
+          {% else %}
+          <span> We are going to be down for a while. Please check back later.</span>
+          {% endif %}
+        </p>
+      </div>
+
+    </div> <!-- /container -->
+
+{% endblock %}

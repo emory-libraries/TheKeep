@@ -1,9 +1,9 @@
 import sys, os, random, time, logging, getopt, signal, unicodecsv, math, urllib
 from django.core.management.base import BaseCommand, CommandError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from io import BytesIO
 from optparse import make_option
-from urlparse import urlparse
+from urllib.parse import urlparse
 from django.conf import settings
 from keep.common.fedora import Repository
 from keep.common.utils import absolutize_url

@@ -103,7 +103,7 @@ class Command(BaseCommand):
             fmt = diskimg.provenance.content.object.format.name
             diskimgs_by_type[fmt].append(diskimg)
 
-        for fmt, diskimages in diskimgs_by_type.iteritems():
+        for fmt, diskimages in diskimgs_by_type.items():
             if self.verbosity >= self.v_normal:
                 self.stderr.write('Selecting %s disk images' % fmt)
             # sort on binary file size so we sync the smallest ones

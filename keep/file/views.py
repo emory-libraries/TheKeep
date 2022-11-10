@@ -11,7 +11,7 @@ import bagit
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.uploadedfile import UploadedFile
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, HttpResponseBadRequest, Http404, \
     HttpResponseForbidden, HttpResponseRedirect
 
@@ -161,7 +161,7 @@ def ingest_files(files, collection, comment, request):
     results = []
 
     m = magic.Magic(mime=True)
-    for filename, label in files.iteritems():
+    for filename, label in files.items():
 
         file_info = {'label': label}
 
@@ -523,7 +523,7 @@ def largefile_ingest(request):
                 if obj.content.checksum != checksum:
                     checksum_errors.append('content')
 
-                for dsid, checksum in supplemental_checksums.iteritems():
+                for dsid, checksum in supplemental_checksums.items():
                     dsobj = obj.getDatastreamObject(dsid)
                     if dsobj.checksum != checksum:
                         checksum_errors.append(dsid)

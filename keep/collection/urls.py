@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from keep.collection import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', views.list_archives, name='list-archives'),
     url(r'^new/$', views.edit, name='new'),
     url(r'^new/from-findingaid/$', views.create_from_findingaid,
@@ -19,4 +19,4 @@ urlpatterns = patterns('',
     url(r'^(?P<pid>[^/]+)/(?P<dsid>(MODS|RELS-EXT|DC))/$',
         views.view_datastream, name='raw-ds'),
     url(r'^(?P<pid>[^/]+)/AUDIT/$', views.view_audit_trail, name='audit-trail'),
-)
+]

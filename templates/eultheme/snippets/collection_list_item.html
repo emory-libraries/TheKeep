@@ -1,0 +1,20 @@
+{# display a list of items as collections, with folder icon #}
+{# expects to be enclosed in a <ul class="media-list collection-list"> #}
+<li class="media">
+    <a href="{% block url %}{% endblock %}">
+        <div class="media-body-link-to" {% block media-body-style %}{% endblock %}>
+            <span class="glyphicon glyphicon-folder-close"></span>
+        </div>
+        <div class="media-body">
+            <h2 class="media-heading">
+                {% block title %}{% endblock %}
+            </h2>
+            <section class="media-info">
+                <p class="lead">
+                    {% block info %}{% endblock %}
+                </p>
+            </section>
+        </div>
+    </a>
+</li>
+

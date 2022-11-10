@@ -268,7 +268,7 @@ class CodecCreator(_BaseDigitalTech):
     }
     'controlled vocabulary for codec creator configurations'
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
-                    for id, c in configurations.iteritems()]
+                    for id, c in configurations.items()]
     options.insert(0, ('', ''))  # empty value at beginning of list (initial default)
 
     id = xmlmap.StringField('dt:codecCreatorID')

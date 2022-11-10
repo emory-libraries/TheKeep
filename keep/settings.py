@@ -19,12 +19,12 @@ STATIC_ROOT = os.path.join(BASE_DIR, '..', 'static')
 STATIC_URL = '/static/'
 
 # Additional locations of static files
-STATICFILES_DIRS = [
+STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(BASE_DIR, '..', 'sitemedia'),
-]
+)
 
 
 # List of finder classes that know how to find static files in
@@ -35,41 +35,48 @@ STATICFILES_FINDERS = (
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-# List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
-)
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    # django default context processors
-    "django.contrib.auth.context_processors.auth",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    "django.contrib.messages.context_processors.messages",
-    # additional context processors
-    "django.core.context_processors.request",  # always include request in render context
-    "django.core.context_processors.static",
-    "eultheme.context_processors.template_settings",
-    "eultheme.context_processors.downtime_context",
-    "keep.collection.context_processors.collection_search",  # collection search form on every page
-    "keep.audio.context_processors.item_search",  # audio item search form on every page
-    "keep.version_context",  # include app version
-    "keep.repoadmin.context_processors.search",   # search form on every page
-    'keep.accounts.context_processors.researcher_no_analytics'
-)
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, '..', 'templates')],
+        'OPTIONS': {
+            'context_processors': [
+            # django default context processors
+            "django.contrib.auth.context_processors.auth",
+            "django.core.context_processors.debug",
+            "django.core.context_processors.i18n",
+            "django.core.context_processors.media",
+            "django.contrib.messages.context_processors.messages",
+            # additional context processors
+            "django.core.context_processors.request",  # always include request in render context
+            "django.core.context_processors.static",
+            # "eultheme.context_processors.template_settings",
+            "keep.collection.context_processors.collection_search",  # collection search form on every page
+            "keep.audio.context_processors.item_search",  # audio item search form on every page
+            "keep.version_context",  # include app version
+            "keep.repoadmin.context_processors.search",   # search form on every page
+            "keep.accounts.context_processors.researcher_no_analytics",
+            ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+                
+            ],
+        },
+    },
+]
+
+
 # NOTE: if you modify the configured context processors and need
 # a new processor included in unit tests, be sure to update
 # the list in keep.testplugins.KeepTestSettings
 
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'eultheme.middleware.DownpageMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'keep.accounts.middleware.ResearcherAccessMiddleware',
@@ -77,9 +84,6 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'keep.urls'
 
-TEMPLATE_DIRS = [
-    os.path.join(BASE_DIR, '..', 'templates'),
-]
 
 INSTALLED_APPS = [
     'django.contrib.auth',
@@ -90,18 +94,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     # bootstrap django-admin - must be loaded before admin
-    'django_admin_bootstrapped.bootstrap3',
+    'bootstrap3',
     'django_admin_bootstrapped',
     'django.contrib.admin',
-    'djcelery',
+    # 'djcelery',
     'widget_tweaks',
     'eulexistdb',
     'eulfedora',
     'eulcommon.searchutil',
     'eulcommon.djangoextras.taskresult',
-    'eultheme',
-    'downtime',
-    'keep.accounts',
+    # 'keep.accounts',
     'keep.arrangement',
     'keep.audio',
     'keep.video',
@@ -151,19 +153,16 @@ PID_ALIASES = {
 DOWNTIME_EXEMPT_PATHS = (
    '/db-admin',
    '/admin',
-   '/indexdata'
+   '/indexdata',
 )
 
 SOLR_SCHEMA = os.path.join(BASE_DIR, '..', 'solr', 'schema.xml')
 
-# Celery Config - standard stuff that will not change from project to project
-import djcelery
-djcelery.setup_loader()
 
-CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
+result_backend='djcelery.backends.database:DatabaseBackend'
 # NOTE: should be possible to configure a default queue, but not sure
 # where that needs to be done
-CELERY_DEFAULT_QUEUE = 'keep'
+task_default_queue = 'keep'
 
 try:
     from keep.localsettings import *
@@ -181,9 +180,9 @@ DEFAULT_EXCEPTION_REPORTER_FILTER = 'eulfedora.util.SafeExceptionReporterFilter'
 # explicitly assign a differently-named default queue to prevent
 # collisions with other projects using celery (allow celery to create queue for us)
 # NOTE: setting after including localsettings to allow local override
-CELERY_ROUTES = {
-    'keep.audio.tasks.convert_wav_to_mp3': {'queue': CELERY_DEFAULT_QUEUE},
-    'keep.file.tasks.migrate_aff_diskimage': {'queue': CELERY_DEFAULT_QUEUE}
+task_routes = {
+    'keep.audio.tasks.convert_wav_to_mp3': {'queue': task_default_queue},
+    'keep.file.tasks.migrate_aff_diskimage': {'queue': task_default_queue}
 }
 
 

@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 from django.contrib.auth.models import Group
 
-from .models import AnonymousResearcher
+from keep.accounts.models import AnonymousResearcher
 
 class AccountsConfig(AppConfig):
     name = 'keep.accounts'

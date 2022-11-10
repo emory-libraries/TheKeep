@@ -503,7 +503,6 @@ class DiskImage(DigitalObject):
 
         return img
 
-    @models.permalink
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return (DiskImage.NEW_OBJECT_VIEW, [str(self.pid)])

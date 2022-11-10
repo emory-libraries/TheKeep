@@ -1,0 +1,28 @@
+{# reusable paginator snippet that displays all available pages as options in a select element #}
+{# uses selectize javascript plug-in for interactivity #}
+{# expects paginator as *paginator*, current page as *page_obj*, and any additional url arguments as *url_params* #}
+<footer class="pagination pagination-dropdown">
+    <section>
+        <h2 class="h4">Page</h2>
+            <label class="sr-only" for="select-page">Page:</label>
+            <select id="select-page" class="select-pagination" placeholder="Select page...">
+                {% for i in paginator.page_range %}
+                    <option {% if i == page_obj.number %}class="active" selected="selected"{% endif %} value="?{% if url_params %}{{ url_params }}&amp;{% endif %}page={{ i }}">
+                        {{ i }}
+                    </option>
+                {% endfor %}
+            </select>
+    </section>
+</footer>
+<script type="text/javascript">
+$('.select-pagination').selectize({
+    create: false,
+    highlight: true,
+
+    onChange: function(value){
+        if(window.location!==value){
+            window.location = value;
+        }
+    }
+})
+</script>

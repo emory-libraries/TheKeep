@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse, Http404, HttpResponseForbidden
 from django.views.decorators.http import require_http_methods
 from django.template.response import TemplateResponse

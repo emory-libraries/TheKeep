@@ -5,8 +5,8 @@ from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
-from django.utils.datastructures import MultiValueDict, SortedDict
-
+from django.utils.datastructures import MultiValueDict
+from collections import OrderedDict as SortedDict
 from eulcommon.djangoextras.auth import user_passes_test_with_403, \
     user_passes_test_with_ajax
 from eulcommon.searchutil import pages_to_show, parse_search_terms
@@ -175,12 +175,12 @@ def keyword_search(request):
         display_filters = []
         # - list of tuples: display name, link to remove the filter
         active_filters = dict((field, []) for field in
-                              searchform.facet_field_names.iterkeys())
+                              searchform.facet_field_names.keys())
         # - dictionary of filters in use, for exclusion from displayed
         # facets
 
         # filter the solr search based on any facets in the request
-        for filter_val, facet_field in searchform.facet_field_names.iteritems():
+        for filter_val, facet_field in searchform.facet_field_names.items():
             # For multi-valued fields (author, subject), we could have multiple
             # filters on the same field; treat all facet fields as lists.
             for val in request.GET.getlist(filter_val):
@@ -282,7 +282,7 @@ def keyword_search(request):
         # convert the facets from the solr result for display to user
         facets = SortedDict()
         facet_fields = results.object_list.facet_counts.facet_fields
-        for display_name, field in searchform.facet_field_names.iteritems():
+        for display_name, field in searchform.facet_field_names.items():
             #do not display coll facet because it is redundant with the collection facet
             if display_name in ['coll', 'fixity_check']:
                 continue
@@ -353,7 +353,7 @@ def keyword_search_suggest(request):
              'value': '%s%s' % (term, field),
              'category': 'Search Fields',
              'desc': desc}
-            for field, desc in KeywordSearch.field_descriptions.iteritems()
+            for field, desc in KeywordSearch.field_descriptions.items()
         ]
 
     # otherwise, check if there is a field to look up values for

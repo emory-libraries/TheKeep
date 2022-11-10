@@ -118,7 +118,6 @@ class SimpleCollection(Collectionv1_0, ArkPidDigitalObject):
     def members(self):
         return [DigitalObject(self.api, pid=p) for p in self.member_pids]
 
-    @models.permalink
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return (self.NEW_OBJECT_VIEW, [str(self.pid)])

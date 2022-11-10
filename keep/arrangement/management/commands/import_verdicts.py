@@ -203,10 +203,10 @@ class Command(BaseCommand):
 %(not_found)d record(s) not found, %(too_many)d with multiple matches''' % self.stats
             print 'Verdicts imported:\n    ' + \
                   '; '.join('%d %s' % (n, v)
-                            for v, n in self.verdict_stats.iteritems())
+                            for v, n in self.verdict_stats.items())
             print 'Series and subseries assigned:\n  '+ \
                   '\n  '.join('%s : %d' % (v, n)
-                            for v, n in series_stats.iteritems())
+                            for v, n in series_stats.items())
             if not noact:
                 print 'Updated %(updated)d record(s); error saving %(save_error)d records' \
                       % self.stats

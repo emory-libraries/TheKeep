@@ -1,5 +1,5 @@
 from django import forms
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict as SortedDict
 # NOTE: not using OrderedDict so as not to require Python 2.7
 from eulcommon.searchutil import parse_search_terms
 

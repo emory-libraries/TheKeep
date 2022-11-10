@@ -14,12 +14,12 @@ class FedoraFixtures:
     def archives(format=None):
         if format == dict:
             return [{'title': nick, 'pid': pid}
-                    for nick,pid in settings.PID_ALIASES.iteritems()]
+                    for nick,pid in settings.PID_ALIASES.items()]
             
         if not hasattr(FedoraFixtures, '_archives'):
             repo = Repository()
             FedoraFixtures._archives = [repo.get_object(pid, type=CollectionObject)
-                                        for pid in settings.PID_ALIASES.itervalues()]
+                                        for pid in settings.PID_ALIASES.values()]
         return FedoraFixtures._archives
 
     @staticmethod

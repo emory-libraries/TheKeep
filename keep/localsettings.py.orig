@@ -1,0 +1,241 @@
+# Django local settings for the Keep
+# github: https://github.com/emory-libraries/TheKeep
+# production: https://keep.library.emory.edu
+
+# Celery Config
+CELERY_ACCEPT_CONTENT = ['pickle', 'json', 'msgpack', 'yaml']
+BROKER_URL = 'amqp://guest:guest@wlibqas002.library.emory.edu:5672/'
+
+# CELERY_RESULT_BACKEND = "amqp" # e.g "amqp"
+# BROKER_URL = 'amqp://guest:guest@wlibdev002.library.emory.edu:5672/'
+
+# all settings in debug section should be false in production environment
+DEBUG = True
+TEMPLATE_DEBUG = DEBUG
+DEV_ENV = True
+SECRET_KEY = '3+)48p*e!0-h3k@k7ql$7ogi&eskj_(0)___h-74d%gzgio1*d'
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+
+SERVER_EMAIL = ''       # email where default messages come from; django default is root@localhost
+EMAIL_SUBJECT_PREFIX = '[Keep] '  # prefix for email subjects
+
+# if True the beta warning banner is displayed on the site
+ENABLE_BETA_WARNING = False
+# SECRET_KEY = '3+)48p*e!0-h3k@k7ql$7ogi&eskj_(0)___h-74d%gzgio1*d'
+# IP addresses that should be allowed to see DEBUG info
+INTERNAL_IPS = ('127.0.0.1', '127.0.1.1', )
+
+ADMINS = (
+    ('Your Name', 'your_email@domain.com'),
+)
+
+MANAGERS = ADMINS
+
+EMAIL_SUBJECT_PREFIX = '[Keep] '
+
+DATABASES = {
+    # default database - used for the django site
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': 'keep.db',
+    # },
+
+    'default': {
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'keep_latest',                      # Or path to database file if using sqlite3.
+        'USER': 'root',                      # Not used with sqlite3.
+        'PASSWORD': '',                  # Not used with sqlite3.
+        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',
+    },
+
+}
+
+import ldap
+from django_auth_ldap.config import LDAPSearch
+AUTH_LDAP_SERVER_URI = 'ldaps://ldsauth.service.emory.edu'
+AUTH_LDAP_BIND_DN = 'cn=libweb_LDS_svc,ou=services,dc=emory,dc=edu'
+AUTH_LDAP_BIND_PASSWORD = 'zAka66nET62jZc3'
+AUTH_LDAP_USER_SEARCH = LDAPSearch("ou=People,dc=emory,dc=edu", ldap.SCOPE_SUBTREE, "(cn=%(user)s)")
+
+AUTH_LDAP_USER_ATTR_MAP = {
+    'first_name': 'givenName',
+    'last_name': 'sn',
+    'email': 'mail',
+    'title': 'title',
+}
+
+# Fedora Repository settings
+# fedora 3.8 dev
+#FEDORA_ROOT = 'https://libfedqa1.library.emory.edu:8443/fedora/'
+FEDORA_ROOT = 'https://fedora.library.emory.edu:8443/fedora/'
+FEDORA_USER = 'fedoraAdmin'
+FEDORA_PASSWORD = 'B1gS3cr3t'
+FEDORA_TEST_ROOT = FEDORA_ROOT
+# optional fedora credentials
+FEDORA_PIDSPACE = 'keep-qa'   # change dev to your initials or username
+#FEDORA_USER = 'fedoraAdmin'
+#FEDORA_PASSWORD = 'fedoraAdmin'
+# use this to explicitly configure a test pidspace; by default, uses pidspace-test
+# FEDORA_TEST_PIDSPACE = 'testme'
+FEDORA_TEST_USER = 'fedoraAdmin'
+FEDORA_TEST_PASSWORD = 'fedoraAdmin'
+
+
+
+# fedora user with access to manage content; used for migration scripts
+FEDORA_MANAGEMENT_USER = 'fedoraAdmin'
+FEDORA_MANAGEMENT_PASSWORD = 'B1gS3cr3t'
+
+# Exist DB Settings
+# collection should begin with / -  e.g., /edc
+EXISTDB_ROOT_COLLECTION = ''
+# use this to explicitly set test collection; by default, uses collection_test
+# EXISTDB_TEST_COLLECTION = ''
+
+EXISTDB_SERVER_USER = "findingaids"
+EXISTDB_SERVER_PASSWORD = "findingaids"
+EXISTDB_SERVER_URL = "http://kamina.library.emory.edu:8080/exist"
+EXISTDB_TIMEOUT = 15
+EXISTDB_ROOT_COLLECTION = "/fa-rsk"
+EXISTDB_TEST_COLLECTION = "/test/fa-rsk2"
+
+# pidman PID generation
+PIDMAN_HOST = 'https://testpid.library.emory.edu/'
+PIDMAN_USER = 'testfindingaids'
+PIDMAN_PASSWORD = '4rch1v3s'
+PIDMAN_DOMAIN = 'https://testpid.library.emory.edu/domains/31/'
+
+# django caching - see http://docs.djangoproject.com/en/dev/topics/cache/
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/var/tmp/keep_cache',
+    }
+}
+
+
+# for Developers only: to use sessions in runserver,
+# uncomment this line (override configuration in settings.py)
+SESSION_COOKIE_SECURE = False
+
+# link to keep manual on Box, for display in admin interface
+KEEP_MANUAL_URL = 'http://google.com'
+
+# configure which IP addresses are allowed to access the index data service
+EUL_INDEXER_ALLOWED_IPS = 'ANY'
+
+# Solr index that will be used for searching
+#SOLR_SERVER_URL = "https://wlibdev003.library.emory.edu:9193/solr/keep/"
+# SOLR_SERVER_URL = 'http://ndxprd001.library.emory.edu:9193/solr/keep/'
+SOLR_SERVER_URL = 'https://ndxqas001.library.emory.edu:9193/solr/keep/'
+# Local time zone for this installation. Choices can be found here:
+# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
+# although not all choices may be available on all operating systems.
+# If running in a Windows environment this must be set to the same as your
+# system time zone.
+TIME_ZONE = 'America/New_York'
+
+# Language code for this installation. All choices can be found here:
+# http://www.i18nguy.com/unicode/language-identifiers.html
+LANGUAGE_CODE = 'en-us'
+
+# If you set this to False, Django will make some optimizations so as not
+# to load the internationalization machinery.
+USE_I18N = True
+
+# If you set this to False, Django will not format dates, numbers and
+# calendars according to the current locale
+USE_L10N = True
+
+# Make this unique, and don't share it with anybody.
+# Some optiosn: use uuid, or generate one here:
+# http://www.miniwebtool.com/django-secret-key-generator/
+
+SITE_ID = 1
+
+# settings for ingest staging directory, where uploaded content is put
+INGEST_STAGING_TEMP_DIR = '/tmp/digitalmasters-ingest-staging'
+# time in seconds that files in the ingest staging directory should be kept
+# (clean up handled by ingest_cleanup manage command)
+INGEST_STAGING_KEEP_AGE = 60*60*24*3
+
+# Settings for staging area for large-file ingest workflow (video/disk image)
+# See developer notes on sshfs for large file upload setup
+# - directory as mounted on the Django app server
+LARGE_FILE_STAGING_DIR = '/Users/rsutton/Downloads/libfeddev1-inbound'
+# - directory on Fedora server, if path is different
+LARGE_FILE_STAGING_FEDORA_DIR = '/mnt/ir/fedora38/data/inbound'
+
+# Allowable discrepancy between duration of original file and converted access copy
+# Recommended: set to something around 1.0 - 1.5
+AUDIO_ALLOWED_DURATION_DISCREPANCY = 1.5
+
+# disable external javascript, use copies bundled with eultheme
+EULTHEME_NO_EXTERNAL_JS = True
+# disable google analytics for locked-down researcher access
+RESEARCHER_NO_ANALYTICS = True
+
+# override celery route in settings to avoid conflict with qa celery,
+# which is using the same rabbitmq instance
+CELERY_DEFAULT_QUEUE = 'keep-dev'  # replace dev with initials/username
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'basic': {
+            'format': '[%(asctime)s] %(levelname)s:%(name)s::%(message)s',
+            'datefmt': '%d/%b/%Y %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'basic'
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'include_html': True
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'eulfedora': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'eulxml': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'keep': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'DEBUG',
+        },
+        'eulexistdb': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'requests': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+    }
+}

@@ -1,7 +1,7 @@
 import datetime
 from eulfedora.models import DigitalObject
 from django import template
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.template.defaultfilters import stringfilter
 
 from pidservices.clients import parse_ark

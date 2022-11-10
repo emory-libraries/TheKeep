@@ -1,6 +1,6 @@
 import sys, os, random, time, logging, getopt, signal, unicodecsv, urllib
 from django.core.management.base import BaseCommand, CommandError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from io import BytesIO
 from optparse import make_option
 from django.conf import settings

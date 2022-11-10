@@ -5,14 +5,14 @@ View methods for creating, editing, searching, and browsing
 import logging
 from rdflib.namespace import RDF
 import re
-from urllib import urlencode
+from urllib.parse import urlencode
 import json
 
 from django.conf import settings
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.core.serializers.json import DjangoJSONEncoder
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404, HttpResponse
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_http_methods
@@ -302,7 +302,7 @@ def search(request):
     if form.is_valid():
         # include all non-blank fields from the form as search terms
         search_opts = dict((key, val)
-                           for key, val in form.cleaned_data.iteritems()
+                           for key, val in form.cleaned_data.items()
                            if val is not None and val != '')  # but need to search by 0
         # restrict to currently configured pidspace and collection content model
         search_opts.update({
@@ -312,7 +312,7 @@ def search(request):
 
         # collect non-empty, non-default search terms to display to user on results page
         search_info = {}
-        for field, val in form.cleaned_data.iteritems():
+        for field, val in form.cleaned_data.items():
             key = form.fields[field].label  # use form display label
             if key is None:     # if field label is not set, use field name as a fall-back
                 key = field
@@ -432,7 +432,7 @@ def list_archives(request, archive=None):
                 .sort_by('title')
 
     # pid aliases are keyed on the alias, but we need to look up by pid
-    pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.iteritems()])
+    pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.items()])
 
     # add solr information and pid aliases to info dictionary
     for q in query:

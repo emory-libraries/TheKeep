@@ -10,12 +10,15 @@ from eulxml.xmlmap import mods
 from eulxml.forms import XmlObjectForm, SubformField
 from eulcm.xmlmap.mods import MODS
 from eulcommon.djangoextras.formfields import DynamicChoiceField
-from eultheme.forms import TelephoneInput
 
 from keep.collection.models import CollectionObject
 from keep.common.utils import solr_interface
 
 logger = logging.getLogger(__name__)
+
+class TelephoneInput(forms.TextInput):
+    'HTML5 telephone input (prompt for numeric entry)'
+    input_type = 'tel'
 
 def archive_choices():
     choices = [(a['pid'],
@@ -26,7 +29,7 @@ def archive_choices():
 def archive_alias_choices():
     choices = []
     # we need pid aliases keyed on pid for lookup
-    pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.iteritems()])
+    pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.items()])
     for a in CollectionObject.archives(format=dict):
         if a['pid'] in pid_aliases_by_pid:
             alias = pid_aliases_by_pid[a['pid']]
@@ -117,7 +120,7 @@ class FindCollection(forms.Form):
 
         choices = []
         # we need pid aliases keyed on pid for lookup
-        pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.iteritems()])
+        pid_aliases_by_pid = dict([(v, k) for k, v in settings.PID_ALIASES.items()])
         for a in archives:
             if a in pid_aliases_by_pid:
                 alias = pid_aliases_by_pid[a]

@@ -1,0 +1,33 @@
+{%comment %} card-style search result with preview; cards should be inside
+a div with class="row result-listing cards", and you should also include the
+preview_aside template snippet to pre-load the preview block.
+{% endcomment %}
+<div class="col-sm-6 col-lg-4">
+    <article class="result">
+        <header class="row title">
+            <div class="col-xs-10">
+                {# block for title, high-level info (date, author, etc) #}
+                {% block result-header %}{% endblock %}
+            </div>
+            <div class="col-xs-2 no-padding-right">
+                {# block for right-side info such as relevance score visualization #}
+                {% block result-info %}{% endblock %}
+                {# TODO: make preview optional/configurable ? #}
+                {% if not preview_disabled %}
+                <p> <a class="readmore" title="Preview"><span class="glyphicon glyphicon-eye-open"></span></a></p>
+                {% endif %}
+            </div>
+        </header>
+
+        <section class="summary">
+            {% block result-content %}{% endblock %}
+        </section>
+
+        {# This is the preview section that will appear in the aside. #}
+        {% if not preview_disabled %}
+        <div class="preview hidden">
+            {% block result-preview %}{% endblock %}
+        </div>
+        {% endif %}
+    </article>
+</div>

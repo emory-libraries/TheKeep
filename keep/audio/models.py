@@ -7,7 +7,7 @@ import os
 import mutagen
 from pymediainfo import MediaInfo
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db import models
 from eulxml import xmlmap
 from eulxml.xmlmap import mods
@@ -309,7 +309,6 @@ class AudioObject(DigitalObject):
 
         return super(AudioObject, self).save(logMessage)
 
-    @models.permalink
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return ('audio:view', [str(self.pid)])

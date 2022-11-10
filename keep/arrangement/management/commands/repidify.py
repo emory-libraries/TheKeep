@@ -3,7 +3,7 @@ from collections import OrderedDict
 from datetime import datetime
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from eulcm.models import boda
 from eulfedora.rdfns import relsext
 from eulfedora.server import TypeInferringRepository
@@ -208,7 +208,7 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                 # if there are any errors, report and don't purge
                 if errors:
                     print 'Error! object validation failed:'
-                    for key, val in errors.iteritems():
+                    for key, val in errors.items():
                         print '%s\t%s' % (key, val)
                 else:
                     # purge original unless no purge requested
@@ -342,7 +342,7 @@ NOTE: should not be used except in dire need; may fail on large objects.'''
                     (getattr(oldobj, prop), getattr(newobj, prop))
 
         # compare datastreams
-        for dsid in oldobj.ds_list.iterkeys():
+        for dsid in oldobj.ds_list.keys():
             old_dsobj = oldobj.getDatastreamObject(dsid)
             old_versions = old_dsobj.history().versions
 

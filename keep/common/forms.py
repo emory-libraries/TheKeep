@@ -100,7 +100,7 @@ class ItemSearch(forms.Form):
                           'copyright_date': 'Copyright Date'}
 
     # generate a list of tuples for ChoiceField, sorted by display label
-    _display_field_choices = sorted(display_field_opts.iteritems(),
+    _display_field_choices = sorted(display_field_opts.items(),
                                   key=operator.itemgetter(1))
     display_fields = forms.MultipleChoiceField(_display_field_choices, required=False,
          help_text=mark_safe('''Customize which fields should be displayed in search results.
@@ -149,7 +149,7 @@ class ItemSearch(forms.Form):
         }
 
         # translate non-blank fields from the form to search terms
-        for field, val in self.cleaned_data.iteritems():
+        for field, val in self.cleaned_data.items():
             # skip display-formatting fields
             if field in self.display_output_fields:
                 continue
@@ -212,7 +212,7 @@ class ItemSearch(forms.Form):
             return
 
         search_info = {}
-        for field, val in self.cleaned_data.iteritems():
+        for field, val in self.cleaned_data.items():
             if field in self.display_output_fields:
                 # do not show display-formatting field values with search terms
                 continue

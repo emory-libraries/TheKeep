@@ -18,7 +18,7 @@ from django.http import HttpRequest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.management.base import CommandError
 from django.test import Client, TestCase
 
@@ -708,7 +708,7 @@ class AudioViewsTest(KeepTestCase):
             # test local transfer engineer options
             # - when displaying the form, local options should be available
             response = self.client.get(edit_url)
-            for local_id, local_name in TransferEngineer.local_engineers.iteritems():
+            for local_id, local_name in TransferEngineer.local_engineers.items():
                 self.assertContains(response, '%s|%s' % (TransferEngineer.LOCAL_ID_TYPE,
                                                          local_id),
                     msg_prefix='select id should be listed for local transfer engineer %s' % local_name)

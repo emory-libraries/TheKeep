@@ -1,0 +1,20 @@
+{# reusable paginator snippet that displays all available pages in a horizontal scrollable section #}
+{# expects paginater as *paginator*, current page as *page_obj*, and any additional url arguments as *url_params* #}
+<footer class="pagination">
+    <section>
+        <h2 class="h4">Pages</h2>
+        <div class="paginator scrollbar" id="js-paginator" style="width: 99%;">
+            <table>
+                <tbody>
+                    <tr>
+                        {% for i in paginator.page_range %}
+                        <td {% if i == page_obj.number %}class="active"{% endif %}><span>
+                            <a href="?{% if url_params %}{{ url_params }}&amp;{% endif %}page={{ i }}">{{ i }}</a>
+                        </span></td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</footer>

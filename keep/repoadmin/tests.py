@@ -3,7 +3,7 @@ from django import forms
 from django.http import HttpRequest
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user_model
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.shortcuts import render
 from django.test import TestCase
 import json
@@ -250,7 +250,7 @@ class RepoAdminViewsTest(KeepTestCase):
         for solr_field in mock_facets.keys():
             self.assert_(solr_field not in response.context['facets'])
 
-        for display_name, field in KeywordSearch.facet_field_names.iteritems():
+        for display_name, field in KeywordSearch.facet_field_names.items():
             if field in mock_facets:
                 self.assert_(display_name in response.context['facets'])
 
@@ -542,7 +542,7 @@ class SearchTemplatesTest(TestCase):
         response = render(self.rqst, self.search_results, ctx)
         self.assertContains(response, 'Filter your results')
 
-        for field in mock_facets.iterkeys():
+        for field in mock_facets.keys():
             self.assertContains(response, field,
                 msg_prefix='facet field name should be listed')
 

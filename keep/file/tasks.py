@@ -116,9 +116,9 @@ def migrate_aff_diskimage(self, pid):
         raise Exception('Error running ftkimager verify on E01 for %s' % original.pid)
 
     logger.debug('AFF verify checksums: %s' % \
-        ', '.join('%s: %s' % (k, v) for k, v in aff_checksums.iteritems()))
+        ', '.join('%s: %s' % (k, v) for k, v in aff_checksums.items()))
     logger.debug('E01 verify checksums: %s' % \
-        ', '.join('%s: %s' % (k, v) for k, v in e01_checksums.iteritems()))
+        ', '.join('%s: %s' % (k, v) for k, v in e01_checksums.items()))
     if aff_checksums != e01_checksums:
         raise Exception('AFF and E01 ftkimager verify checksums do not match')
 

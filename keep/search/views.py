@@ -1,4 +1,4 @@
-from urllib import urlencode
+from urllib.parse import urlencode
 
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from django.template.response import TemplateResponse

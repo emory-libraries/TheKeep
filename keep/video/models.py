@@ -19,7 +19,7 @@ import urllib
 from keep.file.utils import md5sum, sha1sum
 from keep.common.models import PremisFixity, PremisObject, allow_researcher_access
 from eulcm.xmlmap.boda import Rights
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 import logging
 
@@ -59,7 +59,7 @@ class VideoCodecCreator(CodecCreator):
     'controlled vocabulary for codec creator configurations'
 
     options = [(id, '%s, %s %s' % (', '.join(c[0]), c[1], c[2] if c[2] is not None else ''))
-                    for id, c in configurations.iteritems()]
+                    for id, c in configurations.items()]
     options.insert(0, ('', ''))  # empty value at beginning of list (initial default)
 
     id = xmlmap.StringField('dt:codecCreatorID')
@@ -333,8 +333,7 @@ class Video(DigitalObject):
             self.label = self.mods.content.title
 
         return super(Video, self).save(logMessage)
-    #
-    @models.permalink
+
     def get_absolute_url(self):
         'Absolute url to view this object within the site'
         return ('video:view', [str(self.pid)])

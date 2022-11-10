@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
 from keep.arrangement import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
     url(r'^(?P<pid>[^/]+)/history/$', views.history, name='history'),
@@ -11,4 +11,4 @@ urlpatterns = patterns('',
     url(r'^get_selected_series_data/(?P<id>[^/]+)', views.get_selected_series_data,
         name='get_selected_series_data'),
     url(r'^(?P<pid>[^/]+)/$', views.view_item, name='view'),
-)
+]

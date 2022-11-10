@@ -1,7 +1,7 @@
 from django.conf.urls import *
 from keep.audio import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^(?P<pid>[^/]+)/tasks/$', views.tasks, name='tasks'),
     url(r'^(?P<pid>[^/]+)/$', views.view, name='view'),
     url(r'^(?P<pid>[^/]+)/edit/$', views.edit, name='edit'),
@@ -14,4 +14,4 @@ urlpatterns = patterns('',
     # NOTE: access copy filename extension is required for inclusion in iTunes
     url(r'^(?P<pid>[^/]+)/access.(?P<extension>(mp3|m4a))$', views.download_audio,
         {'type': 'access'}, name='download-compressed-audio'),
-)
+]

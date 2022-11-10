@@ -9,7 +9,7 @@ import re
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from bodatools.binfile import eudora
 from eulfedora.rdfns import relsext, model as modelns
@@ -222,7 +222,7 @@ Eudora files. (One-time import for 5300c content)
 
     def ingest_email(self, folder_base):
 
-        for folder_name, folder_file in self.email_folders.iteritems():
+        for folder_name, folder_file in self.email_folders.items():
             self.stats['folder'] += 1
 
             folder_path = os.path.join(folder_base, folder_file)

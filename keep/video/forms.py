@@ -159,7 +159,7 @@ class DigitalTechForm(XmlObjectForm):
         options.insert(0, ('', EMPTY_LABEL_TEXT))
 
         # add local transfer engineer options to the list
-        for id, label in TransferEngineer.local_engineers.iteritems():
+        for id, label in TransferEngineer.local_engineers.items():
             options.append((_transfer_engineer_id(type=TransferEngineer.LOCAL_ID_TYPE,
                                                   id=id), label))
 

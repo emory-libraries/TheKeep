@@ -4,11 +4,11 @@ import logging
 from mock import Mock, MagicMock, patch
 import os
 from sunburnt import sunburnt
-import urllib2
+import urllib.request as urllib2
 
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase, Client, override_settings
 
 from eulfedora.models import XmlDatastream

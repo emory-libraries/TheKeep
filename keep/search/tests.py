@@ -2,7 +2,7 @@ from mock import patch, NonCallableMock, MagicMock
 from sunburnt import sunburnt
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.core.paginator import Paginator
 from django.test import TestCase
 

@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from keep.search import views
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', views.search, name='keyword'),
-)
+]

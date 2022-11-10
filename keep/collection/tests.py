@@ -10,7 +10,7 @@ from sunburnt import sunburnt
 from unittest import skip
 
 from django.conf import settings
-from django.core.urlresolvers import reverse, resolve
+from django.urls import reverse, resolve
 from django.contrib import messages
 from django.test import Client
 from django.utils.http import urlquote

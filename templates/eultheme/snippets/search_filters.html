@@ -1,0 +1,57 @@
+{# snippet for toggle-able search filters, including optional date range #}
+{# expects form with list of "advanced_fields" and "advanced_fields_values"; see eultheme.forms #}
+{# set resource_name to customize label of item in date filter #}
+{% load widget_tweaks %}
+
+<span class="adv toggle switch" data-type="advfields">
+    <a href="#">search options <span class="glyphicon glyphicon-chevron-down"></span></a>
+</span>
+<div class="filter">
+{# start Advanced Filter #}
+<fieldset class="adv toggle group" data-type="advfields" {% if not form.advanced_fields_values|default:0 %}style="display:none;"{% endif %}>
+    <header class="col-sm-12">
+        <h4>Advanced Search Options</h4>
+    </header>
+
+    {# for each advanced field #}
+    {% for field in form.advanced_fields %}
+    <div class="form-group">
+        <label for="id_{{ field.name }}" class="col-sm-2 control-label">{{ field.label }}</label>
+        <div class="col-sm-10">{{ field|add_class:"form-control" }}</div>
+    </div>
+    {% endfor %}
+
+    {% if form.start_date and form.end_date %} {# date range search #}
+        <div class="form-group" id="date-range">
+            <label for="{{ form.start_date.name }}" class="col-sm-5 control-label">Return {{ resource_name|default:'items' }} between these years:</label>
+            <div class="col-sm-7">
+                <div class="row">
+                    <div class="col-xs-5">
+                        {{ form.start_date }}
+                    </div>
+                    <div class="col-xs-1"><p class="small centered">to</p></div>
+                    <div class="col-xs-5">
+                        {{ form.end_date }}
+                    </div>
+                </div> {# row #}
+            </div> {# col-sm-7 #}
+        </div> {# date range form group #}
+    {% endif %}
+
+    <div class="form-group">
+        <div class="col-xs-12 col-sm-6 pull-right">
+            <div class="row">
+                <div class="controls btn-group-sm col-xs-6">
+                    <button class="reset btn btn-default btn-adv">Clear Criteria</button>
+                </div>
+                <div class="controls btn-group-sm col-xs-6">
+                    <button id="submit2" class="btn btn-primary btn-adv" type="submit"><span class="glyphicon glyphicon-search"></span></button>
+                </div>
+            </div> {# row #}
+        </div> {# column #}
+    </div> {# form-group #}
+</fieldset>
+{% block search_options %} {# optional block, e.g. for pagination/sorting #}
+{% endblock %}
+
+</div> {# end filter #}

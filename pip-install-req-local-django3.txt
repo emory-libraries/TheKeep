@@ -1,0 +1,34 @@
+Django==3.2.12
+cx-Oracle
+SPARQLWrapper
+eulexistdb>=0.20
+# dev eulcommon to test removing eullocal (should be 0.19)
+python-magic
+pycparser
+pycrypto
+celery
+django-celery-results
+#django-celery
+mutagen
+poster
+httplib2
+unicodecsv
+python-dateutil
+pytz
+bodatools
+bagit
+django-bootstrap3
+django_admin_bootstrapped
+django-widget-tweaks
+# 2016/02 pymediainfo seems to 2.0 cause a problem running under apache
+pymediainfo
+django-downtime
+django_auth_ldap
+# packasges to help with ssl issues
+mysqlclient
+ndg-httpsclient
+pyOpenSSL
+httplib2.ca-certs-locater
+sunburnt-python3
+# 11/2015 testing local version of sunburnt with join query and basic group support
+#git+https://github.com/rlskoeser/sunburnt.git@group-and-join#egg=sunburnt

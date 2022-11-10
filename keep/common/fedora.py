@@ -2,10 +2,11 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import Http404
 from django.shortcuts import render
-import urllib, logging, urllib2
+import urllib, logging
+import urllib.request as urllib2
 
 from eulfedora import models, server
 from eulfedora.util import RequestFailed, PermissionDenied
